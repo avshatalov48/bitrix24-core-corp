@@ -3,6 +3,22 @@ namespace Bitrix\Crm\Cleaning\Entity;
 
 use Bitrix\Main;
 
+/**
+ * Class CleaningTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Cleaning_Query query()
+ * @method static EO_Cleaning_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Cleaning_Result getById($id)
+ * @method static EO_Cleaning_Result getList(array $parameters = array())
+ * @method static EO_Cleaning_Entity getEntity()
+ * @method static \Bitrix\Crm\Cleaning\Entity\EO_Cleaning createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Cleaning\Entity\EO_Cleaning_Collection createCollection()
+ * @method static \Bitrix\Crm\Cleaning\Entity\EO_Cleaning wakeUpObject($row)
+ * @method static \Bitrix\Crm\Cleaning\Entity\EO_Cleaning_Collection wakeUpCollection($rows)
+ */
 class CleaningTable extends Main\ORM\Data\DataManager
 {
 	/**

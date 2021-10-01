@@ -146,6 +146,7 @@ BX.DiskFileDialog.openDialog = function(name)
 		zIndex: 100,
 		closeByEsc: true,
 		closeIcon : true,
+		overlay: BX.DiskFileDialog.obElementBindPopup[name].overlay ? BX.DiskFileDialog.obElementBindPopup[name].overlay : null,
 		draggable: BX.DiskFileDialog.obElementBindPopup[name].node == null? {restrict: true}: false,
 		titleBar: BX.DiskFileDialog.obLocalize[name].title,
 		contentColor : 'white',

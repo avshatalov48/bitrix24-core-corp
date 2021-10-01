@@ -1,16 +1,16 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\UserTable,
-	\Bitrix\Main\Application,
-	\Bitrix\Main\Config\Option,
-	\Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
+use Bitrix\Main\UserTable;
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Localization\Loc;
 
-use \Bitrix\Im\User;
+use Bitrix\Im\User;
 
-use \Bitrix\ImOpenLines\Model\QueueTable,
-	Bitrix\ImOpenLines\Model\ConfigQueueTable;
+use Bitrix\ImOpenLines\Model\QueueTable;
+use Bitrix\ImOpenLines\Model\ConfigQueueTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -40,7 +40,7 @@ class QueueManager
 	 * @param $fields
 	 * @return bool
 	 */
-	protected static function validateQueueFields($fields): bool
+	public static function validateQueueFields($fields): bool
 	{
 		$result = true;
 
@@ -54,6 +54,45 @@ class QueueManager
 			))
 			{
 				$result = false;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $fields
+	 * @return bool
+	 */
+	public static function isEmptyQueueFields($fields): bool
+	{
+		$result = true;
+
+		if(
+			!empty($fields)
+			&& is_array($fields)
+		)
+		{
+			foreach ($fields as $fieldsEntity)
+			{
+				if(
+					$result === true
+					&& !empty($fieldsEntity['ENTITY_ID'])
+				)
+				{
+					if($fieldsEntity['ENTITY_TYPE'] === 'user')
+					{
+						$result = false;
+					}
+					elseif($fieldsEntity['ENTITY_TYPE'] === 'department')
+					{
+						$usersDepartment = self::getUsersDepartment($fieldsEntity['ENTITY_ID']);
+						if($usersDepartment->fetch())
+						{
+							$result = false;
+						}
+					}
+				}
 			}
 		}
 
@@ -262,8 +301,6 @@ class QueueManager
 
 	/**
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function getIdIblockStructure(): int
 	{
@@ -276,9 +313,6 @@ class QueueManager
 
 	/**
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected static function getStructureDepartments(): array
 	{
@@ -329,9 +363,6 @@ class QueueManager
 	 * @param false $recursion
 	 * @param false $includeCurrentDepartment
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getChildDepartments($idDepartment, $recursion = false, $includeCurrentDepartment = false): array
 	{
@@ -377,9 +408,6 @@ class QueueManager
 	 * @param false $recursion
 	 * @param false $includeCurrentDepartment
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getParentDepartments($idDepartment, $recursion = false, $includeCurrentDepartment = false): array
 	{
@@ -427,11 +455,6 @@ class QueueManager
 	 * @param $idDepartment
 	 * @param string[] $select
 	 * @param false $excludeHead
-	 * @return \Bitrix\Main\EO_User_Result|\Bitrix\Main\ORM\Query\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getUsersDepartment($idDepartment, $select = ['ID'], $excludeHead = true)
 	{
@@ -468,7 +491,6 @@ class QueueManager
 	/**
 	 * @param $userId
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function isValidUser($userId): bool
 	{
@@ -493,10 +515,6 @@ class QueueManager
 	/**
 	 * @param $queue
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getUsersFromQueue($queue): array
 	{
@@ -551,10 +569,6 @@ class QueueManager
 	/**
 	 * @param $queue
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getUserListFromQueue($queue): array
 	{
@@ -590,7 +604,6 @@ class QueueManager
 	/**
 	 * QueueManager constructor.
 	 * @param $idLine
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function __construct($idLine)
 	{
@@ -601,7 +614,6 @@ class QueueManager
 
 	/**
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected function getDefaultUsers(): array
 	{
@@ -635,10 +647,6 @@ class QueueManager
 
 	/**
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getConfigQueue()
 	{
@@ -706,10 +714,6 @@ class QueueManager
 	/**
 	 * @param $items
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function deleteItemsConfigQueue($items)
 	{
@@ -778,10 +782,6 @@ class QueueManager
 	 * @param $fields
 	 * @param array|false $usersFields
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function compatibleUpdate($fields, $usersFields = false)
 	{
@@ -812,10 +812,6 @@ class QueueManager
 	 * @param $fields
 	 * @param array|false $usersFields
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function update($fields, $usersFields = false): Result
 	{

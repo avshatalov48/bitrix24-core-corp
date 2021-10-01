@@ -14,4 +14,4 @@ $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_REQUEST_INFORMATION_FROM_SE
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INVALID_OAUTH_ACCESS_TOKEN'] = 'Потерян доступ к управлению публичной страницы. Необходимо повторно выполнить подключение.';
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_REPEATING_ERROR'] = 'Если ошибка повторяется на протяжении длительного времени: отключите канал и настройте его снова.';
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_DISABLED_ACCESS_INSTAGRAM_DIRECT_MESSAGES'] = 'Для подключения IG Direct необходимо разрешить доступ к сообщениям на стороне вашего аккаунта Instagram. #A#Подробнее о настройке.#A_END#';
-$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_IG_ACCOUNT_IS_NOT_ELIGIBLE_API'] = 'К сожалению, по правилам Facebook, подключение IG Direct возможно только для аккаунтов с подписчиками от 10 000 до 100 000. #A#Подробнее.#A_END#';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_IG_ACCOUNT_IS_NOT_ELIGIBLE_API_2'] = 'К сожалению, по правилам Facebook, подключение IG Direct возможно только для аккаунтов с подписчиками от 1 000 до 100 000. #A#Подробнее.#A_END#';

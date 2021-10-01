@@ -1,7 +1,16 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-use \Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load( "ui.fonts.opensans");
+
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\Main\UI;
+
+UI\Extension::load(
+	[
+		'ui.fonts.opensans',
+		'ui.hint'
+	]
+);
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -23,8 +32,7 @@ Loc::loadMessages(__FILE__);
 
 Loc::loadMessages($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/imconnector.settings/templates/.default/template.php');
 
-
-CJSCore::Init(["popup"]);
+CJSCore::Init(['popup']);
 $this->addExternalJs('/bitrix/components/bitrix/imconnector.connector.settings/templates/.default/script.js');
 ?>
 <?if(empty($arResult['RELOAD'])):?>
@@ -60,17 +68,17 @@ $this->addExternalJs('/bitrix/components/bitrix/imconnector.connector.settings/t
 				<?$APPLICATION->IncludeComponent(
 					$arResult['COMPONENT'],
 					"mobile",
-					Array(
-						"LINE" => $arResult['ACTIVE_LINE']['ID'],
-						"CONNECTOR" => $arResult['ID'],
-						"AJAX_MODE" => "Y",
-						"AJAX_OPTION_ADDITIONAL" => "",
-						"AJAX_OPTION_HISTORY" => "N",
-						"AJAX_OPTION_JUMP" => "Y",
-						"AJAX_OPTION_STYLE" => "Y",
-						"INDIVIDUAL_USE" => "Y",
-						"MOBILE" => "Y"
-					)
+					[
+						'LINE' => $arResult['ACTIVE_LINE']['ID'],
+						'CONNECTOR' => $arResult['ID'],
+						'AJAX_MODE' => 'Y',
+						'AJAX_OPTION_ADDITIONAL' => '',
+						'AJAX_OPTION_HISTORY' => 'N',
+						'AJAX_OPTION_JUMP' => 'Y',
+						'AJAX_OPTION_STYLE' => 'Y',
+						'INDIVIDUAL_USE' => 'Y',
+						'MOBILE' => 'Y'
+					]
 				);?>
 				</div>
 				<?=$arResult['LANG_JS_SETTING'];?>

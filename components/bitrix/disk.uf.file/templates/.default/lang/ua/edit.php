@@ -1,0 +1,25 @@
+<?php
+$MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_DROPBOX"] = "Dropbox";
+$MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_GDRIVE"] = "Google Drive";
+$MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_OFFICE365"] = "Office365";
+$MESS["DISK_UF_FILE_EDIT_SERVICE_LABEL"] = "Створювати документ через #NAME#";
+$MESS["WDUF_ALLOW_COLLAGE"] = "Дозволити колаж фото";
+$MESS["WDUF_ALLOW_EDIT"] = "Дозволити редагування документів";
+$MESS["WDUF_CREATE_DOCUMENT"] = "Створити документ";
+$MESS["WDUF_CREATE_DOCX"] = "Документ";
+$MESS["WDUF_CREATE_PPTX"] = "Презентація";
+$MESS["WDUF_CREATE_XLSX"] = "Таблиця";
+$MESS["WDUF_DND_AREA_TITLE"] = "Ви можете просто перетягнути файл сюди";
+$MESS["WDUF_FILE_IS_EXISTS"] = "Файл вже існує.";
+$MESS["WDUF_ITEM_ERROR"] = "Помилка";
+$MESS["WDUF_ITEM_MENU_DELETE"] = "Видалити";
+$MESS["WDUF_ITEM_MENU_EDIT"] = "Редагувати";
+$MESS["WDUF_ITEM_MENU_FILE"] = "Файл";
+$MESS["WDUF_ITEM_MENU_INSERT_INTO_THE_TEXT"] = "Вставити в текст";
+$MESS["WDUF_ITEM_MENU_RENAME"] = "Перейменувати";
+$MESS["WDUF_ITEM_MENU_RENAME_CANCEL"] = "Скасувати";
+$MESS["WDUF_ITEM_MENU_RENAME_SAVE"] = "Зберегти";
+$MESS["WDUF_ITEM_MENU_RENAME_TITLE"] = "Перейменувати";
+$MESS["WDUF_MY_DISK"] = "Мій диск";
+$MESS["WDUF_UPLOAD"] = "Завантажити";
+$MESS["WDUF_UPLOAD_DOCUMENT"] = "Завантажити документи";

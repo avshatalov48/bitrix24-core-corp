@@ -4,7 +4,7 @@ $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_FINAL_FORM_DESCRIPTION"] = "Бизнес �
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_NAME"] = "Имя";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_ID"] = "Business ID";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_NAME_CHAT_LINK"] = "Ссылка на чат";
-$MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED"] = "Apple Business Chat подключен";
+$MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED_NEW"] = "Apple Messages for Business подключен";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CHANGE_ANY_TIME"] = "Вы можете в любое время изменить или отключить";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_TITLE"] = "Подключите бизнес чат к Открытой линии";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP"] = "Для подключения необходимо <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">создать бизнес чат</a>

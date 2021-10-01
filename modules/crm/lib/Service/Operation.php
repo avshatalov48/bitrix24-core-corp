@@ -7,6 +7,7 @@ use Bitrix\Crm\Automation\Starter;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Search\SearchContentBuilderFactory;
 use Bitrix\Crm\Service\Operation\Action;
@@ -112,6 +113,16 @@ abstract class Operation
 		return $this->item;
 	}
 
+	protected function getItemIdentifier(): ?ItemIdentifier
+	{
+		if ($this->getItem()->isNew())
+		{
+			return null;
+		}
+
+		return ItemIdentifier::createByItem($this->getItem());
+	}
+
 	public function getItemBeforeSave(): Item
 	{
 		return $this->itemBeforeSave;
@@ -134,10 +145,13 @@ abstract class Operation
 
 	public function launch(): Result
 	{
-		$checkLimitsResult = $this->checkLimits();
-		if (!$checkLimitsResult->isSuccess())
+		if ($this->isCheckLimitsEnabled())
 		{
-			return $checkLimitsResult;
+			$checkLimitsResult = $this->checkLimits();
+			if (!$checkLimitsResult->isSuccess())
+			{
+				return $checkLimitsResult;
+			}
 		}
 
 		if ($this->isCheckAccessEnabled())
@@ -502,6 +516,7 @@ abstract class Operation
 			return $result;
 		}
 
+		$isChanged = false;
 		foreach($this->fieldsCollection as $field)
 		{
 			$fieldResult = $field->processAfterSave($this->itemBeforeSave, $this->item, $this->getContext());
@@ -515,11 +530,16 @@ abstract class Operation
 				{
 					$this->item->set($fieldName, $value);
 				}
-				$saveAfterSaveResult = $this->save();
-				if (!$saveAfterSaveResult->isSuccess())
-				{
-					$result->addErrors($saveAfterSaveResult->getErrors());
-				}
+				$isChanged = true;
+			}
+		}
+
+		if ($isChanged)
+		{
+			$saveAfterSaveResult = $this->save();
+			if (!$saveAfterSaveResult->isSuccess())
+			{
+				$result->addErrors($saveAfterSaveResult->getErrors());
 			}
 		}
 
@@ -588,6 +608,25 @@ abstract class Operation
 	public function isCheckAccessEnabled(): bool
 	{
 		return $this->settings->isCheckAccessEnabled();
+	}
+
+	public function enableCheckLimits(): self
+	{
+		$this->settings->enableCheckLimits();
+
+		return $this;
+	}
+
+	public function disableCheckLimits(): self
+	{
+		$this->settings->disableCheckLimits();
+
+		return $this;
+	}
+
+	public function isCheckLimitsEnabled(): bool
+	{
+		return $this->settings->isCheckLimitsEnabled();
 	}
 
 	public function isCheckFieldsEnabled(): bool
@@ -664,6 +703,30 @@ abstract class Operation
 	public function isSaveToHistoryEnabled(): bool
 	{
 		return $this->settings->isSaveToHistoryEnabled();
+	}
+
+	/**
+	 * Exclude the specified items from being registered in this item's timeline as bound item
+	 *
+	 * @param ItemIdentifier[] $itemsToExclude
+	 *
+	 * @return $this
+	 */
+	public function excludeItemsFromTimelineRelationEventsRegistration(array $itemsToExclude): self
+	{
+		$this->settings->excludeItemsFromTimelineRelationEventsRegistration($itemsToExclude);
+
+		return $this;
+	}
+
+	/**
+	 * Get items that are excluded from being registered in this item's timeline as bound item
+	 *
+	 * @return ItemIdentifier[]
+	 */
+	public function getItemsThatExcludedFromTimelineRelationEventsRegistration(): array
+	{
+		return $this->settings->getItemsThatExcludedFromTimelineRelationEventsRegistration();
 	}
 
 	public function enableBeforeSaveActions(): self

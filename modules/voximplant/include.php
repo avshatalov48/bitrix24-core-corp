@@ -14,7 +14,7 @@ CJSCore::RegisterExt('voximplant', array(
 		return array(
 			'lang_additional' => array(
 				'voximplantDefaultLineId' => CVoxImplantUser::getUserOutgoingLine($USER->getId()),
-				'voximplantSdkUrl' => \CUtil::GetAdditionalFileURL("/bitrix/js/voximplant/voximplant.min.js"),
+				'voximplantSdkUrl' => \CUtil::GetAdditionalFileURL(CVoxImplantMain::getSdkUrl()),
 				'voximplantCanMakeCalls' => \Bitrix\Voximplant\Limits::canCall() ? 'Y' : 'N',
 				'voximplantMediaServer' => CVoxImplantMain::getMediaServer(),
 			)

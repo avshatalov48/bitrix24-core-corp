@@ -33,7 +33,7 @@ const MessageView = {
 
 			getSmsMessage()
 			{
-				let link = `<span class="salescenter-app-payment-by-sms-item-container-sms-content-message-link">${this.orderPublicUrl}</span><sapn class="salescenter-app-payment-by-sms-item-container-sms-content-message-link-ref">xxxxx</sapn>` + ` `;
+				let link = `<span class="salescenter-app-payment-by-sms-item-container-sms-content-message-link">${this.orderPublicUrl}</span><span class="salescenter-app-payment-by-sms-item-container-sms-content-message-link-ref">xxxxx</span>` + ` `;
 				let text = this.text;
 
 				return Text.encode(text).replace(/#LINK#/g, link);

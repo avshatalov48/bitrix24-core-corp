@@ -8,6 +8,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class RequisiteTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Requisite_Query query()
+ * @method static EO_Requisite_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Requisite_Result getById($id)
+ * @method static EO_Requisite_Result getList(array $parameters = array())
+ * @method static EO_Requisite_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_Requisite createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_Requisite_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_Requisite wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_Requisite_Collection wakeUpCollection($rows)
+ */
 class RequisiteTable extends Entity\DataManager
 {
 	public static function getUfId()

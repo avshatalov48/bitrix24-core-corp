@@ -776,11 +776,11 @@ elseif($action === 'LOAD')
 
 	if ($ID <=0)
 	{
-		__CrmDealDetailsEndJsonResonse(['ERROR'=>'ENTITY ID IS NOT FOUND!']);
+		__CrmLeadDetailsEndJsonResponse(['ERROR'=>'ENTITY ID IS NOT FOUND!']);
 	}
 	if(!\CCrmDeal::CheckReadPermission($ID, $currentUserPermissions))
 	{
-		__CrmDealDetailsEndJsonResonse(['ERROR'=>'PERMISSION DENIED!']);
+		__CrmLeadDetailsEndJsonResponse(['ERROR'=>'PERMISSION DENIED!']);
 	}
 
 	CBitrixComponent::includeComponentClass('bitrix:crm.lead.details');
@@ -872,6 +872,11 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	$context = isset($_POST['CONTEXT']) && is_array($_POST['CONTEXT']) ? $_POST['CONTEXT'] : array();
 	$fieldNames = isset($_POST['FIELDS']) && is_array($_POST['FIELDS']) ? $_POST['FIELDS'] : array();
 	$title = isset($_POST['TITLE']) ? $_POST['TITLE'] : '';
+
+	if (!\CCrmLead::CheckReadPermission($ID))
+	{
+		__CrmLeadDetailsEndJsonResponse(['ERROR' => 'Access denied.']);
+	}
 
 	$enableConfigScopeToggle = !isset($_POST['ENABLE_CONFIG_SCOPE_TOGGLE'])
 		|| mb_strtoupper($_POST['ENABLE_CONFIG_SCOPE_TOGGLE']) === 'Y';

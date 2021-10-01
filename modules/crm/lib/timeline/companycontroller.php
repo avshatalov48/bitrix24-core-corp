@@ -1,11 +1,10 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Timeline\TimelineType;
+use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -17,21 +16,6 @@ class CompanyController extends EntityController
 	const RESTORE_EVENT_NAME = 'timeline_company_restore';
 	//endregion
 
-	//region Singleton
-	/** @var CompanyController|null */
-	protected static $instance = null;
-	/**
-	 * @return CompanyController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new CompanyController();
-		}
-		return self::$instance;
-	}
-	//endregion
 	//region EntityController
 	public function getEntityTypeID()
 	{
@@ -109,46 +93,6 @@ class CompanyController extends EntityController
 			);
 		}
 	}
-	public function onModify($ownerID, array $params)
-	{
-		if(!is_int($ownerID))
-		{
-			$ownerID = (int)$ownerID;
-		}
-		if($ownerID <= 0)
-		{
-			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
-		}
-
-		$options = isset($params['OPTIONS']) && is_array($params['OPTIONS'])
-			? $params['OPTIONS'] : array();
-
-		$mode = isset($options['MODE']) ? $options['MODE'] : '';
-		if($mode !== 'LINK')
-		{
-			return;
-		}
-
-		$currentFields = isset($params['CURRENT_FIELDS']) && is_array($params['CURRENT_FIELDS'])
-			? $params['CURRENT_FIELDS'] : array();
-		$previousFields = isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
-			? $params['PREVIOUS_FIELDS'] : array();
-
-		$currentLeadID = isset($currentFields['LEAD_ID']) ? (int)$currentFields['LEAD_ID'] : 0;
-		$previousLeadID = isset($previousFields['LEAD_ID']) ? (int)$previousFields['LEAD_ID'] : 0;
-		if($currentLeadID > 0 && $currentLeadID !== $previousLeadID)
-		{
-			$this->onLink(
-				$ownerID,
-				array(
-					'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
-					'ENTITY_ID' => $currentLeadID,
-					'FIELDS' => $currentFields,
-					'AUTHOR_ID' => isset($options['USER_ID']) ? (int)$options['USER_ID'] : 0
-				)
-			);
-		}
-	}
 
 	public function onDelete($ownerID, array $params)
 	{
@@ -177,71 +121,25 @@ class CompanyController extends EntityController
 		}
 	}
 
+	/**
+	 * @deprecated Please, use RelationController instead
+	 * @see RelationController::onItemsBind()
+	 */
 	public function onLink($ownerID, array $params)
 	{
-		$fields = isset($params['FIELDS']) && is_array($params['FIELDS']) ? $params['FIELDS'] : null;
-		if(!is_array($fields))
-		{
-			$fields = self::getEntity($ownerID);
-		}
-		if(!is_array($fields))
-		{
-			return;
-		}
-
 		$entityTypeID = isset($params['ENTITY_TYPE_ID']) ? (int)$params['ENTITY_TYPE_ID'] : \CCrmOwnerType::Undefined;
 		$entityID = isset($params['ENTITY_ID']) ? (int)$params['ENTITY_ID'] : 0;
-		if(!(\CCrmOwnerType::IsDefined($entityTypeID) && $entityID > 0))
+
+		if (($entityID <= 0) || !\CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			return;
 		}
 
-		$authorID = isset($params['AUTHOR_ID']) ? (int)$params['AUTHOR_ID'] : 0;
-		if($authorID <= 0)
-		{
-			//Set portal admin as default creator
-			$authorID = 1;
-		}
+		$authorID = isset($params['AUTHOR_ID']) ? (int)$params['AUTHOR_ID'] : null;
 
-		$historyEntryID = LinkEntry::create(
-			array(
-				'ENTITY_TYPE_ID' => $entityTypeID,
-				'ENTITY_ID' => $entityID,
-				'AUTHOR_ID' => $authorID,
-				'SETTINGS' => array(),
-				'BINDINGS' => array(
-					array(
-						'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
-						'ENTITY_ID' => $ownerID
-					)
-				)
-			)
-		);
-
-		$enableHistoryPush = $historyEntryID > 0;
-		if($enableHistoryPush && Main\Loader::includeModule('pull'))
-		{
-			$pushParams = array();
-			if($enableHistoryPush)
-			{
-				$historyFields = TimelineEntry::getByID($historyEntryID);
-				if(is_array($historyFields))
-				{
-					TimelineManager::prepareItemDisplayData($historyFields);
-					$pushParams['HISTORY_ITEM'] = $historyFields;
-				}
-			}
-
-			$tag = $pushParams['TAG'] = TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::Company, $ownerID);
-			\CPullWatch::AddToStack(
-				$tag,
-				array(
-					'module_id' => 'crm',
-					'command' => 'timeline_link_add',
-					'params' => $pushParams,
-				)
-			);
-		}
+		$parent = $this->getItemIdentifier($ownerID);
+		$child = new ItemIdentifier($entityTypeID, $entityID);
+		RelationController::getInstance()->onItemsBind($parent, $child, $authorID);
 	}
 	public function onRestore($ownerID, array $params)
 	{

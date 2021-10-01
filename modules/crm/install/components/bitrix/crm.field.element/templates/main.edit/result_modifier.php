@@ -141,39 +141,39 @@ if ($component->isDefaultMode())
 		$arResult['DYNAMIC_TYPE_TITLES'][mb_strtoupper($code)] = \Bitrix\Main\Text\HtmlFilter::encode($type->getTitle());
 	}
 
-	$arParams['createNewEntity'] = (
-		$arParams['createNewEntity']
+	$canCreateNewEntity = (
+		(!empty($arParams['createNewEntity']) || !empty($arParams['additionalParameters']['createNewEntity']))
 		&& LayoutSettings::getCurrent()->isSliderEnabled()
 	);
+	$arResult['canCreateNewEntity'] = $canCreateNewEntity;
 
-	if (!empty($arParams['createNewEntity']))
+	if ($canCreateNewEntity)
 	{
-		if (!empty($arResult['ENTITY_TYPE']))
+		$arResult['LIST_ENTITY_CREATE_URL'] = [];
+		if (!empty($arParams['ENTITY_TYPE']))
 		{
-			if (count($arResult['ENTITY_TYPE']) > 1)
+			if (count($arParams['ENTITY_TYPE']) > 1)
 			{
 				$arResult['PLURAL_CREATION'] = true;
 			}
 			else
 			{
 				$arResult['PLURAL_CREATION'] = false;
-				$arResult['CURRENT_ENTITY_TYPE'] = current($arResult['ENTITY_TYPE']);
+				$arResult['CURRENT_ENTITY_TYPE'] = current($arParams['ENTITY_TYPE']);
 			}
-		}
 
-		$arResult['LIST_ENTITY_CREATE_URL'] = [];
-
-		foreach ($arResult['ENTITY_TYPE'] as $entityType)
-		{
-			$arResult['LIST_ENTITY_CREATE_URL'][$entityType] = \CCrmUrlUtil::addUrlParams(
-				\CCrmOwnerType::getDetailsUrl(
-					CCrmOwnerType::resolveID($entityType),
-					0,
-					false,
-					['ENABLE_SLIDER' => true]
-				),
-				['init_mode' => 'edit']
-			);
+			foreach ($arParams['ENTITY_TYPE'] as $entityType)
+			{
+				$arResult['LIST_ENTITY_CREATE_URL'][$entityType] = \CCrmUrlUtil::addUrlParams(
+					\CCrmOwnerType::getDetailsUrl(
+						CCrmOwnerType::resolveID($entityType),
+						0,
+						false,
+						['ENABLE_SLIDER' => true]
+					),
+					['init_mode' => 'edit']
+				);
+			}
 		}
 	}
 }

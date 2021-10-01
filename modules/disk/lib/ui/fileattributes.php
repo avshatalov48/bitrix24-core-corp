@@ -75,17 +75,24 @@ final class FileAttributes extends ItemAttributes
 			$documentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
 			if ($documentHandler instanceof OnlyOfficeHandler)
 			{
-				$this->setTypeClass(self::JS_TYPE_CLASS_ONLYOFFICE);
-				$this->setAsSeparateItem();
+				if (isset($this->fileData['FILE_SIZE']) && OnlyOfficeHandler::shouldRestrictedBySize($this->fileData['FILE_SIZE']))
+				{
+					$this->setAttribute('data-viewer-type', Renderer\RestrictedBySize::getJsType());
+				}
+				else
+				{
+					$this->setTypeClass(self::JS_TYPE_CLASS_ONLYOFFICE);
+					$this->setAsSeparateItem();
+				}
 			}
 			else
 			{
 				$this->setTypeClass(self::JS_TYPE_CLASS_CLOUD_DOCUMENT);
 			}
 
-			$this->setExtension('disk.viewer.document-item');
+			$this->setExtension('disk.viewer.onlyoffice-item');
 
-			Extension::load('disk.viewer.document-item');
+			Extension::load('disk.viewer.onlyoffice-item');
 		}
 	}
 
@@ -167,11 +174,17 @@ final class FileAttributes extends ItemAttributes
 		return [
 			MimeType::getByFileExtension('pdf'),
 			MimeType::getByFileExtension('doc'),
+			MimeType::getByFileExtension('docm'),
 			MimeType::getByFileExtension('docx'),
+			MimeType::getByFileExtension('rtf'),
+			'application/rtf',
 			MimeType::getByFileExtension('xls'),
+			MimeType::getByFileExtension('xlt'),
 			MimeType::getByFileExtension('xlsx'),
+			MimeType::getByFileExtension('xlsm'),
 			MimeType::getByFileExtension('ppt'),
 			MimeType::getByFileExtension('pptx'),
+			MimeType::getByFileExtension('pptm'),
 			'application/vnd.ms-powerpoint',
 		];
 	}

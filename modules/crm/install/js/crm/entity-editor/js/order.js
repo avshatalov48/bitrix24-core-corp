@@ -3833,7 +3833,8 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 			{
 				var fields = ['DEDUCTED', 'ALLOW_DELIVERY', 'FORMATTED_PRICE_DELIVERY_WITH_CURRENCY', 'DELIVERY_SERVICE_NAME',
 				'DELIVERY_SERVICES_LIST', 'DELIVERY_PROFILES_LIST', 'STATUS_CONTROL', 'DELIVERY_LOGO', 'DELIVERY_SELECTOR_DELIVERY_ID',
-				'DELIVERY_SELECTOR_PROFILE_ID', 'DELIVERY_ID', 'PRICE_DELIVERY', 'BASE_PRICE_DELIVERY', 'EXTRA_SERVICES_DATA'],
+				'DELIVERY_SELECTOR_PROFILE_ID', 'DELIVERY_ID', 'PRICE_DELIVERY', 'BASE_PRICE_DELIVERY', 'EXTRA_SERVICES_DATA',
+				'TRACKING_NUMBER', 'COMMENTS'],
 					values = this.getValue(),
 					isChanged = false;
 
@@ -3895,7 +3896,11 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 		{
 			this._model.setField(this.getName(), values);
 			this.refreshLayout();
-			this.getOrderController().onDataChanged();
+
+			var eventParams = {
+				"entityData": this._model.getData()
+			};
+			BX.onCustomEvent(window, BX.Crm.EntityEvent.names.update, [eventParams]);
 		}
 	};
 	BX.Crm.EntityEditorShipment.create = function(id, settings)

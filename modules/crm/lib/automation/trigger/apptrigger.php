@@ -76,11 +76,8 @@ class AppTrigger extends BaseTrigger
 		$result = array();
 		foreach ($list as $index => $item)
 		{
-			if (isset($appNames[$item['APP_ID']]))
-			{
-				$list[$index]['APP_NAME'] = $appNames[$item['APP_ID']];
-				$result[] = $list[$index];
-			}
+			$list[$index]['APP_NAME'] = $appNames[$item['APP_ID']] ?? $item['APP_ID'];
+			$result[] = $list[$index];
 		}
 
 		return $result;

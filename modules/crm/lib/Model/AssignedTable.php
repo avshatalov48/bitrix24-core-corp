@@ -5,6 +5,22 @@ use Bitrix\Main\Application;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 
+/**
+ * Class AssignedTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Assigned_Query query()
+ * @method static EO_Assigned_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Assigned_Result getById($id)
+ * @method static EO_Assigned_Result getList(array $parameters = array())
+ * @method static EO_Assigned_Entity getEntity()
+ * @method static \Bitrix\Crm\Model\EO_Assigned createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Model\EO_Assigned_Collection createCollection()
+ * @method static \Bitrix\Crm\Model\EO_Assigned wakeUpObject($row)
+ * @method static \Bitrix\Crm\Model\EO_Assigned_Collection wakeUpCollection($rows)
+ */
 class AssignedTable extends DataManager
 {
 	public static function getTableName(): string

@@ -1,4 +1,3 @@
-import {Type} from 'main.core';
 import Item from './item';
 import {ExternalLinkForTrackedObject} from 'disk.external-link';
 export default class ItemExternalLink extends Item
@@ -7,11 +6,20 @@ export default class ItemExternalLink extends Item
 	{
 		super(objectId, itemData);
 
+		const shouldBlockFeature = itemData['dataset']['shouldBlockFeature']
+		const blocker = itemData['dataset']['blocker'];
+
 		this.data['onclick'] = function() {
 			this.emit('close');
 
-			ExternalLinkForTrackedObject.showPopup(this.trackedObjectId);
+			if (shouldBlockFeature && blocker)
+			{
+				eval(blocker);
 
+				return;
+			}
+
+			ExternalLinkForTrackedObject.showPopup(this.trackedObjectId);
 		}.bind(this);
 	}
 
@@ -20,4 +28,3 @@ export default class ItemExternalLink extends Item
 		return itemData['id'] === 'externalLink';
 	}
 }
-

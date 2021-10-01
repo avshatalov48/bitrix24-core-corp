@@ -1057,6 +1057,9 @@
 	    this.restClient = null;
 	    this.userRegisterData = {};
 	    this.customData = [];
+	    this.options = {
+	      checkSameDomain: true
+	    };
 	    this.subscribers = {};
 	    this.configRequestXhr = null;
 	    this.initParams().then(function () {
@@ -1679,6 +1682,19 @@
 	      }
 
 	      return true;
+	    }
+	  }, {
+	    key: "isSameDomain",
+	    value: function isSameDomain() {
+	      if (typeof BX === 'undefined' || !BX.isReady) {
+	        return false;
+	      }
+
+	      if (!this.options.checkSameDomain) {
+	        return false;
+	      }
+
+	      return this.host.lastIndexOf('.' + location.hostname) > -1;
 	    }
 	    /* endregion 01. Initialize and store data */
 
@@ -2552,6 +2568,8 @@
 	        alert(this.localize.BX_LIVECHAT_OLD_VUE);
 	        console.error("LiveChatWidget.error: OLD_VUE_VERSION (".concat(this.localize.BX_LIVECHAT_OLD_VUE_DEV.replace('#CURRENT_VERSION#', ui_vue.Vue.version()), ")"));
 	        return false;
+	      } else if (this.isSameDomain()) {
+	        this.setError('LIVECHAT_SAME_DOMAIN', this.localize.BX_LIVECHAT_SAME_DOMAIN);
 	      } else if (!this.isWidgetDataRequested()) {
 	        this.requestWidgetData();
 	      }
@@ -2844,6 +2862,12 @@
 	      this.controller.restClient.setAuthId(RestAuth.guest, authToken);
 	    }
 	  }, {
+	    key: "setOption",
+	    value: function setOption(name, value) {
+	      this.options[name] = value;
+	      return true;
+	    }
+	  }, {
 	    key: "setCustomData",
 	    value: function setCustomData(params) {
 	      if (!this.controller || !this.controller.getStore()) {
@@ -2890,6 +2914,13 @@
 	        this.setNewAuthToken();
 	      } else if (code === 'LIVECHAT_AUTH_PORTAL_USER') {
 	        localizeDescription = this.getLocalize('BX_LIVECHAT_PORTAL_USER_NEW').replace('#LINK_START#', '<a href="' + this.host + '">').replace('#LINK_END#', '</a>');
+	      } else if (code === 'LIVECHAT_SAME_DOMAIN') {
+	        localizeDescription = this.getLocalize('BX_LIVECHAT_SAME_DOMAIN');
+	        var link = this.getLocalize('BX_LIVECHAT_SAME_DOMAIN_LINK');
+
+	        if (link) {
+	          localizeDescription += '<br><br><a href="' + link + '">' + this.getLocalize('BX_LIVECHAT_SAME_DOMAIN_MORE') + '</a>';
+	        }
 	      } else if (code.endsWith('LOCALIZED')) {
 	        localizeDescription = description;
 	      }

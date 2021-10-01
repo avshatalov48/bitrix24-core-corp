@@ -92,85 +92,7 @@ this.BX = this.BX || {};
 	  return Pagination;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"disk-active-user-popup-content disk-active-user-popup--grid\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"disk-active-user-popup-box\">\n\t\t\t\t\t<div class=\"disk-active-user-popup-inner\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-active-user-value\" style=\"display: none;\"></div>"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"disk-active-user-list\"></div>"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-active-user-box ", "\" ", " onclick=\"", "\">\n\t\t\t<div class=\"disk-active-user\">\n\t\t\t\t<div class=\"disk-active-user-inner\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-icon ui-icon-common-user disk-active-user-popup-icon\">\n\t\t\t\t<i ", ">\n\t\t\t\t</i>\n\t\t\t</div>\n\t\t\t<div class=\"disk-active-user-popup-name\">", "</div>\n\t\t"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-active-user-popup-item\">\n\t\t\t\t</div>>\n\t\t\t"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a href=\"", "\" class=\"disk-active-user-popup-item\">\n\t\t\t\t</a>>\n\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-icon ui-icon-common-user disk-active-user-list-item\" title=\"", "\">\n\t\t\t\t\t<i ", ">\n\t\t\t\t\t</i>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
 	var repo = [];
 
 	var Users = /*#__PURE__*/function () {
@@ -258,7 +180,7 @@ this.BX = this.BX || {};
 	    key: "getUserContainer",
 	    value: function getUserContainer(user) {
 	      return this.cache.remember('userContainer' + user['id'], function () {
-	        return main_core.Tag.render(_templateObject(), main_core.Text.encode(user['name']), user['avatar'] ? "style=\"background: url('".concat(main_core.Text.encode(user['avatar']), "') no-repeat center; background-size: cover;\" ") : '');
+	        return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-icon ui-icon-common-user disk-active-user-list-item\" title=\"", "\">\n\t\t\t\t\t<i ", ">\n\t\t\t\t\t</i>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Text.encode(user['name']), user['avatar'] ? "style=\"background: url('".concat(main_core.Text.encode(user['avatar']), "') no-repeat center; background-size: cover;\" ") : '');
 	      });
 	    }
 	    /**
@@ -273,12 +195,12 @@ this.BX = this.BX || {};
 	      var wrapper;
 
 	      if (user.url) {
-	        wrapper = main_core.Tag.render(_templateObject2(), user['url']);
+	        wrapper = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a href=\"", "\" class=\"disk-active-user-popup-item\">\n\t\t\t\t</a>>\n\t\t\t"])), user['url']);
 	      } else {
-	        wrapper = main_core.Tag.render(_templateObject3());
+	        wrapper = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-active-user-popup-item\">\n\t\t\t\t</div>>\n\t\t\t"])));
 	      }
 
-	      var userRow = main_core.Tag.render(_templateObject4(), user['avatar'] ? "style=\"background: url('".concat(main_core.Text.encode(user['avatar']), "') no-repeat center; background-size: cover;\" ") : '', main_core.Text.encode(user['name']));
+	      var userRow = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-icon ui-icon-common-user disk-active-user-popup-icon\">\n\t\t\t\t<i ", ">\n\t\t\t\t</i>\n\t\t\t</div>\n\t\t\t<div class=\"disk-active-user-popup-name\">", "</div>\n\t\t"])), user['avatar'] ? "style=\"background: url('".concat(main_core.Text.encode(user['avatar']), "') no-repeat center; background-size: cover;\" ") : '', main_core.Text.encode(user['name']));
 
 	      (_wrapper = wrapper).append.apply(_wrapper, babelHelpers.toConsumableArray(userRow));
 
@@ -297,7 +219,7 @@ this.BX = this.BX || {};
 	      return this.cache.remember('mainContainer', function () {
 	        var style = _this.items.size <= 0 ? ' style="display: none;" ' : '';
 	        var gridModifier = placeInGrid ? 'disk-active-user--grid' : '';
-	        return main_core.Tag.render(_templateObject5(), gridModifier, style, _this.showPopupUsers.bind(_this), _this.getUserListContainer(), _this.getMoreButton());
+	        return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-active-user-box ", "\" ", " onclick=\"", "\">\n\t\t\t<div class=\"disk-active-user\">\n\t\t\t\t<div class=\"disk-active-user-inner\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>"])), gridModifier, style, _this.showPopupUsers.bind(_this), _this.getUserListContainer(), _this.getMoreButton());
 	      });
 	    }
 	    /**
@@ -308,7 +230,7 @@ this.BX = this.BX || {};
 	    key: "getUserListContainer",
 	    value: function getUserListContainer() {
 	      return this.cache.remember('users', function () {
-	        return main_core.Tag.render(_templateObject6());
+	        return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"disk-active-user-list\"></div>"])));
 	      });
 	    }
 	    /**
@@ -319,7 +241,7 @@ this.BX = this.BX || {};
 	    key: "getMoreButton",
 	    value: function getMoreButton() {
 	      return this.cache.remember('more', function () {
-	        return main_core.Tag.render(_templateObject7());
+	        return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-active-user-value\" style=\"display: none;\"></div>"])));
 	      });
 	    }
 	    /**
@@ -349,7 +271,7 @@ this.BX = this.BX || {};
 
 	      this.popup = new main_popup.Popup({
 	        className: 'disk-active-user-popup',
-	        content: main_core.Tag.render(_templateObject8(), this.title ? "<div class=\"disk-active-user-popup-title\">".concat(this.title, "</div>") : '', this.getPopupUsersContainer(), this.getPopupUsersEndBlock()),
+	        content: main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div class=\"disk-active-user-popup-content disk-active-user-popup--grid\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"disk-active-user-popup-box\">\n\t\t\t\t\t<div class=\"disk-active-user-popup-inner\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"])), this.title ? "<div class=\"disk-active-user-popup-title\">".concat(this.title, "</div>") : '', this.getPopupUsersContainer(), this.getPopupUsersEndBlock()),
 	        bindElement: this.getContainer(),
 	        closeByEsc: true,
 	        autoHide: true

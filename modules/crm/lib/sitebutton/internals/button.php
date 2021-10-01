@@ -7,6 +7,22 @@ use Bitrix\Main\Security\Random;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class ButtonTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Button_Query query()
+ * @method static EO_Button_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Button_Result getById($id)
+ * @method static EO_Button_Result getList(array $parameters = array())
+ * @method static EO_Button_Entity getEntity()
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Button createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Button_Collection createCollection()
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Button wakeUpObject($row)
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Button_Collection wakeUpCollection($rows)
+ */
 class ButtonTable extends \Bitrix\Main\Entity\DataManager
 {
 	const ENUM_LOCATION_TOP_LEFT = 1;

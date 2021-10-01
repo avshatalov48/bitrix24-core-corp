@@ -54,6 +54,7 @@ $MESS["VI_STATUS_423"] = "Blocked";
 $MESS["VI_STATUS_480"] = "Temporary unavailable";
 $MESS["VI_STATUS_484"] = "This route is unavailable";
 $MESS["VI_STATUS_486"] = "Busy";
+$MESS["VI_STATUS_500"] = "Internal server error";
 $MESS["VI_STATUS_503"] = "This route is unavailable";
 $MESS["VI_STATUS_603"] = "Declined";
 $MESS["VI_STATUS_603-S"] = "The call was canceled";

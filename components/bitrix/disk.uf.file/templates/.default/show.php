@@ -148,7 +148,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 			?><script>BX.LazyLoad.registerImages([<?=$jsIds?>], null, {dataSrcName: "thumbSrc"});</script><?
 		}
 
-		if ($arParams['USE_TOGGLE_VIEW'] == 'Y')
+		if ($arParams['USE_TOGGLE_VIEW'])
 		{
 			?>
 			<a href="javascript:void(0);" class="disk-uf-file-switch-control" data-bx-view-type="grid"><?=Loc::getMessage('DISK_UF_FILE_SHOW_GRID')?></a>

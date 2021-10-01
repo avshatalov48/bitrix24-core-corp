@@ -7,6 +7,19 @@ use Bitrix\Main;
  * Class ExpensesPackTable
  *
  * @package Bitrix\Crm\Tracking\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ExpensesPack_Query query()
+ * @method static EO_ExpensesPack_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ExpensesPack_Result getById($id)
+ * @method static EO_ExpensesPack_Result getList(array $parameters = array())
+ * @method static EO_ExpensesPack_Entity getEntity()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_ExpensesPack createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_ExpensesPack_Collection createCollection()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_ExpensesPack wakeUpObject($row)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_ExpensesPack_Collection wakeUpCollection($rows)
  */
 class ExpensesPackTable extends Main\ORM\Data\DataManager
 {

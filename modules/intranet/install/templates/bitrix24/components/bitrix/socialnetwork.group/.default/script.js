@@ -27,6 +27,7 @@ window.B24SGControl = function()
 	this.favoritesValue = null;
 	this.newValue = null;
 	this.editFeaturesAllowed = true;
+	this.copyFeatureAllowed = true;
 	this.canInitiate = false;
 	this.canModify = false;
 	this.canProcessRequestsIn = false;
@@ -67,6 +68,7 @@ window.B24SGControl.prototype = {
 		this.userIsAutoMember = !!params.userIsAutoMember;
 		this.userRole = params.userRole;
 		this.editFeaturesAllowed = (BX.type.isBoolean(params.editFeaturesAllowed) ? params.editFeaturesAllowed : true);
+		this.copyFeatureAllowed = (BX.type.isBoolean(params.copyFeatureAllowed) ? params.copyFeatureAllowed : true);
 		this.canInitiate = !!params.canInitiate;
 		this.canModify = !!params.canModify;
 		this.canProcessRequestsIn = !!params.canProcessRequestsIn;
@@ -150,6 +152,7 @@ window.B24SGControl.prototype = {
 			isProject: this.isProject,
 			isOpened: this.groupOpened,
 			editFeaturesAllowed: this.editFeaturesAllowed,
+			copyFeatureAllowed: this.copyFeatureAllowed,
 			canPickTheme: this.canPickTheme,
 			perms: {
 				canInitiate: this.canInitiate,

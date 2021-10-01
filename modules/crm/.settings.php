@@ -52,6 +52,12 @@ return array(
 			'crm.service.factory.lead' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Factory\\Lead',
 			],
+			'crm.service.factory.contact' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Factory\\Contact',
+			],
+			'crm.service.factory.company' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Factory\\Company',
+			],
 			'crm.type.factory' => [
 				'className' => '\\Bitrix\\Crm\\Model\\Dynamic\\Factory',
 			],
@@ -155,6 +161,15 @@ return array(
 			],
 			'crm.filter.factory' => [
 				'className' => '\\Bitrix\\Crm\\Filter\\Factory',
+			],
+			'crm.timeline.timelineEntry.facade' => [
+				'className' => '\\Bitrix\\Crm\\Timeline\\TimelineEntry\\Facade',
+			],
+			'crm.timeline.pusher' => [
+				'className' => '\\Bitrix\\Crm\\Timeline\\Pusher',
+			],
+			'crm.timeline.historyDataModel.maker' => [
+				'className' => '\\Bitrix\\Crm\\Timeline\\HistoryDataModel\\Maker',
 			],
 		],
 		'readonly' => true,

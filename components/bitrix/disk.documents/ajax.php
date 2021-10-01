@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Disk;
 use Bitrix\Disk\File;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -34,16 +35,25 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		$actionToShare = [];
 		if (Disk\Configuration::isPossibleToShowExternalLinkControl())
 		{
+			$featureBlocker = Bitrix24Manager::filterJsAction('disk_manual_external_link', '');
 			$actionToShare[] = [
 				'id' => 'externalLink',
 				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_GET_EXT_LINK'),
+				'dataset' => [
+					'shouldBlockFeature' => (bool)$featureBlocker,
+					'blocker' => $featureBlocker ?: null,
+				]
 			];
 		}
 
 		if ($this->belongsToDiskStorages($file))
 		{
 			$urlManager = Disk\Driver::getInstance()->getUrlManager();
-			$internalLink = $urlManager->getUrlForShowFile($file, [], true);
+			$internalLink = $urlManager->getUrlFocusController('showObjectInGrid', [
+					'objectId' => $file->getId(),
+					'cmd' => 'show',
+			], true);
+
 			$actionToShare[] = [
 				'id' => 'internalLink',
 				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_COPY_INTERNAL_LINK'),
@@ -80,6 +90,17 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 				'id' => 'rename',
 				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_RENAME'),
 				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_rename.svg'
+			];
+		}
+		if ($trackedObject->canMarkDeleted($this->getCurrentUser()->getId()))
+		{
+			$actions[] = [
+				'id' => 'delete',
+				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_DELETE'),
+				'dataset' => [
+					'objectId' => $trackedObject->getFileId(),
+					'objectName' => $trackedObject->getFile()->getName(),
+				],
 			];
 		}
 

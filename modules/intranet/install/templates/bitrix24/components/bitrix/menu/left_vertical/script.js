@@ -163,7 +163,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          itemData: itemData
 	        },
 	        analyticsLabel: {
-	          analyticsLabel: 'selfItem'
+	          type: 'self'
 	        }
 	      }).then(function (response) {
 	        var itemParams = {
@@ -503,7 +503,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        this.isCurrentPageInLeftMenu = true;
 	        this.parent.generateItemHtml(itemInfo);
 	        this.parent.saveItemsSort({
-	          analyticsLabel: 'standartItem'
+	          type: 'standard'
 	        });
 	        return;
 	      }
@@ -539,7 +539,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	              this.isCurrentPageInLeftMenu = true;
 	              this.parent.generateItemHtml(itemInfo);
 	              this.parent.saveItemsSort({
-	                analyticsLabel: 'standartItem'
+	                type: 'standard'
 	              });
 	            }, this)
 	          }).animate();
@@ -557,7 +557,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        BX.remove(BX(itemId));
 	        this.isCurrentPageInLeftMenu = false;
 	        this.parent.saveItemsSort({
-	          analyticsLabel: 'standartItem'
+	          type: 'standard'
 	        });
 	        return;
 	      }
@@ -581,7 +581,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          BX.remove(BX(itemId));
 	          this.parent.isCurrentPageInLeftMenu = false;
 	          this.parent.saveItemsSort({
-	            analyticsLabel: 'standartItem'
+	            type: 'standard'
 	          });
 	        }, this)
 	      }).animate();
@@ -704,6 +704,25 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	    }
 	  }, {
+	    key: "getCurrentPreset",
+	    value: function getCurrentPreset() {
+	      var form = document.forms["left-menu-preset-form"];
+
+	      if (!form) {
+	        return "";
+	      }
+
+	      var presets = form.elements["presetType"];
+
+	      for (var i = 0; i < presets.length; i++) {
+	        if (presets[i].checked) {
+	          return presets[i].value;
+	        }
+	      }
+
+	      return "";
+	    }
+	  }, {
 	    key: "showPresetPopupFunction",
 	    value: function showPresetPopupFunction(mode) {
 	      BX.ready(function () {
@@ -746,10 +765,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                BX.ajax.runAction('intranet.leftmenu.setPreset', {
 	                  data: {
 	                    preset: currentPreset,
-	                    mode: mode == "global" ? "global" : "personal"
+	                    mode: mode === "global" ? "global" : "personal"
 	                  },
 	                  analyticsLabel: {
-	                    analyticsLabel: currentPreset + (mode == "global" ? "&analyticsFirst=y" : "")
+	                    preset: this.getCurrentPreset(),
+	                    first: mode === "global" ? 'y' : ''
 	                  }
 	                }).then(function (response) {
 	                  if (response.data.hasOwnProperty("url")) {
@@ -757,7 +777,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                  } else {
 	                    document.location.reload();
 	                  }
-	                }, function (response) {
+	                }, function () {
 	                  document.location.reload();
 	                });
 	              }, this)
@@ -770,9 +790,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                BX.ajax.runAction('intranet.leftmenu.delaySetPreset', {
 	                  data: {},
 	                  analyticsLabel: {
-	                    analyticsLabel: mode == "global" ? "&analyticsFirst=y" : ""
+	                    preset: this.getCurrentPreset(),
+	                    first: mode === "global" ? 'y' : ''
 	                  }
-	                }).then(function (response) {}, function (response) {});
+	                });
 	                BX.proxy_context.popupWindow.close();
 
 	                if (this.showImportConfiguration) {
@@ -913,7 +934,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                  firstItemLink: firstItemLink
 	                },
 	                analyticsLabel: {
-	                  analyticsLabel: 'customPreset'
+	                  preset: 'customPreset'
 	                }
 	              }).then(function (response) {
 	                BX.removeClass(button.buttonNode, "popup-window-button-wait");
@@ -1978,7 +1999,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 
 	      this.saveItemsSort({
-	        analyticsLabel: 'hideItem',
+	        type: 'hide',
 	        itemId: menuItemId
 	      });
 	    }
@@ -2000,7 +2021,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 
 	      this.saveItemsSort({
-	        analyticsLabel: 'showItem',
+	        type: 'show',
 	        itemId: menuItemId
 	      });
 	    }
@@ -2245,7 +2266,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            BX.removeClass(itemNode, "menu-item-draggable");
 	            BX.remove(dragElement);
 	            this.saveItemsSort({
-	              analyticsLabel: 'mainPage',
+	              type: 'mainPage',
 	              itemId: itemId
 	            });
 	          }, this)
@@ -2299,9 +2320,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        BX.ajax.runAction('intranet.leftmenu.setDefaultMenu', {
 	          data: {},
 	          analyticsLabel: {
-	            'defaultMenu': 'Y'
+	            defaultMenu: 'Y'
 	          }
-	        }).then(function (response) {
+	        }).then(function () {
 	          document.location.reload();
 	        });
 	      } else {
@@ -2432,14 +2453,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        }
 
 	        var analyticsLabel = {
-	          analyticsLabel: 'sortItem'
+	          type: 'sort'
 	        };
 	        var prevItem = BX.previousSibling(dragElement);
 
 	        if (BX.type.isDomNode(prevItem) && prevItem.id == "left-menu-empty-item" && !this.isExtranet) {
 	          this.showMessage(dragElement, BX.message("MENU_ITEM_MAIN_PAGE"), "right");
 	          analyticsLabel = {
-	            analyticsLabel: 'mainPage',
+	            type: 'mainPage',
 	            itemId: dragElement.getAttribute("data-id")
 	          };
 	        }
@@ -3129,7 +3150,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          BX.ajax.runAction("intranet.leftmenu.".concat(action), {
 	            data: {},
 	            analyticsLabel: {
-	              analyticsLabel: action
+	              type: action
 	            }
 	          });
 	          var event = document.createEvent("Event");

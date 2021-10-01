@@ -12,12 +12,36 @@ use Bitrix\ImBot\Error;
  * Class Openlines
  *
  * @package Bitrix\ImBot\Service
+ *
+ * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageAdd
+ * @method bool operatorMessageAdd(array $params)
+ *
+ * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageUpdate
+ * @method bool operatorMessageUpdate(array $params)
+ *
+ * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageDelete
+ * @method bool operatorMessageDelete(array $params)
+ *
+ * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorStartWriting
+ * @method bool operatorStartWriting(array $params)
+ *
+ * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageReceived
+ * @method bool operatorMessageReceived(array $params)
+ *
+ * @see \Bitrix\Botcontroller\Bot\Network\Command\StartDialogSession
+ * @method bool sessionStart(array $params)
+ *
+ * @see \Bitrix\Botcontroller\Bot\Network\Command\FinishDialogSession
+ * @method bool sessionFinish(array $params)
+ *
+ * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorQueueNumber
+ * @method bool operatorQueueNumber(array $params)
+ *
  */
 class Openlines
 {
 	public const
 		BOT_CODE = 'network',
-		SERVICE_CODE = 'openlines',
 
 		COMMAND_OPERATOR_MESSAGE_ADD = 'operatorMessageAdd',
 		COMMAND_OPERATOR_MESSAGE_UPDATE = 'operatorMessageUpdate',
@@ -25,7 +49,8 @@ class Openlines
 		COMMAND_OPERATOR_MESSAGE_RECEIVED = 'operatorMessageReceived',
 		COMMAND_OPERATOR_START_WRITING = 'operatorStartWriting',
 		COMMAND_START_DIALOG_SESSION = 'startDialogSession',
-		COMMAND_FINISH_DIALOG_SESSION = 'finishDialogSession'
+		COMMAND_FINISH_DIALOG_SESSION = 'finishDialogSession',
+		COMMAND_OPERATOR_QUEUE_NUMBER = 'operatorQueueNumber'
 	;
 
 	/** @var ImBot\Http */
@@ -110,6 +135,7 @@ class Openlines
 
 	//endregion
 
+	//region Outgoing
 
 	/**
 	 * Removes mentions from message.
@@ -127,157 +153,60 @@ class Openlines
 		return $messageText;
 	}
 
-	//region Outgoing
-
 	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageAdd
+	 * @param string $command
 	 * @param array $params
 	 *
 	 * @return bool
 	 */
-	public static function operatorMessageAdd($params)
+	public static function __callStatic(string $command, array $params)
 	{
-		$params['MESSAGE_TEXT'] = self::prepareMessage($params['MESSAGE_TEXT']);
-
-		$http = self::instanceHttpClient();
-		$query = $http->query(
-			self::COMMAND_OPERATOR_MESSAGE_ADD,
-			$params
-		);
-		if (isset($query->error))
+		$aliasList = [
+			'sessionStart' => self::COMMAND_START_DIALOG_SESSION,
+			'sessionFinish' => self::COMMAND_FINISH_DIALOG_SESSION,
+		];
+		if (isset($aliasList[$command]))
 		{
-			return false;
+			$command = $aliasList[$command];
 		}
 
-		return true;
+		if (
+			$command === self::COMMAND_OPERATOR_MESSAGE_ADD
+			|| $command === self::COMMAND_OPERATOR_MESSAGE_UPDATE
+		)
+		{
+			$params['MESSAGE_TEXT'] = self::prepareMessage($params['MESSAGE_TEXT']);
+		}
+
+		return self::sendCommand($command, $params[0]);
 	}
 
 	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageUpdate
+	 * @param string $command
 	 * @param array $params
 	 *
 	 * @return bool
 	 */
-	public static function operatorMessageUpdate($params)
+	public static function sendCommand(string $command, array $params): bool
 	{
-		$params['MESSAGE_TEXT'] = self::prepareMessage($params['MESSAGE_TEXT']);
-
-		$http = self::instanceHttpClient();
-		$query = $http->query(
-			self::COMMAND_OPERATOR_MESSAGE_UPDATE,
-			$params
-		);
-		if (isset($query->error))
+		$constList = (new \ReflectionClass(__CLASS__))->getConstants();
+		$whiteList = [];
+		foreach ($constList as $const => $value)
 		{
-			return false;
+			if (strpos($const, 'COMMAND_', 0) === 0)
+			{
+				$whiteList[] = $value;
+			}
+		}
+		if (in_array($command, $whiteList, true))
+		{
+			$http = self::instanceHttpClient();
+			$query = $http->query($command, $params, true);
+
+			return !isset($query->error);
 		}
 
-		return true;
-	}
-
-	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageDelete
-	 * @param array $params
-	 *
-	 * @return bool
-	 */
-	public static function operatorMessageDelete($params)
-	{
-		$http = self::instanceHttpClient();
-		$query = $http->query(
-			self::COMMAND_OPERATOR_MESSAGE_DELETE,
-			$params
-		);
-		if (isset($query->error))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorStartWriting
-	 * @param array $params
-	 *
-	 * @return bool
-	 */
-	public static function operatorStartWriting($params)
-	{
-		$http = self::instanceHttpClient();
-		$query = $http->query(
-			self::COMMAND_OPERATOR_START_WRITING,
-			$params
-		);
-		if (isset($query->error))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network\Command\StartDialogSession
-	 * @param array $params
-	 *
-	 * @return bool
-	 */
-	public static function sessionStart($params)
-	{
-		$http = self::instanceHttpClient();
-		$query = $http->query(
-			self::COMMAND_START_DIALOG_SESSION,
-			$params
-		);
-		if (isset($query->error))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network\Command\FinishDialogSession
-	 * @param array $params
-	 *
-	 * @return bool
-	 */
-	public static function sessionFinish($params)
-	{
-		$http = self::instanceHttpClient();
-		$query = $http->query(
-			self::COMMAND_FINISH_DIALOG_SESSION,
-			$params
-		);
-		if (isset($query->error))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageReceived
-	 * @param array $params
-	 *
-	 * @return bool
-	 */
-	public static function operatorMessageReceived($params)
-	{
-		$http = self::instanceHttpClient();
-		$query = $http->query(
-			self::COMMAND_OPERATOR_MESSAGE_RECEIVED,
-			$params
-		);
-		if (isset($query->error))
-		{
-			return false;
-		}
-
-		return true;
+		return false;
 	}
 
 	//endregion

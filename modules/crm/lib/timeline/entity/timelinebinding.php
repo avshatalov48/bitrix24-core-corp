@@ -6,6 +6,22 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\Query;
 use \Bitrix\Crm\Timeline\TimelineType;
 
+/**
+ * Class TimelineBindingTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TimelineBinding_Query query()
+ * @method static EO_TimelineBinding_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TimelineBinding_Result getById($id)
+ * @method static EO_TimelineBinding_Result getList(array $parameters = array())
+ * @method static EO_TimelineBinding_Entity getEntity()
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineBinding createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineBinding_Collection createCollection()
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineBinding wakeUpObject($row)
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineBinding_Collection wakeUpCollection($rows)
+ */
 class TimelineBindingTable  extends Entity\DataManager
 {
 	/**

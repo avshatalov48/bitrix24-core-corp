@@ -11,6 +11,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Crm;
 
+/**
+ * Class DealContactTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DealContact_Query query()
+ * @method static EO_DealContact_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DealContact_Result getById($id)
+ * @method static EO_DealContact_Result getList(array $parameters = array())
+ * @method static EO_DealContact_Entity getEntity()
+ * @method static \Bitrix\Crm\Binding\EO_DealContact createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Binding\EO_DealContact_Collection createCollection()
+ * @method static \Bitrix\Crm\Binding\EO_DealContact wakeUpObject($row)
+ * @method static \Bitrix\Crm\Binding\EO_DealContact_Collection wakeUpCollection($rows)
+ */
 class DealContactTable extends Entity\DataManager
 {
 	/**

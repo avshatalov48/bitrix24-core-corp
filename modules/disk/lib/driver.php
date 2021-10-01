@@ -18,6 +18,8 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Text\Emoji;
+use Bitrix\Pull\Model\Channel;
 
 final class Driver implements IErrorable
 {
@@ -230,7 +232,7 @@ final class Driver implements IErrorable
 		if($group)
 		{
 			$group = $group->fetch();
-			$data['NAME'] = mb_substr($group['NAME'], 0, 100);
+			$data['NAME'] = mb_substr(Emoji::decode($group['NAME']), 0, 100);
 		}
 
 		$data['USE_INTERNAL_RIGHTS'] = 1;
@@ -638,7 +640,7 @@ final class Driver implements IErrorable
 	/**
 	 * Send event by module pull.
 	 *
-	 * @param int|array $userIds List of user ids.
+	 * @param array|string|int|Channel $userIds List of user ids.
 	 * @param string $command Command determine action on client.
 	 * @param array     $data Optional data which can be used on client.
 	 * @throws \Bitrix\Main\LoaderException

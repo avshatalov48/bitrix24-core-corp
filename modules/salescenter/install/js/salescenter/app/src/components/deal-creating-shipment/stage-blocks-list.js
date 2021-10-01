@@ -1,5 +1,6 @@
 import {Loc} from 'main.core';
 import {StatusTypes as Status} from 'salescenter.component.stage-block';
+import {UI} from 'ui.notification';
 import {MixinTemplatesType} from '../templates-type-mixin';
 import * as Tile from 'salescenter.tile';
 import Send from './stage-blocks/send';
@@ -118,7 +119,12 @@ export default {
 					{
 						this.refreshTilesByType(response.data, type);
 					}
-				}.bind(this));
+				}.bind(this),
+				function() {
+					UI.Notification.Center.notify({
+						content: Loc.getMessage('SALESCENTER_DATA_UPDATE_ERROR'),
+					});
+				});
 			},
 
 			refreshTilesByType(data, type)

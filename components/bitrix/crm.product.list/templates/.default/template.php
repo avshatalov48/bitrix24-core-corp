@@ -1,18 +1,21 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-$extMgrId = isset($arParams['PRODUCT_SECTION_MANAGER_ID']) ? $arParams['PRODUCT_SECTION_MANAGER_ID'] : '';
-$mgrId = isset($extMgrId[0]) ? $extMgrId : 'CrmProductSectionManager';
-
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var \CBitrixComponent $component */
 /** @global CMain $APPLICATION */
 global $APPLICATION;
+
+$extMgrId = $arParams['PRODUCT_SECTION_MANAGER_ID'] ?? '';
+$mgrId = isset($extMgrId[0]) ? $extMgrId : 'CrmProductSectionManager';
 
 CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/activity.js');
 CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/interface_grid.js');
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
@@ -52,7 +55,7 @@ function crm_product_delete_grid(title, message, btnTitle, path)
 }
 </script>
 <?php
-$bVatMode = ($arResult['VAT_MODE'] === true) ? true : false;
+$bVatMode = $arResult['VAT_MODE'] === true;
 $arResult['GRID_DATA'] = $arColumns = array();
 foreach ($arResult['HEADERS'] as $arHead)
 {
@@ -108,6 +111,8 @@ foreach($arSections as $sKey =>  $arSection)
 	$arResult['GRID_DATA'][] = $gridDataRecord;
 	unset($gridDataRecord);
 }
+
+
 $arProducts = array();
 if (is_array($arResult['PRODUCTS']))
 	$arProducts = $arResult['PRODUCTS'];
@@ -141,17 +146,20 @@ foreach($arProducts as $sKey =>  $arProduct)
 				).'\');'
 		);
 
-		$arActions[] =  array(
-			'ICONCLASS' => 'copy',
-			'TITLE' => GetMessage('CRM_PRODUCT_COPY_TITLE'),
-			'TEXT' => GetMessage('CRM_PRODUCT_COPY'),
-			'ONCLICK' => 'jsUtils.Redirect([], \''.CUtil::JSEscape(
-					CHTTP::urlAddParams(
-						$arProduct['PATH_TO_PRODUCT_EDIT'],
-						array('list_section_id' => $arResult['BACK_URL_SECTION_ID'], 'copy' => 1)
-					)
-				).'\');'
-		);
+		if ($arResult['CAN_ADD_PRODUCT'])
+		{
+			$arActions[] = array(
+				'ICONCLASS' => 'copy',
+				'TITLE' => GetMessage('CRM_PRODUCT_COPY_TITLE'),
+				'TEXT' => GetMessage('CRM_PRODUCT_COPY'),
+				'ONCLICK' => 'jsUtils.Redirect([], \''.CUtil::JSEscape(
+						CHTTP::urlAddParams(
+							$arProduct['PATH_TO_PRODUCT_EDIT'],
+							array('list_section_id' => $arResult['BACK_URL_SECTION_ID'], 'copy' => 1)
+						)
+					).'\');'
+			);
+		}
 	}
 
 	if ($arProduct['DELETE'] && !$arResult['INTERNAL'])
@@ -353,7 +361,7 @@ if (is_array($arResult['FILTER']))
 			{
 				$values[] = $elementName.' ['.$elementId.']';
 			}
-			?><input type="hidden" name="<?echo $propID?>[]" value=""><? //This will emulate empty input
+			?><input type="hidden" name="<?php echo $propID?>[]" value=""><?php //This will emulate empty input
 			$lookupInputId = $APPLICATION->IncludeComponent(
 				'bitrix:main.lookup.input',
 				'elements',
@@ -388,7 +396,7 @@ if (is_array($arResult['FILTER']))
 					'SOCNET_GROUP_ID' => '',
 				), $component, array('HIDE_ICONS' => 'Y')
 			);
-			?><a href="javascript:void(0)" onclick="<?=$treeSelectorId?>.SetValue([]); <?=$treeSelectorId?>.Show()"><?echo GetMessage('CRM_PRODUCT_PROP_CHOOSE_ELEMENT')?></a><?
+			?><a href="javascript:void(0)" onclick="<?=$treeSelectorId?>.SetValue([]); <?=$treeSelectorId?>.Show()"><?php echo GetMessage('CRM_PRODUCT_PROP_CHOOSE_ELEMENT')?></a><?php
 
 			$html = ob_get_contents();
 			ob_end_clean();
@@ -455,10 +463,10 @@ if(!isset($extMgrId[0]))
 		<input type="hidden" id="sectionID" name="sectionID" value="">
 		<input type="hidden" id="action" name="action" value="">
 	</form>
-<?
+	<?php
 }?>
 <script type="text/javascript">
-	<?
+	<?php
 	if(!isset($extMgrId[0]))
 	{?>
 	BX.CrmProductSectionManager.create(
@@ -470,7 +478,7 @@ if(!isset($extMgrId[0]))
 			IDField: 'sectionID'
 		}
 	);
-	<?
+	<?php
 }?>
 
 	BX.CrmProductSectionManager.messages =

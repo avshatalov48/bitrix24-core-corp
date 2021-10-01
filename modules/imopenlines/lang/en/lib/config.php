@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IMOL_ADD_ERROR"] = "Error creating Open Channel";
 $MESS["IMOL_CONFIG_CLOSE_TEXT"] = "Thank you for contacting us! Please tell us how you like our service.";
 $MESS["IMOL_CONFIG_CLOSE_TEXT_2"] = "Thank you for doing business with us.";
@@ -15,5 +15,8 @@ $MESS["IMOL_CONFIG_VOTE_MESSAGE_2_TEXT"] = "Please tell us how we did.[br][br]Ju
 $MESS["IMOL_CONFIG_WELCOME_MESSAGE"] = "Welcome to [b]#COMPANY_NAME#[/b] Open Channel![br]You will receive a reply shortly, please hold on.";
 $MESS["IMOL_CONFIG_WORKTIME_DAYOFF_2"] = "Unfortunately we are currently unable to talk to you.[br][br]Please type in your question, and we will get back to you as soon as we can.";
 $MESS["IMOL_CONFIG_WORKTIME_DAYOFF_3"] = "Welcome to [b]#COMPANY_NAME#![/b] Open Channel![br]Unfortunately we are currently unable to talk to you.[br][br]Please type in your question, and we will get back to you as soon as we can.";
+$MESS["IMOL_ERROR_UPDATE_EMPTY_DEPARTMENT_QUEUE"] = "Queue requires at least one person (the department you added does not contain employees)";
+$MESS["IMOL_ERROR_UPDATE_EMPTY_QUEUE"] = "Queue requires at least one person";
+$MESS["IMOL_ERROR_UPDATE_NO_LOAD_LINE"] = "Attempt to update a nonexistent Open Channel";
+$MESS["IMOL_ERROR_UPDATE_NO_VALID_QUEUE"] = "Attempt to save invalid queue data";
 $MESS["IMOL_UPDATE_ERROR"] = "Error updating Open Channel";
-?>

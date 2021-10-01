@@ -66,19 +66,53 @@ export default class Toolbar
 		createProcess.start();
 	}
 
+	static resolveServiceCode(service)
+	{
+		if (!service)
+		{
+			service = BX.Disk.getDocumentService();
+		}
+
+		if (service)
+		{
+			return service;
+		}
+
+		if (BX.Disk.isAvailableOnlyOffice())
+		{
+			return 'onlyoffice';
+		}
+
+		BX.Disk.InformationPopups.openWindowForSelectDocumentService({});
+
+		return null;
+	}
+
 	static createDocx(service)
 	{
-		this.runCreating('docx', service);
+		const code = this.resolveServiceCode(service);
+		if (code)
+		{
+			this.runCreating('docx', code);
+		}
 	}
 
 	static createXlsx(service)
 	{
-		this.runCreating('xlsx', service);
+		const code = this.resolveServiceCode(service);
+		if (code)
+		{
+			this.runCreating('xlsx', code);
+		}
 	}
 
 	static createPptx(service)
 	{
-		this.runCreating('pptx', service);
+		const code = this.resolveServiceCode(service);
+		if (code)
+		{
+			this.runCreating('pptx', code);
+		}
 	}
 
 	static createByDefault(service)

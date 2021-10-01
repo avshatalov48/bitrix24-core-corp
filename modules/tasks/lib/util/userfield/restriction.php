@@ -21,7 +21,7 @@ final class Restriction
 		// you can read\write field values, but editing scheme is not guaranteed
 		if (
 			static::hadUserFieldsBefore($entityCode, $forceUpdate)
-			|| Bitrix24\Task::checkFeatureEnabled('task_user_field')
+			|| Bitrix24\Task::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_USER_FIELD)
 		)
 		{
 			return true;
@@ -33,7 +33,7 @@ final class Restriction
 	public static function canManage($entityCode, $userId = 0)
 	{
 		// for any entity, ask bitrix24
-		return Bitrix24\Task::checkFeatureEnabled('task_user_field');
+		return Bitrix24\Task::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_USER_FIELD);
 	}
 
 	public static function canCreateMandatory($entityCode, $userId = 0)

@@ -768,9 +768,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 
 /*.feed-com-files-title {font-size:12px; font-weight:bold; float:left; min-width:50px;}*/
 .diskuf-files-entity .feed-com-files-cont {
-	/*padding: 1px 0 1px 0;*/
 	padding: 0;
-	margin-right: -10px;
 	overflow: hidden;
 	zoom: 1;
 }
@@ -812,10 +810,15 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 }
 
 .diskuf-files-entity .feed-com-file-name {
+	display: inline-block;
+	max-width: 490px;
 	color: #2067b0;
 	cursor: pointer;
 	font-weight: bold;
 	text-decoration: none;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 .diskuf-files-entity .feed-com-file-name:hover {
@@ -1389,7 +1392,7 @@ a.feed-file-history-list-name {
 
 .feed-com-file-wrap {
 	box-sizing: border-box;
-	display: inline-block;
+	display: block;
 	font-size: 13px;
 	line-height: 14px;
 	margin: -2px 6px 14px 0;

@@ -3943,7 +3943,7 @@ var Vue = exports.Vue;
 
     var ItemSelector = {
       props: ['field'],
-      template: "\n\t\t<div>\n\t\t\t<div class=\"b24-form-control-list-selector-item\"\n\t\t\t\tv-for=\"(item, itemIndex) in field.unselectedItems()\"\n\t\t\t\t@click=\"selectItem(item)\"\n\t\t\t>\n\t\t\t\t<img class=\"b24-form-control-list-selector-item-image\"\n\t\t\t\t\tv-if=\"pic(item)\" \n\t\t\t\t\t:src=\"pic(item)\"\n\t\t\t\t>\n\t\t\t\t<div class=\"b24-form-control-list-selector-item-title\">\n\t\t\t\t\t<span >{{ item.label }}</span>\n\t\t\t\t</div>\n\t\n\t\t\t\t<div class=\"b24-form-control-list-selector-item-price\">\n\t\t\t\t\t<div class=\"b24-form-control-list-selector-item-price-old\"\n\t\t\t\t\t\tv-if=\"item.discount\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.price + item.discount)\"\n\t\t\t\t\t></div>\n\t\t\t\t\t<div class=\"b24-form-control-list-selector-item-price-current\"\n\t\t\t\t\t\tv-if=\"item.price\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.price)\"\n\t\t\t\t\t></div> \n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div>\n\t\t\t<div class=\"b24-form-control-list-selector-item\"\n\t\t\t\tv-for=\"(item, itemIndex) in field.unselectedItems()\"\n\t\t\t\t@click=\"selectItem(item)\"\n\t\t\t>\n\t\t\t\t<img class=\"b24-form-control-list-selector-item-image\"\n\t\t\t\t\tv-if=\"pic(item)\" \n\t\t\t\t\t:src=\"pic(item)\"\n\t\t\t\t>\n\t\t\t\t<div class=\"b24-form-control-list-selector-item-title\">\n\t\t\t\t\t<span >{{ item.label }}</span>\n\t\t\t\t</div>\n\t\n\t\t\t\t<div class=\"b24-form-control-list-selector-item-price\">\n\t\t\t\t\t<div class=\"b24-form-control-list-selector-item-price-old\"\n\t\t\t\t\t\tv-if=\"item.discount\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.price + item.discount)\"\n\t\t\t\t\t></div>\n\t\t\t\t\t<div class=\"b24-form-control-list-selector-item-price-current\"\n\t\t\t\t\t\tv-if=\"item.price || item.price === 0\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.price)\"\n\t\t\t\t\t></div> \n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
       computed: {},
       methods: {
         pic: function pic(item) {
@@ -7768,11 +7768,13 @@ var Vue = exports.Vue;
               return b24form.user.fields || {};
             }
 
-            var user = b24form.util.ls.getItem('b24-form-user', ttl);
+            try {
+              var user = b24form.util.ls.getItem('b24-form-user', ttl);
 
-            if (user !== null && babelHelpers.typeof(user) === 'object') {
-              return user.fields || {};
-            }
+              if (user !== null && babelHelpers.typeof(user) === 'object') {
+                return user.fields || {};
+              }
+            } catch (e) {}
           }
 
           if (babelHelpers.classPrivateFieldGet(this, _userProviderPromise)) {

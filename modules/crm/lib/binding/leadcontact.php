@@ -10,6 +10,22 @@ namespace Bitrix\Crm\Binding;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
+/**
+ * Class LeadContactTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_LeadContact_Query query()
+ * @method static EO_LeadContact_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_LeadContact_Result getById($id)
+ * @method static EO_LeadContact_Result getList(array $parameters = array())
+ * @method static EO_LeadContact_Entity getEntity()
+ * @method static \Bitrix\Crm\Binding\EO_LeadContact createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Binding\EO_LeadContact_Collection createCollection()
+ * @method static \Bitrix\Crm\Binding\EO_LeadContact wakeUpObject($row)
+ * @method static \Bitrix\Crm\Binding\EO_LeadContact_Collection wakeUpCollection($rows)
+ */
 class LeadContactTable extends Entity\DataManager
 {
 	/**

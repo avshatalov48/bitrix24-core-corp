@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Controller\Action\Entity;
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Service\Container;
 
 /**
  * Class MergeAction
@@ -30,6 +31,24 @@ class MergeBatchAction extends Main\Engine\Action
 
 		$entityIDs = isset($params['entityIds']) && is_array($params['entityIds']) ? $params['entityIds'] : null;
 		$effectiveEntityIDs = [];
+
+		if ($entityTypeID === \CCrmOwnerType::Deal)
+		{
+			$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getWebFormResultsRestriction();
+			if (!$restriction->hasPermission())
+			{
+				$restrictedItemIds = $restriction->filterRestrictedItemIds(
+					$entityTypeID,
+					$entityIDs
+				);
+				if (!empty($restrictedItemIds))
+				{
+					Container::getInstance()->getLocalization()->loadMessages();
+					$this->addError(new Main\Error(Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR')));
+					return null;
+				}
+			}
+		}
 
 		foreach($entityIDs as $entityID)
 		{

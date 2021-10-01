@@ -113,7 +113,25 @@ if (typeof (BX.CrmScenarioSelection) === 'undefined')
 				}
 			}).then(function (result) {
 				BX.removeClass(event.target, 'ui-btn-wait');
-				_this.closeSlider();
+				if (result.data.success)
+				{
+					_this.closeSlider();
+				}
+				else
+				{
+					if (result.data.error)
+					{
+						BX.UI.Notification.Center.notify({
+							content: result.data.error
+						});
+					}
+					else
+					{
+						BX.UI.Notification.Center.notify({
+							content: BX.message('CRM_SCENARIO_SELECTION_SAVE_ERROR')
+						});
+					}
+				}
 			});
 		},
 

@@ -38,7 +38,7 @@ if($arResult['PERMISSION_DENIED'])
 		id="crm-<?= $fieldUID ?>-box"
 		data-has-input="no"
 	>
-		<div class="crm-button-open">
+		<div class="crm-element-button-open">
 			<?= Loc::getMessage('CRM_SFE_PERMISSION_DENIED') ?>
 		</div>
 		<?php
@@ -102,13 +102,13 @@ else
 		</span>
 
 		<?php
-		if(!empty($arParams['createNewEntity']))
+		if($arResult['canCreateNewEntity'])
 		{
 			?>
 			<script>
 				BX.ready(function ()
 				{
-					BX['<?=$jsObject?>'] = new BX.CrmEntitySelector({
+					BX['<?=$jsObject?>'] = new BX.CrmElementEntitySelector({
 						randomString: '<?=$randString?>',
 						jsObject: '<?=$jsObject?>',
 						fieldUid: '<?=$fieldUID?>',
@@ -119,38 +119,39 @@ else
 						listPrefix: <?=\Bitrix\Main\Web\Json::encode($arResult['LIST_PREFIXES'])?>,
 						selectorEntityTypes: <?=\Bitrix\Main\Web\Json::encode($arResult['SELECTOR_ENTITY_TYPES'])?>,
 						listElement: <?=\Bitrix\Main\Web\Json::encode($arResult['ELEMENT'])?>,
-						listEntityType: <?=\Bitrix\Main\Web\Json::encode($arResult['ENTITY_TYPE'])?>,
+						listEntityType: <?=\Bitrix\Main\Web\Json::encode($arParams['ENTITY_TYPE'])?>,
 						listEntityCreateUrl: <?=\Bitrix\Main\Web\Json::encode($arResult['LIST_ENTITY_CREATE_URL'])?>,
 						pluralCreation: '<?=!empty($arResult['PLURAL_CREATION']) ? 'true' : '' ?>',
-						currentEntityType: '<?=!empty($arResult['CURRENT_ENTITY_TYPE']) ? $arResult['CURRENT_ENTITY_TYPE'] : null?>'
+						currentEntityType: '<?=!empty($arResult['CURRENT_ENTITY_TYPE']) ? $arResult['CURRENT_ENTITY_TYPE'] : null?>',
+						dynamicTypeTitles: <?= \Bitrix\Main\Web\Json::encode($arResult['DYNAMIC_TYPE_TITLES']) ?>,
 					});
 
 					BX.message({
-						CRM_FF_LEAD: '<?=GetMessageJS('CRM_FF_LEAD')?>',
-						CRM_FF_CONTACT: '<?=GetMessageJS('CRM_FF_CONTACT')?>',
-						CRM_FF_COMPANY: '<?=GetMessageJS('CRM_FF_COMPANY')?>',
-						CRM_FF_DEAL: '<?=GetMessageJS('CRM_FF_DEAL')?>',
-						CRM_FF_ORDER: '<?=GetMessageJS('CRM_FF_ORDER')?>',
-						CRM_FF_QUOTE: '<?=GetMessageJS('CRM_FF_QUOTE')?>',
-						CRM_FF_OK: '<?=GetMessageJS('CRM_FF_OK')?>',
-						CRM_FF_CANCEL: '<?=GetMessageJS('CRM_FF_CANCEL')?>',
-						CRM_FF_CLOSE: '<?=GetMessageJS('CRM_FF_CLOSE')?>',
-						CRM_FF_SEARCH: '<?=GetMessageJS('CRM_FF_SEARCH')?>',
-						CRM_FF_NO_RESULT: '<?=GetMessageJS('CRM_FF_NO_RESULT')?>',
-						CRM_FF_CHOISE: '<?=GetMessageJS('CRM_FF_CHOISE')?>',
-						CRM_FF_CHANGE: '<?=GetMessageJS('CRM_FF_CHANGE')?>',
-						CRM_FF_LAST: '<?=GetMessageJS('CRM_FF_LAST')?>',
-						CRM_CES_CREATE_LEAD: '<?=GetMessageJS('CRM_CES_CREATE_LEAD')?>',
-						CRM_CES_CREATE_CONTACT: '<?=GetMessageJS('CRM_CES_CREATE_CONTACT')?>',
-						CRM_CES_CREATE_COMPANY: '<?=GetMessageJS('CRM_CES_CREATE_COMPANY')?>',
-						CRM_CES_CREATE_DEAL: '<?=GetMessageJS('CRM_CES_CREATE_DEAL')?>'
+						CRM_ELEMENT_LEAD: '<?= Loc::getMessage('CRM_ELEMENT_LEAD')?>',
+						CRM_ELEMENT_CONTACT: '<?= Loc::getMessage('CRM_ELEMENT_CONTACT')?>',
+						CRM_ELEMENT_COMPANY: '<?= Loc::getMessage('CRM_ELEMENT_COMPANY')?>',
+						CRM_ELEMENT_DEAL: '<?= Loc::getMessage('CRM_ELEMENT_DEAL')?>',
+						CRM_ELEMENT_ORDER: '<?= Loc::getMessage('CRM_ELEMENT_ORDER')?>',
+						CRM_ELEMENT_QUOTE: '<?= Loc::getMessage('CRM_ELEMENT_QUOTE')?>',
+						CRM_ELEMENT_OK: '<?= Loc::getMessage('CRM_ELEMENT_OK')?>',
+						CRM_ELEMENT_CANCEL: '<?= Loc::getMessage('CRM_ELEMENT_CANCEL')?>',
+						CRM_ELEMENT_CLOSE: '<?= Loc::getMessage('CRM_ELEMENT_CLOSE')?>',
+						CRM_ELEMENT_SEARCH: '<?= Loc::getMessage('CRM_ELEMENT_SEARCH')?>',
+						CRM_ELEMENT_NO_RESULT: '<?= Loc::getMessage('CRM_ELEMENT_NO_RESULT')?>',
+						CRM_ELEMENT_CHOISE: '<?= Loc::getMessage('CRM_ELEMENT_CHOISE')?>',
+						CRM_ELEMENT_CHANGE: '<?= Loc::getMessage('CRM_ELEMENT_CHANGE')?>',
+						CRM_ELEMENT_LAST: '<?= Loc::getMessage('CRM_ELEMENT_LAST')?>',
+						CRM_ELEMENT_CREATE_LEAD: '<?= Loc::getMessage('CRM_ELEMENT_CREATE_LEAD')?>',
+						CRM_ELEMENT_CREATE_CONTACT: '<?= Loc::getMessage('CRM_ELEMENT_CREATE_CONTACT')?>',
+						CRM_ELEMENT_CREATE_COMPANY: '<?= Loc::getMessage('CRM_ELEMENT_CREATE_COMPANY')?>',
+						CRM_ELEMENT_CREATE_DEAL: '<?= Loc::getMessage('CRM_ELEMENT_CREATE_DEAL')?>'
 					});
 				});
 			</script>
 
-			<div class="crm-button-open">
+			<div class="crm-element-button-open">
 				<span onclick="BX['<?= $jsObject ?>'].createNewEntity(event);">
-					<?= Loc::getMessage('CRM_CES_CREATE') ?>
+					<?= Loc::getMessage('CRM_ELEMENT_CREATE') ?>
 				</span>
 			</div>
 			<?php

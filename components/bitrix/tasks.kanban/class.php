@@ -1614,7 +1614,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 						'columnId' => $task['stage_id'] > 0 ? $task['stage_id'] : $columnId,
 						'data' => $task,
 						'isSprintView' => ($this->arParams['SPRINT_ID'] > 0 ? 'Y' : 'N'),
-						'calendarSettings' => $this->arResult['CALENDAR_SETTINGS']
+						'calendarSettings' => $this->arResult['CALENDAR_SETTINGS'],
+						'networkEnabled' => \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled(),
 					)
 				);
 
@@ -1754,7 +1755,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 					'columnId' => $column['ID'],
 					'data' => $item,
 					'isSprintView' => ($this->arParams['SPRINT_SELECTED'] == 'Y' ? 'Y' : 'N'),
-					'calendarSettings' => $this->arResult['CALENDAR_SETTINGS']
+					'calendarSettings' => $this->arResult['CALENDAR_SETTINGS'],
+					'networkEnabled' => \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled(),
 				);
 				if (
 					isset($filterTmp['ID']) &&

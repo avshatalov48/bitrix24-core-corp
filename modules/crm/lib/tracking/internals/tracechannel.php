@@ -7,6 +7,19 @@ use Bitrix\Main\ORM\Data\DataManager;
  * Class TraceChannelTable
  *
  * @package Bitrix\Crm\Tracking\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TraceChannel_Query query()
+ * @method static EO_TraceChannel_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TraceChannel_Result getById($id)
+ * @method static EO_TraceChannel_Result getList(array $parameters = array())
+ * @method static EO_TraceChannel_Entity getEntity()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_TraceChannel createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_TraceChannel_Collection createCollection()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_TraceChannel wakeUpObject($row)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_TraceChannel_Collection wakeUpCollection($rows)
  */
 class TraceChannelTable extends DataManager
 {

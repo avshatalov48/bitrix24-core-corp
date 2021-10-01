@@ -9,7 +9,7 @@ Loc::loadMessages(__FILE__);
 
 class VoximplantLinesComponent extends \CBitrixComponent
 {
-	protected $gridId = "voximplant_lines_list";
+	protected $gridId = "voximplant_lines";
 	protected $gridOptions;
 	protected $userPermissions;
 	protected $rentedNumbers;
@@ -24,7 +24,8 @@ class VoximplantLinesComponent extends \CBitrixComponent
 		$this->gridOptions = new \Bitrix\Main\Grid\Options($this->gridId);
 		$this->userPermissions = Permissions::createWithCurrentUser();
 		$this->rentedNumbers = CVoxImplantPhone::GetRentNumbers();
-
+		$sip = new CVoxImplantSip();
+		$sip->updateSipRegisrations();
 		if(is_array($this->rentedNumbers) && CVoxImplantPhone::GetRentedNumbersCount() != count($this->rentedNumbers))
 		{
 			CVoxImplantPhone::syncWithController([
@@ -76,14 +77,17 @@ class VoximplantLinesComponent extends \CBitrixComponent
 				"SEARCH_ID",
 				"PORTAL_MODE",
 				"PHONE_NAME",
+				"SIP_TYPE" => "SIP_CONFIG.TYPE",
 				"SIP_SERVER" => "SIP_CONFIG.SERVER",
 				"SIP_LOGIN" => "SIP_CONFIG.LOGIN",
+				"SIP_STATUS_CODE" => "SIP_CONFIG.REGISTRATION_STATUS_CODE",
 				"CALLER_ID_NUMBER" => "CALLER_ID.NUMBER",
 				"CALLER_ID_VERIFIED" => "CALLER_ID.VERIFIED",
 				"CALLER_ID_VERIFIED_UNTIL" => "CALLER_ID.VERIFIED_UNTIL"
 			],
 			"order" => ["ID" => "ASC"],
 		]);
+
 
 		while ($row = $cursor->fetch())
 		{
@@ -133,10 +137,10 @@ class VoximplantLinesComponent extends \CBitrixComponent
 			array("id" => "NAME", "name" => GetMessage("VOX_LINES_HEADER_NAME"), "default" => true, "editable" => false, "shift" => true),
 			array("id" => "TYPE", "name" => GetMessage("VOX_LINES_HEADER_TYPE"), "default" => true, "editable" => false),
 			array("id" => "DESCRIPTION", "name" => GetMessage("VOX_LINES_HEADER_DESCRIPTION"), "default" => true, "editable" => false),
+			array("id" => "STATE", "name" => GetMessage("VOX_LINES_HEADER_STATE"), "default" => true, "editable" => false)
 		);
 		$result["GRID_ID"] = $this->gridId;
 		$result["TELEPHONY_AVAILABLE"] = \Bitrix\Voximplant\Limits::canManageTelephony();
-
 		return $result;
 	}
 
@@ -235,11 +239,21 @@ class VoximplantLinesComponent extends \CBitrixComponent
 		$name = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($number)->format(\Bitrix\Main\PhoneNumber\Format::INTERNATIONAL);
 		$description = CVoxImplantPhone::getNumberDescription($numberFields);
 
+		if($numberFields["TO_DELETE"] === 'Y')
+		{
+			$state = "<span class='voximplant-grid-state-fail'>" . CVoxImplantPhone::getNumberStatus($numberFields) . "</span>";
+		}
+		else
+		{
+			$state = "<span class='voximplant-grid-state-active'>" . CVoxImplantPhone::getNumberStatus($numberFields) . "</span>";
+		}
+
 		return [
 			"ID" => $configId,
 			"NAME" => "<span class='voximplant-grid-icon voximplant-grid-rented'>" . htmlspecialcharsbx($name) . "</span>",
 			"TYPE" => $this->getLineTypeName(CVoxImplantConfig::MODE_RENT),
 			"DESCRIPTION" => $description,
+			"STATE" => $state
 		];
 	}
 
@@ -276,12 +290,25 @@ class VoximplantLinesComponent extends \CBitrixComponent
 	protected function getSipFields($row)
 	{
 		$name = $row["PHONE_NAME"] ? htmlspecialcharsbx($row["PHONE_NAME"]) : CVoxImplantConfig::GetDefaultPhoneName($row);
+		if($row["SIP_TYPE"] === CVoxImplantSip::TYPE_OFFICE)
+		{
+			$state = "-";
+		}
+		else if((int)$row["SIP_STATUS_CODE"] === 200)
+		{
+			$state = "<span class='voximplant-grid-state-active'>" . Loc::getMessage("VOX_LINES_SIP_STATUS_RECOVERED") . "</span>";
+		}
+		else
+		{
+			$state = "<span class='voximplant-grid-state-fail'>" . Loc::getMessage("VOX_LINES_SIP_STATUS_FAIL") . "</span>";
+		}
 
 		return [
 			"ID" => $row["ID"],
 			"NAME" => "<span class='voximplant-grid-icon voximplant-grid-sip'>" . $name . "</span>",
 			"TYPE" => $this->getLineTypeName(CVoxImplantConfig::MODE_SIP),
 			"DESCRIPTION" => htmlspecialcharsbx(CVoxImplantSip::getConnectionDescription($row)),
+			"STATE" => $state
 		];
 	}
 

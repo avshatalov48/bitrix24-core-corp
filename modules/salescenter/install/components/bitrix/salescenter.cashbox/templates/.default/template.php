@@ -67,27 +67,40 @@ Extension::load([
 								</div>
 								<div class="salescenter-main-header-right-block">
 									<div class="salescenter-main-header-title-container">
-										<div class="ui-title-3" style="margin-bottom: 0;"><?=Loc::getMessage($arResult['handlerDescription']['title']);?></div>
+										<?php
+										$title = Loc::getMessage($arResult['handlerDescription']['title']);
+										if (!$title)
+										{
+											$title = $arResult['handlerDescription']['title'];
+										}
+										?>
+										<div class="ui-title-3" style="margin-bottom: 0;"><?= $title ?></div>
 										<div class="salescenter-main-header-feedback-container">
 											<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
 										</div>
-										<div class="salescenter-main-header-switcher-container">
+										<?php if ($arResult['isPaySystemCashbox']): ?>
+											<input name="fields[ACTIVE]" type="hidden" value="Y" />
+										<?php else: ?>
+											<div class="salescenter-main-header-switcher-container">
 											<span data-switcher="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode([
 												'id' => 'salescenter-cashbox-active',
 												'checked' => ($arResult['data']['fields[ACTIVE]'] !== 'N'),
 												'inputName' => "fields[ACTIVE]",
 											]))?>" class="ui-switcher"></span>
-										</div>
+											</div>
+										<?php endif; ?>
 									</div>
 									<hr class="ui-hr" style="margin-bottom: 15px;">
 									<div class="ui-text-2" style="margin-bottom: 20px;"><?=Loc::getMessage($arResult['handlerDescription']['description'])?></div>
 									<div class="salescenter-button-container">
 										<?php if (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxCheckbox')): ?>
-										<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCheckboxCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
+											<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCheckboxCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
 										<?php elseif (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxBusinessRu')): ?>
-										<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigBusinessRuCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_BUSINESSRU_LINK_CONNECT')?></a>
+											<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigBusinessRuCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_BUSINESSRU_LINK_CONNECT')?></a>
+										<?php elseif (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxRobokassa')): ?>
+											<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigRobokassaCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_ROBOKASSA_LINK_CONNECT')?></a>
 										<?php else:?>
-										<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
+											<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
 										<?php endif; ?>
 									</div>
 								</div>
@@ -113,7 +126,7 @@ Extension::load([
 					],
 					'cancel' => '/saleshub/'
 				];
-				if($arResult['id'] > 0)
+				if ($arResult['id'] > 0 && !$arResult['isPaySystemCashbox'])
 				{
 					$buttons[] = [
 						'TYPE' => 'remove',

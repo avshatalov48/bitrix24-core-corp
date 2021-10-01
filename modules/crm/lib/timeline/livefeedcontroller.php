@@ -2,30 +2,13 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Main;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
 class LiveFeedController extends Controller
 {
-	//region Singleton
-	/** @var ActivityController|null */
-	protected static $instance = null;
-	/**
-	 * @return LiveFeedController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new LiveFeedController();
-		}
-		return self::$instance;
-	}
-	//endregion
-
 	public function onMessageCreate($ownerID, array $params)
 	{
 		if(!is_int($ownerID))

@@ -8,10 +8,14 @@ use Bitrix\Main\IO\File;
 
 final class Configuration
 {
+	public const DEFAULT_MAX_FILESIZE = 104857600;
+
 	/** @var string|null */
 	protected $server;
 	/** @var string|null */
 	protected $secretKey;
+	/** @var int|null */
+	protected $maxFileSize;
 	/** @var array|null */
 	protected $localValues;
 
@@ -53,12 +57,23 @@ final class Configuration
 		return $this->secretKey;
 	}
 
+	public function getMaxFileSize(): ?int
+	{
+		if ($this->maxFileSize === null)
+		{
+			$value = $this->getValue('max_filesize', 'disk_onlyoffice_max_filesize');
+			$this->maxFileSize = ($value === null || $value === '') ? self::DEFAULT_MAX_FILESIZE : (int)$value;
+		}
+
+		return $this->maxFileSize;
+	}
+
 	protected function getValue($key, string $optionName): ?string
 	{
 		$value = $this->getLocalValues($key);
 		if ($value === null)
 		{
-			return Option::get(Driver::INTERNAL_MODULE_ID, $optionName);
+			return Option::get(Driver::INTERNAL_MODULE_ID, $optionName, null);
 		}
 
 		return $value;

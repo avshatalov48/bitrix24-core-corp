@@ -29,7 +29,7 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	      this.$emit('on-mycompany-requisite-settings');
 	    }
 	  },
-	  template: "   \n\t\t\t<div>\n\t\t\t\t<div class=\"salescenter-company-contacts-text\">{{loc.SC_MYCOMPANY_SETTINGS_COMPANY_REQUISITE_INFO}}</div>\n\t\t\t\t<div class=\"salescenter-company-contacts-text salescenter-company-contacts-text--link\" @click=\"openSlider\">{{loc.SC_MYCOMPANY_SETTINGS_COMPANY_REQUISITE_EDIT}}</div>\n\t\t\t</div>"
+	  template: "   \n\t\t\t<div>\n\t\t\t\t<div class=\"salescenter-company-contacts-text\">{{loc.SC_MYCOMPANY_SETTINGS_COMPANY_REQUISITE_INFO_V2}}</div>\n\t\t\t\t<div class=\"salescenter-company-contacts-text salescenter-company-contacts-text--link\" @click=\"openSlider\">{{loc.SC_MYCOMPANY_SETTINGS_COMPANY_REQUISITE_EDIT}}</div>\n\t\t\t</div>"
 	};
 
 	exports.RequisiteBlock = RequisiteBlock;

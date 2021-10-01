@@ -2049,7 +2049,7 @@ if ($isInCalendarMode)
 	{
 		if ($calendarModeItem['selected'])
 		{
-			list($calendarModeItemUserFieldId, $calendarModeItemUserFieldType, $calendarModeItemUserFieldName) =
+			[$calendarModeItemUserFieldId, $calendarModeItemUserFieldType, $calendarModeItemUserFieldName] =
 				\Bitrix\Crm\Integration\Calendar::parseUserfieldKey($calendarModeItem['id']);
 			if ($calendarModeItemUserFieldName && !in_array($calendarModeItemUserFieldName, $arSelect, true))
 			{
@@ -2874,6 +2874,79 @@ $CCrmUserType->ListAddEnumFieldsValue(
 	)
 );
 
+$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getWebFormResultsRestriction();
+$restrictedItemIds = [];
+$itemsMutator = null;
+$displayOptions =
+	(new Crm\Service\Display\Options())
+		->setReturnMultipleFieldsAsSingle(true)
+		->setMultipleFieldsDelimiter($isInExportMode ? ', ' : '<br />')
+		->setUseTextMode($isInExportMode)
+		->setGridId($arResult['GRID_ID'])
+		->setFileUrlTemplate('/bitrix/components/bitrix/crm.deal.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#')
+;
+if (!$restriction->hasPermission())
+{
+	$itemIds = array_keys($arResult['DEAL']);
+	$restriction->prepareDisplayOptions(\CCrmOwnerType::Deal, $itemIds, $displayOptions);
+	$restrictedItemIds = $displayOptions->getRestrictedItemIds();
+	if (!empty($restrictedItemIds))
+	{
+		$itemsMutator = new Crm\Restriction\ItemsMutator(array_merge(
+			$displayOptions->getRestrictedFieldsToShow(),
+			[
+				'ASSIGNED_BY',
+				'~STAGE_ID',
+				'~CATEGORY_ID',
+				'ASSIGNED_BY_ID',
+				'~ASSIGNED_BY_ID',
+				'ASSIGNED_BY_FORMATTED_NAME',
+				'~ASSIGNED_BY_FORMATTED_NAME',
+				'ASSIGNED_BY_SHOW_URL',
+				'DEAL_SUMMARY',
+				'DATE_CREATE',
+				'DATE_MODIFY',
+				'PATH_TO_DEAL_SHOW',
+				'PATH_TO_DEAL_EDIT',
+				'PATH_TO_DEAL_DELETE',
+				'PATH_TO_DEAL_DETAILS',
+				'PATH_TO_DEAL_EXCLUDE',
+				'BIZPROC_STATUS',
+				'BIZPROC_STATUS_HINT',
+				'EDIT',
+				'CURRENCY_ID',
+			]
+		));
+		$arResult['RESTRICTED_VALUE_CLICK_CALLBACK'] = $restriction->prepareInfoHelperScript();
+	}
+
+}
+if (!empty($restrictedItemIds) && $itemsMutator)
+{
+	foreach ($arResult['DEAL'] as &$item)
+	{
+		if (in_array($item['ID'], $restrictedItemIds))
+		{
+			$valueReplacer = $isInExportMode
+				? $displayOptions->getRestrictedValueTextReplacer()
+				: $displayOptions->getRestrictedValueHtmlReplacer()
+			;
+			$item = $itemsMutator->processItem($item, $valueReplacer);
+			$item['DEAL_LEGEND'] = null;
+			$item['~ASSIGNED_BY_ID'] = null;
+			$item['EDIT'] = false;
+		}
+	}
+	foreach ($arResult['DEAL_UF'] as $itemId => &$item)
+	{
+		if (in_array($itemId, $restrictedItemIds))
+		{
+			$item = $itemsMutator->processItem($item, $displayOptions->getRestrictedValueHtmlReplacer());
+		}
+	}
+}
+unset($item);
+
 $arResult['ENABLE_TOOLBAR'] = isset($arParams['ENABLE_TOOLBAR']) ? $arParams['ENABLE_TOOLBAR'] : false;
 if($arResult['ENABLE_TOOLBAR'])
 {
@@ -2980,12 +3053,16 @@ foreach($arResult['CATEGORIES'] as $categoryID => $IDs)
 	$entityAttrs = CCrmDeal::GetPermissionAttributes($IDs, $categoryID);
 	foreach($IDs as $ID)
 	{
-		$arResult['DEAL'][$ID]['EDIT'] = CCrmDeal::CheckUpdatePermission(
-			$ID,
-			$userPermissions,
-			$categoryID,
-			array('ENTITY_ATTRS' => $entityAttrs)
-		);
+		$arResult['DEAL'][$ID]['EDIT'] =
+			(in_array($ID, $restrictedItemIds))
+				? false
+				: CCrmDeal::CheckUpdatePermission(
+					$ID,
+					$userPermissions,
+					$categoryID,
+					['ENTITY_ATTRS' => $entityAttrs]
+				)
+		;
 		$arResult['DEAL'][$ID]['DELETE'] = CCrmDeal::CheckDeletePermission(
 			$ID,
 			$userPermissions,

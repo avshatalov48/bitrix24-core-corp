@@ -330,3 +330,5 @@ $arResult['JS_DATA']['duration'] = $helper->detectUnitType($matchWorkTime, $temp
 $arResult['JS_DATA']['auxData'] = $arResult['AUX_DATA'];
 $arResult['JS_DATA']['currentUser'] = $users[$arParams['USER_ID']];
 $arResult['JS_DATA']['taskLimitExceeded'] = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
+$arResult['JS_DATA']['templateSubtaskLimitExceeded'] = $arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'];
+$arResult['JS_DATA']['templateTaskRecurrentLimitExceeded'] = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];

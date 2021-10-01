@@ -27,3 +27,6 @@ $MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_TITLE'] = 'В данной папк�
 $MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_CREATE'] = 'Создать файл';
 $MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_UPLOAD'] = 'Загрузить файл';
 $MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_TITLE_FOR_FILTERED'] = 'Не удалось найти документы по данному запросу';
+$MESS['DISK_DOCUMENTS_ACT_DELETE_TITLE'] = 'Подтверждение удаления';
+$MESS['DISK_DOCUMENTS_ACT_DELETE_MESSAGE'] = 'Вы хотите переместить документ "#NAME#" в корзину?';
+$MESS['DISK_DOCUMENTS_ACT_DELETE_OK_BUTTON'] = 'Переместить в корзину';

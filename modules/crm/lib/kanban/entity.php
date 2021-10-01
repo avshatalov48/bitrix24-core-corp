@@ -1687,23 +1687,6 @@ abstract class Entity
 		);
 		$dateFormat = $dateFormats[LANGUAGE_ID];
 
-		$itemFields = [];
-
-		$fields = $this->getAdditionalFields(true);
-		foreach ($fields as $fieldName => $field)
-		{
-			if (mb_strpos($fieldName, 'UF_') !== 0)
-			{
-				$itemFields[] = [
-					'code' => $fieldName,
-					'html' => 'false',
-					'title' => $field['title'],
-					'type' => $field['type'],
-					'value' => HtmlFilter::encode($data[$fieldName])
-				];
-			}
-		}
-
 		return [
 			'id'=> $data['ID'],
 			'data' => [
@@ -1721,7 +1704,7 @@ abstract class Entity
 					? \FormatDate($dateFormat, $data['DATE_UNIX'], $timeFull)
 					: \FormatDate('x', $data['DATE_UNIX'], $timeFull)
 				)),
-				'fields' => $itemFields
+				'categoryId' => $data['CATEGORY_ID'] ?? null,
 			],
 			'rawData' => $data // @todo get only visible values for current user
 		];

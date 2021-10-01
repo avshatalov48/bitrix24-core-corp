@@ -13,6 +13,7 @@ use Bitrix\Disk\User;
 use Bitrix\Main\Application;
 use Bitrix\Main\Context;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\ActionFilter\ContentType;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\ActionFilter\HttpMethod;
@@ -79,6 +80,18 @@ final class OnlyOffice extends Engine\Controller
 				}
 			),
 		];
+	}
+
+	protected function processBeforeAction(Action $action): bool
+	{
+		if (!Document\OnlyOffice\OnlyOfficeHandler::isEnabled())
+		{
+			$this->addError(new Error('OnlyOffice handler is not configured.'));
+
+			return false;
+		}
+
+		return parent::processBeforeAction($action);
 	}
 
 	public function configureActions()
@@ -250,24 +263,27 @@ final class OnlyOffice extends Engine\Controller
 		if ($session->isEdit())
 		{
 			$countActiveSessions = $session->countActiveSessions();
-			if ($countActiveSessions <= 1)
+			$documentInfo = $session->getInfo();
+			if ($countActiveSessions <= 1 && $session->isActive())
 			{
-				if ($session->isActive() && $session->getInfo())
+				if ($documentInfo)
 				{
-					$session->getInfo()->setUserCount(0);
+					$documentInfo->setUserCount(0);
 				}
-				//we have to keep at least one session with hash because OnlyOffice will use
-				//it when invokes callbackHandler to inform us.
-
-				return [
-					'mode' => 'edit',
-					'file' => [
-						'id' => $session->getObject()->getId(),
-						'name' => $session->getObject()->getName(),
-					],
-					'activeSessions' => $countActiveSessions,
-				];
 			}
+
+			return [
+				'mode' => 'edit',
+				'file' => [
+					'id' => $session->getObject()->getId(),
+					'name' => $session->getObject()->getName(),
+				],
+				'documentSessionInfo' => [
+					'contentStatus' => $documentInfo? $documentInfo->getContentStatus() : null,
+					'isFinished' => $documentInfo && $documentInfo->isFinished(),
+				],
+				'activeSessions' => $countActiveSessions,
+			];
 		}
 
 		return [
@@ -323,6 +339,10 @@ final class OnlyOffice extends Engine\Controller
 		}
 
 		$this->processStatusToInfoModel($documentSession, $status);
+		if ($documentSession->getInfo() && $documentSession->getInfo()->wasFinallySaved())
+		{
+			$this->sendEventToDocumentChannel($documentSession);
+		}
 
 		if ($this->getErrors())
 		{
@@ -540,6 +560,28 @@ final class OnlyOffice extends Engine\Controller
 		}
 
 		return false;
+	}
+
+	protected function sendEventToDocumentChannel(Models\DocumentSession $documentSession): void
+	{
+		$documentInfo = $documentSession->getInfo();
+		$objectEvent = $documentSession->getObject()->makeObjectEvent(
+			'onlyoffice',
+			[
+				'object' => [
+					'id' => $documentSession->getObjectId(),
+				],
+				'documentSession' => [
+					'hash' => $documentSession->getExternalHash(),
+				],
+				'documentSessionInfo' => [
+					'contentStatus' => $documentInfo->getContentStatus(),
+					'wasFinallySaved' => $documentInfo->wasFinallySaved(),
+				],
+			]
+		);
+
+		$objectEvent->sendToObjectChannel();
 	}
 
 	protected function sendEventToParticipants(string $documentSessionHash, string $event): void

@@ -5,8 +5,16 @@ namespace Bitrix\Crm\Order\EventsHandler;
 use Bitrix\Main;
 use Bitrix\Crm;
 
+/**
+ * Class Shipment
+ * @package Bitrix\Crm\Order\EventsHandler
+ * @internal
+ */
 final class Shipment
 {
+	/**
+	 * @param Main\Event $event
+	 */
 	public static function OnSaleShipmentEntitySaved(Main\Event $event)
 	{
 		/** @var Crm\Order\Shipment $shipment */

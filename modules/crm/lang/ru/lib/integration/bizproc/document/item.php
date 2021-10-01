@@ -1,3 +1,5 @@
 <?php
 
 $MESS['CRM_BP_DOCUMENT_ITEM_FIELD_CONTACTS'] = 'Контакты';
+$MESS['CRM_ENTITY_EXISTENCE_ERROR'] = 'Не существует документа с id: "#DOCUMENT_ID#"';
+$MESS['CRM_BP_DOCUMENT_ITEM_FIELD_IS_MANUAL_OPPORTUNITY'] = 'Ручной расчет суммы';

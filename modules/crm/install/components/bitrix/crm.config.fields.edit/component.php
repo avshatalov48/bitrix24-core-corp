@@ -84,12 +84,32 @@ $arResult['LANGUAGES'] = $arLangs;
 $bVarsFromForm = false;
 $arResult['USE_MULTI_LANG_LABEL'] = !$arResult['NEW_FIELD'];
 
+$ufAddRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getUserFieldAddRestriction();
+$resourceBookingRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getResourceBookingRestriction();
+$hasRestrictions = false;
+if ($arResult['NEW_FIELD'] && $ufAddRestriction->isExceeded((int)CCrmOwnerType::ResolveIDByUFEntityID($arResult['ENTITY_ID'])))
+{
+	$hasRestrictions = true;
+	$arResult['RESTRICTION_CALLBACK'] = $ufAddRestriction->prepareInfoHelperScript();
+}
+if (!$hasRestrictions && $arResult['NEW_FIELD'] && $_POST['USER_TYPE_ID'] === 'resourcebooking' && !$resourceBookingRestriction->hasPermission())
+{
+	$hasRestrictions = true;
+	$arResult['RESTRICTION_CALLBACK'] = $resourceBookingRestriction->prepareInfoHelperScript();
+}
+
 if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 {
 	//When Save or Apply buttons was pressed
 	if(isset($_POST['save']) || isset($_POST['apply']))
 	{
 		$strError = '';
+
+		if ($hasRestrictions)
+		{
+			\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+			$strError .= \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR');
+		}
 
 		//Gather fields for update
 		$arField = array(

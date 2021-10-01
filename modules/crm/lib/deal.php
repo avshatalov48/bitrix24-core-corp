@@ -18,6 +18,22 @@ use Bitrix\Main\Entity\ReferenceField;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class DealTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Deal_Query query()
+ * @method static EO_Deal_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Deal_Result getById($id)
+ * @method static EO_Deal_Result getList(array $parameters = array())
+ * @method static EO_Deal_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_Deal createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_Deal_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_Deal wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_Deal_Collection wakeUpCollection($rows)
+ */
 class DealTable extends Main\ORM\Data\DataManager
 {
 	public static function getTableName()

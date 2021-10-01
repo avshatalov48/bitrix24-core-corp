@@ -42,7 +42,7 @@ final class Agent
 			$commandList[] = $row['COMMAND'];
 		}
 
-		foreach ([Support24::COMMAND_SUPPORT24, Support24::COMMAND_NETWORK_SESSION, Support24::COMMAND_MENU] as $command)
+		foreach (Support24::getCommandList() as $command => $commandParam)
 		{
 			if (!in_array($command, $commandList))
 			{
@@ -50,9 +50,9 @@ final class Agent
 					'MODULE_ID' => Support24::MODULE_ID,
 					'BOT_ID' => $botId,
 					'COMMAND' => $command,
-					'HIDDEN' => 'Y',
-					'CLASS' => Support24::class,
-					'METHOD_COMMAND_ADD' => 'onCommandAdd'
+					'HIDDEN' => $commandParam['visible'] === true ? 'N' : 'Y',
+					'CLASS' => $commandParam['class'] ?? Support24::class,
+					'METHOD_COMMAND_ADD' => $commandParam['handler'] ?? 'onCommandAdd'
 				]);
 			}
 		}
@@ -100,7 +100,7 @@ final class Agent
 			$commandList[] = $row['COMMAND'];
 		}
 
-		foreach ([SupportBox::COMMAND_NETWORK_SESSION, SupportBox::COMMAND_ACTIVATE] as $command)
+		foreach (SupportBox::getCommandList() as $command => $commandParam)
 		{
 			if (!in_array($command, $commandList))
 			{
@@ -108,9 +108,9 @@ final class Agent
 					'MODULE_ID' => SupportBox::MODULE_ID,
 					'BOT_ID' => $botId,
 					'COMMAND' => $command,
-					'HIDDEN' => 'Y',
-					'CLASS' => SupportBox::class,
-					'METHOD_COMMAND_ADD' => 'onCommandAdd'
+					'HIDDEN' => $commandParam['visible'] === true ? 'N' : 'Y',
+					'CLASS' => $commandParam['class'] ?? SupportBox::class,
+					'METHOD_COMMAND_ADD' => $commandParam['handler'] ?? 'onCommandAdd'
 				]);
 			}
 		}

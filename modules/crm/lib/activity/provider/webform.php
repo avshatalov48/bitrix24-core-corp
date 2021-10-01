@@ -123,7 +123,7 @@ class WebForm extends Base
 				<span class="crm-task-list-form-field">%values%</span>
 			</label>
 		';
-		$fieldsString = WebFormResult::formatFieldsByTemplate($fields, $fieldTemplate, '%value%<br>', '<br>%value%');
+		$fieldsString = WebFormResult::formatFieldsByTemplate($fields, $fieldTemplate, '%value%<br>', '%value%<br>');
 
 		$add = '';
 		$link = htmlspecialcharsbx($activity['PROVIDER_PARAMS']['FORM']['LINK']);

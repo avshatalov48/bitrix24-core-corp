@@ -71,15 +71,20 @@ class CommentEntry extends TimelineEntry
 	 */
 	private static function attachFiles($ID, array $attachment)
 	{
+		global $USER_FIELD_MANAGER;
 		$ID = (int)$ID;
 		if($ID <= 0)
 		{
 			return;
 		}
 
-		$GLOBALS['USER_FIELD_MANAGER']->Update(CommentController::UF_FIELD_NAME, $ID, array(
-			CommentController::UF_COMMENT_FILE_NAME => $attachment
-		));
+		$ufValues = [
+			CommentController::UF_COMMENT_FILE_NAME => $attachment,
+		];
+		if ($USER_FIELD_MANAGER->CheckFields(CommentController::UF_FIELD_NAME, $ID, $ufValues))
+		{
+			$USER_FIELD_MANAGER->Update(CommentController::UF_FIELD_NAME, $ID, $ufValues);
+		}
 	}
 	public static function rebind($entityTypeID, $oldEntityID, $newEntityID)
 	{

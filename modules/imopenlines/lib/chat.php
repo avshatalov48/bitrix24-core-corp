@@ -2358,21 +2358,6 @@ class Chat
 
 			if (!empty($users))
 			{
-				// TODO remove this after release 21.500.0
-				foreach ($updateDate as $name => $value)
-				{
-					Pull\Event::add($users, Array(
-						'module_id' => 'im',
-						'command' => 'chatUpdateParam',
-						'params' => Array(
-							'chatId' => (int)$this->chat['ID'],
-							'name' => mb_strtolower($name),
-							'value' => $value
-						),
-						'extra' =>  \Bitrix\Im\Common::getPullExtra()
-					));
-				}
-
 				if (isset($updateDate['NAME']))
 				{
 					$updateDate['NAME'] = htmlspecialcharsbx($updateDate['NAME']);

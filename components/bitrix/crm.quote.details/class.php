@@ -245,9 +245,11 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		return $printTemplates;
 	}
 
-	protected function initializeConversionWizard(): ?\Bitrix\Crm\Conversion\EntityConversionWizard
+	protected function initializeConversionWizardFromRequest(
+		\Bitrix\Main\Request $request
+	): ?\Bitrix\Crm\Conversion\EntityConversionWizard
 	{
-		$dealId = (int)$this->request->get(DealConversionWizard::QUERY_PARAM_SRC_ID);
+		$dealId = (int)$request->get(DealConversionWizard::QUERY_PARAM_SRC_ID);
 		if ($dealId <= 0)
 		{
 			return null;
@@ -948,7 +950,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 						$this->item->bindContacts($bindings);
 					}
 				}
-				
+
 				return;
 			}
 		}

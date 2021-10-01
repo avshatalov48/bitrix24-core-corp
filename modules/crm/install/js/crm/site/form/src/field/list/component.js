@@ -23,7 +23,7 @@ const ItemSelector = {
 						v-html="field.formatMoney(item.price + item.discount)"
 					></div>
 					<div class="b24-form-control-list-selector-item-price-current"
-						v-if="item.price"
+						v-if="item.price || item.price === 0"
 						v-html="field.formatMoney(item.price)"
 					></div> 
 				</div>

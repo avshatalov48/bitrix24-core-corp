@@ -876,6 +876,12 @@ export class Manager
 		Manager.openHelper(event, 'redirect=detail&code=13651476', 'crmstore_how_works');
 	}
 
+	static openHowCrmFormsWorks(event, url)
+	{
+		url = url || 'redirect=detail&code=13774372';
+		Manager.openHelper(event, url, 'crmforms_how_works');
+	}
+
 	static openHowSmsWorks(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=9680407', 'sms_connect');
@@ -919,6 +925,11 @@ export class Manager
 	static openHowToConfigBusinessRuCashBox(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=12806492', 'cashbox_connect');
+	}
+
+	static openHowToConfigRobokassaCashBox(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=12849128', 'cashbox_connect');
 	}
 
 	static openHowToSetupCheckboxCashBoxAndKeys(event)

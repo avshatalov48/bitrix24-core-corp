@@ -877,6 +877,32 @@ abstract class EntityMerger
 			$targID = (int)$targID;
 		}
 
+		if ($this->isPermissionCheckEnabled() && !$this->isAdminUser())
+		{
+			$userPermissions = $this->getUserPermissions();
+			foreach($seedIDs as $seedID)
+			{
+				if (!$this->checkEntityReadPermission($seedID, $userPermissions))
+				{
+					throw new EntityMergerException(
+						$this->entityTypeID,
+						$seedID,
+						self::ROLE_SEED,
+						EntityMergerException::READ_DENIED
+					);
+				}
+			}
+			if (!$this->checkEntityReadPermission($targID, $userPermissions))
+			{
+				throw new EntityMergerException(
+					$this->entityTypeID,
+					$targID,
+					self::ROLE_TARG,
+					EntityMergerException::READ_DENIED
+				);
+			}
+		}
+
 		$results = array();
 
 		$entityFieldInfos = $this->getEntityFieldsInfo();

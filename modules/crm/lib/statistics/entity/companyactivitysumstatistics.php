@@ -5,6 +5,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Crm;
 
+/**
+ * Class CompanyActivitySumStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CompanyActivitySumStatistics_Query query()
+ * @method static EO_CompanyActivitySumStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CompanyActivitySumStatistics_Result getById($id)
+ * @method static EO_CompanyActivitySumStatistics_Result getList(array $parameters = array())
+ * @method static EO_CompanyActivitySumStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyActivitySumStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyActivitySumStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyActivitySumStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyActivitySumStatistics_Collection wakeUpCollection($rows)
+ */
 class CompanyActivitySumStatisticsTable  extends Entity\DataManager
 {
 	/**

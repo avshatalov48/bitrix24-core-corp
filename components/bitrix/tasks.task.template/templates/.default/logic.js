@@ -26,6 +26,7 @@ BX.namespace('Tasks.Component');
 				this.vars.parentType = ((!parseInt(this.option('template').BASE_TEMPLATE_ID) && parseInt(this.option('template').PARENT_ID))? 'task' : 'template');
 				this.vars.currentLock = false;
 				this.vars.taskLimitExceeded = this.option('taskLimitExceeded');
+				this.vars.templateTaskRecurrentLimitExceeded = this.option('templateTaskRecurrentLimitExceeded');
 
 				this.analyticsData = {};
 
@@ -336,7 +337,15 @@ BX.namespace('Tasks.Component');
 						flagNode.value = node.checked ? yesValue : noValue;
 					}
 
-					if (flagName === 'REPLICATE' && node.checked && this.vars.taskLimitExceeded)
+					if (
+						flagName === 'REPLICATE'
+						&& node.checked
+						&&
+						(
+							this.vars.taskLimitExceeded
+							|| this.vars.templateTaskRecurrentLimitExceeded
+						)
+					)
 					{
 						flagNode.value = 'N';
 						node.checked = false;
@@ -352,7 +361,20 @@ BX.namespace('Tasks.Component');
 			{
 				if (name == 'REPLICATE')
 				{
-					if (!this.vars.taskLimitExceeded || (this.vars.taskLimitExceeded && !value))
+					if (
+						(
+							!this.vars.taskLimitExceeded
+							&& !this.vars.templateTaskRecurrentLimitExceeded
+						)
+						||
+						(
+							(
+								this.vars.taskLimitExceeded
+								|| this.vars.templateTaskRecurrentLimitExceeded
+							)
+							&& !value
+						)
+					)
 					{
 						BX.Tasks.Util.fadeSlideToggleByClass(this.control('replication-panel'));
 						this.solveFieldOpLock('REPLICATE', value);
@@ -797,7 +819,7 @@ BX.namespace('Tasks.Component');
 				}
 
 				this.vars.realValue = value;
-				
+
 				this.fireEvent('change', [value]);
 			},
 

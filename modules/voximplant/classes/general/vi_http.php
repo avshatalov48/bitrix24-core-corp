@@ -933,13 +933,16 @@ class CVoxImplantHttp
 			$userId = (int)$USER->getId();
 		}
 
+		$account = new CVoxImplantAccount();
+		$accountLang = $account->GetAccountLang(false);
+
 		return $this->Query(
 			"saveConsent",
 			[
 				"USER_ID" => $userId,
 				"IP_ADDRESS" => $ipAddress,
 				"USER_AGENT" => $userAgent,
-				"CONSENT_TYPE" => "TOS_RU"
+				"CONSENT_TYPE" => $accountLang === 'ru' ? "TOS_RU" : "TOS_EN"
 			],
 			['returnArray' => true]
 		);
@@ -1089,6 +1092,18 @@ class CVoxImplantHttp
 			return $publicUrl;
 		else
 			return (CMain::IsHTTPS() ? "https" : "http")."://".$_SERVER['SERVER_NAME'].(in_array($_SERVER['SERVER_PORT'], Array(80, 443))?'':':'.$_SERVER['SERVER_PORT']);
+	}
+
+	public function GetSipRegistrationList(array $params = [])
+	{
+		$query = $this->Query('GetSipRegistrationList', $params);
+		if (isset($query->error))
+		{
+			$this->error = new CVoxImplantError(__METHOD__, $query->error->code, $query->error->msg);
+			return false;
+		}
+
+		return $query;
 	}
 }
 ?>

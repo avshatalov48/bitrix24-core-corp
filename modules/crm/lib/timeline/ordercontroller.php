@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Crm\Order\OrderStatus;
 use Bitrix\Crm\Order;
+use Bitrix\Crm\Order\OrderStatus;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -14,21 +14,6 @@ Loc::loadMessages(__FILE__);
  */
 class OrderController extends EntityController
 {
-	/** @var OrderController|null */
-	protected static $instance = null;
-
-	/**
-	 * @return OrderController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new OrderController();
-		}
-		return self::$instance;
-	}
-
 	/**
 	 * @return int
 	 */

@@ -519,445 +519,7 @@ this.BX = this.BX || {};
 	  return CheckListItemFields;
 	}();
 
-	function _templateObject44() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item-wrapper\" id=\"", "\">\n\t\t\t\t<div class=\"mobile-task-checklist-item ", " ", "\"\n\t\t\t\t\t onclick=\"", "\">\n\t\t\t\t\t<div class=\"mobile-task-checklist-item-checker\" id=\"progress_", "\"\n\t\t\t\t\t\t onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"mobile-task-checklist-item-title\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-number\" style=\"display: none\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"mobile-task-checklist-item-controls\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"mobile-task-checklist\" id=\"subItems_", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject44 = function _templateObject44() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject43() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item-setting\" onclick=\"", "\"></div>\n\t\t"]);
-
-	  _templateObject43 = function _templateObject43() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject42() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-section\" id=\"", "\" data-role=\"mobile-task-checklist\">\n\t\t\t\t<div class=\"mobile-task-checklist-head\">\n\t\t\t\t\t<div class=\"mobile-task-checklist-counter\">\n\t\t\t\t\t\t<div class=\"mobile-task-checklist-counter-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"mobile-task-checklist-head-title\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"mobile-task-checklist-controls\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"mobile-task-checklist-visible\"\n\t\t\t\t\t\t\t onclick=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"mobile-task-checklist-wrapper\">\n\t\t\t\t\t<div class=\"mobile-task-checklist\" id=\"subItems_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject42 = function _templateObject42() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject41() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-add-button\" onclick=\"", "\">\n\t\t\t\t<div class=\"mobile-task-checklist-add-text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject41 = function _templateObject41() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject40() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-setting\" onclick=\"", "\"></div>\n\t\t"]);
-
-	  _templateObject40 = function _templateObject40() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject39() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item-param\" id=\"attachments_", "\" onclick=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject39 = function _templateObject39() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject38() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item mobile-task-checklist-item-edit-mode ", "\">\n\t\t\t\t<div class=\"mobile-task-checklist-item-checker\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"mobile-task-checklist-item-title\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-number\" style=\"display: none\">", "</div>\n\t\t\t\t\t<input class=\"mobile-task-checklist-item-input\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t   placeholder=\"", "\"\n\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t   oninput=\"", "\"\n\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject38 = function _templateObject38() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject37() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"mobile-task-checklist-head-title mobile-task-checklist-item-edit-mode\">\n\t\t\t\t\t<input class=\"mobile-task-checklist-item-input\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t   oninput=\"", "\"\n\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject37 = function _templateObject37() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject36() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item-param\" id=\"attachments_", "\" onclick=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject36 = function _templateObject36() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject35() {
-	  var data = babelHelpers.taggedTemplateLiteral(["+ ", ""]);
-
-	  _templateObject35 = function _templateObject35() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject34() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item\" id=\"", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-inner droppable ", "\"\n\t\t\t\t\t onmousedown=\"", "\" onmouseup=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"/>\n\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-number\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-description\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-additional-block\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-actions-block\">\n\t\t\t\t\t\t<input class=\"tasks-checklist-item-group-checkbox\" id=\"select_", "\" type=\"checkbox\"\n\t\t\t\t\t\t\t   onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-attachment\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-list\" id=\"attachments_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-sublist-items-wrapper\" id=\"subItems_", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject34 = function _templateObject34() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject33() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-checklist-item-dragndrop\"></div>"]);
-
-	  _templateObject33 = function _templateObject33() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject32() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<button class=\"tasks-checklist-item-remove\" onclick=\"", "\"/>"]);
-
-	  _templateObject32 = function _templateObject32() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject31() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-wrapper tasks-checklist-item-group-editor-collapse\" id=\"", "\">\n\t\t\t\t<div class=\"tasks-checklist-header-wrapper droppable\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-header-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-header-inner\">\n\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-name\"\n\t\t\t\t\t\t\t\t onmousedown=\"", "\"\n\t\t\t\t\t\t\t\t onmouseup=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-name-edit-btn\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-progress-block\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-header-actions\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-checklist-action-collapse-btn collapsed\" onclick=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-items-wrapper\">\n\t\t\t\t\t<div class=\"tasks-checklist-items-list\" id=\"subItems_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject31 = function _templateObject31() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject30() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a class=\"tasks-checklist-item-remove-btn\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t"]);
-
-	  _templateObject30 = function _templateObject30() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject29() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-action-group-btn\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject29 = function _templateObject29() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject28() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a class=\"tasks-checklist-item-add-btn\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t"]);
-
-	  _templateObject28 = function _templateObject28() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject27() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-checklist-wrapper-dragndrop\"></div>"]);
-
-	  _templateObject27 = function _templateObject27() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject26() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-action-complete-all-btn\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject26 = function _templateObject26() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject25() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-checklist-items-list-actions droppable\"></div>"]);
-
-	  _templateObject25 = function _templateObject25() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject24() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-task-root\">\n\t\t\t\t<div id=\"subItems_", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject24 = function _templateObject24() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject23() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-item-attachment-file\" id=\"disk-attach-", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-name\">\n\t\t\t\t\t\t<label class=\"tasks-checklist-item-attachment-file-name-text\" title=\"", "\">", "</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-size\">\n\t\t\t\t\t\t<label class=\"tasks-checklist-item-attachment-file-size-text\">", "</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject23 = function _templateObject23() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject22() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"files_chooser\">\n\t\t\t\t<div id=\"diskuf-selectdialog-", "\" class=\"diskuf-files-entity diskuf-selectdialog bx-disk\">\n\t\t\t\t\t<div class=\"diskuf-files-block tasks-checklist-loader-files\">\n\t\t\t\t\t\t<div class=\"diskuf-placeholder\">\n\t\t\t\t\t\t\t<table class=\"files-list\">\n\t\t\t\t\t\t\t\t<tbody class=\"diskuf-placeholder-tbody\"></tbody>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"diskuf-extended\" style=\"display: block\">\n\t\t\t\t\t\t<input type=\"hidden\" name=\"", "[", "][UF_CHECKLIST_FILES][]\" value=\"\"/>\n\t\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t\t<label for=\"file_loader_", "\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t<input class=\"diskuf-fileUploader\" id=\"file_loader_", "\" type=\"file\"\n\t\t\t\t\t\t\t\t   multiple=\"multiple\" size=\"1\" style=\"display: none\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"diskuf-extended-item\" onclick=\"", "\">\n\t\t\t\t\t\t\t<span class=\"diskuf-selector-link\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"diskuf-extended-item\" onclick=\"", "\">\n\t\t\t\t\t\t\t<span class=\"diskuf-selector-link-cloud\" data-bx-doc-handler=\"gdrive\">\n\t\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject22 = function _templateObject22() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject21() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-attachment-file\" id=\"disk-attach-", "\" data-bx-id=\"", "\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-name\">\n\t\t\t\t\t<label class=\"tasks-checklist-item-attachment-file-name-text\" title=\"", "\">", "</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-size\">\n\t\t\t\t\t<label class=\"tasks-checklist-item-attachment-file-size-text\">", "</label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject21 = function _templateObject21() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject20() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-cover\">\n\t\t\t\t\t<div class=\"ui-icon ui-icon-file-", "\"><i></i></div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-remove\" onclick=\"", "\"></div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject20 = function _templateObject20() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject19() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-cover\" style=\"background-image: url(", ")\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-remove\" onclick=\"", "\"></div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject19 = function _templateObject19() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject18() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-remove\"\n\t\t\t\t\t\t onclick=\"", "\"></div>\n\t\t\t\t"]);
-
-	  _templateObject18 = function _templateObject18() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject17() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject17 = function _templateObject17() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject16() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div id=\"request_", "\">\n\t\t\t\t\t<input type=\"hidden\" id=\"NODE_ID\" name=\"", "[NODE_ID]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"PARENT_NODE_ID\" name=\"", "[PARENT_NODE_ID]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"ID\" name=\"", "[ID]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"COPIED_ID\" name=\"", "[COPIED_ID]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"PARENT_ID\" name=\"", "[PARENT_ID]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"TITLE\" name=\"", "[TITLE]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"SORT_INDEX\" name=\"", "[SORT_INDEX]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"IS_COMPLETE\" name=\"", "[IS_COMPLETE]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"IS_IMPORTANT\" name=\"", "[IS_IMPORTANT]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"MODIFY\" name=\"", "[ACTION][MODIFY]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"REMOVE\" name=\"", "[ACTION][REMOVE]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"TOGGLE\" name=\"", "[ACTION][TOGGLE]\" value=\"", "\"/>\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject16 = function _templateObject16() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject15() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-important\" onclick=\"", "\"></div>\n\t\t"]);
-
-	  _templateObject15 = function _templateObject15() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject14() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-item-editor-panel-container\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject14 = function _templateObject14() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject13() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-inner tasks-checklist-item-new ", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"/>\n\t\t\t\t\t\t</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   placeholder=\"", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject13 = function _templateObject13() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject12() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-header-name tasks-checklist-header-name-edit-mode\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon ui-ctl-xs ui-ctl-no-padding ui-ctl-underline \n\t\t\t\t\t\t\t\ttasks-checklist-header-name-editor\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject12 = function _templateObject12() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject11() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject11 = function _templateObject11() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject10() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-editor-panel ", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject10 = function _templateObject10() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject9() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-checklist-item-editor-panel-separator\"></div>"]);
-
-	  _templateObject9 = function _templateObject9() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t", "\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-tabin\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-tabout\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-separator\"></div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-important\n\t\t\t\t", "\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-text\">", "</span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-separator\"></div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-checklist\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-text\">", "</span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-separator\"></div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-remove\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-attachment\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["+ ", ""]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["+ ", ""]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-auditor\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-text\">", "</span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-separator\"></div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-accomplice\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-text\">", "</span>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["+ ", ""]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-checklist-notification-balloon-message-container\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-notification-balloon-avatar\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<span class=\"tasks-checklist-notification-balloon-message\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<img class=\"tasks-checklist-notification-balloon-avatar-img\" src=\"", "\" alt=\"\"/>\n\t\t\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24, _templateObject25, _templateObject26, _templateObject27, _templateObject28, _templateObject29, _templateObject30, _templateObject31, _templateObject32, _templateObject33, _templateObject34, _templateObject35, _templateObject36, _templateObject37, _templateObject38, _templateObject39, _templateObject40, _templateObject41, _templateObject42, _templateObject43, _templateObject44;
 
 	var CheckListItem = /*#__PURE__*/function (_CompositeTreeItem) {
 	  babelHelpers.inherits(CheckListItem, _CompositeTreeItem);
@@ -1518,10 +1080,10 @@ this.BX = this.BX || {};
 	            var image = '';
 
 	            if (data.avatar) {
-	              image = main_core.Tag.render(_templateObject(), data.avatar);
+	              image = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<img class=\"tasks-checklist-notification-balloon-avatar-img\" src=\"", "\" alt=\"\"/>\n\t\t\t\t\t"])), data.avatar);
 	            }
 
-	            content = main_core.Tag.render(_templateObject2(), image, main_core.Loc.getMessage("TASKS_CHECKLIST_NOTIFICATION_BALLOON_ACTION_".concat(action)));
+	            content = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-checklist-notification-balloon-message-container\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-notification-balloon-avatar\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<span class=\"tasks-checklist-notification-balloon-message\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), image, main_core.Loc.getMessage("TASKS_CHECKLIST_NOTIFICATION_BALLOON_ACTION_".concat(action)));
 	            break;
 	          }
 
@@ -1568,7 +1130,7 @@ this.BX = this.BX || {};
 	      var selectMode = this.checkSelectedItems();
 	      var popupMenuItems = [];
 	      var toNewCheckListMenuItem = {
-	        text: main_core.Tag.message(_templateObject3(), 'TASKS_CHECKLIST_PANEL_TO_ANOTHER_CHECKLIST_POPUP_NEW_CHECKLIST'),
+	        text: main_core.Tag.message(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["+ ", ""])), 'TASKS_CHECKLIST_PANEL_TO_ANOTHER_CHECKLIST_POPUP_NEW_CHECKLIST'),
 	        onclick: function onclick(event, item) {
 	          item.getMenuWindow().close();
 
@@ -1757,6 +1319,7 @@ this.BX = this.BX || {};
 	      var typeFunction = typeFunctionMap[memberType] || typeFunctionMap.auditor;
 	      this.isSelectorLoading = true;
 	      main_core.Runtime.loadExtension('ui.entity-selector').then(function (exports) {
+	        console.log(_this6.optionManager.isNetworkEnabled);
 	        var Dialog = exports.Dialog;
 	        var dialog = new Dialog({
 	          targetNode: e.target,
@@ -1768,7 +1331,7 @@ this.BX = this.BX || {};
 	              inviteGuestLink: false,
 	              inviteEmployeeLink: false,
 	              emailUsers: true,
-	              networkUsers: true,
+	              networkUsers: _this6.optionManager.isNetworkEnabled,
 	              extranetUsers: true
 	            }
 	          }],
@@ -1851,11 +1414,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getPanelBodyLayout",
 	    value: function getPanelBodyLayout() {
-	      var membersLayout = main_core.Tag.render(_templateObject4(), this.onAddAuditorClick.bind(this), main_core.Tag.message(_templateObject5(), 'TASKS_CHECKLIST_PANEL_AUDITOR'), this.onAddAccompliceClick.bind(this), main_core.Tag.message(_templateObject6(), 'TASKS_CHECKLIST_PANEL_ACCOMPLICE'));
-	      var attachmentButtonLayout = main_core.Tag.render(_templateObject7(), this.onUploadAttachmentClick.bind(this));
-	      var itemsActionButtonsLayout = main_core.Tag.render(_templateObject8(), this.checkSelectedItems() ? '' : attachmentButtonLayout, this.onTabInClick.bind(this), this.onTabOutClick.bind(this), this.fields.getIsImportant() ? ' tasks-checklist-item-editor-panel-btn-important-selected' : '', this.onImportantClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_PANEL_IMPORTANT'), this.onToAnotherCheckListClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_PANEL_TO_ANOTHER_CHECKLIST'), this.onDeleteClick.bind(this));
-	      var separator = main_core.Tag.render(_templateObject9());
-	      return main_core.Tag.render(_templateObject10(), this.isTaskRoot() || this.isCheckList() ? 'tasks-checklist-item-editor-group-panel' : '', this.checkCanAddAccomplice() ? membersLayout : '', this.checkCanAddAccomplice() && !this.isCheckList() ? separator : '', !this.isCheckList() ? itemsActionButtonsLayout : '');
+	      var membersLayout = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-auditor\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-text\">", "</span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-separator\"></div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-accomplice\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-text\">", "</span>\n\t\t\t</div>\n\t\t"])), this.onAddAuditorClick.bind(this), main_core.Tag.message(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["+ ", ""])), 'TASKS_CHECKLIST_PANEL_AUDITOR'), this.onAddAccompliceClick.bind(this), main_core.Tag.message(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["+ ", ""])), 'TASKS_CHECKLIST_PANEL_ACCOMPLICE'));
+	      var attachmentButtonLayout = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-attachment\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t</div>\n\t\t"])), this.onUploadAttachmentClick.bind(this));
+	      var itemsActionButtonsLayout = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t", "\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-tabin\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-tabout\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-separator\"></div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-important\n\t\t\t\t", "\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-text\">", "</span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-separator\"></div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-checklist\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-text\">", "</span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-separator\"></div>\n\t\t\t<div class=\"tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-remove\" onclick=\"", "\">\n\t\t\t\t<span class=\"tasks-checklist-item-editor-panel-icon\"></span>\n\t\t\t</div>\n\t\t"])), this.checkSelectedItems() ? '' : attachmentButtonLayout, this.onTabInClick.bind(this), this.onTabOutClick.bind(this), this.fields.getIsImportant() ? ' tasks-checklist-item-editor-panel-btn-important-selected' : '', this.onImportantClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_PANEL_IMPORTANT'), this.onToAnotherCheckListClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_PANEL_TO_ANOTHER_CHECKLIST'), this.onDeleteClick.bind(this));
+	      var separator = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-checklist-item-editor-panel-separator\"></div>"])));
+	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-editor-panel ", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.isTaskRoot() || this.isCheckList() ? 'tasks-checklist-item-editor-group-panel' : '', this.checkCanAddAccomplice() ? membersLayout : '', this.checkCanAddAccomplice() && !this.isCheckList() ? separator : '', !this.isCheckList() ? itemsActionButtonsLayout : '');
 	    }
 	  }, {
 	    key: "updateTitle",
@@ -1889,7 +1452,7 @@ this.BX = this.BX || {};
 	      title = title.replace(/(https?:\/\/[^\s]+)/g, function (url) {
 	        return CheckListItem.getLinkLayout(url);
 	      });
-	      return main_core.Tag.render(_templateObject11(), this.getTitleNodeClass(), title);
+	      return main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.getTitleNodeClass(), title);
 	    }
 	  }, {
 	    key: "processMembersFromText",
@@ -2092,7 +1655,7 @@ this.BX = this.BX || {};
 	      var nodeId = this.getNodeId();
 
 	      if (this.isCheckList()) {
-	        return main_core.Tag.render(_templateObject12(), nodeId, this.fields.getTitle(), this.onInputKeyPressed.bind(this), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
+	        return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-header-name tasks-checklist-header-name-edit-mode\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon ui-ctl-xs ui-ctl-no-padding ui-ctl-underline \n\t\t\t\t\t\t\t\ttasks-checklist-header-name-editor\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), nodeId, this.fields.getTitle(), this.onInputKeyPressed.bind(this), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
 	      }
 
 	      var progressBarLayout = new BX.UI.ProgressRound({
@@ -2103,7 +1666,7 @@ this.BX = this.BX || {};
 	        fill: false,
 	        color: BX.UI.ProgressRound.Color.PRIMARY
 	      });
-	      return main_core.Tag.render(_templateObject13(), this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onCompleteButtonClick.bind(this), progressBarLayout.getContainer(), nodeId, main_core.Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER'), this.fields.getTitle(), this.onInputKeyPressed.bind(this), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
+	      return main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-inner tasks-checklist-item-new ", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"/>\n\t\t\t\t\t\t</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   placeholder=\"", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onCompleteButtonClick.bind(this), progressBarLayout.getContainer(), nodeId, main_core.Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER'), this.fields.getTitle(), this.onInputKeyPressed.bind(this), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
 	    }
 	  }, {
 	    key: "showEditorPanel",
@@ -2113,7 +1676,7 @@ this.BX = this.BX || {};
 	      var position = main_core.Dom.getPosition(node);
 
 	      if (!this.panel) {
-	        this.panel = main_core.Tag.render(_templateObject14(), item.getPanelBodyLayout());
+	        this.panel = main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-item-editor-panel-container\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), item.getPanelBodyLayout());
 	        this.panel.style.top = "".concat(position.top, "px");
 	        this.panel.style.left = "".concat(position.left, "px");
 	        this.panel.style.width = "".concat(position.width, "px");
@@ -2354,7 +1917,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getImportantLayout",
 	    value: function getImportantLayout() {
-	      return main_core.Tag.render(_templateObject15(), this.onImportantClick.bind(this));
+	      return main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-important\" onclick=\"", "\"></div>\n\t\t"])), this.onImportantClick.bind(this));
 	    }
 	  }, {
 	    key: "toggleImportant",
@@ -3024,7 +2587,7 @@ this.BX = this.BX || {};
 	        Object.keys(attachments).forEach(function (id) {
 	          attachmentsLayout += "<input type=\"hidden\" id=\"ATTACHMENTS_".concat(id, "\" name=\"").concat(prefix, "[ATTACHMENTS][").concat(id, "]\" value=\"").concat(attachments[id], "\"/>");
 	        });
-	        var requestLayout = main_core.Tag.render(_templateObject16(), nodeId, prefix, nodeId, prefix, this.getParent().getNodeId(), prefix, this.fields.getId(), prefix, this.fields.getCopiedId(), prefix, this.fields.getParentId(), prefix, this.fields.getTitle(), prefix, this.fields.getSortIndex(), prefix, this.fields.getIsComplete(), prefix, this.fields.getIsImportant(), prefix, this.checkCanUpdate(), prefix, this.checkCanRemove(), prefix, this.checkCanToggle(), membersLayout, attachmentsLayout);
+	        var requestLayout = main_core.Tag.render(_templateObject16 || (_templateObject16 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div id=\"request_", "\">\n\t\t\t\t\t<input type=\"hidden\" id=\"NODE_ID\" name=\"", "[NODE_ID]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"PARENT_NODE_ID\" name=\"", "[PARENT_NODE_ID]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"ID\" name=\"", "[ID]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"COPIED_ID\" name=\"", "[COPIED_ID]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"PARENT_ID\" name=\"", "[PARENT_ID]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"TITLE\" name=\"", "[TITLE]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"SORT_INDEX\" name=\"", "[SORT_INDEX]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"IS_COMPLETE\" name=\"", "[IS_COMPLETE]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"IS_IMPORTANT\" name=\"", "[IS_IMPORTANT]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"MODIFY\" name=\"", "[ACTION][MODIFY]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"REMOVE\" name=\"", "[ACTION][REMOVE]\" value=\"", "\"/>\n\t\t\t\t\t<input type=\"hidden\" id=\"TOGGLE\" name=\"", "[ACTION][TOGGLE]\" value=\"", "\"/>\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), nodeId, prefix, nodeId, prefix, this.getParent().getNodeId(), prefix, this.fields.getId(), prefix, this.fields.getCopiedId(), prefix, this.fields.getParentId(), prefix, this.fields.getTitle(), prefix, this.fields.getSortIndex(), prefix, this.fields.getIsComplete(), prefix, this.fields.getIsImportant(), prefix, this.checkCanUpdate(), prefix, this.checkCanRemove(), prefix, this.checkCanToggle(), membersLayout, attachmentsLayout);
 	        main_core.Dom.remove(this.container.querySelector("#request_".concat(nodeId)));
 	        main_core.Dom.append(requestLayout, this.container);
 	      }
@@ -3044,7 +2607,7 @@ this.BX = this.BX || {};
 	      var attachmentsLayout = '';
 
 	      if (optionAttachments && searchId in optionAttachments) {
-	        var attachments = main_core.Tag.render(_templateObject17(), optionAttachments[searchId]);
+	        var attachments = main_core.Tag.render(_templateObject17 || (_templateObject17 = babelHelpers.taggedTemplateLiteral(["", ""])), optionAttachments[searchId]);
 	        var stableAttachments = this.getStableAttachments(optionManager.getStableTreeStructure());
 	        var attachmentsToDelete = [];
 
@@ -3064,7 +2627,7 @@ this.BX = this.BX || {};
 	          var extension = CheckListItem.getFileExtension(attachment.getAttribute('data-bx-extension'));
 	          var extensionClass = "ui-icon-file-".concat(extension);
 	          var iconContainer = attachment.querySelector("#disk-attach-file-".concat(fileId));
-	          var deleteButton = main_core.Tag.render(_templateObject18(), _this16.onDeleteAttachmentClick.bind(_this16, fileId));
+	          var deleteButton = main_core.Tag.render(_templateObject18 || (_templateObject18 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-remove\"\n\t\t\t\t\t\t onclick=\"", "\"></div>\n\t\t\t\t"])), _this16.onDeleteAttachmentClick.bind(_this16, fileId));
 	          var has = Object.prototype.hasOwnProperty;
 
 	          if (!has.call(stableAttachments, fileId)) {
@@ -3123,13 +2686,13 @@ this.BX = this.BX || {};
 	      var img = '';
 
 	      if (viewUrl) {
-	        img = main_core.Tag.render(_templateObject19(), viewUrl, this.onDeleteAttachmentClick.bind(this, id));
+	        img = main_core.Tag.render(_templateObject19 || (_templateObject19 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-cover\" style=\"background-image: url(", ")\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-remove\" onclick=\"", "\"></div>\n\t\t\t\t</div>\n\t\t\t"])), viewUrl, this.onDeleteAttachmentClick.bind(this, id));
 	      } else {
 	        var extension = CheckListItem.getFileExtension(ext);
-	        img = main_core.Tag.render(_templateObject20(), extension, this.onDeleteAttachmentClick.bind(this, id));
+	        img = main_core.Tag.render(_templateObject20 || (_templateObject20 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-cover\">\n\t\t\t\t\t<div class=\"ui-icon ui-icon-file-", "\"><i></i></div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-remove\" onclick=\"", "\"></div>\n\t\t\t\t</div>\n\t\t\t"])), extension, this.onDeleteAttachmentClick.bind(this, id));
 	      }
 
-	      return main_core.Tag.render(_templateObject21(), id, id, img, name, name, size);
+	      return main_core.Tag.render(_templateObject21 || (_templateObject21 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-attachment-file\" id=\"disk-attach-", "\" data-bx-id=\"", "\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-name\">\n\t\t\t\t\t<label class=\"tasks-checklist-item-attachment-file-name-text\" title=\"", "\">", "</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-size\">\n\t\t\t\t\t<label class=\"tasks-checklist-item-attachment-file-size-text\">", "</label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), id, id, img, name, name, size);
 	    }
 	  }, {
 	    key: "onAttachmentsLoaderMenuItemClick",
@@ -3145,7 +2708,7 @@ this.BX = this.BX || {};
 
 	      var nodeId = this.getNodeId();
 	      var prefix = this.optionManager.prefix;
-	      var filesChooser = main_core.Tag.render(_templateObject22(), nodeId, prefix, nodeId, nodeId, this.onAttachmentsLoaderMenuItemClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_FILES_LOADER_POPUP_FROM_COMPUTER'), nodeId, this.onAttachmentsLoaderMenuItemClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_FILES_LOADER_POPUP_FROM_B24'), this.onAttachmentsLoaderMenuItemClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_FILES_LOADER_POPUP_FROM_CLOUD'));
+	      var filesChooser = main_core.Tag.render(_templateObject22 || (_templateObject22 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"files_chooser\">\n\t\t\t\t<div id=\"diskuf-selectdialog-", "\" class=\"diskuf-files-entity diskuf-selectdialog bx-disk\">\n\t\t\t\t\t<div class=\"diskuf-files-block tasks-checklist-loader-files\">\n\t\t\t\t\t\t<div class=\"diskuf-placeholder\">\n\t\t\t\t\t\t\t<table class=\"files-list\">\n\t\t\t\t\t\t\t\t<tbody class=\"diskuf-placeholder-tbody\"></tbody>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"diskuf-extended\" style=\"display: block\">\n\t\t\t\t\t\t<input type=\"hidden\" name=\"", "[", "][UF_CHECKLIST_FILES][]\" value=\"\"/>\n\t\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t\t<label for=\"file_loader_", "\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t<input class=\"diskuf-fileUploader\" id=\"file_loader_", "\" type=\"file\"\n\t\t\t\t\t\t\t\t   multiple=\"multiple\" size=\"1\" style=\"display: none\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"diskuf-extended-item\" onclick=\"", "\">\n\t\t\t\t\t\t\t<span class=\"diskuf-selector-link\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"diskuf-extended-item\" onclick=\"", "\">\n\t\t\t\t\t\t\t<span class=\"diskuf-selector-link-cloud\" data-bx-doc-handler=\"gdrive\">\n\t\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), nodeId, prefix, nodeId, nodeId, this.onAttachmentsLoaderMenuItemClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_FILES_LOADER_POPUP_FROM_COMPUTER'), nodeId, this.onAttachmentsLoaderMenuItemClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_FILES_LOADER_POPUP_FROM_B24'), this.onAttachmentsLoaderMenuItemClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_FILES_LOADER_POPUP_FROM_CLOUD'));
 	      BX.addCustomEvent(filesChooser, 'OnFileUploadSuccess', this.OnFileUploadSuccess.bind(this));
 	      BX.addCustomEvent(filesChooser, 'DiskDLoadFormControllerInit', function (uf) {
 	        uf._onUploadProgress = _this18.onUploadProgress.bind(_this18);
@@ -3171,7 +2734,7 @@ this.BX = this.BX || {};
 	          color: BX.UI.ProgressRound.Color.PRIMARY,
 	          statusType: BX.UI.ProgressRound.Status.INCIRCLE
 	        });
-	        var filePreview = main_core.Tag.render(_templateObject23(), id, myProgress.getContainer(), name, name, size);
+	        var filePreview = main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-item-attachment-file\" id=\"disk-attach-", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-name\">\n\t\t\t\t\t\t<label class=\"tasks-checklist-item-attachment-file-name-text\" title=\"", "\">", "</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-file-size\">\n\t\t\t\t\t\t<label class=\"tasks-checklist-item-attachment-file-size-text\">", "</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), id, myProgress.getContainer(), name, name, size);
 	        this.filesLoaderProgressBars.set(id, myProgress);
 	        main_core.Dom.append(filePreview, this.getAttachmentsContainer());
 	      }
@@ -3233,7 +2796,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getTaskRootLayout",
 	    value: function getTaskRootLayout(children) {
-	      this.container = main_core.Tag.render(_templateObject24(), this.getNodeId(), children);
+	      this.container = main_core.Tag.render(_templateObject24 || (_templateObject24 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-task-root\">\n\t\t\t\t<div id=\"subItems_", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.getNodeId(), children);
 	      return this.container;
 	    }
 	  }, {
@@ -3243,21 +2806,21 @@ this.BX = this.BX || {};
 	      var value = this.fields.getCompletedCount();
 	      var maxValue = this.fields.getTotalCount();
 	      var layouts = {
-	        listActionsPanel: main_core.Tag.render(_templateObject25()),
-	        completeAllButton: main_core.Tag.render(_templateObject26(), this.onCompleteAllButtonClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_COMPLETE_ALL')),
+	        listActionsPanel: main_core.Tag.render(_templateObject25 || (_templateObject25 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-checklist-items-list-actions droppable\"></div>"]))),
+	        completeAllButton: main_core.Tag.render(_templateObject26 || (_templateObject26 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-action-complete-all-btn\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), this.onCompleteAllButtonClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_COMPLETE_ALL')),
 	        groupButton: '',
-	        dndButton: main_core.Tag.render(_templateObject27())
+	        dndButton: main_core.Tag.render(_templateObject27 || (_templateObject27 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-checklist-wrapper-dragndrop\"></div>"])))
 	      };
 
 	      if (this.checkCanAdd()) {
-	        var addButtonLayout = main_core.Tag.render(_templateObject28(), this.onAddCheckListItemClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_ADD_NEW_ITEM'));
-	        var groupButton = main_core.Tag.render(_templateObject29(), this.onGroupButtonClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_GROUP_ACTIONS'));
+	        var addButtonLayout = main_core.Tag.render(_templateObject28 || (_templateObject28 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a class=\"tasks-checklist-item-add-btn\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t"])), this.onAddCheckListItemClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_ADD_NEW_ITEM'));
+	        var groupButton = main_core.Tag.render(_templateObject29 || (_templateObject29 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-action-group-btn\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), this.onGroupButtonClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_GROUP_ACTIONS'));
 	        main_core.Dom.append(addButtonLayout, layouts.listActionsPanel);
 	        layouts.groupButton = groupButton;
 	      }
 
 	      if (this.checkCanRemove()) {
-	        var removeButtonLayout = main_core.Tag.render(_templateObject30(), this.onDeleteClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_DELETE_CHECKLIST'));
+	        var removeButtonLayout = main_core.Tag.render(_templateObject30 || (_templateObject30 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a class=\"tasks-checklist-item-remove-btn\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t"])), this.onDeleteClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_DELETE_CHECKLIST'));
 	        main_core.Dom.append(removeButtonLayout, layouts.listActionsPanel);
 	      }
 
@@ -3275,7 +2838,7 @@ this.BX = this.BX || {};
 	        size: BX.UI.ProgressBar.Size.MEDIUM,
 	        textAfter: CheckListItem.getProgressText(value, maxValue)
 	      });
-	      this.container = main_core.Tag.render(_templateObject31(), nodeId, layouts.dndButton, this.onHeaderMouseDown.bind(this), this.onHeaderMouseUp.bind(this), this.getTitleLayout(), nodeId, this.progress.getContainer(), layouts.completeAllButton, layouts.groupButton, this.onCollapseButtonClick.bind(this), nodeId, children, layouts.listActionsPanel);
+	      this.container = main_core.Tag.render(_templateObject31 || (_templateObject31 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-wrapper tasks-checklist-item-group-editor-collapse\" id=\"", "\">\n\t\t\t\t<div class=\"tasks-checklist-header-wrapper droppable\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-header-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-header-inner\">\n\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-name\"\n\t\t\t\t\t\t\t\t onmousedown=\"", "\"\n\t\t\t\t\t\t\t\t onmouseup=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-name-edit-btn\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-progress-block\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-header-actions\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-checklist-action-collapse-btn collapsed\" onclick=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-items-wrapper\">\n\t\t\t\t\t<div class=\"tasks-checklist-items-list\" id=\"subItems_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), nodeId, layouts.dndButton, this.onHeaderMouseDown.bind(this), this.onHeaderMouseUp.bind(this), this.getTitleLayout(), nodeId, this.progress.getContainer(), layouts.completeAllButton, layouts.groupButton, this.onCollapseButtonClick.bind(this), nodeId, children, layouts.listActionsPanel);
 	      return this.container;
 	    }
 	  }, {
@@ -3283,8 +2846,8 @@ this.BX = this.BX || {};
 	    value: function getCheckListItemLayout(children) {
 	      var nodeId = this.getNodeId();
 	      var layouts = {
-	        deleteButton: main_core.Tag.render(_templateObject32(), this.onDeleteClick.bind(this)),
-	        dndButton: main_core.Tag.render(_templateObject33()),
+	        deleteButton: main_core.Tag.render(_templateObject32 || (_templateObject32 = babelHelpers.taggedTemplateLiteral(["<button class=\"tasks-checklist-item-remove\" onclick=\"", "\"/>"])), this.onDeleteClick.bind(this)),
+	        dndButton: main_core.Tag.render(_templateObject33 || (_templateObject33 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-checklist-item-dragndrop\"></div>"]))),
 	        attachments: this.getAttachmentsLayout()
 	      };
 
@@ -3305,7 +2868,7 @@ this.BX = this.BX || {};
 	        fill: false,
 	        color: BX.UI.ProgressRound.Color.PRIMARY
 	      });
-	      this.container = main_core.Tag.render(_templateObject34(), nodeId, this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onInnerContainerMouseDown.bind(this), this.onInnerContainerMouseUp.bind(this), layouts.dndButton, this.onCompleteButtonClick.bind(this), nodeId, this.progress.getContainer(), this.fields.getDisplaySortIndex(), this.fields.getIsImportant() ? this.getImportantLayout() : '', this.getTitleLayout(), layouts.deleteButton, nodeId, this.onSelectCheckboxClick.bind(this), nodeId, layouts.attachments, nodeId, children);
+	      this.container = main_core.Tag.render(_templateObject34 || (_templateObject34 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item\" id=\"", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-inner droppable ", "\"\n\t\t\t\t\t onmousedown=\"", "\" onmouseup=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"/>\n\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-number\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-description\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-additional-block\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-actions-block\">\n\t\t\t\t\t\t<input class=\"tasks-checklist-item-group-checkbox\" id=\"select_", "\" type=\"checkbox\"\n\t\t\t\t\t\t\t   onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-attachment\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-list\" id=\"attachments_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-sublist-items-wrapper\" id=\"subItems_", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), nodeId, this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onInnerContainerMouseDown.bind(this), this.onInnerContainerMouseUp.bind(this), layouts.dndButton, this.onCompleteButtonClick.bind(this), nodeId, this.progress.getContainer(), this.fields.getDisplaySortIndex(), this.fields.getIsImportant() ? this.getImportantLayout() : '', this.getTitleLayout(), layouts.deleteButton, nodeId, this.onSelectCheckboxClick.bind(this), nodeId, layouts.attachments, nodeId, children);
 	      return this.container;
 	    }
 	  }, {
@@ -3643,7 +3206,7 @@ this.BX = this.BX || {};
 	      });
 	      popupChecklistsList.push({
 	        id: 'newChecklist',
-	        title: main_core.Tag.message(_templateObject35(), 'TASKS_CHECKLIST_PANEL_TO_ANOTHER_CHECKLIST_POPUP_NEW_CHECKLIST'),
+	        title: main_core.Tag.message(_templateObject35 || (_templateObject35 = babelHelpers.taggedTemplateLiteral(["+ ", ""])), 'TASKS_CHECKLIST_PANEL_TO_ANOTHER_CHECKLIST_POPUP_NEW_CHECKLIST'),
 	        sectionCode: '0'
 	      });
 	      return popupChecklistsList;
@@ -3726,7 +3289,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setLayoutAttachmentsCount",
 	    value: function setLayoutAttachmentsCount(attachmentsCount) {
-	      var newAttachmentsLayout = main_core.Tag.render(_templateObject36(), this.getNodeId(), this.onAttachmentsLayoutClick.bind(this), attachmentsCount > 0 ? "<div class=\"mobile-task-checklist-item-param-attach\">".concat(attachmentsCount, "</div>") : '');
+	      var newAttachmentsLayout = main_core.Tag.render(_templateObject36 || (_templateObject36 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item-param\" id=\"attachments_", "\" onclick=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.getNodeId(), this.onAttachmentsLayoutClick.bind(this), attachmentsCount > 0 ? "<div class=\"mobile-task-checklist-item-param-attach\">".concat(attachmentsCount, "</div>") : '');
 	      main_core.Dom.replace(this.getAttachmentsContainer(), newAttachmentsLayout);
 	    }
 	  }, {
@@ -4097,7 +3660,7 @@ this.BX = this.BX || {};
 	      var nodeId = this.getNodeId();
 
 	      if (this.isCheckList()) {
-	        return main_core.Tag.render(_templateObject37(), nodeId, this.fields.getTitle(), this.onInput.bind(this), this.onInputKeyPressed.bind(this), this.rememberInputState.bind(this));
+	        return main_core.Tag.render(_templateObject37 || (_templateObject37 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"mobile-task-checklist-head-title mobile-task-checklist-item-edit-mode\">\n\t\t\t\t\t<input class=\"mobile-task-checklist-item-input\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t   oninput=\"", "\"\n\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t</div>\n\t\t\t"])), nodeId, this.fields.getTitle(), this.onInput.bind(this), this.onInputKeyPressed.bind(this), this.rememberInputState.bind(this));
 	      }
 
 	      var progressBarLayout = new BX.Mobile.Tasks.CheckList.ProgressRound({
@@ -4108,20 +3671,20 @@ this.BX = this.BX || {};
 	        fill: false,
 	        color: BX.UI.ProgressRound.Color.PRIMARY
 	      });
-	      return main_core.Tag.render(_templateObject38(), this.fields.getIsComplete() ? this.checkedClass : '', progressBarLayout.getContainer(), this.fields.getDisplaySortIndex(), nodeId, main_core.Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER'), this.fields.getTitle(), this.onInput.bind(this), this.onInputKeyPressed.bind(this), this.rememberInputState.bind(this));
+	      return main_core.Tag.render(_templateObject38 || (_templateObject38 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item mobile-task-checklist-item-edit-mode ", "\">\n\t\t\t\t<div class=\"mobile-task-checklist-item-checker\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"mobile-task-checklist-item-title\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-number\" style=\"display: none\">", "</div>\n\t\t\t\t\t<input class=\"mobile-task-checklist-item-input\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t   placeholder=\"", "\"\n\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t   oninput=\"", "\"\n\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.fields.getIsComplete() ? this.checkedClass : '', progressBarLayout.getContainer(), this.fields.getDisplaySortIndex(), nodeId, main_core.Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER'), this.fields.getTitle(), this.onInput.bind(this), this.onInputKeyPressed.bind(this), this.rememberInputState.bind(this));
 	    }
 	  }, {
 	    key: "getAttachmentsLayout",
 	    value: function getAttachmentsLayout() {
 	      var attachmentsCount = Object.keys(this.fields.getAttachments()).length;
-	      return main_core.Tag.render(_templateObject39(), this.getNodeId(), this.onAttachmentsLayoutClick.bind(this), attachmentsCount > 0 ? "<div class=\"mobile-task-checklist-item-param-attach\">".concat(attachmentsCount, "</div>") : '');
+	      return main_core.Tag.render(_templateObject39 || (_templateObject39 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item-param\" id=\"attachments_", "\" onclick=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.getNodeId(), this.onAttachmentsLayoutClick.bind(this), attachmentsCount > 0 ? "<div class=\"mobile-task-checklist-item-param-attach\">".concat(attachmentsCount, "</div>") : '');
 	    }
 	  }, {
 	    key: "getCheckListLayout",
 	    value: function getCheckListLayout(children) {
 	      var nodeId = this.getNodeId();
-	      var settingsLayout = main_core.Tag.render(_templateObject40(), this.onSettingsClick.bind(this));
-	      var addButtonLayout = main_core.Tag.render(_templateObject41(), this.onAddCheckListItemClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_ADD_NEW_ITEM'));
+	      var settingsLayout = main_core.Tag.render(_templateObject40 || (_templateObject40 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-setting\" onclick=\"", "\"></div>\n\t\t"])), this.onSettingsClick.bind(this));
+	      var addButtonLayout = main_core.Tag.render(_templateObject41 || (_templateObject41 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-add-button\" onclick=\"", "\">\n\t\t\t\t<div class=\"mobile-task-checklist-add-text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.onAddCheckListItemClick.bind(this), main_core.Loc.getMessage('TASKS_CHECKLIST_ADD_NEW_ITEM'));
 	      this.progress = new BX.Mobile.Tasks.CheckList.ProgressRound({
 	        width: 29,
 	        lineSize: 3,
@@ -4129,14 +3692,14 @@ this.BX = this.BX || {};
 	        maxValue: this.fields.getTotalCount(),
 	        statusType: BX.UI.ProgressRound.Status.COUNTER
 	      });
-	      this.container = main_core.Tag.render(_templateObject42(), nodeId, nodeId, this.progress.getContainer(), this.onHeaderClickDone.bind(this), this.getTitleLayout(), this.checkCanUpdate() ? settingsLayout : '', this.onCollapseButtonClick.bind(this), nodeId, children, this.checkCanAdd() ? addButtonLayout : '');
+	      this.container = main_core.Tag.render(_templateObject42 || (_templateObject42 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-section\" id=\"", "\" data-role=\"mobile-task-checklist\">\n\t\t\t\t<div class=\"mobile-task-checklist-head\">\n\t\t\t\t\t<div class=\"mobile-task-checklist-counter\">\n\t\t\t\t\t\t<div class=\"mobile-task-checklist-counter-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"mobile-task-checklist-head-title\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"mobile-task-checklist-controls\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"mobile-task-checklist-visible\"\n\t\t\t\t\t\t\t onclick=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"mobile-task-checklist-wrapper\">\n\t\t\t\t\t<div class=\"mobile-task-checklist\" id=\"subItems_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), nodeId, nodeId, this.progress.getContainer(), this.onHeaderClickDone.bind(this), this.getTitleLayout(), this.checkCanUpdate() ? settingsLayout : '', this.onCollapseButtonClick.bind(this), nodeId, children, this.checkCanAdd() ? addButtonLayout : '');
 	      return this.container;
 	    }
 	  }, {
 	    key: "getCheckListItemLayout",
 	    value: function getCheckListItemLayout(children) {
 	      var nodeId = this.getNodeId();
-	      var settingsLayout = main_core.Tag.render(_templateObject43(), this.onSettingsClick.bind(this));
+	      var settingsLayout = main_core.Tag.render(_templateObject43 || (_templateObject43 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item-setting\" onclick=\"", "\"></div>\n\t\t"])), this.onSettingsClick.bind(this));
 	      this.progress = new BX.Mobile.Tasks.CheckList.ProgressRound({
 	        id: "progress_".concat(nodeId),
 	        value: this.fields.getCompletedCount(),
@@ -4146,7 +3709,7 @@ this.BX = this.BX || {};
 	        fill: false,
 	        color: BX.UI.ProgressRound.Color.PRIMARY
 	      });
-	      this.container = main_core.Tag.render(_templateObject44(), nodeId, this.fields.getIsComplete() ? this.checkedClass : '', this.fields.getIsImportant() ? 'mobile-task-checklist-item-important' : '', this.onInnerContainerClickDone.bind(this), nodeId, this.onCompleteButtonClick.bind(this), this.progress.getContainer(), this.fields.getDisplaySortIndex(), this.getTitleLayout(), this.getAttachmentsLayout(), this.checkCanUpdate() ? settingsLayout : '', nodeId, children);
+	      this.container = main_core.Tag.render(_templateObject44 || (_templateObject44 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item-wrapper\" id=\"", "\">\n\t\t\t\t<div class=\"mobile-task-checklist-item ", " ", "\"\n\t\t\t\t\t onclick=\"", "\">\n\t\t\t\t\t<div class=\"mobile-task-checklist-item-checker\" id=\"progress_", "\"\n\t\t\t\t\t\t onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"mobile-task-checklist-item-title\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-number\" style=\"display: none\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"mobile-task-checklist-item-controls\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"mobile-task-checklist\" id=\"subItems_", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), nodeId, this.fields.getIsComplete() ? this.checkedClass : '', this.fields.getIsImportant() ? 'mobile-task-checklist-item-important' : '', this.onInnerContainerClickDone.bind(this), nodeId, this.onCompleteButtonClick.bind(this), this.progress.getContainer(), this.fields.getDisplaySortIndex(), this.getTitleLayout(), this.getAttachmentsLayout(), this.checkCanUpdate() ? settingsLayout : '', nodeId, children);
 	      return this.container;
 	    }
 	  }], [{

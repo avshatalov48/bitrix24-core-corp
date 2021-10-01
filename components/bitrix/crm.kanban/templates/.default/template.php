@@ -41,8 +41,7 @@ $demoAccess = \CJSCore::IsExtRegistered('intranet_notify_dialog') &&
 	'ui.actionpanel',
 	'ui.notification'
 ]);
-$assetRoot = '/bitrix/js/crm/';
-$langRoot = BX_ROOT . '/modules/crm/lang/' . LANGUAGE_ID . '/';
+
 \CJSCore::registerExt('crm_common', array(
 	'js' => array('/bitrix/js/crm/crm.js', '/bitrix/js/crm/common.js')
 ));
@@ -55,31 +54,10 @@ $langRoot = BX_ROOT . '/modules/crm/lang/' . LANGUAGE_ID . '/';
 \CJSCore::registerExt('popup_menu', array(
 	'js' => array('/bitrix/js/main/popup_menu.js')
 ));
-\CJSCore::registerExt(
-	'crm_kanban',
-	array(
-		'js'  => array(
-			$assetRoot . 'kanban/actions.js',
-			$assetRoot . 'kanban/grid.js',
-			$assetRoot . 'kanban/item.js',
-			$assetRoot . 'kanban/column.js',
-			$assetRoot . 'kanban/dropzone.js',
-			$assetRoot . 'kanban/pullmanager.js'
-		),
-		'css' => array(
-			$assetRoot . 'kanban/css/kanban.css',
-		),
-		'rel' => array(
-			'kanban', 'ajax', 'color_picker', 'date', 'crm_activity_planner'
-		),
-		'lang' => $langRoot . 'kanban.php',
-		'bundle_js' => 'crm_kanban',
-		'bundle_css' => 'crm_kanban'
-	)
-);
+
 \CJSCore::Init(array(
 	'crm_common',
-	'crm_kanban',
+	'crm.kanban',
 	'crm_visit_tracker',
 	'crm_activity_type',
 	'crm_partial_entity_editor',
@@ -115,6 +93,12 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 		function()
 		{
 			"use strict";
+
+			<?php if (isset($arResult['RESTRICTED_VALUE_CLICK_CALLBACK'])):?>
+				BX.addCustomEvent(window, 'onCrmRestrictedValueClick', function() {
+					<?=$arResult['RESTRICTED_VALUE_CLICK_CALLBACK'];?>
+				});
+			<?php endif;?>
 
 			BX.Crm.PartialEditorDialog.messages =
 			{

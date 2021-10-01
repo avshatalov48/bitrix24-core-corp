@@ -10,6 +10,22 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 
+/**
+ * Class EntityContactTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EntityContact_Query query()
+ * @method static EO_EntityContact_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EntityContact_Result getById($id)
+ * @method static EO_EntityContact_Result getList(array $parameters = array())
+ * @method static EO_EntityContact_Entity getEntity()
+ * @method static \Bitrix\Crm\Binding\EO_EntityContact createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Binding\EO_EntityContact_Collection createCollection()
+ * @method static \Bitrix\Crm\Binding\EO_EntityContact wakeUpObject($row)
+ * @method static \Bitrix\Crm\Binding\EO_EntityContact_Collection wakeUpCollection($rows)
+ */
 class EntityContactTable extends DataManager
 {
 	public static function getTableName(): string

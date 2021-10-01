@@ -1,27 +1,33 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\HttpApplication,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\Config\Configuration,
-	\Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Context;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Configuration;
+use Bitrix\Main\Engine\Contract\Controllerable;
 
-use \Bitrix\UI\EntitySelector,
-	\Bitrix\UI\EntitySelector\Item;
+use Bitrix\UI\EntitySelector;
 
-use \Bitrix\Im;
+use Bitrix\Im;
 
-use	\Bitrix\ImOpenLines\Queue,
-	\Bitrix\ImOpenLines\Tools,
-	\Bitrix\ImOpenLines\Config,
-	\Bitrix\ImOpenLines\Common,
-	\Bitrix\ImOpenLines\QueueManager,
-	\Bitrix\ImOpenlines\QuickAnswers;
+use Bitrix\Intranet;
+
+use Bitrix\ImOpenLines\Crm;
+use Bitrix\Imopenlines\Limit;
+use Bitrix\ImOpenLines\Queue;
+use Bitrix\ImOpenLines\Tools;
+use Bitrix\ImOpenLines\Config;
+use Bitrix\ImOpenLines\Common;
+use Bitrix\ImOpenLines\QueueManager;
+use Bitrix\ImOpenlines\QuickAnswers;
+use Bitrix\ImOpenLines\Model\ConfigTable;
+use Bitrix\ImOpenlines\Security\Permissions;
 
 class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controllerable
 {
-	/** @var \Bitrix\ImOpenlines\Security\Permissions */
+	/** @var Permissions */
 	protected $userPermissions;
 
 	protected const AVAILABLE_OPTION_TIME_TASK = [
@@ -34,11 +40,96 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		'1209600'
 	];
 
+	protected const BOOL_PARAMS_FORM = [
+		'CHECK_AVAILABLE',
+		'CHECK_ONLINE',
+		'CRM',
+		'CRM_CHAT_TRACKER',
+		'CRM_CREATE_THIRD',
+		'CRM_FORWARD',
+		'CRM_TRANSFER_CHANGE',
+		'WORKTIME_ENABLE',
+		'AGREEMENT_MESSAGE',
+		'WELCOME_MESSAGE',
+		'WATCH_TYPING',
+		'WELCOME_BOT_ENABLE',
+		'KPI_FIRST_ANSWER_ALERT',
+		'KPI_FURTHER_ANSWER_ALERT',
+		'KPI_CHECK_OPERATOR_ACTIVITY',
+		'ACTIVE',
+		'RECORDING',
+		'VOTE_MESSAGE',
+		'VOTE_BEFORE_FINISH',
+		'VOTE_CLOSING_DELAY',
+		'VOTE_ENABLE_TIME_LIMIT',
+
+		'CATEGORY_ENABLE'
+	];
+
+	protected const REQUIRED_PARAMS_FORM = [
+		'CRM_CREATE',
+		'QUEUE_TYPE',
+		'QUEUE_TIME',
+		'OPERATOR_DATA',
+		'NO_ANSWER_TIME',
+		'FULL_CLOSE_TIME',
+		'AUTO_CLOSE_TIME'
+	];
+
+	protected const ARRAY_PARAMS_FORM = [
+		'KPI_FIRST_ANSWER_LIST',
+		'KPI_FURTHER_ANSWER_LIST'
+	];
+
+	protected const OTHER_PARAMS_FORM = [
+		'SESSION_PRIORITY',
+		'CRM_CREATE_ITEMS',
+		'CRM_CREATE_SECOND',
+		'CRM_SOURCE',
+		'WORKTIME_TIMEZONE',
+		'WORKTIME_FROM',
+		'WORKTIME_TO',
+		'WORKTIME_DAYOFF',
+		'WORKTIME_HOLIDAYS',
+		'WORKTIME_DAYOFF_RULE',
+		'WORKTIME_DAYOFF_TEXT',
+		'AGREEMENT_ID',
+		'WELCOME_MESSAGE_TEXT',
+		'NO_ANSWER_RULE',
+		'NO_ANSWER_FORM_ID',
+		'NO_ANSWER_TEXT',
+		'CLOSE_RULE',
+		'CLOSE_TEXT',
+		'AUTO_CLOSE_RULE',
+		'AUTO_CLOSE_FORM_ID',
+		'AUTO_CLOSE_TEXT',
+		'QUICK_ANSWERS_IBLOCK_ID',
+		'WELCOME_BOT_ID',
+		'WELCOME_BOT_JOIN',
+		'WELCOME_BOT_TIME',
+		'WELCOME_BOT_LEFT',
+		'KPI_FIRST_ANSWER_TIME',
+		'KPI_FIRST_ANSWER_TEXT',
+		'KPI_FURTHER_ANSWER_TIME',
+		'KPI_FURTHER_ANSWER_TEXT',
+		'LINE_NAME',
+		'LANGUAGE_ID',
+		'VOTE_TIME_LIMIT',
+		'VOTE_MESSAGE_1_TEXT',
+		'VOTE_MESSAGE_1_DISLIKE',
+		'VOTE_MESSAGE_1_LIKE',
+		'VOTE_MESSAGE_2_TEXT',
+		'VOTE_MESSAGE_2_DISLIKE',
+		'VOTE_MESSAGE_2_LIKE',
+		'DEFAULT_OPERATOR_DATA',
+		'QUEUE_USERS_FIELDS',
+		'LIMITATION_MAX_CHAT'
+	];
+
 	/**
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	protected function checkModules()
+	protected function checkModules(): bool
 	{
 		$result = true;
 
@@ -58,10 +149,6 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 	/**
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function updateLine(): bool
 	{
@@ -69,40 +156,26 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 		$post = $this->request->getPostList()->toArray();
 
-		if(
-			!empty($post) &&
-			\check_bitrix_sessid() &&
-			Config::canEditLine($post['CONFIG_ID'])
-		)
+		if(empty($post))
 		{
-			$boolParams = [
-				'ACTIVE',
-				'CRM',
-				'CRM_FORWARD',
-				'CRM_CHAT_TRACKER',
-				'CRM_TRANSFER_CHANGE',
-				'CRM_CREATE_THIRD',
-				'CHECK_AVAILABLE',
-				'RECORDING',
-				'WORKTIME_ENABLE',
-				'CATEGORY_ENABLE',
-				'VOTE_MESSAGE',
-				'VOTE_BEFORE_FINISH',
-				'VOTE_CLOSING_DELAY',
-				'WATCH_TYPING',
-				'WELCOME_MESSAGE',
-				'WELCOME_BOT_ENABLE',
-				'AGREEMENT_MESSAGE',
-				'KPI_FIRST_ANSWER_ALERT',
-				'KPI_FURTHER_ANSWER_ALERT',
-				'KPI_CHECK_OPERATOR_ACTIVITY'
-			];
-			foreach ($boolParams as $field)
+			$this->arResult['ERROR'][] = Loc::getMessage('OL_COMPONENT_ERROR_EMPTY_DATA_UPDATE');
+		}
+		elseif(!\check_bitrix_sessid())
+		{
+			$this->arResult['ERROR'][] = Loc::getMessage('OL_COMPONENT_ERROR_UPDATE_SESSION_EXPIRED');
+		}
+		elseif(!Config::canEditLine($post['CONFIG_ID']))
+		{
+			$this->arResult['ERROR'][] = Loc::getMessage('OL_COMPONENT_ERROR_NO_PERMISSION_FOR_UPDATE');
+		}
+		else
+		{
+			foreach (self::BOOL_PARAMS_FORM as $fieldId)
 			{
-				$post['CONFIG'][$field] = isset($post['CONFIG'][$field])? $post['CONFIG'][$field]: 'N';
+				$post['CONFIG'][$fieldId] = $post['CONFIG'][$fieldId] ?? 'N';
 			}
 
-			$post['CONFIG']['WORKTIME_DAYOFF'] = isset($post['CONFIG']['WORKTIME_DAYOFF'])? $post['CONFIG']['WORKTIME_DAYOFF']: [];
+			$post['CONFIG']['WORKTIME_DAYOFF'] = $post['CONFIG']['WORKTIME_DAYOFF'] ?? [];
 
 			if(
 				empty($post['CONFIG']['LIMITATION_MAX_CHAT']) ||
@@ -145,8 +218,8 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 					if(QueueManager::validateQueueTypeField($entity['type']))
 					{
 						if(
-							(string)$entity['type'] === 'user' &&
-							QueueManager::isValidUser($entity['id'])
+							(string)$entity['type'] === 'user'
+							&& QueueManager::isValidUser($entity['id'])
 						)
 						{
 							$queueList[] = [
@@ -218,8 +291,15 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 				$post['CONFIG']['ACTIVE'] = 'N';
 			}
 
-			if ($configManager->update($post['CONFIG_ID'], $post['CONFIG']))
+			$resultConfigUpdate = $configManager->update($post['CONFIG_ID'], $post['CONFIG']);
+
+			if ($resultConfigUpdate->isSuccess())
 			{
+				if((int)$post['CONFIG']['MAX_CHAT'] === 0)
+				{
+					unset($this->arResult['CONFIG']['LIMITATION_MAX_CHAT']);
+				}
+
 				if(
 					empty($post['AUTOMATIC_MESSAGE']['ENABLE']) ||
 					$post['AUTOMATIC_MESSAGE']['ENABLE'] !== 'Y'
@@ -264,6 +344,11 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 						{
 							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['LONG_TEXT_BUTTON_NEW'] = Loc::getMessage('OL_COMPONENT_AUTOMATIC_MESSAGE_NEW_TITLE');
 						}
+
+						if($cell[0] !== 'n')
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['ID'] = $cell;
+						}
 					}
 
 					$configManager->updateAllAutomaticMessage($post['CONFIG_ID'], $post['AUTOMATIC_MESSAGE']['TASK']);
@@ -271,11 +356,13 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 				$result = true;
 
-				if ((string)$this->request->getPost('action') === 'save')
+				if ((string)$this->request->getPost('action') === 'apply')
 				{
 					if(empty($this->request['back_url']))
 					{
-						LocalRedirect($this->arResult['PATH_TO_LIST']);
+						$uri = new Uri(Context::getCurrent()->getServer()->getRequestUri());
+						$uri->addParams(['isSuccessSendForm' => 'Y']);
+						LocalRedirect($uri->getUri());
 					}
 					else
 					{
@@ -285,7 +372,12 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			}
 			else
 			{
-				$this->arResult['ERROR'] = $configManager->getError()->msg;
+				$errorCollection = $resultConfigUpdate->getErrorCollection();
+
+				foreach ($errorCollection as $error)
+				{
+					$this->arResult['ERROR'][] = $error->getMessage();
+				}
 			}
 		}
 
@@ -294,7 +386,6 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 	/**
 	 * @return mixed
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected function getWorkTimeConfig()
 	{
@@ -326,7 +417,6 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 	/**
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected function getQueue(): array
 	{
@@ -355,74 +445,83 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 		if (Loader::includeModule('ui'))
 		{
+			$preselectedItems = [];
 			if(
-				!empty($this->arResult['CONFIG']['QUEUE']) &&
-				is_array($this->arResult['CONFIG']['QUEUE'])
+				!empty($this->arResult['CONFIG']['configQueue']) &&
+				is_array($this->arResult['CONFIG']['configQueue'])
 			)
 			{
-				$preselectedItems = [];
-				if(
-					!empty($this->arResult['CONFIG']['configQueue']) &&
-					is_array($this->arResult['CONFIG']['configQueue'])
-				)
+				foreach ($this->arResult['CONFIG']['configQueue'] as $configQueue)
 				{
-					foreach ($this->arResult['CONFIG']['configQueue'] as $configQueue)
-					{
-						$preselectedItems[] = [
-							$configQueue['ENTITY_TYPE'],
-							$configQueue['ENTITY_ID']
-						];
-					}
-				}
-
-				$itemCollections = EntitySelector\Dialog::getSelectedItems($preselectedItems);
-
-				$preselectedUsers = [];
-				foreach ($this->arResult['CONFIG']['QUEUE'] as $userId)
-				{
-					$preselectedUsers[] = [
-						'user',
-						$userId
+					$preselectedItems[] = [
+						$configQueue['ENTITY_TYPE'],
+						$configQueue['ENTITY_ID']
 					];
 				}
-
-				//TODO: 279941 (426ad54dd7a8) socialnetwork
-				$userCollections = EntitySelector\Dialog::getSelectedItems($preselectedUsers);
-				$items = $userCollections->getAll();
-				$users = [];
-
-				foreach ($items as $item)
-				{
-					//$item = new \Bitrix\UI\EntitySelector\Item;
-					$users[] = [
-						'entityId' => $item->getId(),
-						'entityType' => $item->getEntityId(),
-						'name' => $item->getTitle(),
-						'avatar' => $item->getAvatar(),
-						'department' => $this->arResult['CONFIG']['QUEUE_FULL'][$item->getId()]['DEPARTMENT_ID']
-					];
-				}
-
-				$result['queueUsers'] = $users;
-
-				foreach ($this->arResult['CONFIG']['QUEUE_USERS_FIELDS'] as $key => $userFields)
-				{
-					if (empty($userFields['USER_AVATAR']))
-					{
-						$userFields['USER_AVATAR'] = \Bitrix\Im\User::getInstance($key)->getAvatar();
-					}
-					$result['queueUsersFields'][$key] = $userFields;
-				}
-
-				//TODO ui 20.400.0
-				//$result['queueItems'] = $itemCollections->toArray();
-				$result['queueItems'] = array_map(function(EntitySelector\Item $item) {
-					return $item->jsonSerialize();
-				}, $itemCollections->getAll());
 			}
+
+			$itemCollections = EntitySelector\Dialog::getSelectedItems($preselectedItems);
+
+			$result['queueUsers'] = $this->getQueueUsers($this->arResult['CONFIG']['QUEUE']);
+
+			foreach ($this->arResult['CONFIG']['QUEUE_USERS_FIELDS'] as $key => $userFields)
+			{
+				if (empty($userFields['USER_AVATAR']))
+				{
+					$userFields['USER_AVATAR'] = Im\User::getInstance($key)->getAvatar();
+				}
+				$result['queueUsersFields'][$key] = $userFields;
+			}
+
+			//TODO ui 20.400.0
+			//$result['queueItems'] = $itemCollections->toArray();
+			$result['queueItems'] = array_map(static function(EntitySelector\Item $item) {
+				return $item->jsonSerialize();
+			}, $itemCollections->getAll());
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param array $ids
+	 * @return array
+	 */
+	protected function getQueueUsers(array $ids): array
+	{
+		$users = [];
+
+		$preselectedUsers = [];
+		if(
+			!empty($ids) &&
+			is_array($ids)
+		)
+		{
+			foreach ($ids as $userId)
+			{
+				$preselectedUsers[] = [
+					'user',
+					$userId
+				];
+			}
+		}
+
+		$userCollections = EntitySelector\Dialog::getSelectedItems($preselectedUsers);
+		$items = $userCollections->getAll();
+
+		foreach ($items as $item)
+		{
+			//$item = new \Bitrix\UI\EntitySelector\Item;
+			$users[] = [
+				'entityId' => $item->getId(),
+				'entityType' => $item->getEntityId(),
+				'name' => $item->getTitle(),
+				'avatar' => $item->getAvatar(),
+				'department' => $this->arResult['CONFIG']['QUEUE_FULL'][$item->getId()]['DEPARTMENT_ID']
+			];
+		}
+
+		return $users;
 	}
 
 	/**
@@ -430,7 +529,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 	 * @param $configId
 	 * @return array
 	 */
-	protected function getPagesMenu($pathToList, $configId)
+	protected function getPagesMenu($pathToList, $configId): array
 	{
 		$menuList = [
 			'queue-crm' => [
@@ -466,7 +565,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_OTHERS')
 			]
 		];
-		$menuItemBase = $pathToList . 'edit.php?ID=' . $configId;
+		$menuItemBase = $pathToList . 'lines_edit/?ID=' . $configId;
 		if ($this->request['IFRAME'] === 'Y')
 		{
 			$menuItemBase .= '&IFRAME=Y';
@@ -483,14 +582,12 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 	/**
 	 * @param $config
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	private function getCrmFields($config): array
+	protected function getCrmFields($config): array
 	{
 		$result = [];
 		$selected = Config::CRM_CREATE_NONE;
-		$dealCategories = \Bitrix\ImOpenLines\Crm\Common::getDealCategories();
+		$dealCategories = Crm\Common::getDealCategories();
 		$secondItemsDeal = [];
 		if(
 			$dealCategories->isSuccess() &&
@@ -552,9 +649,6 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 	/**
 	 * @param $configId
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function getConfigAutomaticMessage($configId): array
 	{
@@ -593,193 +687,46 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 	}
 
 	/**
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return array
 	 */
-	protected function showConfig()
+	protected function getVisibleConfig($isErrorSaveForm = false): array
 	{
-		$configManager = new Config();
-		$configId = (int)$this->request->get('ID');
-		if ($configId === 0)
+		$result = [];
+
+		if($this->arResult['CONFIG']['QUEUE_TYPE'] === Config::QUEUE_TYPE_ALL)
 		{
-			if(!$configManager->canActivateLine())
-			{
-				\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
-				return false;
-			}
-
-			if(!$this->userPermissions->canPerform(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_LINES, \Bitrix\ImOpenlines\Security\Permissions::ACTION_MODIFY))
-			{
-				\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
-				return false;
-			}
-
-			$configId = $configManager->create();
-			if ($configId)
-			{
-				//LocalRedirect($this->arResult['PATH_TO_LIST'] . 'edit.php?ID='.$configId);
-			}
-			else
-			{
-				//LocalRedirect($this->arResult['PATH_TO_LIST']);
-				\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
-				return false;
-			}
-		}
-
-		if (!Loader::includeModule('socialnetwork'))
-		{
-			\ShowError(Loc::getMessage('OL_COMPONENT_MODULE_SOCIALNETWORK_NOT_INSTALLED'));
-			return false;
-		}
-
-		if (!$configManager->canViewLine($configId))
-		{
-			\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
-			return false;
-		}
-
-		$config = $configManager->get($configId, true, true, true);
-
-		if (!$config)
-		{
-			\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
-			return false;
-		}
-
-		if(Configuration::getValue('ol_automatic_messages'))
-		{
-			$this->arResult['AUTOMATIC_MESSAGE'] = $this->getConfigAutomaticMessage($configId);
-		}
-
-		$this->arResult['CAN_EDIT'] = $configManager->canEditLine($configId);
-		$this->arResult['CAN_EDIT_CONNECTOR'] = $configManager->canEditConnector($configId);
-		$this->arResult['IS_CRM_INSTALLED'] = IsModuleInstalled('crm')? 'Y': 'N';
-
-		$this->arResult['LANGUAGE_LIST'] = \Bitrix\Intranet\Util::getLanguageList();
-		if (!$config['LANGUAGE_ID'])
-		{
-			$context = \Bitrix\Main\Context::getCurrent();
-			$config['LANGUAGE_ID'] = $context !== null? $context->getLanguage(): 'en';
-		}
-
-		$config['WORKTIME_HOLIDAYS'] = implode(',', $config['WORKTIME_HOLIDAYS']);
-		$this->arResult['CONFIG'] = $config;
-
-		$this->arResult['QUEUE'] = $this->getQueue();
-
-		$this->arResult['CRM_SOURCES'] = \Bitrix\Main\Loader::includeModule('crm')? CCrmStatus::GetStatusList('SOURCE'): Array();
-		$this->arResult['CRM_SOURCES'] = ['create' => Loc::getMessage('OL_COMPONENT_LE_CRM_SOURCE_CREATE')]+$this->arResult['CRM_SOURCES'];
-
-		$this->arResult['BOT_LIST'] = [];
-		if (\Bitrix\Main\Loader::includeModule('im'))
-		{
-			$list = \Bitrix\Im\Bot::getListCache(\Bitrix\Im\Bot::LIST_OPENLINE);
-			foreach ($list as $botId => $botData)
-			{
-				$this->arResult['BOT_LIST'][$botId] = \Bitrix\Im\User::getInstance($botId)->getFullName();
-			}
-
-			if (Loader::includeModule('rest'))
-			{
-				$this->arResult['CAN_INSTALL_APPLICATIONS'] = \CRestUtil::canInstallApplication();
-			}
-		}
-
-		$this->arResult['NO_ANSWER_RULES'] = [];
-		if ($this->arResult['IS_CRM_INSTALLED'] == 'Y')
-		{
-			//$this->arResult['NO_ANSWER_RULES']['disabled'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_FORM');
-		}
-		$this->arResult['NO_ANSWER_RULES']['text'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_TEXT');
-		$this->arResult['NO_ANSWER_RULES']['none'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_NONE');
-
-		$this->arResult['SELECT_RULES'] = [];
-		if ($this->arResult['IS_CRM_INSTALLED'] == 'Y')
-		{
-			//$this->arResult['SELECT_RULES']['disabled'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_FORM');
-		}
-		$this->arResult['SELECT_RULES']['text'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_TEXT');
-		$this->arResult['SELECT_RULES']['none'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_NONE');
-
-		$this->arResult['CLOSE_RULES'] = [];
-		if ($this->arResult['IS_CRM_INSTALLED'] == 'Y')
-		{
-			//$this->arResult['CLOSE_RULES']['disabled'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_FORM');
-		}
-		//$this->arResult['CLOSE_RULES']['quality'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_QUALITY');
-		$this->arResult['CLOSE_RULES']['text'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_TEXT');
-		$this->arResult['CLOSE_RULES']['none'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_NONE');
-
-		$workTimeConfig = $this->getWorkTimeConfig();
-		$this->arResult['TIME_ZONE_ENABLED'] = $workTimeConfig['TIME_ZONE_ENABLED'];
-		$this->arResult['TIME_ZONE_LIST'] = $workTimeConfig['TIME_ZONE_LIST'];
-		$this->arResult['WEEK_DAYS'] = $workTimeConfig['WEEK_DAYS'];
-		$this->arResult['WORKTIME_LIST_FROM'] = $workTimeConfig['WORKTIME_LIST_FROM'];
-		$this->arResult['WORKTIME_LIST_TO'] = $workTimeConfig['WORKTIME_LIST_TO'];
-
-		if (empty($this->arResult['CONFIG']['WORKTIME_TIMEZONE']))
-		{
-			if (LANGUAGE_ID == 'ru')
-			{
-				$tzByLang = 'Europe/Moscow';
-			}
-			elseif (LANGUAGE_ID == 'de')
-			{
-				$tzByLang = 'Europe/Berlin';
-			}
-			elseif (LANGUAGE_ID == 'ua')
-			{
-				$tzByLang = 'Europe/Kiev';
-			}
-			else
-			{
-				$tzByLang = 'America/New_York';
-			}
-
-			$this->arResult['CONFIG']['WORKTIME_TIMEZONE'] = $tzByLang;
-		}
-
-		$quickAnswersStorageList = QuickAnswers\ListsDataManager::getStorageList();
-		if($this->isCreateNewQuickAnswersStorageAllowed($this->arResult['CONFIG'], $quickAnswersStorageList))
-		{
-			$quickAnswersStorageList[0] = array('NAME' => Loc::getMessage('OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_CREATE'));
-			ksort($quickAnswersStorageList);
-			$uri = new \Bitrix\Main\Web\Uri($this->request->getRequestUri());
-			$this->arResult['QUICK_ANSWERS_MANAGE_URL'] = $uri->addParams(array('action' => 'imopenlines_create_qa_list'))->getLocator();
-		}
-
-		$this->arResult['QUICK_ANSWERS_STORAGE_LIST'] = $quickAnswersStorageList;
-		if($this->arResult['CONFIG']['QUICK_ANSWERS_IBLOCK_ID'] > 0 && isset($quickAnswersStorageList[$this->arResult['CONFIG']['QUICK_ANSWERS_IBLOCK_ID']]))
-		{
-			$dataManager = new QuickAnswers\ListsDataManager($this->arResult['CONFIG']['ID']);
-			$this->arResult['QUICK_ANSWERS_MANAGE_URL'] = $dataManager->getUrlToList();
+			$result['QUEUE_TIME'] = false;
+			$result['LIMITATION_MAX_CHAT'] = false;
+			$result['MAX_CHAT'] = false;
 		}
 		else
 		{
-			$this->arResult['CONFIG']['QUICK_ANSWERS_IBLOCK_ID'] = 0;
+			$result['QUEUE_TIME'] = true;
+			$result['LIMITATION_MAX_CHAT'] = true;
+			if(
+				(
+					$isErrorSaveForm === false
+					|| empty($this->arResult['CONFIG']['LIMITATION_MAX_CHAT'])
+				)
+				&& (
+					empty($this->arResult['CONFIG']['MAX_CHAT'])
+					|| $this->arResult['CONFIG']['MAX_CHAT'] < 1
+				)
+			)
+			{
+				$result['MAX_CHAT'] = false;
+			}
+			else
+			{
+				$result['MAX_CHAT'] = true;
+			}
 		}
 
-		$this->arResult['CONFIG_MENU'] = $this->getPagesMenu($this->arResult['PATH_TO_LIST'], $configId);
+		return $result;
+	}
 
-		$this->arResult['IFRAME'] = $this->request->get('IFRAME') == 'Y';
-		$this->arResult['IS_ACTION'] = $this->request->get('action') != '';
-		$this->arResult['IS_OPENED'] = $this->request->get('opened') === 'Y';
-		$this->arResult['SHOW_QUEUE_SETTINGS'] = htmlspecialcharsbx($this->request->get('SHOW_QUEUE_SETTINGS'));
-		$this->arResult['SHOW_AUTO_ACTION_SETTINGS'] = htmlspecialcharsbx($this->request->get('SHOW_AUTO_ACTION_SETTINGS'));
-		$this->arResult['SHOW_WORKERS_TIME'] = htmlspecialcharsbx($this->request->get('SHOW_WORKERS_TIME'));
-		$this->arResult['PAGE'] = (htmlspecialcharsbx($this->request->get('PAGE')) ? : 'queue-crm');
-
-		$uri = new \Bitrix\Main\Web\Uri(htmlspecialchars_decode(POST_FORM_ACTION_URI));
-		$uriParams['action-line'] = 'edit';
-		$uriParams['rating-request'] = $this->arResult['CONFIG']['VOTE_MESSAGE'];
-		$uri->addParams($uriParams);
-		$this->arResult['ACTION_URI'] = htmlspecialcharsbx($uri->getUri());
-
+	protected function showKpi(): void
+	{
 		$kpiFirstAnswerElements = [
 			0 => ['NAME' => '0 ' . Loc::getMessage('OL_COMPONENT_LE_KPI_ANSWER_TIME_SECONDS'), 'VALUE' => 0],
 			15 => ['NAME' => '15 ' . Loc::getMessage('OL_COMPONENT_LE_KPI_ANSWER_TIME_SECONDS'), 'VALUE' => 15],
@@ -863,105 +810,364 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		{
 			$this->arResult['CONFIG']['KPI_FURTHER_ANSWER_LIST'] = [];
 		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function showConfig(): bool
+	{
+		if(!empty($this->request->get('isSuccessSendForm')))
+		{
+			$this->arResult['IS_SUCCESS_SEND_FORM'] = true;
+		}
+		else
+		{
+			$this->arResult['IS_SUCCESS_SEND_FORM'] = false;
+		}
+
+		$configManager = new Config();
+		$configId = (int)$this->request->get('ID');
+
+		if ($configId === 0)
+		{
+			if(!$configManager->canActivateLine())
+			{
+				\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
+				return false;
+			}
+
+			if(!$this->userPermissions->canPerform(Permissions::ENTITY_LINES, Permissions::ACTION_MODIFY))
+			{
+				\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
+				return false;
+			}
+
+			$configId = $configManager->create();
+			if (!$configId)
+			{
+				\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
+				return false;
+			}
+		}
+
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			\ShowError(Loc::getMessage('OL_COMPONENT_MODULE_SOCIALNETWORK_NOT_INSTALLED'));
+			return false;
+		}
+
+		if (!$configManager->canViewLine($configId))
+		{
+			\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
+			return false;
+		}
+
+		$config = $configManager->get($configId, true, true, true);
+
+		if (!$config)
+		{
+			\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
+			return false;
+		}
+
+		if(Configuration::getValue('ol_automatic_messages'))
+		{
+			$this->arResult['AUTOMATIC_MESSAGE'] = $this->getConfigAutomaticMessage($configId);
+		}
+
+		$this->arResult['CAN_EDIT'] = $configManager->canEditLine($configId);
+		$this->arResult['CAN_EDIT_CONNECTOR'] = $configManager->canEditConnector($configId);
+		$this->arResult['IS_CRM_INSTALLED'] = IsModuleInstalled('crm')? 'Y': 'N';
+
+		$this->arResult['LANGUAGE_LIST'] = Intranet\Util::getLanguageList();
+		if (!$config['LANGUAGE_ID'])
+		{
+			$context = Context::getCurrent();
+			$config['LANGUAGE_ID'] = $context !== null? $context->getLanguage(): 'en';
+		}
+
+		$config['WORKTIME_HOLIDAYS'] = implode(',', $config['WORKTIME_HOLIDAYS']);
+		$this->arResult['CONFIG'] = $config;
+
+		$this->arResult['CRM_SOURCES'] = Loader::includeModule('crm')? CCrmStatus::GetStatusList('SOURCE'): Array();
+		$this->arResult['CRM_SOURCES'] = ['create' => Loc::getMessage('OL_COMPONENT_LE_CRM_SOURCE_CREATE')]+$this->arResult['CRM_SOURCES'];
+
+		$this->arResult['BOT_LIST'] = [];
+		if (Loader::includeModule('im'))
+		{
+			$list = Im\Bot::getListCache(Im\Bot::LIST_OPENLINE);
+			foreach ($list as $botId => $botData)
+			{
+				$this->arResult['BOT_LIST'][$botId] = Im\User::getInstance($botId)->getFullName();
+			}
+
+			if (Loader::includeModule('rest'))
+			{
+				$this->arResult['CAN_INSTALL_APPLICATIONS'] = \CRestUtil::canInstallApplication();
+			}
+		}
+
+		$this->arResult['NO_ANSWER_RULES'] = [];
+		if($this->arResult['IS_CRM_INSTALLED'] === 'Y')
+		{
+			//$this->arResult['NO_ANSWER_RULES']['disabled'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_FORM');
+		}
+		$this->arResult['NO_ANSWER_RULES']['text'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_TEXT');
+		$this->arResult['NO_ANSWER_RULES']['none'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_NONE');
+
+		$this->arResult['SELECT_RULES'] = [];
+		if($this->arResult['IS_CRM_INSTALLED'] === 'Y')
+		{
+			//$this->arResult['SELECT_RULES']['disabled'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_FORM');
+		}
+		$this->arResult['SELECT_RULES']['text'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_TEXT');
+		$this->arResult['SELECT_RULES']['none'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_NONE');
+
+		$this->arResult['CLOSE_RULES'] = [];
+		if($this->arResult['IS_CRM_INSTALLED'] === 'Y')
+		{
+			//$this->arResult['CLOSE_RULES']['disabled'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_FORM');
+		}
+		//$this->arResult['CLOSE_RULES']['quality'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_QUALITY');
+		$this->arResult['CLOSE_RULES']['text'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_TEXT');
+		$this->arResult['CLOSE_RULES']['none'] = Loc::getMessage('OL_COMPONENT_LE_OPTION_NONE');
+
+		$workTimeConfig = $this->getWorkTimeConfig();
+		$this->arResult['TIME_ZONE_ENABLED'] = $workTimeConfig['TIME_ZONE_ENABLED'];
+		$this->arResult['TIME_ZONE_LIST'] = $workTimeConfig['TIME_ZONE_LIST'];
+		$this->arResult['WEEK_DAYS'] = $workTimeConfig['WEEK_DAYS'];
+		$this->arResult['WORKTIME_LIST_FROM'] = $workTimeConfig['WORKTIME_LIST_FROM'];
+		$this->arResult['WORKTIME_LIST_TO'] = $workTimeConfig['WORKTIME_LIST_TO'];
+
+		if (empty($this->arResult['CONFIG']['WORKTIME_TIMEZONE']))
+		{
+			if (LANGUAGE_ID === 'ru')
+			{
+				$tzByLang = 'Europe/Moscow';
+			}
+			elseif (LANGUAGE_ID === 'de')
+			{
+				$tzByLang = 'Europe/Berlin';
+			}
+			elseif (LANGUAGE_ID === 'ua')
+			{
+				$tzByLang = 'Europe/Kiev';
+			}
+			else
+			{
+				$tzByLang = 'America/New_York';
+			}
+
+			$this->arResult['CONFIG']['WORKTIME_TIMEZONE'] = $tzByLang;
+		}
+
+		$this->arResult['CAN_USE_QUICK_ANSWERS'] = Limit::canUseQuickAnswers();
+		if($this->arResult['CAN_USE_QUICK_ANSWERS'] === true)
+		{
+			$quickAnswersStorageList = QuickAnswers\ListsDataManager::getStorageList();
+			if($this->isCreateNewQuickAnswersStorageAllowed($this->arResult['CONFIG'], $quickAnswersStorageList))
+			{
+				$quickAnswersStorageList[0] = ['NAME' => Loc::getMessage('OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_CREATE')];
+				ksort($quickAnswersStorageList);
+				$uri = new \Bitrix\Main\Web\Uri($this->request->getRequestUri());
+				$this->arResult['QUICK_ANSWERS_MANAGE_URL'] = $uri->addParams(['action' => 'imopenlines_create_qa_list'])->getLocator();
+			}
+
+			$this->arResult['QUICK_ANSWERS_STORAGE_LIST'] = $quickAnswersStorageList;
+			if(
+				$this->arResult['CONFIG']['QUICK_ANSWERS_IBLOCK_ID'] > 0
+				&& isset($quickAnswersStorageList[$this->arResult['CONFIG']['QUICK_ANSWERS_IBLOCK_ID']])
+			)
+			{
+				$dataManager = new QuickAnswers\ListsDataManager($this->arResult['CONFIG']['ID']);
+				$this->arResult['QUICK_ANSWERS_MANAGE_URL'] = $dataManager->getUrlToList();
+			}
+			else
+			{
+				$this->arResult['CONFIG']['QUICK_ANSWERS_IBLOCK_ID'] = 0;
+			}
+		}
+		else
+		{
+			$this->arResult['QUICK_ANSWERS_STORAGE_LIST'] = [
+				0 => ['NAME' => Loc::getMessage('OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_NOT_SELECTED')]
+			];
+
+			$this->arResult['CONFIG']['QUICK_ANSWERS_IBLOCK_ID'] = 0;
+		}
+
+		$this->arResult['CONFIG_MENU'] = $this->getPagesMenu($this->arResult['PATH_TO_LIST'], $configId);
+
+		$this->arResult['IFRAME'] = $this->request->get('IFRAME') === 'Y';
+		$this->arResult['IS_ACTION'] = $this->request->get('action') != '';
+		$this->arResult['IS_OPENED'] = $this->request->get('opened') === 'Y';
+		$this->arResult['SHOW_QUEUE_SETTINGS'] = htmlspecialcharsbx($this->request->get('SHOW_QUEUE_SETTINGS'));
+		$this->arResult['SHOW_AUTO_ACTION_SETTINGS'] = htmlspecialcharsbx($this->request->get('SHOW_AUTO_ACTION_SETTINGS'));
+		$this->arResult['SHOW_WORKERS_TIME'] = htmlspecialcharsbx($this->request->get('SHOW_WORKERS_TIME'));
+		$this->arResult['PAGE'] = (htmlspecialcharsbx($this->request->get('PAGE')) ? : 'queue-crm');
+
+		$uri = new Uri(htmlspecialchars_decode(POST_FORM_ACTION_URI));
+		$uriParams['action-line'] = 'edit';
+		$uriParams['rating-request'] = $this->arResult['CONFIG']['VOTE_MESSAGE'];
+		$uri->addParams($uriParams);
+		$uri->deleteParams(['isSuccessSendForm']);
+		$this->arResult['ACTION_URI'] = htmlspecialcharsbx($uri->getUri());
 
 		if((int)$this->arResult['CONFIG']['VOTE_TIME_LIMIT'] > 0)
 		{
 			$this->arResult['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] = 'Y';
 		}
 
-		//Visible block
-		if($this->arResult['CONFIG']['QUEUE_TYPE'] == Config::QUEUE_TYPE_ALL)
-		{
-			$this->arResult['VISIBLE']['QUEUE_TIME'] = false;
-			$this->arResult['VISIBLE']['LIMITATION_MAX_CHAT'] = false;
-			$this->arResult['VISIBLE']['MAX_CHAT'] = false;
-		}
-		else
-		{
-			$this->arResult['VISIBLE']['QUEUE_TIME'] = true;
-			$this->arResult['VISIBLE']['LIMITATION_MAX_CHAT'] = true;
-			if(empty($this->arResult['CONFIG']['MAX_CHAT']) || $this->arResult['CONFIG']['MAX_CHAT'] < 1)
-			{
-				$this->arResult['VISIBLE']['MAX_CHAT'] = false;
-			}
-			else
-			{
-				$this->arResult['VISIBLE']['MAX_CHAT'] = true;
-			}
-		}
-		//END Visible block
-
-		$this->arResult['CRM'] = $this->getCrmFields($config);
-
-		$this->includeComponentTemplate();
+		$this->arResult['CAN_WATCH_TYPING'] = \CPullOptions::GetQueueServerStatus() && \CPullOptions::GetPublishWebEnabled();
 
 		return true;
 	}
 
-	/**
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public function executeComponent()
+	protected function processNoSaveFormData(): void
 	{
-		$result = false;
+		$post = $this->request->getPostList()->toArray();
 
-		$this->includeComponentLang('class.php');
-
-		if ($this->checkModules())
+		//Required params
+		foreach (self::REQUIRED_PARAMS_FORM as $id)
 		{
-			$this->userPermissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
-
-			$this->arResult['PATH_TO_LIST'] = \Bitrix\ImOpenLines\Common::getPublicFolder() . 'list/';
-
-			/*CModule::includeModule('crm');
-			$contactCenterHandler = new \Bitrix\Intranet\ContactCenter();
-			$forms = $contactCenterHandler->crmGetItems()->getData()['form']['LIST'];
-			$this->arResult['CRM_FORMS_LIST'] = $forms;*/
-
-			if(
-				$this->request->getQuery('action') == 'imopenlines_create_qa_list' &&
-				$this->request->getQuery('ID') > 0 &&
-				!$this->createQuickAnswersStorage()
-			)
+			if(isset($post['CONFIG'][$id]))
 			{
-				$this->showConfig();
-			}
-			if (
-				$this->request->isPost() &&
-				$this->request->getPost('form') == 'imopenlines_edit_form' &&
-				!$this->updateLine()
-			)
-			{
-				\ShowError(Loc::getMessage('OL_COMPONENT_ERROR_SAVE_CONFIG'));
-			}
-			else
-			{
-				$result = $this->showConfig();
+				$this->arResult['CONFIG'][$id] = $post['CONFIG'][$id];
 			}
 		}
 
-		return $result;
+		//Bool params
+		foreach (self::BOOL_PARAMS_FORM as $id)
+		{
+			if(isset($post['CONFIG'][$id]))
+			{
+				$this->arResult['CONFIG'][$id] = $post['CONFIG'][$id];
+			}
+			else
+			{
+				$this->arResult['CONFIG'][$id] = 'N';
+			}
+		}
+
+		//Bool params
+		foreach (self::ARRAY_PARAMS_FORM as $id)
+		{
+			if(
+				isset($post['CONFIG'][$id])
+				&& is_array($post['CONFIG'][$id])
+			)
+			{
+				$this->arResult['CONFIG'][$id] = $post['CONFIG'][$id];
+			}
+			else
+			{
+				$this->arResult['CONFIG'][$id] = [];
+			}
+		}
+
+		//Other params
+		foreach (self::OTHER_PARAMS_FORM as $id)
+		{
+			if(isset($post['CONFIG'][$id]))
+			{
+				$this->arResult['CONFIG'][$id] = $post['CONFIG'][$id];
+			}
+			else
+			{
+				unset($this->arResult['CONFIG'][$id]);
+			}
+		}
+
+		//Special data processing
+		if(isset($post['CONFIG']['LIMITATION_MAX_CHAT']))
+		{
+			if(isset($post['CONFIG']['MAX_CHAT']))
+			{
+				$this->arResult['CONFIG']['MAX_CHAT'] = $post['CONFIG']['MAX_CHAT'];
+			}
+			else
+			{
+				$this->arResult['CONFIG']['MAX_CHAT'] = 0;
+			}
+			if(isset($post['CONFIG']['TYPE_MAX_CHAT']))
+			{
+				$this->arResult['CONFIG']['TYPE_MAX_CHAT'] = $post['CONFIG']['TYPE_MAX_CHAT'];
+			}
+			else
+			{
+				unset($this->arResult['CONFIG']['TYPE_MAX_CHAT']);
+			}
+		}
+		else
+		{
+			unset($this->arResult['CONFIG']['TYPE_MAX_CHAT']);
+			$this->arResult['CONFIG']['MAX_CHAT'] = 0;
+		}
+
+		//Automatic message
+		if(
+			isset($post['AUTOMATIC_MESSAGE']['ENABLE'])
+			&& $post['AUTOMATIC_MESSAGE']['ENABLE'] === 'Y'
+		)
+		{
+			$this->arResult['AUTOMATIC_MESSAGE'] = $post['AUTOMATIC_MESSAGE'];
+		}
+		else
+		{
+			$this->arResult['AUTOMATIC_MESSAGE']['ENABLE'] = 'N';
+			unset($this->arResult['AUTOMATIC_MESSAGE']['TASK']);
+		}
+
+		//Queue
+		unset($this->arResult['CONFIG']['configQueue'], $this->arResult['CONFIG']['queueUsers']);
+
+		$usersId = [];
+
+		foreach ($post['CONFIG']['QUEUE'] as $queue)
+		{
+			$this->arResult['CONFIG']['configQueue'][] = [
+				'ENTITY_TYPE' => $queue['type'],
+				'ENTITY_ID' => $queue['id']
+			];
+
+			if($queue['type'] === 'user')
+			{
+				if(in_array($queue['id'], $usersId, false) === false)
+				{
+					$usersId[] = $queue['id'];
+				}
+
+			}
+			elseif($queue['type'] === 'department')
+			{
+				$usersDepartment = QueueManager::getUsersDepartment($queue['id']);
+				while ($userId = $usersDepartment->fetch()['ID'])
+				{
+					if(in_array($userId, $usersId, false) === false)
+					{
+						$usersId[] = $userId;
+					}
+				}
+			}
+		}
+
+		$this->arResult['CONFIG']['QUEUE'] = $usersId;
+		//END Queue
 	}
 
 	/**
 	 * @param $config
 	 * @param null $storageList
 	 * @return bool
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function isCreateNewQuickAnswersStorageAllowed($config, $storageList = null)
 	{
-		if(intval($config['QUICK_ANSWERS_IBLOCK_ID']) <= 0)
+		if((int)$config['QUICK_ANSWERS_IBLOCK_ID'] <= 0)
 		{
 			return true;
 		}
-		$configsWithTheSameQuickAnswersStorage = \Bitrix\ImOpenLines\Model\ConfigTable::getCount(array('=QUICK_ANSWERS_IBLOCK_ID' => $config['QUICK_ANSWERS_IBLOCK_ID']));
+		$configsWithTheSameQuickAnswersStorage = ConfigTable::getCount(['=QUICK_ANSWERS_IBLOCK_ID' => $config['QUICK_ANSWERS_IBLOCK_ID']]);
 		if($configsWithTheSameQuickAnswersStorage > 1)
 		{
 			return true;
@@ -980,13 +1186,10 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 	/**
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	protected function createQuickAnswersStorage()
+	protected function createQuickAnswersStorage(): bool
 	{
-		$configManager = new \Bitrix\ImOpenLines\Config();
+		$configManager = new Config();
 		if(!$configManager->canEditLine($this->request->getQuery('ID')))
 		{
 			$this->arResult['ERROR'] = Loc::getMessage('OL_COMPONENT_LE_QUICK_ANSWERS_NO_ACCESS_CREATE');
@@ -1022,7 +1225,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 	/**
 	 * @return array
 	 */
-	public function configureActions()
+	public function configureActions(): array
 	{
 		return [];
 	}
@@ -1031,19 +1234,79 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 	 * Reload blocks using ajax-request
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function loadPageAction()
+	public function loadPageAction(): array
 	{
 		ob_start();
 		$this->executeComponent();
 		$html = ob_get_clean();
+
 		return [
 			'html' => $html
 		];
 	}
-};
+
+	/**
+	 * @return mixed|void|null
+	 */
+	public function executeComponent()
+	{
+		$isSendForm = false;
+		$this->includeComponentLang('class.php');
+
+		if ($this->checkModules())
+		{
+			$this->userPermissions = Permissions::createWithCurrentUser();
+
+			$this->arResult['PATH_TO_LIST'] = Common::getContactCenterPublicFolder();
+
+			if(
+				$this->request->getQuery('action') === 'imopenlines_create_qa_list'
+				&& $this->request->getQuery('ID') > 0
+			)
+			{
+				$this->createQuickAnswersStorage();
+			}
+			if (
+				$this->request->isPost()
+				&& $this->request->getPost('form') === 'imopenlines_edit_form'
+			)
+			{
+				$resultUpdate = $this->updateLine();
+				$isSendForm = true;
+
+				if(
+					$resultUpdate === false
+					&& empty($this->arResult['ERROR'])
+				)
+				{
+					$this->arResult['ERROR'][] = Loc::getMessage('OL_COMPONENT_ERROR_SAVE_CONFIG');
+				}
+			}
+
+			$resultShowConfig = $this->showConfig();
+
+			if($resultShowConfig === true)
+			{
+				if(
+					$isSendForm === true
+					&& !empty($this->arResult['ERROR'])
+				)
+				{
+					$this->processNoSaveFormData();
+					$this->arResult['VISIBLE'] = $this->getVisibleConfig(true);
+				}
+				else
+				{
+					$this->arResult['VISIBLE'] = $this->getVisibleConfig(false);
+				}
+
+				$this->showKpi();
+				$this->arResult['QUEUE'] = $this->getQueue();
+				$this->arResult['CRM'] = $this->getCrmFields($this->arResult['CONFIG']);
+
+				$this->includeComponentTemplate();
+			}
+		}
+	}
+}

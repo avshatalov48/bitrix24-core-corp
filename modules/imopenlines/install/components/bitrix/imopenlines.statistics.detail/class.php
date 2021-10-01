@@ -1229,7 +1229,28 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 			'bxajaxid',
 			'AJAX_CALL',
 		];
+
 		$filterKeys = array_keys($this->getFilterDefinition());
+		$filterKeys[] = 'FIND';
+
+		foreach ($this->getFilterDefinition() as $key => $field)
+		{
+			if ($field['type'] === 'date')
+			{
+				$filterKeys[] = $key. '_datesel';
+				$filterKeys[] = $key. '_month';
+				$filterKeys[] = $key. '_year';
+				$filterKeys[] = $key. '_quarter';
+				$filterKeys[] = $key. '_from';
+				$filterKeys[] = $key. '_to';
+			}
+			elseif ($field['type'] === 'number')
+			{
+				$filterKeys[] = $key. '_numsel';
+				$filterKeys[] = $key. '_from';
+				$filterKeys[] = $key. '_to';
+			}
+		}
 
 		$uri->deleteParams(array_merge(
 			\Bitrix\Main\HttpRequest::getSystemParameters(),

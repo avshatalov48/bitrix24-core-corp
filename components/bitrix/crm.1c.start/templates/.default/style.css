@@ -303,3 +303,24 @@
 /*endregion*/
 
 .ui-tile-list-item-selected .ui-tile-list-name-text { color: #525c69; }
+
+.crm-onec-helper .ui-tile-list-item {
+	background-color: rgba(250,250,250,.7);
+}
+
+.crm-onec-helper .ui-tile-list-logo-container {
+	display: none;
+}
+
+.crm-onec-helper .ui-tile-list-name-text {
+	margin-bottom: 10px;
+	max-width: 100%;
+	color: #fff;
+	text-align: center;
+	white-space: normal;
+}
+
+.bitrix24-default-theme .crm-onec-helper .ui-tile-list-name-text,
+.bitrix24-dark-theme .crm-onec-helper .ui-tile-list-name-text {
+	color: #525c69;
+}

@@ -399,13 +399,6 @@
 	background-color: #19D0C8;
 }
 
-.salescenter-roboxchange-alfa_bank-icon { width: 97px; }
-.salescenter-roboxchange-alfa_bank-icon i {
-	background-image: url(images/roboxchange_alfa_bank.svg);
-	background-size: 90% auto;
-	background-color: #EF3124;
-}
-
 .salescenter-roboxchange-apple_pay-icon { width: 97px; }
 .salescenter-roboxchange-apple_pay-icon i {
 	background-image: url(images/roboxchange_apple_pay.svg);
@@ -419,6 +412,14 @@
 	background-size: 85% auto;
 	background-color: #1429A1;
 }
+
+.salescenter-roboxchange-google_pay-icon { width: 97px; }
+.salescenter-roboxchange-google_pay-icon i {
+	background-image: url(images/roboxchange_google_pay.svg);
+	background-size: 80% auto;
+	background-color: #4285F4;
+}
+
 
 .salescenter-main-header-right-block {
 	width: 100%;

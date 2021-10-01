@@ -1,10 +1,11 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 use	Bitrix\Main;
 use	Bitrix\Main\Loader;
-use Bitrix\Crm;
 use Bitrix\Crm\UserField\UserFieldHistory;
+use Bitrix\Main\Localization\Loc;
 
 class CCrmFields
 {
@@ -256,26 +257,27 @@ class CCrmFields
 				break;
 
 			case 'enumeration':
-				$arFields[] = array(
+				$arFields[] = [
 					'id' => 'E_DISPLAY',
-					'name' => GetMessage('CRM_FIELDS_TYPE_E_DISPLAY'),
+					'name' => Loc::getMessage('CRM_FIELDS_TYPE_E_DISPLAY'),
 					'type' => 'list',
-					'items' => array(
-						'LIST' => GetMessage('CRM_FIELDS_TYPE_E_DISPLAY_LIST'),
-						'UI' => GetMessage('CRM_FIELDS_TYPE_E_DISPLAY_UI'),
-						'CHECKBOX' => GetMessage('CRM_FIELDS_TYPE_E_DISPLAY_CHECKBOX'),
-					),
-				);
-				$arFields[] = array(
+					'items' => [
+						'LIST' => Loc::getMessage('CRM_FIELDS_TYPE_E_DISPLAY_LIST'),
+						'UI' => Loc::getMessage('CRM_FIELDS_TYPE_E_DISPLAY_UI'),
+						'CHECKBOX' => Loc::getMessage('CRM_FIELDS_TYPE_E_DISPLAY_CHECKBOX'),
+//						'DIALOG' => Loc::getMessage('CRM_FIELDS_TYPE_E_DISPLAY_DIALOG'),
+					],
+				];
+				$arFields[] = [
 					'id' => 'E_LIST_HEIGHT',
-					'name' => GetMessage('CRM_FIELDS_TYPE_E_LIST_HEIGHT'),
+					'name' => Loc::getMessage('CRM_FIELDS_TYPE_E_LIST_HEIGHT'),
 					'type' => 'text',
-				);
-				$arFields[] = array(
+				];
+				$arFields[] = [
 					'id' => 'E_CAPTION_NO_VALUE',
-					'name' => GetMessage('CRM_FIELDS_TYPE_E_CAPTION_NO_VALUE'),
+					'name' => Loc::getMessage('CRM_FIELDS_TYPE_E_CAPTION_NO_VALUE'),
 					'type' => 'text',
-				);
+				];
 				break;
 			case 'money':
 				if (Loader::includeModule('currency'))

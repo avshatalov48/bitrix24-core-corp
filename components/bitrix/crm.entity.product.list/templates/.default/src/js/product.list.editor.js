@@ -344,6 +344,7 @@ export class Editor
 		if (changed)
 		{
 			this.refreshSortFields();
+			this.numerateRows();
 			this.executeActions([{type: this.actions.productListChanged}]);
 		}
 	}
@@ -993,7 +994,15 @@ export class Editor
 			}
 		}
 
+		this.numerateRows();
 		this.productsWasInitiated = true;
+	}
+
+	numerateRows()
+	{
+		this.products.forEach((product, index) => {
+			product.setRowNumber(index + 1);
+		})
 	}
 
 	getGrid(): ?BX.Main.Grid
@@ -1325,6 +1334,7 @@ export class Editor
 		}
 
 		this.refreshSortFields();
+		this.numerateRows();
 
 		product.updateUiCurrencyFields();
 		this.updateTotalUiCurrency();
@@ -1864,6 +1874,7 @@ export class Editor
 			{
 				this.products.splice(index, 1);
 				this.refreshSortFields();
+				this.numerateRows();
 			}
 		}
 

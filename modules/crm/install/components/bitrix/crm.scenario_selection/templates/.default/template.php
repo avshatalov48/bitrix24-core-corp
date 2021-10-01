@@ -12,7 +12,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'c
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.notification']);
 ?>
 
 <div class="crm-scenario-selection-wrapper">

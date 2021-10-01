@@ -10,6 +10,7 @@ namespace Bitrix\Crm\WebForm;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\UtmTable;
+use Bitrix\Crm\Merger;
 
 Loc::loadMessages(__FILE__);
 
@@ -37,7 +38,7 @@ class Entity
 				'CLASS_NAME' => 'CCrmLead',
 				'DUPLICATE_CHECK' => array(
 					'CHECKER_CLASS_NAME' => '\Bitrix\Crm\Integrity\LeadDuplicateChecker',
-					'MERGER_CLASS_NAME' => '\Bitrix\Crm\Merger\LeadMerger',
+					'MERGER_CLASS_NAME' => Merger\LeadMerger::class,
 				),
 				'HAS_MULTI_FIELDS' => true,
 				'FIELD_AUTO_FILL_TEMPLATE' => array(
@@ -56,7 +57,7 @@ class Entity
 				'CLASS_NAME' => 'CCrmContact',
 				'DUPLICATE_CHECK' => array(
 					'CHECKER_CLASS_NAME' => '\Bitrix\Crm\Integrity\ContactDuplicateChecker',
-					'MERGER_CLASS_NAME' => '\Bitrix\Crm\Merger\ContactMerger',
+					'MERGER_CLASS_NAME' => Merger\ContactMerger::class,
 				),
 				'HAS_MULTI_FIELDS' => true,
 				'FIELD_AUTO_FILL_TEMPLATE' => array(
@@ -79,7 +80,7 @@ class Entity
 				'CLASS_NAME' => 'CCrmCompany',
 				'DUPLICATE_CHECK' => array(
 					'CHECKER_CLASS_NAME' => '\Bitrix\Crm\Integrity\CompanyDuplicateChecker',
-					'MERGER_CLASS_NAME' => '\Bitrix\Crm\Merger\CompanyMerger',
+					'MERGER_CLASS_NAME' => Merger\CompanyMerger::class,
 				),
 				'HAS_MULTI_FIELDS' => true,
 				'FIELD_AUTO_FILL_TEMPLATE' => array(
@@ -95,7 +96,7 @@ class Entity
 				'CLASS_NAME' => 'CCrmDeal',
 				'DUPLICATE_CHECK' => array(
 					'CHECKER_CLASS_NAME' => null,
-					'MERGER_CLASS_NAME' => '\Bitrix\Crm\Merger\DealMerger',
+					'MERGER_CLASS_NAME' => Merger\DealMerger::class,
 				),
 				'FIELD_AUTO_FILL_TEMPLATE' => array(
 					'TITLE' => array(
@@ -188,7 +189,11 @@ class Entity
 					'TITLE' => array(
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
 					),
-				)
+				),
+				'DUPLICATE_CHECK' => array(
+					'CHECKER_CLASS_NAME' => null,
+					'MERGER_CLASS_NAME' => Merger\DealMerger::class, // real is anonymus class
+				),
 			);
 		}
 

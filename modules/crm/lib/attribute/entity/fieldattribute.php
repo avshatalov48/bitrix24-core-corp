@@ -4,6 +4,22 @@ namespace Bitrix\Crm\Attribute\Entity;
 use Bitrix\Main;
 use Bitrix\Crm;
 
+/**
+ * Class FieldAttributeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_FieldAttribute_Query query()
+ * @method static EO_FieldAttribute_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_FieldAttribute_Result getById($id)
+ * @method static EO_FieldAttribute_Result getList(array $parameters = array())
+ * @method static EO_FieldAttribute_Entity getEntity()
+ * @method static \Bitrix\Crm\Attribute\Entity\EO_FieldAttribute createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Attribute\Entity\EO_FieldAttribute_Collection createCollection()
+ * @method static \Bitrix\Crm\Attribute\Entity\EO_FieldAttribute wakeUpObject($row)
+ * @method static \Bitrix\Crm\Attribute\Entity\EO_FieldAttribute_Collection wakeUpCollection($rows)
+ */
 class FieldAttributeTable extends Main\Entity\DataManager
 {
 	/**

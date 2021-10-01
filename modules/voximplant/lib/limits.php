@@ -7,6 +7,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Bitrix24;
 use Bitrix\Main\Type\Date;
+use Bitrix\Voximplant\Model\QueueTable;
 
 class Limits
 {
@@ -92,7 +93,7 @@ class Limits
 		{
 			return false;
 		}
-		
+
 		return (int)Option::get('voximplant', self::OPTION_INFOCALLS_LIMIT);
 	}
 
@@ -188,16 +189,16 @@ class Limits
 	public static function getMaximumGroups()
 	{
 		if (!Loader::includeModule('bitrix24'))
-			return 0;
+		{
+			return -1;
+		}
 
 		if(Option::get('voximplant', static::OPTION_IGNORE_MAXIMUM_GROUPS) === "Y")
-			return 0;
+		{
+			return -1;
+		}
 
-		$licenseType = \CBitrix24::getLicenseType();
-		if($licenseType === 'project') //project
-			return 1;
-		else
-			return 0;
+		return (int)Bitrix24\Feature::getVariable('voximplant_groups_limit');
 	}
 
 	/**
@@ -207,16 +208,12 @@ class Limits
 	public static function getMaximumGroupMembers()
 	{
 		if (!Loader::includeModule('bitrix24'))
-			return 0;
+			return -1;
 
 		if(Option::get('voximplant', static::OPTION_IGNORE_MAXIMUM_GROUP_MEMBERS) === "Y")
-			return 0;
+			return -1;
 
-		$licenseType = \CBitrix24::getLicenseType();
-		if($licenseType === 'project') //project
-			return 3;
-		else
-			return 0;
+		return (int)Bitrix24\Feature::getVariable('voximplant_max_group_members');
 	}
 
 	/**
@@ -257,7 +254,7 @@ class Limits
 	public static function canRentMultiple()
 	{
 		$account = new \CVoxImplantAccount();
-		return ($account->GetAccountLang() == 'ru');
+		return ($account->GetAccountLang() === 'ru');
 	}
 
 	/**
@@ -267,13 +264,12 @@ class Limits
 	public static function canCreateGroup()
 	{
 		$maxGroups = self::getMaximumGroups();
-		if ($maxGroups == 0)
+		if ($maxGroups === -1)
+		{
 			return true;
+		}
 
-		$row = \Bitrix\Voximplant\Model\QueueTable::getList(array(
-			'select' => array('CNT')
-		))->fetch();
-		$groupCount = $row['CNT'];
+		$groupCount = QueueTable::getCount();
 		return $groupCount < $maxGroups;
 	}
 
@@ -284,10 +280,53 @@ class Limits
 
 	public static function canInterceptCall()
 	{
-		return \CVoxImplantAccount::IsPro();
+		return (
+			!Loader::includeModule('bitrix24')
+			|| Bitrix24\Feature::isFeatureEnabled("voximplant_intercept_call")
+		);
 	}
 
-	public static function canManageTelephony($withGracePeriod = true)
+	public static function canSelectCallSource()
+	{
+		return (
+			!Loader::includeModule('bitrix24')
+			|| Bitrix24\Feature::isFeatureEnabled("voximplant_call_source")
+		);
+	}
+
+	public static function canExportCalls()
+	{
+		return (
+			!Loader::includeModule('bitrix24')
+			|| Bitrix24\Feature::isFeatureEnabled("voximplant_export_calls")
+		);
+	}
+
+	public static function canVote()
+	{
+		return (
+			!Loader::includeModule('bitrix24')
+			|| Bitrix24\Feature::isFeatureEnabled("voximplant_vote")
+		);
+	}
+
+	public static function isQueueAllAllowed()
+	{
+		return (
+			!Loader::includeModule('bitrix24')
+			|| Bitrix24\Feature::isFeatureEnabled("voximplant_queue_all")
+		);
+	}
+
+	public static function isRedirectToQueueAllowed()
+	{
+		return (
+			!Loader::includeModule('bitrix24')
+			|| Bitrix24\Feature::isFeatureEnabled("voximplant_redirect_to_queue")
+		);
+	}
+
+	public static function canManageTelephony()
 	{
 		if (!Loader::includeModule("bitrix24"))
 		{
@@ -299,9 +338,7 @@ class Limits
 			return true;
 		}
 
-		$gracePeriodEnd = Bitrix24\Feature::getVariable("voximplant_disable_telephony_for_free_date");
-		$gracePeriodEndDate = new Date($gracePeriodEnd, 'Y-m-d');
-		return $withGracePeriod && time() < $gracePeriodEndDate->getTimestamp();
+		return false;
 	}
 
 	public static function canCall()
@@ -312,11 +349,6 @@ class Limits
 		}
 
 		if (Bitrix24\Feature::isFeatureEnabled("voximplant_calls"))
-		{
-			return true;
-		}
-
-		if (Bitrix24\Feature::isFeatureEnabled("voximplant_calls_for_grace_period"))
 		{
 			return true;
 		}

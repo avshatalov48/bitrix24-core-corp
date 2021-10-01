@@ -36,8 +36,6 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		this._helpWrapper = null;
 		this.eventsNamespace = 'BX.Crm.EntityEditor';
 		this.pageTitleInputClassName = "pagetitle-item crm-pagetitle-item";
-
-		this._ufAccessRights = {};
 	};
 
 	BX.extend(BX.Crm.EntityEditor, BX.UI.EntityEditor);
@@ -87,8 +85,6 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			duplicateControlConfig
 		);
 		//endregion
-
-		this._ufAccessRights = BX.prop.getObject(this._settings, "ufAccessRights", {});
 
 		this._bizprocManager = BX.prop.get(this._settings, "bizprocManager", null);
 		if(this._bizprocManager)
@@ -644,12 +640,12 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	//endregion
 	BX.Crm.EntityEditor.prototype.adjustTitle = function()
 	{
-		if (!this._enablePageTitleControls || !this._model.isCaptionEditable())
+		BX.Crm.EntityEditor.superclass.adjustTitle.apply(this);
+
+		if (!this._enablePageTitleControls)
 		{
 			return;
 		}
-
-		BX.Crm.EntityEditor.superclass.adjustTitle.apply(this);
 
 		document.title = this._model.getCaption().trim();
 		if (BX.getClass("BX.SidePanel.Instance.updateBrowserTitle"))

@@ -256,6 +256,11 @@ final class Fields
 							$data['quantity']['unit'] = $item['QUANTITY']['unit'] ?? null;
 						}
 
+						if (!$item['ID'] || (is_string($item['ID']) && !is_numeric($item['ID'])))
+						{
+							return $data;
+						}
+
 						$product = \CCrmProduct::getByID($item['ID']);
 						if (!$product)
 						{

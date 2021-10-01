@@ -53,6 +53,7 @@ BX.Disk.FolderListClass = (function (){
 		this.destFormName = parameters.destFormName || 'folder-list-destFormName';
 
 		this.ajaxUrl = '/bitrix/components/bitrix/disk.folder.list/ajax.php';
+		this.baseGridPageUrl = document.location.toString();
 
 		BX.Disk.Page.changeFolder({
 			id: this.currentFolder.id,
@@ -73,7 +74,7 @@ BX.Disk.FolderListClass = (function (){
 					}
 				},
 				null,
-				document.location.toString()
+				this.baseGridPageUrl
 			);
 		}
 
@@ -257,7 +258,7 @@ BX.Disk.FolderListClass = (function (){
 		BX.addCustomEvent("Disk.Page:onChangeFolder", this.onChangeFolder.bind(this));
 		BX.addCustomEvent("Disk.TileItem.Item:onItemDblClick", this.onItemDblClick.bind(this));
 		BX.addCustomEvent("Disk.TileItem.Item:onItemEnter", this.onItemDblClick.bind(this));
-		BX.addCustomEvent(this.commonGrid.instance, "TileGrid.Grid:onItemRemove", this.onItemRemove.bind(this));
+		BX.addCustomEvent(this.commonGrid.instance, "TileGrid.Grid:onItemRemove", this.handleItemRemoveByTileGrid.bind(this));
 		BX.addCustomEvent(this.commonGrid.instance, "TileGrid.Grid:onItemMove", this.onItemMove.bind(this));
 
 		BX.addCustomEvent("Disk:onChangeDocumentService", this.onChangeDocumentService.bind(this));
@@ -594,22 +595,16 @@ BX.Disk.FolderListClass = (function (){
 		}
 	};
 
-	FolderListClass.prototype.onItemRemove = function (item)
+	FolderListClass.prototype.handleItemRemoveByTileGrid = function (item)
 	{
-		if (this.isTrashMode)
-		{
-
-		}
-		else
+		if (!this.isTrashMode)
 		{
 			BX.ajax.runAction('disk.api.commonActions.markDeleted', {
 				analyticsLabel: 'folder.list.dd',
 				data: {
 					objectId: item.getId()
 				}
-			}).then(function (response) {
-				BX.addClass(this.layout.trashCanButton, 'pashaPleaseUseSomeClassHere');
-			}.bind(this));
+			});
 		}
 	};
 
@@ -675,7 +670,7 @@ BX.Disk.FolderListClass = (function (){
 
 		if (!requestParams.url)
 		{
-			requestParams.url = window.location.pathname + window.location.search;
+			requestParams.url = this.baseGridPageUrl;
 		}
 
 		if (requestParams.data.controls)
@@ -1265,14 +1260,14 @@ BX.Disk.FolderListClass = (function (){
 
 		if (event.getEventId() === 'Disk.File:onNewVersionUploaded')
 		{
-			this.commonGrid.reload(BX.SidePanel.Instance.getPageUrl());
+			this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(eventData.object.id));
 		}
 
 		if (event.getEventId() === 'Disk.OnlyOffice:onSaved')
 		{
 			if (!eventData.object)
 			{
-				this.commonGrid.reload(BX.SidePanel.Instance.getPageUrl());
+				this.commonGrid.reload();
 			}
 			else
 			{
@@ -1364,6 +1359,7 @@ BX.Disk.FolderListClass = (function (){
 				name: folder.name
 			}
 		};
+
 		if (this.shouldUseHistory())
 		{
 			window.history.pushState(
@@ -1373,6 +1369,7 @@ BX.Disk.FolderListClass = (function (){
 			);
 		}
 		BX.onCustomEvent("Window:onPushState", [state, null, folder.link]);
+		this.baseGridPageUrl = folder.link;
 
 		this.openFolder(folder.id, folder);
 
@@ -5076,7 +5073,6 @@ BX.Disk.FolderListClass = (function (){
 				var item = this.instance.getItem(itemId);
 				if (item)
 				{
-					//todo here we have to remove item from server
 					this.instance.removeItem(item);
 				}
 			}

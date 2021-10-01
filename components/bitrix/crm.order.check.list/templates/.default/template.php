@@ -124,7 +124,7 @@ foreach($arResult['ROWS'] as $key => $check)
 	{
 		$paymentData = $arResult['PAYMENT_LIST'][$paymentId];
 		$paymentTitle = Loc::getMessage("CRM_ORDER_PAYMENT_TITLE",array(
-			"#ACCOUNT_NUMBER#" => $paymentData['ACCOUNT_NUMBER'],
+			"#ACCOUNT_NUMBER#" => htmlspecialcharsbx($paymentData['ACCOUNT_NUMBER']),
 			"#DATE_BILL#" =>   FormatDate($arResult['DATE_FORMAT'], MakeTimeStamp($paymentData['DATE_BILL'])),
 		));
 		$link = CComponentEngine::MakePathFromTemplate(
@@ -153,7 +153,7 @@ foreach($arResult['ROWS'] as $key => $check)
 	{
 		$shipmentData = $arResult['SHIPMENT_LIST'][$shipmentId];
 		$shipmentTitle = Loc::getMessage("CRM_ORDER_SHIPMENT_TITLE",array(
-			"#ACCOUNT_NUMBER#" => $shipmentData['ACCOUNT_NUMBER'],
+			"#ACCOUNT_NUMBER#" => htmlspecialcharsbx($shipmentData['ACCOUNT_NUMBER']),
 			"#DATE_INSERT#" =>  FormatDate($arResult['DATE_FORMAT'], MakeTimeStamp($shipmentData['DATE_INSERT'])),
 		));
 		$link = CComponentEngine::MakePathFromTemplate(

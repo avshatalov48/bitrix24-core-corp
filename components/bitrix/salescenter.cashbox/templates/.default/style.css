@@ -96,6 +96,14 @@
 	background-color: #359FD0;
 }
 
+.salescenter-cashboxrobokassa-icon { width: 97px; }
+
+.salescenter-cashboxrobokassa-icon i {
+	background-image: url(images/cashboxrobokassa.svg);
+	background-size: 90% auto;
+	background-color: #FF5722;
+}
+
 .salescenter-angle-icon-after {
 	cursor: pointer;
 }

@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
@@ -8,7 +9,17 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 \Bitrix\Main\UI\Extension::load("popup");
 
-\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
+Loc::loadLanguageFile(__FILE__);
+
+if ($arParams['FEEDBACK_TYPE'] === 'integration_request')
+{
+	$pageTitle = Loc::getMessage('SALESCENTER_FEEDBACK_INTEGRATION_REQUEST_TITLE');
+}
+else
+{
+	$pageTitle = Loc::getMessage('SALESCENTER_FEEDBACK_TITLE');
+}
+
 if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 {
 	$APPLICATION->RestartBuffer();
@@ -37,7 +48,7 @@ if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 			<div class="pagetitle-wrap">
 				<div class="pagetitle-inner-container">
 					<div class="pagetitle">
-						<span id="pagetitle" class="pagetitle-item"><?=\Bitrix\Main\Localization\Loc::getMessage('SALESCENTER_FEEDBACK_TITLE');?></span>
+						<span id="pagetitle" class="pagetitle-item"><?=$pageTitle;?></span>
 					</div>
 				</div>
 			</div>
@@ -45,7 +56,7 @@ if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 <?}
 else
 {
-	$APPLICATION->SetTitle(\Bitrix\Main\Localization\Loc::getMessage('SALESCENTER_FEEDBACK_TITLE'));
+	$APPLICATION->SetTitle($pageTitle);
 	?>
 	<script id="bx24_form_inline" data-skip-moving="true">
 		(function(w,d,u,b){w['Bitrix24FormObject']=b;w[b] = w[b] || function(){arguments[0].ref=u;

@@ -7,7 +7,7 @@ use Bitrix\Main\UserConsent\Consent;
 use Bitrix\Main\UserConsent\Agreement;
 use Bitrix\Main\UserConsent\Internals\AgreementTable;
 
-use Bitrix\Notifications\Limit;
+use Bitrix\ImConnector\Limit;
 
 class Notifications
 {
@@ -27,9 +27,12 @@ class Notifications
 		return !Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() === 'ru';
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function canUse(): bool
 	{
-		return Loader::includeModule('notifications') && Limit::isAvailable();
+		return Loader::includeModule('notifications') && Limit::canUseConnector('notifications');
 	}
 
 	/**

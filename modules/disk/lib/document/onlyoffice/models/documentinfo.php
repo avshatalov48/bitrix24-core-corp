@@ -23,6 +23,8 @@ final class DocumentInfo extends Model
 	public const CONTENT_STATUS_SAVED = DocumentInfoTable::CONTENT_STATUS_SAVED;
 	public const CONTENT_STATUS_NO_CHANGES = DocumentInfoTable::CONTENT_STATUS_NO_CHANGES;
 
+	public const SECONDS_TO_MARK_AS_STILL_WORKING = 60;
+
 	public const REF_OWNER = 'owner';
 	public const REF_OBJECT = 'object';
 	public const REF_VERSION = 'version';
@@ -159,6 +161,11 @@ final class DocumentInfo extends Model
 		return in_array($this->getContentStatus(), $finalStatuses, true);
 	}
 
+	public function wasFinallySaved(): bool
+	{
+		return $this->getContentStatus() === self::CONTENT_STATUS_SAVED;
+	}
+
 	public function wasForceSaved(): bool
 	{
 		$forceSavedStatuses = [
@@ -167,6 +174,25 @@ final class DocumentInfo extends Model
 		];
 
 		return in_array($this->getContentStatus(), $forceSavedStatuses, true);
+	}
+
+	public function isAbandoned(): bool
+	{
+		if ($this->isFinished())
+		{
+			return false;
+		}
+
+		if ($this->isSaving())
+		{
+			$now = new DateTime();
+			if ($now->getTimestamp() - $this->getUpdateTime()->getTimestamp() > self::SECONDS_TO_MARK_AS_STILL_WORKING * 2)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function isSaving(): bool
@@ -224,6 +250,13 @@ final class DocumentInfo extends Model
 		return $this->update([
 			'CONTENT_STATUS' => $contentStatus,
 		]);
+	}
+
+	public function actualizeUpdateTime(): bool
+	{
+		return $this->update([
+			'UPDATE_TIME' => new DateTime(),
+	 	]);
 	}
 
 	protected function update(array $data)

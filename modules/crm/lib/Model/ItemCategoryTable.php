@@ -14,6 +14,22 @@ use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class ItemCategoryTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ItemCategory_Query query()
+ * @method static EO_ItemCategory_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ItemCategory_Result getById($id)
+ * @method static EO_ItemCategory_Result getList(array $parameters = array())
+ * @method static EO_ItemCategory_Entity getEntity()
+ * @method static \Bitrix\Crm\Model\EO_ItemCategory createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Model\EO_ItemCategory_Collection createCollection()
+ * @method static \Bitrix\Crm\Model\EO_ItemCategory wakeUpObject($row)
+ * @method static \Bitrix\Crm\Model\EO_ItemCategory_Collection wakeUpCollection($rows)
+ */
 class ItemCategoryTable extends DataManager
 {
 	public static function getTableName(): string

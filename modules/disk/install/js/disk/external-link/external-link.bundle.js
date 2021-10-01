@@ -145,35 +145,7 @@ this.BX = this.BX || {};
 	  return BackendForTrackedObject;
 	}(Backend);
 
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" class=\"disk-control-external-link-link\" target=\"_blank\">", "</a>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-control-external-link-block", "\">\n\t\t\t\t\t<div class=\"disk-control-external-link\">\n\t\t\t\t\t\t<div class=\"disk-control-external-link-btn\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"disk-control-external-link-main\">\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-link-box\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-subtitle\" onclick=\"", "\">", ", ", "", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-text\">", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-skeleton\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"disk-control-external-link-link-icon\"></div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3;
 
 	var Input = /*#__PURE__*/function () {
 	  function Input(objectId, data) {
@@ -276,7 +248,7 @@ this.BX = this.BX || {};
 	      var _this2 = this;
 
 	      return this.cache.remember('main', function () {
-	        var copyButton = main_core.Tag.render(_templateObject());
+	        var copyButton = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"disk-control-external-link-link-icon\"></div>"])));
 	        BX.clipboard.bindCopyClick(copyButton, {
 	          text: function text() {
 	            return _this2.data.link;
@@ -287,7 +259,7 @@ this.BX = this.BX || {};
 	          return _this2.constructor.showPopup(_this2.objectId, _this2.data);
 	        };
 
-	        return main_core.Tag.render(_templateObject2(), _this2.data.id !== null ? ' disk-control-external-link-block--active' : '', _this2.getSwitcher().getNode(), _this2.getLinkContainer(), copyButton, tune, _this2.getDeathTimeContainer(), _this2.getPasswordContainer(), _this2.getRightsContainer(), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_IS_NOT_PUBLISHED'));
+	        return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-control-external-link-block", "\">\n\t\t\t\t\t<div class=\"disk-control-external-link\">\n\t\t\t\t\t\t<div class=\"disk-control-external-link-btn\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"disk-control-external-link-main\">\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-link-box\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-subtitle\" onclick=\"", "\">", ", ", "", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-text\">", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-skeleton\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t"])), _this2.data.id !== null ? ' disk-control-external-link-block--active' : '', _this2.getSwitcher().getNode(), _this2.getLinkContainer(), copyButton, tune, _this2.getDeathTimeContainer(), _this2.getPasswordContainer(), _this2.getRightsContainer(), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_IS_NOT_PUBLISHED'));
 	      });
 	    }
 	  }, {
@@ -318,7 +290,7 @@ this.BX = this.BX || {};
 	      var _this4 = this;
 
 	      return this.cache.remember('link', function () {
-	        return main_core.Tag.render(_templateObject3(), main_core.Text.encode(_this4.data.link), main_core.Text.encode(_this4.data.link));
+	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" class=\"disk-control-external-link-link\" target=\"_blank\">", "</a>"])), main_core.Text.encode(_this4.data.link), main_core.Text.encode(_this4.data.link));
 	      });
 	    }
 	  }, {
@@ -405,55 +377,7 @@ this.BX = this.BX || {};
 	  return Input;
 	}();
 
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-line\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element\" name=\"canEditDocument\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-line\">\n\t\t\t\t<input type=\"checkbox\" name=\"hasPassword\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element\" name=\"enablePassword\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"passwordIsNotSaved\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"password\" name=\"passwordValue\" class=\"ui-ctl-element\" placeholder=\"", "\" autocomplete=\"nope\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-angle disk-external-link-setting-popup-password-show\" name=\"passwordTypeSwitcher\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"passwordIsSaved\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-disabled ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"password\" class=\"ui-ctl-element\" readonly value=\"some password\">\n\t\t\t\t\t\t\t<button name=\"passwordButtonUnset\" class=\"ui-ctl-after ui-ctl-icon-clear\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-line\">\n\t\t\t\t<input type=\"checkbox\" name=\"hasDeathTime\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element\" name=\"enableDeathTime\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"deathTimeIsNotSaved\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w25 ui-ctl-inline\">\n\t\t\t\t\t\t\t<input type=\"number\" min=\"1\" name=\"deathTimeValue\" class=\"ui-ctl-element\" value=\"10\" size=\"4\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-inline ui-ctl-w50\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t<select class=\"ui-ctl-element\" name=\"deathTimeMeasure\">\n\t\t\t\t\t\t\t\t<option value=\"60\" selected>", "</option>\n\t\t\t\t\t\t\t\t<option value=\"3600\">", "</option>\n\t\t\t\t\t\t\t\t<option value=\"86400\">", "</option>\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"deathTimeIsSaved\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-no-border\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-element\" name=\"deathTimeParsed\">14.10.2014 16:33</div>\n\t\t\t\t\t\t\t<button name=\"deathTimeButtonUnset\" class=\"ui-ctl-after ui-ctl-icon-clear\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"]);
-
-	  _templateObject3$1 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-control-external-link-block", " disk-control-external-link-block--tunable\">\n\t\t\t\t\t<div class=\"disk-control-external-link\">\n\t\t\t\t\t\t<div class=\"disk-control-external-link-btn\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"disk-control-external-link-main\">\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-link-box\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-subtitle\" onclick=\"", "\">", ", ", "", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-text\">", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-skeleton\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"disk-public-link-config\" onclick=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"disk-control-external-link-settings\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject2$1 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"disk-control-external-link-link-icon\"></div>"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4, _templateObject5;
 
 	var InputExtended = /*#__PURE__*/function (_Input) {
 	  babelHelpers.inherits(InputExtended, _Input);
@@ -499,14 +423,14 @@ this.BX = this.BX || {};
 	      var _this = this;
 
 	      return this.cache.remember('main', function () {
-	        var copyButton = main_core.Tag.render(_templateObject$1());
+	        var copyButton = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"disk-control-external-link-link-icon\"></div>"])));
 	        BX.clipboard.bindCopyClick(copyButton, {
 	          text: function text() {
 	            return _this.data.link;
 	          }
 	        });
 	        _this.showSettings = _this.showSettings.bind(_this);
-	        return main_core.Tag.render(_templateObject2$1(), _this.data.id !== null ? ' disk-control-external-link-block--active' : '', _this.getSwitcher().getNode(), _this.getLinkContainer(), copyButton, _this.showSettings, _this.getDeathTimeContainer(), _this.getPasswordContainer(), _this.getRightsContainer(), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_IS_NOT_PUBLISHED'), _this.showSettings, _this.getDeathTimeSettingsContainer(), _this.getPasswordSettingsContainer(), _this.getEditSettingsContainer());
+	        return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-control-external-link-block", " disk-control-external-link-block--tunable\">\n\t\t\t\t\t<div class=\"disk-control-external-link\">\n\t\t\t\t\t\t<div class=\"disk-control-external-link-btn\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"disk-control-external-link-main\">\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-link-box\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-subtitle\" onclick=\"", "\">", ", ", "", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-text\">", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-skeleton\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"disk-public-link-config\" onclick=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"disk-control-external-link-settings\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), _this.data.id !== null ? ' disk-control-external-link-block--active' : '', _this.getSwitcher().getNode(), _this.getLinkContainer(), copyButton, _this.showSettings, _this.getDeathTimeContainer(), _this.getPasswordContainer(), _this.getRightsContainer(), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_IS_NOT_PUBLISHED'), _this.showSettings, _this.getDeathTimeSettingsContainer(), _this.getPasswordSettingsContainer(), _this.getEditSettingsContainer());
 	      });
 	    }
 	  }, {
@@ -533,7 +457,7 @@ this.BX = this.BX || {};
 	      var _this2 = this;
 
 	      return this.cache.remember('deathTimeSettings', function () {
-	        var deathTimeSettings = main_core.Tag.render(_templateObject3$1(), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_DEATHTIME_LIMIT_CHECKBOX'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_MINUTES'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_HOURS'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_DAYS'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_DEATHTIME_LIMIT_PREPOSITION'));
+	        var deathTimeSettings = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-line\">\n\t\t\t\t<input type=\"checkbox\" name=\"hasDeathTime\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element\" name=\"enableDeathTime\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"deathTimeIsNotSaved\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w25 ui-ctl-inline\">\n\t\t\t\t\t\t\t<input type=\"number\" min=\"1\" name=\"deathTimeValue\" class=\"ui-ctl-element\" value=\"10\" size=\"4\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-inline ui-ctl-w50\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t<select class=\"ui-ctl-element\" name=\"deathTimeMeasure\">\n\t\t\t\t\t\t\t\t<option value=\"60\" selected>", "</option>\n\t\t\t\t\t\t\t\t<option value=\"3600\">", "</option>\n\t\t\t\t\t\t\t\t<option value=\"86400\">", "</option>\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"deathTimeIsSaved\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-no-border\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-element\" name=\"deathTimeParsed\">14.10.2014 16:33</div>\n\t\t\t\t\t\t\t<button name=\"deathTimeButtonUnset\" class=\"ui-ctl-after ui-ctl-icon-clear\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"])), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_DEATHTIME_LIMIT_CHECKBOX'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_MINUTES'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_HOURS'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_DAYS'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_DEATHTIME_LIMIT_PREPOSITION'));
 	        /*region bind settings form */
 
 	        var onDeathTimeHasChanged = function onDeathTimeHasChanged() {
@@ -599,7 +523,7 @@ this.BX = this.BX || {};
 	      var _this3 = this;
 
 	      return this.cache.remember('passwordSettings', function () {
-	        var passwordSettings = main_core.Tag.render(_templateObject4(), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_PASSWORD_CHECKBOX'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_PASSWORD_PLACEHOLDER'));
+	        var passwordSettings = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-line\">\n\t\t\t\t<input type=\"checkbox\" name=\"hasPassword\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element\" name=\"enablePassword\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"passwordIsNotSaved\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"password\" name=\"passwordValue\" class=\"ui-ctl-element\" placeholder=\"", "\" autocomplete=\"nope\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-angle disk-external-link-setting-popup-password-show\" name=\"passwordTypeSwitcher\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"passwordIsSaved\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-disabled ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"password\" class=\"ui-ctl-element\" readonly value=\"some password\">\n\t\t\t\t\t\t\t<button name=\"passwordButtonUnset\" class=\"ui-ctl-after ui-ctl-icon-clear\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_PASSWORD_CHECKBOX'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_PASSWORD_PLACEHOLDER'));
 	        /*region bind settings form */
 
 	        var passwordValue = passwordSettings.querySelector('input[name=passwordValue]');
@@ -662,7 +586,7 @@ this.BX = this.BX || {};
 	      var _this4 = this;
 
 	      return this.cache.remember('editSettings', function () {
-	        var editSettings = main_core.Tag.render(_templateObject5(), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_ALLOW_EDITING'));
+	        var editSettings = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-line\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element\" name=\"canEditDocument\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_ALLOW_EDITING'));
 	        /*region bind settings form */
 
 	        var canEditDocument = editSettings.querySelector('input[name=canEditDocument]');

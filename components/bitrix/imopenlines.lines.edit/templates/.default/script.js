@@ -5,12 +5,19 @@
 	var selectorQueueInstance = null;
 
 	window.BX.OpenLinesConfigEdit = {
-		init : function()
+		init : function(params)
 		{
 			BX.imolTrialHandler.init();
 			BX.OpenLinesConfigEdit.addEventForTooltip();
 			BX.OpenLinesConfigEdit.bindEvents();
 			BX.OpenLinesConfigEdit.onLoad();
+			if(params.isSuccessSendForm === true)
+			{
+				window.addEventListener('load', function() {
+					BX.OpenLinesConfigEdit.formSuccessSendForm();
+					params.isSuccessSendForm = false;
+				});
+			}
 		},
 		loadKpiTimeMenus : function(params)
 		{
@@ -72,11 +79,15 @@
 			selectorQueueInstance.setUserInput(BX(nodes.userInputNode));
 			selectorQueueInstance.setDefaultUserInput(BX(nodes.defaultUserInputNode));
 		},
-		formSubmitAction : function()
+		formSuccessSendForm : function()
 		{
 			BX.OpenLinesConfigEdit.sendUsersData();
 			BX.OpenLinesConfigEdit.updateLinesList();
-			BX.SidePanel.Instance.close();
+		},
+		successSendForm : function()
+		{
+			BX.OpenLinesConfigEdit.sendUsersData();
+			BX.OpenLinesConfigEdit.updateLinesList();
 		},
 		sendUsersData : function()
 		{
@@ -522,11 +533,6 @@
 		bindEvents: function()
 		{
 			BX.bind(
-				BX('imol_config_edit_form'),
-				'submit',
-				BX.OpenLinesConfigEdit.formSubmitAction
-			);
-			BX.bind(
 				BX('imol_crm_create'),
 				'change',
 				BX.OpenLinesConfigEdit.toggleCrmSourceRule
@@ -662,6 +668,14 @@
 				function (e) {
 					e.preventDefault();
 					BX.OpenLinesConfigEdit.openQuickAnswers(this);
+				}
+			);
+			BX.bind(
+				BX('imol_quick_answer_manage_not_can_use'),
+				'click',
+				function (e) {
+					e.preventDefault();
+					BX.imolTrialHandler.openPopup(BX.message('IMOL_CONFIG_EDIT_LIMIT_INFO_HELPER_QUICK_ANSWERS'));
 				}
 			);
 			BX.bind(
@@ -1266,7 +1280,16 @@
 				queue.push({type : entity.entityId, id : entity.id})
 			});
 
-			this.sendActionRequest('getUsersQueue', {'queue': queue}, BX.proxy(this.setResultRequestQueueUsers, this));
+			if(queue.length>0)
+			{
+				this.sendActionRequest('getUsersQueue', {'queue': queue}, BX.proxy(this.setResultRequestQueueUsers, this));
+			}
+			else
+			{
+				this.setResultRequestQueueUsers({data : queue});
+			}
+
+
 		},
 		showPopupDepartment : function (item)
 		{
@@ -1601,11 +1624,11 @@
 				sendData.action = action;
 				sendData.configId = this.id;
 			}
-
 			BX.ajax.runComponentAction('bitrix:imopenlines.lines.edit', action, {
 				mode: 'ajax',
 				data: sendData
 			}).then(BX.proxy(function(data){
+
 				data = data || {};
 				if(data.error)
 				{

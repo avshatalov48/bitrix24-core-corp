@@ -2881,6 +2881,14 @@
 	height: 16px;
 }
 
+.voximplant-grid-state-fail {
+	color: #d0021b;
+}
+
+.voximplant-grid-state-active {
+	color: #719100;
+}
+
 .voximplant-status-panel {
 	cursor: pointer;
 }

@@ -1,14 +1,14 @@
-<?
-use \Bitrix\Main\UI\Extension,
-	\Bitrix\Main\Localization\Loc;
+<? if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Localization\Loc;
 
-use \Bitrix\Imopenlines\Limit;
+use Bitrix\Imopenlines\Limit;
 
 /**
  * @var array $arResult
  * @var CMain $APPLICATION
  */
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
 $this->addExternalCss('/bitrix/css/main/table/style.css');
 
 if($arResult['ERRORS'] && $arResult['ERRORS'] instanceof \Bitrix\Main\ErrorCollection)
@@ -88,41 +88,55 @@ Extension::load('ui.alerts');
 			</td>
 		</tr>
 	</table>
-	<?if($arResult['CAN_EDIT']):?>
-		<input type="submit" class="webform-small-button webform-small-button-accept" value="<?=Loc::getMessage('IMOL_ROLE_SAVE')?>">
+	<? if($arResult['CAN_EDIT']):?>
+		<?$APPLICATION->IncludeComponent(
+			'bitrix:ui.button.panel',
+			'',
+			[
+				'BUTTONS' => [
+					[
+						'TYPE' => 'save',
+						'CAPTION' => Loc::getMessage('IMOL_ROLE_SAVE'),
+
+					],
+					[
+						'TYPE' => 'cancel',
+						'LINK' =>  $arResult['PERMISSIONS_URL']
+					]
+				],
+				'ALIGN' => 'center'
+			],
+			false
+		);
+		?>
 	<?else:?>
-		<span class="webform-small-button webform-small-button-accept" onclick="openTrialInfoHelper('<?=Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_ACCESS_PERMISSIONS?>');">
-			<?=Loc::getMessage('IMOL_ROLE_SAVE')?>
-			<div class="tariff-lock-holder-title"><div class="tariff-lock"></div></div>
-		</span>
-	<?endif?>
-	<a class="webform-small-button"
-		<? if($arResult['IFRAME']): ?>
-			onclick="BX.SidePanel.Instance.close()"
-		<? else: ?>
-			href="<?=$arResult['PERMISSIONS_URL']?>"
-		<? endif; ?>
-	>
-		<?=Loc::getMessage('IMOL_ROLE_CANCEL')?>
-	</a>
-	<?if(!$arResult['CAN_EDIT']):?>
-	<div class="ui-alert ui-alert-warning" style="margin: 15px 0 0 0;">
-		<span class="ui-alert-message"><?=Loc::getMessage('IMOL_PERM_RESTRICTION')?></span>
-	</div>
+		<?$APPLICATION->IncludeComponent(
+			'bitrix:ui.button.panel',
+			'',
+			[
+				'BUTTONS' => [
+					[
+						'TYPE' => 'custom',
+						'LAYOUT' => '<span class="webform-small-button webform-small-button-accept" onclick="openTrialInfoHelper(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_ACCESS_PERMISSIONS . '\');">
+		' . Loc::getMessage('IMOL_ROLE_SAVE') . '
+		<div class="tariff-lock-holder-title"><div class="tariff-lock"></div></div>
+		</span>'
+					],
+					[
+						'TYPE' => 'cancel',
+						'LINK' =>  $arResult['PERMISSIONS_URL']
+					],
+					[
+						'TYPE' => 'custom',
+						'LAYOUT' => '<div class="ui-alert ui-alert-warning" style="margin: 15px 0 0 0;">
+		<span class="ui-alert-message">' . Loc::getMessage('IMOL_PERM_RESTRICTION') . '</span>
+	</div>'
+					],
+				],
+				'ALIGN' => 'center'
+			],
+			false
+		);
+		?>
 	<?endif?>
 </form>
-<?
-if(!$arResult['CAN_EDIT'])
-{
-	?>
-	<script>
-		BX.ready(function()
-		{
-			var sendSidePanelMessage =  function imolSendSidePanelMessage() {
-				BX.SidePanel.Instance.postMessage(BX.SidePanel.Instance.getSliderByWindow(window), 'ImOpenLines:reloadRoles', {});
-			};
-			BX.bind(BX('imol-role-form'), 'submit', sendSidePanelMessage);
-		});
-	</script>
-	<?
-}

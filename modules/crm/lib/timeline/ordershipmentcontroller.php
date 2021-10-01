@@ -10,21 +10,6 @@ Loc::loadMessages(__FILE__);
 
 class OrderShipmentController extends EntityController
 {
-	//region Singleton
-	/** @var OrderShipmentController|null */
-	protected static $instance = null;
-	/**
-	 * @return OrderShipmentController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new OrderShipmentController();
-		}
-		return self::$instance;
-	}
-	//endregion
 	//region EntityController
 	public function getEntityTypeID()
 	{

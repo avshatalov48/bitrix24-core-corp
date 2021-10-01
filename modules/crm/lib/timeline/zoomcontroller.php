@@ -5,28 +5,12 @@ use Bitrix\Main;
 
 class ZoomController extends EntityController
 {
-	/** @var ZoomController|null */
-	private static $instance = null;
-
-	private function __construct()
+	protected function __construct()
 	{
 	}
 
-	private function __clone()
+	protected function __clone()
 	{
-	}
-
-	/**
-	 * @return ZoomController
-	 */
-	public static function getInstance(): ?ZoomController
-	{
-		if (self::$instance === null)
-		{
-			self::$instance = new static();
-		}
-
-		return self::$instance;
 	}
 
 	public function onCreate($ownerId, array $params): void

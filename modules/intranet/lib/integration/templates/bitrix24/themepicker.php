@@ -182,14 +182,16 @@ class ThemePicker
 			return true;
 		}
 
-		if (\CBitrix24::isLicensePaid() || \CBitrix24::IsNfrLicense())
+		$licenseType = \CBitrix24::getLicenseType();
+		if ((\CBitrix24::isLicensePaid() && $licenseType !== 'basic') || \CBitrix24::IsNfrLicense())
 		{
 			return true;
 		}
 
 		return (
-			\CBitrix24::isDemoLicense() &&
-			in_array(\CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS), \CBitrix24::PAID_EDITIONS, true)
+			\CBitrix24::isDemoLicense()
+			&& in_array(\CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS), \CBitrix24::PAID_EDITIONS, true)
+			&& $licenseType !== 'basic'
 		);
 	}
 

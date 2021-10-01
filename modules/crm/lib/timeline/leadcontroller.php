@@ -1,11 +1,10 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\History\LeadStatusHistoryEntry;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -17,93 +16,9 @@ class LeadController extends EntityController
 	const RESTORE_EVENT_NAME = 'timeline_lead_restore';
 	//endregion
 
-	//region Singleton
-	/** @var LeadController|null */
-	protected static $instance = null;
-	/**
-	 * @return LeadController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new LeadController();
-		}
-		return self::$instance;
-	}
-	//endregion
-
-
 	public function onConvert($ownerID, array $params)
 	{
-		if(!is_int($ownerID))
-		{
-			$ownerID = (int)$ownerID;
-		}
-		if($ownerID <= 0)
-		{
-			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
-		}
-
-		$entities = isset($params['ENTITIES']) && is_array($params['ENTITIES']) ? $params['ENTITIES'] : array();
-		if(empty($entities))
-		{
-			return;
-		}
-
-		$settings = array('ENTITIES' => array());
-		foreach($entities as $entityTypeName => $entityID)
-		{
-			$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
-			if($entityTypeID === \CCrmOwnerType::Undefined)
-			{
-				continue;
-			}
-
-			$settings['ENTITIES'][] = array('ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID);
-		}
-
-		$authorID = \CCrmSecurityHelper::GetCurrentUserID();
-		if($authorID <= 0)
-		{
-			$authorID = 1;
-		}
-
-		$historyEntryID = ConversionEntry::create(
-			array(
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
-				'ENTITY_ID' => $ownerID,
-				'AUTHOR_ID' => $authorID,
-				'SETTINGS' => $settings
-			)
-		);
-
-		$enableHistoryPush = $historyEntryID > 0;
-		if(($enableHistoryPush) && Main\Loader::includeModule('pull'))
-		{
-			$pushParams = array();
-			if($enableHistoryPush)
-			{
-				$historyFields = TimelineEntry::getByID($historyEntryID);
-				if(is_array($historyFields))
-				{
-					$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
-						$historyFields,
-						array('ENABLE_USER_INFO' => true)
-					);
-				}
-			}
-
-			$tag = $pushParams['TAG'] = TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::Lead, $ownerID);
-			\CPullWatch::AddToStack(
-				$tag,
-				array(
-					'module_id' => 'crm',
-					'command' => 'timeline_activity_add',
-					'params' => $pushParams,
-				)
-			);
-		}
+		$this->onConvertImplementation($ownerID, $params);
 	}
 
 	//region EntityController

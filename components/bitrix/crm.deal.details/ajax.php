@@ -782,6 +782,18 @@ elseif($action === 'SAVE')
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
 
 			$entity = new \CCrmDeal(!CCrmPerms::IsAdmin());
+			$saveOptions = ['REGISTER_SONET_EVENT' => true];
+			if(!$enableRequiredUserFieldCheck)
+			{
+				$saveOptions['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+			}
+			if (!is_null($conversionWizard))
+			{
+				$saveOptions['EXCLUDE_FROM_RELATION_REGISTRATION'] = [
+					new Crm\ItemIdentifier($conversionWizard->getEntityTypeID(), $conversionWizard->getEntityID()),
+				];
+			}
+
 			if($isNew)
 			{
 				$now = time() + CTimeZone::GetOffset();
@@ -812,12 +824,6 @@ elseif($action === 'SAVE')
 
 				$fields['EXCH_RATE'] = CCrmCurrency::GetExchangeRate($fields['CURRENCY_ID']);
 
-				$options = array('REGISTER_SONET_EVENT' => true);
-				if(!$enableRequiredUserFieldCheck)
-				{
-					$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
-				}
-
 				$requisiteInfo = \Bitrix\Crm\Requisite\EntityLink::determineRequisiteLinkBeforeSave(
 					CCrmOwnerType::Deal,
 					0,
@@ -828,7 +834,7 @@ elseif($action === 'SAVE')
 					$bankDetailID > 0 ? $bankDetailID : null
 				);
 
-				$ID = $entity->Add($fields, true, $options);
+				$ID = $entity->Add($fields, true, $saveOptions);
 				if($ID <= 0)
 				{
 					$checkExceptions = $entity->GetCheckExceptions();
@@ -870,16 +876,6 @@ elseif($action === 'SAVE')
 					$fields['EXCH_RATE'] = CCrmCurrency::GetExchangeRate($fields['CURRENCY_ID']);
 				}
 
-				$options = array('REGISTER_SONET_EVENT' => true);
-				if(!$enableRequiredUserFieldCheck)
-				{
-					$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
-				}
-				if($isRecurringSaving || $previousFields['IS_RECURRING'] === 'Y')
-				{
-					$options['REGISTER_STATISTICS'] = false;
-				}
-
 				$requisiteInfo = \Bitrix\Crm\Requisite\EntityLink::determineRequisiteLinkBeforeSave(
 					CCrmOwnerType::Deal,
 					$ID,
@@ -889,7 +885,13 @@ elseif($action === 'SAVE')
 					$requisiteID > 0 ? $requisiteID : null,
 					$bankDetailID > 0 ? $bankDetailID : null
 				);
-				if(!$entity->Update($ID, $fields, true, true, $options))
+
+				if($isRecurringSaving || $previousFields['IS_RECURRING'] === 'Y')
+				{
+					$saveOptions['REGISTER_STATISTICS'] = false;
+				}
+
+				if(!$entity->Update($ID, $fields, true, true, $saveOptions))
 				{
 					$checkExceptions = $entity->GetCheckExceptions();
 					$errorMessage = $entity->LAST_ERROR;
@@ -1533,6 +1535,11 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	$context = isset($_POST['CONTEXT']) && is_array($_POST['CONTEXT']) ? $_POST['CONTEXT'] : array();
 	$fieldNames = isset($_POST['FIELDS']) && is_array($_POST['FIELDS']) ? $_POST['FIELDS'] : array();
 	$title = isset($_POST['TITLE']) ? $_POST['TITLE'] : '';
+
+	if (!\CCrmDeal::CheckReadPermission($ID))
+	{
+		__CrmDealDetailsEndJsonResonse(['ERROR' => 'Access denied.']);
+	}
 
 	$enableConfigScopeToggle = !isset($_POST['ENABLE_CONFIG_SCOPE_TOGGLE'])
 		|| mb_strtoupper($_POST['ENABLE_CONFIG_SCOPE_TOGGLE']) === 'Y';

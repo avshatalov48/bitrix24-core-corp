@@ -56,6 +56,7 @@ $MESS["VI_TOS_RU"] = "<p>Для пополнения баланса Телефо
 		</ul>
 	</li>
 </ol>";
+$MESS["VI_TOS_EN"] = "You are about to leave Bitrix24 website and will be forwarded to Voximplant website. By continuing to this service you accept Voximplant data processing agreement <a href=\"https://voximplant.com/assets/uploads/data-processing-addendum.pdf\" target=\"_blank\">https://voximplant.com/assets/uploads/data-processing-addendum.pdf</a>";
 
 $MESS["VI_DEMO_TOPUP_WARNING_TITLE"] = "Демо-режим предназначен только для тестирования всех возможностей Битрикс24.";
 $MESS["VI_DEMO_TOPUP_WARNING"] = "Обратите внимание, Телефония доступна на любом коммерческом тарифе. Когда демо-режим закончится, вы не сможете звонить и принимать звонки, даже если у вас останутся средства на балансе. Все арендованные номера и средства на балансе сохранятся. Когда вы перейдете на коммерческий тариф, вы сможете продолжить работу с Телефонией. <a href=\"#LINK#\">Подробнее</a>"

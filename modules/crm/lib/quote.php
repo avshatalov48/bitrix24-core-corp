@@ -14,6 +14,7 @@ use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Settings\QuoteSettings;
+use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -411,9 +412,10 @@ class QuoteTable extends DataManager
 		QuoteElementTable::deleteByQuoteId($id);
 		SortTable::clearEntity($id, \CCrmOwnerType::QuoteName);
 		EntityPermsTable::clearByEntity(\CCrmOwnerType::QuoteName, $id);
+		TimelineEntry::deleteByOwner(static::getEntityTypeId(), $id);
 
-		$CCrmEvent = new \CCrmEvent();
-		$CCrmEvent->DeleteByElement(\CCrmOwnerType::QuoteName, $id);
+		$crmEvent = new \CCrmEvent();
+		$crmEvent->DeleteByElement(\CCrmOwnerType::QuoteName, $id);
 
 		\CCrmActivity::DeleteByOwner(\CCrmOwnerType::Quote, $id);
 		EntityLink::unregister(\CCrmOwnerType::Quote, $id);

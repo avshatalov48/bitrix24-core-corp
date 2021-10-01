@@ -40,20 +40,23 @@ class Quote extends ProductsDataProvider
 				'VALUE' => 'DEAL_ID',
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_DEAL_TITLE'),
 			];
-			$this->fields['CONTACTS'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CONTACTS_TITLE'),
-				'PROVIDER' => ArrayDataProvider::class,
-				'OPTIONS' => [
-					'ITEM_PROVIDER' => Contact::class,
-					'ITEM_NAME' => 'CONTACT',
-					'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CONTACT_TITLE'),
-					'ITEM_OPTIONS' => [
-						'DISABLE_MY_COMPANY' => true,
-						'isLightMode' => true,
+			if (!$this->isLightMode())
+			{
+				$this->fields['CONTACTS'] = [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CONTACTS_TITLE'),
+					'PROVIDER' => ArrayDataProvider::class,
+					'OPTIONS' => [
+						'ITEM_PROVIDER' => Contact::class,
+						'ITEM_NAME' => 'CONTACT',
+						'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CONTACT_TITLE'),
+						'ITEM_OPTIONS' => [
+							'DISABLE_MY_COMPANY' => true,
+							'isLightMode' => true,
+						],
 					],
-				],
-				'VALUE' => [$this, 'getContacts'],
-			];
+					'VALUE' => [$this, 'getContacts'],
+				];
+			}
 		}
 
 		return $this->fields;

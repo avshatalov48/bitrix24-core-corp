@@ -34,4 +34,6 @@ $MESS["SC_CASHBOX_OFFLINE_INSTRUCTIION_TITLE"] = "Wie funktioniert das?";
 $MESS["SC_CASHBOX_OFFLINE_TITLE"] = "Arbeit mit eigenem physischen Kassenapparat";
 $MESS["SC_CASHBOX_ORANGE_DESCRITION"] = "Sie müssen einen Kassenapparat verwenden, um Bar- oder Kartenzahlungen akzeptieren zu können.";
 $MESS["SC_CASHBOX_ORANGE_TITLE"] = "Orange Data";
+$MESS["SC_CASHBOX_ROBOKASSA_DESCRITION"] = "Robochecki ist verfügbar, wenn Sie Robokassa nutzen, um die Zahlungssysteme zu verbinden. Robochecki werden die Cloud-Kassenbons ersetzen. Kassenbons werden an Ihre Kunden, Fiskalinformation an enstprechende Behörde gesendet. Wenn Sie Robochecki nutzen, brauchen Sie keinen Kassenapparat zu kaufen oder zu mieten.";
+$MESS["SC_CASHBOX_ROBOKASSA_LINK_CONNECT"] = "Wie kann ich Robocheki konfigurieren?";
 $MESS["SC_MENU_TITLE"] = "Einstellungen";

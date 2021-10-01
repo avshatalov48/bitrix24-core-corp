@@ -1,4 +1,7 @@
 <?php
+$MESS["DISK_DOCUMENTS_ACT_DELETE_MESSAGE"] = "Möchten Sie \"#NAME#\" in den Papierkorb verschieben?";
+$MESS["DISK_DOCUMENTS_ACT_DELETE_OK_BUTTON"] = "In den Papierkorb verschieben";
+$MESS["DISK_DOCUMENTS_ACT_DELETE_TITLE"] = "Löschen bestätigen";
 $MESS["DISK_DOCUMENTS_ACT_LOADING"] = "Wird geladen";
 $MESS["DISK_DOCUMENTS_GRID_STUB_DESCRIPTION"] = "Bearbeiten. Diskutieren. Teilen.";
 $MESS["DISK_DOCUMENTS_GRID_STUB_TITLE"] = "Sie können neue Dokumente, Tabellen oder Präsentationen erstellen, um daran gemeinsam mit Ihren Kollegen zu arbeiten.";

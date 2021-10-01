@@ -9,6 +9,22 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Main\ORM\Fields\StringField;
 
+/**
+ * Class AutosearchUserSettingsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AutosearchUserSettings_Query query()
+ * @method static EO_AutosearchUserSettings_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AutosearchUserSettings_Result getById($id)
+ * @method static EO_AutosearchUserSettings_Result getList(array $parameters = array())
+ * @method static EO_AutosearchUserSettings_Entity getEntity()
+ * @method static \Bitrix\Crm\Integrity\AutoSearchUserSettings createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_AutosearchUserSettings_Collection createCollection()
+ * @method static \Bitrix\Crm\Integrity\AutoSearchUserSettings wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_AutosearchUserSettings_Collection wakeUpCollection($rows)
+ */
 class AutosearchUserSettingsTable extends DataManager
 {
 

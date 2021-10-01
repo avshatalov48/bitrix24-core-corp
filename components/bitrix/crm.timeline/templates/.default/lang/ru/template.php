@@ -236,3 +236,9 @@ $MESS["CRM_TIMELINE_ORDER_MANUAL_CONTINUE_PAY"] = "Клиент продолжи
 $MESS["CRM_TIMELINE_DEAL_ORDER_TITLE"] = "На основании заказа: <a href='#HREF#'>№#ORDER_ID#</a> от #DATE_TIME# (на сумму #PRICE_WITH_CURRENCY#)";
 $MESS["CRM_TIMELINE_PAYMENT_NEED_MANUAL_ADD_CHECK"] = "Обратите внимание! Чек по оплате не будет сформирован автоматически. Чтобы создать чек вручную, перейдите в <a href='#HREF#'>оплату</a>.";
 $MESS["CRM_TIMELINE_PAYMENT_NEED_MANUAL_ADD_CHECK_HELP_LINK"] = "Как создать чек";
+$MESS["CRM_TIMELINE_LINK_TITLE"] = "Добавлена связь с элементом";
+$MESS["CRM_TIMELINE_LINK_CONTENT_TEMPLATE"] = '#ENTITY_TYPE_CAPTION#: <a href="#LINK#">#LINK_TITLE#</a> #LEGEND#';
+$MESS["CRM_TIMELINE_UNLINK_TITLE"] = "Удалена связь с элементом";
+$MESS["CRM_TIMELINE_MARK_ENTITY_SUCCESS_MARK"] = "Элемент успешно завершен";
+$MESS["CRM_TIMELINE_MARK_ENTITY_FAILED_MARK"] = "Элемент провален";
+$MESS["CRM_TIMELINE_MARK_ENTITY_CONTENT_TEMPLATE"] = '#ENTITY_TYPE_CAPTION#: <a href="#LINK#">#LINK_TITLE#</a>';

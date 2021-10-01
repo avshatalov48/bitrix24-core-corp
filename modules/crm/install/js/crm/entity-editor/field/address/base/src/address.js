@@ -970,13 +970,6 @@ class AddressItem extends EventEmitter
 		}
 	}
 
-	getIconState()
-	{
-		let isAddressSet = !!this.getAddress();
-
-		return this._isLoading.toString() + isAddressSet.toString();
-	}
-
 	refreshCopyButtonVisibility()
 	{
 		let node = this._domNodes.copyButton;
@@ -1204,18 +1197,12 @@ class AddressItem extends EventEmitter
 
 	onAddressChanged(event)
 	{
-		let oldIconState = this.getIconState();
-
 		this._isLoading = false;
 
 		let data = event.getData();
 		this._value = Type.isObject(data.address) ? data.address.toJson() : '';
 
-		if (oldIconState !== this.getIconState())
-		{
-			this.refreshIcon();
-		}
-
+		this.refreshIcon();
 		this.refreshCopyButtonVisibility();
 		this.emit('onUpdateAddress', {id: this.getId(), value: this.getValue()});
 	}

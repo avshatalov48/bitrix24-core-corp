@@ -368,6 +368,42 @@ if(typeof BX.Crm.QuoteModel === "undefined")
 	};
 
 	/**
+	 * Quote caption and quote TITLE field are separate entities and should not be confused
+	 *
+	 * @return {string}
+	 */
+	BX.Crm.QuoteModel.prototype.getCaption = function()
+	{
+		var caption = BX.Loc.getMessage(
+			'CRM_QUOTE_TITLE',
+			{
+				'#QUOTE_NUMBER#': this.getField('QUOTE_NUMBER'),
+				'#BEGINDATE#': this.getField('BEGINDATE')
+			}
+		);
+
+		return BX.Type.isString(caption) ? caption : '';
+	};
+
+	/**
+	 * You can't change quote caption
+	 *
+	 * @param {string} caption
+	 */
+	BX.Crm.QuoteModel.prototype.setCaption = function(caption)
+	{
+	};
+
+	/**
+	 * You can't change quote caption
+	 *
+	 * @param {Object} data
+	 */
+	BX.Crm.QuoteModel.prototype.prepareCaptionData = function(data)
+	{
+	};
+
+	/**
 	 * @param {string} id
 	 * @param {Object} settings
 	 * @return {BX.Crm.QuoteModel}

@@ -183,14 +183,32 @@ class CCrmProduct
 			//Try to create a CIBlockElement
 			$arElement = array();
 
+			if (isset($arFields['CATALOG_ID']))
+			{
+				$arElement['IBLOCK_ID'] = (int)$arFields['CATALOG_ID'];
+			}
+			else
+			{
+				$arFields['CATALOG_ID'] = (int)CCrmCatalog::EnsureDefaultExists();
+				$arElement['IBLOCK_ID'] = $arFields['CATALOG_ID'];
+			}
+
 			if(isset($arFields['NAME']))
 			{
 				$arElement['NAME'] = $arFields['NAME'];
 			}
 
-			if(isset($arFields['CODE']))
+			if (isset($arFields['CODE']))
 			{
 				$arElement['CODE'] = $arFields['CODE'];
+			}
+			elseif (isset($arElement['NAME']))
+			{
+				$mnemonicCode = $element->generateMnemonicCode($arElement['NAME'], $arElement['IBLOCK_ID']);
+				if ($mnemonicCode !== null)
+				{
+					$arElement['CODE'] = $mnemonicCode;
+				}
 			}
 
 			if(isset($arFields['SORT']))
@@ -233,15 +251,6 @@ class CCrmProduct
 			if(isset($arFields['PREVIEW_TEXT_TYPE']))
 			{
 				$arElement['PREVIEW_TEXT_TYPE'] = $arFields['PREVIEW_TEXT_TYPE'];
-			}
-
-			if(isset($arFields['CATALOG_ID']))
-			{
-				$arElement['IBLOCK_ID'] = intval($arFields['CATALOG_ID']);
-			}
-			else
-			{
-				$arElement['IBLOCK_ID'] = $arFields['CATALOG_ID'] = CCrmCatalog::EnsureDefaultExists();
 			}
 
 			if(isset($arFields['SECTION_ID']))
@@ -1253,7 +1262,13 @@ class CCrmProduct
 			return $arResult;
 		}
 
-		$arFilter = array('=ID' => intval($ID));
+		$ID = (int)$ID;
+		if ($ID <= 0)
+		{
+			return false;
+		}
+
+		$arFilter = array('=ID' => $ID);
 		if ($bRealPrice !== false) $arFilter['~REAL_PRICE'] = true;
 
 		$dbRes = CCrmProduct::GetList(array(), $arFilter, array('*'), array('nTopCount' => 1));

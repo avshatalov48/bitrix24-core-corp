@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["VOX_LINES_ACTION_ADD_TO_GROUP"] = "Add to number pool";
 $MESS["VOX_LINES_ACTION_CONFIGURE"] = "Configure";
 $MESS["VOX_LINES_ACTION_DELETE"] = "Delete";
@@ -12,10 +12,12 @@ $MESS["VOX_LINES_DISCONNECT_NUMBER"] = "Disconnect number";
 $MESS["VOX_LINES_HEADER_DESCRIPTION"] = "Description";
 $MESS["VOX_LINES_HEADER_ID"] = "ID";
 $MESS["VOX_LINES_HEADER_NAME"] = "Name";
+$MESS["VOX_LINES_HEADER_STATE"] = "Connection status";
 $MESS["VOX_LINES_HEADER_TYPE"] = "Type";
 $MESS["VOX_LINES_MODE_GROUP"] = "Number pool";
 $MESS["VOX_LINES_MODE_LINK"] = "Connected";
 $MESS["VOX_LINES_MODE_RENT"] = "Rented";
 $MESS["VOX_LINES_MODE_SIP"] = "SIP connection";
 $MESS["VOX_LINES_REMOVE_CONNECTION"] = "Delete connection";
-?>
+$MESS["VOX_LINES_SIP_STATUS_FAIL"] = "Error";
+$MESS["VOX_LINES_SIP_STATUS_RECOVERED"] = "Connected";

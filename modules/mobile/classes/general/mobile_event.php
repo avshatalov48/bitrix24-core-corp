@@ -117,6 +117,7 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 		"/bitrix/services/main/ajax.php",
 		"/bitrix/services/mobileapp/jn.php",
 		"/bitrix/components/bitrix/main.urlpreview/",
+		"/bitrix/components/bitrix/main.file.input/",
 		"/mobileapp/",
 		"/rest/"
 	];

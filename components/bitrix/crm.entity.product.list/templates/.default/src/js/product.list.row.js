@@ -123,6 +123,13 @@ export class Row
 		});
 	}
 
+	setRowNumber(number)
+	{
+		this.getNode().querySelectorAll('.main-grid-row-number').forEach(node => {
+			node.textContent = number + '.';
+		});
+	}
+
 	getFields(fields: Array = [])
 	{
 		let result;

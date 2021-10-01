@@ -206,6 +206,8 @@ trait StatusTrait
 			uasort($result[static::TYPE], function ($a, $b) {return ($a['SORT'] < $b['SORT']) ? -1 : 1;});
 		}
 
+		Crm\Color\PhaseColorScheme::fillDefaultColors($result[static::TYPE]);
+
 		return $result[static::TYPE];
 	}
 

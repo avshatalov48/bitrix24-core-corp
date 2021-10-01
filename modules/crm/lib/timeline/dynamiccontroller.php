@@ -20,7 +20,7 @@ class DynamicController extends FactoryBasedController
 		$this->entityTypeId = $entityTypeId;
 	}
 
-	public static function getInstance(int $entityTypeId = null): FactoryBasedController
+	public static function getInstance(int $entityTypeId = null)
 	{
 		if ($entityTypeId <= 0)
 		{
@@ -40,7 +40,7 @@ class DynamicController extends FactoryBasedController
 
 	protected static function getServiceLocatorIdentifier(int $entityTypeId = null): string
 	{
-		return parent::getServiceLocatorIdentifier() . ".$entityTypeId";
+		return parent::getServiceLocatorIdentifier() . ".{$entityTypeId}";
 	}
 
 	protected function getTrackedFieldNames(): array

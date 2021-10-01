@@ -1,7 +1,9 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Imopenlines\Limit;
 use Bitrix\ImOpenlines\QuickAnswers\QuickAnswer;
+
 use Bitrix\Main\Localization\Loc;
 
 class BotcontrollerIframeQuick extends CBitrixComponent
@@ -13,7 +15,7 @@ class BotcontrollerIframeQuick extends CBitrixComponent
 
 		CJSCore::Init(array('fx'));
 		$lang = 'en';
-		if (in_array($this->arParams['LANG'], Array('ru','kz','ua')))
+		if (in_array($this->arParams['LANG'], ['ru','kz','ua']))
 		{
 			$lang = 'ru';
 		}
@@ -22,6 +24,7 @@ class BotcontrollerIframeQuick extends CBitrixComponent
 		$APPLICATION->restartBuffer();
 
 		$this->arResult['IMOP_ID'] = $this->arParams['IMOP_ID'];
+		$this->arResult['CAN_USE_QUICK_ANSWERS'] = Limit::canUseQuickAnswers();
 		$listDataManager = new \Bitrix\ImOpenlines\QuickAnswers\ListsDataManager($this->arResult['IMOP_ID']);
 		if(!$listDataManager->isHasRights())
 		{

@@ -8,6 +8,7 @@ use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Factory\Dynamic;
+use Bitrix\Crm\Timeline;
 use Bitrix\Crm\UserField;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
@@ -22,6 +23,17 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.container');
 	}
 
+	/**
+	 * Returns ServiceLocator service identifier by the provided class name
+	 *
+	 * For example, \Bitrix\Crm\Service\Container -> crm.service.container
+	 *
+	 * @param string $className
+	 * @param array|null $parameters
+	 *
+	 * @return string
+	 * @throws ArgumentException
+	 */
 	public static function getIdentifierByClassName(string $className, array $parameters = null): string
 	{
 		$words = explode('\\', $className);
@@ -66,6 +78,14 @@ class Container
 		if ($entityTypeId === \CCrmOwnerType::Deal)
 		{
 			return ServiceLocator::getInstance()->get('crm.service.factory.deal');
+		}
+		if ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return ServiceLocator::getInstance()->get('crm.service.factory.contact');
+		}
+		if ($entityTypeId === \CCrmOwnerType::Company)
+		{
+			return ServiceLocator::getInstance()->get('crm.service.factory.company');
 		}
 		if ($entityTypeId === \CCrmOwnerType::Quote)
 		{
@@ -318,5 +338,20 @@ class Container
 	public function getFileUploader(): FileUploader
 	{
 		return ServiceLocator::getInstance()->get('crm.service.fileUploader');
+	}
+
+	public function getTimelineEntryFacade(): Timeline\TimelineEntry\Facade
+	{
+		return ServiceLocator::getInstance()->get('crm.timeline.timelineEntry.facade');
+	}
+
+	public function getTimelinePusher(): Timeline\Pusher
+	{
+		return ServiceLocator::getInstance()->get('crm.timeline.pusher');
+	}
+
+	public function getTimelineHistoryDataModelMaker(): Timeline\HistoryDataModel\Maker
+	{
+		return ServiceLocator::getInstance()->get('crm.timeline.historyDataModel.maker');
 	}
 }

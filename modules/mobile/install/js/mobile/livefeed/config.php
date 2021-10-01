@@ -22,7 +22,21 @@ $langAdditional = [
 	'MOBILE_EXT_LIVEFEED_LISTS_INSTALLED' => (Loader::includeModule('lists') && \CLists::isFeatureEnabled() ? 'Y' : 'N'),
 	'MOBILE_EXT_LIVEFEED_DISK_INSTALLED' => (Option::get('disk', 'successfully_converted', false) && ModuleManager::isModuleInstalled('disk') ? 'Y' : 'N'),
 	'MOBILE_EXT_LIVEFEED_WEBDAV_INSTALLED' => (ModuleManager::isModuleInstalled('webdav') ? 'Y' : 'N'),
-	'MOBILE_EXT_LIVEFEED_VOTE_INSTALLED' => (ModuleManager::isModuleInstalled('vote') ? 'Y' : 'N'),
+	'MOBILE_EXT_LIVEFEED_VOTE_INSTALLED' => (
+		ModuleManager::isModuleInstalled('vote')
+		&& (
+			!\Bitrix\Main\Loader::includeModule('bitrix24')
+			|| \Bitrix\Bitrix24\Feature::isFeatureEnabled('socialnetwork_livefeed_vote')
+		)
+			? 'Y'
+			: 'N'
+	),
+	'MOBILE_EXT_LIVEFEED_USE_IMPORTANT' => (
+		!\Bitrix\Main\Loader::includeModule('bitrix24')
+		|| \Bitrix\Bitrix24\Feature::isFeatureEnabled('socialnetwork_livefeed_important')
+			? 'Y'
+			: 'N'
+	),
 	'MOBILE_EXT_LIVEFEED_USE_TASKS' => (
 		ModuleManager::isModuleInstalled('tasks')
 		&& (

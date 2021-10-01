@@ -975,7 +975,7 @@ class LeftMenu
 		}
 
 		this.saveItemsSort({
-			analyticsLabel: 'hideItem',
+			type: 'hide',
 			itemId: menuItemId
 		});
 	}
@@ -1001,7 +1001,7 @@ class LeftMenu
 		}
 
 		this.saveItemsSort({
-			analyticsLabel: 'showItem',
+			type: 'show',
 			itemId: menuItemId
 		});
 	}
@@ -1272,7 +1272,7 @@ class LeftMenu
 					BX.remove(dragElement);
 
 					this.saveItemsSort({
-						analyticsLabel: 'mainPage',
+						type: 'mainPage',
 						itemId: itemId
 					});
 				}, this)
@@ -1345,9 +1345,9 @@ class LeftMenu
 			BX.ajax.runAction('intranet.leftmenu.setDefaultMenu', {
 				data: {},
 				analyticsLabel: {
-					'defaultMenu': 'Y'
+					defaultMenu: 'Y'
 				}
-			}).then((response) => {
+			}).then(() => {
 				document.location.reload();
 			});
 		}
@@ -1497,14 +1497,14 @@ class LeftMenu
 				dragElement.setAttribute("data-status", "show");
 			}
 
-			var analyticsLabel = {analyticsLabel: 'sortItem'};
+			var analyticsLabel = {type: 'sort'};
 
 			var prevItem = BX.previousSibling(dragElement);
 			if (BX.type.isDomNode(prevItem) && prevItem.id == "left-menu-empty-item" && !this.isExtranet)
 			{
 				this.showMessage(dragElement, BX.message("MENU_ITEM_MAIN_PAGE"), "right");
 				analyticsLabel = {
-					analyticsLabel: 'mainPage',
+					type: 'mainPage',
 					itemId: dragElement.getAttribute("data-id")
 				};
 			}
@@ -2347,7 +2347,7 @@ class LeftMenu
 				BX.ajax.runAction(`intranet.leftmenu.${action}`, {
 					data: {},
 					analyticsLabel: {
-						analyticsLabel: action
+						type: action
 					}
 				});
 

@@ -4,6 +4,22 @@ namespace Bitrix\Crm\Kanban;
 use Bitrix\Main\Entity;
 
 
+/**
+ * Class SortTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Sort_Query query()
+ * @method static EO_Sort_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Sort_Result getById($id)
+ * @method static EO_Sort_Result getList(array $parameters = array())
+ * @method static EO_Sort_Entity getEntity()
+ * @method static \Bitrix\Crm\Kanban\EO_Sort createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Kanban\EO_Sort_Collection createCollection()
+ * @method static \Bitrix\Crm\Kanban\EO_Sort wakeUpObject($row)
+ * @method static \Bitrix\Crm\Kanban\EO_Sort_Collection wakeUpCollection($rows)
+ */
 class SortTable extends Entity\DataManager
 {
 	/**

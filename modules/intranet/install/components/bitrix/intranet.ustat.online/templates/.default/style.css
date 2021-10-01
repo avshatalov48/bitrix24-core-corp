@@ -47,6 +47,7 @@
 	z-index: 2;
 }
 
+
 .intranet-ustat-online-counter .ui-graph-circle-number {
 	font-size: 21px;
 	line-height: 21px;
@@ -78,6 +79,7 @@
 .intranet-ustat-online-counter .ui-graph-circle-counter .ui-graph-circle-number {
 	margin-top: 0;
 }
+
 
 .intranet-ustat-online-icon-box {
 	display: flex;
@@ -113,13 +115,24 @@
 	border: 2px solid #fff;
 	border-radius: 100%;
 	transform-origin: 50% 50%;
-	transition: opacity .5s, width .5s;
+	/*opacity: 0;*/
 	overflow: hidden;
 	box-sizing: border-box;
 }
 
+.intranet-ustat-online-icon:first-child {
+	animation: none;
+	opacity: 1;
+}
+
+.intranet-ustat-online-icon-show {
+	animation: intranet-ustat-online-icon-show 1s forwards .3s;
+	opacity: 1;
+}
+
 .intranet-ustat-online-icon-hide {
 	animation: intranet-ustat-online-icon-hide 1.2s ease forwards;
+
 }
 
 @keyframes intranet-ustat-online-icon-hide {
@@ -196,6 +209,7 @@
 	display: flex;
 	align-items: center;
     justify-content: space-around;
+
 	max-width: 177px;
 }
 

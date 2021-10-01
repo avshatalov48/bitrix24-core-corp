@@ -15,7 +15,9 @@ export default Vue.extend({
 				{{localize.TIMELINE_DELIVERY_TAXI_DELIVERY_CANCELLED_BY_DRIVER}}
 			</template>
 			<template v-slot:status>
-				<span class="crm-entity-stream-content-event-process">{{localize.TIMELINE_DELIVERY_TAXI_DELIVERY_CANCELLATION}}</span>
+				<span class="crm-entity-stream-content-event-process">
+					{{localize.TIMELINE_DELIVERY_TAXI_DELIVERY_CANCELLATION}}
+				</span>
 			</template>			
 			<template v-slot:default>
 				<car-logo-info

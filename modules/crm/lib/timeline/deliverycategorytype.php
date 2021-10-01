@@ -9,11 +9,15 @@ namespace Bitrix\Crm\Timeline;
 class DeliveryCategoryType
 {
 	const UNDEFINED = 0;
-	const TAXI_ESTIMATION_REQUEST = 1;
-	const TAXI_CALL_REQUEST = 2;
-	const TAXI_CANCELLED_BY_MANAGER = 3;
-	const TAXI_CANCELLED_BY_DRIVER = 4;
-	const TAXI_PERFORMER_NOT_FOUND = 5;
-	const TAXI_SMS_PROVIDER_ISSUE = 6;
-	const TAXI_RETURNED_FINISH = 7;
+	// region old types
+	public const TAXI_ESTIMATION_REQUEST = 1;
+	public const TAXI_CALL_REQUEST = 2;
+	public const TAXI_CANCELLED_BY_MANAGER = 3;
+	public const TAXI_CANCELLED_BY_DRIVER = 4;
+	public const TAXI_PERFORMER_NOT_FOUND = 5;
+	public const TAXI_SMS_PROVIDER_ISSUE = 6;
+	public const TAXI_RETURNED_FINISH = 7;
+	// endregion
+	public const MESSAGE = 101;
+	public const DELIVERY_CALCULATION = 102;
 }

@@ -63,12 +63,12 @@ final class DeletionNotifyManager
 				]);
 
 				$type = $isFolder? 'FOLDER' : 'FILE';
-				$text = Loc::getMessage("DISK_OBJECT_NOTIFY_ABOUT_DELETION_{$type}_M", [
+				$text = Loc::getMessage("DISK_DELETION_MANAGER_NOTIFY_ABOUT_DELETION_{$type}_M", [
 					'#NAME#' => "<a href=\"{$link}\">{$name}</a>",
 				]);
 				if($deleteUser->getPersonalGender() === 'F')
 				{
-					$text = Loc::getMessage("DISK_OBJECT_NOTIFY_ABOUT_DELETION_{$type}_F");
+					$text = Loc::getMessage("DISK_DELETION_MANAGER_NOTIFY_ABOUT_DELETION_{$type}_F");
 				}
 
 				Driver::getInstance()->sendNotify($createdBy, [

@@ -72,8 +72,13 @@ BX.namespace('Tasks.Component');
 			doMenuAction: function(menu, e, item)
 			{
 				var code = item.code;
-				if(code)
+				if (code)
 				{
+					if (code === 'CREATE_SUB')
+					{
+						BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');
+						return;
+					}
 					this.fireEvent('button-click', [code]);
 				}
 

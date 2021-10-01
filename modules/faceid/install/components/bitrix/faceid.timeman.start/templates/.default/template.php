@@ -179,9 +179,7 @@ foreach ($jsMessagesCodes as $code)
 
     <? if (\Bitrix\Main\Loader::includeModule('bitrix24')): ?>
         <div class="b24-time-desc-block b24-time-desc-text-small b24-time-desc-block-red b24-time-desc-warning">
-            <div><?= Loc::getMessage("FACEID_TMS_START_WARN")?></div>
-            <div><?= Loc::getMessage("FACEID_TMS_START_WARN_1", array('T_URL' => '/crm/retail/index.php'))?></div>
-            <div><?= Loc::getMessage("FACEID_TMS_START_WARN_2", array('T_URL' => \CBitrix24::PATH_LICENSE_ALL))?></div>
+            <div><?= Loc::getMessage("FACEID_TMS_START_WARN_NEW", array('T_URL' => '/settings/license_all.php'))?></div>
         </div>
     <? endif ?>
 </div>

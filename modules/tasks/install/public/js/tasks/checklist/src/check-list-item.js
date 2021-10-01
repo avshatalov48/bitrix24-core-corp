@@ -901,7 +901,7 @@ class CheckListItem extends CompositeTreeItem
 							inviteGuestLink: false,
 							inviteEmployeeLink: false,
 							emailUsers: true,
-							networkUsers: true,
+							networkUsers: this.optionManager.isNetworkEnabled,
 							extranetUsers: true,
 						},
 					},

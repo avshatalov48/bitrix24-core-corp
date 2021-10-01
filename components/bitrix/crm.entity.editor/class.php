@@ -584,7 +584,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 
 		$this->arResult['MESSAGES'] = (array)($this->arParams['MESSAGES'] ?? []);
 
-		$this->prepareUfAccessRightRestriction();
+		$this->prepareRestrictions();
 	}
 
 	protected function getDefaultEntityConfigOptions(): array
@@ -658,15 +658,29 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		return $result;
 	}
 
-	protected function prepareUfAccessRightRestriction(): void
+	protected function prepareRestrictions(): void
 	{
-		$restriction = RestrictionManager::getUfAccessRightsRestriction();
+		$ufAccessRightsRestriction = RestrictionManager::getUfAccessRightsRestriction();
+		$ufAddRestriction = RestrictionManager::getUserFieldAddRestriction();
+		$ufResourceBookingRestriction = RestrictionManager::getResourceBookingRestriction();
 
-		$this->arResult['USER_FIELD_ACCESS_RIGHTS']['IS_PERMITTED'] = $restriction->hasPermission();
+		$isUfAccessRightsPermitted = $ufAccessRightsRestriction->hasPermission();
+		$isUfAddPermitted = !$ufAddRestriction->isExceeded($this->entityTypeID);
+		$isResourceBookingPermitted = $ufResourceBookingRestriction->hasPermission();
 
-		if(!$this->arResult['USER_FIELD_ACCESS_RIGHTS']['IS_PERMITTED'])
-		{
-			$this->arResult['USER_FIELD_ACCESS_RIGHTS']['LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
-		}
+		$this->arResult['RESTRICTIONS'] = [
+			'userFieldAccessRights' => [
+				'isPermitted' => $isUfAccessRightsPermitted,
+				'restrictionCallback' => $isUfAccessRightsPermitted ? '' : $ufAccessRightsRestriction->prepareInfoHelperScript(),
+			],
+			'userFieldAdd' => [
+				'isPermitted' => $isUfAddPermitted,
+				'restrictionCallback' => $isUfAddPermitted ? '' : $ufAddRestriction->prepareInfoHelperScript(),
+			],
+			'userFieldResourceBooking' => [
+				'isPermitted' => $isResourceBookingPermitted,
+				'restrictionCallback' => $isResourceBookingPermitted ? '' : $ufResourceBookingRestriction->prepareInfoHelperScript(),
+			],
+		];
 	}
 }

@@ -13,6 +13,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class UtmTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Utm_Query query()
+ * @method static EO_Utm_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Utm_Result getById($id)
+ * @method static EO_Utm_Result getList(array $parameters = array())
+ * @method static EO_Utm_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_Utm createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_Utm_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_Utm wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_Utm_Collection wakeUpCollection($rows)
+ */
 class UtmTable extends Entity\DataManager
 {
 	public const ENUM_CODE_UTM_SOURCE = 'UTM_SOURCE';

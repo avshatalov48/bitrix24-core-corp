@@ -1,4 +1,7 @@
 <?php
+$MESS["DISK_DOCUMENTS_ACT_DELETE_MESSAGE"] = "Ви хочете перемістити документ \"#NAME#\" у кошик?";
+$MESS["DISK_DOCUMENTS_ACT_DELETE_OK_BUTTON"] = "Перемістити в кошик";
+$MESS["DISK_DOCUMENTS_ACT_DELETE_TITLE"] = "Підтвердження видалення";
 $MESS["DISK_DOCUMENTS_ACT_LOADING"] = "Завантаження...";
 $MESS["DISK_DOCUMENTS_GRID_STUB_DESCRIPTION"] = "Редагуйте разом. Обговорюйте. Діліться.";
 $MESS["DISK_DOCUMENTS_GRID_STUB_TITLE"] = "Створюйте нові документи, таблиці або презентації та працюйте з ними разом iз колегами!";

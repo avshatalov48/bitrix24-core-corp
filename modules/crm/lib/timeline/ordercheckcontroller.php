@@ -12,22 +12,6 @@ Loc::loadMessages(__FILE__);
  */
 class OrderCheckController extends EntityController
 {
-
-	/** @var OrderCheckController|null */
-	protected static $instance = null;
-
-	/**
-	 * @return OrderCheckController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new OrderCheckController();
-		}
-		return self::$instance;
-	}
-
 	/**
 	 * @return int
 	 */

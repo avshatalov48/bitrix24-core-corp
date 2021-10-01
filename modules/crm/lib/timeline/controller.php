@@ -1,12 +1,47 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-use Bitrix\Main\Type\Date;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Type\DateTime;
 
 class Controller
 {
+	/** @var int|null */
+	protected static $defaultAuthorId;
+
+	/**
+	 * Get an instance of the controller
+	 *
+	 * @return static
+	 */
+	public static function getInstance()
+	{
+		if (!ServiceLocator::getInstance()->has(static::getServiceLocatorIdentifier()))
+		{
+			$instance = new static();
+			ServiceLocator::getInstance()->addInstance(static::getServiceLocatorIdentifier(), $instance);
+		}
+
+		return ServiceLocator::getInstance()->get(static::getServiceLocatorIdentifier());
+	}
+
+	protected static function getServiceLocatorIdentifier(): string
+	{
+		return Container::getIdentifierByClassName(static::class);
+	}
+
+	/**
+	 * Prepare data about an timeline entry. The data is used in interface to display timeline event
+	 *
+	 * @param array $data
+	 * @param array|null $options = [
+	 *     'ENABLE_USER_INFO' => false, // prepare detailed author info (link, image, name). Disabled by default
+	 * ];
+	 *
+	 * @return array
+	 */
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
 		if(!is_array($options))
@@ -137,5 +172,29 @@ class Controller
 				'params' => $params,
 			)
 		);
+	}
+
+	protected static function getDefaultAuthorId()
+	{
+		if (is_null(static::$defaultAuthorId))
+		{
+			$user = \CUser::GetList(
+				'ID',
+				'ASC',
+				['GROUPS_ID' => [1], 'ACTIVE' => 'Y'],
+				['FIELDS' => ['ID'], 'NAV_PARAMS' => ['nTopCount' => 1]]
+			)->fetch();
+
+			static::$defaultAuthorId = is_array($user) ? (int)$user['ID'] : 0;
+		}
+
+		return static::$defaultAuthorId;
+	}
+
+	protected static function getCurrentOrDefaultAuthorId(): int
+	{
+		$currentUserId = Container::getInstance()->getContext()->getUserId();
+
+		return ($currentUserId > 0) ? $currentUserId : (int)static::getDefaultAuthorId();
 	}
 }

@@ -1,17 +1,23 @@
 <?php
 namespace Bitrix\ImOpenLines\Model;
 
-use \Bitrix\Main,
-	\Bitrix\Main\Type\DateTime,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\Entity\Validator;
-use \Bitrix\Main\ORM\Event,
-	\Bitrix\Main\ORM\EventResult,
-	\Bitrix\Main\ORM\Fields\StringField,
-	\Bitrix\Main\ORM\Fields\BooleanField,
-	\Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Entity\Validator\Length;
 
-use \Bitrix\ImOpenLines\Config;
+use Bitrix\Main\ORM\Event;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\EventResult;
+use Bitrix\Main\ORM\Fields\TextField;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\DatetimeField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+
+use Bitrix\ImOpenLines\Config;
+use Bitrix\ImOpenLines\Model\ConfigStatisticTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -41,7 +47,7 @@ class ConfigTable extends Main\Entity\DataManager
 	 *
 	 * @return string
 	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_imopenlines_config';
 	}
@@ -50,9 +56,8 @@ class ConfigTable extends Main\Entity\DataManager
 	 * Returns entity map definition.
 	 *
 	 * @return array
-	 * @throws Main\SystemException
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return [
 			new IntegerField('ID', [
@@ -146,10 +151,9 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_MESSAGE_FIELD'),
 				'default_value' => 'Y',
 			]),
-			'WELCOME_MESSAGE_TEXT' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_MESSAGE_TEXT_FIELD_NEW'),
-			),
+			new TextField('WELCOME_MESSAGE_TEXT', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_MESSAGE_TEXT_FIELD_NEW')
+			]),
 			new BooleanField('VOTE_MESSAGE', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_FIELD'),
@@ -168,30 +172,24 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_CLOSING_DELAY_FIELD_NEW'),
 				'default_value' => 'N',
 			]),
-			'VOTE_MESSAGE_1_TEXT' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_1_TEXT_FIELD'),
-			),
-			'VOTE_MESSAGE_1_LIKE' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_1_LIKE_FIELD'),
-			),
-			'VOTE_MESSAGE_1_DISLIKE' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_1_DISLIKE_FIELD'),
-			),
-			'VOTE_MESSAGE_2_TEXT' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_2_TEXT_FIELD'),
-			),
-			'VOTE_MESSAGE_2_LIKE' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_2_LIKE_FIELD'),
-			),
-			'VOTE_MESSAGE_2_DISLIKE' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_2_DISLIKE_FIELD'),
-			),
+			new TextField('VOTE_MESSAGE_1_TEXT', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_1_TEXT_FIELD')
+			]),
+			new TextField('VOTE_MESSAGE_1_LIKE', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_1_LIKE_FIELD')
+			]),
+			new TextField('VOTE_MESSAGE_1_DISLIKE', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_1_DISLIKE_FIELD')
+			]),
+			new TextField('VOTE_MESSAGE_2_TEXT', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_2_TEXT_FIELD')
+			]),
+			new TextField('VOTE_MESSAGE_2_LIKE', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_2_LIKE_FIELD')
+			]),
+			new TextField('VOTE_MESSAGE_2_DISLIKE', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_2_DISLIKE_FIELD')
+			]),
 			new BooleanField('AGREEMENT_MESSAGE', [
 				'values' => ['N', 'Y'],
 				'default_value' => 'N',
@@ -253,10 +251,9 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_BOT_ID_FIELD'),
 				'default_value' => '0',
 			]),
-			'NO_ANSWER_TEXT' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_TEXT_FIELD'),
-			),
+			new TextField('NO_ANSWER_TEXT', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_TEXT_FIELD')
+			]),
 			new BooleanField('WORKTIME_ENABLE', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_ENABLE_FIELD'),
@@ -297,10 +294,9 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_BOT_ID_FIELD'),
 				'default_value' => '0',
 			]),
-			'WORKTIME_DAYOFF_TEXT' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_TEXT_FIELD'),
-			),
+			new TextField('WORKTIME_DAYOFF_TEXT', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_TEXT_FIELD')
+			]),
 			new StringField('CLOSE_RULE', [
 				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CLOSE_RULE_FIELD'),
@@ -314,10 +310,9 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_CLOSE_BOT_ID_FIELD'),
 				'default_value' => '0',
 			]),
-			'CLOSE_TEXT' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_CLOSE_TEXT_FIELD'),
-			),
+			new TextField('CLOSE_TEXT', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_CLOSE_TEXT_FIELD')
+			]),
 			new IntegerField('FULL_CLOSE_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_FULL_CLOSE_TIME_FIELD'),
 				'default_value' => '10',
@@ -339,24 +334,21 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_CLOSE_TIME_FIELD_NEW'),
 				'default_value' => '14400',
 			]),
-			'AUTO_CLOSE_TEXT' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_CLOSE_TEXT_FIELD_NEW'),
-			),
+			new TextField('AUTO_CLOSE_TEXT', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_CLOSE_TEXT_FIELD_NEW')
+			]),
 			new IntegerField('AUTO_EXPIRE_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_EXPIRE_TIME_FIELD'),
 				'default_value' => '86400',
 			]),
-			'DATE_CREATE' => array(
-				'data_type' => 'datetime',
+			new DatetimeField('DATE_CREATE', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_DATE_CREATE_FIELD'),
-				'default_value' => array(__CLASS__, 'getCurrentDate'),
-			),
-			'DATE_MODIFY' => array(
-				'data_type' => 'datetime',
+				'default_value' => [__CLASS__, 'getCurrentDate'],
+			]),
+			new DatetimeField('DATE_MODIFY', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_DATE_MODIFY_FIELD'),
-				'default_value' => array(__CLASS__, 'getCurrentDate'),
-			),
+				'default_value' => [__CLASS__, 'getCurrentDate'],
+			]),
 			new IntegerField('MODIFY_USER_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_MODIFY_USER_ID_FIELD'),
 				'required' => true,
@@ -372,15 +364,15 @@ class ConfigTable extends Main\Entity\DataManager
 			new StringField('LANGUAGE_ID', [
 				'validation' => [__CLASS__, 'validateText2'],
 			]),
-			'STATISTIC' => array(
-				'data_type' => 'Bitrix\ImOpenLines\Model\ConfigStatistic',
-				'reference' => array('=this.ID' => 'ref.CONFIG_ID')
+			new Reference(
+				'STATISTIC',
+				ConfigStatisticTable::class,
+				Join::on('this.ID', 'ref.CONFIG_ID')
 			),
 			new IntegerField('QUICK_ANSWERS_IBLOCK_ID'),
-			'SESSION_PRIORITY' => array(
-				'data_type' => 'integer',
-				'default_value' => 0,
-			),
+			new IntegerField('SESSION_PRIORITY', [
+				'default_value' => '0',
+			]),
 			new StringField('TYPE_MAX_CHAT', [
 				'validation' => [__CLASS__, 'validateText50'],
 				'default_value' => 'ANSWERED_NEW',
@@ -433,17 +425,18 @@ class ConfigTable extends Main\Entity\DataManager
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_CHECK_OPERATOR_ACTIVITY'),
 				'default_value' => 'N',
+			]),
+			new BooleanField('SEND_NOTIFICATION_EMPTY_QUEUE', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_SEND_NOTIFICATION_EMPTY_QUEUE'),
+				'default_value' => 'N',
 			])
 		];
 	}
 
-
 	/**
 	 * @param Event $event
 	 * @return EventResult|void
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function onDelete(Event $event)
 	{
@@ -470,72 +463,66 @@ class ConfigTable extends Main\Entity\DataManager
 	 * Returns validators for a text field of up to 2000 characters.
 	 *
 	 * @return array
-	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateText2000()
+	public static function validateText2000(): array
 	{
 		return [
-			new Validator\Length(null, 2000),
+			new Length(null, 2000),
 		];
 	}
 	/**
 	 * Returns validators for a text field of up to 255 characters.
 	 *
 	 * @return array
-	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateText255()
+	public static function validateText255(): array
 	{
 		return [
-			new Validator\Length(null, 255),
+			new Length(null, 255),
 		];
 	}
 	/**
 	 * Returns validators for a text field of up to 50 characters.
 	 *
 	 * @return array
-	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateText50()
+	public static function validateText50(): array
 	{
 		return [
-			new Validator\Length(null, 50),
+			new Length(null, 50),
 		];
 	}
 	/**
 	 * Returns validators for a text field of up to 20 characters.
 	 *
 	 * @return array
-	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateText20()
+	public static function validateText20(): array
 	{
 		return [
-			new Validator\Length(null, 20),
+			new Length(null, 20),
 		];
 	}
 	/**
 	 * Returns validators for a text field of up to 5 characters.
 	 *
 	 * @return array
-	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateText5()
+	public static function validateText5(): array
 	{
 		return [
-			new Validator\Length(null, 5),
+			new Length(null, 5),
 		];
 	}
 	/**
 	 * Returns validators for a text field of up to 2 characters.
 	 *
 	 * @return array
-	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateText2()
+	public static function validateText2(): array
 	{
 		return [
-			new Validator\Length(null, 2),
+			new Length(null, 2),
 		];
 	}
 
@@ -543,9 +530,8 @@ class ConfigTable extends Main\Entity\DataManager
 	 * Return current date for DATE_CREATE field.
 	 *
 	 * @return DateTime
-	 * @throws Main\ObjectException
 	 */
-	public static function getCurrentDate()
+	public static function getCurrentDate(): DateTime
 	{
 		return new DateTime();
 	}

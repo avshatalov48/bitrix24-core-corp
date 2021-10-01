@@ -17,6 +17,16 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 
 $can =& $arParams["TASK"]["ACTION"];
 $data =& $arParams["TASK"];
+
+/**
+ * The originator has permissions to complete, but if the task awaiting validation, we're should hide the Complete button
+ * #100526
+ */
+if ((int)$data['STATUS'] === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+{
+	$can['COMPLETE'] = false;
+}
+
 $taskId = intval($arParams["TASK"]["ID"]);
 
 $data["TIME_ESTIMATE"] = intval($data["TIME_ESTIMATE"]);

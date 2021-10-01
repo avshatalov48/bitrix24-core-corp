@@ -848,7 +848,6 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onAddressDataInputting",
 	    value: function onAddressDataInputting(event) {
-	      //this.emitUpdateEvent();
 	      main_core_events.EventEmitter.emit(this, 'onAddressDataInputting');
 	    }
 	  }, {
@@ -1300,12 +1299,6 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "getIconState",
-	    value: function getIconState() {
-	      var isAddressSet = !!this.getAddress();
-	      return this._isLoading.toString() + isAddressSet.toString();
-	    }
-	  }, {
 	    key: "refreshCopyButtonVisibility",
 	    value: function refreshCopyButtonVisibility() {
 	      var node = this._domNodes.copyButton;
@@ -1527,15 +1520,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onAddressChanged",
 	    value: function onAddressChanged(event) {
-	      var oldIconState = this.getIconState();
 	      this._isLoading = false;
 	      var data = event.getData();
 	      this._value = main_core.Type.isObject(data.address) ? data.address.toJson() : '';
-
-	      if (oldIconState !== this.getIconState()) {
-	        this.refreshIcon();
-	      }
-
+	      this.refreshIcon();
 	      this.refreshCopyButtonVisibility();
 	      this.emit('onUpdateAddress', {
 	        id: this.getId(),

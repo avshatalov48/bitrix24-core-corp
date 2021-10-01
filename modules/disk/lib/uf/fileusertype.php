@@ -13,6 +13,7 @@ use Bitrix\Disk\SystemUser;
 use Bitrix\Disk\User;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Disk\Internals\AttachedViewTypeTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -233,6 +234,19 @@ final class FileUserType
 			}
 		}
 
+		$userFieldManager = Driver::getInstance()->getUserFieldManager();
+
+		if ($templateType = Application::getInstance()->getContext()->getRequest()->getPost(
+			$userFieldManager->getInputNameForTemplateView($userField['ENTITY_ID'])
+		))
+		{
+			self::setTemplateType([
+				'ENTITY_ID' => $userField['ENTITY_ID'],
+				'ENTITY_VALUE_ID' => $userField['ENTITY_VALUE_ID'],
+				'VALUE' =>  ($templateType === 'grid' ? 'grid' : 'gallery')
+			]);
+		}
+
 		return $valuesToInsert;
 	}
 
@@ -425,11 +439,30 @@ final class FileUserType
 			);
 
 			$newResult = array("VALUE" => array($id));
-			$userFieldManager->showView(
-				$newParams,
-				$newResult,
-				null
-			);
+			if ($newParams['INLINE'] === 'Y')
+			{
+				if (
+					isset($newParams['TEMPLATE'])
+					&& $newParams['TEMPLATE'] === 'mobile'
+				)
+				{
+					$newParams['MOBILE'] = 'Y';
+				}
+
+				$userFieldManager->showInlineView(
+					$newParams,
+					$newResult,
+					null
+				);
+			}
+			else
+			{
+				$userFieldManager->showView(
+					$newParams,
+					$newResult,
+					null
+				);
+			}
 			$res = ob_get_clean();
 		}
 		return $res;
@@ -790,5 +823,59 @@ final class FileUserType
 		}
 
 		return $relationsToReplace;
+	}
+
+	/**
+	 * @param array $params
+	 */
+	public static function setTemplateType(array $params = [])
+	{
+		if (
+			!empty($params['ENTITY_ID'])
+			&& !empty($params['ENTITY_VALUE_ID'])
+			&& isset($params['VALUE'])
+		)
+		{
+			AttachedViewTypeTable::set([
+				'ENTITY_TYPE' => $params['ENTITY_ID'],
+				'ENTITY_ID' => $params['ENTITY_VALUE_ID'],
+				'VALUE' => $params['VALUE'],
+			]);
+		}
+	}
+
+	/**
+	 * @param array $params
+	 * @return string
+	 */
+	public static function getTemplateType($params)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+		$result = '';
+		if (isset($params['GRID']) && $params['GRID'] == 'Y')
+		{
+			$result = 'grid';
+		}
+
+		if (
+			!empty($params['ARUSERFIELD'])
+			&& !empty($params['ARUSERFIELD']['ENTITY_ID'])
+			&& !empty($params['ARUSERFIELD']['ENTITY_VALUE_ID'])
+		)
+		{
+			$res = AttachedViewTypeTable::getList([
+				'filter' => [
+					'=ENTITY_TYPE' => $params['ARUSERFIELD']['ENTITY_ID'],
+					'ENTITY_ID' => $params['ARUSERFIELD']['ENTITY_VALUE_ID']
+				],
+				'select' => [ 'VALUE' ]
+			]);
+			if ($paramFields = $res->fetch())
+			{
+				$result = $paramFields['VALUE'];
+			}
+		}
+
+		return $result;
 	}
 }

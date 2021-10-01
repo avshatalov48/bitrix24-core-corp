@@ -743,15 +743,14 @@
 
 					if (countOfUploadedFiles === 1 && BX.SidePanel.Instance.getSliderByWindow(window))
 					{
-						document.location.reload();
 						BX.SidePanel.Instance.postMessageAll(window, 'Disk.File:onNewVersionUploaded', {
-							objectId: item["fileId"]
+							object: {
+								id: item["fileId"]
+							}
 						});
 					}
-					else
-					{
-						BX.onCustomEvent("onPopupFileUploadClose", [this, item["fileId"]]);
-					}
+
+					BX.onCustomEvent("onPopupFileUploadClose", [this, item["fileId"]]);
 				}
 			}
 		}

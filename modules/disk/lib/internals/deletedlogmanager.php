@@ -7,13 +7,14 @@ use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\Steppers\DeletedLogMover;
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
 
 final class DeletedLogManager
 {
 	/** @var bool */
-	private $isRegisteredShutdownFunction = false;
+	private $isRegisteredFinalizeFunction = false;
 	/** @var array */
 	private $subscribedStorages = array();
 	/** @var array */
@@ -23,22 +24,21 @@ final class DeletedLogManager
 
 	public function __construct()
 	{
-		$this->registerShutdownFunction();
+		$this->registerFinalizeFunction();
 	}
 
-	private function registerShutdownFunction()
+	private function registerFinalizeFunction(): void
 	{
-		if ($this->isRegisteredShutdownFunction)
+		if ($this->isRegisteredFinalizeFunction)
 		{
 			return;
 		}
 
-		$self = $this;
-		register_shutdown_function(function() use ($self){
-			$self->finalize();
+		Application::getInstance()->addBackgroundJob(function () {
+			$this->finalize();
 		});
 
-		$this->isRegisteredShutdownFunction = true;
+		$this->isRegisteredFinalizeFunction = true;
 	}
 
 	/**

@@ -23,7 +23,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Faceid
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TrackingVisits_Query query()
+ * @method static EO_TrackingVisits_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TrackingVisits_Result getById($id)
+ * @method static EO_TrackingVisits_Result getList(array $parameters = array())
+ * @method static EO_TrackingVisits_Entity getEntity()
+ * @method static \Bitrix\Faceid\EO_TrackingVisits createObject($setDefaultValues = true)
+ * @method static \Bitrix\Faceid\EO_TrackingVisits_Collection createCollection()
+ * @method static \Bitrix\Faceid\EO_TrackingVisits wakeUpObject($row)
+ * @method static \Bitrix\Faceid\EO_TrackingVisits_Collection wakeUpCollection($rows)
+ */
 
 class TrackingVisitsTable extends Main\Entity\DataManager
 {

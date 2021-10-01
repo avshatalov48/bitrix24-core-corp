@@ -953,9 +953,22 @@ class CCrmViewHelper
 		}
 
 		$entityType = is_array($params) && isset($params['ENTITY_TYPE']) ? $params['ENTITY_TYPE'] : '';
-		$entityID = is_array($params) && isset($params['ENTITY_ID']) ? intval($params['ENTITY_ID']) : 0;
-		$activityID = is_array($params) && isset($params['SRC_ACTIVITY_ID']) ? intval($params['SRC_ACTIVITY_ID']) : 0;
-		return '<span class="crm-client-contacts-block-text-tel-icon" onclick="if(typeof(top.BXIM) === \'undefined\') { window.alert(\''.GetMessageJS('CRM_SIP_NO_SUPPORTED').'\'); return; } BX.CrmSipManager.startCall({ number:\''.CUtil::JSEscape($phone).'\', enableInfoLoading: true }, { ENTITY_TYPE: \''.CUtil::JSEscape($entityType).'\', ENTITY_ID: \''.CUtil::JSEscape($entityID).'\', SRC_ACTIVITY_ID: \''.CUtil::JSEscape($activityID).'\' }, true, this);"></span>';
+		$entityId = is_array($params) && isset($params['ENTITY_ID']) ? intval($params['ENTITY_ID']) : 0;
+		$activityId = is_array($params) && isset($params['SRC_ACTIVITY_ID']) ? intval($params['SRC_ACTIVITY_ID']) : 0;
+
+		$phone = CUtil::JSEscape(htmlspecialcharsbx($phone));
+		$entityType = CUtil::JSEscape(htmlspecialcharsbx($entityType));
+		$entityId = CUtil::JSEscape(htmlspecialcharsbx($entityId));
+		$activityId = CUtil::JSEscape(htmlspecialcharsbx($activityId));
+
+		$onclick =
+			'if(typeof(top.BXIM) === \'undefined\') { window.alert(\''.GetMessageJS('CRM_SIP_NO_SUPPORTED').'\'); return; } '
+			.' BX.CrmSipManager.startCall('
+			.' { number:\''.$phone.'\', enableInfoLoading: true },'
+			.' { ENTITY_TYPE: \''.$entityType.'\', ENTITY_ID: \''.$entityId.'\', SRC_ACTIVITY_ID: \''.$activityId.'\' }, true, this);'
+		;
+
+		return '<span class="crm-client-contacts-block-text-tel-icon" onclick="' . $onclick . '"></span>';
 	}
 	private static function RenderListMultiFieldValues($ID, &$arValues, $typeName, &$arValueTypes, $arOptions = null)
 	{

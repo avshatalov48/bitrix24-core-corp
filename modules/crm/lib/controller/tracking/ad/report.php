@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Controller\Tracking\Ad;
 
 use Bitrix\Main;
+use Bitrix\Intranet;
 use Bitrix\Crm\Tracking;
 
 /**
@@ -21,6 +22,24 @@ class Report extends Main\Engine\JsonController
 			'getGrid' => [
 				'-prefilters' => [
 					Main\Engine\ActionFilter\ContentType::class,
+				],
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				]
+			],
+			'build' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				]
+			],
+			'list' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				]
+			],
+			'changeStatus' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
 				]
 			],
 		];

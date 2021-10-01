@@ -1,7 +1,25 @@
 <?php
 namespace Bitrix\Crm\Activity\Entity;
+
 use Bitrix\Main;
 use Bitrix\Main\Entity;
+
+/**
+ * Class AppTypeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AppType_Query query()
+ * @method static EO_AppType_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AppType_Result getById($id)
+ * @method static EO_AppType_Result getList(array $parameters = array())
+ * @method static EO_AppType_Entity getEntity()
+ * @method static \Bitrix\Crm\Activity\Entity\EO_AppType createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Activity\Entity\EO_AppType_Collection createCollection()
+ * @method static \Bitrix\Crm\Activity\Entity\EO_AppType wakeUpObject($row)
+ * @method static \Bitrix\Crm\Activity\Entity\EO_AppType_Collection wakeUpCollection($rows)
+ */
 class AppTypeTable extends Entity\DataManager
 {
 	public static function getTableName()

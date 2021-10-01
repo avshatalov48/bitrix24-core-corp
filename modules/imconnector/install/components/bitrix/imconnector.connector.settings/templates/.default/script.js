@@ -458,8 +458,8 @@
 			 {
 				if (isIframe)
 				{
-					BX.SidePanel.Instance.close();
-					BX.SidePanel.Instance.open(detailPageUrlTemplate.replace('#LINE#', data.config_id), {width: 700, cacheable: false});
+					BX.SidePanel.Instance.reload();
+					window.location.href = detailPageUrlTemplate.replace('#LINE#', data.config_id) + '&IFRAME=Y';
 				}
 				else
 				{
@@ -674,11 +674,8 @@
 
 		changeLine: function(url)
 		{
-			BX.SidePanel.Instance.close();
-			var lastSlider = BX.SidePanel.Instance.getSliderByWindow(window),
-				options = lastSlider.options;
-			BX.SidePanel.Instance.open(url, options);
-			lastSlider.destroy();
+			BX.SidePanel.Instance.reload();
+			window.location.href = url + '&IFRAME=Y';
 		},
 
 		activateLine: function(lineId)

@@ -3,7 +3,7 @@
 namespace Bitrix\Crm\Order;
 
 use Bitrix\Crm;
-use Bitrix\Crm\Timeline\DeliveryController;
+use Bitrix\Crm\Activity\Provider\Delivery;
 use Bitrix\Sale;
 use Bitrix\Main;
 
@@ -20,7 +20,6 @@ class Shipment extends Sale\Shipment
 {
 	/**
 	 * @param $isNew
-	 * @throws Main\ArgumentException
 	 */
 	protected function onAfterSave($isNew)
 	{
@@ -29,6 +28,23 @@ class Shipment extends Sale\Shipment
 			if ($isNew)
 			{
 				$this->addTimelineEntryOnCreate();
+
+				$deliveryService = $this->getDelivery();
+				$deliveryRequestHandler = $deliveryService ? $deliveryService->getDeliveryRequestHandler() : null;
+				if ($deliveryRequestHandler && $deliveryRequestHandler->hasCallbackTrackingSupport())
+				{
+					$activityId = Delivery::addActivity($this);
+					if ($activityId > 0)
+					{
+						AddEventToStatFile(
+							'sale',
+							'deliveryActivityCreation',
+							$activityId,
+							$deliveryService->getName(),
+							'delivery_service_name'
+						);
+					}
+				}
 			}
 			else
 			{
@@ -100,67 +116,10 @@ class Shipment extends Sale\Shipment
 							'ORDER_DONE' => 'N'
 						],
 					],
-					'BINDINGS' => $this->getTimelineBindings()
+					'BINDINGS' => BindingsMaker\TimelineBindingsMaker::makeByShipment($this)
 				];
 
 				Crm\Timeline\OrderShipmentController::getInstance()->onDeducted($this->getId(), $timelineParams);
-			}
-		}
-
-		if (!$this->isSystem()
-			&& $isNew
-			&& ($deliveryService = $this->getDelivery())
-		)
-		{
-			if ($deliveryService instanceof Sale\Delivery\Services\Crm\ICrmActivityProvider)
-			{
-				$activity = $deliveryService->provideCrmActivity($this);
-
-				$fields = [
-					'TYPE_ID' => \CCrmActivityType::Provider,
-					'ASSOCIATED_ENTITY_ID' => $this->getId(),
-					'PROVIDER_ID' => 'CRM_DELIVERY',
-					'PROVIDER_TYPE_ID' => 'DELIVERY',
-					'SUBJECT' => $activity->getSubject() ? $activity->getSubject() : 'Delivery',
-					'IS_HANDLEABLE' => $activity->isHandleable() ? 'Y' : 'N',
-					'COMPLETED' => $activity->isCompleted() ? 'Y' : 'N',
-					'STATUS' => $activity->getStatus(),
-					'RESPONSIBLE_ID' => $activity->getResponsibleId(),
-					'PRIORITY' => $activity->getPriority(),
-					'AUTHOR_ID' => $activity->getAuthorId(),
-					'BINDINGS' => $activity->getBindings(),
-					'SETTINGS' => [
-						'FIELDS' => $activity->getFields()
-					],
-				];
-
-				$activityId = (int)\CCrmActivity::add($fields, false);
-
-				if ($activityId > 0)
-				{
-					AddEventToStatFile(
-						'sale',
-						'deliveryActivityCreation',
-						$activityId,
-						$deliveryService->getName(),
-						'delivery_service_name'
-					);
-				}
-			}
-
-			if ($deliveryService instanceof Sale\Delivery\Services\Crm\ICrmEstimationMessageProvider)
-			{
-				$estimationMessage = $deliveryService->provideCrmEstimationMessage($this);
-
-				DeliveryController::getInstance()->createHistoryMessage(
-					$this->getId(),
-					$estimationMessage->getTypeId(),
-					[
-						'AUTHOR_ID' => $estimationMessage->getAuthorId(),
-						'SETTINGS' => ['FIELDS' => $estimationMessage->getFields()],
-						'BINDINGS' => $estimationMessage->getBindings()
-					]
-				);
 			}
 		}
 
@@ -180,33 +139,6 @@ class Shipment extends Sale\Shipment
 	}
 
 	/**
-	 * @return array
-	 */
-	private function getTimelineBindings() : array
-	{
-		$bindings = [
-			[
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ENTITY_ID' => $this->getOrder()->getId()
-			]
-		];
-
-		if ($this->getOrder()->getDealbinding())
-		{
-			/** @var DealBinding $dealBindings */
-			$dealBindings = $this->getOrder()->getDealBinding();
-
-			$bindings[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-				'ENTITY_ID' => $dealBindings->getDealId()
-			];
-		}
-
-		return $bindings;
-	}
-
-	/**
-	 * @throws Main\ArgumentException
 	 * @return void;
 	 */
 	private function addTimelineEntryOnCreate()
@@ -225,7 +157,6 @@ class Shipment extends Sale\Shipment
 	}
 
 	/**
-	 * @throws Main\ArgumentException
 	 * @return void;
 	 */
 	private function addTimelineEntryOnStatusModify()
@@ -248,7 +179,6 @@ class Shipment extends Sale\Shipment
 	}
 
 	/**
-	 * @throws Main\ArgumentException
 	 * @return void;
 	 */
 	private function updateTimelineCreationEntity()

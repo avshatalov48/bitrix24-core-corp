@@ -15,6 +15,7 @@ use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Item\Converter\Task\Template\ToTemplate;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TemplateSubtaskLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -197,6 +198,8 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		);
 
 		$this->arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
+		$this->arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] = TemplateSubtaskLimit::isLimitExceeded();
+		$this->arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'] = Util\Restriction\Bitrix24Restriction\Limit\RecurringLimit::isLimitExceeded();
 
 		parent::getAuxData();
 	}

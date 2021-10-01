@@ -1,22 +1,22 @@
 <?php
 namespace Bitrix\ImOpenLines\Queue;
 
-use \Bitrix\Main\Event,
-	\Bitrix\Main\Loader,
-	\Bitrix\Main\EventResult,
-	\Bitrix\Main\Type\DateTime,
-	\Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Event;
+use Bitrix\Main\Loader;
+use Bitrix\Main\EventResult;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Localization\Loc;
 
-use \Bitrix\Im;
+use Bitrix\Im;
 
-use \Bitrix\ImOpenLines,
-	\Bitrix\ImOpenLines\Log,
-	\Bitrix\ImOpenLines\Chat,
-	\Bitrix\ImOpenLines\Config,
-	\Bitrix\ImOpenLines\Session,
-	\Bitrix\ImOpenLines\Tools\Lock,
-	\Bitrix\ImOpenLines\AutomaticAction,
-	\Bitrix\ImOpenLines\Model\SessionCheckTable;
+use Bitrix\ImOpenLines;
+use Bitrix\ImOpenLines\Chat;
+use Bitrix\ImOpenLines\Config;
+use Bitrix\ImOpenLines\Common;
+use Bitrix\ImOpenLines\Session;
+use Bitrix\ImOpenLines\Tools\Lock;
+use Bitrix\ImOpenLines\Model\ConfigTable;
+use Bitrix\ImOpenLines\Model\SessionCheckTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -199,7 +199,6 @@ abstract class Queue
 
 	/**
 	 * @return bool
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	public function startLock()
 	{
@@ -208,7 +207,6 @@ abstract class Queue
 
 	/**
 	 * @return bool
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	public function stopLock()
 	{
@@ -217,10 +215,6 @@ abstract class Queue
 
 	/**
 	 * @return DateTime
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function getNewDateNoAnswer()
 	{
@@ -239,20 +233,23 @@ abstract class Queue
 	 * Check for unallocated sessions.
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function isUndistributedSession()
+	public function isUndistributedSession(): bool
 	{
 		$result = false;
 
-		$count = SessionCheckTable::getCount([
-			'=UNDISTRIBUTED' => 'Y',
-			'=SESSION.CONFIG_ID' => $this->config['ID'],
-			'!=DATE_QUEUE' => NULL
-		]);
+		$resultRequest = SessionCheckTable::getList([
+			'select' => ['SESSION_ID'],
+			'filter' =>
+			[
+				'=UNDISTRIBUTED' => 'Y',
+				'=SESSION.CONFIG_ID' => $this->config['ID'],
+				'!=DATE_QUEUE' => NULL
+			],
+			'limit' => 1
+		])->fetch();
 
-		if($count>0)
+		if(!empty($resultRequest))
 		{
 			$result = true;
 		}
@@ -266,10 +263,6 @@ abstract class Queue
 	 * @param $userId
 	 * @param bool $ignorePause
 	 * @return bool|string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function isOperatorActive($userId, bool $ignorePause = false)
 	{
@@ -282,10 +275,6 @@ abstract class Queue
 	 * @param bool $ignorePause
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function isOperatorsActiveLine(bool $ignorePause = false): bool
 	{
@@ -298,9 +287,6 @@ abstract class Queue
 	 * @param $userId
 	 * @param int $currentOperator
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function isOperatorAvailable($userId, $currentOperator = 0)
 	{
@@ -329,6 +315,60 @@ abstract class Queue
 	abstract public function getOperatorsQueue($currentOperator = 0);
 
 	/**
+	 * @param int $configId
+	 * @param $fullCountOperators
+	 */
+	protected function processingEmptyQueue(int $configId, $fullCountOperators): void
+	{
+		if(!empty($configId))
+		{
+			if($fullCountOperators > 0)
+			{
+				if($this->config['SEND_NOTIFICATION_EMPTY_QUEUE'] === 'Y')
+				{
+					$this->config['SEND_NOTIFICATION_EMPTY_QUEUE'] = 'N';
+					ConfigTable::update($configId, ['SEND_NOTIFICATION_EMPTY_QUEUE' => 'N']);
+				}
+			}
+			elseif($fullCountOperators === 0)
+			{
+				if($this->config['SEND_NOTIFICATION_EMPTY_QUEUE'] === 'N')
+				{
+					ConfigTable::update($configId, ['SEND_NOTIFICATION_EMPTY_QUEUE' => 'Y']);
+					$this->sendNotificationEmptyQueue($configId);
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param int $configId
+	 */
+	protected function sendNotificationEmptyQueue(int $configId): void
+	{
+		if (Loader::includeModule('im'))
+		{
+			$message = Loc::getMessage('IMOL_QUEUE_NOTIFICATION_EMPTY_QUEUE', ['#URL#' => Common::getContactCenterPublicFolder() . 'lines_edit/?ID=' . $configId . '&SIDE=Y']);
+
+			$notificationUserList = Common::getAdministrators();
+
+			foreach($notificationUserList as $userId)
+			{
+				$notifyFields = [
+					'TO_USER_ID' => $userId,
+					'NOTIFY_TYPE' => IM_NOTIFY_SYSTEM,
+					'NOTIFY_MODULE' => 'imopenlines',
+					'NOTIFY_EVENT' => 'default',
+					'NOTIFY_MESSAGE' => $message,
+					'RECENT_ADD' => 'Y'
+				];
+
+				\CIMNotify::Add($notifyFields);
+			}
+		}
+	}
+
+	/**
 	 * Returns the default queue time
 	 *
 	 * @return int
@@ -350,10 +390,6 @@ abstract class Queue
 	 * @param \Bitrix\ImOpenLines\Crm $crmManager
 	 * @param bool $isGroupByChat
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function createSession($operatorId = 0, $crmManager = null, $isGroupByChat = false)
 	{
@@ -485,11 +521,6 @@ abstract class Queue
 	 *
 	 * @param bool $manual
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function transferToNext($manual = true)
 	{
@@ -620,11 +651,6 @@ abstract class Queue
 	 * @param bool $vote
 	 * @param bool $noCache
 	 * @return bool|string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function isRemoveSession($finish = false, $vote = false, $noCache = false)
 	{
@@ -669,10 +695,6 @@ abstract class Queue
 	 *
 	 * @param $userId
 	 * @return bool|string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function isActiveCrmUser($userId)
 	{
@@ -683,11 +705,6 @@ abstract class Queue
 	 * Directing a conversation to a queue when an operator is not available.
 	 *
 	 * @param string $reasonReturn
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function transferOperatorNotAvailable($reasonReturn = ImOpenLines\Queue::REASON_OPERATOR_NOT_AVAILABLE): void
 	{
@@ -698,11 +715,6 @@ abstract class Queue
 
 	/**
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function transferOperatorOffline()
 	{
@@ -718,7 +730,6 @@ abstract class Queue
 
 	/**
 	 * @param $chatId
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function sendMessageSkipAlone($chatId)
 	{

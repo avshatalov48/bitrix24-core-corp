@@ -99,6 +99,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 				'prefix' => $arResult['INPUT_PREFIX'],
 				'userPath' => $arResult['PATH_TO_USER_PROFILE'],
 				'converted' => $arResult['CONVERTED'],
+				'isNetworkEnabled' => $arResult['IS_NETWORK_ENABLED'],
 				'showCompleteAllButton' => $arResult['SHOW_COMPLETE_ALL_BUTTON'],
 				'collapseOnCompleteAll' => $arResult['COLLAPSE_ON_COMPLETE_ALL'],
 				'ajaxActions' => $arResult['AJAX_ACTIONS'],
@@ -115,7 +116,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 					'urlDeleteFile' => '/bitrix/tools/disk/uf.php?action=deleteFile',
 					'urlUpload' => '/bitrix/tools/disk/uf.php?action=uploadFile&ncc=1',
 				],
-				'suffixDomId' => $suffixDomId
+				'suffixDomId' => $suffixDomId,
 			])?>);
 
 			BX.Tasks.CheckListInstance = new BX.Tasks.CheckList(data);

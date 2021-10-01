@@ -913,7 +913,7 @@ class CIntranetInviteDialog
 			$ID = self::RegisterUser($userData, $SITE_ID);
 			if(is_array($ID))
 			{
-				$arError = $ID;
+				$strError = $ID[0];
 				return false;
 			}
 			else
@@ -1444,7 +1444,7 @@ class CIntranetInviteDialog
 
 		foreach(GetModuleEvents("intranet", "OnTransferEMailUser", true) as $arEvent)
 		{
-			if(!ExecuteModuleEventEx($arEvent, array(&$arFields)))
+			if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
 			{
 				return false;
 			}
@@ -1565,7 +1565,7 @@ class CIntranetInviteDialog
 
 		foreach(GetModuleEvents("intranet", "OnTransferExtranetUser", true) as $arEvent)
 		{
-			if(!ExecuteModuleEventEx($arEvent, array(&$arFields)))
+			if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
 			{
 				return false;
 			}

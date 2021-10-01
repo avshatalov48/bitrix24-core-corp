@@ -16,6 +16,19 @@ if (!Loader::includeModule('sale'))
 /**
  * Class OrderPropsValueTable
  * @package Bitrix\Crm\Invoice\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_InvoicePropsValue_Query query()
+ * @method static EO_InvoicePropsValue_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_InvoicePropsValue_Result getById($id)
+ * @method static EO_InvoicePropsValue_Result getList(array $parameters = array())
+ * @method static EO_InvoicePropsValue_Entity getEntity()
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_InvoicePropsValue createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_InvoicePropsValue_Collection createCollection()
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_InvoicePropsValue wakeUpObject($row)
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_InvoicePropsValue_Collection wakeUpCollection($rows)
  */
 class InvoicePropsValueTable extends DataManager
 {

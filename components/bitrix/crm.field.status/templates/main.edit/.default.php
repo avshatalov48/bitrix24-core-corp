@@ -47,17 +47,39 @@ $defaultFieldName = $arResult['fieldName'].'_default_'.$postfix;
 <script>
 	BX.ready(function ()
 	{
-		new BX.Desktop.Field.Enum(
-			<?=CUtil::PhpToJSObject([
-				'defaultFieldName' => $defaultFieldName,
-				'fieldName' => $arResult['fieldNameJs'],
-				'container' => $arResult['controlNodeId'],
-				'valueContainerId' => $arResult['valueContainerId'],
-				'block' => $arResult['block'],
-				'value' => $arResult['currentValue'],
-				'items' => $arResult['items'],
-				'params' => $arResult['params']
-			])?>
-		);
+		/**
+		 * @todo Remove this in the future. Made so that there is no hard dependence on the main
+		 * Need to leave only BX.Desktop.Field.Enum.Ui
+		 */
+		<?php
+
+		$params = CUtil::PhpToJSObject([
+			'defaultFieldName' => $defaultFieldName,
+			'fieldName' => $arResult['fieldNameJs'],
+			'container' => $arResult['controlNodeId'],
+			'valueContainerId' => $arResult['valueContainerId'],
+			'block' => $arResult['block'],
+			'value' => $arResult['currentValue'],
+			'items' => $arResult['items'],
+			'params' => $arResult['params']
+		]);
+
+		if (defined('\Bitrix\Main\UserField\Types\EnumType::DISPLAY_DIALOG'))
+		{
+			?>
+			new BX.Desktop.Field.Enum.Ui(
+				<?= $params ?>
+			);
+		<?php
+		}
+		else
+		{
+			?>
+			new BX.Desktop.Field.Enum(
+				<?= $params ?>
+			);
+		<?php
+		}
+		?>
 	});
 </script>

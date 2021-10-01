@@ -1,2 +1,3 @@
 <?php
 $MESS["SALESCENTER_FEEDBACK_TITLE"] = "Обратная связь";
+$MESS["SALESCENTER_FEEDBACK_INTEGRATION_REQUEST_TITLE"] = "Заказать подключение";

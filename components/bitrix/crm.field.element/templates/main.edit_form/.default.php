@@ -28,7 +28,7 @@ if($arResult['PERMISSION_DENIED'])
 {
 	?>
 	<div id="crm-<?= $fieldUID ?>-box">
-		<div class="crm-button-open">
+		<div class="crm-element-button-open">
 			<?= Loc::getMessage('CRM_SFE_PERMISSION_DENIED') ?>
 		</div>
 		<?php
@@ -169,7 +169,7 @@ else
 				});
 			</script>
 
-			<div class="crm-button-open">
+			<div class="crm-button-open crm-element-button-open">
 				<span onclick="BX['<?= $jsObject ?>'].createNewEntity(event);">
 					<?= Loc::getMessage('CRM_CES_CREATE') ?>
 				</span>

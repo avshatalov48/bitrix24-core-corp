@@ -95,15 +95,14 @@ if ($isBitrix24Template)
 	if (
 		$isMyTasks
 		&& $arResult['SHOW_COUNTERS']
-		&& Factory::canUseAutomation()
 		&& Access\TaskAccessController::can($arParams['USER_ID'], Access\ActionDictionary::ACTION_TASK_ROBOT_EDIT)
 	)
 	{
 		$groupId = (int)$arParams['GROUP_ID'];
 		$projectId = ($showViewMode ? $groupId : 'this.getAttribute(\'data-project-id\')');
 
-		$showLimitSlider = $taskLimitExceeded && !Factory::canUseAutomation();
-		$openLimitSliderAction = "BX.UI.InfoHelper.show('limit_tasks_robots')";
+		$showLimitSlider = $taskLimitExceeded || !Factory::canUseAutomation();
+		$openLimitSliderAction = "top.BX.UI.InfoHelper.show('limit_tasks_robots')";
 		$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId});";
 
 		$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');

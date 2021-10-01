@@ -20,7 +20,6 @@ use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\Sale\Delivery;
-use Bitrix\Sale\Delivery\Services\OrderPropsDictionary;
 use Bitrix\ImOpenLines;
 use Bitrix\SalesCenter\Builder\Converter;
 
@@ -522,32 +521,22 @@ class Order extends Base
 								$result[$index]['QUANTITY'] = $basketItem->getQuantity();
 							}
 
-							$result[$index]['PRICE'] = $product['basePrice'];
+							$result[$index]['PRICE'] = $product['price'];
 							$result[$index]['PRICE_EXCLUSIVE'] = $product['basePrice'];
-							$result[$index]['PRICE_ACCOUNT'] = $product['basePrice'];
+							$result[$index]['PRICE_ACCOUNT'] = $product['price'];
 							$result[$index]['PRICE_NETTO'] = $product['basePrice'];
-							$result[$index]['PRICE_BRUTTO'] = $product['basePrice'];
+							$result[$index]['PRICE_BRUTTO'] = $product['price'];
 
-							$discount = 0;
-							if ((int)$product['discountType'] === \Bitrix\Crm\Discount::PERCENTAGE)
+							if (!empty($product['discount']))
 							{
-								$discount = $product['discount'];
-
-								$result[$index]['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::PERCENTAGE;
+								$result[$index]['DISCOUNT_TYPE_ID'] =
+									(int)$product['discountType'] === Crm\Discount::MONETARY
+										? Crm\Discount::MONETARY
+										: Crm\Discount::PERCENTAGE
+								;
 								$result[$index]['DISCOUNT_RATE'] = $product['discountRate'];
 								$result[$index]['DISCOUNT_SUM'] = $product['discount'];
 							}
-							elseif ((int)$product['discountType'] === \Bitrix\Crm\Discount::MONETARY)
-							{
-								$result[$index]['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::MONETARY;
-								$result[$index]['DISCOUNT_SUM'] = $product['discount'];
-
-								$discount = $product['discount'];
-							}
-
-							$result[$index]['PRICE'] -= $discount;
-							$result[$index]['PRICE_ACCOUNT'] -= $discount;
-							$result[$index]['PRICE_EXCLUSIVE'] -= $discount;
 
 							continue;
 						}
@@ -557,11 +546,11 @@ class Order extends Base
 				$item = [
 					'PRODUCT_ID' => $productId,
 					'PRODUCT_NAME' => $product['name'],
-					'PRICE' => $product['basePrice'],
-					'PRICE_ACCOUNT' => $product['basePrice'],
+					'PRICE' => $product['price'],
+					'PRICE_ACCOUNT' => $product['price'],
 					'PRICE_EXCLUSIVE' => $product['basePrice'],
 					'PRICE_NETTO' => $product['basePrice'],
-					'PRICE_BRUTTO' => $product['basePrice'],
+					'PRICE_BRUTTO' => $product['price'],
 					'QUANTITY' => $product['quantity'],
 					'MEASURE_CODE' => $product['measureCode'],
 					'MEASURE_NAME' => $product['measureName'],
@@ -569,29 +558,16 @@ class Order extends Base
 					'TAX_INCLUDED' => $product['taxIncluded'],
 				];
 
-				$discount = 0;
-				if ((int)$product['discountType'] === \Bitrix\Crm\Discount::PERCENTAGE)
+				if (!empty($product['discount']))
 				{
-					if ($product['discount'] > 0)
-					{
-						$discount = $product['discount'];
-
-						$item['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::PERCENTAGE;
-						$item['DISCOUNT_RATE'] = $product['discountRate'];
-						$item['DISCOUNT_SUM'] = $product['discount'];
-					}
-				}
-				elseif ((int)$product['discountType'] === \Bitrix\Crm\Discount::MONETARY)
-				{
-					$item['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::MONETARY;
+					$item['DISCOUNT_TYPE_ID'] =
+						(int)$product['discountType'] === Crm\Discount::MONETARY
+							? Crm\Discount::MONETARY
+							: Crm\Discount::PERCENTAGE
+					;
+					$item['DISCOUNT_RATE'] = $product['discountRate'];
 					$item['DISCOUNT_SUM'] = $product['discount'];
-
-					$discount = $product['discount'];
 				}
-
-				$item['PRICE'] -= $discount;
-				$item['PRICE_ACCOUNT'] -= $discount;
-				$item['PRICE_EXCLUSIVE'] -= $discount;
 
 				$result[] = $item;
 			}
@@ -838,7 +814,16 @@ class Order extends Base
 		if (Bitrix24Manager::getInstance()->isPaymentsLimitReached())
 		{
 			$this->addError(
-				new Main\Error('You have reached limit of payments for your tariff')
+				new Main\Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_PAYMENTS_LIMIT_REACHED'))
+			);
+
+			return [];
+		}
+
+		if ((int)$options['orderId'] <= 0 && CrmManager::getInstance()->isOrderLimitReached())
+		{
+			$this->addError(
+				new Main\Error('You have reached the order limit for your plan')
 			);
 
 			return [];
@@ -988,8 +973,20 @@ class Order extends Base
 			{
 				if ($payment)
 				{
-					$previewData = ImOpenLinesManager::getInstance()->getPaymentPreviewData($payment);
 					$publicUrl = ImOpenLinesManager::getInstance()->getPublicUrlInfoForPayment($payment);
+
+					if ($options['context'] === 'sms')
+					{
+						$smsTemplate = CrmManager::getInstance()->getSmsTemplate();
+						$smsTitle = str_replace('#LINK#', $publicUrl['url'], $smsTemplate);
+						$previewData = [
+							'title' => $smsTitle,
+						];
+					}
+					else
+					{
+						$previewData = ImOpenLinesManager::getInstance()->getPaymentPreviewData($payment);
+					}
 				}
 				else
 				{
@@ -1018,6 +1015,15 @@ class Order extends Base
 	 */
 	public function createShipmentAction(array $basketItems = array(), array $options = [])
 	{
+		if ((int)$options['orderId'] <= 0 && CrmManager::getInstance()->isOrderLimitReached())
+		{
+			$this->addError(
+				new Main\Error('You have reached the order limit for your plan')
+			);
+
+			return [];
+		}
+
 		$basketItems = $this->processBasketItems($basketItems);
 
 		$options['basketItems'] = $basketItems;
@@ -1386,7 +1392,7 @@ class Order extends Base
 		$sessionId = $dialogId = false;
 		if(Bitrix24Manager::getInstance()->isPaymentsLimitReached())
 		{
-			$this->addError(new Error('You have reached limit of payments for your tariff'));
+			$this->addError(new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_PAYMENTS_LIMIT_REACHED')));
 			return null;
 		}
 		if(isset($options['sessionId']))
@@ -1450,7 +1456,7 @@ class Order extends Base
 
 		if (Bitrix24Manager::getInstance()->isPaymentsLimitReached())
 		{
-			$this->addError(new Error('You have reached limit of payments for your tariff'));
+			$this->addError(new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_PAYMENTS_LIMIT_REACHED')));
 			return null;
 		}
 
@@ -1991,7 +1997,7 @@ HTML;
 	 */
 	private function getClientAddressId(int $shipmentId): ?int
 	{
-		return $this->getAddressId($shipmentId, OrderPropsDictionary::ADDRESS_TO_PROPERTY_CODE);
+		return $this->getAddressId($shipmentId, 'IS_ADDRESS_TO');
 	}
 
 	/**
@@ -2000,22 +2006,20 @@ HTML;
 	 */
 	private function getDeliveryFromAddressId(int $shipmentId): ?int
 	{
-		return $this->getAddressId($shipmentId, OrderPropsDictionary::ADDRESS_FROM_PROPERTY_CODE);
+		return $this->getAddressId($shipmentId, 'IS_ADDRESS_FROM');
 	}
 
 	/**
 	 * @param int $shipmentId
-	 * @param string $propertyCode
+	 * @param string $attribute
 	 * @return int|null
 	 */
-	private function getAddressId(int $shipmentId, string $propertyCode)
+	private function getAddressId(int $shipmentId, string $attribute)
 	{
 		$shipment = Sale\Repository\ShipmentRepository::getInstance()->getById($shipmentId);
 
 		/** @var \Bitrix\Sale\PropertyValue $propValue */
-		$propValue = $shipment->getPropertyCollection()
-			->getItemByOrderPropertyCode($propertyCode);
-
+		$propValue = $shipment->getPropertyCollection()->getAttribute($attribute);
 		if (!$propValue)
 		{
 			return null;

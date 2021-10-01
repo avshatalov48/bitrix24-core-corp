@@ -412,6 +412,13 @@ if($action === 'SAVE')
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
 
 			$entity = new \CCrmCompany(false);
+			$saveOptions = ['REGISTER_SONET_EVENT' => true];
+			if (!is_null($conversionWizard))
+			{
+				$saveOptions['EXCLUDE_FROM_RELATION_REGISTRATION'] = [
+					new Crm\ItemIdentifier($conversionWizard->getEntityTypeID(), $conversionWizard->getEntityID()),
+				];
+			}
 			if($isNew)
 			{
 				if(!isset($fields['COMPANY_TYPE']))
@@ -434,7 +441,7 @@ if($action === 'SAVE')
 					$fields['OPENED'] = \Bitrix\Crm\Settings\CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
 				}
 
-				$ID = $entity->Add($fields, true, array('REGISTER_SONET_EVENT' => true));
+				$ID = $entity->Add($fields, true, $saveOptions);
 				if($ID <= 0)
 				{
 					$checkExceptions = $entity->GetCheckExceptions();
@@ -443,7 +450,7 @@ if($action === 'SAVE')
 			}
 			else
 			{
-				if(!$entity->Update($ID, $fields, true, true,  array('REGISTER_SONET_EVENT' => true)))
+				if(!$entity->Update($ID, $fields, true, true, $saveOptions))
 				{
 					$checkExceptions = $entity->GetCheckExceptions();
 					$errorMessage = $entity->LAST_ERROR;
@@ -719,6 +726,11 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	$context = isset($_POST['CONTEXT']) && is_array($_POST['CONTEXT']) ? $_POST['CONTEXT'] : array();
 	$fieldNames = isset($_POST['FIELDS']) && is_array($_POST['FIELDS']) ? $_POST['FIELDS'] : array();
 	$title = isset($_POST['TITLE']) ? $_POST['TITLE'] : '';
+
+	if (!\CCrmCompany::CheckReadPermission($ID))
+	{
+		__CrmDealDetailsEndJsonResonse(['ERROR' => 'Access denied.']);
+	}
 
 	$enableConfigScopeToggle = !isset($_POST['ENABLE_CONFIG_SCOPE_TOGGLE'])
 		|| mb_strtoupper($_POST['ENABLE_CONFIG_SCOPE_TOGGLE']) === 'Y';

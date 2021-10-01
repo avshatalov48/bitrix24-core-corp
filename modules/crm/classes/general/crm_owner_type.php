@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Crm\Security\EntityAuthorization;
 
 class CCrmOwnerType
 {
@@ -39,6 +40,8 @@ class CCrmOwnerType
 	public const Scoring = 28;
 
 	public const CheckCorrection = 29;
+
+	public const DeliveryRequest = 30;
 
 	public const FirstOwnerType = 1;
 	public const LastOwnerType = 29;
@@ -136,6 +139,7 @@ class CCrmOwnerType
 			|| $typeID === self::OrderShipment
 			|| $typeID === self::OrderCheck
 			|| $typeID === self::CheckCorrection
+			|| $typeID === self::DeliveryRequest
 		);
 
 		if($isStatic)
@@ -897,7 +901,7 @@ class CCrmOwnerType
 
 	protected static function checkReadPermission(int $typeId, int $id): bool
 	{
-		return \Bitrix\Crm\Security\EntityAuthorization::checkReadPermission($typeId, $id);
+		return EntityAuthorization::checkReadPermission($typeId, $id);
 	}
 
 	public static function GetEditUrl($typeID, $ID, $bCheckPermissions = false, array $options = null)
@@ -1322,7 +1326,14 @@ class CCrmOwnerType
 
 		if(self::$INFO_STUB === null)
 		{
-			self::$INFO_STUB = array('TITLE' => '', 'LEGEND' => '', 'IMAGE_FILE_ID' => 0, 'RESPONSIBLE_ID' => 0, 'SHOW_URL' => '');
+			self::$INFO_STUB = [
+				'TITLE' => '',
+				'LEGEND' => '',
+				'IMAGE_FILE_ID' => 0,
+				'RESPONSIBLE_ID' => 0,
+				'SHOW_URL' => '',
+				'ENTITY_TYPE_CAPTION' => '',
+			];
 		}
 
 		if($ID <= 0)
@@ -1377,7 +1388,8 @@ class CCrmOwnerType
 					'LEGEND' => CCrmLead::PrepareFormattedName($arRes),
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
-					'SHOW_URL' => self::GetEntityShowPath(self::Lead, $ID)
+					'SHOW_URL' => self::GetEntityShowPath(self::Lead, $ID),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Lead),
 				);
 
 				$info = self::$INFOS[$key];
@@ -1406,7 +1418,8 @@ class CCrmOwnerType
 					'LEGEND' => isset($arRes['COMPANY_TITLE']) ? $arRes['COMPANY_TITLE'] : '',
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => isset($arRes['PHOTO']) ? intval($arRes['PHOTO']) : 0,
-					'SHOW_URL' => self::GetEntityShowPath(self::Contact, $ID)
+					'SHOW_URL' => self::GetEntityShowPath(self::Contact, $ID),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Contact),
 				);
 
 				$info = self::$INFOS[$key];
@@ -1459,7 +1472,8 @@ class CCrmOwnerType
 					'LEGEND' => !empty($legendParts) ? implode(', ', $legendParts) : '',
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => isset($arRes['LOGO']) ? intval($arRes['LOGO']) : 0,
-					'SHOW_URL' => self::GetEntityShowPath(self::Company, $ID)
+					'SHOW_URL' => self::GetEntityShowPath(self::Company, $ID),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Company),
 				);
 
 				$info = self::$INFOS[$key];
@@ -1473,7 +1487,7 @@ class CCrmOwnerType
 					array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
 					false,
 					false,
-					array('TITLE', 'ASSIGNED_BY_ID')
+					array('TITLE', 'ASSIGNED_BY_ID', 'DATE_CREATE', 'OPPORTUNITY', 'CURRENCY_ID')
 				);
 
 				$arRes = $dbRes ? $dbRes->Fetch() : null;
@@ -1484,12 +1498,24 @@ class CCrmOwnerType
 					return false;
 				}
 
+				$date = new Bitrix\Main\Type\Date($arRes['DATE_CREATE']);
+
 				self::$INFOS[$key] = array(
-					'TITLE' => isset($arRes['TITLE']) ? $arRes['TITLE'] : '',
-					'LEGEND' => '',
+					'TITLE' => $arRes['TITLE'],
+					'LEGEND' => GetMessage('CRM_OWNER_TYPE_DEAL_LEGEND', [
+						"#DATE_CREATE#" =>  FormatDate(
+							Bitrix\Main\Context::getCurrent()->getCulture()->getLongDateFormat(),
+							$date->getTimestamp()
+						),
+						"#SUM_WITH_CURRENCY#" => \CCrmCurrency::MoneyToString(
+							$arRes['OPPORTUNITY'],
+							$arRes['CURRENCY_ID']
+						),
+					]),
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
-					'SHOW_URL' => self::GetEntityShowPath(self::Deal, $ID)
+					'SHOW_URL' => self::GetEntityShowPath(self::Deal, $ID),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Deal),
 				);
 
 				$info = self::$INFOS[$key];
@@ -1499,7 +1525,7 @@ class CCrmOwnerType
 			{
 				$dbRes = CCrmInvoice::GetList(
 					array(),
-					array('ID' => $ID),
+					array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
 					false,
 					false,
 					array('ORDER_TOPIC', 'RESPONSIBLE_ID')
@@ -1518,11 +1544,8 @@ class CCrmOwnerType
 					'LEGEND' => '',
 					'RESPONSIBLE_ID' => isset($arRes['RESPONSIBLE_ID']) ? intval($arRes['RESPONSIBLE_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
-					'SHOW_URL' =>
-						CComponentEngine::MakePathFromTemplate(
-							COption::GetOptionString('crm', 'path_to_invoice_show'),
-							array('invoice_id' => $ID)
-						)
+					'SHOW_URL' => static::GetEntityShowPath(static::Invoice, $ID),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Invoice),
 				);
 
 				$info = self::$INFOS[$key];
@@ -1551,11 +1574,8 @@ class CCrmOwnerType
 					'LEGEND' => '',
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
-					'SHOW_URL' =>
-						CComponentEngine::MakePathFromTemplate(
-							COption::GetOptionString('crm', 'path_to_quote_show'),
-							array('quote_id' => $ID)
-						)
+					'SHOW_URL' => static::GetEntityShowPath(self::Quote, $ID),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Quote),
 				);
 
 				$info = self::$INFOS[$key];
@@ -1588,12 +1608,48 @@ class CCrmOwnerType
 						CComponentEngine::MakePathFromTemplate(
 							COption::GetOptionString('crm', 'path_to_order_details'),
 							array('order_id' => $ID)
-						)
+						),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Order),
 				);
 
 				$info = self::$INFOS[$key];
 				return true;
 			}
+
+			default:
+				$factory = Container::getInstance()->getFactory($typeID);
+				if ($factory)
+				{
+					$item = $factory->getItems([
+						'select' => [
+							\Bitrix\Crm\Item::FIELD_NAME_ID,
+							\Bitrix\Crm\Item::FIELD_NAME_TITLE,
+							\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED,
+						],
+						'filter' => [
+							'=' . \Bitrix\Crm\Item::FIELD_NAME_ID => $ID,
+						]
+					])[0] ?? null;
+
+					if ($item)
+					{
+						$info = [
+							'TITLE' => $item->getTitle(),
+							'LEGEND' => '',
+							'RESPONSIBLE_ID' => $item->getAssignedById(),
+							'IMAGE_FILE_ID' => 0,
+							'SHOW_URL' => Container::getInstance()->getRouter()->getItemDetailUrl(
+								$factory->getEntityTypeId(),
+								$item->getId()
+							),
+							'ENTITY_TYPE_CAPTION' => $factory->getEntityDescription(),
+						];
+
+						self::$INFOS[$key] = $info;
+
+						return true;
+					}
+				}
 		}
 
 		$info = self::$INFO_STUB;
@@ -1945,6 +2001,41 @@ class CCrmOwnerType
 	{
 		$enableSlider = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 		$enableEditUrl = is_array($options) && isset($options['ENABLE_EDIT_URL']) && $options['ENABLE_EDIT_URL'] === true;
+
+		$permissionOptions =
+			isset($options['PERMISSION_OPTIONS']) && is_array($options['PERMISSION_OPTIONS'])
+				? $options['PERMISSION_OPTIONS']
+				: []
+		;
+
+		$displayNotPermittedItemsAsHidden = (bool)($permissionOptions['DISPLAY_NOT_PERMITTED_ITEMS_AS_HIDDEN'] ?? false);
+		$hideItemsFromUnauthorizedUsers = (bool)($permissionOptions['HIDE_ITEMS_FROM_UNAUTHORIZED_USERS'] ?? true);
+
+		$shouldHideItem = false;
+		$isUserAuthorized = Container::getInstance()->getContext()->getUserId() > 0;
+
+		if ($displayNotPermittedItemsAsHidden)
+		{
+			if ($isUserAuthorized)
+			{
+				$shouldHideItem = !static::checkReadPermission((int)$typeID, (int)$ID);
+			}
+			else
+			{
+				$shouldHideItem = $hideItemsFromUnauthorizedUsers;
+			}
+		}
+
+		if ($shouldHideItem)
+		{
+			Container::getInstance()->getLocalization()->loadMessages();
+
+			return [
+				'TITLE' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_HIDDEN_ITEM'),
+				'ENTITY_TYPE_CAPTION' => static::GetDescription($typeID),
+			];
+		}
+
 		switch($typeID)
 		{
 			case self::Lead:
@@ -1986,6 +2077,7 @@ class CCrmOwnerType
 					COption::GetOptionString('crm', $enableSlider ? 'path_to_lead_details' : 'path_to_lead_show'),
 					array('lead_id' => $ID)
 				);
+				$result['ENTITY_TYPE_CAPTION'] = static::GetDescription(static::Lead);
 
 				if($enableEditUrl)
 				{
@@ -2008,7 +2100,8 @@ class CCrmOwnerType
 						CComponentEngine::MakePathFromTemplate(
 							COption::GetOptionString('crm', $enableSlider ? 'path_to_contact_details' : 'path_to_contact_show'),
 							array('contact_id' => $ID)
-						)
+						),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Contact),
 				);
 				if($enableEditUrl)
 				{
@@ -2054,7 +2147,8 @@ class CCrmOwnerType
 						CComponentEngine::MakePathFromTemplate(
 							COption::GetOptionString('crm', $enableSlider ? 'path_to_company_details' : 'path_to_company_show'),
 							array('company_id' => $ID)
-						)
+						),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Company),
 				);
 				if($enableEditUrl)
 				{
@@ -2088,7 +2182,8 @@ class CCrmOwnerType
 						CComponentEngine::MakePathFromTemplate(
 							COption::GetOptionString('crm', $enableSlider ? 'path_to_deal_details' : 'path_to_deal_show'),
 							['deal_id' => $ID]
-						)
+						),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Deal),
 				];
 				if($enableEditUrl)
 				{
@@ -2111,7 +2206,8 @@ class CCrmOwnerType
 						CComponentEngine::MakePathFromTemplate(
 							COption::GetOptionString('crm', 'path_to_invoice_show'),
 							array('invoice_id' => $ID)
-						)
+						),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Invoice),
 				);
 				if($enableEditUrl)
 				{
@@ -2138,7 +2234,8 @@ class CCrmOwnerType
 					'SHOW_URL' => Container::getInstance()->getRouter()->getItemDetailUrl(
 						static::Quote,
 						$arRes['ID']
-					)
+					),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Quote),
 				);
 				if($enableEditUrl)
 				{
@@ -2182,6 +2279,7 @@ class CCrmOwnerType
 						),
 					'DATE' => $dateInsert,
 					'SUM_WITH_CURRENCY' => \CCrmCurrency::MoneyToString($arRes['PRICE'], $arRes['CURRENCY']),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Order),
 				);
 				if($enableEditUrl)
 				{
@@ -2232,6 +2330,7 @@ class CCrmOwnerType
 					'SUM' => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY'], '#'),
 					'CURRENCY' => \CCrmCurrency::GetCurrencyText($arRes['CURRENCY']),
 					'SUM_WITH_CURRENCY' => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY']),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::OrderPayment),
 				);
 				if($enableEditUrl)
 				{
@@ -2267,7 +2366,8 @@ class CCrmOwnerType
 						CComponentEngine::MakePathFromTemplate(
 							COption::GetOptionString('crm', 'path_to_order_shipment_details'),
 							['shipment_id' => $ID]
-						)
+						),
+					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::OrderShipment),
 				];
 				if($enableEditUrl)
 				{
@@ -2287,12 +2387,15 @@ class CCrmOwnerType
 				return array(
 					'TITLE' => isset($arRes['TITLE']) ? $arRes['TITLE'] : '',
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
+					'ENTITY_TYPE_CAPTION' => static::GetDescription($typeID),
 				);
 			}
 		}
 
 		if (static::isPossibleDynamicTypeId($typeID))
 		{
+			$factory = Container::getInstance()->getFactory((int)$typeID);
+
 			return [
 				'TITLE' => $arRes[\Bitrix\Crm\Item::FIELD_NAME_TITLE] ?? '',
 				'RESPONSIBLE_ID' => $arRes[\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED] ?? 0,
@@ -2300,6 +2403,7 @@ class CCrmOwnerType
 					$typeID,
 					$arRes['ID'] ?? 0
 				)->getUri(),
+				'ENTITY_TYPE_CAPTION' => $factory ? $factory->getEntityDescription() : '',
 			];
 		}
 
@@ -2405,9 +2509,18 @@ class CCrmOwnerType
 				return self::Requisite;
 			case \Bitrix\Crm\Order\Manager::getUfId():
 				return self::Order;
-			default:
-				return self::Undefined;
 		}
+
+		if (preg_match('/CRM_(\d+)/', $entityTypeID, $matches))
+		{
+			$type = Container::getInstance()->getType($matches[1]);
+			if ($type)
+			{
+				return $type->getEntityTypeId();
+			}
+		}
+
+		return self::Undefined;
 	}
 
 	private static function GetFields($typeID, $ID, $options = array())

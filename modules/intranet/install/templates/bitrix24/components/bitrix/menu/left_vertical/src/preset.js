@@ -39,6 +39,26 @@ export class Preset
 		}
 	}
 
+	getCurrentPreset()
+	{
+		const form = document.forms["left-menu-preset-form"];
+		if (!form)
+		{
+			return "";
+		}
+
+		const presets = form.elements["presetType"];
+		for (let i = 0; i < presets.length; i++)
+		{
+			if (presets[i].checked)
+			{
+				return presets[i].value;
+			}
+		}
+
+		return "";
+	}
+
 	showPresetPopupFunction(mode)
 	{
 		BX.ready(function ()
@@ -85,10 +105,11 @@ export class Preset
 								BX.ajax.runAction('intranet.leftmenu.setPreset', {
 									data: {
 										preset: currentPreset,
-										mode: mode == "global" ? "global" : "personal"
+										mode: mode === "global" ? "global" : "personal"
 									},
 									analyticsLabel: {
-										analyticsLabel: currentPreset + (mode == "global" ? "&analyticsFirst=y" : "")
+										preset: this.getCurrentPreset(),
+										first: mode === "global" ? 'y' : '',
 									}
 								}).then((response) => {
 
@@ -100,7 +121,7 @@ export class Preset
 									{
 										document.location.reload();
 									}
-								}, (response) => {
+								}, () => {
 
 									document.location.reload();
 								});
@@ -115,15 +136,11 @@ export class Preset
 							click: BX.proxy(function ()
 							{
 								BX.ajax.runAction('intranet.leftmenu.delaySetPreset', {
-									data: {
-									},
+									data: {},
 									analyticsLabel: {
-										analyticsLabel: (mode == "global" ? "&analyticsFirst=y" : "")
+										preset: this.getCurrentPreset(),
+										first: mode === "global" ? 'y' : '',
 									}
-								}).then((response) => {
-
-								}, (response) => {
-
 								});
 
 								BX.proxy_context.popupWindow.close();
@@ -261,7 +278,7 @@ export class Preset
 									firstItemLink: firstItemLink
 								},
 								analyticsLabel: {
-									analyticsLabel: 'customPreset'
+									preset: 'customPreset'
 								}
 							}).then((response) => {
 

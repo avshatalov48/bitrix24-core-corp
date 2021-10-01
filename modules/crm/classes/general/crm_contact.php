@@ -203,7 +203,10 @@ class CAllCrmContact
 				),
 				'LEAD_ID' => array(
 					'TYPE' => 'crm_lead',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
+					'SETTINGS' => [
+						'parentEntityTypeId' => \CCrmOwnerType::Lead,
+					],
 				),
 				'ORIGINATOR_ID' => array(
 					'TYPE' => 'string'
@@ -1336,6 +1339,20 @@ class CAllCrmContact
 			else
 			{
 				Bitrix\Crm\Timeline\ContactController::getInstance()->onCreate($ID, array('FIELDS' => $arFields));
+
+				CCrmEntityHelper::registerAdditionalTimelineEvents([
+					'entityTypeId' => \CCrmOwnerType::Contact,
+					'entityId' => $ID,
+					'fieldsInfo' => static::GetFieldsInfo(),
+					'previousFields' => [],
+					'currentFields' => $arFields,
+					'options' => $options,
+					'bindings' => [
+						'entityTypeId' => \CCrmOwnerType::Company,
+						'previous' => [],
+						'current' => $companyBindings,
+					]
+				]);
 			}
 
 			$lastName = isset($arFields['LAST_NAME']) ? $arFields['LAST_NAME'] : '';
@@ -2188,6 +2205,20 @@ class CAllCrmContact
 					'OPTIONS' => $arOptions
 				)
 			);
+
+			CCrmEntityHelper::registerAdditionalTimelineEvents([
+				'entityTypeId' => \CCrmOwnerType::Contact,
+				'entityId' => $ID,
+				'fieldsInfo' => static::GetFieldsInfo(),
+				'previousFields' => $arRow,
+				'currentFields' => $arFields,
+				'options' => $arOptions,
+				'bindings' => [
+					'entityTypeId' => \CCrmOwnerType::Company,
+					'previous' => $originalCompanyBindings,
+					'current' => $companyBindings,
+				]
+			]);
 
 			if (isset($GLOBALS["USER"]) && isset($arFields['COMPANY_ID']) && intval($arFields['COMPANY_ID']) > 0)
 			{

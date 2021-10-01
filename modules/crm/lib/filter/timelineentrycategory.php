@@ -30,6 +30,8 @@ class TimelineEntryCategory
 		CREATION = 'creation',
 		MODIFICATION = 'modification',
 		CONVERSION = 'conversion',
+		LINK = 'link',
+		UNLINK = 'unlink',
 		WAITING = 'waiting',
 		APPLICATION = 'application',
 		ORDER = 'order',
@@ -59,11 +61,14 @@ class TimelineEntryCategory
 			self::CREATION => Loc::getMessage('CRM_TIMELINE_CATEGORY_CREATION'),
 			self::MODIFICATION => Loc::getMessage('CRM_TIMELINE_CATEGORY_MODIFICATION'),
 			self::CONVERSION => Loc::getMessage('CRM_TIMELINE_CATEGORY_CONVERSION'),
+			self::LINK => Loc::getMessage('CRM_TIMELINE_CATEGORY_LINK'),
+			self::UNLINK => Loc::getMessage('CRM_TIMELINE_CATEGORY_UNLINK'),
 			self::WAITING => Loc::getMessage('CRM_TIMELINE_CATEGORY_WAITING'),
 			self::APPLICATION => Loc::getMessage('CRM_TIMELINE_CATEGORY_APPLICATION'),
 			self::ORDER => Loc::getMessage('CRM_TIMELINE_CATEGORY_ORDER'),
 			self::ORDER_CHECK => Loc::getMessage('CRM_TIMELINE_CATEGORY_ORDER_CHECK'),
 		];
+
 		if (Main\Config\Option::get('mobile', 'crm_call_tracker_enabled', 'N') === 'Y')
 		{
 			$result[self::ACTIVITY_CALL_TRACKER] = Loc::getMessage('CRM_TIMELINE_CATEGORY_CALL_TRACKER');
@@ -176,6 +181,18 @@ class TimelineEntryCategory
 				{
 					$categoryFilter->where(
 						Main\Entity\Query::filter()->where('TYPE_ID', Crm\Timeline\TimelineType::CONVERSION)
+					);
+				}
+				elseif($entryCategoryID === self::LINK)
+				{
+					$categoryFilter->where(
+						Main\Entity\Query::filter()->where('TYPE_ID', Crm\Timeline\TimelineType::LINK)
+					);
+				}
+				elseif($entryCategoryID === self::UNLINK)
+				{
+					$categoryFilter->where(
+						Main\Entity\Query::filter()->where('TYPE_ID', Crm\Timeline\TimelineType::UNLINK)
 					);
 				}
 				elseif($entryCategoryID === self::WAITING)

@@ -80,6 +80,9 @@ class SalesCenterOrderListComponent extends CBitrixComponent
 		$this->arResult['toolbarButtons'] = $this->getToolbarButtons();
 		$this->arResult['isSitePublished'] = LandingManager::getInstance()->isSitePublished();
 
+		$isOrderLimitReached = CrmManager::getInstance()->isOrderLimitReached();
+		$this->arResult['addOrderOnClick'] = $isOrderLimitReached ? 'top.BX.UI.InfoHelper.show(\'' . CrmManager::getInstance()->getOrderLimitSliderId() . '\');' : 'BX.Salescenter.Manager.showOrderAdd();';
+
 		$this->includeComponentTemplate();
 	}
 

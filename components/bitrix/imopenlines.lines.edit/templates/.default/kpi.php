@@ -41,6 +41,15 @@ $arResult['kpiSelector'] = [
 	});
 </script>
 <div class="imopenlines-form-settings-section">
+	<?if(!empty($arResult['ERROR'])):?>
+		<div class="ui-alert ui-alert-danger">
+			<span class="ui-alert-message">
+			<?foreach ($arResult['ERROR'] as $error):?>
+				<?= $error ?><br>
+			<?endforeach;?>
+			</span>
+		</div>
+	<?endif;?>
 	<div class="imopenlines-control-container ui-form-border-bottom">
 		<div class="imopenlines-control-container imopenlines-control-select">
 			<div class="imopenlines-control-subtitle">
@@ -53,19 +62,19 @@ $arResult['kpiSelector'] = [
 				<input type="hidden" name="CONFIG[KPI_FIRST_ANSWER_TIME]" id="imol_kpi_first_answer_time" value="<?=$arResult['CONFIG']['KPI_FIRST_ANSWER_TIME']?>">
 			</div>
 		</div>
-		<div id="imol_kpi_first_answer_full_block" <? if ($arResult['CONFIG']['KPI_FIRST_ANSWER_TIME'] == 0) { ?>class="invisible"<? } ?>>
+		<div id="imol_kpi_first_answer_full_block" <?if((int)$arResult['CONFIG']['KPI_FIRST_ANSWER_TIME'] === 0) { ?>class="invisible"<? } ?>>
 			<div class="imopenlines-control-checkbox-container">
 				<label class="imopenlines-control-checkbox-label">
 					<input id="imol_kpi_first_answer_alert"
 						   type="checkbox"
 						   class="imopenlines-control-checkbox"
 						   name="CONFIG[KPI_FIRST_ANSWER_ALERT]"
-						   <?if($arResult['CONFIG']['KPI_FIRST_ANSWER_ALERT'] == 'Y') {?>checked="checked"<?}?>
+						   <?if($arResult['CONFIG']['KPI_FIRST_ANSWER_ALERT'] === 'Y') {?>checked="checked"<?}?>
 						   value="Y">
 					<?=Loc::getMessage('IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT')?>
 				</label>
 			</div>
-			<div id="imol_kpi_first_answer_inner_block" <?if($arResult['CONFIG']['KPI_FIRST_ANSWER_ALERT'] != 'Y') {?>class="invisible"<? } ?>>
+			<div id="imol_kpi_first_answer_inner_block" <?if($arResult['CONFIG']['KPI_FIRST_ANSWER_ALERT'] !== 'Y') {?>class="invisible"<? } ?>>
 				<div class="imopenlines-form-settings-inner">
 					<div class="imopenlines-control-subtitle">
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_LIST')?>
@@ -100,19 +109,19 @@ $arResult['kpiSelector'] = [
 				<input type="hidden" name="CONFIG[KPI_FURTHER_ANSWER_TIME]" id="imol_kpi_further_answer_time" value="<?=$arResult['CONFIG']['KPI_FURTHER_ANSWER_TIME']?>">
 			</div>
 		</div>
-		<div id="imol_kpi_further_answer_full_block" <? if ($arResult['CONFIG']['KPI_FURTHER_ANSWER_TIME'] == 0) { ?>class="invisible"<? } ?>>
+		<div id="imol_kpi_further_answer_full_block" <?if((int)$arResult['CONFIG']['KPI_FURTHER_ANSWER_TIME'] === 0) { ?>class="invisible"<? } ?>>
 			<div class="imopenlines-control-checkbox-container">
 				<label class="imopenlines-control-checkbox-label">
 					<input id="imol_kpi_further_answer_alert"
 						   type="checkbox"
 						   class="imopenlines-control-checkbox"
 						   name="CONFIG[KPI_FURTHER_ANSWER_ALERT]"
-						   <?if($arResult['CONFIG']['KPI_FURTHER_ANSWER_ALERT'] == 'Y') {?>checked="checked"<?}?>
+						   <?if($arResult['CONFIG']['KPI_FURTHER_ANSWER_ALERT'] === 'Y') {?>checked="checked"<?}?>
 						   value="Y">
 					<?=Loc::getMessage('IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT')?>
 				</label>
 			</div>
-			<div id="imol_kpi_further_answer_inner_block" <?if($arResult['CONFIG']['KPI_FURTHER_ANSWER_ALERT'] != 'Y') {?>class="invisible"<? } ?>>
+			<div id="imol_kpi_further_answer_inner_block" <?if($arResult['CONFIG']['KPI_FURTHER_ANSWER_ALERT'] !== 'Y') {?>class="invisible"<? } ?>>
 				<div class="imopenlines-form-settings-inner">
 					<div class="imopenlines-control-subtitle">
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_LIST')?>

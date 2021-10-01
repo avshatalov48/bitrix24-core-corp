@@ -37,65 +37,22 @@ class PublicPullConfigurator implements Errorable
 		}
 	}
 
+	public function getChannel(int $objectId): Pull\Model\Channel
+	{
+		return (new ObjectChannel($objectId))->getPullModel();
+	}
+
 	public function getConfig(int $objectId): array
 	{
-		[
-			'privateId' => $privateId,
-			'publicId' => $publicId
-		] = $this->getPublicChannelIdsByObjectId($objectId);
+		$channel = $this->getChannel($objectId);
 
-		$config = $this->getBaseConfigForGuest();
-		$config['channels'] = [
-			'private' => [
-				'id' => \CPullChannel::SignChannel("$privateId:$publicId"),
-				'public_id' => \CPullChannel::SignPublicChannel($publicId),
-				'start' => date('c'),
-				'end' => date('c', time() + 3600 * 24 * 365),
-				'type' => 'private'
-			]
-		];
-
-		$config['publicChannels'] = [
-			'-1' => [
-				'user_id' => -1,
-				'public_id' => $publicId,
-				'signature' => \CPullChannel::GetPublicSignature($publicId),
-				'start' => date('c'),
-				'end' => date('c', time() + 3600 * 24 * 365),
-			]
-		];
-
-		return $config;
-	}
-
-	protected function getPublicChannelIdsByObjectId(int $objectId): array
-	{
-		$serverUniqID = \CMain::GetServerUniqID();
-		$privateId = md5("DISK_FILE{$objectId}|{$serverUniqID}");
-		$publicId = md5("DISK_FILE{$objectId}|{$serverUniqID}|PUB");
-
-		return [
-			'privateId' => $privateId,
-			'publicId' => $publicId,
-		];
-	}
-
-	protected function getBaseConfigForGuest(): ?array
-	{
-		$baseConfig = Pull\Config::get([
-			'USER_ID' => -1,
+		$config = Pull\Config::get([
+			'CHANNEL' => $channel,
 			'JSON' => true
 		]);
 
-		if (!$baseConfig)
-		{
-			$baseConfig = null;
-			$this->errorCollection->addOne(new Error('Could not get pull config.'));
-		}
-
-		return $baseConfig;
+		return $config ? : [];
 	}
-
 
 	/**
 	 * Getting array of errors.

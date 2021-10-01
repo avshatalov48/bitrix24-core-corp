@@ -1,20 +1,19 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\Main,
-	\Bitrix\Main\Loader,
-	Bitrix\Main\Text\Emoji,
-	\Bitrix\Main\ModuleManager,
-	\Bitrix\Main\Localization\Loc;
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Text\Emoji;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Localization\Loc;
 
-use \Bitrix\Bitrix24\Feature;
+use Bitrix\Bitrix24\Feature;
 
-use \Bitrix\Imopenlines\Limit,
-	\Bitrix\ImOpenLines\Model\ConfigTable,
-	\Bitrix\ImOpenLines\Model\ConfigQueueTable,
-	\Bitrix\ImOpenlines\QuickAnswers\ListsDataManager,
-	\Bitrix\ImOpenLines\Model\SessionAutomaticTasksTable,
-	\Bitrix\Imopenlines\Model\ConfigAutomaticMessagesTable;
+use Bitrix\ImOpenLines\Model\ConfigTable;
+use Bitrix\ImOpenLines\Model\ConfigQueueTable;
+use Bitrix\ImOpenlines\QuickAnswers\ListsDataManager;
+use Bitrix\ImOpenLines\Model\SessionAutomaticTasksTable;
+use Bitrix\Imopenlines\Model\ConfigAutomaticMessagesTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -185,15 +184,6 @@ class Config
 			$fields['QUEUE_TIME'] = 60;
 		}
 
-//		if (isset($params['CRM_FORM_TO_USE']))
-//		{
-//			$fields['CRM_FORM_TO_USE'] = intval($params['CRM_FORM_TO_USE']);
-//		}
-//		else if ($mode == self::MODE_ADD)
-//		{
-//			$fields['CRM_FORM_TO_USE'] = 0;
-//		}
-
 		if (isset($params['NO_ANSWER_TIME']))
 		{
 			$fields['NO_ANSWER_TIME'] = intval($params['NO_ANSWER_TIME']);
@@ -326,7 +316,10 @@ class Config
 		{
 			$fields['QUEUE_TYPE'] = self::QUEUE_TYPE_ALL;
 		}
-		if ($fields['QUEUE_TYPE'] == self::QUEUE_TYPE_ALL && !\Bitrix\Imopenlines\Limit::canUseQueueAll())
+		if (
+			$fields['QUEUE_TYPE'] == self::QUEUE_TYPE_ALL
+			&& !Limit::canUseQueueAll()
+		)
 		{
 			$fields['QUEUE_TYPE'] = self::QUEUE_TYPE_EVENLY;
 		}
@@ -429,7 +422,10 @@ class Config
 		{
 			$fields["WORKTIME_ENABLE"] = 'N';
 		}
-		if ($fields['WORKTIME_ENABLE'] == 'Y' && !\Bitrix\Imopenlines\Limit::canWorkHourSettings())
+		if (
+			$fields['WORKTIME_ENABLE'] == 'Y'
+			&& !Limit::canWorkHourSettings()
+		)
 		{
 			$fields['WORKTIME_ENABLE'] = 'N';
 		}
@@ -583,7 +579,10 @@ class Config
 		{
 			$fields['VOTE_MESSAGE'] = 'Y';
 		}
-		if ($fields['VOTE_MESSAGE'] == 'Y' && !\Bitrix\Imopenlines\Limit::canUseVoteClient())
+		if(
+			$fields['VOTE_MESSAGE'] === 'Y'
+			&& !Limit::canUseVoteClient())
+
 		{
 			$fields['VOTE_MESSAGE'] = 'N';
 		}
@@ -881,7 +880,7 @@ class Config
 		\CGlobalCounter::Increment('imol_line_number', \CGlobalCounter::ALL_SITES, false);
 		if ($fields['TEMPORARY'] == 'Y')
 		{
-			$date = new \Bitrix\Main\Type\DateTime();
+			$date = new DateTime();
 			$date->add('8 HOUR');
 			\CAgent::AddAgent('\Bitrix\ImOpenLines\Config::deleteTemporaryConfigAgent('.$id.');', "imopenlines", "N", 28800, "", "Y", $date);
 		}
@@ -910,144 +909,206 @@ class Config
 	/**
 	 * @param $id
 	 * @param array $params
-	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @return Result
 	 */
-	public function update($id, $params = [])
+	public function update($id, array $params = []): Result
 	{
+		$result = new Result();
+
 		$fields = $this->prepareFields($params, self::MODE_UPDATE);
 
 		$orm = Model\ConfigTable::getById($id);
-		if (!($config = $orm->fetch()))
-			return false;
 
-		if (!isset($params['SKIP_MODIFY_MARK']))
+		if ($config = $orm->fetch())
 		{
-			$fields['DATE_MODIFY'] = new \Bitrix\Main\Type\DateTime();
-			global $USER;
-			$userId = is_object($USER) && $USER->GetID()? $USER->GetID(): 0;
-			if ($userId)
+			if (isset($params['QUEUE']))
 			{
-				$fields['MODIFY_USER_ID'] = $userId;
+				if(QueueManager::validateQueueFields($params['QUEUE']) === false)
+				{
+					$result->addError(new Error(
+						Loc::getMessage('IMOL_ERROR_UPDATE_NO_VALID_QUEUE'),
+						'IMOL_ERROR_UPDATE_NO_VALID_QUEUE',
+						__METHOD__,
+						['queue' => $params['QUEUE']]
+					));
+				}
+				elseif(
+					empty($params['QUEUE'])
+					|| !is_array($params['QUEUE'])
+				)
+				{
+					$result->addError(new Error(
+						Loc::getMessage('IMOL_ERROR_UPDATE_EMPTY_QUEUE'),
+						'IMOL_ERROR_UPDATE_EMPTY_QUEUE',
+						__METHOD__
+					));
+				}
+				elseif(QueueManager::isEmptyQueueFields($params['QUEUE']) === true)
+				{
+					$result->addError(new Error(
+						Loc::getMessage('IMOL_ERROR_UPDATE_EMPTY_DEPARTMENT_QUEUE'),
+						'IMOL_ERROR_UPDATE_EMPTY_DEPARTMENT_QUEUE',
+						__METHOD__,
+						['queue' => $params['QUEUE']]
+					));
+				}
 			}
-		}
 
-		$result = Model\ConfigTable::update($id, $fields);
+			if($result->isSuccess())
+			{
+				if (!isset($params['SKIP_MODIFY_MARK']))
+				{
+					$fields['DATE_MODIFY'] = new DateTime();
+					global $USER;
+					$userId = is_object($USER) && $USER->GetID()? $USER->GetID(): 0;
+					if ($userId)
+					{
+						$fields['MODIFY_USER_ID'] = $userId;
+					}
+				}
 
-		if(!$result->isSuccess())
-		{
-			$this->error = new BasicError(__METHOD__, 'UPDATE_ERROR', Loc::getMessage('IMOL_UPDATE_ERROR'));
-			return false;
+				$resultConfigTableUpdate = Model\ConfigTable::update($id, $fields);
+
+				if($resultConfigTableUpdate->isSuccess())
+				{
+					if ($config['ACTIVE'] !== $fields['ACTIVE'])
+					{
+						$eventData = [
+							'line' => $id,
+							'active' => $fields['ACTIVE']
+						];
+						$event = new Main\Event('imopenlines', self::EVENT_AFTER_IMOPENLINE_ACTIVE_CHANGE, $eventData);
+						$event->send();
+					}
+
+					if ($config['QUEUE_TYPE'] !== $fields['QUEUE_TYPE'])
+					{
+						$eventData = [
+							'line' => $id,
+							'typeBefore' => $config['QUEUE_TYPE'],
+							'typeAfter' => $fields['QUEUE_TYPE']
+						];
+						$event = new Main\Event('imopenlines', self::EVENT_IMOPENLINE_CHANGE_QUEUE_TYPE, $eventData);
+						$event->send();
+					}
+
+					if(
+						isset($params['DEFAULT_OPERATOR_DATA'])
+						&& !empty($config['DEFAULT_OPERATOR_DATA']['AVATAR_ID'])
+						&& (
+							empty($params['DEFAULT_OPERATOR_DATA']['AVATAR_ID'])
+							|| $config['DEFAULT_OPERATOR_DATA']['AVATAR_ID'] != $params['DEFAULT_OPERATOR_DATA']['AVATAR_ID']
+						)
+					)
+					{
+						\CFile::Delete($config['DEFAULT_OPERATOR_DATA']['AVATAR_ID']);
+					}
+
+					if (
+						isset($params['QUEUE'])
+						&& is_array($params['QUEUE'])
+					)
+					{
+						if(!isset($params['QUEUE_USERS_FIELDS']))
+						{
+							$params['QUEUE_USERS_FIELDS'] = false;
+						}
+						$queueManager = new QueueManager($id);
+						$queueManager->compatibleUpdate($params['QUEUE'], $params['QUEUE_USERS_FIELDS']);
+					}
+
+					if(
+						$config['QUICK_ANSWERS_IBLOCK_ID'] != $fields['QUICK_ANSWERS_IBLOCK_ID']
+						&& $config['QUICK_ANSWERS_IBLOCK_ID'] > 0
+					)
+					{
+						ListsDataManager::updateIblockRights($config['QUICK_ANSWERS_IBLOCK_ID']);
+					}
+
+					if($fields['QUICK_ANSWERS_IBLOCK_ID'] > 0)
+					{
+						ListsDataManager::updateIblockRights($fields['QUICK_ANSWERS_IBLOCK_ID']);
+					}
+
+					$sendUpdate = false;
+					$sendDelete = false;
+					$lineName = $config['LINE_NAME'];
+					$queueType = $config['QUEUE_TYPE'];
+
+					if (
+						isset($fields['ACTIVE'])
+						&& $config['ACTIVE'] !== $fields['ACTIVE']
+					)
+					{
+						if ($fields['ACTIVE'] === 'Y')
+						{
+							$sendUpdate = true;
+						}
+						else
+						{
+							$sendDelete = true;
+						}
+					}
+					else
+					{
+						if (
+							isset($fields['LINE_NAME'])
+							&& $config['LINE_NAME'] !== $fields['LINE_NAME']
+						)
+						{
+							$lineName = $fields['LINE_NAME'];
+							$sendUpdate = true;
+						}
+						if (
+							isset($fields['QUEUE_TYPE'])
+							&& $config['QUEUE_TYPE'] !== $fields['QUEUE_TYPE']
+						)
+						{
+							$sendUpdate = true;
+							$queueType = $fields['QUEUE_TYPE'];
+						}
+					}
+
+					if ($sendUpdate)
+					{
+						self::sendUpdateForQueueList([
+							'ID' => $id,
+							'NAME' => $lineName,
+							'SESSION_PRIORITY' => $fields['SESSION_PRIORITY'] ?? $config['SESSION_PRIORITY'],
+							'QUEUE_TYPE' => $queueType
+						]);
+					}
+					else if ($sendDelete)
+					{
+						self::sendUpdateForQueueList([
+							'ID' => $id,
+							'ACTION' => 'DELETE',
+							'SESSION_PRIORITY' => 0
+						]);
+					}
+				}
+				else
+				{
+					$result->addError(new Error(
+						Loc::getMessage('IMOL_UPDATE_ERROR'),
+						'IMOL_ERROR_UPDATE_ERROR',
+						__METHOD__,
+						['id' => $id, 'fields' => $fields]
+					));
+				}
+			}
 		}
 		else
 		{
-			if ($config['ACTIVE'] !== $fields['ACTIVE'])
-			{
-				$eventData = [
-					'line' => $id,
-					'active' => $fields['ACTIVE']
-				];
-				$event = new Main\Event('imopenlines', self::EVENT_AFTER_IMOPENLINE_ACTIVE_CHANGE, $eventData);
-				$event->send();
-			}
-
-			if ($config['QUEUE_TYPE'] !== $fields['QUEUE_TYPE'])
-			{
-				$eventData = array(
-					'line' => $id,
-					'typeBefore' => $config['QUEUE_TYPE'],
-					'typeAfter' => $fields['QUEUE_TYPE']
-				);
-				$event = new Main\Event('imopenlines', self::EVENT_IMOPENLINE_CHANGE_QUEUE_TYPE, $eventData);
-				$event->send();
-			}
-		}
-
-		if(
-			isset($params['DEFAULT_OPERATOR_DATA']) &&
-			!empty($config['DEFAULT_OPERATOR_DATA']['AVATAR_ID']) &&
-			(
-				empty($params['DEFAULT_OPERATOR_DATA']['AVATAR_ID']) ||
-				$config['DEFAULT_OPERATOR_DATA']['AVATAR_ID'] != $params['DEFAULT_OPERATOR_DATA']['AVATAR_ID']
-			)
-		)
-		{
-			\CFile::Delete($config['DEFAULT_OPERATOR_DATA']['AVATAR_ID']);
-		}
-
-		if (isset($params['QUEUE']) && is_array($params['QUEUE']))
-		{
-			$queueManager = new QueueManager($id);
-
-			if(!isset($params['QUEUE_USERS_FIELDS']))
-			{
-				$params['QUEUE_USERS_FIELDS'] = false;
-			}
-			$queueManager->compatibleUpdate($params['QUEUE'], $params['QUEUE_USERS_FIELDS']);
-		}
-
-		if($config['QUICK_ANSWERS_IBLOCK_ID'] != $fields['QUICK_ANSWERS_IBLOCK_ID'] && $config['QUICK_ANSWERS_IBLOCK_ID'] > 0)
-		{
-			ListsDataManager::updateIblockRights($config['QUICK_ANSWERS_IBLOCK_ID']);
-		}
-
-		if($fields['QUICK_ANSWERS_IBLOCK_ID'] > 0)
-		{
-			ListsDataManager::updateIblockRights($fields['QUICK_ANSWERS_IBLOCK_ID']);
-		}
-
-		$sendUpdate = false;
-		$sendDelete = false;
-		$lineName = $config['LINE_NAME'];
-		$queueType = $config['QUEUE_TYPE'];
-
-		if (isset($fields['ACTIVE']) && $config['ACTIVE'] != $fields['ACTIVE'])
-		{
-			if ($fields['ACTIVE'] == 'Y')
-			{
-				$sendUpdate = true;
-			}
-			else
-			{
-				$sendDelete = true;
-			}
-		}
-		else
-		{
-			if (isset($fields['LINE_NAME']) && $config['LINE_NAME'] != $fields['LINE_NAME'])
-			{
-				$lineName = $fields['LINE_NAME'];
-				$sendUpdate = true;
-			}
-			if (isset($fields['QUEUE_TYPE']) && $config['QUEUE_TYPE'] != $fields['QUEUE_TYPE'])
-			{
-				$sendUpdate = true;
-				$queueType = $fields['QUEUE_TYPE'];
-			}
-		}
-
-		if ($sendUpdate)
-		{
-			self::sendUpdateForQueueList(Array(
-				'ID' => $id,
-				'NAME' => $lineName,
-				'SESSION_PRIORITY' => isset($fields['SESSION_PRIORITY'])? $fields['SESSION_PRIORITY']: $config['SESSION_PRIORITY'],
-				'QUEUE_TYPE' => $queueType
-			));
-		}
-		else if ($sendDelete)
-		{
-			self::sendUpdateForQueueList(Array(
-				'ID' => $id,
-				'ACTION' => 'DELETE',
-				'SESSION_PRIORITY' => 0
+			$result->addError(new Error(
+				Loc::getMessage('IMOL_ERROR_UPDATE_NO_LOAD_LINE'),
+				'IMOL_ERROR_UPDATE_NO_LOAD_LINE',
+				__METHOD__,
+				['idLine' => $id]
 			));
 		}
 
-		return true;
+		return $result;
 	}
 
 	/**
@@ -1085,13 +1146,13 @@ class Config
 			Model\QueueTable::delete($row['ID']);
 		}
 
-		$raw = Model\ConfigQueueTable::getList([
+		$raw = ConfigQueueTable::getList([
 			'select' => ['ID'],
 			'filter' => ['=CONFIG_ID' => $id]
 		]);
 		while ($row = $raw->fetch())
 		{
-			Model\ConfigQueueTable::delete($row['ID']);
+			ConfigQueueTable::delete($row['ID']);
 		}
 
 		$this->deleteAllAutomaticMessage($id);
@@ -1151,9 +1212,18 @@ class Config
 	 * @param bool $status
 	 * @return bool
 	 */
-	public function setActive($id, $status = true)
+	public function setActive($id, $status = true): bool
 	{
-		return $this->update($id, ['ACTIVE' => $status? 'Y': 'N']);
+		$result = false;
+
+		$resultUpdate = $this->update($id, ['ACTIVE' => $status? 'Y': 'N']);
+
+		if($resultUpdate->isSuccess())
+		{
+			$result = true;
+		}
+
+		return $result;
 	}
 
 	public static function canActivateLine()
@@ -1323,11 +1393,7 @@ class Config
 	 * @param bool $withQueue
 	 * @param bool $showOffline
 	 * @param bool $withConfigQueue
-	 * @return array|bool|false
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @return array|bool
 	 */
 	public function get($id, $withQueue = true, $showOffline = true, $withConfigQueue = false)
 	{
@@ -1412,12 +1478,12 @@ class Config
 					$config['configQueue'] = $queueManager->getConfigQueue();
 				}
 
-				if (!\Bitrix\Imopenlines\Limit::canUseVoteClient())
+				if (!Limit::canUseVoteClient())
 				{
 					$config['VOTE_MESSAGE'] = 'N';
 				}
 
-				if (!\Bitrix\Imopenlines\Limit::canWorkHourSettings())
+				if (!Limit::canWorkHourSettings())
 				{
 					$config['WORKTIME_ENABLE'] = 'N';
 				}
@@ -1474,9 +1540,6 @@ class Config
 	 * @param $idConfig
 	 * @param $configs
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function updateAllAutomaticMessage($idConfig, $configs): Result
 	{
@@ -1555,7 +1618,7 @@ class Config
 
 			if($resultAdd->isSuccess())
 			{
-				$resultData['update'][] = $resultAdd->getId();
+				$resultData['add'][] = $resultAdd->getId();
 			}
 			else
 			{
@@ -1747,7 +1810,7 @@ class Config
 			if ($withConfigQueue === true)
 			{
 				$config['CONFIG_QUEUE'] = [];
-				$ormConfigQueue = Model\ConfigQueueTable::getList([
+				$ormConfigQueue = ConfigQueueTable::getList([
 					'filter' => ['=CONFIG_ID' => $config['ID']],
 					'order' => [
 						'SORT' => 'ASC',

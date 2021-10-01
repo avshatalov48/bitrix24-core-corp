@@ -1,16 +1,18 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Web\Uri,
-	\Bitrix\Main\Data\Cache,
-	\Bitrix\Main\PhoneNumber,
-	\Bitrix\Main\LoaderException,
-	\Bitrix\Main\Localization\Loc;
-use \Bitrix\ImConnector\Output,
-	\Bitrix\ImConnector\Status,
-	\Bitrix\ImConnector\Library,
-	\Bitrix\ImConnector\Connector;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Data\Cache;
+use Bitrix\Main\PhoneNumber;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImConnector\Limit;
+use Bitrix\ImConnector\Output;
+use Bitrix\ImConnector\Status;
+use Bitrix\ImConnector\Library;
+use Bitrix\ImConnector\Connector;
 
 class ImConnectorWhatsappByTwilio extends \CBitrixComponent
 {
@@ -19,9 +21,9 @@ class ImConnectorWhatsappByTwilio extends \CBitrixComponent
 	private $connector = 'whatsappbytwilio';
 	private $error = [];
 	private $messages = [];
-	/** @var \Bitrix\ImConnector\Output */
+	/** @var Output */
 	private $connectorOutput;
-	/** @var \Bitrix\ImConnector\Status */
+	/** @var Status */
 	private $status;
 
 	protected $pageId = 'page_wabt';
@@ -31,7 +33,6 @@ class ImConnectorWhatsappByTwilio extends \CBitrixComponent
 	/**
 	 * Check the connection of the necessary modules.
 	 * @return bool
-	 * @throws LoaderException
 	 */
 	protected function checkModules()
 	{
@@ -46,10 +47,6 @@ class ImConnectorWhatsappByTwilio extends \CBitrixComponent
 		}
 	}
 
-	/**
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
 	protected function initialization()
 	{
 		$this->connectorOutput = new Output($this->connector, $this->arParams['LINE']);
@@ -61,6 +58,8 @@ class ImConnectorWhatsappByTwilio extends \CBitrixComponent
 		$this->arResult["CONNECTION_STATUS"] = $this->status->getConnection();
 		$this->arResult["REGISTER_STATUS"] = $this->status->getRegister();
 		$this->arResult["ERROR_STATUS"] = $this->status->getError();
+		$this->arResult['CAN_USE_CONNECTION'] = Limit::canUseConnector($this->connector);
+		$this->arResult['INFO_HELPER_LIMIT'] = Limit::getIdInfoHelperConnector($this->connector);
 
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);
 	}

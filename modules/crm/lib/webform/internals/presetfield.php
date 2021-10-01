@@ -13,6 +13,22 @@ use Bitrix\Crm\WebForm\Helper;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class PresetFieldTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_PresetField_Query query()
+ * @method static EO_PresetField_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_PresetField_Result getById($id)
+ * @method static EO_PresetField_Result getList(array $parameters = array())
+ * @method static EO_PresetField_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_PresetField createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_PresetField_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_PresetField wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_PresetField_Collection wakeUpCollection($rows)
+ */
 class PresetFieldTable extends Entity\DataManager
 {
 	public static function getTableName()

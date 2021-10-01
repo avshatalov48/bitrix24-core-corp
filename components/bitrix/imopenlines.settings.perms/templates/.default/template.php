@@ -1,4 +1,4 @@
-<?
+<? if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use \Bitrix\Main\Page\Asset,
 	\Bitrix\Main\UI\Extension,
 	\Bitrix\Main\Localization\Loc;
@@ -9,21 +9,21 @@ use \Bitrix\Imopenlines\Limit;
  * @var array $arResult
  * @var CMain $APPLICATION
  */
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 
 CUtil::InitJSCore(['access', 'sidepanel']);
 $APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 Extension::load('ui.alerts');
 ?>
+
 <script type="text/javascript">
 	function openTrialInfoHelper(dialogId)
 	{
 		BX.UI.InfoHelper.show(dialogId);
 	}
 </script>
-<div id="vi-permissions-edit">
-<form method="POST" action="<?=$arResult['ACTION_URI']?>">
+<form method="POST" action="<?=$arResult['ACTION_URI']?>" id="imol_permissions_edit_form">
+	<div id="imol-permissions-edit">
 	<input type="hidden" id="act" value="save" name="act">
 	<?echo bitrix_sessid_post()?>
 	<table class="table-blue-wrapper">
@@ -96,23 +96,63 @@ Extension::load('ui.alerts');
 			</td>
 		</tr>
 	</table>
+	</div>
 	<?if($arResult['CAN_EDIT']):?>
-		<input type="submit" class="webform-small-button webform-small-button-accept" value="<?=Loc::getMessage('IMOL_PERM_SAVE')?>">
+		<?$APPLICATION->IncludeComponent(
+			'bitrix:ui.button.panel',
+			'',
+			[
+				'BUTTONS' => [
+					[
+						'TYPE' => 'save',
+						'CAPTION' => Loc::getMessage('IMOL_PERM_SAVE'),
+
+					],
+					[
+						'TYPE' => 'cancel',
+						'LINK' =>  $arResult['INDEX_URL']
+					]
+				],
+				'ALIGN' => 'center'
+			],
+			false
+		);
+		?>
 	<?else:?>
-		<span class="webform-small-button webform-small-button-accept" onclick="openTrialInfoHelper('<?=Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_ACCESS_PERMISSIONS?>');">
-			<?=Loc::getMessage('IMOL_PERM_SAVE')?>
-			<div class="tariff-lock-holder-title"><div class="tariff-lock"></div></div>
-		</span>
-		<div class="ui-alert ui-alert-warning" style="margin: 15px 0 0 0;">
-			<span class="ui-alert-message"><?=Loc::getMessage('IMOL_PERM_RESTRICTION')?></span>
-		</div>
+		<?$APPLICATION->IncludeComponent(
+			'bitrix:ui.button.panel',
+			'',
+			[
+				'BUTTONS' => [
+					[
+						'TYPE' => 'custom',
+						'LAYOUT' => '<span class="webform-small-button webform-small-button-accept" onclick="openTrialInfoHelper(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_ACCESS_PERMISSIONS . '\');">
+		' . Loc::getMessage('IMOL_PERM_SAVE') . '
+		<div class="tariff-lock-holder-title"><div class="tariff-lock"></div></div>
+		</span>'
+					],
+					[
+						'TYPE' => 'cancel',
+						'LINK' =>  $arResult['INDEX_URL']
+					],
+					[
+						'TYPE' => 'custom',
+						'LAYOUT' => '<div class="ui-alert ui-alert-warning" style="margin: 15px 0 0 0;">
+			<span class="ui-alert-message"> ' . Loc::getMessage('IMOL_PERM_RESTRICTION') . '</span>
+		</div>'
+					],
+				],
+				'ALIGN' => 'center'
+			],
+			false
+		);
+		?>
 	<?endif?>
 </form>
-</div>
 <script>
 	(function()
 	{
-		var permissions = new BX.ViPermissionEdit(BX("vi-permissions-edit"));
+		var permissions = new BX.IMOLPermissionEdit(BX("imol-permissions-edit"));
 	})();
 </script>
 
@@ -143,4 +183,3 @@ Extension::load('ui.alerts');
 		IMOL_PERM_ROLE_CANCEL: '<?=GetMessageJS('IMOL_PERM_ROLE_CANCEL')?>'
 	});
 </script>
-

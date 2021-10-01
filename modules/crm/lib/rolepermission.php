@@ -14,6 +14,22 @@ use Bitrix\Main\ORM\Fields\StringField;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class RolePermissionTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_RolePermission_Query query()
+ * @method static EO_RolePermission_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_RolePermission_Result getById($id)
+ * @method static EO_RolePermission_Result getList(array $parameters = array())
+ * @method static EO_RolePermission_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_RolePermission createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_RolePermission_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_RolePermission wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_RolePermission_Collection wakeUpCollection($rows)
+ */
 class RolePermissionTable extends Main\ORM\Data\DataManager
 {
 	public static function getTableName()

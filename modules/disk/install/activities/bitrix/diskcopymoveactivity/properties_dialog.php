@@ -87,7 +87,7 @@ CJSCore::Init('file_dialog');
 
 			while($row = $iterator->fetch()):
 				?>
-				<option value="<?=htmlspecialcharsbx($row['ID'])?>" <?if ($row['ID'] == $value) echo 'selected'?>>[<?=htmlspecialcharsbx($row['SITE_ID'])?>] <?=htmlspecialcharsbx($row['NAME'])?></option>
+				<option value="<?=htmlspecialcharsbx($row['ID'])?>" <?if ($row['ID'] == $value) echo 'selected'?>>[<?=htmlspecialcharsbx($row['SITE_ID'])?>] <?=htmlspecialcharsbx(\Bitrix\Main\Text\Emoji::decode($row['NAME']))?></option>
 				<?
 			endwhile;
 			?>
@@ -241,5 +241,5 @@ CJSCore::Init('file_dialog');
 		BX('id_'+field+'_name').innerHTML = '<?=GetMessageJs('BPDCM_PD_LABEL_DISK_EMPTY')?>';
 		BX('id_'+field+'_clear').style.display = 'none';
 		return false;
-	}	
+	}
 </script>

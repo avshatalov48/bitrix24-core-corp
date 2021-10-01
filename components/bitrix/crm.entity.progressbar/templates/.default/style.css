@@ -31,10 +31,10 @@
 	position: relative;
 	overflow: hidden;
 	transition: 300ms all linear;
-	flex: 1 0;
+	flex: 1 1 100%;
 }
 
-.crm-entity-section-status-step-hover:hover { flex: 4 0; }
+.crm-entity-section-status-step-hover:hover { flex: 4 0 100%; }
 
 .crm-entity-section-status-step-item {
 	position: relative;

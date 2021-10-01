@@ -305,4 +305,3 @@ $exclusionConfirmDialogContentHelp = GetMessage("CRM_ENT_DETAIL_EXCLUDE_DIALOG_M
 		}
 	);
 </script>
-<?

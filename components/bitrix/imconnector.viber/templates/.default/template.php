@@ -96,17 +96,24 @@ if (empty($arResult['PAGE'])) //case when not first open
 					{
 						?>
 						<div class="imconnector-field-box-content">
-							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_CONNECT_STEP', array('#ID#' => Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_INFO_CONNECT_ID')))?>
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_CONNECT_STEP', ['#ID#' => Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_INFO_CONNECT_ID')])?>
 						</div>
 						<form action="<?=$arResult["URL"]["SIMPLE_FORM"]?>" method="post" class="ui-btn-container">
-							<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_form" value="true">
-							<?=bitrix_sessid_post();?>
-							<button class="ui-btn ui-btn-light-border"
-									type="submit"
-									name="<?=$arResult["CONNECTOR"]?>_active"
-									value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>">
-								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>
-							</button>
+							<?if ($arResult['CAN_USE_CONNECTION'] === true):?>
+								<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
+								<?=bitrix_sessid_post();?>
+								<button class="ui-btn ui-btn-light-border"
+										type="submit"
+										name="<?=$arResult['CONNECTOR']?>_active"
+										value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>">
+									<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>
+								</button>
+							<?else:?>
+								<button class="ui-btn ui-btn-light-border"
+										onclick="BX.UI.InfoHelper.show('<?=$arResult['INFO_HELPER_LIMIT']?>'); return false;">
+									<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>
+								</button>
+							<?endif;?>
 						</form>
 						<?
 					}

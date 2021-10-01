@@ -11,6 +11,7 @@ use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Internals\Counter\EffectiveTable;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -76,8 +77,12 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 	protected function getData()
 	{
 		$taskLimitExceeded = TaskLimit::isLimitExceeded();
+		$kpiLimitExceeded = KpiLimit::isLimitExceeded();
 
-		if (!$taskLimitExceeded)
+		if (
+			!$taskLimitExceeded
+			&& !$kpiLimitExceeded
+		)
 		{
 			$this->arResult['VIOLATION_LIST'] = $this->getViolationList();
 		}

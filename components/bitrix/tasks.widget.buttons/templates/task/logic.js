@@ -369,6 +369,11 @@ BX.namespace('Tasks.Component');
 				var can = this.vars.can;
 				var data = this.vars.data;
 
+				if (data.STATUS == 4)
+				{
+					can.COMPLETE = false;
+				}
+
 				var map = {
 					'timer-start': can['DAYPLAN.TIMER.TOGGLE'] && !data.TIMER_IS_RUNNING_FOR_CURRENT_USER,
 					'timer-pause': can['DAYPLAN.TIMER.TOGGLE'] && data.TIMER_IS_RUNNING_FOR_CURRENT_USER,
@@ -505,12 +510,11 @@ BX.namespace('Tasks.Component');
 
 				if (can.DELEGATE)
 				{
-					var lock = (this.option('taskLimitExceeded') ? '<span class="tariff-lock"></span>' : '');
 					menu.push({
 						code: 'DELEGATE',
-						text: BX.message('TASKS_DELEGATE_TASK') + lock,
+						text: BX.message('TASKS_DELEGATE_TASK'),
 						title: BX.message('TASKS_DELEGATE_TASK'),
-						className: 'menu-popup-item-delegate',
+						className: 'menu-popup-item-delegate' + (this.option('taskLimitExceeded') ? ' tasks-tariff-lock' : ''),
 						onclick: this.passCtx(this.doMenuAction)
 					});
 				}

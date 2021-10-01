@@ -134,6 +134,11 @@ if ($isBitrix24Template)
 </div>
 
 <?php
+if ($isBitrix24Template)
+{
+	$this->EndViewTarget();
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.toolbar',
 	'',
@@ -153,11 +158,6 @@ $APPLICATION->IncludeComponent(
 	$component,
 	['HIDE_ICONS' => true]
 );
-
-if ($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
 ?>
 
 <?php
@@ -234,7 +234,9 @@ $APPLICATION->IncludeComponent(
 		'TOTAL_ROWS_COUNT' => $arResult['NAV']->getRecordCount(),
 		'DEFAULT_PAGE_SIZE' => 10,
 
-		'TOP_ACTION_PANEL_RENDER_TO' => '.pagetitle-below',
+		'TOP_ACTION_PANEL_RENDER_TO' => (
+			isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y' ? '.ui-side-panel-wrap-below' : '.pagetitle-below'
+		),
 		'ACTION_PANEL' => $arResult['GRID']->prepareGroupActions(),
 
 		'NAV_PARAM_NAME' => 'page',

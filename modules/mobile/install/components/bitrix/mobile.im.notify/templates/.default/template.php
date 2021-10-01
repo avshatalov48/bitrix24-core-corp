@@ -35,13 +35,13 @@ if(empty($arResult['NOTIFY'])):?>
 			);
 			$maxId = $data['id'] > $maxId? $data['id']: $maxId;
 			$data['date'] = FormatDate($arFormat, $data['date']);
-			$data['text'] = preg_replace("/<img.*?data-code=\"([^\"]*)\".*?>/i", "$1", $data['text']);
-			$data['text'] = preg_replace("/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i", "$2", $data['text']);
-			$data['text'] = preg_replace("/\[RATING=([1-5]{1})\]/i", "$1", $data['text']);
-			$data['text'] = preg_replace("/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/i", "$3", $data['text']);
-			$data['text'] = preg_replace("/\[LIKE\]/i", '<span class="bx-smile bx-im-smile-like"></span>', $data['text']);
-			$data['text'] = preg_replace("/\[DISLIKE\]/i", '<span class="bx-smile bx-im-smile-dislike"></span>', $data['text']);
-			$data['text'] = CMobileHelper::prepareNotificationText($data['text'], $data['originalTag']);
+			$data['text_converted'] = preg_replace("/<img.*?data-code=\"([^\"]*)\".*?>/i", "$1", $data['text_converted']);
+			$data['text_converted'] = preg_replace("/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i", "$2", $data['text_converted']);
+			$data['text_converted'] = preg_replace("/\[RATING=([1-5]{1})\]/i", "$1", $data['text_converted']);
+			$data['text_converted'] = preg_replace("/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/i", "$3", $data['text_converted']);
+			$data['text_converted'] = preg_replace("/\[LIKE\]/i", '<span class="bx-smile bx-im-smile-like"></span>', $data['text_converted']);
+			$data['text_converted'] = preg_replace("/\[DISLIKE\]/i", '<span class="bx-smile bx-im-smile-dislike"></span>', $data['text_converted']);
+			$data['text_converted'] = CMobileHelper::prepareNotificationText($data['text_converted'], $data['originalTag']);
 			$data['link'] = CMobileHelper::createLink($data['originalTag']);
 
 
@@ -85,7 +85,7 @@ if(empty($arResult['NOTIFY'])):?>
 					</div>
 
 					<div class="notif-inner" id="inner<?=$data['id']?>" data-fold="fold<?=$data['id']?>">
-						<div class="notif-text"><?=$data['text']?></div>
+						<div class="notif-text"><?=$data['text_converted']?></div>
 
 						<?if(isset($data['params'])):?>
 							<?=getNotifyParamsHtml($data['params'])?>

@@ -67,14 +67,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		$newWindow = $this->request->get('NEW_WINDOW');
 		$allowEditPayment = $this->request->get('ALLOW_EDIT_PAYMENT');
 		$code = $this->request->get('CODE');
-
 		$isCanPrintCheckSelf = $this->request->get('CAN_PRINT_CHECK_SELF');
-
-		$path = PaySystem\Manager::getPathToHandlerFolder($handler);
-		if ($path === null)
-		{
-			$this->errorCollection->add([new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_ERROR_HANDLER_TYPE'))]);
-		}
 
 		if (empty($handler))
 		{
@@ -155,6 +148,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 			}
 		}
 
+		$path = PaySystem\Manager::getPathToHandlerFolder($handler);
 		if (IO\File::isFileExists($documentRoot.$path.'/handler.php'))
 		{
 			require_once $documentRoot.$path.'/handler.php';
@@ -179,28 +173,14 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 				$fields['HAVE_RESULT'] = 'Y';
 			}
 		}
-		else
+
+		if (PaySystem\Manager::isRestHandler($handler))
 		{
-			if (IO\File::isFileExists($documentRoot.$handler."/pre_payment.php"))
-			{
-				$fields["HAVE_PREPAY"] = "Y";
-			}
-			if (IO\File::isFileExists($documentRoot.$handler."/result.php"))
-			{
-				$fields["HAVE_RESULT"] = "Y";
-			}
-			if (IO\File::isFileExists($documentRoot.$handler."/action.php"))
-			{
-				$fields["HAVE_ACTION"] = "Y";
-			}
-			if (IO\File::isFileExists($documentRoot.$handler."/payment.php"))
-			{
-				$fields["HAVE_PAYMENT"] = "Y";
-			}
-			if (IO\File::isFileExists($documentRoot.$handler."/result_rec.php"))
-			{
-				$fields["HAVE_RESULT_RECEIVE"] = "Y";
-			}
+			$fields['HAVE_PREPAY'] = 'N';
+			$fields['HAVE_RESULT'] = 'N';
+			$fields['HAVE_ACTION'] = 'N';
+			$fields['HAVE_PAYMENT'] = 'N';
+			$fields['HAVE_RESULT_RECEIVE'] = 'Y';
 		}
 
 		if ($this->getErrors())

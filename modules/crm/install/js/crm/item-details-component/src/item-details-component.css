@@ -1,0 +1,49 @@
+.ui-toolbar .crm-pagetitle.ui-toolbar-title-item-box {
+	display: inline-block;
+}
+
+.ui-page-slider-wrapper .ui-toolbar {
+	padding-left: 8px;
+}
+
+.ui-toolbar .crm-pagetitle .ui-toolbar-title-item {
+	display: inline;
+	padding-right: 5px;
+	height: auto;
+	white-space: normal;
+	word-break: break-word;
+	overflow: auto;
+}
+
+.crm-pagetitle .pagetitile-button-container {
+	padding-left: 0;
+}
+
+.pagetitle-narrow.ui-toolbar-title-item-box {
+	font-size: 18px;
+	line-height: 18px;
+	animation: ui-toolbar-opacity-show .5s linear forwards;
+}
+
+.ui-page-slider-wrapper .crm-entity-wrap {
+	padding-right: 15px;
+	padding-left: 21px;
+}
+
+@keyframes ui-toolbar-opacity-show {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.crm-bizproc-starter-icon {
+	background-position: center -355px;
+	background-image: url(/bitrix/js/crm/images/icons-sprite.svg);
+	background-repeat: no-repeat;
+	padding: 0;
+	width: 39px;
+	min-width: 0;
+}

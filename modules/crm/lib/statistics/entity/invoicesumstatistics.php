@@ -4,6 +4,22 @@ namespace Bitrix\Crm\Statistics\Entity;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
+/**
+ * Class InvoiceSumStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_InvoiceSumStatistics_Query query()
+ * @method static EO_InvoiceSumStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_InvoiceSumStatistics_Result getById($id)
+ * @method static EO_InvoiceSumStatistics_Result getList(array $parameters = array())
+ * @method static EO_InvoiceSumStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_InvoiceSumStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_InvoiceSumStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_InvoiceSumStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_InvoiceSumStatistics_Collection wakeUpCollection($rows)
+ */
 class InvoiceSumStatisticsTable  extends Entity\DataManager
 {
 	const MAX_SUM_SLOT_COUNT = 5;

@@ -41,6 +41,7 @@ $MESS["CRM_ORDER_SECTION_PROPERTIES"] = "Властивості замовлен
 $MESS["CRM_ORDER_SECTION_SHIPMENT"] = "Відвантаження";
 $MESS["CRM_ORDER_SECTION_SHIPMENT_PROPERTIES"] = "Властивості відвантаження";
 $MESS["CRM_ORDER_SECTION_USER_PROFILE"] = "Профіль замовлення";
+$MESS["CRM_ORDER_SHIPMENT_PROPS"] = "Властивості відвантаження";
 $MESS["CRM_ORDER_SHIPMENT_SUBTITLE_MASK"] = "№ #ID# від #DATE_BILL#";
 $MESS["CRM_ORDER_STORE_NOT_CHOSEN"] = "Не вибрано";
 $MESS["CRM_ORDER_TAB_AUTOMATION"] = "Роботи";

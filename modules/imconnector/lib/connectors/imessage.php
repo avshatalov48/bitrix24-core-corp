@@ -34,7 +34,7 @@ class IMessage extends Base
 			$userNumber = \CGlobalCounter::GetValue($this->idConnector);
 		}
 
-		$fields['NAME'] = Loc::getMessage('IMCONNECTOR_IMESSAGE_DEFAULT_USER_NAME') . $userNumber;
+		$fields['NAME'] = Loc::getMessage('IMCONNECTOR_IMESSAGE_DEFAULT_USER_NAME_NEW') . $userNumber;
 
 		return $fields;
 	}

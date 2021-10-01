@@ -39,6 +39,7 @@ use Bitrix\Main\Search\Content;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\PostDecodeFilter;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Socialnetwork;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -209,11 +210,24 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		return !Bitrix24Manager::isFeatureEnabled('disk_common_storage');
 	}
 
+	private function setPageTitle(): void
+	{
+		$proxyType = $this->storage->getProxyType();
+		$this->application->setTitle(htmlspecialcharsbx($proxyType->getTitleForCurrentUser()));
+
+		if ($proxyType instanceof ProxyType\Group)
+		{
+			$this->application->SetPageProperty('title', Socialnetwork\ComponentHelper::getWorkgroupPageTitle([
+				'WORKGROUP_ID' => (int)$this->storage->getEntityId(),
+				'TITLE' => $proxyType->getTitle(),
+			]));
+		}
+	}
+
 	protected function processActionDefault()
 	{
 		$errorsInGridActions = $this->processGridActions();
-
-		$this->application->setTitle(htmlspecialcharsbx($this->storage->getProxyType()->getTitleForCurrentUser()));
+		$this->setPageTitle();
 
 		$securityContext = $this->storage->getCurrentUserSecurityContext();
 		$proxyType = $this->storage->getProxyType();
@@ -504,7 +518,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						'href' => $exportData['OPEN_URL'],
 						'onclick' => "BX.Disk['FolderListClass_{$this->componentId}'].openFolderContextMenu(this, event, {$objectId}, {
 							id: {$objectId},
-							name: '" . CUtil::JSEscape($name) . "' 
+							name: '" . CUtil::JSEscape($name) . "'
 						});",
 					);
 				}
@@ -581,7 +595,10 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				}
 				else
 				{
-					$internalLink = $urlManager->getUrlForShowFile($object, array(), true);
+					$internalLink = $urlManager->getUrlFocusController('showObjectInGrid', [
+							'objectId' => $object->getId(),
+							'cmd' => 'show',
+					], true);
 				}
 
 				$actionToShare = [];
@@ -1492,10 +1509,10 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				$parameters['runtime'][] = new ExpressionField(
 					'HAS_SHARING',
 					'CASE WHEN EXISTS (
-							SELECT 1 FROM b_disk_sharing s 
-							WHERE s.REAL_OBJECT_ID = %1$s AND s.REAL_STORAGE_ID = %2$s AND 
-							s.STATUS = ' . SharingTable::STATUS_IS_APPROVED . ' AND s.FROM_ENTITY = "' . $fromEntity . '" 
-						) 
+							SELECT 1 FROM b_disk_sharing s
+							WHERE s.REAL_OBJECT_ID = %1$s AND s.REAL_STORAGE_ID = %2$s AND
+							s.STATUS = ' . SharingTable::STATUS_IS_APPROVED . ' AND s.FROM_ENTITY = "' . $fromEntity . '"
+						)
 					THEN 1 ELSE 0 END',
 					array('REAL_OBJECT_ID', 'STORAGE_ID'),
 					array('data_type' => 'boolean',)

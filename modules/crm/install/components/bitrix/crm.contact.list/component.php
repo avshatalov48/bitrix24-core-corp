@@ -77,9 +77,18 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 //endregion
 
 $CCrmContact = new CCrmContact();
+
 if (!$isErrorOccured && $isInExportMode && $CCrmContact->cPerms->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'EXPORT'))
 {
-	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
+	$errorMessage = \Bitrix\Main\Localization\Loc::getMessage('CRM_PERMISSION_DENIED');
+	$isErrorOccured = true;
+}
+
+$exportRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getContactExportRestriction();
+if (!$isErrorOccured && $isInExportMode && !$exportRestriction->hasPermission())
+{
+	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+	$errorMessage = \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR');
 	$isErrorOccured = true;
 }
 

@@ -5,6 +5,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Crm;
 
+/**
+ * Class LeadConversionStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_LeadConversionStatistics_Query query()
+ * @method static EO_LeadConversionStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_LeadConversionStatistics_Result getById($id)
+ * @method static EO_LeadConversionStatistics_Result getList(array $parameters = array())
+ * @method static EO_LeadConversionStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_LeadConversionStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_LeadConversionStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_LeadConversionStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_LeadConversionStatistics_Collection wakeUpCollection($rows)
+ */
 class LeadConversionStatisticsTable  extends Entity\DataManager
 {
 	/**

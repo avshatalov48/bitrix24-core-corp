@@ -5,6 +5,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Crm;
 
+/**
+ * Class ContactActivityMarkStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ContactActivityMarkStatistics_Query query()
+ * @method static EO_ContactActivityMarkStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ContactActivityMarkStatistics_Result getById($id)
+ * @method static EO_ContactActivityMarkStatistics_Result getList(array $parameters = array())
+ * @method static EO_ContactActivityMarkStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_ContactActivityMarkStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_ContactActivityMarkStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_ContactActivityMarkStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_ContactActivityMarkStatistics_Collection wakeUpCollection($rows)
+ */
 class ContactActivityMarkStatisticsTable  extends Entity\DataManager
 {
 	/**

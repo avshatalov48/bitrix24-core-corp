@@ -379,6 +379,8 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 				]);
 			}
 
+			$handlerTitle = $title;
+
 			$image = $this->getImagePath().'marketplace_default.svg';
 			$itemSelectedImage = $this->getImagePath().'marketplace_default_s.svg';
 
@@ -396,6 +398,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 				{
 					foreach ($paySystem['ITEMS'] as $psMode => $paySystemItem)
 					{
+						$title = $handlerTitle;
 						$type = $psMode;
 						$isActive = $paySystemActions[$handler]['ACTIVE'][$psMode];
 						if (!$isActive
@@ -667,8 +670,8 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 			'alfabank' => '#EF3124',
 			'roboxchange' => [
 				'bank_card' => '#19D0C8',
-				'alfa_bank' => '#EF3124',
 				'apple_pay' => '#8F8F8F',
+				'google_pay' => '#4285F4',
 				'samsung_pay' => '#1429A1',
 			],
 			'platon' => '#EC6125',

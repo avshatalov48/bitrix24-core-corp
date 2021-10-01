@@ -1,20 +1,20 @@
-<?
-$MESS["HINT_TASK_CLOSED_DEPARTMENT_EDIT"] = "Edit available completed tasks in own department";
-$MESS["HINT_TASK_CLOSED_NON_DEPARTMENT_EDIT"] = "User can edit all tasks of other departments they can view even after a task is completed. Supervisor inherits their employees' task edit permission. Supervisor can edit their task if it was assigned to them by their employee.";
-$MESS["HINT_TASK_DEPARTMENT_DELETE"] = "User can edit all tasks of their department they can view even after a task is completed.";
+<?php
+$MESS["HINT_TASK_CLOSED_DEPARTMENT_EDIT"] = "User can edit available completed tasks in own department";
+$MESS["HINT_TASK_CLOSED_NON_DEPARTMENT_EDIT"] = "User can edit completed tasks of other departments they can view. Supervisor inherits their employees' task edit permission. Supervisor can edit their task if it was assigned to them by their subordinate employee.";
+$MESS["HINT_TASK_DEPARTMENT_DELETE"] = "User can edit completed tasks of their department they can view.";
 $MESS["HINT_TASK_DEPARTMENT_DIRECT"] = "Employees in own department and subdepartments";
-$MESS["HINT_TASK_DEPARTMENT_EDIT"] = "User can edit all tasks of their department they can view.";
-$MESS["HINT_TASK_DEPARTMENT_VIEW"] = "Participants' tasks are always available to them irrespective of the option.";
+$MESS["HINT_TASK_DEPARTMENT_EDIT"] = "User can edit tasks of their department they can view.";
+$MESS["HINT_TASK_DEPARTMENT_VIEW"] = "User can view tasks of other employees and the department supervisor in their department. Note that this permission applies to all departments the user belongs to.";
 $MESS["HINT_TASK_RESPONSE_ASSIGN"] = "Adding a participant requires task assign permission for a specific person.";
-$MESS["HINT_TASK_RESPONSE_CHANGE_RESPONSIBLE"] = "By default, responsible person can reassign a tasks to subordinate employees. Tasks can be reassigned to supervisors or employees of other departments if task assign permission exists for a specific person.";
-$MESS["HINT_TASK_RESPONSE_CHECKLIST_ADD"] = "User can add or edit items to a checklist. This permission does not affect items added by other users.";
+$MESS["HINT_TASK_RESPONSE_CHANGE_RESPONSIBLE"] = "By default, responsible person can reassign a tasks to subordinate employees.  User can reassigned tasks to supervisors or employees of other departments if this user has a task assign permission.";
+$MESS["HINT_TASK_RESPONSE_CHECKLIST_ADD"] = "User can add or edit items in a checklist. This permission does not affect items added by other users.";
 $MESS["HINT_TASK_RESPONSE_CHECKLIST_EDIT"] = "Edit all items in a checklist. Responsible person can open and close checklist items irrespective of this option.";
-$MESS["HINT_TASK_RESPONSE_DELEGATE"] = "By default, tasks can be delegated to subordinate employees. Tasks can be delegated to supervisors or employees of other departments if task assign permission exists for a specific person.";
+$MESS["HINT_TASK_RESPONSE_DELEGATE"] = "By default, tasks can be delegated to subordinate employees. User can delegate tasks to supervisors or employees of other departments if this user has a task assign permission.";
 $MESS["HINT_TASK_RESPONSE_EDIT"] = "Supervisor inherits their employees' task edit permission. Supervisor can edit their task if it was assigned to them by their employee.";
 $MESS["TASK_ACCESS_MANAGE"] = "Manage access permissions";
 $MESS["TASK_CLOSED_DEPARTMENT_EDIT"] = "Edit available completed tasks in own department";
-$MESS["TASK_CLOSED_NON_DEPARTMENT_EDIT"] = "Edit available completed tasks in other departments";
 $MESS["TASK_CLOSED_DIRECTOR_EDIT"] = "Creator: edit completed task";
+$MESS["TASK_CLOSED_NON_DEPARTMENT_EDIT"] = "Edit available completed tasks in other departments";
 $MESS["TASK_DEPARTMENT_DELETE"] = "Delete available tasks in own department";
 $MESS["TASK_DEPARTMENT_DIRECT"] = "Assign task to own department's employees";
 $MESS["TASK_DEPARTMENT_EDIT"] = "Edit available tasks in own department";
@@ -43,4 +43,3 @@ $MESS["TEMPLATE_NON_DEPARTMENT_EDIT"] = "Edit other departments' templates";
 $MESS["TEMPLATE_NON_DEPARTMENT_VIEW"] = "View other departments' templates";
 $MESS["TEMPLATE_REMOVE"] = "Delete accessible templates";
 $MESS["TEMPLATE_VIEW"] = "Read-only";
-?>

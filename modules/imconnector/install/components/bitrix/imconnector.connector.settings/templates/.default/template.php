@@ -1,17 +1,17 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
-use \Bitrix\Main\UI;
+use Bitrix\Main\UI;
 
-use \Bitrix\ImConnector\Status,
-	\Bitrix\ImConnector\Connector;
+use Bitrix\ImConnector\Status;
+use Bitrix\ImConnector\Connector;
 
-use \Bitrix\ImOpenLines,
-	\Bitrix\Imopenlines\Limit,
-	\Bitrix\ImOpenlines\Security;
+use Bitrix\ImOpenLines;
+use Bitrix\Imopenlines\Limit;
+use Bitrix\ImOpenlines\Security;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -47,7 +47,7 @@ UI\Extension::load([
 
 		'ui.entity-selector',
 		'ui.forms'
-]
+	]
 );
 \CJSCore::Init('loader');
 Connector::initIconCss();
@@ -187,7 +187,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_PERMISSIONS') ?>
 							</div>
 							<a href="javascript:void(0)"
-							   onclick="BX.SidePanel.Instance.open('<?=ImOpenLines\Common::getPublicFolder() . 'permissions.php'?>', {allowChangeHistory: false, cacheable: false})"
+							   onclick="BX.SidePanel.Instance.open('<?=ImOpenLines\Common::getContactCenterPublicFolder() . 'permissions/'?>', {allowChangeHistory: false, cacheable: false})"
 							   class="bx-destination-add imconnector-field-link-grey">
 								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE') ?>
 							</a>

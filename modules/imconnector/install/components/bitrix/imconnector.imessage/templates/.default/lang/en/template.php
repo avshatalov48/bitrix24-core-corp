@@ -1,6 +1,6 @@
-<?
+<?php
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CHANGE_ANY_TIME"] = "You can edit or disconnect it at any time";
-$MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED"] = "Apple Business Chat is connected";
+$MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED_NEW"] = "Apple Messages for Business connected";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_CONNECTION_STEP"] = "To complete the connection, select an Open Channel to connect to.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_CONNECTION_TITLE"] = "Business chat is now almost connected to Open Channel";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">I would like to:</div>
@@ -17,4 +17,3 @@ $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_I_KNOW_KEY"] = "I have a Business ID";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_ID"] = "Business ID";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_NAME"] = "Name";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_NAME_CHAT_LINK"] = "Live Chat link";
-?>

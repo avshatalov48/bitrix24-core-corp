@@ -69,6 +69,12 @@ class CrmCardShowComponent extends CBitrixComponent
 
 	protected function getEntityData($entityType, $entityId, $userId)
 	{
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		if (!CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityId, $userPermissions))
+		{
+			return false;
+		}
+
 		$findParams = array('USER_ID'=> $userId);
 
 		$entityTypeId = CCrmOwnerType::ResolveID($entityType);

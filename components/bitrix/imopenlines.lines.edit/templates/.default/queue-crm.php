@@ -87,6 +87,15 @@ if ($arResult['CAN_EDIT'])
 }
 ?>
 <div class="imopenlines-form-settings-section">
+	<?if(!empty($arResult['ERROR'])):?>
+		<div class="ui-alert ui-alert-danger">
+			<span class="ui-alert-message">
+			<?foreach ($arResult['ERROR'] as $error):?>
+				<?= $error ?><br>
+			<?endforeach;?>
+			</span>
+		</div>
+	<?endif;?>
 	<div class="imopenlines-form-settings-block">
 		<a name="<?=$arResult['QUEUE']['blockIdQueueInput']?>"></a>
 		<div class="imopenlines-form-settings-inner">
@@ -106,13 +115,13 @@ if ($arResult['CAN_EDIT'])
 				</div>
 				<div class="imopenlines-control-inner">
 					<select name="CONFIG[QUEUE_TYPE]" id="imol_queue_type" class="imopenlines-control-input">
-						<option value="evenly" <?if($arResult['CONFIG']['QUEUE_TYPE'] == Config::QUEUE_TYPE_EVENLY) { ?>selected<? }?>>
+						<option value="evenly" <?if($arResult['CONFIG']['QUEUE_TYPE'] === Config::QUEUE_TYPE_EVENLY) { ?>selected<? }?>>
 							<?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TYPE_EVENLY')?>
 						</option>
-						<option value="strictly" <?if($arResult['CONFIG']['QUEUE_TYPE'] == Config::QUEUE_TYPE_STRICTLY) { ?>selected<? }?>>
+						<option value="strictly" <?if($arResult['CONFIG']['QUEUE_TYPE'] === Config::QUEUE_TYPE_STRICTLY) { ?>selected<? }?>>
 							<?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TYPE_STRICTLY')?>
 						</option>
-						<option value="all" <?if($arResult['CONFIG']['QUEUE_TYPE'] == Config::QUEUE_TYPE_ALL) { ?>selected<? }?>>
+						<option value="all" <?if($arResult['CONFIG']['QUEUE_TYPE'] === Config::QUEUE_TYPE_ALL) { ?>selected<? }?>>
 							<?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TYPE_ALL')?>
 						</option>
 					</select>
@@ -122,25 +131,25 @@ if ($arResult['CAN_EDIT'])
 	</div>
 	<div class="imopenlines-form-settings-block">
 		<div class="imopenlines-form-settings-inner">
-			<div class="imopenlines-control-container imopenlines-control-select  <? if($arResult["VISIBLE"]["QUEUE_TIME"] == false) { ?>invisible<? } ?>" id="imol_workers_time_block">
+			<div class="imopenlines-control-container imopenlines-control-select  <?if($arResult['VISIBLE']['QUEUE_TIME'] == false) { ?>invisible<? } ?>" id="imol_workers_time_block">
 				<div class="imopenlines-control-subtitle" id="imol_queue_time_title">
 					<?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_NEW')?>
 				</div>
 				<div class="imopenlines-control-inner">
 					<select class="imopenlines-control-input" name="CONFIG[QUEUE_TIME]">
-						<option value="60" <?if($arResult['CONFIG']['QUEUE_TIME'] == '60') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_1')?></option>
-						<option value="180" <?if($arResult['CONFIG']['QUEUE_TIME'] == '180') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_3')?></option>
-						<option value="300" <?if($arResult['CONFIG']['QUEUE_TIME'] == '300') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_5')?></option>
-						<option value="600" <?if($arResult['CONFIG']['QUEUE_TIME'] == '600') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_10')?></option>
-						<option value="900" <?if($arResult['CONFIG']['QUEUE_TIME'] == '900') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_15')?></option>
-						<option value="1800" <?if($arResult['CONFIG']['QUEUE_TIME'] == '1800') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_30')?></option>
+						<option value="60" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 60) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_1')?></option>
+						<option value="180" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 180) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_3')?></option>
+						<option value="300" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 300) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_5')?></option>
+						<option value="600" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 600) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_10')?></option>
+						<option value="900" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 900) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_15')?></option>
+						<option value="1800" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 1800) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_30')?></option>
 
-						<option value="3600" <?if($arResult['CONFIG']['QUEUE_TIME'] == '3600') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_60')?></option>
-						<option value="7200" <?if($arResult['CONFIG']['QUEUE_TIME'] == '7200') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_120')?></option>
-						<option value="10800" <?if($arResult['CONFIG']['QUEUE_TIME'] == '10800') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_180')?></option>
-						<option value="21600" <?if($arResult['CONFIG']['QUEUE_TIME'] == '21600') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_360')?></option>
-						<option value="28800" <?if($arResult['CONFIG']['QUEUE_TIME'] == '28800') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_480')?></option>
-						<option value="43200" <?if($arResult['CONFIG']['QUEUE_TIME'] == '43200') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_720')?></option>
+						<option value="3600" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 3600) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_60')?></option>
+						<option value="7200" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 7200) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_120')?></option>
+						<option value="10800" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 10800) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_180')?></option>
+						<option value="21600" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 21600) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_360')?></option>
+						<option value="28800" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 28800) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_480')?></option>
+						<option value="43200" <?if((int)$arResult['CONFIG']['QUEUE_TIME'] === 43200) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_720')?></option>
 					</select>
 				</div>
 			</div>
@@ -151,7 +160,7 @@ if ($arResult['CAN_EDIT'])
 						   name="CONFIG[CHECK_AVAILABLE]"
 						   value="Y"
 						   class="imopenlines-control-checkbox"
-						   <?if($arResult['CONFIG']['CHECK_AVAILABLE'] == 'Y') { ?>checked<? }?>>
+						   <?if($arResult['CONFIG']['CHECK_AVAILABLE'] === 'Y') { ?>checked<? }?>>
 					<?=Loc::getMessage('IMOL_CONFIG_EDIT_CHECK_OPERATOR_AVAILABLE')?>
 					<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_CHECK_OPERATOR_AVAILABLE_DESC'))?>"></span>
 				</label>
@@ -165,11 +174,11 @@ if ($arResult['CAN_EDIT'])
 						   name="CONFIG[CHECK_ONLINE]"
 						   value="Y"
 						   class="imopenlines-control-checkbox"
-						   <?if($arResult['CONFIG']['CHECK_ONLINE'] == 'Y') { ?>checked<? }?>>
+						   <?if($arResult['CONFIG']['CHECK_ONLINE'] === 'Y') { ?>checked<? }?>>
 					<?=Loc::getMessage('IMOL_CONFIG_EDIT_CHECK_OPERATOR_ONLINE')?>
 				</label>
 			</div>
-			<div id="imol_limitation_max_chat_block" <? if ($arResult['VISIBLE']['LIMITATION_MAX_CHAT'] == false) { ?>class="invisible"<? } ?>>
+			<div id="imol_limitation_max_chat_block" <? if ($arResult['VISIBLE']['LIMITATION_MAX_CHAT'] === false) { ?>class="invisible"<? } ?>>
 				<div class="imopenlines-control-checkbox-container">
 					<label class="imopenlines-control-checkbox-label">
 						<input id="imol_limitation_max_chat"
@@ -177,8 +186,8 @@ if ($arResult['CAN_EDIT'])
 							   name="CONFIG[LIMITATION_MAX_CHAT]"
 							   value="Y"
 							   class="imopenlines-control-checkbox"
-							   <?if($arResult['CONFIG']['MAX_CHAT'] > '0') { ?>checked<? }?>>
-						<?=Loc::getMessage('IMOL_CONFIG_EDIT_LIMITATION_MAX_CHAT_TITLE_NEW')?>
+							   <?if(!empty($arResult['CONFIG']['LIMITATION_MAX_CHAT'])) { ?>checked<? }?>>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_LIMITATION_MAX_CHAT_TITLE_NEW');?>
 						<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_LIMITATION_MAX_CHAT_DESC'))?>"></span>
 					</label>
 				</div>
@@ -190,9 +199,9 @@ if ($arResult['CAN_EDIT'])
 						</div>
 						<div class="imopenlines-control-inner">
 							<select class="imopenlines-control-input" name="CONFIG[TYPE_MAX_CHAT]">
-								<option value="answered_new" <?if($arResult['CONFIG']['TYPE_MAX_CHAT'] == 'answered_new' || empty($arResult['CONFIG']['TYPE_MAX_CHAT'])) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_ANSWERED_NEW')?></option>
-								<option value="answered" <?if($arResult['CONFIG']['TYPE_MAX_CHAT'] == 'answered') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_ANSWERED')?></option>
-								<option value="closed" <?if($arResult['CONFIG']['TYPE_MAX_CHAT'] == 'closed') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_CLOSED')?></option>
+								<option value="answered_new" <?if($arResult['CONFIG']['TYPE_MAX_CHAT'] === 'answered_new' || empty($arResult['CONFIG']['TYPE_MAX_CHAT'])) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_ANSWERED_NEW')?></option>
+								<option value="answered" <?if($arResult['CONFIG']['TYPE_MAX_CHAT'] === 'answered') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_ANSWERED')?></option>
+								<option value="closed" <?if($arResult['CONFIG']['TYPE_MAX_CHAT'] === 'closed') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_CLOSED')?></option>
 							</select>
 						</div>
 					</div>
@@ -241,22 +250,22 @@ if ($arResult['CAN_EDIT'])
 				</div>
 				<div class="imopenlines-control-inner">
 					<select name="CONFIG[OPERATOR_DATA]" id="imol_operator_data" class="imopenlines-control-input">
-						<option value="profile" <?if($arResult['CONFIG']['OPERATOR_DATA'] == 'profile') { ?>selected<? }?>>
+						<option value="profile" <?if($arResult['CONFIG']['OPERATOR_DATA'] === 'profile') { ?>selected<? }?>>
 							<?=Loc::getMessage('IMOL_CONFIG_EDIT_OPERATOR_DATA_PROFILE')?>
 						</option>
-						<option value="queue" <?if($arResult['CONFIG']['OPERATOR_DATA'] == 'queue') { ?>selected<? }?>>
+						<option value="queue" <?if($arResult['CONFIG']['OPERATOR_DATA'] === 'queue') { ?>selected<? }?>>
 							<?=Loc::getMessage('IMOL_CONFIG_EDIT_OPERATOR_DATA_QUEUE')?>
 						</option>
-						<option value="hide" <?if($arResult['CONFIG']['OPERATOR_DATA'] == 'hide') { ?>selected<? }?>>
+						<option value="hide" <?if($arResult['CONFIG']['OPERATOR_DATA'] === 'hide') { ?>selected<? }?>>
 							<?=Loc::getMessage('IMOL_CONFIG_EDIT_OPERATOR_DATA_HIDE')?>
 						</option>
 					</select>
 				</div>
 			</div>
 
-			<div id="users_for_queue_data" <?if($arResult['CONFIG']['OPERATOR_DATA'] != 'queue') { ?>class="invisible"<? }?>>
+			<div id="users_for_queue_data" <?if($arResult['CONFIG']['OPERATOR_DATA'] !== 'queue') { ?>class="invisible"<? }?>>
 			</div>
-			<div class="imopenlines-form-settings-user <?if($arResult['CONFIG']['OPERATOR_DATA'] != 'hide') { ?>invisible<? }?>" id="default_user_data" data-id="default-user">
+			<div class="imopenlines-form-settings-user <?if($arResult['CONFIG']['OPERATOR_DATA'] !== 'hide') { ?>invisible<? }?>" id="default_user_data" data-id="default-user">
 				<div class="imopenlines-form-settings-user-info">
 					<span class="imopenlines-form-settings-user-name"><?=Loc::getMessage('IMOL_CONFIG_EDIT_DEFAULT_OPERATOR_DATA_TITLE')?></span>
 					<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_DEFAULT_OPERATOR_DATA_TIP'))?>"></span>
@@ -273,16 +282,16 @@ if ($arResult['CAN_EDIT'])
 						   value="Y"
 						   id="imol_crm_checkbox"
 						   class="imopenlines-control-checkbox"
-						<? if ($arResult['CONFIG']['CRM'] == 'Y'  && $arResult['IS_CRM_INSTALLED'] == 'Y') { ?>
+						<? if ($arResult['CONFIG']['CRM'] === 'Y'  && $arResult['IS_CRM_INSTALLED'] === 'Y') { ?>
 							checked
-						<? } elseif($arResult['IS_CRM_INSTALLED'] != 'Y') { ?>
+						<? } elseif($arResult['IS_CRM_INSTALLED'] !== 'Y') { ?>
 							disabled
 						<? } ?>>
 					<?=Loc::getMessage('IMOL_CONFIG_EDIT_CRM')?>
 				</label>
 			</div>
 			<?
-			if ($arResult['IS_CRM_INSTALLED'] != 'Y')
+			if ($arResult['IS_CRM_INSTALLED'] !== 'Y')
 			{
 				?>
 				<div class="imopenlines-control-checkbox-container">
@@ -294,7 +303,7 @@ if ($arResult['CAN_EDIT'])
 			}
 			?>
 			<?if(!empty($arResult['CRM'])):?>
-			<div id="imol_crm_block" <?if (!($arResult['CONFIG']['CRM'] == 'Y'  && $arResult['IS_CRM_INSTALLED'] == 'Y')){?>class="invisible"<?}?>>
+			<div id="imol_crm_block" <?if (!($arResult['CONFIG']['CRM'] === 'Y'  && $arResult['IS_CRM_INSTALLED'] === 'Y')){?>class="invisible"<?}?>>
 				<div class="imopenlines-control-checkbox-container">
 					<label class="imopenlines-control-checkbox-label">
 						<input type="checkbox"
@@ -302,7 +311,7 @@ if ($arResult['CAN_EDIT'])
 							   name="CONFIG[CRM_CHAT_TRACKER]"
 							   id="imol_crm_chat_tracker"
 							   value="Y"
-							   <?if($arResult['CONFIG']['CRM_CHAT_TRACKER'] == 'Y') { ?>checked<? }?>>
+							   <?if($arResult['CONFIG']['CRM_CHAT_TRACKER'] === 'Y') { ?>checked<? }?>>
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_CRM_CHAT_TRACKER')?>
 					</label>
 				</div>
@@ -398,7 +407,7 @@ if ($arResult['CAN_EDIT'])
 							   name="CONFIG[CRM_FORWARD]"
 							   id="imol_crm_forward"
 							   value="Y"
-							   <?if($arResult['CONFIG']['CRM_FORWARD'] == 'Y') { ?>checked<? }?>>
+							   <?if($arResult['CONFIG']['CRM_FORWARD'] === 'Y') { ?>checked<? }?>>
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_CRM_FORWARD_NEW')?>
 						<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_CRM_FORWARD_TIP'))?>"></span>
 					</label>
@@ -410,7 +419,7 @@ if ($arResult['CAN_EDIT'])
 							   class="imopenlines-control-checkbox"
 							   name="CONFIG[CRM_TRANSFER_CHANGE]"
 							   value="Y"
-							   <?if($arResult['CONFIG']['CRM_TRANSFER_CHANGE'] == 'Y') { ?>checked<? }?>  >
+							   <?if($arResult['CONFIG']['CRM_TRANSFER_CHANGE'] === 'Y') { ?>checked<? }?>  >
 						<span id="imol_crm_transfer_change_title"<?if($arResult['CRM']['VISIBLE']['CRM_TRANSFER_CHANGE'] !== Config::CRM_CREATE_LEAD):?> class="invisible"<?endif;?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_CRM_TRANSFER_CHANGE')?></span>
 						<span id="imol_crm_transfer_change_title_deal"<?if($arResult['CRM']['VISIBLE']['CRM_TRANSFER_CHANGE'] !== Config::CRM_CREATE_DEAL):?> class="invisible"<?endif;?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_CRM_TRANSFER_CHANGE_DEAL')?></span>
 					</label>

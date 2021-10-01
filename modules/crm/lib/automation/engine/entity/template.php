@@ -8,8 +8,20 @@ use Bitrix\Main;
  * @package Bitrix\Crm\Automation\Engine\Entity
  * @deprecated
  * @see \Bitrix\Bizproc\WorkflowTemplateTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Template_Query query()
+ * @method static EO_Template_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Template_Result getById($id)
+ * @method static EO_Template_Result getList(array $parameters = array())
+ * @method static EO_Template_Entity getEntity()
+ * @method static \Bitrix\Crm\Automation\Engine\Entity\EO_Template createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Automation\Engine\Entity\EO_Template_Collection createCollection()
+ * @method static \Bitrix\Crm\Automation\Engine\Entity\EO_Template wakeUpObject($row)
+ * @method static \Bitrix\Crm\Automation\Engine\Entity\EO_Template_Collection wakeUpCollection($rows)
  */
-
 class TemplateTable extends Main\Entity\DataManager
 {
 	/**

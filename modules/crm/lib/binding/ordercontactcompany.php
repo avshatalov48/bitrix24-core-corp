@@ -12,6 +12,19 @@ use Bitrix\Main\Entity;
 /**
  * Class OrderContactCompanyTable
  * @package Bitrix\Crm\Binding
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_OrderContactCompany_Query query()
+ * @method static EO_OrderContactCompany_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_OrderContactCompany_Result getById($id)
+ * @method static EO_OrderContactCompany_Result getList(array $parameters = array())
+ * @method static EO_OrderContactCompany_Entity getEntity()
+ * @method static \Bitrix\Crm\Binding\EO_OrderContactCompany createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Binding\EO_OrderContactCompany_Collection createCollection()
+ * @method static \Bitrix\Crm\Binding\EO_OrderContactCompany wakeUpObject($row)
+ * @method static \Bitrix\Crm\Binding\EO_OrderContactCompany_Collection wakeUpCollection($rows)
  */
 class OrderContactCompanyTable extends Entity\DataManager
 {

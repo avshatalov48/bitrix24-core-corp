@@ -62,6 +62,7 @@ $APPLICATION->IncludeComponent(
 	{
 		BX.Voximplant.QueueList.setDefaults({
 			canCreateGroup: <?= $arResult['CAN_CREATE_GROUP'] ? 'true' : 'false'?>,
+			maximumGroups: <?= (int)$arResult['MAXIMUM_GROUPS'] ?>,
 			createUrl: '<?=CUtil::JSEscape($arResult['CREATE_QUEUE_URL'])?>'
 		});
 		var instance = BX.Voximplant.QueueList.getInstance();

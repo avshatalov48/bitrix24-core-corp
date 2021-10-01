@@ -125,9 +125,6 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 			</div>
 		</div>
 		<?if ($arResult['RECORD_LIMIT']['ENABLE'] && CModule::IncludeModule('bitrix24')):?>
-		<?
-			$arResult["TRIAL_TEXT"] = CVoxImplantMain::GetTrialText();
-		?>
 		<div class="tel-history-block">
 			<div class="tel-history-title"><?=GetMessage("VI_LOCK_RECORD_TITLE")?></div>
       		<?=GetMessage("VI_LOCK_RECORD_TEXT", Array("#LIMIT#" => '<b>'.$arResult['RECORD_LIMIT']['LIMIT'].'</b>', '#REMAINING#' => '<b>'.$arResult['RECORD_LIMIT']['REMAINING'].'</b>'))?>

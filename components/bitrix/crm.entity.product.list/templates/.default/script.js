@@ -4,15 +4,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 (function (exports,ui_hint,catalog_productCalculator,main_popup,main_core,main_core_events,currency_currencyCore,catalog_productSelector) {
 	'use strict';
 
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class='ui-hint-content'>", "</div>\n\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject;
 
 	var HintPopup = /*#__PURE__*/function () {
 	  function HintPopup(editor) {
@@ -33,7 +25,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      this.hintPopup.setBindElement(node);
 	      this.hintPopup.adjustPosition();
-	      this.hintPopup.setContent(main_core.Tag.render(_templateObject(), main_core.Text.encode(text)));
+	      this.hintPopup.setContent(main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class='ui-hint-content'>", "</div>\n\t\t"])), main_core.Text.encode(text)));
 	      return this.hintPopup;
 	    }
 	  }, {
@@ -178,6 +170,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        main_core.Event.bind(node, 'mousedown', function (event) {
 	          return event.stopPropagation();
 	        });
+	      });
+	    }
+	  }, {
+	    key: "setRowNumber",
+	    value: function setRowNumber(number) {
+	      this.getNode().querySelectorAll('.main-grid-row-number').forEach(function (node) {
+	        node.textContent = number + '.';
 	      });
 	    }
 	  }, {
@@ -1227,45 +1226,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return PageEventsManager;
 	}();
 
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<label class=\"ui-ctl-block ui-entity-editor-popup-create-field-item ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-w10\" style=\"text-align: center\">", "</div>\n\t\t\t\t<div class=\"ui-ctl-w75\">\n\t\t\t\t\t<span class=\"ui-entity-editor-popup-create-field-item-title\">", "</span>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</label>\n\t\t"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-entity-editor-popup-create-field-item-desc\">", "</span>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"checkbox\">\n\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class='ui-entity-editor-popup-create-field-list'></div>\n\t\t"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4;
 
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
@@ -1396,7 +1357,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	var _prepareSettingsContent2 = function _prepareSettingsContent2() {
 	  var _this3 = this;
 
-	  var content = main_core.Tag.render(_templateObject$1());
+	  var content = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class='ui-entity-editor-popup-create-field-list'></div>\n\t\t"])));
 	  babelHelpers.classPrivateFieldGet(this, _settings).forEach(function (item) {
 	    content.append(_classPrivateMethodGet$1(_this3, _getSettingItem, _getSettingItem2).call(_this3, item));
 	  });
@@ -1404,11 +1365,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	};
 
 	var _getSettingItem2 = function _getSettingItem2(item) {
-	  var input = main_core.Tag.render(_templateObject2());
+	  var input = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"checkbox\">\n\t\t"])));
 	  input.checked = item.checked;
 	  input.dataset.settingId = item.id;
-	  var descriptionNode = main_core.Type.isStringFilled(item.desc) ? main_core.Tag.render(_templateObject3(), item.desc) : '';
-	  var setting = main_core.Tag.render(_templateObject4(), input, item.title, descriptionNode);
+	  var descriptionNode = main_core.Type.isStringFilled(item.desc) ? main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-entity-editor-popup-create-field-item-desc\">", "</span>"])), item.desc) : '';
+	  var setting = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<label class=\"ui-ctl-block ui-entity-editor-popup-create-field-item ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-w10\" style=\"text-align: center\">", "</div>\n\t\t\t\t<div class=\"ui-ctl-w75\">\n\t\t\t\t\t<span class=\"ui-entity-editor-popup-create-field-item-title\">", "</span>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</label>\n\t\t"])), input, item.title, descriptionNode);
 	  main_core.Event.bind(setting, 'change', _classPrivateMethodGet$1(this, _setSetting, _setSetting2).bind(this));
 	  return setting;
 	};
@@ -1479,15 +1440,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  });
 	};
 
-	function _templateObject$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a \n\t\t\t\t\thref=\"#\"\n\t\t\t\t\tclass=\"main-grid-delete-button\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t></a>\n\t\t\t"]);
-
-	  _templateObject$2 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$2;
 
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
@@ -1801,6 +1754,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      if (changed) {
 	        this.refreshSortFields();
+	        this.numerateRows();
 	        this.executeActions([{
 	          type: this.actions.productListChanged
 	        }]);
@@ -2465,7 +2419,15 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        _iterator.f();
 	      }
 
+	      this.numerateRows();
 	      this.productsWasInitiated = true;
+	    }
+	  }, {
+	    key: "numerateRows",
+	    value: function numerateRows() {
+	      this.products.forEach(function (product, index) {
+	        product.setRowNumber(index + 1);
+	      });
 	    }
 	  }, {
 	    key: "getGrid",
@@ -2699,7 +2661,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      if (rowId) {
 	        // BX.Main.grid._onClickOnRow needs to be a link or input here
-	        var deleteButton = main_core.Tag.render(_templateObject$2(), this.handleDeleteRow.bind(this, rowId), main_core.Loc.getMessage('CRM_ENTITY_PL_DELETE'));
+	        var deleteButton = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a \n\t\t\t\t\thref=\"#\"\n\t\t\t\t\tclass=\"main-grid-delete-button\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t></a>\n\t\t\t"])), this.handleDeleteRow.bind(this, rowId), main_core.Loc.getMessage('CRM_ENTITY_PL_DELETE'));
 	        main_core.Dom.append(deleteButton, actionCellContentContainer);
 	      }
 	    }
@@ -2758,6 +2720,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 
 	      this.refreshSortFields();
+	      this.numerateRows();
 	      product.updateUiCurrencyFields();
 	      this.updateTotalUiCurrency();
 	      return product;
@@ -3268,6 +3231,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        if (index > -1) {
 	          this.products.splice(index, 1);
 	          this.refreshSortFields();
+	          this.numerateRows();
 	        }
 	      }
 

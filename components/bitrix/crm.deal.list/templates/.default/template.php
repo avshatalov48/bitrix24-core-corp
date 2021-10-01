@@ -1190,6 +1190,12 @@ $APPLICATION->IncludeComponent(
 					id: "deal_list",
 					settings: { params: <?=CUtil::PhpToJSObject($arResult['ANALYTIC_TRACKER'])?> }
 				};
+
+			<?php if (isset($arResult['RESTRICTED_VALUE_CLICK_CALLBACK'])):?>
+			BX.addCustomEvent(window, 'onCrmRestrictedValueClick', function() {
+				<?=$arResult['RESTRICTED_VALUE_CLICK_CALLBACK'];?>
+			});
+			<?php endif;?>
 		}
 	);
 </script><?

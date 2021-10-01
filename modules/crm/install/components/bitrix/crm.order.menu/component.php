@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
  * @global CDatabase $DB
  */
 
+use Bitrix\Crm\Restriction\OrderRestriction;
 use Bitrix\Main\Localization\Loc;
 use \Bitrix\Crm\Order\Permissions,
 	\Bitrix\Main\Config\Option;
@@ -214,7 +215,7 @@ if($bAdd)
 			'TEXT' => GetMessage('ORDER_ADD'),
 			'TITLE' => GetMessage('ORDER_ADD_TITLE'),
 			'LINK' => $link,
-			'HIGHLIGHT' => true
+			'HIGHLIGHT' => true,
 		);
 	}
 	else
@@ -223,16 +224,18 @@ if($bAdd)
 
 		foreach($sites as  $lid => $name)
 		{
+			$onClickHandler = 'BX.SidePanel.Instance.open(\'' .
+				CCrmUrlUtil::AddUrlParams(
+					CComponentEngine::MakePathFromTemplate(
+						$arParams['PATH_TO_ORDER_DETAILS'],
+						array('order_id' => 0)
+					),
+					array('SITE_ID' => $lid)
+				) . '\')';
+
 			$items[] = array(
 				'TEXT' => $name,
-				'ONCLICK' => 'BX.SidePanel.Instance.open(\''.
-					CCrmUrlUtil::AddUrlParams(
-						CComponentEngine::MakePathFromTemplate(
-							$arParams['PATH_TO_ORDER_DETAILS'],
-							array('order_id' => 0)
-						),
-						array('SITE_ID' => $lid)
-				).'\')'
+				'ONCLICK' => $onClickHandler,
 			);
 		}
 
@@ -242,7 +245,7 @@ if($bAdd)
 			'LINK' => $link,
 			'TYPE' => 'crm-btn-double',
 			'ITEMS' => $items,
-			'HIGHLIGHT' => true
+			'HIGHLIGHT' => true,
 		);
 	}
 }

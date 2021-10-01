@@ -152,7 +152,7 @@ class Connector
 		$connectors['avito'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_AVITO');
 		$connectors['viber'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT');
 		$connectors['telegrambot'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT');
-		$connectors['imessage'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_IMESSAGE');
+		$connectors['imessage'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_IMESSAGE_NEW');
 		if($serviceLocator->has('ImConnector.toolsWeChat'))
 		{
 			/** @var \Bitrix\ImConnector\Tools\Connectors\WeChat $toolsWeChat */

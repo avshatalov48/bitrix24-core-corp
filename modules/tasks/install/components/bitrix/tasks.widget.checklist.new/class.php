@@ -10,6 +10,7 @@ use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\Integration\Network\MemberSelector;
 use Bitrix\Tasks\Scrum\Checklist\TypeChecklistFacade;
 use Bitrix\Tasks\Scrum\Checklist\ItemChecklistFacade;
 use Bitrix\Tasks\Util\User;
@@ -106,6 +107,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		$this->arResult['ENTITY_ID'] = $entityId;
 		$this->arResult['ENTITY_TYPE'] = $entityType;
 		$this->arResult['MODE'] = (in_array(mb_strtolower($mode), ['view', 'edit'], true) ? $mode : 'view');
+		$this->arResult['IS_NETWORK_ENABLED'] = MemberSelector::isNetworkEnabled();
 
 		$this->arResult['AJAX_ACTIONS'] = static::$map[$entityType]['ACTIONS'];
 		$this->arResult['USER_OPTIONS'] = $this->getUserOptions($entityType, $userId);

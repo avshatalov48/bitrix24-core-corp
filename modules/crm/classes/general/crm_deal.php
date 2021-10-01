@@ -139,7 +139,10 @@ class CAllCrmDeal
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
 				),
 				'COMPANY_ID' => array(
-					'TYPE' => 'crm_company'
+					'TYPE' => 'crm_company',
+					'SETTINGS' => [
+						'parentEntityTypeId' => \CCrmOwnerType::Company,
+					],
 				),
 				'CONTACT_ID' => array(
 					'TYPE' => 'crm_contact',
@@ -151,7 +154,10 @@ class CAllCrmDeal
 				),
 				'QUOTE_ID' => array(
 					'TYPE' => 'crm_quote',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
+					'SETTINGS' => [
+						'parentEntityTypeId' => \CCrmOwnerType::Quote,
+					],
 				),
 				'BEGINDATE' => array(
 					'TYPE' => 'date',
@@ -198,7 +204,10 @@ class CAllCrmDeal
 				),
 				'LEAD_ID' => array(
 					'TYPE' => 'crm_lead',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
+					'SETTINGS' => [
+						'parentEntityTypeId' => \CCrmOwnerType::Lead,
+					],
 				),
 				'ADDITIONAL_INFO' => array(
 					'TYPE' => 'string'
@@ -1754,7 +1763,6 @@ class CAllCrmDeal
 
 			if ($options['DISABLE_TIMELINE_CREATION'] !== 'Y')
 			{
-
 				if($isRestoration)
 				{
 					Bitrix\Crm\Timeline\DealController::getInstance()->onRestore($ID, array('FIELDS' => $arFields));
@@ -1768,6 +1776,22 @@ class CAllCrmDeal
 							'CONTACT_BINDINGS' => $contactBindings
 						)
 					);
+
+					CCrmEntityHelper::registerAdditionalTimelineEvents([
+						'entityTypeId' => \CCrmOwnerType::Deal,
+						'entityId' => $ID,
+						'fieldsInfo' => static::GetFieldsInfo(),
+						'previousFields' => [],
+						'currentFields' => $arFields,
+						'previousStageSemantics' => Crm\PhaseSemantics::UNDEFINED,
+						'currentStageSemantics' => $arFields['STAGE_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
+						'options' => $options,
+						'bindings' => [
+							'entityTypeId' => \CCrmOwnerType::Contact,
+							'previous' => [],
+							'current' => $contactBindings,
+						]
+					]);
 				}
 			}
 
@@ -2423,6 +2447,17 @@ class CAllCrmDeal
 				return false;
 			}
 
+			$updateOperationRestriction = Crm\Restriction\RestrictionManager::getUpdateOperationRestriction(new Crm\ItemIdentifier(
+				\CCrmOwnerType::Deal,
+				(int)$ID
+			));
+			if (!$isSystemAction && !$updateOperationRestriction->hasPermission())
+			{
+				$this->LAST_ERROR = $updateOperationRestriction->getErrorMessage();
+				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+				return false;
+			}
+
 			if(!isset($arFields['ID']))
 			{
 				$arFields['ID'] = $ID;
@@ -2950,6 +2985,22 @@ class CAllCrmDeal
 					'ADDED_CONTACT_BINDINGS' => $addedContactBindings
 				)
 			);
+
+			CCrmEntityHelper::registerAdditionalTimelineEvents([
+				'entityTypeId' => \CCrmOwnerType::Deal,
+				'entityId' => $ID,
+				'fieldsInfo' => static::GetFieldsInfo(),
+				'previousFields' => $arRow,
+				'currentFields' => $arFields,
+				'previousStageSemantics' => $arRow['STAGE_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
+				'currentStageSemantics' => $arFields['STAGE_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
+				'options' => $options,
+				'bindings' => [
+					'entityTypeId' => \CCrmOwnerType::Contact,
+					'previous' => $originalContactBindings,
+					'current' => $contactBindings,
+				]
+			]);
 
 			Bitrix\Crm\Integration\Im\Chat::onEntityModification(
 				CCrmOwnerType::Deal,
@@ -4637,6 +4688,15 @@ class CAllCrmDeal
 		if($checkRunningBizProcess && \CCrmBizProcHelper::HasRunningWorkflows(CCrmOwnerType::Deal, $ID))
 		{
 			return DealCategoryChangeError::HAS_WORKFLOWS;
+		}
+
+		$updateOperationRestriction = Crm\Restriction\RestrictionManager::getUpdateOperationRestriction(new Crm\ItemIdentifier(
+			\CCrmOwnerType::Deal,
+			(int)$ID
+		));
+		if (!$updateOperationRestriction->hasPermission())
+		{
+			return DealCategoryChangeError::RESTRICTION_APPLIED;
 		}
 
 		$successStageID = DealCategory::prepareStageID($newCategoryID, 'WON');

@@ -66,6 +66,8 @@ $MESS["CRM_COMMON_MODIFY_DATE"] = "Дата изменения";
 $MESS["CRM_COMMON_DETAIL"] = "Подробнее";
 $MESS["CRM_COMMON_ROBOTS"] = "Роботы";
 $MESS["CRM_COMMON_EMPTY_VALUE"] = "Не заполнено";
+$MESS["CRM_COMMON_HIDDEN_ITEM"] = "Скрытый элемент";
+$MESS["CRM_COMMON_HIDDEN_VALUE"] = "скрыто";
 
 $MESS["CRM_COMMON_READ_ACCESS_DENIED"] = "У Вас нет прав на просмотр этого элемента";
 $MESS["CRM_COMMON_ADD_ACCESS_DENIED"] = "У вас нет прав на добавление нового элемента сущности #ENTITY_DESCRIPTION#";
@@ -134,3 +136,7 @@ $MESS["CRM_TYPE_CATEGORY_ACCESS_DENIED"] = "Доступ к направлени
 $MESS["CRM_TYPE_CATEGORY_SORT_TITLE"] = "Сортировка";
 
 $MESS["CRM_QUOTE_TITLE"] = "Предложение №#QUOTE_NUMBER# от #BEGINDATE#";
+
+$MESS["CRM_FEATURE_RESTRICTION_ERROR"] = "Это действие недоступно на вашем тарифе";
+$MESS["CRM_FEATURE_RESTRICTION_GRID_TITLE"] = "Доступ к данным закрыт";
+$MESS["CRM_FEATURE_RESTRICTION_GRID_TEXT"] = "Вы перешли на тариф ниже, поэтому доступ к этим данным сейчас закрыт. Чтобы продолжить работу с ними, продлите ваш тариф.";

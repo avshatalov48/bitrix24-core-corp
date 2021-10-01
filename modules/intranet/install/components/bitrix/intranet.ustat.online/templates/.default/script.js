@@ -1,41 +1,61 @@
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,rest_client,main_core,pull_client,ui_graph_circle) {
+(function (exports,rest_client,main_popup,main_core,pull_client,ui_graph_circle) {
 	'use strict';
 
-	var Popup = /*#__PURE__*/function () {
-	  function Popup(parent) {
-	    var _this2 = this;
+	function _templateObject2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a \n\t\t\t\t\tclass=\"intranet-ustat-online-popup-item\"\n\t\t\t\t\thref=\"", "\" \n\t\t\t\t\ttarget=\"_blank\"\n\t\t\t\t>\n\t\t\t\t\t<span class=\"intranet-ustat-online-popup-avatar-new\">\n\t\t\t\t\t\t<div class=\"ui-icon ui-icon-common-user intranet-ustat-online-popup-avatar-img\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<span class=\"intranet-ustat-online-popup-avatar-status-icon\"></span>\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"intranet-ustat-online-popup-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</a>\n\t\t\t"]);
 
-	    babelHelpers.classCallCheck(this, Popup);
+	  _templateObject2 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<span class=\"intranet-ustat-online-popup-name-title\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-container\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-content\">\n\t\t\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-content-box\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-inner\"></div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"]);
+
+	  _templateObject = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
+	var UserPopup = /*#__PURE__*/function () {
+	  function UserPopup(parent) {
+	    var _this = this;
+
+	    babelHelpers.classCallCheck(this, UserPopup);
 	    this.parent = parent;
 	    this.signedParameters = this.parent.signedParameters;
 	    this.componentName = this.parent.componentName;
 	    this.userInnerBlockNode = this.parent.userInnerBlockNode || "";
+	    this.timemanNode = this.parent.timemanNode;
 	    this.circleNode = this.parent.circleNode || "";
 	    this.isPopupShown = false;
 	    this.popupCurrentPage = {};
 	    this.renderedUsers = [];
 	    main_core.Event.bind(this.userInnerBlockNode, 'click', function () {
-	      _this2.showPopup('getAllOnlineUser', _this2.userInnerBlockNode);
+	      _this.showPopup('getAllOnlineUser', _this.userInnerBlockNode);
 	    });
 	    main_core.Event.bind(this.circleNode, 'click', function () {
-	      _this2.showPopup('getAllOnlineUser', _this2.circleNode, -5);
+	      _this.showPopup('getAllOnlineUser', _this.circleNode, -5);
 	    });
 
 	    if (this.parent.isTimemanAvailable && main_core.Type.isDomNode(this.parent.timemanNode)) {
-	      var openedNode = this.parent.timemanNode.querySelector('.js-ustat-online-timeman-opened-block');
-	      var closedNode = this.parent.timemanNode.querySelector('.js-ustat-online-timeman-closed-block');
+	      var openedNode = this.timemanNode.querySelector('.js-ustat-online-timeman-opened-block');
+	      var closedNode = this.timemanNode.querySelector('.js-ustat-online-timeman-closed-block');
 	      main_core.Event.bind(openedNode, 'click', function () {
-	        _this2.showPopup('getOpenedTimemanUser', openedNode);
+	        _this.showPopup('getOpenedTimemanUser', openedNode);
 	      });
 	      main_core.Event.bind(closedNode, 'click', function () {
-	        _this2.showPopup('getClosedTimemanUser', closedNode);
+	        _this.showPopup('getClosedTimemanUser', closedNode);
 	      });
 	    }
 	  }
 
-	  babelHelpers.createClass(Popup, [{
+	  babelHelpers.createClass(UserPopup, [{
 	    key: "getPopupTitle",
 	    value: function getPopupTitle(action) {
 	      var title = "";
@@ -53,6 +73,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }, {
 	    key: "showPopup",
 	    value: function showPopup(action, bindNode, topOffset) {
+	      var _this2 = this;
+
 	      if (this.isPopupShown) {
 	        return;
 	      }
@@ -64,7 +86,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      this.popupCurrentPage[action] = 1;
 	      this.popupInnerContainer = "";
 	      this.renderedUsers = [];
-	      this.allOnlineUserPopup = new BX.PopupWindow('intranet-ustat-online-popup', bindNode, {
+	      this.allOnlineUserPopup = new main_popup.Popup("intranet-ustat-online-popup-".concat(main_core.Text.getRandom()), bindNode, {
 	        lightShadow: true,
 	        offsetLeft: action === 'getClosedTimemanUser' ? -60 : -22,
 	        offsetTop: topOffset,
@@ -82,94 +104,54 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          }
 	        },
 	        events: {
-	          onPopupDestroy: function () {
-	            this.isPopupShown = false;
-	          }.bind(this),
-	          onPopupClose: function onPopupClose() {
-	            this.destroy();
+	          onPopupDestroy: function onPopupDestroy() {
+	            _this2.isPopupShown = false;
 	          },
-	          onAfterPopupShow: function (popup) {
-	            var popupContent = popup.contentContainer;
-	            var popupContainer = BX.create('div', {
-	              props: {
-	                className: 'intranet-ustat-online-popup-container'
-	              }
-	            });
-	            var popupTitle = BX.create('span', {
-	              props: {
-	                className: 'intranet-ustat-online-popup-name-title'
-	              },
-	              text: this.getPopupTitle(action)
-	            });
-	            this.popupInnerContainer = BX.create('div', {
-	              props: {
-	                className: 'intranet-ustat-online-popup-inner'
-	              }
-	            });
-	            var popupInnerContent = BX.create('div', {
-	              props: {
-	                className: 'intranet-ustat-online-popup-content'
-	              }
-	            });
-	            var popupInnerContentBox = BX.create('div', {
-	              props: {
-	                className: 'intranet-ustat-online-popup-content-box'
-	              }
-	            });
-	            popupContent.appendChild(popupTitle);
-	            popupContent.appendChild(popupContainer);
-	            popupContainer.appendChild(popupInnerContent);
-	            popupInnerContent.appendChild(popupInnerContentBox);
-	            popupInnerContentBox.appendChild(this.popupInnerContainer);
-	            this.loader = this.showLoader({
-	              node: popupInnerContent,
+	          onPopupClose: function onPopupClose() {
+	            _this2.allOnlineUserPopup.destroy();
+	          },
+	          onAfterPopupShow: function onAfterPopupShow(popup) {
+	            var popupContent = main_core.Tag.render(_templateObject(), _this2.getPopupTitle(action));
+	            popup.contentContainer.appendChild(popupContent);
+	            _this2.popupInnerContainer = popupContent.querySelector(".intranet-ustat-online-popup-inner");
+	            _this2.loader = _this2.showLoader({
+	              node: popupContent.querySelector(".intranet-ustat-online-popup-content"),
 	              loader: null,
 	              size: 40
 	            });
-	            this.showUsersInPopup(action);
-	            this.isPopupShown = true;
-	          }.bind(this)
+
+	            _this2.showUsersInPopup(action);
+
+	            _this2.isPopupShown = true;
+	          }
 	        },
 	        className: 'intranet-ustat-online-popup'
 	      });
-	      /*BX.bind(BX('intranet-ustat-online-popup'), 'mouseout' , BX.delegate(function() {
-	      	clearTimeout(this.popupTimeout);
-	      	this.popupTimeout = setTimeout(BX.delegate(function() {
-	      		this.allOnlineUserPopup.close();
-	      	}, this), 1000);
-	      }, this));
-	      	BX.bind(BX('intranet-ustat-online-popup'), 'mouseover' , BX.delegate(function() {
-	      	clearTimeout(this.popupTimeout);
-	      	clearTimeout(this.mouseLeaveTimeoutId);
-	      }, this));
-	      	BX.bind(this.userInnerBlockNode, 'mouseleave' , BX.delegate(function() {
-	      	this.mouseLeaveTimeoutId = setTimeout(BX.delegate(function() {
-	      		this.allOnlineUserPopup.close();
-	      	}, this), 1000);
-	      }, this));*/
-
 	      this.popupScroll(action);
 	      this.allOnlineUserPopup.show();
 	    }
 	  }, {
 	    key: "popupScroll",
 	    value: function popupScroll(action) {
-	      if (!BX.type.isDomNode(this.popupInnerContainer)) {
+	      var _this3 = this;
+
+	      if (!main_core.Type.isDomNode(this.popupInnerContainer)) {
 	        return;
 	      }
 
-	      BX.bind(this.popupInnerContainer, 'scroll', BX.delegate(function () {
-	        var _this = BX.proxy_context;
+	      main_core.Event.bind(this.popupInnerContainer, 'scroll', function () {
+	        if (_this3.popupInnerContainer.scrollTop > (_this3.popupInnerContainer.scrollHeight - _this3.popupInnerContainer.offsetHeight) / 1.5) {
+	          _this3.showUsersInPopup(action);
 
-	        if (_this.scrollTop > (_this.scrollHeight - _this.offsetHeight) / 1.5) {
-	          this.showUsersInPopup(action);
-	          BX.unbindAll(_this);
+	          main_core.Event.unbindAll(_this3.popupInnerContainer, 'scroll');
 	        }
-	      }, this));
+	      });
 	    }
 	  }, {
 	    key: "showUsersInPopup",
 	    value: function showUsersInPopup(action) {
+	      var _this4 = this;
+
 	      if (action !== 'getAllOnlineUser' && action !== 'getOpenedTimemanUser' && action !== 'getClosedTimemanUser') {
 	        return;
 	      }
@@ -182,91 +164,47 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        }
 	      }).then(function (response) {
 	        if (response.data) {
-	          this.renderPopupUsers(response.data);
-	          this.popupCurrentPage[action]++;
-	          this.popupScroll(action);
+	          _this4.renderPopupUsers(response.data);
+
+	          _this4.popupCurrentPage[action]++;
+
+	          _this4.popupScroll(action);
 	        } else {
-	          if (!this.popupInnerContainer.hasChildNodes()) {
-	            this.popupInnerContainer.innerText = main_core.Loc.getMessage('INTRANET_USTAT_ONLINE_EMPTY');
+	          if (!_this4.popupInnerContainer.hasChildNodes()) {
+	            _this4.popupInnerContainer.innerText = main_core.Loc.getMessage('INTRANET_USTAT_ONLINE_EMPTY');
 	          }
 	        }
 
-	        this.hideLoader({
-	          loader: this.loader
+	        _this4.hideLoader({
+	          loader: _this4.loader
 	        });
-	      }.bind(this), function (response) {
-	        this.hideLoader({
-	          loader: this.loader
+	      }, function (response) {
+	        _this4.hideLoader({
+	          loader: _this4.loader
 	        });
-	      }.bind(this));
+	      });
 	    }
 	  }, {
 	    key: "renderPopupUsers",
 	    value: function renderPopupUsers(users) {
-	      if (!this.allOnlineUserPopup || !BX.type.isDomNode(this.popupInnerContainer)) {
-	        return;
-	      }
-
-	      if (!users || babelHelpers.typeof(users) !== "object") {
+	      if (!this.allOnlineUserPopup || !main_core.Type.isDomNode(this.popupInnerContainer) || !main_core.Type.isObjectLike(users)) {
 	        return;
 	      }
 
 	      for (var i in users) {
-	        if (!users.hasOwnProperty(i)) {
-	          continue;
-	        }
-
-	        if (this.renderedUsers.indexOf(users[i]['ID']) >= 0) {
+	        if (!users.hasOwnProperty(i) || this.renderedUsers.indexOf(users[i]['ID']) >= 0) {
 	          continue;
 	        }
 
 	        this.renderedUsers.push(users[i]['ID']);
-	        var avatarNode = void 0;
+	        var avatarIcon = "<i></i>";
 
-	        if (BX.type.isNotEmptyString(users[i]['AVATAR'])) {
-	          avatarNode = BX.create("div", {
-	            props: {
-	              className: "ui-icon ui-icon-common-user intranet-ustat-online-popup-avatar-img"
-	            },
-	            children: [BX.create('i', {
-	              style: {
-	                backgroundImage: "url('" + users[i]['AVATAR'] + "')"
-	              }
-	            })]
-	          });
-	        } else {
-	          avatarNode = BX.create("div", {
-	            props: {
-	              className: "ui-icon ui-icon-common-user intranet-ustat-online-popup-avatar-img"
-	            },
-	            children: [BX.create('i', {})]
-	          });
+	        if (main_core.Type.isString(users[i]['AVATAR']) && users[i]['AVATAR']) {
+	          avatarIcon = "<i style=\"background-image: url('".concat(users[i]['AVATAR'], "')\"></i>");
 	        }
 
-	        this.popupInnerContainer.appendChild(BX.create("A", {
-	          attrs: {
-	            href: users[i]['PATH_TO_USER_PROFILE'],
-	            target: '_blank'
-	          },
-	          props: {
-	            className: "intranet-ustat-online-popup-item"
-	          },
-	          children: [BX.create("SPAN", {
-	            props: {
-	              className: "intranet-ustat-online-popup-avatar-new"
-	            },
-	            children: [avatarNode, BX.create("SPAN", {
-	              props: {
-	                className: "intranet-ustat-online-popup-avatar-status-icon"
-	              }
-	            })]
-	          }), BX.create("SPAN", {
-	            props: {
-	              className: "intranet-ustat-online-popup-name"
-	            },
-	            html: users[i]['NAME']
-	          })]
-	        }));
+	        var userNode = main_core.Tag.render(_templateObject2(), users[i]['PATH_TO_USER_PROFILE'], avatarIcon, users[i]['NAME']);
+	        this.popupInnerContainer.appendChild(userNode);
 	      }
 	    }
 	  }, {
@@ -297,7 +235,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 
 	      if (params.node) {
-	        BX.cleanNode(params.node);
+	        main_core.Dom.clean(params.node);
 	      }
 
 	      if (params.loader !== null) {
@@ -305,7 +243,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	    }
 	  }]);
-	  return Popup;
+	  return UserPopup;
 	}();
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
@@ -321,6 +259,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    this.componentName = this.parent.componentName;
 	    this.isTimemanAvailable = this.parent.isTimemanAvailable;
 	    this.timemanNode = this.parent.timemanNode;
+	    this.containerNode = this.parent.ustatOnlineContainerNode;
 
 	    if (this.isTimemanAvailable && main_core.Type.isDomNode(this.timemanNode)) {
 	      this.timemanValueNodes = this.timemanNode.querySelectorAll('.intranet-ustat-online-value');
@@ -384,17 +323,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "redrawTimeman",
 	    value: function redrawTimeman(data) {
 	      if (data.hasOwnProperty("OPENED")) {
-	        var openedNode = document.querySelector('.js-ustat-online-timeman-opened');
+	        var openedNode = this.containerNode.querySelector('.js-ustat-online-timeman-opened');
 
-	        if (BX.type.isDomNode(openedNode)) {
+	        if (main_core.Type.isDomNode(openedNode)) {
 	          openedNode.innerHTML = data["OPENED"];
 	        }
 	      }
 
 	      if (data.hasOwnProperty("CLOSED")) {
-	        var closedNode = document.querySelector('.js-ustat-online-timeman-closed');
+	        var closedNode = this.containerNode.querySelector('.js-ustat-online-timeman-closed');
 
-	        if (BX.type.isDomNode(closedNode)) {
+	        if (main_core.Type.isDomNode(closedNode)) {
 	          closedNode.innerHTML = data["CLOSED"];
 	        }
 	      }
@@ -404,25 +343,27 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }, {
 	    key: "checkTimeman",
 	    value: function checkTimeman() {
+	      var _this = this;
+
 	      BX.ajax.runComponentAction(this.componentName, "checkTimeman", {
 	        signedParameters: this.signedParameters,
 	        mode: 'class'
 	      }).then(function (response) {
 	        if (response.data) {
-	          this.redrawTimeman(response.data);
+	          _this.redrawTimeman(response.data);
 	        }
-	      }.bind(this), function (response) {}.bind(this));
+	      });
 	    }
 	  }, {
 	    key: "subscribePullEvent",
 	    value: function subscribePullEvent() {
-	      var _this = this;
+	      var _this2 = this;
 
 	      pull_client.PULL.subscribe({
 	        moduleId: 'intranet',
 	        command: 'timemanDayInfo',
 	        callback: function callback(data) {
-	          _this.redrawTimeman(data);
+	          _this2.redrawTimeman(data);
 	        }
 	      });
 	    }
@@ -487,7 +428,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      BX.UI.Hint.init(this.ustatOnlineContainerNode);
 	    }
 
-	    new Popup(this);
+	    new UserPopup(this);
 	    this.timemanObj = new Timeman(this);
 	    var now = new Date();
 	    this.currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).valueOf();
@@ -880,29 +821,27 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var onlineToShow = newUserIds.slice(0, this.maxUserToShow);
 	      var renderedUserNodes = this.userBlockNode.querySelectorAll(".js-ustat-online-user");
 
-	      if (this.online.length > 100 && renderedUserNodes >= this.maxUserToShow) {
+	      if (this.online.length > 100 && renderedUserNodes.length >= this.maxUserToShow) {
 	        return;
 	      }
 
-	      if (renderedUserNodes) {
-	        for (var item in renderedUserNodes) {
-	          if (!renderedUserNodes.hasOwnProperty(item)) {
-	            continue;
+	      for (var item in renderedUserNodes) {
+	        if (!renderedUserNodes.hasOwnProperty(item)) {
+	          continue;
+	        }
+
+	        var renderedItemId = parseInt(renderedUserNodes[item].getAttribute("data-user-id"));
+
+	        if (newUserIds.indexOf(renderedItemId) === -1) {
+	          if (main_core.Type.isDomNode(renderedUserNodes[item])) {
+	            main_core.Dom.remove(renderedUserNodes[item]); //remove offline avatars
+
+	            /*renderedUserNodes[item].classList.add('intranet-ustat-online-icon-hide');
+	            setTimeout( () => {
+	            	}, 800);*/
 	          }
-
-	          var renderedItemId = parseInt(renderedUserNodes[item].getAttribute("data-user-id"));
-
-	          if (newUserIds.indexOf(renderedItemId) === -1) {
-	            if (main_core.Type.isDomNode(renderedUserNodes[item])) {
-	              main_core.Dom.remove(renderedUserNodes[item]); //remove offline avatars
-
-	              /*renderedUserNodes[item].classList.add('intranet-ustat-online-icon-hide');
-	              setTimeout( () => {
-	              	}, 800);*/
-	            }
-	          } else {
-	            renderedUserIds.push(parseInt(renderedItemId));
-	          }
+	        } else {
+	          renderedUserIds.push(parseInt(renderedItemId));
 	        }
 	      }
 
@@ -1066,5 +1005,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.UstatOnline = UstatOnline;
 
-}((this.BX.Intranet.UstatOnline = this.BX.Intranet.UstatOnline || {}),BX,BX,BX,BX.UI.Graph));
+}((this.BX.Intranet.UstatOnline = this.BX.Intranet.UstatOnline || {}),BX,BX.Main,BX,BX,BX.UI.Graph));
 //# sourceMappingURL=script.js.map

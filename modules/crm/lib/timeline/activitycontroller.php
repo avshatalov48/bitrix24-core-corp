@@ -1,13 +1,13 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Integration;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -19,22 +19,6 @@ class ActivityController extends EntityController
 	private static $userID = null;
 	/** @var  \CCrmPerms|null */
 	private static $userPermissions = null;
-
-	//region Singleton
-	/** @var ActivityController|null */
-	protected static $instance = null;
-	/**
-	 * @return ActivityController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new ActivityController();
-		}
-		return self::$instance;
-	}
-	//endregion
 
 	//region EntityController
 	public function getEntityTypeID()
@@ -664,6 +648,10 @@ class ActivityController extends EntityController
 		{
 			\Bitrix\Crm\Activity\Provider\CallTracker::modifyScheduleEntityData($data, $options);
 		}
+		else if($providerID === \Bitrix\Crm\Activity\Provider\Delivery::getId())
+		{
+			$data['DELIVERY_INFO'] = \Bitrix\Crm\Activity\Provider\Delivery::getDeliveryInfo($data['ID']);
+		}
 
 		$model = array(
 			'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
@@ -833,6 +821,10 @@ class ActivityController extends EntityController
 		elseif($providerID === \Bitrix\Crm\Activity\Provider\CallTracker::getId())
 		{
 			\Bitrix\Crm\Activity\Provider\CallTracker::modifyTimelineEntityData($ID, $fields, $options);
+		}
+		else if($providerID === \Bitrix\Crm\Activity\Provider\Delivery::getId())
+		{
+			$fields['DELIVERY_INFO'] = \Bitrix\Crm\Activity\Provider\Delivery::getDeliveryInfo($fields['ID']);
 		}
 
 		if(isset($fields['STORAGE_ELEMENT_IDS']))

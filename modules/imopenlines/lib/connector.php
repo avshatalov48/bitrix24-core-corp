@@ -930,6 +930,9 @@ class Connector
 		if ($chat['CHAT_ENTITY_TYPE'] != 'LINES')
 			return true;
 
+		if ($fields['SKIP_CONNECTOR'] === 'Y')
+			return true;
+
 		if ($fields['FROM_USER_ID'] <= 0)
 			return true;
 
@@ -2212,32 +2215,24 @@ class Connector
 	/**
 	 * Returns the operator's avatar.
 	 *
-	 * @param $lineId
-	 * @param $userId
-	 * @param $userCodeSession
+	 * @param int $lineId OpenLine Id.
+	 * @param int $userId User Id.
+	 * @param string $userCodeSession Combined session code, ex. 'livechat|1|33|14'.
 	 * @return string
 	 * @throws Main\ArgumentException
 	 * @throws Main\LoaderException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function getOperatorAvatar($lineId, $userId, $userCodeSession = '')
+	public static function getOperatorAvatar(int $lineId, int $userId, string $userCodeSession = ''): string
 	{
 		$actualLineId = Queue::getActualLineId([
 			'LINE_ID' =>  $lineId,
 			'USER_CODE' => $userCodeSession
 		]);
 		$userArray = Queue::getUserData($actualLineId, $userId);
-		if (!empty($userArray['AVATAR']))
-		{
-			$result = $userArray['AVATAR'];
-		}
-		else
-		{
-			$result = ImUser::getInstance($userId)->getAvatar();
-		}
 
-		return $result;
+		return $userArray['AVATAR'];
 	}
 
 	/**

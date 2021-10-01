@@ -46,7 +46,20 @@ use Bitrix\Main\Entity;
  * </ul>
  *
  * @package Bitrix\Crm
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Volume_Query query()
+ * @method static EO_Volume_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Volume_Result getById($id)
+ * @method static EO_Volume_Result getList(array $parameters = array())
+ * @method static EO_Volume_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_Volume createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_Volume_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_Volume wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_Volume_Collection wakeUpCollection($rows)
+ */
 
 
 class VolumeTable extends ORM\Data\DataManager

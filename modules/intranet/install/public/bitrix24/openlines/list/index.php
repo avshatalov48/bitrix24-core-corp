@@ -5,7 +5,6 @@ IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/intranet/public
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_after.php');
 
 $APPLICATION->SetTitle(GetMessage('OL_PAGE_MANAGE_LINES_TITLE'));
-
 ?>
 <?$APPLICATION->IncludeComponent(
 	'bitrix:imopenlines.menu.top',

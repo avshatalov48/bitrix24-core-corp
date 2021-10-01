@@ -65,7 +65,7 @@ class TasksWidgetAccessComponent extends TasksBaseComponent
 	{
 		$featureEnabled = true;
 
-		if (!Bitrix24::checkFeatureEnabled('tasks_templates_access'))
+		if (!Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_TEMPLATES_ACCESS))
 		{
 			if (!$this->arParams['EDIT_MODE'])
 			{

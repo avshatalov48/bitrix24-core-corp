@@ -17,6 +17,11 @@ class EncourageBuyProducts extends Controller
 	 */
 	public function addProductToDealAction(int $dealId, int $productId, array $options = [])
 	{
+		if (!\CCrmDeal::CheckUpdatePermission($dealId, \CCrmPerms::GetCurrentUserPermissions()))
+		{
+			return;
+		}
+
 		$row = [
 			'PRODUCT_ID' => $productId,
 			'QUANTITY' => 1,

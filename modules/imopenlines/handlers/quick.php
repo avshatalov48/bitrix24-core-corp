@@ -1,9 +1,16 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Context;
+use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+use Bitrix\Im\Dialog;
+
+use Bitrix\ImOpenLines\Session\Common;
+use Bitrix\ImOpenLines\Model\SessionTable;
+
+Loc::loadMessages(__FILE__);
 
 /** @global \CMain $APPLICATION */
 if ($APPLICATION instanceof \CMain)
@@ -11,7 +18,10 @@ if ($APPLICATION instanceof \CMain)
 	$APPLICATION->RestartBuffer();
 }
 
-if (!\Bitrix\Main\Loader::includeModule('imopenlines') || !\Bitrix\Main\Loader::includeModule('im'))
+if (
+	!Loader::includeModule('imopenlines')
+	|| !Loader::includeModule('im')
+)
 {
 	\Bitrix\Main\Application::getInstance()->terminate();
 }
@@ -34,12 +44,12 @@ $errorOutput = function ($message)
 $error = '';
 $getRequest = Context::getCurrent()->getRequest()->toArray();
 $check = parse_url($getRequest['DOMAIN']);
-if (!in_array($check['scheme'], Array('http', 'https')) || empty($check['host']))
+if (!in_array($check['scheme'], ['http', 'https']) || empty($check['host']))
 {
-	$errorOutput(\Bitrix\Main\Localization\Loc::getMessage('IMOP_QUICK_IFRAME_ERROR_ADDRESS'));
+	$errorOutput(Loc::getMessage('IMOP_QUICK_IFRAME_ERROR_ADDRESS'));
 	die();
 }
-$params = array();
+$params = [];
 
 $params['DOMAIN'] = $check['scheme'].'://'.$check['host'];
 $params['SERVER_NAME'] = $check['host'];
@@ -50,7 +60,7 @@ if (
 	&& mb_strpos($_SERVER['HTTP_REFERER'], $params['DOMAIN']) !== 0
 )
 {
-	$errorOutput(\Bitrix\Main\Localization\Loc::getMessage('IMOP_QUICK_IFRAME_ERROR_SECURITY'));
+	$errorOutput(Loc::getMessage('IMOP_QUICK_IFRAME_ERROR_SECURITY'));
 	die();
 }
 
@@ -59,10 +69,10 @@ $dialogId = $getRequest['DIALOG_ID'] ?? null;
 $userCode = $getRequest['DIALOG_ENTITY_ID'] ?? '';
 if ($dialogId)
 {
-	$chatId = \Bitrix\Im\Dialog::getChatId($dialogId);
+	$chatId = Dialog::getChatId($dialogId);
 	if ($chatId)
 	{
-		$sessionData = \Bitrix\ImOpenLines\Model\SessionTable::getList([
+		$sessionData = SessionTable::getList([
 			'select' => ['CONFIG_ID'],
 			'filter' => [
 				'=CHAT_ID' => $chatId,
@@ -80,11 +90,12 @@ if ($dialogId)
 }
 if (!$lineId)
 {
-	$lineId = \Bitrix\ImOpenLines\Session\Common::parseUserCode($userCode)['CONFIG_ID'];
+	$lineId = Common::parseUserCode($userCode)['CONFIG_ID'];
 }
 $params['IMOP_ID'] = $lineId;
 $params['DARK_MODE'] = (isset($getRequest['DARK_MODE']) && $getRequest['DARK_MODE'] === 'Y') ? 'Y' : 'N';
-$APPLICATION->IncludeComponent("bitrix:imopenlines.iframe.quick", ".default", $params, false, Array("HIDE_ICONS" => "Y"));
+
+$APPLICATION->IncludeComponent('bitrix:imopenlines.iframe.quick', '.default', $params, false, ['HIDE_ICONS' => 'Y']);
 
 \CMain::FinalActions();
 die();

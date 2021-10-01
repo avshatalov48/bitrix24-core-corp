@@ -98,4 +98,17 @@ class ItemIdentifier
 	{
 		return 'type_' . $this->getEntityTypeId() . '_id_' . $this->getEntityId();
 	}
+
+	/**
+	 * Return array representation of this object
+	 *
+	 * @return array
+	 */
+	public function toArray(): array
+	{
+		return [
+			'ENTITY_TYPE_ID' => $this->getEntityTypeId(),
+			'ENTITY_ID' => $this->getEntityId(),
+		];
+	}
 }

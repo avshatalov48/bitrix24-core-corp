@@ -99,8 +99,9 @@ $className = ToLower($arResult['COMPONENT_DATA']['CLASS_NAME']);
 $templateData = $arResult['TEMPLATE_DATA'];
 $request = \Bitrix\Main\Context::getCurrent()->getRequest()->toArray();
 $taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
+$taskRecurrentRestrict = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
 
-if ($taskLimitExceeded)
+if ($taskLimitExceeded || $taskRecurrentRestrict)
 {
 	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 }
@@ -653,7 +654,7 @@ if ($taskLimitExceeded)
 							?>
 
 							<div data-bx-id="task-edit-replication-block" class="task-options-item-open-inner <?/*=($replicationOn ? '' : 'mode-replication-off')*/?>">
-								<label class="task-field-label task-field-label-repeat <?=$taskLimitExceeded? 'tasks-btn-restricted' : ''?>">
+								<label class="task-field-label task-field-label-repeat <?= $taskLimitExceeded || $taskRecurrentRestrict ? 'tasks-btn-restricted' : ''?>">
 									<input data-bx-id="task-edit-flag task-edit-flag-replication" data-target="replication" data-flag-name="REPLICATE" class="task-options-checkbox" type="checkbox" <?=($taskData['REPLICATE'] == 'Y' ? 'checked' : '')?>><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_MAKE_REPLICABLE')?>
 									<input data-bx-id="task-edit-replication" type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[REPLICATE]" value="<?=htmlspecialcharsbx($taskData['REPLICATE'])?>" />
 								</label>
@@ -1008,6 +1009,7 @@ if ($taskLimitExceeded)
 			'HINT_STATE' => $arResult['AUX_DATA']['HINT_STATE'],
 			'USER' => $arResult['AUX_DATA']['USER'],
 			'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+			'TASK_RECURRENT_RESTRICT' => $taskRecurrentRestrict
 		),
 		'componentId' => $arResult['COMPONENT_DATA']['ID'],
 		'doInit' => !$arResult['TEMPLATE_DATA']['SHOW_SUCCESS_MESSAGE'],

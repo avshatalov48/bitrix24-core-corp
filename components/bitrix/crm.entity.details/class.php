@@ -255,18 +255,12 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 
 	protected function getRestrictionsScript(): string
 	{
-		$restriction = null;
+		$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getItemDetailPageRestriction(
+			$this->entityTypeID,
+			$this->entityID
+		);
 
-		switch ($this->entityTypeID)
-		{
-			case CCrmOwnerType::Lead:
-				$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction();
-				break;
-			case CCrmOwnerType::Quote:
-				$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getQuotesRestriction();
-				break;
-		}
-		if ($restriction && !$restriction->hasPermission())
+		if (!$restriction->hasPermission())
 		{
 			return $restriction->prepareInfoHelperScript();
 		}

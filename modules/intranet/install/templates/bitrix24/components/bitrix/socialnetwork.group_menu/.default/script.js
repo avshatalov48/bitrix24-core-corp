@@ -36,7 +36,7 @@
 		this.favoritesValue = !!params.favoritesValue;
 		this.canInitiate = !!params.canInitiate;
 		this.canModify = !!params.canModify;
-		this.canProcessRequestsIn = !!params.cacanProcessRequestsInnModify;
+		this.canProcessRequestsIn = !!params.canProcessRequestsIn;
 		this.canPickTheme = !!params.canPickTheme;
 		this.pageId = params.pageId;
 
@@ -46,6 +46,7 @@
 		}
 
 		this.editFeaturesAllowed = (typeof params.editFeaturesAllowed != 'undefined' ? !!params.editFeaturesAllowed : true);
+		this.copyFeatureAllowed = (typeof params.copyFeatureAllowed != 'undefined' ? !!params.copyFeatureAllowed : true);
 
 		var f = BX.delegate(function(eventData) {
 
@@ -287,6 +288,7 @@
 			isProject: this.isProject,
 			isOpened: this.groupOpened,
 			editFeaturesAllowed: this.editFeaturesAllowed,
+			copyFeatureAllowed: this.copyFeatureAllowed,
 			canPickTheme: this.canPickTheme,
 			perms: {
 				canInitiate: this.canInitiate,

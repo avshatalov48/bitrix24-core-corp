@@ -198,18 +198,16 @@ class Transferor
 	 */
 	public static function createCallerId($targetType, $targetId)
 	{
-		if($targetType == Target::USER || $targetType == Target::QUEUE)
+		if($targetType === Target::USER || $targetType === Target::QUEUE)
 		{
 			return $targetType . ':' . $targetId;
 		}
-		else if($targetType == Target::PSTN)
+		if($targetType === Target::PSTN)
 		{
-			return \CVoxImplantPhone::Normalize($targetId);
+			return \CVoxImplantPhone::stripLetters($targetId);
 		}
-		else
-		{
-			throw new ArgumentException('Unknown target type ' . $targetType);
-		}
+
+		throw new ArgumentException('Unknown target type ' . $targetType);
 	}
 
 	/**

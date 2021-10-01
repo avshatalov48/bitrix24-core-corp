@@ -31,7 +31,6 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 	/**
 	 * Check the connection of the necessary modules.
 	 * @return bool
-	 * @throws LoaderException
 	 */
 	protected function checkModules(): bool
 	{
@@ -61,10 +60,6 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 
 	/**
 	 * @return array
-	 * @throws LoaderException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	private function showList()
 	{
@@ -196,11 +191,7 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 			{
 				$this->arResult['ACTIVE_LINE'] = $config;
 
-				$uri = new Uri(str_replace('#ID#', $config['ID'], $this->arResult['PATH_TO_EDIT']));
-				$uri->addParams(['back_url' => urlencode(
-					str_replace(['#ID#', '#LINE#'], [$this->arResult['ID'], $config['ID']], $this->arResult['PATH_TO_CONNECTOR_LINE']))
-				]);
-				$this->arResult['ACTIVE_LINE']['URL_EDIT'] = $uri->getUri();
+				$this->arResult['ACTIVE_LINE']['URL_EDIT'] = str_replace('#ID#', $config['ID'], $this->arResult['PATH_TO_EDIT']);
 
 				$this->arResult['QUEUE'] = $this->getQueue();
 			}
@@ -213,10 +204,6 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 
 	/**
 	 * @return array
-	 * @throws LoaderException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function getQueue(): array
 	{
@@ -273,13 +260,7 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 	}
 
 	/**
-	 * @return mixed|void
-	 * @throws LoaderException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return mixed|void|null
 	 */
 	public function executeComponent()
 	{
@@ -293,7 +274,7 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 		{
 			Connector::initIconCss();
 
-			$this->arResult['PUBLIC_PATH'] = Common::getPublicFolder();
+			$this->arResult['PUBLIC_PATH'] = Common::getContactCenterPublicFolder();
 
 			if(empty($this->arParams['connector']))
 			{
@@ -353,7 +334,7 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 					$this->arResult['NAME_SMALL'] = Connector::getNameConnectorReal($this->arResult['ID'], true);
 					$this->arResult['LANG_JS_SETTING'] = Component::getJsLangMessageSetting();
 
-					$this->arResult['PATH_TO_EDIT'] = $this->arResult['PUBLIC_PATH'] . 'list/edit.php?ID=#ID#';
+					$this->arResult['PATH_TO_EDIT'] = $this->arResult['PUBLIC_PATH'] . 'lines_edit/?ID=#ID#';
 					$ratingRequest = Limit::canUseVoteClient() ? 'Y' : 'N';
 
 					if(empty($this->arParams['connector']))

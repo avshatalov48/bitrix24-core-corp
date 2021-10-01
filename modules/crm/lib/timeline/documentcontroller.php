@@ -6,28 +6,14 @@ use Bitrix\Main\Loader;
 
 final class DocumentController extends EntityController
 {
-	/** @var DocumentController|null */
-	private static $instance;
 	protected $processedDeletedEntryIds = [];
 
-	private function __construct()
+	protected function __construct()
 	{
 	}
 
-	private function __clone()
+	protected function __clone()
 	{
-	}
-
-	/**
-	 * @return DocumentController
-	 */
-	public static function getInstance(): DocumentController
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new static();
-		}
-		return self::$instance;
 	}
 
 	public function prepareHistoryDataModel(array $data, array $options = null)

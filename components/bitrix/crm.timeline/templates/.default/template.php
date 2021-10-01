@@ -25,6 +25,7 @@ Bitrix\Main\UI\Extension::load(
 		'crm.delivery.taxi',
 		'crm.timeline',
 		'sidepanel',
+		'crm.restriction.bitrix24'
 	]
 );
 
@@ -211,14 +212,18 @@ if(!empty($arResult['ERRORS']))
 					] + $baseMenuItem;
 				}
 
-				if ($arResult["ENABLE_VISIT"])
+				if ($arResult['ENABLE_VISIT'])
 				{
 					$menuItems[] = [
-						"ID" => "visit",
-						"TEXT" => GetMessage('CRM_TIMELINE_VISIT'),
-						"TITLE" => GetMessage('CRM_TIMELINE_VISIT'),
-					] + $baseMenuItem;
+							'ID' => 'visit',
+							'TEXT' => GetMessage('CRM_TIMELINE_VISIT'),
+							'TITLE' => GetMessage('CRM_TIMELINE_VISIT'),
+						] + ($arResult['IS_VISIT_RESTRICTED'] ? [
+							'CLASS' => 'crm-tariff-lock-ahead',
+							'CLASS_SUBMENU_ITEM' => 'crm-tariff-lock-ahead'
+						] : [] ) + $baseMenuItem;
 				}
+
 				foreach($arResult['ADDITIONAL_TABS'] as $tab)
 				{
 					$menuItems[] = [
@@ -301,7 +306,7 @@ if(!empty($arResult['ERRORS']))
 						</div>
 					</div>
 					<div class="crm-entity-stream-content-new-sms-btn-container">
-						<a href="<?=htmlspecialcharsbx($arResult['SMS_MANAGE_URL'])?>" target="_top" class="crm-entity-stream-content-new-sms-connect-link"><?=GetMessage("CRM_TIMELINE_SMS_MANAGE_URL")?></a>
+						<a href="#" data-role="sender-selector" target="_top" class="crm-entity-stream-content-new-sms-connect-link"><?=GetMessage("CRM_TIMELINE_SMS_MANAGE_URL")?></a>
 						<?php if($arResult['ENABLE_SALESCENTER'])
 						{?>
 							<div class="crm-entity-stream-content-sms-salescenter-container-absolute" data-role="salescenter-starter">
@@ -498,6 +503,9 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 
 			BX.CrmHistoryItemMark.messages =
 			{
+				entitySuccessMark: "<?= GetMessageJS('CRM_TIMELINE_MARK_ENTITY_SUCCESS_MARK') ?>",
+				entityFailedMark: "<?= GetMessageJS('CRM_TIMELINE_MARK_ENTITY_FAILED_MARK') ?>",
+				entityContentTemplate: "<?= GetMessageJS('CRM_TIMELINE_MARK_ENTITY_CONTENT_TEMPLATE') ?>",
 				dealSuccessMark: "<?=GetMessageJS('CRM_TIMELINE_DEAL_SUCCESS_MARK')?>",
 				dealFailedMark: "<?=GetMessageJS('CRM_TIMELINE_DEAL_FAILED_MARK')?>",
 				orderSuccessMark: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SUCCESS_MARK')?>",
@@ -539,9 +547,14 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 
 			BX.CrmHistoryItemLink.messages =
 			{
-				lead: "<?=GetMessageJS('CRM_TIMELINE_LEAD_LINK')?>",
-				deal: "<?=GetMessageJS('CRM_TIMELINE_DEAL_LINK')?>",
-				order: "<?=GetMessageJS('CRM_TIMELINE_ORDER_LINK')?>"
+				title: "<?= GetMessageJS('CRM_TIMELINE_LINK_TITLE') ?>",
+				contentTemplate: "<?= GetMessageJS('CRM_TIMELINE_LINK_CONTENT_TEMPLATE') ?>"
+			};
+
+			BX.CrmHistoryItemUnlink.messages =
+			{
+				title: "<?= GetMessageJS('CRM_TIMELINE_UNLINK_TITLE') ?>",
+				contentTemplate: "<?= GetMessageJS('CRM_TIMELINE_LINK_CONTENT_TEMPLATE') ?>"
 			};
 
 			BX.CrmTimelineCallAction.messages =

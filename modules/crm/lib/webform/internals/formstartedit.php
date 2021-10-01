@@ -14,6 +14,22 @@ use Bitrix\Crm\WebForm\Helper;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class FormStartEditTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_FormStartEdit_Query query()
+ * @method static EO_FormStartEdit_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_FormStartEdit_Result getById($id)
+ * @method static EO_FormStartEdit_Result getList(array $parameters = array())
+ * @method static EO_FormStartEdit_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormStartEdit createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormStartEdit_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormStartEdit wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormStartEdit_Collection wakeUpCollection($rows)
+ */
 class FormStartEditTable extends Entity\DataManager
 {
 	public static function getTableName()

@@ -8,6 +8,22 @@ use Bitrix\Main\Entity\DataManager;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class GuestTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Guest_Query query()
+ * @method static EO_Guest_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Guest_Result getById($id)
+ * @method static EO_Guest_Result getList(array $parameters = array())
+ * @method static EO_Guest_Entity getEntity()
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Guest createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Guest_Collection createCollection()
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Guest wakeUpObject($row)
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Guest_Collection wakeUpCollection($rows)
+ */
 class GuestTable extends DataManager
 {
 	/**

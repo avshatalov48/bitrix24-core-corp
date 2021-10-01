@@ -58,7 +58,7 @@ class Task
 		$usersExceptAuditors = array_unique(
 			array_merge(
 				[$fields['CREATED_BY'], $fields['RESPONSIBLE_ID']],
-				(array)$fields['ACCOMPLICE']
+				(array)$fields['ACCOMPLICES']
 			)
 		);
 

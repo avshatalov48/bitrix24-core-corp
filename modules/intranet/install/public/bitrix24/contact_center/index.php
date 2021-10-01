@@ -9,6 +9,7 @@ $APPLICATION->SetTitle(\Bitrix\Main\Localization\Loc::getMessage('TITLE'));
 	'',
 	[
 		'COMPONENT_BASE_DIR' => '/contact_center/',
+		'SECTION_ACTIVE' => 'contact_center'
 	],
 	false
 );?>

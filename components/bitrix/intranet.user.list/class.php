@@ -352,7 +352,7 @@ class CIntranetUserListComponent extends UserList
 		];
 
 		if (
-			\Bitrix\Main\Loader::includeModule('extranet')
+			Loader::includeModule('extranet')
 			&& \CExtranet::isExtranetSite()
 		)
 		{
@@ -1428,6 +1428,19 @@ class CIntranetUserListComponent extends UserList
 				'WHITE_LIST' => $this->arParams['USER_PROPERTY_LIST']
 			]
 		);
+
+		$result['EXCEL_EXPORT_LIMITED'] = (
+			Loader::includeModule('bitrix24')
+			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('intranet_user_export_excel')
+		);
+
+		if (
+			$result['EXCEL_EXPORT_LIMITED']
+			&& $this->arParams['EXPORT_TYPE'] === 'excel'
+		)
+		{
+			$this->arParams['EXPORT_MODE'] = 'N';
+		}
 
 		$result['EXTRANET_SITE'] = ($this->extranetSite() ? 'Y' : 'N');
 		$result['GRID_ID'] = $this->gridId;

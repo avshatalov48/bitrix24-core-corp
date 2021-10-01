@@ -196,10 +196,15 @@ abstract class EntityConversionWizard
 
 	public function prepareEditorContextParams($targetEntityTypeID)
 	{
-		$result = array();
-
 		$entityTypeID = $this->getEntityTypeID();
 		$entityID = $this->getEntityID();
+
+		$result = [
+			'CONVERSION_SOURCE' => [
+				'entityTypeId' => $entityTypeID,
+				'entityId' => $entityID,
+			],
+		];
 
 		if($entityTypeID === \CCrmOwnerType::Lead)
 		{

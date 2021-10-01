@@ -19,9 +19,9 @@ $voximplant_default_option = array(
 	"notice_old_config_office_pbx" => "N",
 	"interface_chat_action" => "ADD",
 	"default_group_id" => 1,
-	"ignore_maximum_numbers" => "Y",
-	"ignore_maximum_groups" => "Y",
-	"ignore_maximum_group_members" => "Y",
+	"ignore_maximum_numbers" => "N",
+	"ignore_maximum_groups" => "N",
+	"ignore_maximum_group_members" => "N",
 	"combination_intercept_group" => "*11"
 );
 ?>

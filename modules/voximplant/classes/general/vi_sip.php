@@ -531,7 +531,7 @@ class CVoxImplantSip
 			"#SIP_LOGIN#" => $connectionFields["SIP_LOGIN"]
 		]);
 	}
-	
+
 	public static function isActive()
 	{
 		return CVoxImplantConfig::GetModeStatus(CVoxImplantConfig::MODE_SIP);
@@ -576,5 +576,105 @@ class CVoxImplantSip
 		}
 		return '';
 	}
+
+	public function GetSipRegistrationList()
+	{
+		$viHttp = new CVoxImplantHttp();
+		$result = $viHttp->GetSipRegistrationList();
+		if (!$result)
+		{
+			$this->error = new CVoxImplantError(__METHOD__, 'REG_ID_NOT_FOUND', GetMessage('VI_SIP_CONFIG_NOT_FOUND'));
+			return false;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $parameters
+	 * <li> array parameters
+	 */
+	public function updateSipRegisrations($parameters = [])
+	{
+		if(isset($parameters['sipRegistrations']))
+		{
+			$sipRegistrations = $parameters['sipRegistrations'];
+		}
+		else
+		{
+			$rowResponse = $this->GetSipRegistrationList();
+			$sipRegistrations = $rowResponse->result;
+		}
+
+		if(!is_array($sipRegistrations))
+		{
+			return false;
+		}
+		foreach ($sipRegistrations as $sipRegistration)
+		{
+			$this->updateSipRegistrationStatus((array) $sipRegistration);
+		}
+	}
+
+	public function updateSipRegistrationStatus(array $sipRegistration)
+	{
+		$sipData = $this->getSipData($sipRegistration);
+
+		if(!isset($sipRegistration['status_code']))
+		{
+			$sipRegistration['status_code'] = 200;
+		}
+
+		if($sipData && (int)$sipData['REGISTRATION_STATUS_CODE'] !== $sipRegistration['status_code'])
+		{
+			\Bitrix\Voximplant\SipStatusInformer::notifyStatusUpdate(
+				$sipRegistration['successful'],
+				[
+					'#PROXY#' => $sipData['SERVER'],
+					'#LOGIN#' => $sipData['LOGIN'],
+					'#STATUS_CODE#' => $sipRegistration['status_code'],
+					'#ERROR_MESSAGE#' => $sipRegistration['error_message'],
+					'#PHONE_NAME#' => $sipData['PHONE_NAME'],
+					'#PHONE_ID#' => $sipData['PHONE_ID']
+				]
+			);
+
+			\Bitrix\Voximplant\SipTable::update(
+				$sipData['ID'],
+				[
+					'REGISTRATION_STATUS_CODE' => $sipRegistration['status_code'],
+					'REGISTRATION_ERROR_MESSAGE' => $sipRegistration['error_message']
+				]
+			);
+		}
+
+	}
+
+
+	public function getSipData($sipRegistration)
+	{
+		$row = \Bitrix\Voximplant\SipTable::getList([
+			'select' => [
+				'ID',
+				'REGISTRATION_STATUS_CODE',
+				'LOGIN',
+				'SERVER',
+				'PHONE_NAME' => 'CONFIG.PHONE_NAME',
+				'PHONE_ID' => 'CONFIG_ID'
+			],
+			'filter' => [
+				'=REG_ID' => $sipRegistration['sip_registration_id'],
+			],
+			'limit' => 1
+		])->fetch();
+
+		if(!$row)
+		{
+			return false;
+		}
+
+		return $row;
+	}
+
 }
 ?>

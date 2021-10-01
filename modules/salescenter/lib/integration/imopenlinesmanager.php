@@ -918,6 +918,11 @@ class ImOpenLinesManager extends Base
 		return $message;
 	}
 
+	public function getImMessagePreview()
+	{
+		return Loc::getMessage('SALESCENTER_IMOPMANAGER_PAYMENT_MESSAGE_PREVIEW');
+	}
+
 	/**
 	 * @param Payment $payment
 	 * @param $publicUrl

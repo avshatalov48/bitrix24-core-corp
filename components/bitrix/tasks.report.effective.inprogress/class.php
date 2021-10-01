@@ -11,6 +11,7 @@ use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -86,8 +87,12 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 	protected function getData(): void
 	{
 		$taskLimitExceeded = TaskLimit::isLimitExceeded();
+		$kpiLimitExceeded = KpiLimit::isLimitExceeded();
 
-		if (!$taskLimitExceeded)
+		if (
+			!$taskLimitExceeded
+			&& !$kpiLimitExceeded
+		)
 		{
 			$this->getTasksList();
 		}
@@ -103,6 +108,7 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 
 		$this->arParams['HEADERS'] = $this->getGridHeaders();
 		$this->arResult['TASK_LIMIT_EXCEEDED'] = $taskLimitExceeded;
+		$this->arResult['KPI_LIMIT_EXCEEDED'] = $kpiLimitExceeded;
 	}
 
 	/**

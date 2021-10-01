@@ -285,7 +285,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 				'default' => true,
 			]
 		];
-		if (Disk\Configuration::isPossibleToShowExternalLinkControl())
+		if (Disk\Configuration::isEnabledManualExternalLink())
 		{
 			$result[] = [
 				'id' => 'EXTERNAL_LINK',

@@ -203,11 +203,25 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		}
 		if($arResult['PERM_QUOTE'])
 		{
-			$arEntitySubMenuItems[] = array(
+			$quoteAction = [
 				'TITLE' => GetMessage('CRM_COMPANY_ADD_QUOTE_TITLE'),
 				'TEXT' => GetMessage('CRM_COMPANY_ADD_QUOTE_SHORT'),
 				'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arCompany['PATH_TO_QUOTE_ADD'])."');"
-			);
+			];
+			if (\Bitrix\Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled())
+			{
+				unset($quoteAction['ONCLICK']);
+				$link = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+					\CCrmOwnerType::Quote,
+					0,
+					null
+				);
+				$link->addParams([
+					'company_id' => $arCompany['ID'],
+				]);
+				$quoteAction['HREF'] = $link;
+			}
+			$arEntitySubMenuItems[] = $quoteAction;
 		}
 		if($arResult['PERM_INVOICE'] && IsModuleInstalled('sale'))
 		{

@@ -147,7 +147,7 @@ BX.namespace('Tasks.Component');
 						scope: this.scope(),
 						data: this.option('data'),
 						preRendered: true,
-						taskLimitExceeded: this.option('taskLimitExceeded')
+						templateSubtaskLimitExceeded: this.option('templateSubtaskLimitExceeded')
 					});
 				});
 			}
@@ -169,7 +169,7 @@ BX.namespace('Tasks.Component');
 		methods: {
 			openAddForm: function()
 			{
-				if (this.option('taskLimitExceeded'))
+				if (this.option('templateSubtaskLimitExceeded'))
 				{
 					BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');
 					return;

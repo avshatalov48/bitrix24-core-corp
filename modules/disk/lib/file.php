@@ -3,6 +3,7 @@
 namespace Bitrix\Disk;
 
 use Bitrix\Disk;
+use Bitrix\Disk\Document\Online\UserInfoToken;
 use Bitrix\Disk\Internals\AttachedObjectTable;
 use Bitrix\Disk\Internals\EditSessionTable;
 use Bitrix\Disk\Internals\Error\Error;
@@ -638,6 +639,21 @@ class File extends BaseObject
 			$driver->getIndexManager()->updateFileContent($this);
 		}
 
+		$objectEvent = $this->makeObjectEvent(
+			'contentUpdated',
+			[
+				'object' => [
+					'id' => (int)$this->getId(),
+					'name' => $this->getName(),
+					'updatedBy' => (int)$this->getUpdatedBy(),
+				],
+				'updatedBy' => [
+					'infoToken' => UserInfoToken::generateTimeLimitedToken($this->getUpdatedBy(), $this->getId()),
+				]
+			]
+		);
+		$objectEvent->sendToObjectChannel();
+
 		//todo little hack...We don't synchronize file in folder with uploaded files. And we have not to send notify by pull
 		if($this->parent === null || $this->parent && $this->parent->getCode() !== Folder::CODE_FOR_UPLOADED_FILES)
 		{
@@ -1186,11 +1202,11 @@ class File extends BaseObject
 	 */
 	public function markDeleted($deletedBy)
 	{
+		$alreadyDeleted = $this->isDeleted();
 		$status = $this->markDeletedInternal($deletedBy);
-		if ($status)
+		if ($status && !$alreadyDeleted)
 		{
 			$notifyManager = Driver::getInstance()->getDeletionNotifyManager();
-			$notifyManager->put($this, $deletedBy);
 			$notifyManager->send();
 		}
 

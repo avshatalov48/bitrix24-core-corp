@@ -18,5 +18,6 @@ $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_PAYMENT_TEXT"] = "Оплата на сум
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_PAYMENT_ADD_LINK"] = "Оплата № #PAYMENT_ID# от #BILL_DATE#";
 $MESS["SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_TOP"] = "Информация о вашей оплате на сумму #SUM# от #DATE#";
 $MESS["SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_BOTTOM"] = "Оплата один клик. Будут вопросы - пишите нам в чат!";
+$MESS["SALESCENTER_IMOPMANAGER_PAYMENT_MESSAGE_PREVIEW"] = "Информация о вашей оплате. Оплата один клик. Будут вопросы - пишите нам в чат! #LINK#";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_DEAL_ADD_TEXT"] = "Создана сделка на сумму #SUM#";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_DEAL_ADD_LINK"] = "Сделка № #DEAL_ID# от #DEAL_DATE#";

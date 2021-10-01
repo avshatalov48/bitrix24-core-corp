@@ -759,7 +759,7 @@ function ShowIntranetButtonItemPageInterface($type, $list, $mode, $target = 'ITE
 					<div class="crm-button-edit-channel-title">
 						<span class="crm-button-edit-channel-title-item">
 							<span><?=Loc::getMessage('CRM_WEBFORM_EDIT_SITE_SCRIPT')?></span>
-							<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("CRM_WEBFORM_EDIT_SITE_SCRIPT_TIP"))?>"></span>
+							<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("CRM_WEBFORM_EDIT_SITE_SCRIPT_TIP", ['&lt;/body&gt;' => '</body>']))?>"></span>
 						</span>
 					</div>
 					<div class="crm-button-edit-channel-content">

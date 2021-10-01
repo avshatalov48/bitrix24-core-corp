@@ -15,6 +15,19 @@ Loc::loadMessages(__FILE__);
 /**
  * Class FieldDepGroupTable
  * @package Bitrix\Crm\WebForm\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_FieldDepGroup_Query query()
+ * @method static EO_FieldDepGroup_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_FieldDepGroup_Result getById($id)
+ * @method static EO_FieldDepGroup_Result getList(array $parameters = array())
+ * @method static EO_FieldDepGroup_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FieldDepGroup createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FieldDepGroup_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FieldDepGroup wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FieldDepGroup_Collection wakeUpCollection($rows)
  */
 class FieldDepGroupTable extends Entity\DataManager
 {

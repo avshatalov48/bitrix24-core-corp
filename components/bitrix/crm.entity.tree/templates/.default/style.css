@@ -354,7 +354,7 @@
 	transition: .3s;
 }
 
-.crm-doc-drop-open .crm-doc-drop-link-number {
+.crm-doc-drop-item-open .crm-doc-drop-link-number {
 	opacity: 0;
 	-webkit-transform: scale3d(.4, .4, 1);
 	transform: scale3d(.4, .4, 1);
@@ -419,6 +419,10 @@
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
+}
+
+.crm-doc-droplist.one-item .crm-doc-droplist-item {
+	margin: 5px 0 5px 0;
 }
 
 .crm-doc-droplist-item:last-child {

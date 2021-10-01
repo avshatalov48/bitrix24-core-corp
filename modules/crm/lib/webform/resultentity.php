@@ -58,6 +58,7 @@ class ResultEntity
 	protected $activityFields = array();
 	protected $invoiceSettings = array();
 	protected $isDealDuplicateControlEnabled = false;
+	protected $isDynamicDuplicateControlEnabled = false;
 
 	protected $isCallback = false;
 	protected $callbackPhone = null;
@@ -109,6 +110,8 @@ class ResultEntity
 			return null;
 		}
 
+		$mergerOptions = ['ENABLE_UPLOAD' => true, 'ENABLE_UPLOAD_CHECK' => false];
+
 		switch ($entityTypeName)
 		{
 			case \CCrmOwnerType::CompanyName:
@@ -120,10 +123,10 @@ class ResultEntity
 				break;
 
 			case \CCrmOwnerType::DealName:
-				$rowId = $this->isDealDuplicateControlEnabled ?
-					$this->selector->getDealId()
-					:
-					null;
+				$rowId = $this->isDealDuplicateControlEnabled
+					? $this->selector->getDealId()
+					: null
+				;
 				break;
 
 			case \CCrmOwnerType::LeadName:
@@ -148,7 +151,85 @@ class ResultEntity
 				break;
 
 			default:
-				return null;
+				$entityTypeId = \CCrmOwnerType::resolveID($entityTypeName);
+				if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+				{
+					return null;
+				}
+
+				$rowId = $this->isDynamicDuplicateControlEnabled
+					? $this->selector->getDynamicId()
+					: null
+				;
+				if (!$rowId)
+				{
+					return null;
+				}
+
+				$dynamicFactory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+				$dynamicItem = $dynamicFactory->getItem($rowId);
+				if (!$dynamicItem)
+				{
+					return null;
+				}
+
+				switch($this->duplicateMode)
+				{
+					case self::DUPLICATE_CONTROL_MODE_MERGE:
+						$entityFields = $dynamicItem->getData();
+						foreach ($entityFields as $key => $value)
+						{
+							if ($value === [] || $value === null || $value === '' || $value === false)
+							{
+								unset($entityFields[$key]);
+							}
+						}
+						break;
+
+					case self::DUPLICATE_CONTROL_MODE_REPLACE:
+						$entityFields = [];
+						break;
+
+					default:
+						return $rowId;
+				}
+
+				$merger = new class($entityTypeId, $rowId, false) extends EntityMerger {
+					/** @var \Bitrix\Crm\Service\Factory */
+					public $dynamicFactory;
+					protected function getEntityFieldsInfo()
+					{
+						return $this->dynamicFactory->getFieldsInfo();
+					}
+
+					protected function getEntityUserFieldsInfo()
+					{
+						return $this->dynamicFactory->getUserFieldsInfo();
+					}
+
+					protected function getEntityFields($entityID, $roleID){}
+					protected function getEntityResponsibleID($entityID, $roleID){}
+					protected function checkEntityReadPermission($entityID,$userPermissions){}
+					protected function checkEntityUpdatePermission($entityID,$userPermissions){}
+					protected function checkEntityDeletePermission($entityID,$userPermissions){}
+					protected function updateEntity($entityID,array &$fields,$roleID,array $options = array()){}
+					protected function deleteEntity($entityID,$roleID,array $options = array()){}
+				};
+				$merger->dynamicFactory = $dynamicFactory;
+				$merger->mergeFields($fields, $entityFields, false, $mergerOptions);
+
+				$dynamicItem->setFromCompatibleData($entityFields);
+				$dynamicOperation = $dynamicFactory->getUpdateOperation(
+					$dynamicItem,
+					(new Crm\Service\Context())->setUserId($this->assignedById ?: 1)
+				);
+				$dynamicResult = $dynamicOperation
+					->disableCheckAccess()
+					->disableCheckFields()
+					->launch();
+				$dynamicResult->isSuccess();
+
+				return $rowId;
 		}
 
 		if (!$rowId)
@@ -178,7 +259,6 @@ class ResultEntity
 
 		/** @var  $merger \Bitrix\Crm\Merger\EntityMerger */
 		$mergerClass = $entity['DUPLICATE_CHECK']['MERGER_CLASS_NAME'];
-		$mergerOptions = ['ENABLE_UPLOAD' => true, 'ENABLE_UPLOAD_CHECK' => false];
 		switch($this->duplicateMode)
 		{
 			case self::DUPLICATE_CONTROL_MODE_MERGE:
@@ -196,7 +276,7 @@ class ResultEntity
 				}
 				foreach ($entityFields as $key => $value)
 				{
-					if ($value === null || $value === '' || $value === false)
+					if ($value === [] || $value === null || $value === '' || $value === false)
 					{
 						unset($entityFields[$key]);
 					}
@@ -657,24 +737,14 @@ class ResultEntity
 			$params['FIELDS']['CATEGORY_ID'] = $this->formData['FORM_SETTINGS']['DEAL_CATEGORY'];
 		}
 
-		if(is_array($this->formData['FORM_SETTINGS']) && isset($this->formData['FORM_SETTINGS']['DEAL_DC_ENABLED']))
-		{
-			$this->isDealDuplicateControlEnabled = $this->formData['FORM_SETTINGS']['DEAL_DC_ENABLED'] === 'Y';
-		}
+		$this->isDealDuplicateControlEnabled = ($this->formData['FORM_SETTINGS']['DEAL_DC_ENABLED'] ?? 'N') === 'Y';
 
 		$params['SET_PRODUCTS'] = true;
 		$this->dealId = $this->addByEntityName(\CCrmOwnerType::DealName, $params);
 
 		if ($this->dealId)
 		{
-/*			if ($this->isCallback)
-			{
-				CallBackWebFormTracker::getInstance()->registerDeal($this->dealId);
-			}
-			else
-*/			{
-				WebFormTracker::getInstance()->registerDeal($this->dealId, array('ORIGIN_ID' => $this->formId));
-			}
+			WebFormTracker::getInstance()->registerDeal($this->dealId, array('ORIGIN_ID' => $this->formId));
 		}
 
 		if($dealParams['ADD_INVOICE'])
@@ -691,14 +761,7 @@ class ResultEntity
 
 		if ($this->leadId)
 		{
-/*			if ($this->isCallback)
-			{
-				CallBackWebFormTracker::getInstance()->registerLead($this->leadId);
-			}
-			else
-*/			{
-				WebFormTracker::getInstance()->registerLead($this->leadId, array('ORIGIN_ID' => $this->formId));
-			}
+			WebFormTracker::getInstance()->registerLead($this->leadId, array('ORIGIN_ID' => $this->formId));
 		}
 
 		if($leadParams['ADD_INVOICE'])
@@ -794,6 +857,8 @@ class ResultEntity
 				$params['FIELDS']['CONTACT_ID'] = $this->contactId;
 			}
 		}
+
+		$this->isDynamicDuplicateControlEnabled = ($this->formData['FORM_SETTINGS']['DYNAMIC_DC_ENABLED'] ?? 'N') === 'Y';
 
 		$params['SET_PRODUCTS'] = true;
 		$params['DYNAMIC_ENTITY'] = true;
@@ -1590,6 +1655,11 @@ class ResultEntity
 			->disableExclusionChecking();
 
 		$scheme = Entity::getSchemes($this->scheme);
+		if (!empty($scheme['DYNAMIC']) && !empty($scheme['MAIN_ENTITY']))
+		{
+			$selector->setDynamicTypeId($scheme['MAIN_ENTITY']);
+		}
+
 		foreach ($this->entities as $entity)
 		{
 			if (empty($entity['typeId']) || empty($entity['id']))

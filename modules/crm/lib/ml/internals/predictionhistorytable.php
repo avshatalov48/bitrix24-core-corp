@@ -12,6 +12,22 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class PredictionHistoryTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_PredictionHistory_Query query()
+ * @method static EO_PredictionHistory_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_PredictionHistory_Result getById($id)
+ * @method static EO_PredictionHistory_Result getList(array $parameters = array())
+ * @method static EO_PredictionHistory_Entity getEntity()
+ * @method static \Bitrix\Crm\Ml\Internals\EO_PredictionHistory createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Ml\Internals\EO_PredictionHistory_Collection createCollection()
+ * @method static \Bitrix\Crm\Ml\Internals\EO_PredictionHistory wakeUpObject($row)
+ * @method static \Bitrix\Crm\Ml\Internals\EO_PredictionHistory_Collection wakeUpCollection($rows)
+ */
 class PredictionHistoryTable extends DataManager
 {
 	public static function getTableName()

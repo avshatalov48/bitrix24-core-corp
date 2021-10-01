@@ -2,30 +2,14 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Timeline\TimelineEntry;
 
 Loc::loadMessages(__FILE__);
 
 class TaskController extends ActivityController
 {
-	//region Singleton
-	/** @var TaskController|null */
-	protected static $instance = null;
-	/**
-	 * @return TaskController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new TaskController();
-		}
-		return self::$instance;
-	}
-	//endregion
 	//region EntityController
 	public function onCreate($ownerID, array $params)
 	{

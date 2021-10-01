@@ -80,11 +80,6 @@ class Queue
 	 * @param int $limitTime
 	 * @param int $limit
 	 * @param int $lineId
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function transferToNextSession($limitTime = 60, $limit = 0, $lineId = 0)
 	{
@@ -582,10 +577,8 @@ class Queue
 	 *
 	 * @param $sessionId
 	 * @param string $reasonReturn
-	 *
-	 * @throws \Bitrix\Main\ObjectException
 	 */
-	public static function returnSessionToQueue($sessionId, $reasonReturn = self::REASON_DEFAULT)
+	public static function returnSessionToQueue($sessionId, string $reasonReturn = self::REASON_DEFAULT): void
 	{
 		SessionCheckTable::update(
 			$sessionId,

@@ -22,6 +22,7 @@ global $APPLICATION;
 Extension::load([
 	'disk',
 	'ui.viewer',
+	'sidepanel',
 	'disk.viewer.document-item',
 ]);
 

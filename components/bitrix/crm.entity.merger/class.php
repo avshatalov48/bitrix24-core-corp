@@ -53,6 +53,19 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 		$this->entityIDs = $this->arResult['ENTITY_IDS'] = isset($this->arParams['ENTITY_IDS']) && is_array($this->arParams['ENTITY_IDS'])
 			? $this->arParams['ENTITY_IDS'] : array();
 
+		if (!empty($this->entityIDs) && $this->entityTypeID === \CCrmOwnerType::Deal)
+		{
+			$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getWebFormResultsRestriction();
+			if (!$restriction->hasPermission())
+			{
+				$restrictedItemIds = $restriction->filterRestrictedItemIds(
+					$this->entityTypeID,
+					$this->entityIDs
+				);
+				$this->entityIDs = array_diff($this->entityIDs, $restrictedItemIds);
+			}
+		}
+
 		$this->arResult['PATH_TO_EDITOR'] = isset($this->arParams['PATH_TO_EDITOR'])
 			? $this->arParams['PATH_TO_EDITOR'] : '';
 

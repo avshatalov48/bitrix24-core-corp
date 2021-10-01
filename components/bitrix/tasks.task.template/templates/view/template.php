@@ -16,6 +16,8 @@ $arParams =& $helper->getComponent()->arParams;
 /** @var Template $template */
 $template = $arResult['ITEM'];
 $taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
+$templateSubtaskLimitExceeded = $arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'];
+$templateTaskRecurrentLimitExceeded = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
 
 $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
 ?>
@@ -66,8 +68,8 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 				</a><?php
 			}
 
-			$buttonIcon = ($taskLimitExceeded ? 'ui-btn-icon-lock' : 'ui-btn-icon-add');
-			$href = ($taskLimitExceeded ? '' : htmlspecialcharsbx($arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB']));
+			$buttonIcon = (($taskLimitExceeded || $templateSubtaskLimitExceeded) ? 'ui-btn-icon-lock' : 'ui-btn-icon-add');
+			$href = (($taskLimitExceeded || $templateSubtaskLimitExceeded) ? '' : htmlspecialcharsbx($arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB']));
 			?>
 			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting" id="templateViewPopupMenuOptions"></button>
 			<?if (!$helper->checkHasFatals() && \Bitrix\Tasks\Access\TemplateAccessController::can(User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE)):?>
@@ -94,7 +96,11 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 	$userFields = $arResult['TEMPLATE_DATA']['USER_FIELDS'];
 	$matchWorkTime = $template['MATCH_WORK_TIME'] == 'Y';
 
-	if ($taskLimitExceeded)
+	if (
+		$taskLimitExceeded
+		|| $templateSubtaskLimitExceeded
+		|| $templateTaskRecurrentLimitExceeded
+	)
 	{
 		$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 	}
@@ -223,65 +229,66 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 		</div>
 
 		<div class="task-detail-buttons">
-			<?
-			$links = [];
-			$links[] = array(
-				'CODE' => 'CREATE_BY',
-				'GROUP' => 'MORE',
-				'TITLE' => Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK'),
-				'TYPE' => 'link',
-				'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_CREATE_TASK'],
-				'ACTIVE' => $template['TPARAM_TYPE'] != 1,
-				'MENU_CLASS' => 'menu-popup-item-create',
-			);
-
-			$links[] = array(
-				'CODE' => 'CREATE_SUB',
-				'GROUP' => 'MORE',
-				'TITLE' => Loc::getMessage('TASKS_TEMPLATE_CREATE_SUB'),
-				'TYPE' => 'link',
-				'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB'],
-				'MENU_CLASS' => 'menu-popup-item-create',
-				'ACTIVE' => $canCreate
-			);
-
-			$links[] = array(
-				'CODE' => 'COPY',
-				'GROUP' => 'MORE',
-				'TITLE' => Loc::getMessage('TASKS_TEMPLATE_COPY'),
-				'TYPE' => 'link',
-				'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_COPY'],
-				'MENU_CLASS' => 'menu-popup-item-copy',
-				'ACTIVE' => $canCreate
-			);
-
-			$links[] = array(
-				'CODE' => 'DELETE',
-				'GROUP' => 'MORE',
-				'TITLE' => Loc::getMessage('TASKS_COMMON_DELETE'),
-				'ACTIVE' => $canDelete,
-				'MENU_CLASS' => 'menu-popup-item-delete',
-			);
-			$links[] = array(
-				'CODE' => 'UPDATE',
-				'ACTIVE' => $canUpdate,
-				'TITLE' => Loc::getMessage('TASKS_COMMON_EDIT'),
-				'TYPE' => 'link',
-				'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_EDIT'],
-				'KEEP_SLIDER'=>true
-			);
-
+			<?php
+			$buttonsScheme = [
+				[
+					'CODE' => 'CREATE_BY',
+					'GROUP' => 'MORE',
+					'TITLE' => Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK'),
+					'TYPE' => 'link',
+					'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_CREATE_TASK'],
+					'ACTIVE' => ((int)$template['TPARAM_TYPE'] !== 1),
+					'MENU_CLASS' => 'menu-popup-item-create',
+				],
+				[
+					'CODE' => 'CREATE_SUB',
+					'GROUP' => 'MORE',
+					'TITLE' => Loc::getMessage('TASKS_TEMPLATE_CREATE_SUB'),
+					'TYPE' => 'link',
+					'URL' => ($templateSubtaskLimitExceeded ? '' : $arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB']),
+					'MENU_CLASS' => (
+						$templateSubtaskLimitExceeded
+							? 'menu-popup-item-create tasks-tariff-lock'
+							: 'menu-popup-item-create'
+					),
+					'ACTIVE' => $canCreate,
+				],
+				[
+					'CODE' => 'COPY',
+					'GROUP' => 'MORE',
+					'TITLE' => Loc::getMessage('TASKS_TEMPLATE_COPY'),
+					'TYPE' => 'link',
+					'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_COPY'],
+					'MENU_CLASS' => 'menu-popup-item-copy',
+					'ACTIVE' => $canCreate,
+				],
+				[
+					'CODE' => 'DELETE',
+					'GROUP' => 'MORE',
+					'TITLE' => Loc::getMessage('TASKS_COMMON_DELETE'),
+					'MENU_CLASS' => 'menu-popup-item-delete',
+					'ACTIVE' => $canDelete,
+				],
+				[
+					'CODE' => 'UPDATE',
+					'TITLE' => Loc::getMessage('TASKS_COMMON_EDIT'),
+					'TYPE' => 'link',
+					'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_EDIT'],
+					'ACTIVE' => $canUpdate,
+					'KEEP_SLIDER' => true,
+				],
+			];
 			$APPLICATION->IncludeComponent(
-				"bitrix:tasks.widget.buttons",
-				"",
-				array(
-					'TEMPLATE_CONTROLLER_ID' => $helper->getId().'-buttons',
-					'SCHEME' => $links
-				),
+				'bitrix:tasks.widget.buttons',
+				'',
+				[
+					'TEMPLATE_CONTROLLER_ID' => $helper->getId() . '-buttons',
+					'SCHEME' => $buttonsScheme,
+					'TEMPLATE_SUBTASK_LIMIT_EXCEEDED' => $templateSubtaskLimitExceeded,
+				],
 				$helper->getComponent(),
-				array("HIDE_ICONS" => "Y")
+				['HIDE_ICONS' => 'Y']
 			);
-
 			?>
 
 		</div>
@@ -544,7 +551,7 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 							'ENTITY_ID' => $template->getId(),
 							'ENABLE_TEMPLATE_LINK' => 'N',
 							'TEMPLATE_CREATED_BY' => $template['CREATED_BY'],
-							'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+							'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded || $templateTaskRecurrentLimitExceeded,
 						),
 						$helper->getComponent(),
 						array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")

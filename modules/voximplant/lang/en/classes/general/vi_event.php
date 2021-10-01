@@ -6,3 +6,4 @@ $MESS["ERROR_PHONE_INNER_2"] = "Incorrect value entered in the 'Extension number
 $MESS["ERROR_PHONE_INNER_IN_USAGE"] = "Extension number is incorrect. This number is already in use by other user or group.";
 $MESS["ERROR_WORK_PHONE"] = "The \"Work Phone\" field is incorrect.";
 $MESS["VI_EVENTS_NOTIFICATIONS"] = "Telephony notifications";
+$MESS["VI_EVENTS_SIP_STATUS_NOTIFICATIONS"] = "Notify when SIP connection<br>status changes";

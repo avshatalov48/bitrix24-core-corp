@@ -10,6 +10,7 @@ export class Timeman
 		this.componentName = this.parent.componentName;
 		this.isTimemanAvailable = this.parent.isTimemanAvailable;
 		this.timemanNode = this.parent.timemanNode;
+		this.containerNode = this.parent.ustatOnlineContainerNode;
 
 		if (this.isTimemanAvailable && Type.isDomNode(this.timemanNode))
 		{
@@ -63,8 +64,8 @@ export class Timeman
 	{
 		if (data.hasOwnProperty("OPENED"))
 		{
-			let openedNode = document.querySelector('.js-ustat-online-timeman-opened');
-			if (BX.type.isDomNode(openedNode))
+			let openedNode = this.containerNode.querySelector('.js-ustat-online-timeman-opened');
+			if (Type.isDomNode(openedNode))
 			{
 				openedNode.innerHTML = data["OPENED"];
 			}
@@ -72,8 +73,8 @@ export class Timeman
 
 		if (data.hasOwnProperty("CLOSED"))
 		{
-			let closedNode = document.querySelector('.js-ustat-online-timeman-closed');
-			if (BX.type.isDomNode(closedNode))
+			let closedNode = this.containerNode.querySelector('.js-ustat-online-timeman-closed');
+			if (Type.isDomNode(closedNode))
 			{
 				closedNode.innerHTML = data["CLOSED"];
 			}
@@ -87,14 +88,12 @@ export class Timeman
 		BX.ajax.runComponentAction(this.componentName, "checkTimeman", {
 			signedParameters: this.signedParameters,
 			mode: 'class'
-		}).then(function (response) {
+		}).then((response) => {
 			if (response.data)
 			{
 				this.redrawTimeman(response.data);
 			}
-		}.bind(this), function (response) {
-
-		}.bind(this));
+		});
 	}
 
 	subscribePullEvent()

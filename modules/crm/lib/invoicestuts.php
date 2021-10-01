@@ -12,6 +12,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class InvoiceStUtsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_InvoiceStUts_Query query()
+ * @method static EO_InvoiceStUts_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_InvoiceStUts_Result getById($id)
+ * @method static EO_InvoiceStUts_Result getList(array $parameters = array())
+ * @method static EO_InvoiceStUts_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_InvoiceStUts createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_InvoiceStUts_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_InvoiceStUts wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_InvoiceStUts_Collection wakeUpCollection($rows)
+ */
 class InvoiceStUtsTable extends Entity\DataManager
 {
 	public static function getTableName()

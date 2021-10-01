@@ -1,6 +1,7 @@
 <?
 namespace Bitrix\Intranet\AI;
 
+use Bitrix\Bitrix24\Feature;
 use Bitrix\Bitrix24\Integration\AssistantApp;
 use Bitrix\Crm\Ml\Scoring;
 use Bitrix\FaceId\FaceId;
@@ -17,7 +18,10 @@ class Center
 		$app = null;
 		if (Loader::includeModule("bitrix24"))
 		{
-			$app = AssistantApp::getInfo();
+			if (Feature::isFeatureEnabled("ai_assistant"))
+			{
+				$app = AssistantApp::getInfo();
+			}
 		}
 		else if (Loader::includeModule("rest"))
 		{
@@ -41,9 +45,11 @@ class Center
 		}
 
 		$licensePrefix = null;
+		$featureEnabled = true;
 		if (Loader::includeModule("bitrix24"))
 		{
 			$licensePrefix = \CBitrix24::getLicensePrefix();
+			$featureEnabled = Feature::isFeatureEnabled("ai_assistant");
 		}
 
 		$items = [];
@@ -57,7 +63,9 @@ class Center
 				"iconClass" => "intranet-ai-center-icon intranet-ai-center-icon-alice",
 				"iconColor" => "#9426ff",
 				"selected" => $selected,
-				"data" => []
+				"data" => [
+					'featureEnabled' => $featureEnabled,
+				],
 			];
 		}
 
@@ -67,7 +75,9 @@ class Center
 			"iconClass" => "intranet-ai-center-icon intranet-ai-center-icon-google",
 			"iconColor" => "#ea4335",
 			"selected" => $selected,
-			"data" => []
+			"data" => [
+				'featureEnabled' => $featureEnabled,
+			],
 		];
 
 		return $items;

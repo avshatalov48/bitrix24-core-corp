@@ -30,8 +30,12 @@ $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').' no-background no-all-paddings pagetitle-toolbar-field-view ');
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
+$kpiLimitExceeded = $arResult['KPI_LIMIT_EXCEEDED'];
 
-if ($taskLimitExceeded)
+if (
+	$taskLimitExceeded
+	|| $kpiLimitExceeded
+)
 {
 	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 }
@@ -108,7 +112,7 @@ if ($isBitrix24Template)
 	$this->EndViewTarget();
 }
 ?>
-<div class="<?=($arResult['TASK_LIMIT_EXCEEDED']? 'task-report-locked' : '')?>" id="<?=$arResult['HELPER']->getScopeId()?>">
+<div class="<?=( ($arResult['TASK_LIMIT_EXCEEDED'] || $arResult['KPI_LIMIT_EXCEEDED']) ? 'task-report-locked' : '')?>" id="<?=$arResult['HELPER']->getScopeId()?>">
 	<div class="task-report-row task-report-row-50-50">
 		<div class="task-report-container">
 			<div class="task-report-container-title">
@@ -239,7 +243,11 @@ if (isset($arResult['FILTERS']) && is_array($arResult['FILTERS']))
 <script type="text/javascript">
 	BX.ready(function() {
 		var taskLimitExceeded = <?=Json::encode($taskLimitExceeded)?>;
-		if (taskLimitExceeded)
+		var kpiLimitExceeded = <?=Json::encode($kpiLimitExceeded)?>;
+		if (
+			taskLimitExceeded
+			|| kpiLimitExceeded
+		)
 		{
 			BX.UI.InfoHelper.show('limit_tasks_efficiency');
 		}

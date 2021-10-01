@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports,main_popup,ui_buttons,disk_users,main_core_events,disk_sharingLegacyPopup,disk_externalLink,pull_client,main_core) {
+(function (exports,main_popup,ui_buttons,disk_users,main_core_events,disk_sharingLegacyPopup,disk_externalLink,main_core,pull_client) {
 	'use strict';
 
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -69,7 +69,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        return;
 	      }
 
-	      pull_client.PULL.sendMessage([-1], 'disk', 'hiToDocument', {
+	      pull_client.PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'hiToDocument', {
 	        user: {
 	          id: this.context.currentUser.id,
 	          name: this.context.currentUser.name,
@@ -85,7 +85,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        return;
 	      }
 
-	      pull_client.PULL.sendMessage([-1], 'disk', 'welcomeToDocument', {
+	      pull_client.PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'welcomeToDocument', {
 	        user: {
 	          id: this.context.currentUser.id,
 	          name: this.context.currentUser.name,
@@ -100,7 +100,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        return;
 	      }
 
-	      pull_client.PULL.sendMessage([-1], 'disk', 'pingDocument', {
+	      pull_client.PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'pingDocument', {
 	        fromUserId: this.context.currentUser.id,
 	        infoToken: this.context.currentUser.infoToken
 	      });
@@ -212,10 +212,12 @@ this.BX.Disk = this.BX.Disk || {};
 	  function BaseCommandHandler(commandOptions) {
 	    babelHelpers.classCallCheck(this, BaseCommandHandler);
 	    babelHelpers.defineProperty(this, "options", null);
+	    babelHelpers.defineProperty(this, "onlyOffice", null);
 	    babelHelpers.defineProperty(this, "userManager", null);
 	    this.options = commandOptions;
 	    this.userManager = commandOptions.userManager;
 	    this.context = commandOptions.context;
+	    this.onlyOffice = commandOptions.onlyOffice;
 	  }
 
 	  babelHelpers.createClass(BaseCommandHandler, [{
@@ -343,9 +345,120 @@ this.BX.Disk = this.BX.Disk || {};
 	  return ClientCommandHandler;
 	}(BaseCommandHandler);
 
+	var SharingControlType = function SharingControlType() {
+	  babelHelpers.classCallCheck(this, SharingControlType);
+	};
+
+	babelHelpers.defineProperty(SharingControlType, "WITHOUT_EDIT", 'without-edit');
+	babelHelpers.defineProperty(SharingControlType, "WITH_CHANGE_RIGHTS", 'with-change-rights');
+	babelHelpers.defineProperty(SharingControlType, "WITH_SHARING", 'with-sharing');
+
+	var _templateObject, _templateObject2;
+
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _handleClickToRefreshEditor = /*#__PURE__*/new WeakSet();
+
+	var ServerCommandHandler = /*#__PURE__*/function (_BaseCommandHandler) {
+	  babelHelpers.inherits(ServerCommandHandler, _BaseCommandHandler);
+
+	  function ServerCommandHandler() {
+	    var _babelHelpers$getProt;
+
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, ServerCommandHandler);
+
+	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+
+	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(ServerCommandHandler)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+
+	    _handleClickToRefreshEditor.add(babelHelpers.assertThisInitialized(_this));
+
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(ServerCommandHandler, [{
+	    key: "getMap",
+	    value: function getMap() {
+	      return {
+	        onlyoffice: this.filterCurrentObject(this.handleSavedDocument.bind(this)),
+	        contentUpdated: this.filterCurrentObject(this.handleContentUpdated.bind(this))
+	      };
+	    }
+	  }, {
+	    key: "handleSavedDocument",
+	    value: function handleSavedDocument(data) {
+	      console.log('handleSavedDocument', data);
+
+	      if (data.documentSessionInfo.wasFinallySaved) {
+	        BX.UI.Notification.Center.notify({
+	          autoHide: false,
+	          content: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_SAVED_AFTER_IDLE')
+	        });
+	      }
+	    }
+	  }, {
+	    key: "handleContentUpdated",
+	    value: function handleContentUpdated(data) {
+	      var _this2 = this;
+
+	      console.log('handleContentUpdated', data);
+
+	      if (!data.object.updatedBy) {
+	        return;
+	      }
+
+	      if (this.onlyOffice.wasDocumentChanged()) {
+	        this.userManager.getUserInfo(data.object.updatedBy, data.updatedBy.infoToken).then(function (userData) {
+	          BX.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_SAVED_WHILE_EDITING', {
+	              '#NAME#': data.object.name,
+	              '#USER_NAME#': userData.name
+	            })
+	          });
+	        }, function () {});
+	      } else if (this.onlyOffice.isViewMode()) {
+	        this.userManager.getUserInfo(data.object.updatedBy, data.updatedBy.infoToken).then(function (userData) {
+	          var content = main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_VIEW_NON_ACTUAL_VERSION', {
+	            '#NAME#': data.object.name,
+	            '#USER_NAME#': userData.name
+	          });
+	          content = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"])), content);
+	          var refreshButton = content.querySelector('[data-refresh-btn]');
+
+	          if (refreshButton) {
+	            main_core.Tag.style(refreshButton)(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\tcursor: pointer;\n\t\t\t\t\t"])));
+	            refreshButton.addEventListener('click', _classPrivateMethodGet$1(_this2, _handleClickToRefreshEditor, _handleClickToRefreshEditor2).bind(_this2));
+	          }
+
+	          BX.UI.Notification.Center.notify({
+	            content: content
+	          });
+	        }, function () {});
+	      }
+	    }
+	  }]);
+	  return ServerCommandHandler;
+	}(BaseCommandHandler);
+
+	function _handleClickToRefreshEditor2() {
+	  this.onlyOffice.reloadView();
+	}
+
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var SECONDS_TO_MARK_AS_STILL_WORKING = 60;
+
+	var _trackWork = /*#__PURE__*/new WeakSet();
+
 	var OnlyOffice = /*#__PURE__*/function () {
 	  function OnlyOffice(editorOptions) {
 	    babelHelpers.classCallCheck(this, OnlyOffice);
+
+	    _trackWork.add(this);
+
 	    babelHelpers.defineProperty(this, "editor", null);
 	    babelHelpers.defineProperty(this, "editorJson", null);
 	    babelHelpers.defineProperty(this, "userBoxNode", null);
@@ -354,6 +467,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.defineProperty(this, "targetNode", null);
 	    babelHelpers.defineProperty(this, "documentSession", null);
 	    babelHelpers.defineProperty(this, "linkToEdit", null);
+	    babelHelpers.defineProperty(this, "linkToView", null);
 	    babelHelpers.defineProperty(this, "pullConfig", null);
 	    babelHelpers.defineProperty(this, "editButton", null);
 	    babelHelpers.defineProperty(this, "setupSharingButton", null);
@@ -366,6 +480,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    this.pullConfig = options.pullConfig;
 	    this.documentSession = options.documentSession;
 	    this.linkToEdit = options.linkToEdit;
+	    this.linkToView = options.linkToView;
 	    this.targetNode = options.targetNode;
 	    this.userBoxNode = options.userBoxNode;
 	    this.editorNode = options.editorNode;
@@ -379,6 +494,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      object: options.object,
 	      attachedObject: options.attachedObject
 	    };
+	    this.context.object.publicChannel = options.publicChannel;
 	    this.usersInDocument = new UserManager({
 	      context: this.context,
 	      userBoxNode: this.userBoxNode
@@ -394,9 +510,18 @@ this.BX.Disk = this.BX.Disk || {};
 
 	    this.initPull();
 	    this.bindEvents();
+
+	    if (this.isEditMode()) {
+	      this.registerTimerToTrackWork();
+	    }
 	  }
 
 	  babelHelpers.createClass(OnlyOffice, [{
+	    key: "registerTimerToTrackWork",
+	    value: function registerTimerToTrackWork() {
+	      setInterval(_classPrivateMethodGet$2(this, _trackWork, _trackWork2).bind(this), SECONDS_TO_MARK_AS_STILL_WORKING * 1000);
+	    }
+	  }, {
 	    key: "initPull",
 	    value: function initPull() {
 	      if (this.pullConfig) {
@@ -469,6 +594,12 @@ this.BX.Disk = this.BX.Disk || {};
 	      }
 
 	      pull_client.PULL.subscribe(new ClientCommandHandler({
+	        onlyOffice: this,
+	        context: this.context,
+	        userManager: this.usersInDocument
+	      }));
+	      pull_client.PULL.subscribe(new ServerCommandHandler({
+	        onlyOffice: this,
 	        context: this.context,
 	        userManager: this.usersInDocument
 	      }));
@@ -481,7 +612,8 @@ this.BX.Disk = this.BX.Disk || {};
 	        onDocumentStateChange: this.handleDocumentStateChange.bind(this),
 	        onDocumentReady: this.handleDocumentReady.bind(this),
 	        onMetaChange: this.handleMetaChange.bind(this),
-	        onInfo: this.handleInfo.bind(this) // onRequestClose: this.handleClose.bind(this),
+	        onInfo: this.handleInfo.bind(this),
+	        onError: this.handleError.bind(this) // onRequestClose: this.handleClose.bind(this),
 
 	      };
 
@@ -572,7 +704,12 @@ this.BX.Disk = this.BX.Disk || {};
 	    }
 	  }, {
 	    key: "handleClickSharingByExternalLink",
-	    value: function handleClickSharingByExternalLink() {
+	    value: function handleClickSharingByExternalLink(event, menuItem) {
+	      if (menuItem.dataset.shouldBlockExternalLinkFeature) {
+	        eval(menuItem.dataset.blockerExternalLinkFeature);
+	        return;
+	      }
+
 	      disk_externalLink.ExternalLink.showPopup(this.context.object.id);
 	    }
 	  }, {
@@ -612,7 +749,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleClose",
 	    value: function handleClose() {
-	      pull_client.PULL.sendMessage([-1], 'disk', 'exitDocument', {
+	      pull_client.PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'exitDocument', {
 	        fromUserId: this.context.currentUser.id
 	      });
 	      this.sendTelemetryEvent('exit');
@@ -642,9 +779,36 @@ this.BX.Disk = this.BX.Disk || {};
 	      this.documentWasChanged = true;
 	    }
 	  }, {
+	    key: "wasDocumentChanged",
+	    value: function wasDocumentChanged() {
+	      return this.documentWasChanged;
+	    }
+	  }, {
+	    key: "isEditMode",
+	    value: function isEditMode() {
+	      return this.editorJson.editorConfig.mode === 'edit';
+	    }
+	  }, {
+	    key: "isViewMode",
+	    value: function isViewMode() {
+	      return !this.isEditMode();
+	    }
+	  }, {
+	    key: "reloadView",
+	    value: function reloadView() {
+	      if (this.isViewMode()) {
+	        document.location = this.linkToView;
+	      }
+	    }
+	  }, {
 	    key: "handleInfo",
 	    value: function handleInfo() {
 	      this.caughtInfoEvent = Date.now();
+	    }
+	  }, {
+	    key: "handleError",
+	    value: function handleError(d) {
+	      console.log('onlyoffice error:', d.data);
 	    }
 	  }, {
 	    key: "handleRequestRename",
@@ -726,51 +890,26 @@ this.BX.Disk = this.BX.Disk || {};
 	  return OnlyOffice;
 	}();
 
-	var ServerCommandHandler = /*#__PURE__*/function (_BaseCommandHandler) {
-	  babelHelpers.inherits(ServerCommandHandler, _BaseCommandHandler);
-
-	  function ServerCommandHandler() {
-	    babelHelpers.classCallCheck(this, ServerCommandHandler);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ServerCommandHandler).apply(this, arguments));
-	  }
-
-	  babelHelpers.createClass(ServerCommandHandler, [{
-	    key: "getMap",
-	    value: function getMap() {
-	      return {
-	        onlyoffice: this.filterCurrentObject(this.handleSavedDocument.bind(this))
-	      };
+	function _trackWork2() {
+	  main_core.ajax.runComponentAction('bitrix:disk.file.editor-onlyoffice', 'markAsStillWorkingSession', {
+	    mode: 'ajax',
+	    json: {
+	      documentSessionId: this.context.documentSession.id,
+	      documentSessionHash: this.context.documentSession.hash
 	    }
-	  }, {
-	    key: "handleSavedDocument",
-	    value: function handleSavedDocument(data) {
-	      console.log('handleSavedDocument', data);
-	      main_core.ajax.runAction('disk.api.onlyoffice.continueWithNewSession', {
-	        mode: 'ajax',
-	        json: {
-	          sessionId: this.context.documentSession.id,
-	          documentSessionHash: this.context.documentSession.hash
-	        }
-	      }).then(function (response) {
-	        if (response.status === 'success') {
-	          document.location.href = response.data.documentSession.link;
-	        }
-	      });
-	    }
-	  }]);
-	  return ServerCommandHandler;
-	}(BaseCommandHandler);
+	  });
+	}
 
 	var Waiting = /*#__PURE__*/function () {
-	  function Waiting(editorOptions) {
+	  function Waiting(waitingOptions) {
 	    babelHelpers.classCallCheck(this, Waiting);
 	    babelHelpers.defineProperty(this, "documentSession", null);
 	    babelHelpers.defineProperty(this, "object", null);
-	    var options = main_core.Type.isPlainObject(editorOptions) ? editorOptions : {};
+	    var options = main_core.Type.isPlainObject(waitingOptions) ? waitingOptions : {};
 	    this.documentSession = options.documentSession;
 	    this.object = options.object;
 	    var loader = new BX.Loader({
-	      target: document.querySelector('#test')
+	      target: options.targetNode
 	    });
 	    loader.show();
 	    this.bindEvents();
@@ -779,13 +918,28 @@ this.BX.Disk = this.BX.Disk || {};
 	  babelHelpers.createClass(Waiting, [{
 	    key: "bindEvents",
 	    value: function bindEvents() {
-	      pull_client.PULL.subscribe(new ServerCommandHandler({
-	        context: {
-	          object: this.object,
-	          documentSession: this.documentSession
-	        },
-	        userManager: null
-	      }));
+	      pull_client.PULL.subscribe({
+	        type: BX.PullClient.SubscriptionType.Server,
+	        moduleId: 'disk',
+	        command: 'onlyoffice',
+	        callback: this.handleSavedDocument.bind(this)
+	      });
+	    }
+	  }, {
+	    key: "handleSavedDocument",
+	    value: function handleSavedDocument(data) {
+	      console.log('handleSavedDocument', data);
+	      main_core.ajax.runAction('disk.api.onlyoffice.continueWithNewSession', {
+	        mode: 'ajax',
+	        json: {
+	          sessionId: this.documentSession.id,
+	          documentSessionHash: this.documentSession.hash
+	        }
+	      }).then(function (response) {
+	        if (response.status === 'success') {
+	          document.location.href = response.data.documentSession.link;
+	        }
+	      });
 	    }
 	  }]);
 	  return Waiting;

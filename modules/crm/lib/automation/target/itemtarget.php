@@ -55,7 +55,7 @@ class ItemTarget extends BaseTarget
 
 	public function setEntityStatus($statusId)
 	{
-		$context = Container::getInstance()->getContext();
+		$context = clone Container::getInstance()->getContext();
 		$context->setUserId(0);
 		$context->setScope(Context::SCOPE_AUTOMATION);
 		$operation = $this->factory->getUpdateOperation(

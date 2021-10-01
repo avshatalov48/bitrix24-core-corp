@@ -244,16 +244,9 @@ if ($request->isPost() && check_bitrix_sessid())
 		$post["WORKTIME_DAYOFF_NUMBER"] = '';
 	}
 
-	if (!CVoxImplantAccount::IsPro())
+	if (!\Bitrix\Voximplant\Limits::canSelectCallSource())
 	{
 		$post["CRM_SOURCE"] = 'CALL';
-		$post["CALL_VOTE"] = 'N';
-
-		if ($post["QUEUE_TYPE"] == CVoxImplantConfig::QUEUE_TYPE_ALL)
-		{
-			$post["QUEUE_TYPE"] = CVoxImplantConfig::QUEUE_TYPE_EVENLY;
-			$post["NO_ANSWER_RULE"] = CVoxImplantIncoming::RULE_VOICEMAIL;
-		}
 	}
 
 	if (!\Bitrix\Voximplant\Transcript::isEnabled())
@@ -332,11 +325,11 @@ if ($request->isPost() && check_bitrix_sessid())
 		"IVR_ID" => (int)$post["IVR_ID"],
 		"QUEUE_ID" => $post["QUEUE_ID"],
 		"FORWARD_LINE" => isset($post["FORWARD_LINE_ENABLED"]) ? $post["FORWARD_LINE"] : CVoxImplantConfig::FORWARD_LINE_DEFAULT,
-		"RECORDING" => $post["RECORDING"] == "Y" ? "Y" : "N",
-		"RECORDING_NOTICE" => ($post["RECORDING"] == "Y" && $post["RECORDING_NOTICE"] == "Y") ? "Y" : "N",
-		"VOTE" => $post["VOTE"] == "Y" ? "Y" : "N",
+		"RECORDING" => $post["RECORDING"] === "Y" ? "Y" : "N",
+		"RECORDING_NOTICE" => ($post["RECORDING"] === "Y" && $post["RECORDING_NOTICE"] === "Y") ? "Y" : "N",
+		"VOTE" => \Bitrix\Voximplant\Limits::canVote() && $post["VOTE"] === "Y" ? "Y" : "N",
 		"MELODY_LANG" => $post["MELODY_LANG"],
-		"MELODY_WELCOME_ENABLE" => $post["MELODY_WELCOME_ENABLE"] == "Y" ? "Y" : "N",
+		"MELODY_WELCOME_ENABLE" => $post["MELODY_WELCOME_ENABLE"] === "Y" ? "Y" : "N",
 		"WORKTIME_ENABLE" => $post["WORKTIME_ENABLE"] == "Y" ? "Y" : "N",
 		"WORKTIME_FROM" => $workTimeFrom,
 		"WORKTIME_TO" => $workTimeTo,

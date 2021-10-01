@@ -57,7 +57,7 @@ class CCrmProductSection
 		return is_string($result) ? $result : '';
 	}
 	// CRUD -->
-	public static function Add(&$arFields, $options = [])
+	public static function Add(&$arFields)
 	{
 		if (!CModule::IncludeModule('iblock'))
 		{
@@ -71,45 +71,25 @@ class CCrmProductSection
 			return false;
 		}
 
-		$catalogID = isset($arFields['CATALOG_ID']) ? intval($arFields['CATALOG_ID']) : 0;
+		$catalogID = isset($arFields['CATALOG_ID']) ? (int)$arFields['CATALOG_ID'] : 0;
 		if(!($catalogID > 0 && CCrmCatalog::Exists($catalogID)))
 		{
-			$catalogID = CCrmCatalog::EnsureDefaultExists();
+			$catalogID = (int)CCrmCatalog::EnsureDefaultExists();
 		}
 		$arFields['CATALOG_ID'] = $catalogID;
 
 		$sectionFields = CCrmProductSectionDbResult::MapKeys($arFields);
 		$sectionFields['CHECK_PERMISSIONS'] = 'N';
 
-		$generateCode =
-			!isset($sectionFields['CODE']) &&
-			isset($options['GENERATE_CODE']) &&
-			$options['GENERATE_CODE'];
-
-		if ($generateCode)
+		$section = new CIBlockSection();
+		if (!isset($sectionFields['CODE']))
 		{
-			$iblock = \CIBlock::GetArrayByID($catalogID);
-			if (
-				isset($iblock['FIELDS']['SECTION_CODE']['DEFAULT_VALUE']) &&
-				$iblock['FIELDS']['SECTION_CODE']['DEFAULT_VALUE']['TRANSLITERATION'] == 'Y' &&
-				$iblock['FIELDS']['SECTION_CODE']['DEFAULT_VALUE']['USE_GOOGLE'] != 'Y'
-			)
+			$mnemonicCode = $section->generateMnemonicCode($sectionFields['NAME'], $sectionFields['IBLOCK_ID']);
+			if ($mnemonicCode !== null)
 			{
-				$translitOptions = $iblock['FIELDS']['SECTION_CODE']['DEFAULT_VALUE'];
-				$sectionFields['CODE'] = \CUtil::translit(
-					$sectionFields["NAME"],
-					LANGUAGE_ID,
-					[
-						"max_len" => $translitOptions['TRANS_LEN'],
-						"change_case" => $translitOptions['TRANS_CASE'],
-						"replace_space" => $translitOptions['TRANS_SPACE'],
-						"replace_other" => $translitOptions['TRANS_OTHER'],
-						"delete_repeat_replace" => ($translitOptions['TRANS_EAT'] == 'Y'),
-					]
-				);
+				$sectionFields['CODE'] = $mnemonicCode;
 			}
 		}
-		$section = new CIBlockSection();
 		$result = $section->Add($sectionFields);
 
 		if(!(is_int($result) && $result > 0))
@@ -370,7 +350,7 @@ class CCrmProductSection
 		{
 			return $result;
 		}
-		
+
 		if ($catalogId <= 0)
 		{
 			$catalogId = CCrmCatalog::GetDefaultID();

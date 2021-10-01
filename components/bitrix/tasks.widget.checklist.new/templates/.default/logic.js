@@ -430,6 +430,7 @@ BX.Tasks.CheckList.OptionManager = (function()
 
 		this.showCompleteAllButton = options.showCompleteAllButton;
 		this.collapseOnCompleteAll = options.collapseOnCompleteAll;
+		this.isNetworkEnabled = options.isNetworkEnabled;
 		this.showCompleted = options.options.SHOW_COMPLETED;
 		this.defaultMemberSelectorType = options.options.DEFAULT_MEMBER_SELECTOR_TYPE;
 		this.showOnlyMine = false;

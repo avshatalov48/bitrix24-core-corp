@@ -220,7 +220,9 @@ class UserFieldBase extends BaseType\Base
 
 		$renderResult = ob_get_clean();
 
-		if ($allowSelection)
+		$isPublicControl = $renderMode & FieldType::RENDER_MODE_PUBLIC;
+
+		if ($allowSelection && !$isPublicControl)
 		{
 			$renderResult .= static::renderControlSelector($field, $selectorValue, true, '', $fieldType);
 		}

@@ -9,6 +9,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\UI\PageNavigation;
 
+use Bitrix\Intranet;
 use Bitrix\Crm\Tracking;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
@@ -250,7 +251,13 @@ class CrmTrackingSourceArchiveComponent extends CBitrixComponent implements Cont
 
 	public function configureActions()
 	{
-		return array();
+		return [
+			'unarchive' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				]
+			],
+		];
 	}
 
 	public function unarchiveAction($sourceId)

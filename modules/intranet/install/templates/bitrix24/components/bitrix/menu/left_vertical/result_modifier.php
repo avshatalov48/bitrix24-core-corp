@@ -425,10 +425,7 @@ $presets = array(
 $arResult["IS_CUSTOM_PRESET_AVAILABLE"] = true;
 if (Loader::includeModule("bitrix24"))
 {
-	if (!(CBitrix24::IsLicensePaid() || CBitrix24::IsDemoLicense() || CBitrix24::IsNfrLicense()))
-	{
-		$arResult["IS_CUSTOM_PRESET_AVAILABLE"] = false;
-	}
+	$arResult["IS_CUSTOM_PRESET_AVAILABLE"] = \Bitrix\Bitrix24\Feature::isFeatureEnabled('intranet_menu_to_all');
 }
 
 $arResult["CUSTOM_PRESET_EXISTS"] = COption::GetOptionString("intranet", "left_menu_custom_preset_sort", "") ? true : false;

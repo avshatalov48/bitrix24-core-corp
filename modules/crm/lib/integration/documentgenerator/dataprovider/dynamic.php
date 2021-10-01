@@ -70,7 +70,7 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 			}
 		}
 
-		if ($factory->isClientEnabled())
+		if ($factory->isClientEnabled() && !$this->isLightMode())
 		{
 			$this->fields['CONTACTS'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACTS_TITLE'),
@@ -296,7 +296,11 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 			return static::class . '_' . '%';
 		}
 
-		$categoryId = $this->getRawValue('CATEGORY_ID') ?? $factory->createDefaultCategoryIfNotExist()->getId();
+		$categoryId = (int)$this->getRawValue('CATEGORY_ID');
+		if ($categoryId <= 0)
+		{
+			return static::class . '_' . '%';
+		}
 
 		return static::getProviderCode($factory->getEntityTypeId(), $categoryId);
 	}

@@ -81,6 +81,19 @@ if($arParams['TYPE'] === 'details')
 		);
 	}
 
+	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
+	{
+		\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+		$arResult['BUTTONS'][] = [
+			'TEXT' => GetMessage('CRM_COMMON_DOCUMENT'),
+			'TYPE' => 'crm-document-button',
+			'PARAMS' => \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(
+				mb_strtolower(\Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Shipment::class),
+				$arParams['ELEMENT_ID']
+			),
+		];
+	}
+
 	$this->IncludeComponentTemplate();
 	return;
 }

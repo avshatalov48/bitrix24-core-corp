@@ -16,6 +16,7 @@ use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\Order\BindingsMaker\ActivityBindingsMaker;
+use Bitrix\Crm\Restriction\OrderRestriction;
 use Bitrix\Main;
 use Bitrix\Crm\Automation;
 use Bitrix\Crm\Order;
@@ -1161,6 +1162,19 @@ class CrmManager extends Base
 		}
 
 		return Parser::getInstance()->parse($phone['VALUE'])->format();
+	}
+
+	public function getOrderLimitSliderId()
+	{
+		return OrderRestriction::LIMIT_SLIDER_ID;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function isOrderLimitReached()
+	{
+		return OrderRestriction::isOrderLimitReached();
 	}
 
 	/**

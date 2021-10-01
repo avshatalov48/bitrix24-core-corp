@@ -41,6 +41,7 @@ $MESS["CRM_ORDER_SECTION_PROPERTIES"] = "Bestelleigenschaften";
 $MESS["CRM_ORDER_SECTION_SHIPMENT"] = "Auslieferung";
 $MESS["CRM_ORDER_SECTION_SHIPMENT_PROPERTIES"] = "Eigenschaften der Auslieferung";
 $MESS["CRM_ORDER_SECTION_USER_PROFILE"] = "Bestellprofil";
+$MESS["CRM_ORDER_SHIPMENT_PROPS"] = "Eigenschaften der Auslieferung";
 $MESS["CRM_ORDER_SHIPMENT_SUBTITLE_MASK"] = "##ID# - #DATE_BILL#";
 $MESS["CRM_ORDER_STORE_NOT_CHOSEN"] = "Nicht ausgewählt";
 $MESS["CRM_ORDER_TAB_AUTOMATION"] = "Automatisierungsregeln";

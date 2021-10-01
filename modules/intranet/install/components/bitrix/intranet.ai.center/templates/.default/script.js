@@ -49,7 +49,11 @@ BX.Intranet.AI.Center.prototype =
 
 	openAssistantApp: function(tile)
 	{
-		if (this.assistantAppId > 0)
+		if (tile.data['featureEnabled'] === false)
+		{
+			BX.UI.InfoHelper.show('limit_ai_assistant');
+		}
+		else if (this.assistantAppId > 0)
 		{
 			BX.rest.AppLayout.openApplication(this.assistantAppId, { assistantId: tile.id });
 		}

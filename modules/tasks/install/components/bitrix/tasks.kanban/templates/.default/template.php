@@ -331,7 +331,8 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
             },
 			ownerId: <?= (int) $arParams["USER_ID"] ?>,
 			groupId: <?= (int) $arParams['GROUP_ID'] ?>,
-			isSprintView: '<?= ($isSprintView ? 'Y' : 'N') ?>'
+			isSprintView: '<?= ($isSprintView ? 'Y' : 'N') ?>',
+			networkEnabled: <?= \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled() ? "true" : "false"; ?>,
         });
 
         Kanban.draw();

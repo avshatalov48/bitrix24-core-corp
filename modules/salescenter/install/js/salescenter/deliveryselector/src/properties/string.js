@@ -32,7 +32,7 @@ export default {
 	template: `
 		<div class="ui-ctl ui-ctl-w100">
 			<textarea v-if="isMultiline" @input="onInput" :name="name" class="ui-ctl-element salescenter-delivery-comment-textarea" rows="1">{{value}}</textarea>
-			<input v-else :disabled="!editable" @input="onInput" type="text" :name="name" :value="value" class="ui-ctl-element ui-ctl-textbox" />
+			<input v-else @input="onInput" type="text" :name="name" :value="value" class="ui-ctl-element ui-ctl-textbox" />
 		</div>					
 	`
 };

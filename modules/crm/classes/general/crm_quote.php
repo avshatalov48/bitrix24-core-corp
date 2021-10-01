@@ -67,6 +67,16 @@ class CAllCrmQuote
 			$operation->disableCheckRequiredUserFields();
 		}
 
+		$excludeFromRelationRegistration =
+			isset($options['EXCLUDE_FROM_RELATION_REGISTRATION']) && is_array($options['EXCLUDE_FROM_RELATION_REGISTRATION'])
+				? $options['EXCLUDE_FROM_RELATION_REGISTRATION']
+				: []
+		;
+		if (!empty($excludeFromRelationRegistration))
+		{
+			$operation->excludeItemsFromTimelineRelationEventsRegistration($excludeFromRelationRegistration);
+		}
+
 		return $operation;
 	}
 

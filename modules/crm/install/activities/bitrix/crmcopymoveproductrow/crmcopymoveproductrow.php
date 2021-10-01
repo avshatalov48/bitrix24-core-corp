@@ -63,10 +63,7 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 	{
 		$entityType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
 
-		\CCrmProductRow::DeleteByOwner($entityType, $entityId);
-		\CCrmProductRow::DeleteSettings($entityType, $entityId);
-
-		return true;
+		return \CCrmProductRow::SaveRows($entityType, $entityId, [], null, false);
 	}
 
 	private function copyRows($entityTypeId, $entityId, $dstEntityTypeId, $dstEntityId): bool

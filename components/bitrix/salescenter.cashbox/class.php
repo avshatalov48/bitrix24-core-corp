@@ -168,6 +168,8 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 
 				$this->arResult['signedParameters'] = $this->getSignedParameters();
 
+				$this->arResult['isPaySystemCashbox'] = Cashbox\Manager::isPaySystemCashbox($this->arResult['handler']);
+
 				$this->includeComponentTemplate();
 			}
 		}
@@ -303,17 +305,33 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				'type' => 'text',
 			],
 			[
-				'name' => 'USE_OFFLINE',
-				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_USE_OFFLINE'),
-				'type' => 'boolean',
-			],
-			[
 				'name' => 'EMAIL',
 				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_EMAIL'),
 				'type' => 'text',
 				'hint' => Loc::getMessage('SC_CASHBOX_FIELDS_EMAIL_HINT'),
 			],
 		];
+
+		if (!Cashbox\Manager::isPaySystemCashbox($this->arParams['handler']))
+		{
+			$fields[] = [
+				'name' => 'USE_OFFLINE',
+				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_USE_OFFLINE'),
+				'type' => 'boolean',
+			];
+		}
+
+		if (($this->arParams['handler']::getSupportedKkmModels()))
+		{
+			$fields[] = [
+				'name' => 'KKM_ID',
+				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_KKM_ID'),
+				'type' => 'text',
+				'attribute' => [
+					'disabled'
+				],
+			];
+		}
 
 		$additionalFieldsNeeded = $this->areAdditionalFieldsNeeded();
 
@@ -349,6 +367,11 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 
 	protected function areAdditionalFieldsNeeded()
 	{
+		if (Cashbox\Manager::isPaySystemCashbox($this->arParams['handler']))
+		{
+			return false;
+		}
+
 		if (Bitrix24Manager::getInstance()->isEnabled())
 		{
 			if (Bitrix24Manager::getInstance()->isCurrentZone('ru'))
@@ -377,6 +400,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				'name' => 'parameters',
 				'type' => 'section',
 				'elements' => [
+					['name' => 'KKM_ID'],
 					['name' => 'NAME'],
 					['name' => 'OFD'],
 					['name' => 'NUMBER_KKM'],
@@ -440,6 +464,8 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				{
 					$result['OFD'] = '\\'.Cashbox\TaxcomOfd::class;
 				}
+
+				$result['KKM_ID'] = $this->kkmId;
 			}
 
 
@@ -819,10 +845,11 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	protected function getHandlerDescription()
 	{
 		$code = $this->handler::getCode();
-		if ($this->kkmId)
+		if ($this->kkmId && !Cashbox\Manager::isPaySystemCashbox($this->arParams['handler']))
 		{
 			$code .= '_'.$this->kkmId;
 		}
+
 		switch ($code)
 		{
 			case 'cashboxorangedata':
@@ -861,6 +888,12 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 					'code' => 'rest',
 					'title' => $handlerName,
 					'description' => 'SC_CASHBOX_REST_DESCRITION',
+				];
+			case 'cashboxrobokassa':
+				return [
+					'code' => Cashbox\CashboxRobokassa::getCode(),
+					'title' => Cashbox\CashboxRobokassa::getName(),
+					'description' => 'SC_CASHBOX_ROBOKASSA_DESCRITION',
 				];
 			default:
 				return [

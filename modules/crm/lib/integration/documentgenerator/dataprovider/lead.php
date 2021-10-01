@@ -13,6 +13,7 @@ class Lead extends ProductsDataProvider
 {
 	protected $contacts;
 	protected $honorific;
+	protected $nameData = [];
 
 	/**
 	 * @return array
@@ -22,6 +23,19 @@ class Lead extends ProductsDataProvider
 		if($this->fields === null)
 		{
 			parent::getFields();
+
+			$this->fields['NAME']['VALUE'] = [$this, 'getNameData'];
+			$this->fields['NAME']['TYPE'] = static::FIELD_TYPE_NAME;
+			$this->fields['NAME']['FORMAT'] = ['format' => '#NAME#'];
+
+			$this->fields['SECOND_NAME']['VALUE'] = [$this, 'getNameData'];
+			$this->fields['SECOND_NAME']['TYPE'] = static::FIELD_TYPE_NAME;
+			$this->fields['SECOND_NAME']['FORMAT'] = ['format' => '#SECOND_NAME#'];
+
+			$this->fields['LAST_NAME']['VALUE'] = [$this, 'getNameData'];
+			$this->fields['LAST_NAME']['TYPE'] = static::FIELD_TYPE_NAME;
+			$this->fields['LAST_NAME']['FORMAT'] = ['format' => '#LAST_NAME#'];
+
 			$this->fields['STATUS'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_STATUS_TITLE'),];
 			$this->fields['SOURCE'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_SOURCE_TITLE'),];
 			$this->fields['HONORIFIC'] = [
@@ -76,23 +90,31 @@ class Lead extends ProductsDataProvider
 			$this->fields['EMAIL']['FORMAT'] = ['mfirst' => true,];
 			$this->fields['EMAIL']['VALUE'] = [$this, 'getClientEmail'];
 			$this->fields['BIRTHDATE']['TITLE'] = GetMessage('CRM_DOCGEN_DATAPROVIDER_BIRTHDATE_TITLE');
-			$this->fields['CONTACTS'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_CONTACTS_TITLE'),
-				'PROVIDER' => ArrayDataProvider::class,
-				'OPTIONS' => [
-					'ITEM_PROVIDER' => Contact::class,
-					'ITEM_NAME' => 'CONTACT',
-					'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_CONTACT_TITLE'),
-					'ITEM_OPTIONS' => [
-						'DISABLE_MY_COMPANY' => true,
-						'isLightMode' => true,
+			if (!$this->isLightMode())
+			{
+				$this->fields['CONTACTS'] = [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_CONTACTS_TITLE'),
+					'PROVIDER' => ArrayDataProvider::class,
+					'OPTIONS' => [
+						'ITEM_PROVIDER' => Contact::class,
+						'ITEM_NAME' => 'CONTACT',
+						'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_CONTACT_TITLE'),
+						'ITEM_OPTIONS' => [
+							'DISABLE_MY_COMPANY' => true,
+							'isLightMode' => true,
+						],
 					],
-				],
-				'VALUE' => [$this, 'getContacts'],
-			];
+					'VALUE' => [$this, 'getContacts'],
+				];
+			}
 		}
 
 		return $this->fields;
+	}
+
+	public function getNameData(): array
+	{
+		return $this->nameData;
 	}
 
 	/**
@@ -151,8 +173,8 @@ class Lead extends ProductsDataProvider
 	protected function fetchData()
 	{
 		parent::fetchData();
+
 		$this->honorific = $this->data['HONORIFIC'];
-		unset($this->data['HONORIFIC']);
 		if(empty($this->data['ADDRESS']))
 		{
 			// for lead there is only one available type
@@ -162,6 +184,18 @@ class Lead extends ProductsDataProvider
 				$this->data['ADDRESS'] = new \Bitrix\Crm\Integration\DocumentGenerator\Value\Address($address);
 			}
 		}
+		$this->nameData = [
+			'TITLE' => $this->getHonorificName(),
+			'NAME' => $this->data['NAME'],
+			'SECOND_NAME' => $this->data['SECOND_NAME'],
+			'LAST_NAME' => $this->data['LAST_NAME'],
+		];
+		unset(
+			$this->data['NAME'],
+			$this->data['SECOND_NAME'],
+			$this->data['LAST_NAME'],
+			$this->data['HONORIFIC']
+		);
 	}
 
 

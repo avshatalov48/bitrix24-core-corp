@@ -1526,9 +1526,11 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$iblockElements = array();
 
 		$rows = [];
+		$rowIds = [];
 		while ($row = $res->fetch())
 		{
 			$rows[] = $row;
+			$rowIds[] = $row['ID'];
 		}
 
 		$this->parents = Container::getInstance()->getParentFieldManager()->getParentFields(
@@ -1536,6 +1538,43 @@ class CrmKanbanComponent extends \CBitrixComponent
 			array_column($addFields, 'code'),
 			$this->entity->getTypeId()
 		);
+
+		$displayOptions =
+			(new \Bitrix\Crm\Service\Display\Options())
+				->setReturnMultipleFieldsAsSingle(false)
+		;
+		$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getWebFormResultsRestriction();
+		$restriction->prepareDisplayOptions(\CCrmOwnerType::Deal, $rowIds, $displayOptions);
+
+		$immutableFields = array_merge(
+			$displayOptions->getRestrictedFieldsToShow(),
+			[
+				'FORMAT_TIME',
+				'DATE_UNIX',
+				'LINK',
+				'PRICE',
+				'PRICE_FORMATTED',
+				'CONTACT_TYPE',
+				'CONTACT_ID',
+				'COMPANY_ID',
+				'MODIFY_BY_ID',
+				'IS_REPEATED_APPROACH',
+				'ASSIGNED_BY',
+				'CURRENCY_ID',
+				'IS_RETURN_CUSTOMER',
+				'ORDER_STAGE',
+			]
+		);
+
+		$restrictedItemIds = [];
+		$itemsMutator = null;
+		if (!$restriction->hasPermission())
+		{
+			$restrictedItemIds = $displayOptions->getRestrictedItemIds();
+
+			$itemsMutator = new \Bitrix\Crm\Restriction\ItemsMutator($immutableFields);
+			$this->arResult['RESTRICTED_VALUE_CLICK_CALLBACK'] = $restriction->prepareInfoHelperScript();
+		}
 
 		foreach($rows as $row)
 		{
@@ -1550,6 +1589,12 @@ class CrmKanbanComponent extends \CBitrixComponent
 			{
 				$row['CONTACT_TYPE'] = 'CRM_COMPANY';
 				$this->company[] = $row['COMPANY_ID'];
+			}
+			$isRestricted = false;
+			if ($itemsMutator && in_array($row['ID'], $restrictedItemIds))
+			{
+				$row = $itemsMutator->processItem($row, $displayOptions->getRestrictedValueHtmlReplacer());
+				$isRestricted = true;
 			}
 
 			//additional fields
@@ -1582,7 +1627,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 					{
 						$isHtml = false;
 						$boolFieldNames = ['CLOSED', 'PAYED', 'ALLOY_DELIVERY', 'DEDUCTED', 'CANCELED', 'OPENED'];
-						if (in_array($code, $boolFieldNames, true))
+						if (in_array($code, $boolFieldNames, true) && !$isRestricted)
 						{
 							if($row[$code] !== 'Y' && $row[$code] !== 'N')
 							{
@@ -1597,7 +1642,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 								$row['CURRENCY_ID']
 							);
 						}
-						else if ($code === 'PAYMENT' || $code === 'SHIPMENT')
+						else if (($code === 'PAYMENT' || $code === 'SHIPMENT')  && !$isRestricted)
 						{
 							$fieldValue = "";
 							$row[$code] = is_array($row[$code]) ? $row[$code] : [$row[$code]];
@@ -1651,7 +1696,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 							}
 							$row[$code] = $fieldValue;
 						}
-						else if ($code === 'ORDER_STAGE')
+						else if ($code === 'ORDER_STAGE' && !$isRestricted)
 						{
 							$orderStages = Order\OrderStage::getList();
 							if (isset($orderStages[$row[$code]]))
@@ -1671,7 +1716,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 							}
 						}
 						else if (
-							$addFields[$code]['type'] === 'money'
+							$addFields[$code]['type'] === 'money' && !$isRestricted
 						)
 						{
 							$moneyRow = is_array($row[$code])
@@ -1689,19 +1734,19 @@ class CrmKanbanComponent extends \CBitrixComponent
 							$row[$code] = implode('; ', $row[$code]);
 						}
 						else if (
-							$addFields[$code]['type'] === 'employee'
+							$addFields[$code]['type'] === 'employee' && !$isRestricted
 						)
 						{
 							$this->usersIdFields[] = $code;
 						}
 						else if (
-							$addFields[$code]['type'] === 'boolean'
+							$addFields[$code]['type'] === 'boolean' && !$isRestricted
 						)
 						{
 							$row[$code] = Loc::getMessage('CRM_KANBAN_BOOLEAN_' . (int)$row[$code]);
 						}
 						else if (
-							$addFields[$code]['type'] === 'enumeration'
+							$addFields[$code]['type'] === 'enumeration' && !$isRestricted
 						)
 						{
 							$row[$code] = implode(',', array_intersect_key(
@@ -1710,9 +1755,12 @@ class CrmKanbanComponent extends \CBitrixComponent
 							));
 						}
 						else if (
-							$addFields[$code]['type'] === 'date' ||
-							(mb_strpos($code, 'DATE') !== false && mb_strpos($code, 'UPDATE') === false) ||
-							mb_strpos($code, '_TIME') !== false
+							(
+								$addFields[$code]['type'] === 'date' ||
+								(mb_strpos($code, 'DATE') !== false && mb_strpos($code, 'UPDATE') === false) ||
+								mb_strpos($code, '_TIME') !== false
+							)
+							&& !$isRestricted
 						)
 						{
 							$row[$code] = (array) $row[$code];
@@ -1731,7 +1779,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 							unset($rowDate);
 							$row[$code] = implode(',', $row[$code]);
 						}
-						else if ($addFields[$code]['type'] === 'file')
+						else if ($addFields[$code]['type'] === 'file' && !$isRestricted)
 						{
 							$row[$code] = (array) $row[$code];
 							$fileIds = array_merge(
@@ -1739,7 +1787,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 								$row[$code]
 							);
 						}
-						else if ($addFields[$code]['type'] === 'crm_status')
+						else if ($addFields[$code]['type'] === 'crm_status' && !$isRestricted)
 						{
 							$entityType = $addFields[$code]['settings']['ENTITY_TYPE'] ?? null;
 							$statuses = CCrmStatus::GetStatusList($entityType);
@@ -1752,7 +1800,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 								continue;
 							}
 						}
-						else if ($addFields[$code]['type'] === 'crm')
+						else if ($addFields[$code]['type'] === 'crm' && !$isRestricted)
 						{
 							$row[$code] = (array) $row[$code];
 							$settings = isset($addFields[$code]['settings'])
@@ -1786,7 +1834,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 							}
 							$row[$code] = $newRow;
 						}
-						elseif ($addFields[$code]['type'] === 'iblock_section')
+						elseif ($addFields[$code]['type'] === 'iblock_section' && !$isRestricted)
 						{
 							$row[$code] = (array) $row[$code];
 							$iblockSects = array_merge(
@@ -1794,7 +1842,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 								$row[$code]
 							);
 						}
-						elseif ($addFields[$code]['type'] === 'iblock_element')
+						elseif ($addFields[$code]['type'] === 'iblock_element' && !$isRestricted)
 						{
 							$row[$code] = (array) $row[$code];
 							$iblockElements = array_merge(
@@ -1802,7 +1850,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 								$row[$code]
 							);
 						}
-						elseif ($addFields[$code]['type'] === 'address')
+						elseif ($addFields[$code]['type'] === 'address' && !$isRestricted)
 						{
 							$row[$code] = (array) $row[$code];
 							foreach ($row[$code] as &$location)
@@ -1814,7 +1862,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 							}
 							unset($location);
 						}
-						elseif ($addFields[$code]['type'] === 'url')
+						elseif ($addFields[$code]['type'] === 'url' && !$isRestricted)
 						{
 							$row[$code] = (array) $row[$code];
 							foreach ($row[$code] as &$url)
@@ -1825,13 +1873,26 @@ class CrmKanbanComponent extends \CBitrixComponent
 							unset($url);
 							$isHtml = true;
 						}
-						$fields[] = array(
-							'code' => $code,
-							'title' => $addFields[$code]['title'],
-							'type' => $addFields[$code]['type'],
-							'value' => $row[$code],
-							'html' => $isHtml || in_array($code, ['COMMENTS', 'PAYMENT', 'SHIPMENT'])
-						);
+						if (!$isRestricted || in_array($code, $immutableFields))
+						{
+							$fields[] = [
+								'code' => $code,
+								'title' => $addFields[$code]['title'],
+								'type' => $addFields[$code]['type'],
+								'value' => $row[$code],
+								'html' => $isHtml || in_array($code, ['COMMENTS', 'PAYMENT', 'SHIPMENT'])
+							];
+						}
+						else
+						{
+							$fields[] = [
+								'code' => $code,
+								'title' => $addFields[$code]['title'],
+								'type' => 'string',
+								'value' => $row[$code],
+								'html' => true,
+							];
+						}
 						if (in_array($code, $this->usersIdFields))
 						{
 							$users = array_merge(
@@ -1843,7 +1904,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 				}
 			}
 
-			$this->addParentFields($fields, $row['ID']);
+			if (!$isRestricted)
+			{
+				$this->addParentFields($fields, $row['ID']);
+			}
 
 			$returnCustomer = isset($row['IS_RETURN_CUSTOMER']) && $row['IS_RETURN_CUSTOMER'] === 'Y';
 			// collect required
@@ -1955,6 +2019,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 				'required' => $required,
 				'required_fm' => $requiredFm
 			];
+			if ($isRestricted)
+			{
+				$result[$row['ID']]['updateRestrictionCallback'] = $restriction->prepareInfoHelperScript();
+			}
 		}
 
 		$result = $this->sort($result);
@@ -3393,6 +3461,11 @@ class CrmKanbanComponent extends \CBitrixComponent
 			}
 
 			$createFields = array_intersect_key($fields, array_flip(['SORT', 'COLOR']));
+
+			if(!empty($createFields['COLOR']) && mb_strpos($createFields['COLOR'], '#') !== 0)
+			{
+				$createFields['COLOR'] = '#' . $createFields['COLOR'];
+			}
 
 			$orderStatusIds = [];
 			$statusRaw = Order\OrderStatus::getList([

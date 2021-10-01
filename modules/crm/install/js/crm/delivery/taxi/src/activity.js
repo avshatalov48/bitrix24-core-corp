@@ -233,7 +233,7 @@ export default Vue.extend({
 					<div class="crm-entity-stream-content-detail crm-entity-stream-content-delivery">
 						<div class="crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex">
 							<span v-if="isSendRequestButtonVisible" @click="makeRequest" class="ui-btn ui-btn-sm ui-btn-primary">
-								{{localize.TIMELINE_DELIVERY_TAXI_SEND_REQUEST}}
+								{{localize.TIMELINE_DELIVERY_TAXI_SEND_REQUEST_2}}
 							</span>
 							<span v-if="isSearchingCar" class="crm-entity-stream-content-delivery-status">
 								{{localize.TIMELINE_DELIVERY_TAXI_SEARCHING_CAR}}

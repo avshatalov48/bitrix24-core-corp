@@ -7753,11 +7753,11 @@ if(typeof(BX.CrmWidgetColorScheme) === "undefined")
 				}
 
 				var color = this.infos[k]["color"];
-				var descr = this.descriptions[k];
+				var descr = BX.Text.encode(this.descriptions[k]);
 				results.push(
 					{
 						id: k,
-						text: '<span class="color-item"><span style="background: ' + color + ';" class="color"></span>' + descr + '</span>',
+						html: '<span class="color-item"><span style="background: ' + color + ';" class="color"></span>' + descr + '</span>',
 						onclick: callback
 					}
 				);

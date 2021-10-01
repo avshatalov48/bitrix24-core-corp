@@ -22,15 +22,9 @@ $arResult['TELEPHONY_AVAILABLE'] = \Bitrix\Voximplant\Limits::canManageTelephony
 $arResult['SLIDER_CODE'] = \Bitrix\Voximplant\Limits::canManageTelephony();
 
 $arResult['LINK_TO_BUY'] = $arResult['TELEPHONY_AVAILABLE'] ? CVoxImplantSip::getBuyLink() : "";
-if (IsModuleInstalled('bitrix24'))
+if (\Bitrix\Main\Loader::includeModule('ui'))
 {
-	$account = new CVoxImplantAccount();
-	$accountLang = $account->GetAccountLang();
-	$arResult['LINK_TO_DOC'] = (in_array(LANGUAGE_ID, Array("ru", "kz", "ua", "by"))? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=52&CHAPTER_ID=02564': 'https://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=55&LESSON_ID=6635');
-}
-else
-{
-	$arResult['LINK_TO_DOC'] = (in_array(LANGUAGE_ID, Array("ru", "kz", "ua", "by"))? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&CHAPTER_ID=02699': 'https://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=26&LESSON_ID=6734');
+	$arResult['LINK_TO_DOC'] = \Bitrix\UI\Util::getArticleUrlByCode('5838389');
 }
 
 if(in_array(LANGUAGE_ID, array("ru", "kz", "ua", "by")))

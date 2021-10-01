@@ -53,3 +53,4 @@ $MESS["CRM_ORDER_EMPTY_USER_INPUT_VALUE_WITH_CLIENT"] = "Введите знач
 $MESS["CRM_ORDER_ERROR_PAYSYSTEM_SERVICE"] = "Платёжная система \"#NAME#\" не подходит для оплаты из-за установленных ограничений";
 $MESS["CRM_ORDER_ERROR_DELIVERY_SERVICE"] = "Служба доставки \"#NAME#\" не подходит для отгрузки из-за установленных ограничений";
 $MESS["CRM_ORDER_FIELD_BUDGET"] = "Остаток средств на внутреннем счёте покупателя";
+$MESS["CRM_ORDER_SHIPMENT_PROPS"] = "Свойства отгрузки";

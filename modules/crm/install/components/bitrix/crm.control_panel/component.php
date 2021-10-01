@@ -424,18 +424,22 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 				&& \Bitrix\Main\Engine\CurrentUser::get()->CanDoOperation('catalog_price')
 			)
 			{
-				$createUrl = CComponentEngine::MakePathFromTemplate(
-					$arParams['PATH_TO_PRODUCT_DETAILS'],
-					[
-						'catalog_id' => $catalogId,
-						'product_id' => 0
-					]
-				);
+				$productLimit = \Bitrix\Catalog\Config\State::getExceedingProductLimit($catalogId);
+				if (empty($productLimit))
+				{
+					$createUrl = CComponentEngine::MakePathFromTemplate(
+						$arParams['PATH_TO_PRODUCT_DETAILS'],
+						[
+							'catalog_id' => $catalogId,
+							'product_id' => 0
+						]
+					);
 
-				$actions[] = [
-					'ID' => 'CREATE',
-					'URL' => $createUrl
-				];
+					$actions[] = [
+						'ID' => 'CREATE',
+						'URL' => $createUrl
+					];
+				}
 			}
 		}
 
@@ -446,8 +450,11 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 			'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
 			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']),
 			'ICON' => 'catalog',
-			'ACTIONS' => $actions
 		);
+		if (!empty($actions))
+		{
+			$stdItems['CATALOGUE']['ACTIONS'] = $actions;
+		}
 	}
 	else
 	{
@@ -520,6 +527,13 @@ if($isAdmin || !$userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))
 		),
 		'IS_DISABLED' => true
 	);
+	if (!RestrictionManager::getInvoicesRestriction()->hasPermission())
+	{
+		$stdItems['INVOICE']['CLASS'] = 'crm-tariff-lock';
+		$stdItems['INVOICE']['CLASS_SUBMENU_ITEM'] = 'crm-tariff-lock';
+		unset($stdItems['INVOICE']['URL']);
+		$stdItems['INVOICE']['ON_CLICK'] = RestrictionManager::getInvoicesRestriction()->prepareInfoHelperScript();
+	}
 }
 
 if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
@@ -602,6 +616,13 @@ if(IsModuleInstalled('report'))
 		'ICON' => 'report',
 		'IS_DISABLED' => true
 	);
+	if (!RestrictionManager::getReportRestriction()->hasPermission())
+	{
+		$stdItems['REPORT']['CLASS'] = 'crm-tariff-lock';
+		$stdItems['REPORT']['CLASS_SUBMENU_ITEM'] = 'crm-tariff-lock';
+		unset($stdItems['REPORT']['URL']);
+		$stdItems['REPORT']['ON_CLICK'] = RestrictionManager::getReportRestriction()->prepareInfoHelperScript();
+	}
 }
 
 $stdItems['EVENT'] = array(
@@ -691,20 +712,6 @@ if(ModuleManager::isModuleInstalled('bitrix24'))
 		'IS_DISABLED' => true
 	);
 }
-
-if (\Bitrix\Main\Loader::includeModule('bitrix24') && in_array(\CBitrix24::getLicenseType(), array("project", "tf")))
-{
-	$stdItems['CRMPLUS'] = array(
-		'ID' => 'CRMPLUS',
-		'MENU_ID' => 'menu_crm_plus',
-		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRMPLUS'),
-		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CRMPLUS'),
-		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CRMPLUS']),
-		'ICON' => 'crmplus',
-		'IS_DISABLED' => true
-	);
-}
-
 
 $userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
 if ($isAdmin || $userPermissions->canWriteConfig())

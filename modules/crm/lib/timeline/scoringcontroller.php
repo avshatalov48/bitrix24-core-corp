@@ -1,36 +1,18 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Crm\Pseudoactivity\WaitEntry;
-use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 
 class ScoringController extends EntityController
 {
-
-	/** @var ScoringController|null */
-	private static $instance = null;
-
-	private function __construct()
+	protected function __construct()
 	{
 	}
 
-	private function __clone()
+	protected function __clone()
 	{
-	}
-
-	/**
-	 * @return ScoringController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new static();
-		}
-		return self::$instance;
 	}
 
 	public function onCreate($ID, array $params)

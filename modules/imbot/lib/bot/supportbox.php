@@ -22,7 +22,9 @@ class SupportBox extends Network implements NetworkBot
 		OPTION_BOT_AVATAR = 'support_avatar',
 		OPTION_BOT_MESSAGES = 'support_messages',
 
-		COMMAND_ACTIVATE = 'activate';
+		COMMAND_ACTIVATE = 'activate',
+		COMMAND_START_DIALOG = 'startDialog'
+	;
 
 	protected const
 		AVATAR = 'https://helpdesk.bitrix24.com/images/support/bot.png',
@@ -55,9 +57,9 @@ class SupportBox extends Network implements NetworkBot
 		$botParams = [
 			'MODULE_ID' => self::MODULE_ID,
 			'CLASS' => __CLASS__,
-			'METHOD_WELCOME_MESSAGE' => 'onChatStart',/** @see ImBot\Bot\SupportBox::onChatStart */
-			'METHOD_MESSAGE_ADD' => 'onMessageAdd',/** @see ImBot\Bot\SupportBox::onMessageAdd */
-			'METHOD_BOT_DELETE' => 'onBotDelete',/** @see ImBot\Bot\SupportBox::onBotDelete */
+			'METHOD_WELCOME_MESSAGE' => 'onChatStart',/** @see SupportBox::onChatStart */
+			'METHOD_MESSAGE_ADD' => 'onMessageAdd',/** @see SupportBox::onMessageAdd */
+			'METHOD_BOT_DELETE' => 'onBotDelete',/** @see SupportBox::onBotDelete */
 			'PROPERTIES' => [
 				'NAME' => self::getBotName(),
 				'WORK_POSITION' => self::getBotDesc(),
@@ -111,14 +113,17 @@ class SupportBox extends Network implements NetworkBot
 		{
 			Im\Command::clearCache();
 
-			Im\Command::register([
-				'MODULE_ID' => self::MODULE_ID,
-				'BOT_ID' => $botId,
-				'COMMAND' => self::COMMAND_ACTIVATE,/** @see ImBot\Bot\SupportBox::activate */
-				'HIDDEN' => 'Y',
-				'CLASS' => __CLASS__,
-				'METHOD_COMMAND_ADD' => 'onCommandAdd'/** @see ImBot\Bot\SupportBox::onCommandAdd */
-			]);
+			foreach (self::getCommandList() as $commandName => $commandParam)
+			{
+				Im\Command::register([
+					'MODULE_ID' => self::MODULE_ID,
+					'BOT_ID' => $botId,
+					'COMMAND' => $commandName,
+					'HIDDEN' => $commandParam['visible'] === true ? 'N' : 'Y',
+					'CLASS' => $commandParam['class'] ?? __CLASS__,
+					'METHOD_COMMAND_ADD' => $commandParam['handler'] ?? 'onCommandAdd' /** @see SupportBox::onCommandAdd */
+				]);
+			}
 		}
 
 		if ($botId)
@@ -212,6 +217,60 @@ class SupportBox extends Network implements NetworkBot
 		return $result;
 	}
 
+	/**
+	 * Returns command's property list.
+	 * @return array{handler: string, visible: bool, context: string}[]
+	 */
+	public static function getCommandList(): array
+	{
+		$commandList = parent::getCommandList();
+
+		unset($commandList[self::COMMAND_UNREGISTER]);
+
+		return array_merge($commandList, [
+			self::COMMAND_ACTIVATE => [
+				'command' =>  self::COMMAND_ACTIVATE,
+				'handler' => 'onCommandAdd',/** @see SupportBox::activate */
+				'visible' => false,
+				'context' => [
+					[
+						'COMMAND_CONTEXT' => 'KEYBOARD',
+						'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
+					],
+				],
+			],
+			self::COMMAND_START_DIALOG => [
+				'command' =>  self::COMMAND_START_DIALOG,
+				'handler' => 'onCommandAdd',/** @see SupportBox::onCommandAdd */
+				'visible' => false,
+				'context' => [
+					[
+						'COMMAND_CONTEXT' => 'KEYBOARD',
+						'CHAT_ENTITY_TYPE' => ImBot\Service\Notifier::CHAT_ENTITY_TYPE,
+					],
+				],
+			],
+			self::COMMAND_QUEUE_NUMBER => [
+				'command' =>  self::COMMAND_QUEUE_NUMBER,
+				'handler' => 'onCommandAdd',/** @see SupportBox::onCommandAdd */
+				'visible' => false,
+				'context' => [
+					[
+						'COMMAND_CONTEXT' => 'TEXTAREA',
+						'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
+						'TO_USER_ID' => self::getBotId(),
+					],
+					[
+						'COMMAND_CONTEXT' => 'KEYBOARD',
+						'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
+						'TO_USER_ID' => self::getBotId(),
+					],
+				],
+			],
+		]);
+	}
+
+
 	//region Chart bot interface
 
 	/**
@@ -258,13 +317,27 @@ class SupportBox extends Network implements NetworkBot
 	{
 		if ($command === self::COMMAND_OPERATOR_CHANGE_LINE)
 		{
-			Log::write($params, 'NETWORK: operatorChangeLine');
+			Log::write($params, 'NETWORK: $command');
 
 			if (self::updateBotProperties())
 			{
 				//notify
 				self::notifyAdministrators(self::getMessage('CHANGE_CODE', Loc::getMessage('SUPPORT_BOX_CHANGE_LINE_USER')));
 			}
+
+			return ['RESULT' => 'OK'];
+		}
+		elseif ($command === self::COMMAND_OPERATOR_QUEUE_NUMBER)
+		{
+			Log::write($params, "NETWORK: $command");
+
+			self::operatorQueueNumber([
+				'BOT_ID' => $params['BOT_ID'],
+				'DIALOG_ID' => $params['DIALOG_ID'],
+				'MESSAGE_ID' => $params['MESSAGE_ID'],
+				'SESSION_ID' => $params['SESSION_ID'],
+				'QUEUE_NUMBER' => $params['QUEUE_NUMBER'],
+			]);
 
 			return ['RESULT' => 'OK'];
 		}
@@ -286,22 +359,8 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function onCommandAdd($messageId, $messageFields)
 	{
-		if ($messageFields['SYSTEM'] === 'Y')
-		{
-			return false;
-		}
-
-		if ($messageFields['COMMAND_CONTEXT'] !== 'KEYBOARD')
-		{
-			return false;
-		}
-
-		if ($messageFields['MESSAGE_TYPE'] !== IM_MESSAGE_PRIVATE)
-		{
-			return false;
-		}
-
-		if ($messageFields['TO_USER_ID'] != self::getBotId())
+		$command = static::getCommandByMessage($messageFields);
+		if (!$command)
 		{
 			return false;
 		}
@@ -356,6 +415,84 @@ class SupportBox extends Network implements NetworkBot
 				\CIMMessageParam::Set($messageId, [self::MESSAGE_PARAM_KEYBOARD => 'N']);
 				\CIMMessageParam::SendPull($messageId, [self::MESSAGE_PARAM_KEYBOARD]);
 			}
+
+			return true;
+		}
+		elseif ($messageFields['COMMAND'] === self::COMMAND_START_DIALOG)
+		{
+			$message = (new \CIMChat(0))->getMessage($messageId);
+
+			// duplicate message
+			self::operatorMessageAdd(0, [
+				'BOT_ID' => self::getBotId(),
+				'BOT_CODE' => self::getBotCode(),
+				'DIALOG_ID' => self::getCurrentUser()->getId(),
+				'MESSAGE' => $message['MESSAGE'],
+				'PARAMS' => [
+					self::MESSAGE_PARAM_ALLOW_QUOTE => 'Y',
+					self::MESSAGE_PARAM_MENU_ACTION => 'SKIP:MENU',
+				],
+			]);
+
+			$userGender = Im\User::getInstance(self::getCurrentUser()->getId())->getGender();
+			$forward = self::getMessage('START_DIALOG_'. ($userGender == 'F' ? 'F' : 'M'));
+			if (!$forward)
+			{
+				$forward = Loc::getMessage('SUPPORT_BOX_START_DIALOG_'. ($userGender == 'F' ? 'F' : 'M'));
+			}
+
+			\CIMMessenger::Add([
+				'MESSAGE_TYPE' => \IM_MESSAGE_CHAT,
+				'SYSTEM' => 'Y',
+				'FROM_USER_ID' => self::getBotId(),
+				'TO_CHAT_ID' => $message['CHAT_ID'],
+				'MESSAGE' => self::replacePlaceholders($forward, self::getCurrentUser()->getId()),
+			]);
+
+			// Send push command to chat switch
+			Im\Bot::sendPullOpenDialog(self::getBotId());
+
+			self::disableMessageButtons($messageId);
+
+			return true;
+		}
+		elseif ($messageFields['COMMAND'] === self::COMMAND_QUEUE_NUMBER)
+		{
+			$sessionId = self::getDialogSessionId([
+				'BOT_ID' => static::getBotId(),
+				'DIALOG_ID' => $messageFields['DIALOG_ID'],
+			]);
+
+			if (!$sessionId)
+			{
+				$lastMessages = (new \CIMMessage())->getLastMessage($messageFields['FROM_USER_ID'], static::getBotId(), false, false);
+				foreach ($lastMessages['message'] as $message)
+				{
+					if ($message['senderId'] != self::getBotId())
+					{
+						continue;
+					}
+					if (
+						!$sessionId
+						&& isset($message['params'], $message['params'][self::MESSAGE_PARAM_SESSION_ID])
+						&& (int)$message['params'][self::MESSAGE_PARAM_SESSION_ID] > 0 //SESSION_ID
+					)
+					{
+						$sessionId = (int)$message['params'][self::MESSAGE_PARAM_SESSION_ID];
+					}
+					if (isset($message['params'], $message['params'][self::MESSAGE_PARAM_IMOL_VOTE]))
+					{
+						break;// it is previous session
+					}
+				}
+			}
+
+			self::requestQueueNumber([
+				'MESSAGE_ID' => $messageId,
+				'BOT_ID' => self::getBotId(),
+				'DIALOG_ID' => $messageFields['DIALOG_ID'],
+				'SESSION_ID' => $sessionId,
+			]);
 
 			return true;
 		}
@@ -471,9 +608,9 @@ class SupportBox extends Network implements NetworkBot
 			'TYPE' => Im\Bot::TYPE_NETWORK,
 			'MODULE_ID' => self::MODULE_ID,
 			'CLASS' => __CLASS__,
-			'METHOD_WELCOME_MESSAGE' => 'onChatStart',/** @see ImBot\Bot\SupportBox::onChatStart */
-			'METHOD_MESSAGE_ADD' => 'onMessageAdd',/** @see ImBot\Bot\SupportBox::onMessageAdd */
-			'METHOD_BOT_DELETE' => 'onBotDelete',/** @see ImBot\Bot\SupportBox::onBotDelete */
+			'METHOD_WELCOME_MESSAGE' => 'onChatStart',/** @see SupportBox::onChatStart */
+			'METHOD_MESSAGE_ADD' => 'onMessageAdd',/** @see SupportBox::onMessageAdd */
+			'METHOD_BOT_DELETE' => 'onBotDelete',/** @see SupportBox::onBotDelete */
 			'PROPERTIES' => [
 				'NAME' => self::getBotName(),
 				'WORK_POSITION' => self::getBotDesc(),
@@ -487,6 +624,79 @@ class SupportBox extends Network implements NetworkBot
 		}
 
 		Im\Bot::update(['BOT_ID' => $botId], $botParams);
+
+		return true;
+	}
+
+	/**
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
+	 * 	(int) MESSAGE_ID
+	 * 	(int) DIALOG_ID
+	 * 	(int) SESSION_ID
+	 * 	(int) QUEUE_NUMBER
+	 * ]
+	 * </pre>
+	 *
+	 * @return bool
+	 */
+	protected static function operatorQueueNumber(array $params): bool
+	{
+		if (!Main\Loader::includeModule('im'))
+		{
+			return false;
+		}
+
+		$queueNumber = $params['QUEUE_NUMBER'] ?: 1;
+		$answerText = self::getMessage('QUEUE_NUMBER');
+		if (!$answerText)
+		{
+			$answerText = Loc::getMessage('SUPPORT_BOX_QUEUE_NUMBER');
+		}
+		$answerText = str_replace('#QUEUE_NUMBER#', $queueNumber, $answerText);
+
+
+		// button
+		$buttonText = self::getMessage('QUEUE_NUMBER_REFRESH');
+		if (!$buttonText)
+		{
+			$buttonText = Loc::getMessage('SUPPORT_BOX_QUEUE_NUMBER_REFRESH');
+		}
+		$keyboard = new Im\Bot\Keyboard(self::getBotId());
+		$button = [
+			'COMMAND' => self::COMMAND_QUEUE_NUMBER,
+			'TEXT' => $buttonText,
+			'DISPLAY' => 'LINE',
+			'BG_COLOR' => '#29619b',
+			'TEXT_COLOR' => '#fff',
+		];
+		$keyboard->addButton($button);
+
+		$message = [
+			'DIALOG_ID' => $params['DIALOG_ID'],
+			'MESSAGE' => $answerText,
+			'SYSTEM' => 'Y',
+			'URL_PREVIEW' => 'N',
+			'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
+			'PARAMS' => [
+				self::MESSAGE_PARAM_QUEUE_NUMBER => $queueNumber,
+				self::MESSAGE_PARAM_ALLOW_QUOTE => 'N',
+			],
+			'KEYBOARD' => $keyboard,
+		];
+		if (!empty($params['MESSAGE_ID']))
+		{
+			$message['EDIT_FLAG'] = 'N';
+			if (self::updateMessage((int)$params['MESSAGE_ID'], $message) === false)
+			{
+				self::sendMessage($message);
+			}
+		}
+		else
+		{
+			self::sendMessage($message);
+		}
 
 		return true;
 	}
@@ -694,6 +904,13 @@ class SupportBox extends Network implements NetworkBot
 		return false;
 	}
 
+	/**
+	 * @return string
+	 */
+	public static function getSupportLevel()
+	{
+		return self::SUPPORT_LEVEL_PAID;
+	}
 
 	/**
 	 * Set bot enable.

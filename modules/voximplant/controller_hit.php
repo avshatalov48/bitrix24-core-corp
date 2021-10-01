@@ -432,6 +432,16 @@ if(is_array($params))
 				]);
 				$event->send();
 			}
+			else if($params["COMMAND"] === "UpdateSipRegistrationStatus")
+			{
+				$sipRegistrations = $params['PHONES'];
+				$sip = new CVoxImplantSip();
+
+				$data = $sip->updateSipRegisrations([
+					'sipRegistrations' => $sipRegistrations
+				]);
+
+			}
 		}
 		else
 		{

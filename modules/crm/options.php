@@ -6,7 +6,9 @@
 # mailto:admin@bitrixsoft.com                #
 ##############################################
 
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main;
+
 Loc::loadMessages(__FILE__);
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/main/options.php');
 
@@ -124,7 +126,16 @@ if($MOD_RIGHT>='Y' || $USER->IsAdmin()):
 
 	if ($REQUEST_METHOD=='GET' && $RestoreDefaults <> '' && check_bitrix_sessid())
 	{
+		$extranetExists = IsModuleInstalled('extranet');
+		if ($extranetExists)
+		{
+			$shopEnabled = Main\Config\Option::get('crm', 'crm_shop_enabled');
+		}
 		COption::RemoveOption($module_id);
+		if ($extranetExists)
+		{
+			Main\Config\Option::set('crm', 'crm_shop_enabled', $shopEnabled);
+		}
 	}
 
 	if($REQUEST_METHOD=='POST' && $Update <> '' && check_bitrix_sessid())

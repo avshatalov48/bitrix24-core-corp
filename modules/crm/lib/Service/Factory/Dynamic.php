@@ -132,6 +132,9 @@ class Dynamic extends Service\Factory
 			$info[Item::FIELD_NAME_COMPANY_ID] = [
 				'TYPE' => Field::TYPE_CRM_COMPANY,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
+				'SETTINGS' => [
+					'parentEntityTypeId' => \CCrmOwnerType::Company,
+				],
 			];
 
 			$info[Item::FIELD_NAME_CONTACT_ID] = [
@@ -249,6 +252,7 @@ class Dynamic extends Service\Factory
 				'TYPE' => Field::TYPE_CRM_COMPANY,
 				'SETTINGS' => [
 					'isMyCompany' => true,
+					'parentEntityTypeId' => \CCrmOwnerType::Company,
 				],
 			];
 		}

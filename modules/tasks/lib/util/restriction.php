@@ -20,7 +20,7 @@ final class Restriction
 	{
 		// you can not skip this check for admin, because on bitrix24 admin is just one of regular users
 
-		if(Bitrix24\Task::checkFeatureEnabled('gant'))
+		if(Bitrix24\Task::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_GANTT))
 		{
 			return true; // yes: you are using box, or you are in trial mode
 		}

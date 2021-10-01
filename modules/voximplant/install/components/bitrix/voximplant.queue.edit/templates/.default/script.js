@@ -158,9 +158,20 @@
 		},
 		select : function(item, type, search, bUndeleted, id)
 		{
-			if(this.maximumGroupMembers > 0 && this.getSelectedCount() > this.maximumGroupMembers)
+			if (this.maximumGroupMembers == -1)
 			{
-				BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
+				// unlimit group members
+			}
+			else if (this.getSelectedCount() > this.maximumGroupMembers)
+			{
+				if (this.maximumGroupMembers == 0)
+				{
+					BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size_zero');
+				}
+				else
+				{
+					BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
+				}
 				this.deleteLastItem();
 				BX.SocNetLogDestination.closeDialog(this.params.name);
 				return;
@@ -357,8 +368,10 @@
 				})
 			];
 
-			if(this.destination.maximumGroupMembers == 0)
+			if(this.destination.maximumGroupMembers == -1)
+			{
 				return result;
+			}
 
 			if(this.destination.getSelectedCount() < this.destination.maximumGroupMembers)
 			{
@@ -370,8 +383,15 @@
 							events: {
 								click: function(e)
 								{
-									BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
-								}
+									if (this.destination.maximumGroupMembers == 0)
+									{
+										BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size_zero');
+									}
+									else
+									{
+										BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
+									}
+								}.bind(this)
 							}
 						})
 					]
@@ -387,8 +407,15 @@
 							events: {
 								click: function(e)
 								{
-									BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
-								}
+									if (this.destination.maximumGroupMembers == 0)
+									{
+										BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size_zero');
+									}
+									else
+									{
+										BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
+									}
+								}.bind(this)
 							}
 						})
 					]
@@ -410,7 +437,14 @@
 		{
 			if(this.destination.maximumGroupMembers > 0 && this.destination.getSelectedCount() >= this.destination.maximumGroupMembers)
 			{
-				BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
+				if (this.destination.maximumGroupMembers == 0)
+				{
+					BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size_zero');
+				}
+				else
+				{
+					BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
+				}
 			}
 			else
 			{

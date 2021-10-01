@@ -48,13 +48,13 @@ class ImConnectorLiveChat extends \CBitrixComponent
 	{
 		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
 
-		$this->arResult["STATUS"] = $this->status->isStatus();
-		$this->arResult["ACTIVE_STATUS"] = $this->status->getActive();
-		$this->arResult["CONNECTION_STATUS"] = $this->status->getConnection();
-		$this->arResult["REGISTER_STATUS"] = $this->status->getRegister();
-		$this->arResult["ERROR_STATUS"] = $this->status->getError();
-		$this->arResult["PATH_TO_INDEX_OL"] = \Bitrix\ImOpenLines\Common::getPublicFolder();
-		$this->arResult["PUBLIC_TO_BUTTON_OL"] = Loader::includeModule('crm') ? \Bitrix\Crm\SiteButton\Manager::getUrl() : $this->arResult["PATH_TO_INDEX_OL"] . 'button.php';
+		$this->arResult['STATUS'] = $this->status->isStatus();
+		$this->arResult['ACTIVE_STATUS'] = $this->status->getActive();
+		$this->arResult['CONNECTION_STATUS'] = $this->status->getConnection();
+		$this->arResult['REGISTER_STATUS'] = $this->status->getRegister();
+		$this->arResult['ERROR_STATUS'] = $this->status->getError();
+		$this->arResult['PATH_TO_INDEX_OL'] = \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder();
+		$this->arResult['PUBLIC_TO_BUTTON_OL'] = Loader::includeModule('crm') ? \Bitrix\Crm\SiteButton\Manager::getUrl() : $this->arResult["PATH_TO_INDEX_OL"] . 'button.php';
 
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);
 	}

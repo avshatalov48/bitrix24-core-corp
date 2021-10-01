@@ -275,9 +275,10 @@ class ListsDataManager extends DataManager
 			$gridOption->SetVisibleColumns(array('NAME', 'DETAIL_TEXT', 'SORT', 'IBLOCK_SECTION_ID'));
 			$gridOption->SetDefaultView($gridOption->getCurrentOptions());
 
-			$config['QUICK_ANSWERS_IBLOCK_ID'] = $iblockId;
-			$config['SKIP_MODIFY_MARK'] = 'Y';
-			$configManager->update($lineId, $config);
+			$configManager->update($lineId, [
+				'QUICK_ANSWERS_IBLOCK_ID' => $iblockId,
+				'SKIP_MODIFY_MARK' => 'Y',
+			]);
 
 			return $iblockId;
 		}

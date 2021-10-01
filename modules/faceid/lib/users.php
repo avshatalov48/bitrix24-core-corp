@@ -9,7 +9,20 @@ use Bitrix\Main\Localization\Loc;
  * Class UsersTable
  * Handles dedicated remote face gallery for identifying portal users
  * @package Bitrix\Faceid
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Users_Query query()
+ * @method static EO_Users_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Users_Result getById($id)
+ * @method static EO_Users_Result getList(array $parameters = array())
+ * @method static EO_Users_Entity getEntity()
+ * @method static \Bitrix\Faceid\EO_Users createObject($setDefaultValues = true)
+ * @method static \Bitrix\Faceid\EO_Users_Collection createCollection()
+ * @method static \Bitrix\Faceid\EO_Users wakeUpObject($row)
+ * @method static \Bitrix\Faceid\EO_Users_Collection wakeUpCollection($rows)
+ */
 
 class UsersTable extends Main\Entity\DataManager
 {

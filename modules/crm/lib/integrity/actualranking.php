@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Integrity;
 
+use Bitrix\Crm;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\PhaseSemantics;
@@ -23,6 +24,9 @@ class ActualRanking
 	/** @var integer|null Entity type id */
 	protected $entityTypeId;
 
+	/** @var integer|null Dynamic type id */
+	protected $dynamicTypeId;
+
 	/** @var array List for rank */
 	protected $list = [];
 
@@ -37,6 +41,9 @@ class ActualRanking
 
 	/** @var int[] Deal id of top entity in ranked list */
 	protected $deals = [];
+
+	/** @var int[] Dynamics id of top entity in ranked list. */
+	protected $dynamics;
 
 	/** @var int[] Order id list of top entity in ranked list */
 	protected $orders = [];
@@ -53,7 +60,21 @@ class ActualRanking
 		$this->entityId = null;
 		$this->deals = [];
 		$this->orders = [];
+		$this->dynamics = [];
 		$this->leads = [];
+	}
+
+	/**
+	 * Set dynamic type ID.
+	 *
+	 * @param int|null Dynamic type ID.
+	 * @return $this
+	 */
+	public function setDynamicTypeId($dynamicTypeId)
+	{
+		$this->dynamicTypeId = $dynamicTypeId;
+
+		return $this;
 	}
 
 	/**
@@ -140,6 +161,16 @@ class ActualRanking
 	}
 
 	/**
+	 * Get dynamic entity of top entity in ranked list.
+	 *
+	 * @return integer|null
+	 */
+	public function getDynamicId()
+	{
+		return $this->dynamics[0] ?? null;
+	}
+
+	/**
 	 * Get orders of top entity in ranked list.
 	 *
 	 * @return int[]
@@ -157,6 +188,16 @@ class ActualRanking
 	public function getDeals()
 	{
 		return $this->deals;
+	}
+
+	/**
+	 * Get dynamics of top entity in ranked list.
+	 *
+	 * @return int[]
+	 */
+	public function getDynamics()
+	{
+		return $this->dynamics;
 	}
 
 	/**
@@ -250,8 +291,11 @@ class ActualRanking
 			return $this;
 		}
 
+		// ranking by dynamics
+		$this->rankByDynamics();
+
 		// ranking by deals
-		$findDealsOnly = !$this->entityId? false : true;
+		$findDealsOnly = !$this->entityId ? false : true;
 		$this->rankByDeals($findDealsOnly);
 
 		// ranking by orders
@@ -360,6 +404,93 @@ class ActualRanking
 		$this->deals = $deals;
 	}
 
+	protected function rankByDynamics($findDynamicsOnly = false)
+	{
+		if (!$this->dynamicTypeId)
+		{
+			return;
+		}
+
+		if (!\CCrmOwnerType::isPossibleDynamicTypeId($this->dynamicTypeId))
+		{
+			return;
+		}
+
+		$factory = Crm\Service\Container::getInstance()->getFactory($this->dynamicTypeId);
+		if (!$factory)
+		{
+			return;
+		}
+
+
+		$query = $factory->getDataClass()::query();
+		switch ($this->entityTypeId)
+		{
+			case \CCrmOwnerType::Contact:
+				$fieldName = 'CONTACT_ID';
+				break;
+			case \CCrmOwnerType::Company:
+				$fieldName = 'COMPANY_ID';
+				break;
+			default:
+				return;
+		}
+		$query
+			->setSelect(['ID', $fieldName])
+			->addFilter("=$fieldName", $this->entityId ?: $this->list)
+			->addFilter('!=STAGE.SEMANTICS', Crm\PhaseSemantics::getFinalSemantis());
+
+		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_ID', 'MAX(%s)', 'ID'));
+		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_DATE_MODIFY', 'MAX(%s)', 'UPDATED_TIME'));
+		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_DATE_CREATE', 'MAX(%s)', 'CREATED_TIME'));
+		$query->setOrder(array(
+			'MAX_DATE_MODIFY' => 'DESC',
+			'MAX_DATE_CREATE' => 'DESC',
+			'MAX_ID' => 'DESC',
+		));
+
+		$topEntityId = null;
+		$rankedList = [];
+		foreach ($query->fetchAll() as $item)
+		{
+			if (!$topEntityId)
+			{
+				$topEntityId = $item[$fieldName];
+			}
+
+			if ($topEntityId == $item[$fieldName] && !in_array($item['ID'], $this->dynamics))
+			{
+				// find all, even from ::setEntity
+				$this->dynamics[] = $item['ID'];
+			}
+
+			if (!in_array($item[$fieldName], $rankedList))
+			{
+				$rankedList[] = $item[$fieldName];
+			}
+		}
+
+		if (empty($rankedList))
+		{
+			return;
+		}
+
+		$this->isRanked = true;
+
+		// set entity id
+		if (!$this->entityId)
+		{
+			$this->entityId = $rankedList[0];
+		}
+
+		if ($findDynamicsOnly)
+		{
+			return;
+		}
+
+		$this->updateListByRankedList($rankedList);
+	}
+
 	protected function rankByOrders($findOrdersOnly = false)
 	{
 		if (!in_array($this->entityTypeId, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company]))
@@ -444,14 +575,24 @@ class ActualRanking
 		$rankedList = array();
 		$query->setSelect(array($fieldName => $filterFieldName, 'MAX_ID'));
 		$query->whereIn($filterFieldName, $this->list);
-		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_DATE_MODIFY', 'MAX(%s)', 'DATE_MODIFY'));
-		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_DATE_CREATE', 'MAX(%s)', 'DATE_CREATE'));
 		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_ID', 'MAX(%s)', 'ID'));
-		$query->setOrder(array(
-			'MAX_DATE_MODIFY' => 'DESC',
-			'MAX_DATE_CREATE' => 'DESC',
-			'MAX_ID' => 'DESC',
-		));
+		if ($limit !== 1)
+		{
+			$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_DATE_MODIFY', 'MAX(%s)', 'DATE_MODIFY'));
+			$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_DATE_CREATE', 'MAX(%s)', 'DATE_CREATE'));
+			$query->setOrder(array(
+				'MAX_DATE_MODIFY' => 'DESC',
+				'MAX_DATE_CREATE' => 'DESC',
+				'MAX_ID' => 'DESC',
+			));
+		}
+		else
+		{
+			$query->setOrder(array(
+				'MAX_ID' => 'DESC',
+			));
+		}
+
 		if ($limit)
 		{
 			$query->setLimit($limit);

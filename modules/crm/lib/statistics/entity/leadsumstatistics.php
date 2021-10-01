@@ -5,6 +5,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\DatetimeField;
 
+/**
+ * Class LeadSumStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_LeadSumStatistics_Query query()
+ * @method static EO_LeadSumStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_LeadSumStatistics_Result getById($id)
+ * @method static EO_LeadSumStatistics_Result getList(array $parameters = array())
+ * @method static EO_LeadSumStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_LeadSumStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_LeadSumStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_LeadSumStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_LeadSumStatistics_Collection wakeUpCollection($rows)
+ */
 class LeadSumStatisticsTable  extends Entity\DataManager
 {
 	const MAX_SUM_SLOT_COUNT = 5;

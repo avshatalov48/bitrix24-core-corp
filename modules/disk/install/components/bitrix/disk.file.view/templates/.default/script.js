@@ -143,6 +143,7 @@ BX.Disk.FileViewClass = (function ()
 		BX.addCustomEvent("onBeforeElementShow", BX.proxy(this.onBeforeElementShow, this));
 		BX.addCustomEvent(this.externalLink.externalLinkDescription, "Disk.Model.Item:afterRender", this.handleAfterRenderExternalLinkSettings.bind(this));
 		BX.addCustomEvent('SidePanel.Slider:onMessage', this.onSliderMessage.bind(this));
+		BX.addCustomEvent("onPopupFileUploadClose", this.onPopupFileUploadClose.bind(this));
 
 		if(!!this.uf)
 		{
@@ -161,9 +162,24 @@ BX.Disk.FileViewClass = (function ()
 		{
 			window.location.reload();
 		}
+		if (event.getEventId() === 'Disk.File:onNewVersionUploaded')
+		{
+			if (event.getData().object.id == this.object.id)
+			{
+				window.location.reload();
+			}
+		}
 		if (event.getEventId() === 'Disk.File.Uf:onUpdated')
 		{
 			this.reloadUf();
+		}
+	};
+
+	FileViewClass.prototype.onPopupFileUploadClose = function (diskUpload, fileId)
+	{
+		if (fileId == this.object.id)
+		{
+			document.location.reload();
 		}
 	};
 

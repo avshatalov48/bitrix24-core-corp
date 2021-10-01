@@ -25,6 +25,7 @@ $MESS["SALESCENTER_SP_PARAMS_FORM_LOGOTIP_HINT"] = "Empfohlene Größe: 100 x 45
 $MESS["SALESCENTER_SP_PARAMS_FORM_LOGOTIP_LOAD_BUTTON"] = "Hochladen";
 $MESS["SALESCENTER_SP_PARAMS_FORM_NAME"] = "Name";
 $MESS["SALESCENTER_SP_PARAMS_FORM_NAME_HINT"] = "Z.B.: \"Zahlung per Visa oder MasterCard\". Das ist der Name, den Ihre Kunden in der Liste der Zahlungsarten sehen werden";
+$MESS["SALESCENTER_SP_PARAMS_FORM_NAME_HINT_V2"] = "Zum Beispiel: \"Visa und MasterCard\". Ihre Kunden werden diesen Text in der Liste der Zahlungsoptionen sehen.";
 $MESS["SALESCENTER_SP_PARAMS_FORM_TITLE"] = "Parameter";
 $MESS["SALESCENTER_SP_PAYSYSTEM_ALFABANK_DESCRIPTION"] = "Empfangen Sie Zahlungen via AlfaBank";
 $MESS["SALESCENTER_SP_PAYSYSTEM_ALFABANK_PUBLIC_DESCRIPTION"] = "Geben Sie Kartennummer, Gültigkeitsdatum sowie CVV/CVC Code ein.";

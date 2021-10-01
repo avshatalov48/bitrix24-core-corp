@@ -14,6 +14,19 @@ use Bitrix\Main\ORM\Fields\Relations\Reference;
 /**
  * Class OrderContactCompanyTable
  * @package Bitrix\Crm\Binding
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_OrderDeal_Query query()
+ * @method static EO_OrderDeal_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_OrderDeal_Result getById($id)
+ * @method static EO_OrderDeal_Result getList(array $parameters = array())
+ * @method static EO_OrderDeal_Entity getEntity()
+ * @method static \Bitrix\Crm\Binding\EO_OrderDeal createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Binding\EO_OrderDeal_Collection createCollection()
+ * @method static \Bitrix\Crm\Binding\EO_OrderDeal wakeUpObject($row)
+ * @method static \Bitrix\Crm\Binding\EO_OrderDeal_Collection wakeUpCollection($rows)
  */
 class OrderDealTable extends Main\ORM\Data\DataManager
 {

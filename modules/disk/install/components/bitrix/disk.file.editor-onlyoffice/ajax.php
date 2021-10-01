@@ -4,6 +4,7 @@ use Bitrix\Disk;
 use Bitrix\Disk\Document\Online\UserInfoToken;
 use Bitrix\Disk\Document\OnlyOffice;
 use Bitrix\Disk\Document\OnlyOffice\Filters\DocumentSessionCheck;
+use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\User;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Engine;
@@ -18,6 +19,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 class DiskFileEditorOnlyOfficeController extends Engine\Controller
 {
+	protected function processBeforeAction(Action $action): bool
+	{
+		if (!OnlyOfficeHandler::isEnabled())
+		{
+			$this->addError(new Error('OnlyOffice handler is not configured.'));
+
+			return false;
+		}
+
+		return parent::processBeforeAction($action);
+	}
+
 	protected function shouldDecodePostData(Action $action): bool
 	{
 		return false;
@@ -42,6 +55,7 @@ class DiskFileEditorOnlyOfficeController extends Engine\Controller
 			],
 			'getUserInfo' => [
 				'+prefilters' => [
+					new Bitrix\Main\Engine\ActionFilter\CloseSession(),
 					new ActionFilter\ContentType([ActionFilter\ContentType::JSON]),
 					(new DocumentSessionCheck())
 						->enableOwnerCheck()
@@ -53,6 +67,43 @@ class DiskFileEditorOnlyOfficeController extends Engine\Controller
 				'-prefilters' => [
 					ActionFilter\Authentication::class,
 				],
+			],
+			'markAsStillWorkingSession' => [
+				'+prefilters' => [
+					new Bitrix\Main\Engine\ActionFilter\CloseSession(),
+					new ActionFilter\ContentType([ActionFilter\ContentType::JSON]),
+					(new DocumentSessionCheck())
+						->enableOwnerCheck()
+						->enableHashCheck(function(){
+							return (new Engine\JsonPayload())->getData()['documentSessionHash'];
+						})
+					,
+				],
+			],
+		];
+	}
+
+	public function markAsStillWorkingSessionAction(OnlyOffice\Models\DocumentSession $documentSession): ?array
+	{
+		if ($documentSession->isView())
+		{
+			$this->addError(new Error("Could not update info by view session: {$documentSession->getId()}."));
+
+			return null;
+		}
+		$documentInfo = $documentSession->getInfo();
+		if (!$documentInfo)
+		{
+			$this->addError(new Error("Could not get info by session: {$documentSession->getId()}."));
+
+			return null;
+		}
+
+		$documentInfo->actualizeUpdateTime();
+
+		return [
+			'documentInfo' => [
+				'updateTime' => $documentInfo->getUpdateTime(),
 			],
 		];
 	}

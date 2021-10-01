@@ -1423,3 +1423,11 @@ select {
 	padding: 10px;
 }
 
+#imol_watch_typing_not_available {
+    margin-top: 7px;
+}
+
+#imol_watch_typing_not_available a {
+    margin-left: 0;
+    font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}

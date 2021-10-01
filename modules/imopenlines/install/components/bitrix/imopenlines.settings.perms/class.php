@@ -1,12 +1,14 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
-use Bitrix\Main\Application;
 use Bitrix\Main\Error;
-use Bitrix\Main\ErrorCollection;
-use Bitrix\ImOpenlines\Model;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Application;
+use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImOpenlines\Model;
+use Bitrix\ImOpenlines\Common;
 
 Loc::loadMessages(__FILE__);
 
@@ -46,7 +48,7 @@ class CImOpenlinesPermsComponent extends CBitrixComponent
 			$roles[$row['ID']] = array(
 				'ID' => $row['ID'],
 				'NAME' => $row['NAME'],
-				'EDIT_URL' => \Bitrix\ImOpenlines\Common::getPublicFolder().'editrole.php?ID='.$row['ID'],
+				'EDIT_URL' => Common::getContactCenterPublicFolder() . 'permissions/editrole.php?ID='.$row['ID'],
 			);
 		}
 
@@ -85,13 +87,14 @@ class CImOpenlinesPermsComponent extends CBitrixComponent
 
 		$this->arResult['ROLES'] = $roles;
 		$this->arResult['ROLE_ACCESS_CODES'] = $roleAccessCodes;
-		$this->arResult['ADD_URL'] = \Bitrix\ImOpenlines\Common::getPublicFolder().'editrole.php?ID=0';
+		$this->arResult['ADD_URL'] = Common::getContactCenterPublicFolder() . 'permissions/editrole.php?ID=0';
+		$this->arResult['INDEX_URL'] = Common::getContactCenterPublicFolder();
 		$this->arResult['CAN_EDIT'] = \Bitrix\ImOpenlines\Security\Helper::canUse();
 
 		$this->arResult['IFRAME'] = $this->request['IFRAME'] === 'Y';
 
 		$uri = new \Bitrix\Main\Web\Uri(htmlspecialchars_decode(POST_FORM_ACTION_URI));
-		$uri->addParams(array('action-line' => 'permission-add'));
+		$uri->addParams(['action-line' => 'permission-add']);
 		$this->arResult['ACTION_URI'] = htmlspecialcharsbx($uri->getUri());
 	}
 
@@ -110,10 +113,10 @@ class CImOpenlinesPermsComponent extends CBitrixComponent
 
 		foreach ($roleAccessCodes as $roleAccessCode => $roleId)
 		{
-			$insertResult = Model\RoleAccessTable::add(array(
+			$insertResult = Model\RoleAccessTable::add([
 				'ROLE_ID' => $roleId,
 				'ACCESS_CODE' => $roleAccessCode
-			));
+			]);
 			if(!$insertResult->isSuccess())
 			{
 				$this->errors[] = new Error(Loc::getMessage('IMOL_PERM_UNKNOWN_SAVE_ERROR'));

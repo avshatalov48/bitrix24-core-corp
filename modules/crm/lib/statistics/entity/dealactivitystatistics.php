@@ -6,6 +6,22 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Crm;
 
+/**
+ * Class DealActivityStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DealActivityStatistics_Query query()
+ * @method static EO_DealActivityStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DealActivityStatistics_Result getById($id)
+ * @method static EO_DealActivityStatistics_Result getList(array $parameters = array())
+ * @method static EO_DealActivityStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealActivityStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealActivityStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealActivityStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealActivityStatistics_Collection wakeUpCollection($rows)
+ */
 class DealActivityStatisticsTable  extends Entity\DataManager
 {
 	/**

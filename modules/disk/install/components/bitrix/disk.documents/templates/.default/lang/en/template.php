@@ -1,4 +1,7 @@
 <?php
+$MESS["DISK_DOCUMENTS_ACT_DELETE_MESSAGE"] = "Do you want to move \"#NAME#\" to the Recycle Bin?";
+$MESS["DISK_DOCUMENTS_ACT_DELETE_OK_BUTTON"] = "Move to the Recycle Bin";
+$MESS["DISK_DOCUMENTS_ACT_DELETE_TITLE"] = "Confirm delete";
 $MESS["DISK_DOCUMENTS_ACT_LOADING"] = "Loading...";
 $MESS["DISK_DOCUMENTS_GRID_STUB_DESCRIPTION"] = "Edit. Discuss. Share.";
 $MESS["DISK_DOCUMENTS_GRID_STUB_TITLE"] = "Create new documents, spreadsheets or presentations to collaborate with your colleagues!";

@@ -29,13 +29,6 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 	</div>
 <? else: ?>
 	<div class="voximplant-start-wrap">
-		<? if ($arResult['SHOW_EOS_WARNING']): ?>
-			<div class="ui-alert ui-alert-warning">
-				<span class="ui-alert-message"><?= GetMessage("VOX_START_NOT_TELEPHONY_FOR_FREE", [
-						"#LINK#" => \Bitrix\UI\Util::getArticleUrlByCode("12757512")
-					])?></span>
-			</div>
-		<? endif ?>
 		<div class="voximplant-start-head-box-container">
 			<div class="voximplant-start-head-box">
 				<div class="voximplant-start-head-box-title">

@@ -332,15 +332,7 @@ this.BX = this.BX || {};
 	  return Database;
 	}();
 
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"post-balloon-hidden post-balloon post-balloon-active\"><span class=\"post-balloon-icon\"></span><span class=\"post-balloon-text\">", "</span></div>\n\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject;
 
 	var PublicationQueue = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(PublicationQueue, _EventEmitter);
@@ -469,7 +461,7 @@ this.BX = this.BX || {};
 	    key: "drawItem",
 	    value: function drawItem() {
 	      var title = main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_PUBLICATION_QUEUE_ITEM_TITLE');
-	      return main_core.Tag.render(_templateObject(), title);
+	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"post-balloon-hidden post-balloon post-balloon-active\"><span class=\"post-balloon-icon\"></span><span class=\"post-balloon-text\">", "</span></div>\n\t\t\t"])), title);
 	    }
 	  }, {
 	    key: "hideItem",
@@ -1523,6 +1515,7 @@ this.BX = this.BX || {};
 	            'MODULE_DISK_INSTALLED': BX.message('MOBILE_EXT_LIVEFEED_DISK_INSTALLED') == 'Y' ? 'Y' : 'N',
 	            'MODULE_WEBDAV_INSTALLED': BX.message('MOBILE_EXT_LIVEFEED_WEBDAV_INSTALLED') == 'Y' ? 'Y' : 'N',
 	            'MODULE_VOTE_INSTALLED': BX.message('MOBILE_EXT_LIVEFEED_VOTE_INSTALLED') == 'Y' ? 'Y' : 'N',
+	            'USE_IMPORTANT': BX.message('MOBILE_EXT_LIVEFEED_USE_IMPORTANT') === 'N' ? 'N' : 'Y',
 	            'FILE_ATTACH_PATH': BX.message('MOBILE_EXT_LIVEFEED_FILE_ATTACH_PATH'),
 	            'BACKGROUND_IMAGES_DATA': Instance.getOption('backgroundImagesData', {}),
 	            'BACKGROUND_COMMON': Instance.getOption('backgroundCommon', {}),
@@ -2410,15 +2403,7 @@ this.BX = this.BX || {};
 	  return PostFormOldManager;
 	}();
 
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\" data-livefeed-id=\"", "\">\n\t\t\t<div class=\"post-pinned-cancel-panel-content\">\n\t\t\t\t<div class=\"post-pinned-cancel-panel-label\">", "</div>\n\t\t\t\t\t<div class=\"post-pinned-cancel-panel-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t<div class=\"ui-btn ui-btn-light-border ui-btn-round ui-btn-sm ", "\">", "</div>\n\t\t</div>"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1;
 
 	var PinnedPanel = /*#__PURE__*/function () {
 	  function PinnedPanel() {
@@ -2603,7 +2588,7 @@ this.BX = this.BX || {};
 	      postNode.classList.add(this.class.postItemPinned);
 	      postNode.classList.add(this.class.postItemPinActive);
 	      postItemPinnedBlock.innerHTML = "".concat(main_core.Type.isStringFilled(pinnedContent.TITLE) ? "<div class=\"".concat(this.class.postItemPinnedTitle, "\">").concat(pinnedContent.TITLE, "</div>") : '', "<div class=\"").concat(this.class.postItemPinnedTextBox, "\"><div class=\"").concat(this.class.postItemPinnedDesc, "\">").concat(pinnedContent.DESCRIPTION, "</div></div>");
-	      var cancelPinnedPanel = main_core.Tag.render(_templateObject$1(), this.class.cancelPanel, logId, main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_TITLE'), main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_DESCRIPTION'), this.class.cancelPanelButton, main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_BUTTON'));
+	      var cancelPinnedPanel = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\" data-livefeed-id=\"", "\">\n\t\t\t<div class=\"post-pinned-cancel-panel-content\">\n\t\t\t\t<div class=\"post-pinned-cancel-panel-label\">", "</div>\n\t\t\t\t\t<div class=\"post-pinned-cancel-panel-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t<div class=\"ui-btn ui-btn-light-border ui-btn-round ui-btn-sm ", "\">", "</div>\n\t\t</div>"])), this.class.cancelPanel, logId, main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_TITLE'), main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_DESCRIPTION'), this.class.cancelPanelButton, main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_BUTTON'));
 	      var cancelButton = cancelPinnedPanel.querySelector(".".concat(this.class.cancelPanelButton));
 	      cancelButton.addEventListener('touchend', function (event) {
 	        var cancelPanel = event.currentTarget.closest(".".concat(_this3.class.cancelPanel));
@@ -2954,8 +2939,7 @@ this.BX = this.BX || {};
 
 	      var maxScroll = document.documentElement.scrollHeight - window.innerHeight - 100; // (this.keyboardShown ? 500 : 300)
 
-	      this.showScrollButtonBottom = !(document.documentElement.scrollHeight - window.innerHeight <= 0 || // short page
-	      scrollTop >= maxScroll // too much low
+	      this.showScrollButtonBottom = !(document.documentElement.scrollHeight - window.innerHeight <= 0 || scrollTop >= maxScroll // too much low
 	      && (scrollTop > 0 // refresh patch
 	      || maxScroll > 0));
 	      this.showScrollButtonTop = scrollTop > 200;
@@ -3287,45 +3271,7 @@ this.BX = this.BX || {};
 	  return FollowManager;
 	}();
 
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-load-text\">", "</div><a class=\"post-comments-load-btn\">", "</a></div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-loader\"></div><div class=\"post-comments-load-text\">", "</div></div>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]);
-
-	  _templateObject$2 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$2, _templateObject2, _templateObject3, _templateObject4;
 
 	var Comments = /*#__PURE__*/function () {
 	  function Comments() {
@@ -3429,7 +3375,7 @@ this.BX = this.BX || {};
 	        }
 
 	        main_core.Dom.clean(container);
-	        container.appendChild(main_core.Tag.render(_templateObject$2()));
+	        container.appendChild(main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]))));
 	      }
 
 	      this.showEmptyListWaiter({
@@ -3484,7 +3430,7 @@ this.BX = this.BX || {};
 
 	            var contentData = BX.processHTML(response.TEXT, true);
 	            container.innerHTML = contentData.HTML;
-	            container.appendChild(main_core.Tag.render(_templateObject2()));
+	            container.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]))));
 	            var cnt = 0;
 
 	            var func = function func() {
@@ -3596,7 +3542,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      container.appendChild(main_core.Tag.render(_templateObject3(), main_core.Loc.getMessage('MSLDetailCommentsLoading')));
+	      container.appendChild(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-loader\"></div><div class=\"post-comments-load-text\">", "</div></div>"])), main_core.Loc.getMessage('MSLDetailCommentsLoading')));
 	    }
 	  }, {
 	    key: "showEmptyListFailed",
@@ -3614,7 +3560,7 @@ this.BX = this.BX || {};
 	      }
 
 	      var errorMessage = main_core.Type.isObject(data) && main_core.Type.isStringFilled(data.ERROR_MESSAGE) ? data.ERROR_MESSAGE : main_core.Loc.getMessage('MSLDetailCommentsFailed');
-	      container.appendChild(main_core.Tag.render(_templateObject4(), errorMessage, main_core.Loc.getMessage('MSLDetailCommentsReload')));
+	      container.appendChild(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-load-text\">", "</div><a class=\"post-comments-load-btn\">", "</a></div>"])), errorMessage, main_core.Loc.getMessage('MSLDetailCommentsReload')));
 	      var button = container.querySelector('.post-comments-load-btn');
 
 	      if (!button) {
@@ -3734,15 +3680,7 @@ this.BX = this.BX || {};
 	  return Comments;
 	}();
 
-	function _templateObject$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"]);
-
-	  _templateObject$3 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$3;
 
 	var Page = /*#__PURE__*/function () {
 	  function Page() {
@@ -4047,7 +3985,7 @@ this.BX = this.BX || {};
 	          document.getElementById('lenta_wrapper_global').innerHTML = block.CONTENT;
 	        } else // next
 	          {
-	            document.getElementById('lenta_wrapper').insertBefore(main_core.Tag.render(_templateObject$3(), block.CONTENT), document.getElementById('next_post_more'));
+	            document.getElementById('lenta_wrapper').insertBefore(main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), block.CONTENT), document.getElementById('next_post_more'));
 	          }
 
 	        htmlWasInserted = true;
@@ -4169,15 +4107,7 @@ this.BX = this.BX || {};
 	  return Page;
 	}();
 
-	function _templateObject$4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", " ", "\" ontransitionend=\"", "\"></div>"]);
-
-	  _templateObject$4 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$4;
 
 	var Feed = /*#__PURE__*/function () {
 	  function Feed() {
@@ -4642,7 +4572,7 @@ this.BX = this.BX || {};
 
 	        contentWrapper.remove();
 	      } else if (action === 'add') {
-	        this.setNewPostContainer(main_core.Tag.render(_templateObject$4(), this.class.postNewContainerTransformNew, this.class.postLazyLoadCheck, this.handleInsertPostTransitionEnd.bind(this)));
+	        this.setNewPostContainer(main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"", " ", "\" ontransitionend=\"", "\"></div>"])), this.class.postNewContainerTransformNew, this.class.postLazyLoadCheck, this.handleInsertPostTransitionEnd.bind(this)));
 	        main_core.Dom.prepend(this.getNewPostContainer(), containerNode);
 	        mobile_utils.Utils.htmlWithInlineJS(this.getNewPostContainer(), content).then(function () {
 	          var postNode = _this4.getNewPostContainer().querySelector("div.".concat(_this4.class.listPost));

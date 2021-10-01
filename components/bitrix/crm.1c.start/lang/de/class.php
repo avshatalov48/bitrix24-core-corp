@@ -1,0 +1,9 @@
+<?php
+$MESS["CRM_1C_START_CONNECT"] = "Verbinden";
+$MESS["CRM_1C_START_DOC"] = "1C:Backoffice";
+$MESS["CRM_1C_START_EXCHANGE"] = "1C + CRM";
+$MESS["CRM_1C_START_FACE_CARD"] = "Face Card";
+$MESS["CRM_1C_START_REALTIME"] = "1C anbinden";
+$MESS["CRM_1C_START_REPORT"] = "1C Berichte";
+$MESS["CRM_1C_START_SYNCHRO_CATALOG"] = "Katalog";
+$MESS["CRM_1C_START_SYNCHRO_INVOICE"] = "Rechnungen";

@@ -155,6 +155,7 @@ Class voximplant extends CModule
 		RegisterModuleDependences('rest', 'OnRestAppDelete', 'voximplant', '\Bitrix\Voximplant\Rest\Helper', 'onRestAppDelete');
 		RegisterModuleDependences("im", "OnGetNotifySchema", "voximplant", "CVoxImplantEvent", "onGetNotifySchema");
 
+
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 
 		$eventManager->registerEventHandler('main', 'OnUserSetLastActivityDate', 'voximplant', '\Bitrix\Voximplant\CallQueue', 'onUserSetLastActivityDate');

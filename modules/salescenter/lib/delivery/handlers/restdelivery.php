@@ -161,4 +161,12 @@ class RestDelivery extends Base implements IRestHandler
 
 		return $active ? true : false;
 	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getShortDescription()
+	{
+		return $this->restHandler['DESCRIPTION'];
+	}
 }

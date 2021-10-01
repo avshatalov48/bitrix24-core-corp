@@ -146,10 +146,17 @@ class Application
 				return b24form.user.fields || {};
 			}
 
-			let user = b24form.util.ls.getItem('b24-form-user', ttl);
-			if (user !== null && typeof user === 'object')
+			try
 			{
-				return user.fields || {};
+				let user = b24form.util.ls.getItem('b24-form-user', ttl);
+				if (user !== null && typeof user === 'object')
+				{
+					return user.fields || {};
+				}
+			}
+			catch (e)
+			{
+
 			}
 		}
 

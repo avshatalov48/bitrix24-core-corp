@@ -88,7 +88,7 @@ class Input extends InteractiveMessage\Input
 			)
 			{
 				$this->message['message']['text'] = Loc::getMessage(
-					'IMCONNECTOR_INTERACTIVE_MESSAGE_IMESSAGE_CRM_WEBFORM_RESULT_ENTITY_NOTIFY_SUBJECT',
+					'IMCONNECTOR_INTERACTIVE_MESSAGE_IMESSAGE_CRM_WEBFORM_RESULT_ENTITY_NOTIFY_SUBJECT_NEW',
 					[
 						'#title_from#' => '[URL=' . self::getActivityUrl($activityId) . ']' . htmlspecialcharsbx($nameForm) . '[/URL]'
 					]

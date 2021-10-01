@@ -1,5 +1,10 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
+use Bitrix\Imopenlines\Limit;
+
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Localization\Loc;
 /**
  * @var array $arResult
  * @var array $arParams
@@ -14,17 +19,20 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8" />
 <?php
-	use Bitrix\Main\Localization\Loc;
-	\Bitrix\Main\UI\Extension::load("ui.fonts.opensans");
+Extension::load([
+	'ui.fonts.opensans',
+	'ui.info-helper',
+	'ajax'
+]);
 	Loc::loadMessages(__FILE__);
 	$APPLICATION->ShowHead();
-	CJSCore::Init('ajax');
 	$APPLICATION->ShowCSS(true, true);
 	$APPLICATION->ShowHeadStrings();
 	$APPLICATION->ShowHeadScripts();
 ?>
 </head>
 <body class="imopenlines-iframe-quick <?=($arResult['DARK_MODE'] === true ? 'imopenlines-iframe-quick-dark' : '')?>">
+<?if($arResult['CAN_USE_QUICK_ANSWERS'] === true):?>
 <div class="imopenlines-iframe-quick-info quick-hidden" id="quick-info-container">
 	<div class="imopenlines-iframe-quick-info-header">
 		<?=Loc::getMessage('IMOL_QUICK_ANSWERS_INFO_TITLE_NEW');?>
@@ -107,6 +115,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 		<button class="imopenlines-iframe-quick-edit-button imopenlines-iframe-quick-edit-cancel" id="quick-edit-cancel"><?=Loc::getMessage('IMOL_QUICK_ANSWERS_EDIT_CANCEL');?></button>
 	</div>
 </div>
+<?endif;?>
 
 <script>
 	BX.ready(function()
@@ -116,8 +125,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 				ajaxUrl: '<?=($this->getComponent()->getPath().'/ajax.php')?>',
 				allUrl: '<?=$arResult['ALL_URL'];?>',
 				sections: <?=CUtil::PhpToJSObject($arResult['SECTIONS']);?>,
-				allCount: <?=intval($arResult['ALL_COUNT']);?>,
-				lineId: <?=intval($arResult['IMOP_ID']);?>
+				allCount: <?=(int)$arResult['ALL_COUNT'];?>,
+				lineId: <?=(int)$arResult['IMOP_ID'];?>,
+				canUse: <?=CUtil::PhpToJSObject($arResult['CAN_USE_QUICK_ANSWERS']);?>
 			},
 			function()
 			{
@@ -127,7 +137,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 					'IMOL_QUICK_ANSWERS_NOT_FOUND': '<?=CUtil::JSEscape(Loc::getMessage('IMOL_QUICK_ANSWERS_NOT_FOUND'));?>',
 					'IMOL_QUICK_ANSWERS_EDIT_CREATE': '<?=CUtil::JSEscape(Loc::getMessage('IMOL_QUICK_ANSWERS_EDIT_CREATE'));?>',
 					'IMOL_QUICK_ANSWERS_EDIT_UPDATE': '<?=CUtil::JSEscape(Loc::getMessage('IMOL_QUICK_ANSWERS_EDIT_UPDATE'));?>',
-					'IMOL_QUICK_ANSWERS_EDIT_ERROR_EMPTY_TEXT': '<?=CUtil::JSEscape(Loc::getMessage('IMOL_QUICK_ANSWERS_EDIT_ERROR_EMPTY_TEXT'));?>'
+					'IMOL_QUICK_ANSWERS_EDIT_ERROR_EMPTY_TEXT': '<?=CUtil::JSEscape(Loc::getMessage('IMOL_QUICK_ANSWERS_EDIT_ERROR_EMPTY_TEXT'));?>',
+					'IMOL_QUICK_ANSWERS_INFO_HELPER_LIMIT': '<?=CUtil::JSEscape(Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_QUICK_ANSWERS);?>'
 				});
 			}
 		);

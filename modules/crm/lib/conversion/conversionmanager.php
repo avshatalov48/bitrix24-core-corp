@@ -550,7 +550,7 @@ class ConversionManager
 	 *
 	 * @return EntityConversionWizard|string|null
 	 */
-	protected static function getWizardClass(int $entityTypeId): ?string
+	public static function getWizardClass(int $entityTypeId): ?string
 	{
 		$map = [
 			\CCrmOwnerType::Lead => LeadConversionWizard::class,

@@ -7,3 +7,8 @@
 }
 
 /*endregion*/
+
+.checkout-basket-pay-method-description {
+	overflow: hidden;
+	transition: all .3s linear;
+}

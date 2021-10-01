@@ -108,7 +108,8 @@ if (is_array($arResult["GROUP"]))
 			calendarSettings: <?=CUtil::PhpToJSObject($arResult['CALENDAR_SETTINGS'])?>,
 			messages: {
 				taskInProject: "<?=GetMessageJs("TASKS_QUICK_IN_GROUP")?>"
-			}
+			},
+			networkEnabled: <?= \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled() ? "true" : "false"; ?>
 		});
 	</script>
 </div>

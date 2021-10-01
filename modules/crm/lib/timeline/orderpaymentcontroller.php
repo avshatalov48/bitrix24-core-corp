@@ -15,21 +15,6 @@ Loc::loadMessages(__FILE__);
  */
 class OrderPaymentController extends EntityController
 {
-	/** @var OrderPaymentController|null */
-	protected static $instance = null;
-
-	/**
-	 * @return OrderPaymentController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new OrderPaymentController();
-		}
-		return self::$instance;
-	}
-
 	/**
 	 * @return int
 	 */

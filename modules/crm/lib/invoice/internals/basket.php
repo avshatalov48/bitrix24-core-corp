@@ -10,6 +10,19 @@ Loc::loadMessages(__FILE__);
 /**
  * Class BasketTable
  * @package Bitrix\Crm\Invoice\Internal
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Basket_Query query()
+ * @method static EO_Basket_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Basket_Result getById($id)
+ * @method static EO_Basket_Result getList(array $parameters = array())
+ * @method static EO_Basket_Entity getEntity()
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Basket createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Basket_Collection createCollection()
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Basket wakeUpObject($row)
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Basket_Collection wakeUpCollection($rows)
  */
 class BasketTable extends Main\Entity\DataManager
 {

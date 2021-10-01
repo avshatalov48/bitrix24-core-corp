@@ -5,6 +5,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Crm;
 
+/**
+ * Class CompanyActivityStatusStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CompanyActivityStatusStatistics_Query query()
+ * @method static EO_CompanyActivityStatusStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CompanyActivityStatusStatistics_Result getById($id)
+ * @method static EO_CompanyActivityStatusStatistics_Result getList(array $parameters = array())
+ * @method static EO_CompanyActivityStatusStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyActivityStatusStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyActivityStatusStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyActivityStatusStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyActivityStatusStatistics_Collection wakeUpCollection($rows)
+ */
 class CompanyActivityStatusStatisticsTable  extends Entity\DataManager
 {
 	/**

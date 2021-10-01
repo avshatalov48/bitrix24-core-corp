@@ -1216,6 +1216,27 @@ class crm extends CModule
 			'CCrmProduct',
 			'HandlerOnAfterIBlockElementDelete'
 		);
+		$eventManager->registerEventHandlerCompatible(
+			'iblock',
+			'OnBeforeIBlockElementAdd',
+			'crm',
+			'\Bitrix\Crm\Config\State',
+			'handleBeforeIblockElementAdd'
+		);
+		$eventManager->registerEventHandlerCompatible(
+			'iblock',
+			'OnAfterIBlockElementAdd',
+			'crm',
+			'\Bitrix\Crm\Config\State',
+			'handleAfterIblockElementAdd'
+		);
+		$eventManager->registerEventHandlerCompatible(
+			'iblock',
+			'OnAfterIBlockElementDelete',
+			'crm',
+			'\Bitrix\Crm\Config\State',
+			'handleAfterIblockElementDelete'
+		);
 
 		$eventManager->registerEventHandler('catalog', 'Bitrix\Catalog\Product\Entity::OnAfterUpdate', 'crm', '\CCrmProduct', 'handlerAfterProductUpdate');
 
@@ -1359,6 +1380,62 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Notification',
 			'onMessageSent'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnDeliveryRequestCreated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Delivery',
+			'onDeliveryRequestCreated'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnDeliveryRequestUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Delivery',
+			'onDeliveryRequestUpdated'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnDeliveryRequestDeleted',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Delivery',
+			'onDeliveryRequestDeleted'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnDeliveryRequestMessageReceived',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\DeliveryRequest',
+			'OnMessageReceived'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnDeliveryRequestMessageReceived',
+			'crm',
+			'\Bitrix\Crm\Timeline\DeliveryController',
+			'onMessageReceived'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnNeedDeliveryRecipientContact',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Delivery',
+			'onNeedRecipientContactData'
+		);
+
+		$eventManager->registerEventHandler(
+			'main',
+			'OnBeforeUserTypeAdd',
+			'crm',
+			'\Bitrix\Crm\Service\EventHandler',
+			'OnBeforeUserTypeAdd'
 		);
 	}
 
@@ -1524,6 +1601,27 @@ class crm extends CModule
 			'CCrmProduct',
 			'HandlerOnAfterIBlockElementDelete'
 		);
+		$eventManager->unRegisterEventHandler(
+			'iblock',
+			'OnBeforeIBlockElementAdd',
+			'crm',
+			'\Bitrix\Crm\Config\State',
+			'handleBeforeIblockElementAdd'
+		);
+		$eventManager->unRegisterEventHandler(
+			'iblock',
+			'OnAfterIBlockElementAdd',
+			'crm',
+			'\Bitrix\Crm\Config\State',
+			'handleAfterIblockElementAdd'
+		);
+		$eventManager->unRegisterEventHandler(
+			'iblock',
+			'OnAfterIBlockElementDelete',
+			'crm',
+			'\Bitrix\Crm\Config\State',
+			'handleAfterIblockElementDelete'
+		);
 
 		$eventManager->unRegisterEventHandler('catalog', 'Bitrix\Catalog\Product\Entity::OnAfterUpdate', 'crm', '\CCrmProduct', 'handlerAfterProductUpdate');
 
@@ -1655,11 +1753,66 @@ class crm extends CModule
 			'onMessageSent'
 		);
 
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnDeliveryRequestCreated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Delivery',
+			'onDeliveryRequestCreated'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnDeliveryRequestUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Delivery',
+			'onDeliveryRequestUpdated'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnDeliveryRequestDeleted',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Delivery',
+			'onDeliveryRequestDeleted'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnDeliveryRequestMessageReceived',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\DeliveryRequest',
+			'OnMessageReceived'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnDeliveryRequestMessageReceived',
+			'crm',
+			'\Bitrix\Crm\Timeline\DeliveryController',
+			'onMessageReceived'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnNeedDeliveryRecipientContact',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Delivery',
+			'onNeedRecipientContactData'
+		);
+
 		$eventManager->unRegisterEventHandler('sale', 'OnCheckCollateDocuments', 'crm', '\Bitrix\Crm\Order\EventsHandler\Check', 'OnCheckCollateDocuments');
 		$eventManager->unRegisterEventHandler('sale', 'OnBeforeSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Payment', 'OnBeforeSalePaymentEntitySaved');
 		$eventManager->unRegisterEventHandler('sale', 'OnSaleShipmentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentEntitySaved');
 		$eventManager->unRegisterEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
 
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnBeforeUserTypeAdd',
+			'crm',
+			'\Bitrix\Crm\Service\EventHandler',
+			'OnBeforeUserTypeAdd'
+		);
 	}
 
 	private function uninstallAgents()

@@ -86,10 +86,10 @@ else
 					switch ($headerID)
 					{
 						case 'SOURCE':
-							$orderData['SOURCE'] = htmlspecialcharsbx(trim($arPersonTypes[$orderFields['SOURCE']]));
+							$orderData['SOURCE'] = isset($orderFields['SOURCE']) ? $orderFields['SOURCE'] : '';
 							break;
 						case 'USER':
-							$orderData['USER_ID'] = isset($orderFields['USER_FORMATTED_NAME']) ? $orderFields['USER_FORMATTED_NAME'] : '';
+							$orderData['USER'] = isset($orderFields['USER_FORMATTED_NAME']) ? $orderFields['USER_FORMATTED_NAME'] : '';
 							break;
 						case 'CREATED_BY':
 							$orderData['CREATED_BY'] = isset($orderFields['CREATED_BY_FORMATTED_NAME']) ? $orderFields['CREATED_BY_FORMATTED_NAME'] : '';
@@ -107,7 +107,7 @@ else
 							$orderData['EMP_ALLOW_DELIVERY_ID'] = isset($orderFields['EMP_ALLOW_DELIVERY_ID_FORMATTED_NAME']) ? $orderFields['EMP_ALLOW_DELIVERY_ID_FORMATTED_NAME'] : '';
 							break;
 						case 'EMP_DEDUCTED_ID':
-							$orderData['EMP_ALLOW_DELIVERY_ID'] = isset($orderFields['EMP_DEDUCTED_ID_FORMATTED_NAME']) ? $orderFields['EMP_DEDUCTED_ID_FORMATTED_NAME'] : '';
+							$orderData['EMP_DEDUCTED_ID'] = isset($orderFields['EMP_DEDUCTED_ID_FORMATTED_NAME']) ? $orderFields['EMP_DEDUCTED_ID_FORMATTED_NAME'] : '';
 							break;
 						case 'STATUS_ID':
 							$statusID = !empty($orderFields['STATUS_ID']) ? $orderFields['STATUS_ID'] : '';
@@ -134,7 +134,7 @@ else
 							unset($site);
 							break;
 						case 'PERSON_TYPE_ID':
-							$orderData['PERSON_TYPE_ID'] = htmlspecialcharsbx(trim($arPersonTypes[$orderFields['PERSON_TYPE_ID']]));
+							$orderData['PERSON_TYPE_ID'] = isset($orderFields['PERSON_TYPE_ID']) ? $orderFields['PERSON_TYPE_ID'] : '';
 							break;
 						case 'PAY_SYSTEM_ID':
 							$orderData['PAY_SYSTEM_ID'] = htmlspecialcharsbx(trim($arPaySystems[$personTypeId][$orderFields['PAY_SYSTEM_ID']]));
@@ -193,6 +193,11 @@ else
 							}
 							$orderData[$headerID] = !empty($preparedBasket) ? implode(', ', $preparedBasket) : '';
 							break;
+
+						case 'ACTIVITY_ID':
+							$orderData['ACTIVITY_ID'] = isset($orderFields['C_ACTIVITY_SUBJECT']) ? $orderFields['C_ACTIVITY_SUBJECT'] : '';
+							break;
+
 						default:
 							$currentValue = $orderFields[$headerID];
 							if (isset($ufFields[$headerID]))
@@ -212,7 +217,7 @@ else
 				}
 				if (isset($orderData[$headerID]))
 				{
-					echo ($orderData[$headerID] != '') ? '"'.str_replace('"', '""', htmlspecialcharsback($orderData[$headerID])).'";' : ';';
+					echo ($orderData[$headerID] !== '') ? '"'.str_replace('"', "'", htmlspecialcharsback($orderData[$headerID])).'";' : ';';
 				}
 			}
 			echo "\n";

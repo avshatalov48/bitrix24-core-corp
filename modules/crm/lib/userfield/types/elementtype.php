@@ -197,6 +197,89 @@ class ElementType extends StringType
 	}
 
 	/**
+	 * Return parameters for destination selector of userfield with $settings.
+	 *
+	 * @param array $settings
+	 * @param bool $isMultiple
+	 * @return array
+	 */
+	public static function getDestSelectorParametersForFilter(array $settings, bool $isMultiple): array
+	{
+		$entityTypeNames = [];
+		$supportedEntityTypeNames = [
+			\CCrmOwnerType::LeadName,
+			\CCrmOwnerType::DealName,
+			\CCrmOwnerType::ContactName,
+			\CCrmOwnerType::CompanyName
+		];
+
+		foreach($settings as $entityTypeName => $value)
+		{
+			if(
+				$value === 'Y'
+				&& (
+					in_array($entityTypeName, $supportedEntityTypeNames, true)
+					|| \CCrmOwnerType::isPossibleDynamicTypeId(\CCrmOwnerType::ResolveID($entityTypeName))
+				)
+			)
+			{
+				$entityTypeNames[] = $entityTypeName;
+			}
+		}
+
+		$destSelectorParams = [
+			'apiVersion' => 3,
+			'context' => 'CRM_UF_FILTER_ENTITY',
+			'contextCode' => 'CRM',
+			'useClientDatabase' => 'N',
+			'enableAll' => 'N',
+			'enableDepartments' => 'N',
+			'enableUsers' => 'N',
+			'enableSonetgroups' => 'N',
+			'allowEmailInvitation' => 'N',
+			'allowSearchEmailUsers' => 'N',
+			'departmentSelectDisable' => 'Y',
+			'enableCrm' => 'Y',
+			'multiple' => ($isMultiple ? 'Y' : 'N'),
+			'convertJson' => 'Y',
+		];
+
+		$destSelectorParams = array_merge_recursive(
+			$destSelectorParams,
+			static::getEnableEntityTypesForSelectorOptions($entityTypeNames)
+		);
+
+		if (
+			is_array($destSelectorParams['addTabCrmDynamics'])
+			&& count($destSelectorParams['addTabCrmDynamics'])
+		)
+		{
+			$destSelectorParams['crmDynamicTitles'] = static::getDynamicEntityTitles();
+		}
+
+		return $destSelectorParams;
+	}
+
+	/**
+	 * Return map of dynamic entity titles.
+	 *
+	 * @return array
+	 */
+	public static function getDynamicEntityTitles(): array
+	{
+		$result = [];
+		foreach (\CCrmOwnerType::GetAllDescriptions() as $id => $title)
+		{
+			if (\CCrmOwnerType::isPossibleDynamicTypeId($id))
+			{
+				$result['DYNAMICS_' . $id] = htmlspecialcharsbx($title);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
 	 * @param array|null $availableTypes
 	 * @param array|null $crmDynamicTitles
 	 * @return array

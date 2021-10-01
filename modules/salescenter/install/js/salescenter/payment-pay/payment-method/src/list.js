@@ -17,24 +17,62 @@ Vue.component('salescenter-payment_pay-payment_method-list', {
 		}
 	},
 	methods:
+	{
+		showDescription(item)
 		{
-			showDescription(item)
-			{
-				item.SHOW_DESCRIPTION = item.SHOW_DESCRIPTION === 'Y' ? 'N':'Y';
-			},
-			isShow(item)
-			{
-				return item.SHOW_DESCRIPTION === 'Y'
-			},
-			getLogoSrc(item)
-			{
-				return (
-					item.LOGOTIP
-						? item.LOGOTIP
-						: '/bitrix/js/salescenter/payment-pay/payment-method/images/default_logo.png'
-				);
-			}
+			item.SHOW_DESCRIPTION = item.SHOW_DESCRIPTION === 'Y' ? 'N':'Y';
 		},
+
+		isShow(item)
+		{
+			return item.SHOW_DESCRIPTION === 'Y'
+		},
+
+		beforeEnter: function (item)
+		{
+			item.style.opacity = 0;
+			item.style.maxHeight = 0;
+		},
+
+		enter: function (item)
+		{
+			var delay = item.dataset.index * 150
+			setTimeout(function () {
+				item.style.opacity = 1;
+				item.style.maxHeight = item.scrollHeight + 'px';
+			}, delay)
+		},
+
+		afterEnter: function (item)
+		{
+			item.style.opacity = "";
+			item.style.maxHeight = "";
+		},
+
+		beforeLeave: function (item)
+		{
+			item.style.opacity = 1;
+			item.style.maxHeight = item.scrollHeight + 'px';
+		},
+
+		leave: function (item)
+		{
+			var delay = item.dataset.index * 150
+			setTimeout(function () {
+				item.style.opacity = 0;
+				item.style.maxHeight = 0;
+			}, delay)
+		},
+
+		getLogoSrc(item)
+		{
+			return (
+				item.LOGOTIP
+					? item.LOGOTIP
+					: '/bitrix/js/salescenter/payment-pay/payment-method/images/default_logo.png'
+			);
+		}
+	},
 	// language=Vue
 	template: `
 		<div class="checkout-basket-section">
@@ -50,8 +88,17 @@ Vue.component('salescenter-payment_pay-payment_method-list', {
 					<div class="checkout-basket-pay-method-btn-block">
 						<button class="checkout-checkout-btn-info border btn btn-sm rounded-pill" @click='showDescription(item)'>{{localize.PAYMENT_PAY_PAYMENT_METHOD_2}}</button>
 					</div>
-					<div class="checkout-basket-pay-method-description" v-if="isShow(item)">{{item.DESCRIPTION}}
-					</div>
+                  	<transition 
+						name="fade"
+                        duration="300"
+                        v-on:before-enter="beforeEnter"
+                        v-on:enter="enter"
+                        v-on:after-enter="afterEnter"
+                        v-on:before-leave="beforeLeave"
+                        v-on:leave="leave"
+					>
+						<div class="checkout-basket-pay-method-description" v-if="isShow(item)">{{item.DESCRIPTION}}</div>
+				  	</transition>
 				</div>
 			</div>
 		</div>

@@ -29,12 +29,25 @@ final class SenderPicker
 		}
 		else
 		{
-			foreach ($senders as $sender)
+			return self::getSenderByCode($settingValue);
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param string $code
+	 * @return ICanSendMessage|null
+	 */
+	public static function getSenderByCode(string $code): ?string
+	{
+		$senders = SenderRepository::getPrioritizedList();
+
+		foreach ($senders as $sender)
+		{
+			if ($sender::getSenderCode() === $code)
 			{
-				if ($sender::getSenderCode() === $settingValue)
-				{
-					return $sender;
-				}
+				return $sender;
 			}
 		}
 

@@ -6,6 +6,22 @@ use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class AvatarTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Avatar_Query query()
+ * @method static EO_Avatar_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Avatar_Result getById($id)
+ * @method static EO_Avatar_Result getList(array $parameters = array())
+ * @method static EO_Avatar_Entity getEntity()
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Avatar createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Avatar_Collection createCollection()
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Avatar wakeUpObject($row)
+ * @method static \Bitrix\Crm\SiteButton\Internals\EO_Avatar_Collection wakeUpCollection($rows)
+ */
 class AvatarTable extends \Bitrix\Main\Entity\DataManager
 {
 	/**

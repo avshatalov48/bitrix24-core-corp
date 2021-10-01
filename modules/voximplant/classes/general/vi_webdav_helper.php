@@ -699,9 +699,6 @@ class CVoxImplantDiskHelper
 
 	public static function CheckParams($arHistory, $arFile)
 	{
-		if (intval($arHistory['PORTAL_USER_ID']) <= 0)
-			return false;
-
 		if (!($arHistory['CALL_START_DATE'] instanceof Bitrix\Main\Type\DateTime))
 			return false;
 
@@ -732,6 +729,8 @@ class CVoxImplantDiskHelper
 			return false;
 		}
 
+		$portalUserId = (int)$arHistory['PORTAL_USER_ID'];
+
 		$subFolder = self::GetRecordsFolder($arHistory['CALL_START_DATE']->format("Y-m"), $siteId);
 		if(!$subFolder)
 		{
@@ -742,7 +741,7 @@ class CVoxImplantDiskHelper
 		$fullAccessTaskId = $rightsManager->getTaskIdByName($rightsManager::TASK_FULL);
 
 		$accessCodes[] = Array(
-			'ACCESS_CODE' => 'U'.intval($arHistory['PORTAL_USER_ID']),
+			'ACCESS_CODE' => $portalUserId > 0 ? 'U'.$portalUserId : 'G1',
 			'TASK_ID' => $fullAccessTaskId,
 		);
 
@@ -753,9 +752,9 @@ class CVoxImplantDiskHelper
 
 		$fileModel = $subFolder->addFile(array(
 			'NAME' => $elementName,
-			'FILE_ID' => intval($arFile['ID']),
-			'SIZE' => intval($arFile['FILE_SIZE']),
-			'CREATED_BY' => intval($arHistory['PORTAL_USER_ID']),
+			'FILE_ID' => (int)$arFile['ID'],
+			'SIZE' => (int)$arFile['FILE_SIZE'],
+			'CREATED_BY' => $portalUserId,
 		), $accessCodes, true);
 
 		if($fileModel instanceof \Bitrix\Disk\File)

@@ -151,18 +151,6 @@ namespace Bitrix\Faceid {
 }
 namespace Bitrix\Faceid {
 	/**
-	 * @method static EO_Agreement_Query query()
-	 * @method static EO_Agreement_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Agreement_Result getById($id)
-	 * @method static EO_Agreement_Result getList(array $parameters = array())
-	 * @method static EO_Agreement_Entity getEntity()
-	 * @method static \Bitrix\Faceid\EO_Agreement createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Faceid\EO_Agreement_Collection createCollection()
-	 * @method static \Bitrix\Faceid\EO_Agreement wakeUpObject($row)
-	 * @method static \Bitrix\Faceid\EO_Agreement_Collection wakeUpCollection($rows)
-	 */
-	class AgreementTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -302,18 +290,6 @@ namespace Bitrix\Faceid {
 	}
 }
 namespace Bitrix\Faceid {
-	/**
-	 * @method static EO_Face_Query query()
-	 * @method static EO_Face_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Face_Result getById($id)
-	 * @method static EO_Face_Result getList(array $parameters = array())
-	 * @method static EO_Face_Entity getEntity()
-	 * @method static \Bitrix\Faceid\EO_Face createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Faceid\EO_Face_Collection createCollection()
-	 * @method static \Bitrix\Faceid\EO_Face wakeUpObject($row)
-	 * @method static \Bitrix\Faceid\EO_Face_Collection wakeUpCollection($rows)
-	 */
-	class FaceTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -539,18 +515,6 @@ namespace Bitrix\Faceid {
 }
 namespace Bitrix\Faceid {
 	/**
-	 * @method static EO_TrackingVisitors_Query query()
-	 * @method static EO_TrackingVisitors_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_TrackingVisitors_Result getById($id)
-	 * @method static EO_TrackingVisitors_Result getList(array $parameters = array())
-	 * @method static EO_TrackingVisitors_Entity getEntity()
-	 * @method static \Bitrix\Faceid\EO_TrackingVisitors createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Faceid\EO_TrackingVisitors_Collection createCollection()
-	 * @method static \Bitrix\Faceid\EO_TrackingVisitors wakeUpObject($row)
-	 * @method static \Bitrix\Faceid\EO_TrackingVisitors_Collection wakeUpCollection($rows)
-	 */
-	class TrackingVisitorsTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -690,18 +654,6 @@ namespace Bitrix\Faceid {
 	}
 }
 namespace Bitrix\Faceid {
-	/**
-	 * @method static EO_TrackingVisits_Query query()
-	 * @method static EO_TrackingVisits_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_TrackingVisits_Result getById($id)
-	 * @method static EO_TrackingVisits_Result getList(array $parameters = array())
-	 * @method static EO_TrackingVisits_Entity getEntity()
-	 * @method static \Bitrix\Faceid\EO_TrackingVisits createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Faceid\EO_TrackingVisits_Collection createCollection()
-	 * @method static \Bitrix\Faceid\EO_TrackingVisits wakeUpObject($row)
-	 * @method static \Bitrix\Faceid\EO_TrackingVisits_Collection wakeUpCollection($rows)
-	 */
-	class TrackingVisitsTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -867,18 +819,6 @@ namespace Bitrix\Faceid {
 }
 namespace Bitrix\Faceid {
 	/**
-	 * @method static EO_TrackingWorkday_Query query()
-	 * @method static EO_TrackingWorkday_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_TrackingWorkday_Result getById($id)
-	 * @method static EO_TrackingWorkday_Result getList(array $parameters = array())
-	 * @method static EO_TrackingWorkday_Entity getEntity()
-	 * @method static \Bitrix\Faceid\EO_TrackingWorkday createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Faceid\EO_TrackingWorkday_Collection createCollection()
-	 * @method static \Bitrix\Faceid\EO_TrackingWorkday wakeUpObject($row)
-	 * @method static \Bitrix\Faceid\EO_TrackingWorkday_Collection wakeUpCollection($rows)
-	 */
-	class TrackingWorkdayTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1030,18 +970,6 @@ namespace Bitrix\Faceid {
 	}
 }
 namespace Bitrix\Faceid {
-	/**
-	 * @method static EO_Users_Query query()
-	 * @method static EO_Users_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Users_Result getById($id)
-	 * @method static EO_Users_Result getList(array $parameters = array())
-	 * @method static EO_Users_Entity getEntity()
-	 * @method static \Bitrix\Faceid\EO_Users createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Faceid\EO_Users_Collection createCollection()
-	 * @method static \Bitrix\Faceid\EO_Users wakeUpObject($row)
-	 * @method static \Bitrix\Faceid\EO_Users_Collection wakeUpCollection($rows)
-	 */
-	class UsersTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

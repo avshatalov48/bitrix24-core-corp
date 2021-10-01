@@ -245,7 +245,7 @@ foreach ($grid['ROWS'] as $product)
 			'IS_NEW' => $item['IS_NEW'],
 		]
 	);
-	$productField = ob_get_clean();
+	$productField = '<div class="main-grid-row-number"></div>' . ob_get_clean();
 	$product['MAIN_INFO'] = $productField;
 	// end region MAIN_INFO
 

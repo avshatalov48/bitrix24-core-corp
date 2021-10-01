@@ -194,7 +194,10 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 
 			onFilterApply: function(id, data, ctx, promise, params)
 			{
-				if (this.option('taskLimitExceeded'))
+				if (
+					this.option('taskLimitExceeded')
+					|| this.option('kpiLimitExceeded')
+				)
 				{
 					BX.UI.InfoHelper.show('limit_tasks_efficiency');
 					return;

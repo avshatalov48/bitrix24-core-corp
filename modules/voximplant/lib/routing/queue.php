@@ -4,6 +4,7 @@ namespace Bitrix\Voximplant\Routing;
 
 use Bitrix\Voximplant\Call;
 use Bitrix\Voximplant\CallQueue;
+use Bitrix\Voximplant\Limits;
 use Bitrix\Voximplant\Model\CallTable;
 use Bitrix\Voximplant\Model\CallUserTable;
 use Bitrix\Voximplant\Model\QueueUserTable;
@@ -37,7 +38,7 @@ class Queue extends Node
 			return new Action(Command::VOICEMAIL, ['REASON' => 'Queue ' . $this->queueId . 'is not found']);
 		}
 
-		list($users, $busyUsers) = $this->getUsersToInvite($this->queue, $call->getQueueHistory());
+		[$users, $busyUsers] = $this->getUsersToInvite($this->queue, $call->getQueueHistory());
 
 		if(count($users) > 0)
 		{
@@ -163,7 +164,7 @@ class Queue extends Node
 	{
 		$queue = $this->queue;
 
-		if ($queue->getNoAnswerRule() == \CVoxImplantIncoming::RULE_NEXT_QUEUE && \CVoxImplantAccount::IsPro())
+		if ($queue->getNoAnswerRule() === \CVoxImplantIncoming::RULE_NEXT_QUEUE && Limits::isRedirectToQueueAllowed())
 		{
 			return false;
 		}

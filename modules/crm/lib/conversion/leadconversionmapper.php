@@ -190,6 +190,7 @@ class LeadConversionMapper extends EntityConversionMapper
 			$map->createItem('ASSIGNED_BY_ID');
 			$map->createItem('ORIGINATOR_ID');
 			$map->createItem('ORIGIN_ID');
+			$map->createItem('WEBFORM_ID');
 			//endregion
 			//region Deal Map User Field Bindings
 			$intersections = UserFieldSynchronizer::getIntersection(\CCrmOwnerType::Lead, \CCrmOwnerType::Deal);

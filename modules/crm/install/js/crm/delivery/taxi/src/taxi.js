@@ -1,5 +1,3 @@
-import Activity from './activity';
-import ActivityCompleted from './activitycompleted';
 import CallRequest from './callrequest';
 import EstimationRequest from './estimationrequest';
 import CancelledByManager from './cancelledbymanager';
@@ -8,9 +6,12 @@ import PerformerNotFound from './performernotfound';
 import ReturnedFinish from './returnedfinish';
 import SmsProviderIssue from './smsproviderissue';
 
+/**
+ * Old taxi delivery components
+ *
+ * These are used only for compatibility
+ */
 export {
-	Activity,
-	ActivityCompleted,
 	CallRequest,
 	EstimationRequest,
 	CancelledByManager,

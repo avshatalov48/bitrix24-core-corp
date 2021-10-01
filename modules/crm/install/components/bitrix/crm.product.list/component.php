@@ -1,6 +1,12 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+/** @var array $arParams */
+
+use Bitrix\Main\Loader;
+use Bitrix\Catalog;
+use Bitrix\Crm;
+
 /** @global CMain $APPLICATION */
 global $USER, $DB, $APPLICATION;
 
@@ -39,7 +45,7 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 $isErrorOccured = false;
 $errorMessage = '';
 
-if (!$isErrorOccured && !CModule::IncludeModule('crm'))
+if (!$isErrorOccured && !Loader::includeModule('crm'))
 {
 	$errorMessage = GetMessage('CRM_MODULE_NOT_INSTALLED');
 	$isErrorOccured = true;
@@ -51,7 +57,6 @@ if (!$isErrorOccured && !CCrmSecurityHelper::IsAuthorized())
 	$isErrorOccured = true;
 }
 
-/** @var $CrmPerms CCrmPerms */
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
 if (!$isErrorOccured
 	&& !(CCrmPerms::IsAccessEnabled($CrmPerms)
@@ -97,8 +102,8 @@ unset($curParam);
 
 $arFilter = $arSort = array();
 $bInternal = false;
-$arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
-$arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
+$arResult['FORM_ID'] = $arParams['FORM_ID'] ?? '';
+$arResult['TAB_ID'] = $arParams['TAB_ID'] ?? '';
 
 $bVatMode = $arResult['VAT_MODE'] = CCrmTax::isVatMode();
 
@@ -154,6 +159,17 @@ if ($catalogID <= 0)
 	$catalogID = CCrmCatalog::EnsureDefaultExists();
 }
 $arResult['CATALOG_ID'] = $catalogID;
+
+if (Loader::includeModule('catalog'))
+{
+	$productLimit = Catalog\Config\State::getExceedingProductLimit($catalogID);
+}
+else
+{
+	$productLimit = Crm\Config\State::getExceedingProductLimit();
+}
+$arResult['CAN_ADD_PRODUCT'] = empty($productLimit);
+$arResult['PRODUCT_LIMIT'] = $productLimit;
 
 $arResult['SECTION_LIST'] = array();
 
@@ -372,13 +388,13 @@ if (!$isInExportMode && check_bitrix_sessid())
 
 			if ($actionData['NAME'] === 'ADD_SECTION')
 			{
-				$actionData['SECTION_NAME'] = trim(isset($_POST['sectionName']) ? $_POST['sectionName'] : '', " \n\r\t");
+				$actionData['SECTION_NAME'] = trim($_POST['sectionName'] ?? '', " \n\r\t");
 				unset($_POST['sectionName'], $_REQUEST['sectionName']);
 			}
 			else if ($actionData['NAME'] === 'RENAME_SECTION')
 			{
-				$actionData['RENAMED_SECTION_ID'] = isset($_POST['sectionID']) ? intval($_POST['sectionID']) : 0;
-				$actionData['NEW_SECTION_NAME'] = trim(isset($_POST['sectionName']) ? $_POST['sectionName'] : '', " \n\r\t");
+				$actionData['RENAMED_SECTION_ID'] = (int)($_POST['sectionID'] ?? 0);
+				$actionData['NEW_SECTION_NAME'] = trim($_POST['sectionName'] ?? '', " \n\r\t");
 				unset($_POST['sectionID'], $_REQUEST['sectionID'], $_POST['sectionName'], $_REQUEST['sectionName']);
 			}
 		}
@@ -768,17 +784,17 @@ if ($actionData['ACTIVE'])
 				{
 					$type = mb_substr($ID, 0, 1);
 					$ID = intval(mb_substr($ID, 1));
+					$arUpdateData = array();
+					reset($arResult['HEADERS']);
+					foreach ($arResult['HEADERS'] as $arHead)
+					{
+						if (isset($arHead['editable']) && $arHead['editable'] == true && isset($arSrcData[$arHead['id']]))
+						{
+							$arUpdateData[$arHead['id']] = $arSrcData[$arHead['id']];
+						}
+					}
 					if ($type === 'S')
 					{
-						$arUpdateData = array();
-						reset($arResult['HEADERS']);
-						foreach ($arResult['HEADERS'] as $arHead)
-						{
-							if (isset($arHead['editable']) && $arHead['editable'] == true && isset($arSrcData[$arHead['id']]))
-							{
-								$arUpdateData[$arHead['id']] = $arSrcData[$arHead['id']];
-							}
-						}
 						if (!empty($arUpdateData))
 						{
 							$DB->StartTransaction();
@@ -798,15 +814,6 @@ if ($actionData['ACTIVE'])
 					}
 					else
 					{
-						$arUpdateData = array();
-						reset($arResult['HEADERS']);
-						foreach ($arResult['HEADERS'] as $arHead)
-						{
-							if (isset($arHead['editable']) && $arHead['editable'] == true && isset($arSrcData[$arHead['id']]))
-							{
-								$arUpdateData[$arHead['id']] = $arSrcData[$arHead['id']];
-							}
-						}
 						if (!empty($arUpdateData))
 						{
 							$DB->StartTransaction();
@@ -843,18 +850,15 @@ if ($actionData['ACTIVE'])
 		}
 		else if($actionData['NAME'] === 'ADD_SECTION' && $arResult['CAN_ADD_SECTION'])
 		{
-			$sectionName = $actionData['SECTION_NAME'];
-			if(isset($sectionName[0]))
+			$sectionName = isset($actionData['SECTION_NAME']) ? (string)$actionData['SECTION_NAME'] : '';
+			if ($sectionName !== '')
 			{
-				$section = new CIBlockSection();
-				$section->Add(
-					array(
-						'IBLOCK_ID' => $catalogID,
-						'NAME' => $sectionName,
-						'IBLOCK_SECTION_ID' => $sectionID,
-						'CHECK_PERMISSIONS' => 'N',
-					)
-				);
+				$sectionFields = [
+					'CATALOG_ID' => $catalogID,
+					'NAME' => $sectionName,
+					'SECTION_ID' => $sectionID,
+				];
+				CCrmProductSection::Add($sectionFields);
 			}
 		}
 		elseif($actionData['NAME'] === 'RENAME_SECTION' && $arResult['CAN_EDIT_SECTION'])

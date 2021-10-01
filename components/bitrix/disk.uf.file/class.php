@@ -82,7 +82,11 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 			$this->arParams['ENABLE_AUTO_BINDING_VIEWER'] = null;
 		}
 
-		$this->arParams['USE_TOGGLE_VIEW'] = (isset($this->arParams['USE_TOGGLE_VIEW']) && $this->arParams['USE_TOGGLE_VIEW'] == 'Y' ? 'Y' : 'N');
+		$this->arParams['USE_TOGGLE_VIEW'] = (isset($this->arParams['USE_TOGGLE_VIEW']) && ($this->arParams['USE_TOGGLE_VIEW'] == 'Y' || $this->arParams['USE_TOGGLE_VIEW'] === true));
+		if (isset($this->arParams['PARAMS']['USE_TOGGLE_VIEW']))
+		{
+			$this->arParams['PARAMS']['USE_TOGGLE_VIEW'] = $this->arParams['USE_TOGGLE_VIEW'];
+		}
 
 		return $this;
 	}
@@ -91,7 +95,7 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 	{
 		$result = [];
 
-		if ($this->arParams['USE_TOGGLE_VIEW'] == 'Y')
+		if ($this->arParams['USE_TOGGLE_VIEW'])
 		{
 			$result = [
 				'MOBILE' => $this->arParams['MOBILE'],
@@ -196,6 +200,7 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 			$this->arResult['DISK_ATTACHED_OBJECT_ALLOW_EDIT'] = empty($this->arResult['FILES']);
 			$userFieldManager = Driver::getInstance()->getUserFieldManager();
 			$this->arResult['INPUT_NAME_OBJECT_ALLOW_EDIT'] = $userFieldManager->getInputNameForAllowEditByEntityType($this->arParams['PARAMS']['arUserField']['ENTITY_ID']);
+			$this->arResult['INPUT_NAME_TEMPLATE_VIEW'] = $userFieldManager->getInputNameForTemplateView($this->arParams['PARAMS']['arUserField']['ENTITY_ID']);
 
 
 			$this->arResult['DOCUMENT_HANDLERS'] = [];
@@ -663,10 +668,10 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 			&& !empty($componentParams['PARAMS']['arUserField']['ENTITY_VALUE_ID'])
 		)
 		{
-			\Bitrix\Disk\Uf\UserFieldManager::setTemplateType([
+			\Bitrix\Disk\Uf\FileUserType::setTemplateType([
 				'ENTITY_ID' => $componentParams['PARAMS']['arUserField']['ENTITY_ID'],
 				'ENTITY_VALUE_ID' => $componentParams['PARAMS']['arUserField']['ENTITY_VALUE_ID'],
-				'VALUE' =>  (in_array($viewType, $this->getGridViewTypesList()) ? 'grid' : 'gallery')
+				'VALUE' =>  (in_array($viewType, $this->getGridViewTypesList()) ? $viewType : 'gallery')
 			]);
 		}
 

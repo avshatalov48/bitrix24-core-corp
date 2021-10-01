@@ -7,6 +7,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class DuplicateCommunicationMatchCodeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DuplicateCommunicationMatchCode_Query query()
+ * @method static EO_DuplicateCommunicationMatchCode_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DuplicateCommunicationMatchCode_Result getById($id)
+ * @method static EO_DuplicateCommunicationMatchCode_Result getList(array $parameters = array())
+ * @method static EO_DuplicateCommunicationMatchCode_Entity getEntity()
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateCommunicationMatchCode createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateCommunicationMatchCode_Collection createCollection()
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateCommunicationMatchCode wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateCommunicationMatchCode_Collection wakeUpCollection($rows)
+ */
 class DuplicateCommunicationMatchCodeTable extends Entity\DataManager
 {
 	public static function getTableName()

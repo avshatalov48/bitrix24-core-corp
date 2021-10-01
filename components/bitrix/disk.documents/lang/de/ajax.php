@@ -1,6 +1,7 @@
 <?php
 $MESS["DISK_DOCUMENTS_ACT_COPIED_INTERNAL_LINK"] = "Link in die Zwischenablage kopiert";
 $MESS["DISK_DOCUMENTS_ACT_COPY_INTERNAL_LINK"] = "Internen Link kopieren";
+$MESS["DISK_DOCUMENTS_ACT_DELETE"] = "Löschen";
 $MESS["DISK_DOCUMENTS_ACT_DETAILS"] = "Details";
 $MESS["DISK_DOCUMENTS_ACT_DOWNLOAD"] = "Herunterladen";
 $MESS["DISK_DOCUMENTS_ACT_EDIT"] = "Bearbeiten";

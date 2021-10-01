@@ -49,9 +49,11 @@ Extension::load([
 	'ui.fonts.opensans',
 	'main.loader',
 	'pull.client',
+	'ui.info-helper',
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.icons.b24',
+	'ui.notification',
 	'popup',
     'ui.dialogs.messagebox',
 ]);
@@ -123,6 +125,10 @@ $wayToSharing = [
 		'id' => 'ext-link',
 		'text' => Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_EXT_LINK'),
 		'className' => 'disk-fe-office-access-setting-popup-item disk-fe-office-icon-docs',
+		'dataset' => [
+			'shouldBlockExternalLinkFeature' => (int)$arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'],
+			'blockerExternalLinkFeature' => $arResult['BLOCKER_EXTERNAL_LINK_FEATURE'] ?: '',
+		],
 	],
 	[
 		'id' => 'sharing',
@@ -219,7 +225,9 @@ if (Context::getCurrent()->getLanguage() !== 'ru')
 			setupSharing: '<?= $setupSharingButton ? $setupSharingButton->getUniqId() : '' ?>'
 		},
         pullConfig: <?=CUtil::PhpToJsObject($arResult['PULL_CONFIG'])?>,
+		publicChannel: '<?= $arResult['PUBLIC_CHANNEL'] ?>',
         linkToEdit: '<?= $arResult['EDITOR']['ALLOW_EDIT']? $arResult['LINK_TO_EDIT'] : '' ?>',
+        linkToView: '<?= $arResult['LINK_OPEN_NEW_WINDOW'] ?>',
 		documentSession: {
 			id: <?= $arResult['DOCUMENT_SESSION']['ID'] ?>,
 			hash: '<?= $arResult['DOCUMENT_SESSION']['HASH'] ?>',

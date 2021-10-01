@@ -135,6 +135,6 @@ class Item extends UserField\Internal\Item implements \JsonSerializable
 
 	public function jsonSerialize(): array
 	{
-		return Container::getInstance()->getOrmObjectConverter()->toJson($this);
+		return Container::getInstance()->getItemConverter()->toJson($this);
 	}
 }

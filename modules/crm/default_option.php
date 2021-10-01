@@ -90,4 +90,5 @@ $crm_default_option = array(
 	'enable_slider' => 'Y',
 	'enable_simple_time_format' => 'Y',
 	'enable_user_name_sorting' => 'N',
+	'crm_shop_enabled' => 'N',
 );

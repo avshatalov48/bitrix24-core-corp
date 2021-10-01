@@ -7,6 +7,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class DuplicateEntityMatchHashTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DuplicateEntityMatchHash_Query query()
+ * @method static EO_DuplicateEntityMatchHash_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DuplicateEntityMatchHash_Result getById($id)
+ * @method static EO_DuplicateEntityMatchHash_Result getList(array $parameters = array())
+ * @method static EO_DuplicateEntityMatchHash_Entity getEntity()
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateEntityMatchHash createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateEntityMatchHash_Collection createCollection()
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateEntityMatchHash wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateEntityMatchHash_Collection wakeUpCollection($rows)
+ */
 class DuplicateEntityMatchHashTable extends Entity\DataManager
 {
 	public static function getTableName()

@@ -12,6 +12,7 @@ $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION"] = "Ideal für auto
 $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_1"] = "Onlineshopbestellungen werden nur in den CRM-Bestellungen abgespeichert, sie werden nicht zu den Aufträgen hinzugefügt";
 $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_2"] = "Aufträge werden als separate Elemente erstellt (um bspw. zusätzliche Dienstleistungen anzubieten)";
 $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_3"] = "Die einen Vertriebler arbeiten mit Aufträgen, während die anderen die Onlineshopbestellungen verarbeiten";
+$MESS["CRM_SCENARIO_SELECTION_SAVE_ERROR"] = "Fehler beim Änderns des Modus";
 $MESS["CRM_SCENARIO_SELECTION_SELECT"] = "Auswählen";
 $MESS["CRM_SCENARIO_SELECTION_SELECTED"] = "Ausgewählt";
 $MESS["CRM_SCENARIO_SELECTION_TITLE"] = "Modus der Bestellverarbeitung";

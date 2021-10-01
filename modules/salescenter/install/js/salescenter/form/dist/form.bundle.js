@@ -253,8 +253,14 @@ this.BX = this.BX || {};
 	        required = ' required="required"';
 	      }
 
+	      var attribute = '';
+
+	      if (field.attribute && main_core.Type.isArray(field.attribute)) {
+	        attribute = field.attribute.join(' ');
+	      }
+
 	      if (type === 'text') {
-	        result = "<input name=\"".concat(field.name, "\"\n\t\t\t\tclass=\"").concat(this.classes.get('controlInput'), "\"\n\t\t\t\tvalue=\"").concat(value, "\"").concat(required, "\n\t\t\t\ttype=\"text\">");
+	        result = "<input name=\"".concat(field.name, "\"\n\t\t\t\tclass=\"").concat(this.classes.get('controlInput'), "\"\n\t\t\t\tvalue=\"").concat(value, "\"").concat(required, "\n\t\t\t\ttype=\"text\"\n\t\t\t\t").concat(attribute, ">");
 	      } else if (type === 'boolean') {
 	        value = 'Y';
 	        result = "<input type=\"checkbox\" name=\"".concat(main_core.Text.encode(field.name), "\"").concat(this.data[field.name] === value ? ' checked="checked"' : '').concat(field.disabled ? ' disabled="disabled"' : '').concat(required, "\n\t\t\t\tvalue=\"").concat(value, "\" class=\"").concat(this.classes.get('controlInput'), "\">");

@@ -1,31 +1,14 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Crm\Order\DeliveryStatus;
-use Bitrix\Crm\Order\Shipment;
-use Bitrix\Main;
 use Bitrix\Crm\Order\OrderShipmentStatus;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
 class ExternalNoticeController extends EntityController
 {
-	//region Singleton
-	/** @var ExternalNoticeController|null */
-	protected static $instance = null;
-	/**
-	 * @return ExternalNoticeController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
-	//endregion
 	//region EntityController
 
 	/**

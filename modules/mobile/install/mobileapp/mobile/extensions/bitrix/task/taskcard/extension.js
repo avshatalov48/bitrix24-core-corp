@@ -218,6 +218,7 @@ include('InAppNotifier');
 			this.rest.call('limit.isExceeded').then((response) => {
 				console.log('limit.isExceeded', response.result);
 				this.taskLimitExceeded = response.result || false;
+				this.redrawTaskPopupMenu();
 			});
 
 			TaskGroupList.loadLastActiveProjects();

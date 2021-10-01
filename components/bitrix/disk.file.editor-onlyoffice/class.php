@@ -2,7 +2,9 @@
 
 use Bitrix\Disk;
 use Bitrix\Disk\Document\LocalDocumentController;
+use Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Disk\Internals\Engine\Contract\SidePanelWrappable;
 use Bitrix\Disk\User;
@@ -18,7 +20,7 @@ use Bitrix\Main\Web\Uri;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Controllerable, SidePanelWrappable
+class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Controllerable
 {
 	/** @var User */
 	protected $currentUser;
@@ -57,6 +59,12 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			$documentInfo = $documentSession->createInfo();
 		}
 
+		if ($documentSession->isEdit() && $documentInfo->isAbandoned())
+		{
+			DocumentSessionTable::deactivateByHash($documentSession->getExternalHash());
+			$documentSession = $documentSession->cloneWithNewHash($documentSession->getUserId());
+			$documentInfo = $documentSession->getInfo();
+		}
 		if ($documentInfo->isSaving())
 		{
 			$this->processSavingTemplate($documentSession);
@@ -78,7 +86,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 
 		$allowEdit = false;
 		$allowRename = false;
-		if (!$documentSession->isVersion())
+		if (!$documentSession->isVersion() && OnlyOffice\OnlyOfficeHandler::isEditable($documentSession->getObject()->getExtension()))
 		{
 			$allowEdit = $documentSession->canTransformUserToEdit(CurrentUser::get());
 		}
@@ -185,6 +193,10 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			}
 		}
 
+		$featureBlocker = Bitrix24Manager::filterJsAction('disk_manual_external_link', '');
+		$this->arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'] = (bool)$featureBlocker;
+		$this->arResult['BLOCKER_EXTERNAL_LINK_FEATURE'] = $featureBlocker;
+
 		$this->arResult['EDITOR_JSON'] = Json::encode($configBuilder->build());
 		$this->arResult['SHARING_CONTROL_TYPE'] = $this->getSharingControlType($documentSession);
 		$this->arResult['PULL_CONFIG'] = null;
@@ -195,7 +207,9 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		}
 		else
 		{
-			$this->arResult['PULL_CONFIG'] = $publicPullConfigurator->getConfig($documentSession->getObject()->getRealObjectId());
+			$realObjectId = $documentSession->getObject()->getRealObjectId();
+			$this->arResult['PULL_CONFIG'] = $publicPullConfigurator->getConfig($realObjectId);
+			$this->arResult['PUBLIC_CHANNEL'] = $publicPullConfigurator->getChannel($realObjectId)->getSignedPublicId();
 		}
 
 		$this->includeComponentTemplate();

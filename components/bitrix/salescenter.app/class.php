@@ -157,6 +157,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			}
 		}
 
+		if ($arParams['context'] === self::CONTEXT_CHAT)
+		{
+			$arParams['ownerTypeId'] = CCrmOwnerType::Deal;
+		}
+
 		//@TODO backward compatibility
 
 		return parent::onPrepareComponentParams($arParams);
@@ -169,6 +174,13 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	{
 		if (!Driver::getInstance()->isEnabled())
 		{
+			$this->includeComponentTemplate('limit');
+			return;
+		}
+
+		if ((int)$this->getOrderIdFromParams($this->arParams) <= 0 && CrmManager::getInstance()->isOrderLimitReached())
+		{
+			$this->arResult['isOrderLimitReached'] = true;
 			$this->includeComponentTemplate('limit');
 			return;
 		}
@@ -305,6 +317,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['vatList'] = $this->getProductVatList();
 		$this->arResult['catalogIblockId'] = \CCrmCatalog::GetDefaultID();
 		$this->arResult['basePriceId'] = \CCatalogGroup::GetBaseGroup()['ID'];
+		$this->arResult['showCompilationModeSwitcher'] = \Bitrix\Main\Config\Option::get('catalog', 'product_form_enable_compilation', 'N');
 		$this->arResult['showProductDiscounts'] = \CUserOptions::GetOption('catalog.product-form', 'showDiscountBlock', 'Y');
 		$this->arResult['showProductTaxes'] = \CUserOptions::GetOption('catalog.product-form', 'showTaxBlock', 'Y');
 		$collapseOptions = CUserOptions::GetOption(
@@ -343,96 +356,114 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$this->arResult['personTypeId'] = (int)Sale\Helpers\Admin\Blocks\OrderBuyer::getDefaultPersonType(SITE_ID);
 		}
 
-		if (!\CCrmSaleHelper::isWithOrdersMode())
+		if (
+			!\CCrmSaleHelper::isWithOrdersMode()
+			&& isset($this->arParams['ownerId'])
+			&& (int)$this->arParams['ownerId'] > 0
+			&& (int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
+		)
 		{
-			if (
-				(
-					isset($this->arParams['ownerId'])
-					&& (int)$this->arParams['ownerId'] > 0
-				)
-				&&
-				(
-					(int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
-					|| $this->arParams['context'] === self::CONTEXT_CHAT
-					|| $this->arParams['context'] === self::CONTEXT_SMS
-				)
-			)
-			{
-				$this->arResult['orderList'] = $this->getOrderIdListByDealId((int)$this->arParams['ownerId']);
-			}
+			$this->arResult['orderList'] = $this->getOrderIdListByDealId((int)$this->arParams['ownerId']);
+		}
+
+		if (
+			(int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
+			&& $this->deal = CCrmDeal::GetByID($this->arParams['ownerId'])
+		)
+		{
+			$this->arResult['currencyCode'] = $this->deal['CURRENCY_ID'];
+
+			$this->arResult['stageOnOrderPaid'] = CrmManager::getInstance()->getStageWithOrderPaidTrigger(
+				$this->arParams['ownerId']
+			);
+			$this->arResult['stageOnDeliveryFinished'] = CrmManager::getInstance()->getStageWithDeliveryFinishedTrigger(
+				$this->arParams['ownerId']
+			);
+			$this->arResult['dealResponsible'] = $this->getManagerInfo($this->deal['ASSIGNED_BY']);
+			$this->arResult['contactPhone'] = CrmManager::getInstance()->getDealContactPhoneFormat($this->deal['ID']);
+			$this->arResult['shipmentData'] = $this->getShipmentData();
+			$this->arResult['assignedById'] = $this->deal['ASSIGNED_BY_ID'];
+		}
+		else
+		{
+			$responsibleId = Crm\Settings\OrderSettings::getCurrent()->getDefaultResponsibleId() ?: Main\Engine\CurrentUser::get()->getId();
+			$this->arResult['stageOnOrderPaid'] = CrmManager::getInstance()->getStageWithOrderPaidTrigger(0);
+			$this->arResult['stageOnDeliveryFinished'] = CrmManager::getInstance()->getStageWithDeliveryFinishedTrigger(0);
+			$this->arResult['dealResponsible'] = $this->getManagerInfo($responsibleId);
+			$this->arResult['assignedById'] = $responsibleId;
 		}
 
 		if ($this->arParams['context'] === self::CONTEXT_DEAL)
 		{
-			if (
-				(int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
-				&& $this->deal = CCrmDeal::GetByID($this->arParams['ownerId'])
-			)
-			{
-				$this->arResult['currencyCode'] = $this->deal['CURRENCY_ID'];
-				$this->arResult['sendingMethod'] = 'sms';
-				$this->arResult['sendingMethodDesc'] = $this->getSendingMethodDescByType($this->arResult['sendingMethod']);
-				$this->arResult['stageOnOrderPaid'] = CrmManager::getInstance()->getStageWithOrderPaidTrigger(
-					$this->arParams['ownerId']
-				);
-				$this->arResult['stageOnDeliveryFinished'] = CrmManager::getInstance()->getStageWithDeliveryFinishedTrigger(
-					$this->arParams['ownerId']
-				);
-				$this->arResult['dealStageList'] = $this->getDealStageList();
-				$this->arResult['dealResponsible'] = $this->getManagerInfo($this->deal['ASSIGNED_BY']);
-				$this->arResult['contactPhone'] = CrmManager::getInstance()->getDealContactPhoneFormat($this->deal['ID']);
-				$this->arResult['orderPropertyValues'] = [];
-				$this->arResult['timeline'] = $this->getTimeLine();
-
-				$this->arResult['shipmentData'] = $this->getShipmentData();
-				$this->arResult['emptyDeliveryServiceId'] = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
-
-				// region shipment presets
-				$fromPropId = $this->getDeliveryFromPropId();
-				if ($fromPropId)
-				{
-					$this->arResult['deliveryOrderPropOptions'][$fromPropId] = [
-						'defaultItems' => $this->getDeliveryFromList(),
-						'isFromAddress' => true,
-					];
-				}
-
-				$toPropId = $this->getDeliveryToPropId();
-				if ($toPropId)
-				{
-					$this->arResult['deliveryOrderPropOptions'][$toPropId] = [
-						'defaultItems' => $this->getDeliveryToList(),
-					];
-				}
-				// endregion
-
-				$this->arResult['paySystemList'] = $this->getPaySystemList();
-				$this->arResult['deliveryList'] = $this->getDeliveryList();
-
-				$this->arResult['cashboxList'] = [];
-				if (Driver::getInstance()->isCashboxEnabled())
-				{
-					$this->arResult['cashboxList'] = $this->getCashboxList();
-				}
-
-				$this->arResult['isAutomationAvailable'] = Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Deal);
-				$this->arResult['assignedById'] = $this->deal['ASSIGNED_BY_ID'];
-				$this->arResult['urlProductBuilderContext'] = Crm\Product\Url\ProductBuilder::TYPE_ID;
-			}
+			$this->arResult['sendingMethod'] = 'sms';
+		}
+		elseif ($this->arParams['context'] === self::CONTEXT_CHAT)
+		{
+			$this->arResult['sendingMethod'] = 'chat';
 		}
 
+		$this->arResult['timeline'] = $this->getTimeLine();
+		if (!$this->arResult['sendingMethod'] && $this->arParams['context'] === self::CONTEXT_SMS)
+		{
+			$this->arResult['sendingMethodDesc'] = $this->getSendingMethodDescByType('sms');
+		}
+		else
+		{
+			$this->arResult['sendingMethodDesc'] = $this->getSendingMethodDescByType($this->arResult['sendingMethod']);
+		}
+		$this->arResult['dealStageList'] = $this->getDealStageList();
+		$this->arResult['orderPropertyValues'] = [];
+
+		$this->arResult['emptyDeliveryServiceId'] = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
+
+		// region shipment presets
+		$deliveryFromList = $this->getDeliveryFromList();
+		$fromPropIds = $this->getDeliveryFromPropIds();
+		foreach ($fromPropIds as $fromPropId)
+		{
+			$this->arResult['deliveryOrderPropOptions'][$fromPropId] = [
+				'defaultItems' => $deliveryFromList,
+				'isFromAddress' => true,
+			];
+		}
+
+		if ($this->deal)
+		{
+			$deliveryToList = $this->getDeliveryToList();
+			$toPropIds = $this->getDeliveryToPropIds();
+			foreach ($toPropIds as $toPropId)
+			{
+				$this->arResult['deliveryOrderPropOptions'][$toPropId] = [
+					'defaultItems' => $deliveryToList,
+				];
+			}
+		}
+		// endregion
+
+		$this->arResult['paySystemList'] = $this->getPaySystemList();
+		$this->arResult['deliveryList'] = $this->getDeliveryList();
+
+		$this->arResult['cashboxList'] = [];
+		if (Driver::getInstance()->isCashboxEnabled())
+		{
+			$this->arResult['cashboxList'] = $this->getCashboxList();
+		}
+
+		$this->arResult['isAutomationAvailable'] = Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Deal);
+		$this->arResult['urlProductBuilderContext'] = Crm\Product\Url\ProductBuilder::TYPE_ID;
+
 		if (
-			!\CCrmSaleHelper::isWithOrdersMode()
-			||
-			$this->arParams['templateMode'] === self::TEMPLATE_VIEW_MODE
-			||
+			(int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
+			&&
 			(
+				!\CCrmSaleHelper::isWithOrdersMode()
+				||
+				$this->arParams['templateMode'] === self::TEMPLATE_VIEW_MODE
+				||
 				(
-					(int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
-					|| $this->arParams['context'] === self::CONTEXT_CHAT
+					(int)$this->arParams['ownerId'] > 0
+					&& count($this->getOrderIdListByDealId((int)$this->arParams['ownerId'])) === 0
 				)
-				&& (int)$this->arParams['ownerId'] > 0
-				&& count($this->getOrderIdListByDealId((int)$this->arParams['ownerId'])) === 0
 			)
 		)
 		{
@@ -736,23 +767,25 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 	private function getShipmentData()
 	{
-		if ($this->arParams['templateMode'] === self::TEMPLATE_CREATE_MODE) {
-			$toPropId = $this->getDeliveryToPropId();
-			$fromPropId = $this->getDeliveryFromPropId();
-
+		if ($this->arParams['templateMode'] === self::TEMPLATE_CREATE_MODE)
+		{
 			$propValues = [];
-			if ($toPropId)
+
+			$toPropIds = $this->getDeliveryToPropIds();
+			$toList = $this->getDeliveryToList();
+			if ($toList)
 			{
-				$toList = $this->getDeliveryToList();
-				if ($toList && isset($toList[0]['address']))
+				foreach ($toPropIds as $toPropId)
 				{
 					$propValues[$toPropId] = $toList[0]['address'];
 				}
 			}
-			if ($fromPropId)
+
+			$fromPropIds = $this->getDeliveryFromPropIds();
+			$fromList = $this->getDeliveryFromList();
+			if ($fromList)
 			{
-				$fromList = $this->getDeliveryFromList();
-				if ($fromList && isset($fromList[0]['address']))
+				foreach ($fromPropIds as $fromPropId)
 				{
 					$propValues[$fromPropId] = $fromList[0]['address'];
 				}
@@ -769,42 +802,46 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	}
 
 	/**
-	 * @return int|null
+	 * @return int[]
 	 */
-	private function getDeliveryFromPropId(): ?int
+	private function getDeliveryFromPropIds(): array
 	{
-		return $this->getDeliveryAddressPropIdByCode(
-			Sale\Delivery\Services\OrderPropsDictionary::ADDRESS_FROM_PROPERTY_CODE
-		);
+		return $this->getDeliveryAddressPropIdsByCode('IS_ADDRESS_FROM');
 	}
 
 	/**
-	 * @return int|null
+	 * @return int[]
 	 */
-	private function getDeliveryToPropId(): ?int
+	private function getDeliveryToPropIds(): array
 	{
-		return $this->getDeliveryAddressPropIdByCode(
-			Sale\Delivery\Services\OrderPropsDictionary::ADDRESS_TO_PROPERTY_CODE
-		);
+		return $this->getDeliveryAddressPropIdsByCode('IS_ADDRESS_TO');
 	}
 
 	/**
-	 * @return int|null
+	 * @param string $attribute
+	 * @return int[]
 	 */
-	private function getDeliveryAddressPropIdByCode(string $propCode): ?int
+	private function getDeliveryAddressPropIdsByCode(string $attribute): array
 	{
-		$prop = Sale\ShipmentProperty::getList(
+		$result = [];
+
+		$propsList = Sale\ShipmentProperty::getList(
 			[
 				'filter' => [
 					'=PERSON_TYPE_ID' => $this->arResult['personTypeId'],
 					'=ACTIVE' => 'Y',
 					'=TYPE' => 'ADDRESS',
-					'=CODE' => $propCode,
+					'=' . $attribute => 'Y',
 				],
 			]
-		)->fetch();
+		);
 
-		return $prop ? $prop['ID'] : null;
+		while ($prop = $propsList->fetch())
+		{
+			$result[] = $prop['ID'];
+		}
+
+		return $result;
 	}
 
 	/**
@@ -904,7 +941,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			],
 		];
 
-		$dealStageList = CCrmViewHelper::GetDealStageInfos($this->deal['CATEGORY_ID']);
+		$dealStageList = CCrmViewHelper::GetDealStageInfos($this->deal['CATEGORY_ID'] ?? 0);
 		foreach ($dealStageList as $stage)
 		{
 			$result[] = [
@@ -1998,7 +2035,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			];
 		}
 
-		return [];
+		if ($type === 'chat')
+		{
+			return [
+				'text' => ImOpenLinesManager::getInstance()->getImMessagePreview(),
+			];
+		}
 	}
 
 	/**

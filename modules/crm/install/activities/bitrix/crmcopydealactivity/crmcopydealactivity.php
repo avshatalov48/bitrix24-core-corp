@@ -121,7 +121,11 @@ class CBPCrmCopyDealActivity extends CBPActivity
 
 		if (!$newDealId)
 		{
-			$this->WriteToTrackingService($entity->LAST_ERROR, 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(
+				strip_tags($entity->LAST_ERROR),
+				0,
+				CBPTrackingType::Error
+			);
 
 			return CBPActivityExecutionStatus::Closed;
 		}

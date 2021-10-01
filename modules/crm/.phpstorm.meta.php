@@ -9,6 +9,8 @@ namespace PHPSTORM_META
 		'crm.service.factory.quote',
 		'crm.service.factory.deal',
 		'crm.service.factory.lead',
+		'crm.service.factory.contact',
+		'crm.service.factory.company',
 		'crm.type.factory',
 		'crm.service.converter.ormObject',
 		'crm.service.converter.item',
@@ -36,6 +38,9 @@ namespace PHPSTORM_META
 		'crm.integration.documentgeneratormanager.productLoader',
 		'crm.deal.paymentDocumentsRepository',
 		'crm.filter.factory',
+		'crm.timeline.timelineEntry.facade',
+		'crm.timeline.pusher',
+		'crm.timeline.historyDataModel.maker'
 	);
 
 	expectedArguments(\Bitrix\Main\DI\ServiceLocator::get(), 0, argumentsSet('bitrix_crm_serviceLocator_codes'));
@@ -48,6 +53,8 @@ namespace PHPSTORM_META
 		'crm.service.factory.quote' => \Bitrix\Crm\Service\Factory\Quote::class,
 		'crm.service.factory.deal' => \Bitrix\Crm\Service\Factory\Deal::class,
 		'crm.service.factory.lead' => \Bitrix\Crm\Service\Factory\Lead::class,
+		'crm.service.factory.contact' => \Bitrix\Crm\Service\Factory\Contact::class,
+		'crm.service.factory.company' => \Bitrix\Crm\Service\Factory\Company::class,
 		'crm.type.factory' => \Bitrix\Crm\Model\Dynamic\Factory::class,
 		'crm.service.converter.ormObject' => \Bitrix\Crm\Service\Converter\OrmObject::class,
 		'crm.service.converter.item' => \Bitrix\Crm\Service\Converter\Item::class,
@@ -75,5 +82,8 @@ namespace PHPSTORM_META
 		'crm.integration.documentgeneratormanager.productLoader' => \Bitrix\Crm\Integration\DocumentGenerator\ProductLoader::class,
 		'crm.deal.paymentDocumentsRepository' => \Bitrix\Crm\Deal\PaymentDocumentsRepository::class,
 		'crm.filter.factory' => \Bitrix\Crm\Filter\Factory::class,
+		'crm.timeline.timelineEntry.facade' => \Bitrix\Crm\Timeline\TimelineEntry\Facade::class,
+		'crm.timeline.pusher' => \Bitrix\Crm\Timeline\Pusher::class,
+		'crm.timeline.historyDataModel.maker' => \Bitrix\Crm\Timeline\HistoryDataModel\Maker::class,
 	]));
 }

@@ -300,4 +300,11 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 
 		return $result;
 	}
+
+	public static function shouldRestrictedBySize(int $fileSize): bool
+	{
+		$maxFileSize = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getMaxFileSize();
+
+		return $fileSize > $maxFileSize;
+	}
 }

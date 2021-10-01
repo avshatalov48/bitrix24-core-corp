@@ -1,9 +1,11 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-use Bitrix\Main\Localization\Loc;
-use Bitrix\ImOpenlines\Model;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Context;
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImOpenlines\Model;
 
 Loc::loadMessages(__FILE__);
 
@@ -22,11 +24,18 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 
 		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 		$this->id = (int)$request['ID'];
-		if($this->id == 0)
+		if($this->id === 0)
+		{
 			$this->new = true;
+		}
 
-		if($request['act'] === 'save' && check_bitrix_sessid())
+		if(
+			$request['act'] === 'save'
+			&& check_bitrix_sessid()
+		)
+		{
 			$this->saveMode = true;
+		}
 	}
 
 	protected function checkModules()
@@ -71,7 +80,7 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 		}
 
 		$this->arResult['PERMISSION_MAP'] = \Bitrix\ImOpenlines\Security\Permissions::getMap();
-		$this->arResult['PERMISSIONS_URL'] = \Bitrix\ImOpenlines\Common::getPublicFolder()."permissions.php";
+		$this->arResult['PERMISSIONS_URL'] = \Bitrix\ImOpenlines\Common::getContactCenterPublicFolder() . 'permissions/';
 		$this->arResult['CAN_EDIT'] = \Bitrix\ImOpenlines\Security\Helper::canUse();
 
 		$this->arResult['IFRAME'] = $this->request['IFRAME'] === 'Y';
@@ -81,7 +90,10 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 		$this->arResult['ACTION_URI'] = htmlspecialcharsbx($uri->getUri());
 	}
 
-	protected function save()
+	/**
+	 * @return bool
+	 */
+	protected function save(): bool
 	{
 		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
@@ -89,7 +101,7 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 		$roleName = (string)$request['NAME'];
 		$permissions = $request['PERMISSIONS'];
 
-		if($roleName == '')
+		if($roleName === '')
 		{
 			$this->errors[] = new \Bitrix\Main\Error(Loc::getMessage('IMOL_ROLE_ERROR_EMPTY_NAME'));
 			return false;
@@ -99,16 +111,16 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 		{
 			$saveResult = Model\RoleTable::update(
 				$role['ID'],
-				array(
+				[
 					'NAME' => $roleName
-				)
+				]
 			);
 		}
 		else
 		{
-			$saveResult = Model\RoleTable::add(array(
+			$saveResult = Model\RoleTable::add([
 				'NAME' => $request['NAME']
-			));
+			]);
 			$roleId = $saveResult->getId();
 		}
 
@@ -117,7 +129,7 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 			$this->errors[] = new \Bitrix\Main\Error(Loc::getMessage('IMOL_ROLE_SAVE_ERROR'));
 			return false;
 		}
-		else if(is_array($permissions))
+		elseif(is_array($permissions))
 		{
 			\Bitrix\ImOpenlines\Security\RoleManager::setRolePermissions($roleId, $permissions);
 		}
@@ -140,7 +152,12 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 			{
 				if(\Bitrix\ImOpenlines\Security\Helper::canUse())
 				{
-					$this->save();
+					$resultSave = $this->save();
+
+					if($resultSave === true)
+					{
+						LocalRedirect(Context::getCurrent()->getServer()->getRequestUri());
+					}
 				}
 				else
 				{

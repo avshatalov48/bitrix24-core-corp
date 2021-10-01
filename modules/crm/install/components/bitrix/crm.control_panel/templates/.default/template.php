@@ -25,6 +25,7 @@ if ($isBitrix24)
 {
 	$this->EndViewTarget();
 }
+Bitrix\Main\UI\Extension::load(['crm.restriction.bitrix24']);
 
 if ($arResult["ENABLE_SEARCH"])
 {

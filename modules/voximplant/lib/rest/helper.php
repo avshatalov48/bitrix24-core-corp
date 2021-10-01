@@ -3,6 +3,7 @@
 namespace Bitrix\Voximplant\Rest;
 
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
@@ -832,7 +833,7 @@ class Helper
 		}
 		$lineNumber = mb_substr($line['LINE_NUMBER'], 0, 8) === 'REST_APP' ? '' : $line['LINE_NUMBER'];
 
-		list($extensionSeparator, $extension) = Parser::getInstance()->stripExtension($number);
+		[$extensionSeparator, $extension] = Parser::getInstance()->stripExtension($number);
 		$eventFields = array(
 			'PHONE_NUMBER' => $number,
 			'PHONE_NUMBER_INTERNATIONAL' => Parser::getInstance()->parse($number)->format(Format::E164),
@@ -863,6 +864,8 @@ class Helper
 			$eventFields['CALL_ID'] = $callData['CALL_ID'];
 			$eventFields['CRM_ENTITY_TYPE'] = $callData['CRM_ENTITY_TYPE'];
 			$eventFields['CRM_ENTITY_ID'] = $callData['CRM_ENTITY_ID'];
+			$eventFields['CRM_CREATED_LEAD'] = $callData['CRM_CREATED_LEAD'];
+			$eventFields['CRM_CREATED_ENTITIES'] = $callData['CRM_CREATED_ENTITIES'];
 
 			$event = new Event(
 				'voximplant',
@@ -1266,7 +1269,11 @@ class Helper
 			$result->addErrors($insertResult->getErrors());
 			return $result;
 		}
-
+		Application::getInstance()->addBackgroundJob(
+			["CVoxImplantUser", "clearCache"],
+			[],
+			Application::JOB_PRIORITY_LOW
+		);
 		$result->setData(array(
 			'ID' => $insertResult->getId()
 		));
@@ -1306,6 +1313,12 @@ class Helper
 			return $result;
 		}
 
+		Application::getInstance()->addBackgroundJob(
+			["CVoxImplantUser", "clearCache"],
+			[],
+			Application::JOB_PRIORITY_LOW
+		);
+
 		$updateResult->setData(array(
 			'ID' => $updateResult->getId()
 		));
@@ -1341,6 +1354,12 @@ class Helper
 			$result->addErrors($deleteResult->getErrors());
 			return $result;
 		}
+
+		Application::getInstance()->addBackgroundJob(
+			["CVoxImplantUser", "clearCache"],
+			[],
+			Application::JOB_PRIORITY_LOW
+		);
 
 		return $result;
 	}
@@ -1400,7 +1419,11 @@ class Helper
 			ExternalLineTable::delete($externalNumberId);
 		}
 
-		\CVoxImplantUser::clearCache();
+		Application::getInstance()->addBackgroundJob(
+			["CVoxImplantUser", "clearCache"],
+			[],
+			Application::JOB_PRIORITY_LOW
+		);
 	}
 
 	/**

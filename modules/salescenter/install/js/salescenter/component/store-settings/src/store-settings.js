@@ -259,8 +259,8 @@ export class StoreSettings
 						<div class="salescenter-company-contacts-area">
 							<div class="salescenter-company-contacts-area-item">
 								<div class="ui-ctl-label-text">
-									{{loc.SC_STORE_SETTINGS_COMPANY_TITLE}}
-									<span class="ui-hint" :data-hint="loc.SC_STORE_SETTINGS_PUBLIC_COMPANY_NAME_HINT"></span>
+									{{loc.SC_STORE_SETTINGS_COMPANY_NAME}}
+									<span class="ui-hint" :data-hint="loc.SC_STORE_SETTINGS_COMPANY_NAME_HINT"></span>
 								</div>
 								<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
 									<input type="text" class="ui-ctl-element" name="name" v-model="companyTitle">
@@ -268,7 +268,7 @@ export class StoreSettings
 							</div>
 							
 							<div class="salescenter-company-contacts-area-item">
-								<div class="ui-ctl-label-text">{{loc.SC_STORE_SETTINGS_COMPANY_PHONE}}</div>
+								<div class="ui-ctl-label-text">{{loc.SC_STORE_SETTINGS_COMPANY_PHONE_NUMBER}}</div>
 								<template v-if="isNew">
 									<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
 										<input type="text" class="ui-ctl-element" name="phone" v-model="companyPhone">

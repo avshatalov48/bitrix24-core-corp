@@ -34,7 +34,7 @@ if ($arResult['TASK_LIMIT_EXCEEDED'])
 {
 	?>
 	<div class="ui-alert ui-alert-danger">
-		<span class="ui-alert-message">Лимит</span>
+		<span class="ui-alert-message"><?= Loc::getMessage('TASKS_MOBILE_EFFICIENCY_LIMIT_EXCEEDED') ?></span>
 	</div>
 	<?php
 	return;

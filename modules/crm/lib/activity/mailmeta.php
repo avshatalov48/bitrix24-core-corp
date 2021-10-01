@@ -8,6 +8,22 @@ use Bitrix\Main\Localization\Loc;
 
 //Loc::loadMessages(__FILE__);
 
+/**
+ * Class MailMetaTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_MailMeta_Query query()
+ * @method static EO_MailMeta_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_MailMeta_Result getById($id)
+ * @method static EO_MailMeta_Result getList(array $parameters = array())
+ * @method static EO_MailMeta_Entity getEntity()
+ * @method static \Bitrix\Crm\Activity\EO_MailMeta createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Activity\EO_MailMeta_Collection createCollection()
+ * @method static \Bitrix\Crm\Activity\EO_MailMeta wakeUpObject($row)
+ * @method static \Bitrix\Crm\Activity\EO_MailMeta_Collection wakeUpCollection($rows)
+ */
 class MailMetaTable extends Entity\DataManager
 {
 	public static function getTableName()

@@ -9,5 +9,5 @@ return array(
 		'/bitrix/js/disk/viewer/document-item/item.js',
 		'/bitrix/js/disk/viewer/document-item/onlyoffice-item.js',
 	],
-	'rel' => ['disk', 'ui.viewer'],
+	'rel' => ['disk', 'ui.viewer', 'disk.viewer.onlyoffice-item'],
 );

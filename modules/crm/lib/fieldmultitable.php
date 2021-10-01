@@ -6,6 +6,22 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\PhoneNumber\Parser;
 
+/**
+ * Class FieldMultiTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_FieldMulti_Query query()
+ * @method static EO_FieldMulti_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_FieldMulti_Result getById($id)
+ * @method static EO_FieldMulti_Result getList(array $parameters = array())
+ * @method static EO_FieldMulti_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_FieldMulti createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_FieldMulti_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_FieldMulti wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_FieldMulti_Collection wakeUpCollection($rows)
+ */
 class FieldMultiTable extends DataManager
 {
 	public static function getTableName(): string

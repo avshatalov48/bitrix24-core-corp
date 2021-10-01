@@ -109,7 +109,7 @@
 			},
 			{
 				condition: [
-					new RegExp("^/marketplace\/hook/"),
+					new RegExp("/marketplace\/hook/"),
 				],
 				options: {
 					customLeftBoundary: 0,
@@ -150,7 +150,7 @@
 			},
 			{
 				condition: [
-					new RegExp("^/marketplace\/installed/"),
+					new RegExp("/marketplace\/installed/"),
 				],
 				options: {
 					customLeftBoundary: 0,
@@ -170,7 +170,8 @@
 			},
 			{
 				condition: [
-					new RegExp("^/marketplace\/($|\\?)"),
+
+					new RegExp("/marketplace\/($|\\?)"),
 				],
 				options: {
 					cacheable: false,
@@ -180,10 +181,11 @@
 			},
 			{
 				condition: [
-					new RegExp("^/marketplace\/"),
+					new RegExp("/marketplace\/"),
 				],
 				options: {
 					customLeftBoundary: 0,
+					loader: "rest:marketplace1"
 				}
 			},
 			{
@@ -603,6 +605,15 @@
 					label: {
 						text: BX.message("INTRANET_BINDINGS_SHIPMENT"),
 					}
+				}
+			},
+			{
+				condition: [/\/contact_center\/lines_edit\/\?(.+)SIDE=Y/i,],
+				loader: "/bitrix/components/bitrix/imopenlines.lines.edit/templates/.default/images/imopenlines-view.svg",
+				options: {
+					width: 996,
+					allowChangeHistory: false,
+					cacheable: false
 				}
 			},
 		]

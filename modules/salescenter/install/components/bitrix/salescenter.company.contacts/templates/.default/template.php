@@ -6,7 +6,7 @@ use Bitrix\Main\Localization;
 
 Localization\Loc::loadMessages(__FILE__);
 
-$APPLICATION->SetTitle(Localization\Loc::getMessage('SC_COMPANY_CONTACTS_TITLE'));
+$APPLICATION->SetTitle(Localization\Loc::getMessage('SC_COMPANY_CONTACTS_YOUR_CONTACTS'));
 
 $this->setViewTarget("inside_pagetitle_below", 100); ?>
 	<span class="salescenter-company-contacts-header-link" onclick="BX.Salescenter.Manager.openHowToWork(event);"><?=Localization\Loc::getMessage('SC_COMPANY_CONTACTS_HOW_TO_WORK')?><span>

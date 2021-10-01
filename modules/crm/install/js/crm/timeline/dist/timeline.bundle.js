@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core_events,currency,ui_notification,ui_vue,main_core,pull_client) {
+(function (exports,main_core_events,currency,ui_notification,pull_client,ui_vue,main_core) {
 	'use strict';
 
 	var HistoryItemMixin = {
@@ -117,7 +117,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  template: "\n\t\t<li\n\t\t\t:class=\"{'crm-entity-stream-advice-list-item--active': product.isInDeal}\"\n\t\t\tclass=\"crm-entity-stream-advice-list-item\"\n\t\t>\t\n\t\t\t<div class=\"crm-entity-stream-advice-list-content\">\n\t\t\t\t<div\t\n\t\t\t\t\t:style=\"imageStyle\"\n\t\t\t\t\tclass=\"crm-entity-stream-advice-list-icon\"\n\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-advice-list-inner\">\n\t\t\t\t\t<a\n\t\t\t\t\t\t@click.prevent=\"openDetailPage\"\n\t\t\t\t\t\thref=\"#\"\n\t\t\t\t\t\tclass=\"crm-entity-stream-advice-list-name\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{product.name}}\n\t\t\t\t\t</a>\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"isBottomAreaVisible\"\n\t\t\t\t\t\tclass=\"crm-entity-stream-advice-list-desc-box\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"isVariationInfoVisible\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-advice-list-desc-name\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{product.variationInfo}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"isPriceVisible\"\n\t\t\t\t\t\t\tv-html=\"price\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-advice-list-desc-value\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isAddToDealVisible\" class=\"crm-entity-stream-advice-list-btn-box\">\t\t\t\t\n\t\t\t\t<button\n\t\t\t\t\t@click=\"addProductToDeal\"\n\t\t\t\t\tclass=\"ui-btn ui-btn-round ui-btn-xs crm-entity-stream-advice-list-btn\"\n\t\t\t\t>\n\t\t\t\t\t{{buttonText}}\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</li>\n\t"
 	};
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -439,8 +439,610 @@ this.BX.Crm = this.BX.Crm || {};
 	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-sms\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-sms\"></div>\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div class=\"crm-entity-stream-content-event\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click.prevent=\"viewActivity\"\n\t\t\t\t\t\t\thref=\"#\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-event-title\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{title}}\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"status\"\n\t\t\t\t\t\t\t:class=\"statusClass\"\n\t\t\t\t\t\t\t:title=\"statusErrorDescription\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{status.name}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">{{createdAt}}</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-detail-sms\">\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-detail-sms-status\">\n\t\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_VIA'), " \n\t\t\t\t\t\t\t\t<strong>\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_BITRIX24'), "\n\t\t\t\t\t\t\t\t</strong>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-detail-sms-fragment\">\n\t\t\t\t\t\t\t\t<span>{{text}}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"communication\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-detail-contact-info\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{BX.message('CRM_TIMELINE_SMS_TO')}}\n\t\t\t\t\t\t\t<a v-if=\"communication.SHOW_URL\" :href=\"communication.SHOW_URL\">\n\t\t\t\t\t\t\t\t{{communication.TITLE}}\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t{{communication.TITLE}}\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<span v-if=\"communication.VALUE\">{{communication.VALUE}}</span>\n\t\t\t\t\t\t\t<template v-if=\"provider\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_IN_MESSENGER'), " {{provider}}\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\"></author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\t\n\t")
 	});
 
+	var DeliveryServiceInfo = {
+	  props: {
+	    deliveryService: {
+	      required: true,
+	      type: Object
+	    }
+	  },
+	  computed: {
+	    isDeliveryServiceProfile: function isDeliveryServiceProfile() {
+	      return this.deliveryService.IS_PROFILE;
+	    },
+	    deliveryServiceName: function deliveryServiceName() {
+	      return this.isDeliveryServiceProfile ? this.deliveryService.PARENT_NAME : this.deliveryService.NAME;
+	    },
+	    deliveryProfileServiceName: function deliveryProfileServiceName() {
+	      return this.deliveryService.NAME;
+	    },
+	    deliveryServiceLogoBackgroundUrl: function deliveryServiceLogoBackgroundUrl() {
+	      return this.isDeliveryServiceProfile ? this.deliveryService.PARENT_LOGO : this.deliveryService.LOGO;
+	      return logo ? {
+	        'background-image': 'url(' + logo + ')'
+	      } : {};
+	    }
+	  },
+	  template: "\n\t\t<div class=\"crm-entity-stream-content-delivery-title\">\n\t\t\t<div\n\t\t\t\tv-if=\"isDeliveryServiceProfile && deliveryService.LOGO\"\n\t\t\t\tclass=\"crm-entity-stream-content-delivery-icon\"\n\t\t\t\t:style=\"{'background-image': 'url(' + deliveryService.LOGO + ')'}\"\n\t\t\t>\n\t\t\t</div>\n\t\t\t<div class=\"crm-entity-stream-content-delivery-title-contnet\">\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"deliveryServiceLogoBackgroundUrl\"\n\t\t\t\t\tclass=\"crm-entity-stream-content-delivery-title-logo\"\n\t\t\t\t\t:style=\"{'background-image': 'url(' + deliveryServiceLogoBackgroundUrl + ')'}\"\n\t\t\t\t></div>\n\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title-info\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title-name\">\n\t\t\t\t\t\t{{deliveryServiceName}}\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"isDeliveryServiceProfile\"\n\t\t\t\t\t\tclass=\"crm-entity-stream-content-delivery-title-param\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{deliveryProfileServiceName}}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	};
+
+	var component$2 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin],
+	  components: {
+	    'author': Author,
+	    'delivery-service-info': DeliveryServiceInfo
+	  },
+	  props: {
+	    mode: {
+	      required: true,
+	      type: String
+	    }
+	  },
+	  data: function data() {
+	    return {
+	      entityData: null,
+	      deliveryInfo: null,
+	      isRefreshing: false,
+	      isCreatingRequest: false,
+	      isCancellingRequest: false
+	    };
+	  },
+	  methods: {
+	    // region common activity methods
+	    completeActivity: function completeActivity() {
+	      if (this.self.canComplete()) {
+	        this.self.setAsDone(!this.self.isDone());
+	      }
+	    },
+	    showContextMenu: function showContextMenu(event) {
+	      var _this = this;
+
+	      var popup = BX.PopupMenu.create('taxi_activity_context_menu_' + this.self.getId(), event.target, [{
+	        id: 'delete',
+	        text: this.getLangMessage('menuDelete'),
+	        onclick: function onclick() {
+	          popup.close();
+	          var deletionDlgId = 'entity_timeline_deletion_' + _this.self.getId() + '_confirm';
+	          var dlg = BX.Crm.ConfirmationDialog.get(deletionDlgId);
+
+	          if (!dlg) {
+	            dlg = BX.Crm.ConfirmationDialog.create(deletionDlgId, {
+	              title: _this.getLangMessage('removeConfirmTitle'),
+	              content: _this.getLangMessage('deliveryRemove')
+	            });
+	          }
+
+	          dlg.open().then(function (result) {
+	            if (result.cancel) {
+	              return;
+	            }
+
+	            _this.self.remove();
+	          }, function (result) {});
+	        }
+	      }], {
+	        autoHide: true,
+	        offsetTop: 0,
+	        offsetLeft: 16,
+	        angle: {
+	          position: "top",
+	          offset: 0
+	        },
+	        events: {
+	          onPopupShow: function onPopupShow() {
+	            return BX.addClass(event.target, 'active');
+	          },
+	          onPopupClose: function onPopupClose() {
+	            return BX.removeClass(event.target, 'active');
+	          }
+	        }
+	      });
+	      popup.show();
+	    },
+	    // endregion
+	    // region delivery request methods
+	    createDeliveryRequest: function createDeliveryRequest() {
+	      var _this2 = this;
+
+	      if (this.isLocked) {
+	        return;
+	      }
+
+	      this.isCreatingRequest = true;
+	      BX.ajax.runAction('sale.deliveryrequest.create', {
+	        analyticsLabel: 'saleDeliveryTaxiCall',
+	        data: {
+	          shipmentIds: this.shipmentIds,
+	          additional: {
+	            ACTIVITY_ID: this.activityId
+	          }
+	        }
+	      }).then(function (result) {
+	        _this2.refresh(function () {
+	          _this2.isCreatingRequest = false;
+	        });
+	      }).catch(function (result) {
+	        _this2.isCreatingRequest = false;
+
+	        _this2.showError(result.errors.map(function (item) {
+	          return item.message;
+	        }).join());
+	      });
+	    },
+	    cancelDeliveryRequest: function cancelDeliveryRequest() {
+	      var _this3 = this;
+
+	      if (this.isLocked || !this.deliveryRequest) {
+	        return;
+	      }
+
+	      this.isCancellingRequest = true;
+	      BX.ajax.runAction('sale.deliveryrequest.execute', {
+	        data: {
+	          requestId: this.deliveryRequest['ID'],
+	          actionType: this.deliveryService['CANCEL_ACTION_CODE']
+	        }
+	      }).then(function (result) {
+	        var data = result.data;
+	        BX.ajax.runAction('crm.timeline.deliveryactivity.createcanceldeliveryrequestmessage', {
+	          data: {
+	            requestId: _this3.deliveryRequest['ID'],
+	            message: data.message
+	          }
+	        }).then(function (result) {
+	          BX.ajax.runAction('sale.deliveryrequest.delete', {
+	            data: {
+	              requestId: _this3.deliveryRequest['ID']
+	            }
+	          }).then(function (result) {
+	            _this3.refresh(function () {
+	              _this3.isCancellingRequest = false;
+	            });
+	          }).catch(function (result) {
+	            _this3.isCancellingRequest = false;
+
+	            _this3.showError(result.errors.map(function (item) {
+	              return item.message;
+	            }).join());
+	          });
+	        });
+	      }).catch(function (result) {
+	        _this3.isCancellingRequest = false;
+
+	        _this3.showError(result.errors.map(function (item) {
+	          return item.message;
+	        }).join());
+	      });
+	    },
+	    checkRequestStatus: function checkRequestStatus() {
+	      BX.ajax.runAction('crm.timeline.deliveryactivity.checkrequeststatus');
+	    },
+	    startCheckingRequestStatus: function startCheckingRequestStatus() {
+	      var _this4 = this;
+
+	      clearTimeout(this._checkRequestStatusTimeoutId);
+	      this._checkRequestStatusTimeoutId = setInterval(function () {
+	        return _this4.checkRequestStatus();
+	      }, 30 * 1000);
+	    },
+	    stopCheckingRequestStatus: function stopCheckingRequestStatus() {
+	      clearTimeout(this._checkRequestStatusTimeoutId);
+	    },
+	    // endregion
+	    // region refresh methods
+	    setDeliveryInfo: function setDeliveryInfo(deliveryInfo) {
+	      this.deliveryInfo = deliveryInfo;
+	    },
+	    refresh: function refresh() {
+	      var _this5 = this;
+
+	      var callback = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+
+	      if (this.isRefreshing) {
+	        return;
+	      }
+
+	      this.isRefreshing = true;
+
+	      var finallyCallback = function finallyCallback() {
+	        _this5.isRefreshing = false;
+
+	        if (callback) {
+	          callback();
+	        }
+	      };
+
+	      main_core.ajax.runAction('crm.timeline.deliveryactivity.getdeliveryinfo', {
+	        data: {
+	          activityId: this.activityId
+	        }
+	      }).then(function (result) {
+	        _this5.setDeliveryInfo(result.data);
+
+	        finallyCallback();
+	      }).catch(function (result) {
+	        finallyCallback();
+	      });
+	    },
+	    subscribePullEvents: function subscribePullEvents() {
+	      var _this6 = this;
+
+	      if (this._isPullSubscribed) {
+	        return;
+	      }
+
+	      pull_client.PULL.subscribe({
+	        moduleId: 'crm',
+	        command: 'onOrderShipmentSave',
+	        callback: function callback(params) {
+	          if (_this6.shipmentIds.some(function (id) {
+	            return id == params.FIELDS.ID;
+	          })) {
+	            _this6.refresh();
+	          }
+	        }
+	      });
+	      pull_client.PULL.subscribe({
+	        moduleId: 'sale',
+	        command: 'onDeliveryServiceSave',
+	        callback: function callback(params) {
+	          if (_this6.deliveryServiceIds.some(function (id) {
+	            return id == params.ID;
+	          })) {
+	            _this6.refresh();
+	          }
+	        }
+	      });
+	      pull_client.PULL.subscribe({
+	        moduleId: 'sale',
+	        command: 'onDeliveryRequestUpdate',
+	        callback: function callback(params) {
+	          if (_this6.deliveryRequestId == params.ID) {
+	            _this6.refresh();
+	          }
+	        }
+	      });
+	      pull_client.PULL.subscribe({
+	        moduleId: 'sale',
+	        command: 'onDeliveryRequestDelete',
+	        callback: function callback(params) {
+	          if (_this6.deliveryRequestId == params.ID) {
+	            _this6.refresh();
+	          }
+	        }
+	      });
+	      pull_client.PULL.extendWatch('SALE_DELIVERY_SERVICE');
+	      pull_client.PULL.extendWatch('CRM_ENTITY_ORDER_SHIPMENT');
+	      pull_client.PULL.extendWatch('SALE_DELIVERY_REQUEST');
+	      this._isPullSubscribed = true;
+	    },
+	    //endregion
+	    // region miscellaneous
+	    callPhone: function callPhone(phone) {
+	      if (this.canUseTelephony && typeof top.BXIM !== 'undefined') {
+	        top.BXIM.phoneTo(phone);
+	      } else {
+	        window.location.href = 'tel:' + phone;
+	      }
+	    },
+	    isPhone: function isPhone(property) {
+	      return property.hasOwnProperty('TAGS') && Array.isArray(property['TAGS']) && property['TAGS'].includes('phone');
+	    },
+	    showError: function showError(message) {
+	      BX.loadExt('ui.notification').then(function () {
+	        BX.UI.Notification.Center.notify({
+	          content: message
+	        });
+	      });
+	    } // endregion
+
+	  },
+	  created: function created() {
+	    this.entityData = this.self.getAssociatedEntityData();
+
+	    if (this.entityData['DELIVERY_INFO']) {
+	      this.setDeliveryInfo(this.entityData['DELIVERY_INFO']);
+	    }
+
+	    this.subscribePullEvents();
+	    this._checkRequestStatusTimeoutId = null;
+
+	    if (this.needCheckRequestStatus) {
+	      this.startCheckingRequestStatus();
+	    }
+	  },
+	  computed: {
+	    activityId: function activityId() {
+	      return this.data.ASSOCIATED_ENTITY.ID;
+	    },
+	    // region shipments
+	    shipments: function shipments() {
+	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('SHIPMENTS') && Array.isArray(this.deliveryInfo['SHIPMENTS'])) {
+	        return this.deliveryInfo['SHIPMENTS'];
+	      }
+
+	      return null;
+	    },
+	    shipmentIds: function shipmentIds() {
+	      return this.shipments ? this.shipments.map(function (shipment) {
+	        return shipment['ID'];
+	      }) : [];
+	    },
+	    shipment: function shipment() {
+	      if (this.shipments && Array.isArray(this.shipments) && this.shipments.length > 0) {
+	        return this.shipments[0];
+	      }
+
+	      return null;
+	    },
+	    expectedDeliveryPriceFormatted: function expectedDeliveryPriceFormatted() {
+	      return this.shipment && this.shipment.hasOwnProperty('BASE_PRICE_DELIVERY') ? this.shipment['BASE_PRICE_DELIVERY_FORMATTED'] : this.shipment['PRICE_DELIVERY_FORMATTED'];
+	    },
+	    // endregion
+	    // region delivery service
+	    deliveryService: function deliveryService() {
+	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('DELIVERY_SERVICE') && babelHelpers.typeof(this.deliveryInfo['DELIVERY_SERVICE']) === 'object' && this.deliveryInfo['DELIVERY_SERVICE'] !== null) {
+	        return this.deliveryInfo['DELIVERY_SERVICE'];
+	      }
+
+	      return null;
+	    },
+	    deliveryServiceIds: function deliveryServiceIds() {
+	      // @TODO
+	      if (!this.deliveryService) {
+	        return null;
+	      }
+
+	      return this.deliveryService.IDS;
+	    },
+	    // endregion
+	    // region delivery request
+	    deliveryRequest: function deliveryRequest() {
+	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('DELIVERY_REQUEST') && babelHelpers.typeof(this.deliveryInfo['DELIVERY_REQUEST']) === 'object' && this.deliveryInfo['DELIVERY_REQUEST'] !== null) {
+	        return this.deliveryInfo['DELIVERY_REQUEST'];
+	      }
+
+	      return null;
+	    },
+	    deliveryRequestId: function deliveryRequestId() {
+	      if (this.deliveryRequest && this.deliveryRequest.hasOwnProperty('ID')) {
+	        return this.deliveryRequest['ID'];
+	      }
+
+	      return null;
+	    },
+	    deliveryRequestProperties: function deliveryRequestProperties() {
+	      if (this.deliveryRequest && this.deliveryRequest.hasOwnProperty('EXTERNAL_PROPERTIES') && babelHelpers.typeof(this.deliveryRequest['EXTERNAL_PROPERTIES']) === 'object' && this.deliveryRequest['EXTERNAL_PROPERTIES'] !== null) {
+	        return this.deliveryRequest['EXTERNAL_PROPERTIES'];
+	      }
+
+	      return null;
+	    },
+	    deliveryRequestStatus: function deliveryRequestStatus() {
+	      if (!this.deliveryRequest) {
+	        return null;
+	      }
+
+	      return this.deliveryRequest['EXTERNAL_STATUS'];
+	    },
+	    deliveryRequestStatusSemantic: function deliveryRequestStatusSemantic() {
+	      if (!this.deliveryRequest) {
+	        return null;
+	      }
+
+	      return this.deliveryRequest['EXTERNAL_STATUS_SEMANTIC'];
+	    },
+	    isConnectedWithDeliveryRequest: function isConnectedWithDeliveryRequest() {
+	      return !!this.deliveryRequest;
+	    },
+	    needCheckRequestStatus: function needCheckRequestStatus() {
+	      return this.isConnectedWithDeliveryRequest && this.mode === 'schedule';
+	    },
+	    isSendRequestButtonVisible: function isSendRequestButtonVisible() {
+	      return !this.isCreatingRequest && !this.isConnectedWithDeliveryRequest;
+	    },
+	    // endregion
+	    //region miscellaneous
+	    miscellaneous: function miscellaneous() {
+	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('MISCELLANEOUS')) {
+	        return this.deliveryInfo['MISCELLANEOUS'];
+	      }
+
+	      return null;
+	    },
+	    canUseTelephony: function canUseTelephony() {
+	      return this.miscellaneous && this.miscellaneous.hasOwnProperty('CAN_USE_TELEPHONY') && this.miscellaneous['CAN_USE_TELEPHONY'];
+	    },
+	    template: function template() {
+	      if (!this.miscellaneous || !this.miscellaneous.hasOwnProperty('TEMPLATE')) {
+	        return null;
+	      }
+
+	      return this.miscellaneous['TEMPLATE'];
+	    },
+	    // endregion
+	    // region classes
+	    cancelRequestButtonStyle: function cancelRequestButtonStyle() {
+	      return {
+	        'ui-btn': true,
+	        'ui-btn-sm': true,
+	        'ui-btn-light-border': true,
+	        'ui-btn-wait': this.isCancellingRequest
+	      };
+	    },
+	    statusClass: function statusClass() {
+	      return {
+	        'crm-entity-stream-content-event-process': this.deliveryRequestStatusSemantic === 'process',
+	        'crm-entity-stream-content-event-missing': this.deliveryRequestStatusSemantic === 'error',
+	        'crm-entity-stream-content-event-done': this.deliveryRequestStatusSemantic === 'success'
+	      };
+	    },
+	    wrapperContainerClass: function wrapperContainerClass() {
+	      return {
+	        'crm-entity-stream-section-planned': this.mode === 'schedule'
+	      };
+	    },
+	    innerWrapperContainerClass: function innerWrapperContainerClass() {
+	      return {
+	        'crm-entity-stream-content-event--delivery': this.mode !== 'schedule'
+	      };
+	    },
+	    // endregion
+	    isLocked: function isLocked() {
+	      return this.isRefreshing || this.isCreatingRequest || this.isCancellingRequest;
+	    }
+	  },
+	  watch: {
+	    needCheckRequestStatus: function needCheckRequestStatus(value) {
+	      if (value) {
+	        this.startCheckingRequestStatus();
+	      } else {
+	        this.stopCheckingRequestStatus();
+	      }
+	    }
+	  },
+	  template: "\n\t\t<div\n\t\t\tclass=\"crm-entity-stream-section crm-entity-stream-section-new\"\n\t\t\t:class=\"wrapperContainerClass\"\n\t\t>\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi\"></div>\n\t\t\t<div\n\t\t\t\tv-if=\"mode === 'schedule'\"\n\t\t\t\t@click=\"showContextMenu\"\n\t\t\t\tclass=\"crm-entity-stream-section-context-menu\"\n\t\t\t></div>\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div\n\t\t\t\t\tclass=\"crm-entity-stream-content-event\"\n\t\t\t\t\t:class=\"innerWrapperContainerClass\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-title\">\n\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_SERVICE'), "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"deliveryRequestStatus && deliveryRequestStatusSemantic\"\n\t\t\t\t\t\t\t:class=\"statusClass\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{deliveryRequestStatus}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">{{createdAt}}</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail crm-entity-stream-content-delivery\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex\">\n\t\t\t\t\t\t\t<template v-if=\"mode === 'schedule'\">\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tv-if=\"isSendRequestButtonVisible\"\n\t\t\t\t\t\t\t\t\t@click=\"createDeliveryRequest\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-sm ui-btn-primary\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_CREATE_DELIVERY_REQUEST'), "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span v-if=\"isCreatingRequest\" class=\"crm-entity-stream-content-delivery-status\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_CREATING_REQUEST'), "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tv-if=\"isConnectedWithDeliveryRequest && deliveryService && deliveryService.IS_CANCELLABLE\"\n\t\t\t\t\t\t\t\t\t@click=\"cancelDeliveryRequest\"\n\t\t\t\t\t\t\t\t\t:class=\"cancelRequestButtonStyle\"\n\t\t\t\t\t\t\t\t>\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t{{deliveryService.CANCEL_ACTION_NAME}}\n\t\t\t\t\t\t\t\t</span>\t\t\t\t\t\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<delivery-service-info\n\t\t\t\t\t\t\t\tv-if=\"deliveryService\"\n\t\t\t\t\t\t\t\t:deliveryService=\"deliveryService\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t</delivery-service-info>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row\">\n\t\t\t\t\t\t\t<table class=\"crm-entity-stream-content-delivery-order\">\n\t\t\t\t\t\t\t\t<tr v-if=\"shipment && shipment.ADDRESS_FROM_FORMATTED && shipment.ADDRESS_TO_FORMATTED\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_FROM'), "\n\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"shipment.ADDRESS_FROM_FORMATTED\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_TO'), "\n\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"shipment.ADDRESS_TO_FORMATTED\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"shipment\">\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_CLIENT_DELIVERY_PRICE'), "\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\t\t\t\t\tv-html=\"shipment.PRICE_DELIVERY_FORMATTED\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t style=\"font-size: 14px; color: #333;\"\n\t\t\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_EXPECTED_DELIVERY_PRICE'), "\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"font-size: 14px; color: #333; opacity: .5;\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\t\t\t\t\t\tv-html=\"expectedDeliveryPriceFormatted\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED'), "\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<!-- Properties --->\n\t\t\t\t\t\t\t\t<tr v-for=\"property in deliveryRequestProperties\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{property.NAME}}\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\t\t\t\t\tv-if=\"isPhone(property)\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t@click=\"callPhone(property.VALUE)\"\n\t\t\t\t\t\t\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-delivery-link\"\n\t\t\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t\t\t{{property.VALUE}}\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t\t{{property.VALUE}}\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<!-- end Properties --->\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-if=\"mode === 'schedule'\" class=\"crm-entity-stream-content-detail-planned-action\">\n\t\t\t\t\t\t<input @click=\"completeActivity\" type=\"checkbox\" class=\"crm-entity-stream-planned-apply-btn\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\">\n\t\t\t\t\t</author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t")
+	});
+
+	var component$3 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin],
+	  components: {
+	    'author': Author,
+	    'delivery-service-info': DeliveryServiceInfo
+	  },
+	  computed: {
+	    deliveryService: function deliveryService() {
+	      if (!this.data.FIELDS.hasOwnProperty('DELIVERY_SERVICE')) {
+	        return null;
+	      }
+
+	      return this.data.FIELDS.DELIVERY_SERVICE;
+	    },
+	    messageData: function messageData() {
+	      if (!this.data.FIELDS.hasOwnProperty('MESSAGE_DATA')) {
+	        return null;
+	      }
+
+	      return this.data.FIELDS.MESSAGE_DATA;
+	    },
+	    messageTitle: function messageTitle() {
+	      if (!this.messageData) {
+	        return null;
+	      }
+
+	      return this.messageData['TITLE'];
+	    },
+	    messageDescription: function messageDescription() {
+	      if (!this.messageData) {
+	        return null;
+	      }
+
+	      return this.messageData['DESCRIPTION'];
+	    },
+	    messageStatus: function messageStatus() {
+	      if (!this.messageData) {
+	        return null;
+	      }
+
+	      return this.messageData['STATUS'];
+	    },
+	    messageStatusSemantics: function messageStatusSemantics() {
+	      if (!this.messageData) {
+	        return null;
+	      }
+
+	      return this.messageData['STATUS_SEMANTIC'];
+	    },
+	    messageStatusSemanticsClass: function messageStatusSemanticsClass() {
+	      return {
+	        'crm-entity-stream-content-event-process': this.messageStatusSemantics === 'process',
+	        'crm-entity-stream-content-event-missing': this.messageStatusSemantics === 'error',
+	        'crm-entity-stream-content-event-done': this.messageStatusSemantics === 'success'
+	      };
+	    }
+	  },
+	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-new\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi\"></div>\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div class=\"crm-entity-stream-content-event\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"messageTitle\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-event-title\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{messageTitle}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"messageStatus && messageStatusSemantics\"\n\t\t\t\t\t\t\t:class=\"messageStatusSemanticsClass\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{messageStatus}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">\n\t\t\t\t\t\t\t<span v-html=\"createdAt\">\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex\">\n\t\t\t\t\t\t\t<delivery-service-info\n\t\t\t\t\t\t\t\tv-if=\"deliveryService\"\n\t\t\t\t\t\t\t\t:deliveryService=\"deliveryService\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t</delivery-service-info>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"messageDescription\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-delivery-description\"\n\t\t\t\t\t\t\tv-html=\"messageDescription\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\">\n\t\t\t\t\t</author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	});
+
+	var component$4 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin],
+	  components: {
+	    'author': Author,
+	    'delivery-service-info': DeliveryServiceInfo
+	  },
+	  computed: {
+	    deliveryService: function deliveryService() {
+	      if (!this.data.FIELDS.hasOwnProperty('DELIVERY_SERVICE')) {
+	        return null;
+	      }
+
+	      return this.data.FIELDS.DELIVERY_SERVICE;
+	    },
+	    messageData: function messageData() {
+	      if (!this.data.FIELDS.hasOwnProperty('MESSAGE_DATA')) {
+	        return null;
+	      }
+
+	      return this.data.FIELDS.MESSAGE_DATA;
+	    },
+	    messageTitle: function messageTitle() {
+	      if (!this.messageData) {
+	        return null;
+	      }
+
+	      return this.messageData['TITLE'];
+	    },
+	    messageDescription: function messageDescription() {
+	      if (!this.messageData) {
+	        return null;
+	      }
+
+	      return this.messageData['DESCRIPTION'];
+	    },
+	    messageStatus: function messageStatus() {
+	      if (!this.messageData) {
+	        return null;
+	      }
+
+	      return this.messageData['STATUS'];
+	    },
+	    messageStatusSemantics: function messageStatusSemantics() {
+	      if (!this.messageData) {
+	        return null;
+	      }
+
+	      return this.messageData['STATUS_SEMANTIC'];
+	    },
+	    messageStatusSemanticsClass: function messageStatusSemanticsClass() {
+	      return {
+	        'crm-entity-stream-content-event-process': this.messageStatusSemantics === 'process',
+	        'crm-entity-stream-content-event-missing': this.messageStatusSemantics === 'error',
+	        'crm-entity-stream-content-event-done': this.messageStatusSemantics === 'success'
+	      };
+	    },
+	    addressFrom: function addressFrom() {
+	      if (!this.data.FIELDS.hasOwnProperty('ADDRESS_FROM_FORMATTED')) {
+	        return null;
+	      }
+
+	      return this.data.FIELDS.ADDRESS_FROM_FORMATTED;
+	    },
+	    addressTo: function addressTo() {
+	      if (!this.data.FIELDS.hasOwnProperty('ADDRESS_TO_FORMATTED')) {
+	        return null;
+	      }
+
+	      return this.data.FIELDS.ADDRESS_TO_FORMATTED;
+	    }
+	  },
+	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-new\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi\"></div>\n\t\t\t\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div class=\"crm-entity-stream-content-event\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"messageTitle\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-event-title\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{messageTitle}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"messageStatus && messageStatusSemantics\"\n\t\t\t\t\t\t\t:class=\"messageStatusSemanticsClass\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{messageStatus}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">\n\t\t\t\t\t\t\t<span v-html=\"createdAt\">\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail\">\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-html=\"messageDescription\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-detail-description crm-delivery-taxi-caption\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t\t\t<div v-if=\"addressFrom\" class=\"crm-entity-stream-content-delivery-order-box\">\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box-label\">\n\t\t\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_FROM'), "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<span>{{addressFrom}}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div v-if=\"addressTo\" class=\"crm-entity-stream-content-delivery-order-box\">\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box-label\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_TO'), "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<span>{{addressTo}}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\">\n\t\t\t\t\t</author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t")
+	});
+
 	exports.EncourageBuyProducts = component;
 	exports.Notification = component$1;
+	exports.DeliveryActivity = component$2;
+	exports.DeliveryMessage = component$3;
+	exports.DeliveryCalculation = component$4;
 
 }((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.Event,BX,BX,BX,BX,BX));
 //# sourceMappingURL=timeline.bundle.js.map

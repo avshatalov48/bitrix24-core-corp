@@ -88,12 +88,16 @@ class QuickAnswer
 	 */
 	public function update($data)
 	{
-		if(!self::$dataManager)
+		if (!self::$dataManager)
 		{
 			self::setDataManager(self::getDefaultDataManager());
 		}
 		$data['ID'] = $this->id;
-		if(self::$dataManager->update($this->id, $data))
+		if (!isset($data['NAME']) && isset($data['TEXT']))
+		{
+			$data['NAME'] = self::generateNameFromText($data['TEXT']);
+		}
+		if (self::$dataManager->update($this->id, $data))
 		{
 			$this->initFromArray($data);
 			return true;

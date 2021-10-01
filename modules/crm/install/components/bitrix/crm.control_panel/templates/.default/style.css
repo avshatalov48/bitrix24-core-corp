@@ -17,6 +17,9 @@
 }
 
 .crm-tariff-lock.menu-popup-item.main-buttons-submenu-item:before{
-	right: 95px;
+	right: 25px;
 	top: 11px;
+}
+.main-buttons-edit .crm-tariff-lock:before{
+	display: none;
 }

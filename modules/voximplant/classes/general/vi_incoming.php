@@ -60,9 +60,9 @@ class CVoxImplantIncoming
 		$result = CVoxImplantIncoming::RegisterCall($result, $params);
 
 		$isNumberInBlacklist = CVoxImplantIncoming::IsNumberInBlackList($params["CALLER_ID"], $result['NUMBER_COUNTRY_CODE']);
-		$isBlacklistAutoEnable = Bitrix\Main\Config\Option::get("voximplant", "blacklist_auto", "N") == "Y";
+		$isBlacklistAutoEnable = Bitrix\Main\Config\Option::get("voximplant", "blacklist_auto", "N") === "Y";
 
-		if ($result["WORKTIME_SKIP_CALL"] == "Y" && !$isNumberInBlacklist && $isBlacklistAutoEnable)
+		if ($result["WORKTIME_SKIP_CALL"] === "Y" && !$isNumberInBlacklist && $isBlacklistAutoEnable)
 		{
 			$isNumberInBlacklist = CVoxImplantIncoming::CheckNumberForBlackList($params["CALLER_ID"]);
 		}
@@ -72,16 +72,21 @@ class CVoxImplantIncoming
 			$result["NUMBER_IN_BLACKLIST"] = "Y";
 		}
 
-		if (!CVoxImplantAccount::IsPro())
+		if (!VI\Limits::canSelectCallSource())
 		{
 			$result["CRM_SOURCE"] = 'CALL';
+		}
+		if (!VI\Limits::canVote())
+		{
 			$result["CALL_VOTE"] = 'N';
-
-			if ($result["QUEUE_TYPE"] == CVoxImplantConfig::QUEUE_TYPE_ALL)
-			{
-				$result["QUEUE_TYPE"] = CVoxImplantConfig::QUEUE_TYPE_EVENLY;
-				$result["NO_ANSWER_RULE"] = CVoxImplantIncoming::RULE_VOICEMAIL;
-			}
+		}
+		if ($result["QUEUE_TYPE"] === CVoxImplantConfig::QUEUE_TYPE_ALL && !VI\Limits::isQueueAllAllowed())
+		{
+			$result["QUEUE_TYPE"] = CVoxImplantConfig::QUEUE_TYPE_EVENLY;
+		}
+		if ($result["NO_ANSWER_RULE"] === self::RULE_NEXT_QUEUE && !VI\Limits::isRedirectToQueueAllowed())
+		{
+			$result["NO_ANSWER_RULE"] = self::RULE_VOICEMAIL;
 		}
 
 		foreach(GetModuleEvents("voximplant", "onCallInit", true) as $arEvent)

@@ -1,17 +1,17 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Deal\PaymentDocumentsRepository;
+use Bitrix\Crm\History\DealStageHistoryEntry;
 use Bitrix\Crm\Order\DealBinding;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Order\Payment;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Main;
 use Bitrix\Main\DI\ServiceLocator;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\History\DealStageHistoryEntry;
-use Bitrix\Crm\Binding\DealContactTable;
-use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Cashbox\CheckManager;
 
 Loc::loadMessages(__FILE__);
@@ -24,26 +24,17 @@ class DealController extends EntityController
 	const RESTORE_EVENT_NAME = 'timeline_deal_restore';
 	//endregion
 
-	//region Singleton
-	/** @var DealController|null */
-	protected static $instance = null;
-	/**
-	 * @return DealController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new DealController();
-		}
-		return self::$instance;
-	}
-	//endregion
 	//region EntityController
 	public function getEntityTypeID()
 	{
 		return \CCrmOwnerType::Deal;
 	}
+
+	public function onConvert($ownerID, array $params)
+	{
+		$this->onConvertImplementation($ownerID, $params);
+	}
+
 	public function onCreate($ownerID, array $params)
 	{
 		if(!is_int($ownerID))
@@ -97,42 +88,6 @@ class DealController extends EntityController
 				)
 			)
 		);
-
-		//region Register Link
-		$linkParams = array(
-			'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-			'ENTITY_ID' => $ownerID,
-			'AUTHOR_ID' => $authorID
-		);
-
-		$leadID = isset($fields['LEAD_ID']) ? (int)$fields['LEAD_ID'] : 0;
-		if($leadID > 0)
-		{
-			$linkParams['BASE_INFO'] = array(
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
-				'ENTITY_ID' => $leadID,
-			);
-		}
-
-		$contactBindings = isset($params['CONTACT_BINDINGS']) && is_array($params['CONTACT_BINDINGS'])
-			? $params['CONTACT_BINDINGS'] : array();
-		if(!empty($contactBindings))
-		{
-			foreach($contactBindings as $contactBinding)
-			{
-				if(isset($contactBinding['CONTACT_ID']))
-				{
-					ContactController::getInstance()->onLink($contactBinding['CONTACT_ID'], $linkParams);
-				}
-			}
-		}
-
-		$companyID = isset($fields['COMPANY_ID']) ? (int)$fields['COMPANY_ID'] : 0;
-		if($companyID > 0)
-		{
-			CompanyController::getInstance()->onLink($companyID, $linkParams);
-		}
-		//endregion
 
 		$enableHistoryPush = $historyEntryID > 0;
 		if($enableHistoryPush && Main\Loader::includeModule('pull'))
@@ -255,116 +210,64 @@ class DealController extends EntityController
 			$prevSemanticID = \CCrmDeal::GetSemanticID($prevStageID, $categoryID);
 			if($curSemanticID !== PhaseSemantics::PROCESS && $curSemanticID !== $prevSemanticID)
 			{
-				$bindings = array(
-					array(
-						'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-						'ENTITY_ID' => $ownerID
-					)
-				);
+				$orderIdList = [];
 
-				if($curCompanyID > 0)
+				$dbRes = DealBinding::getList([
+					'select' => ['ORDER_ID'],
+					'filter' => [
+						'=DEAL_ID' => $ownerID,
+					]
+				]);
+
+				while ($data = $dbRes->fetch())
 				{
-					$bindings[] =  array(
-						'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
-						'ENTITY_ID' => $curCompanyID
-					);
+					$orderIdList[] = $data['ORDER_ID'];
 				}
 
-				foreach($contactBindings as $contactBinding)
+				if ($orderIdList)
 				{
-					if(isset($contactBinding['CONTACT_ID']) && $contactBinding['CONTACT_ID'] > 0)
+					if (\CCrmSaleHelper::isWithOrdersMode())
 					{
-						$bindings[] = array(
-							'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
-							'ENTITY_ID' => (int)$contactBinding['CONTACT_ID']
-						);
-					}
-				}
-
-				if(!empty($bindings))
-				{
-					$markHistoryEntryID = MarkEntry::create(
-						array(
-							'MARK_TYPE_ID' => $curSemanticID === PhaseSemantics::SUCCESS
-								? TimelineMarkType::SUCCESS : TimelineMarkType::FAILED,
-							'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+						$entryId = FinalSummaryEntry::create([
 							'ENTITY_ID' => $ownerID,
+							'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+							'TYPE_CATEGORY_ID' => TimelineType::CREATION,
 							'AUTHOR_ID' => $authorID,
-							'BINDINGS' => $bindings
-						)
+							'SETTINGS' => [
+								'ORDER_IDS' => $orderIdList
+							],
+							'BINDINGS' => [
+								[
+									'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+									'ENTITY_ID' => $ownerID
+								]
+							]
+						]);
+					}
+					else
+					{
+						$entryId = FinalSummaryDocumentsEntry::create([
+							'ENTITY_ID' => $ownerID,
+							'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+							'TYPE_CATEGORY_ID' => TimelineType::CREATION,
+							'AUTHOR_ID' => $authorID,
+							'SETTINGS' => [
+								'ORDER_IDS' => $orderIdList
+							],
+							'BINDINGS' => [
+								[
+									'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+									'ENTITY_ID' => $ownerID
+								]
+							]
+						]);
+					}
+
+					self::pushHistoryEntry(
+						$entryId,
+						TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::Deal, $ownerID),
+						'timeline_activity_add'
 					);
-
-					if($markHistoryEntryID > 0)
-					{
-						foreach($bindings as $binding)
-						{
-							self::pushHistoryEntry(
-								$markHistoryEntryID,
-								TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-								'timeline_activity_add'
-							);
-						}
-					}
-
-					$orderIdList = [];
-
-					$dbRes = DealBinding::getList([
-						'select' => ['ORDER_ID'],
-						'filter' => [
-							'=DEAL_ID' => $ownerID,
-						]
-					]);
-
-					while ($data = $dbRes->fetch())
-					{
-						$orderIdList[] = $data['ORDER_ID'];
-					}
-
-					if ($orderIdList)
-					{
-						if (\CCrmSaleHelper::isWithOrdersMode())
-						{
-							$entryId = FinalSummaryEntry::create([
-								'ENTITY_ID' => $ownerID,
-								'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-								'TYPE_CATEGORY_ID' => TimelineType::CREATION,
-								'AUTHOR_ID' => $authorID,
-								'SETTINGS' => [
-									'ORDER_IDS' => $orderIdList
-								],
-								'BINDINGS' => [
-									[
-										'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-										'ENTITY_ID' => $ownerID
-									]
-								]
-							]);
-						}
-						else
-						{
-							$entryId = FinalSummaryDocumentsEntry::create([
-								'ENTITY_ID' => $ownerID,
-								'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-								'TYPE_CATEGORY_ID' => TimelineType::CREATION,
-								'AUTHOR_ID' => $authorID,
-								'SETTINGS' => [
-									'ORDER_IDS' => $orderIdList
-								],
-								'BINDINGS' => [
-									[
-										'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-										'ENTITY_ID' => $ownerID
-									]
-								]
-							]);
-						}
-
-						self::pushHistoryEntry(
-							$entryId,
-							TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::Deal, $ownerID),
-							'timeline_activity_add'
-						);
-					}
 				}
 			}
 		}
@@ -376,42 +279,6 @@ class DealController extends EntityController
 		{
 			$this->createManualOpportunityModificationEntry($ownerID, $authorID, $prevIsManualOpportunity, $curIsManualOpportunity);
 		}
-
-		//region Register Link
-		$linkParams = array(
-			'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-			'ENTITY_ID' => $ownerID,
-			'AUTHOR_ID' => $authorID
-		);
-
-		$leadID = isset($currentFields['LEAD_ID'])
-			? (int)$currentFields['LEAD_ID']
-			: (isset($previousFields['LEAD_ID']) ? (int)$previousFields['LEAD_ID'] : 0);
-
-		if($leadID > 0)
-		{
-			$linkParams['BASE_INFO'] = array(
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
-				'ENTITY_ID' => $leadID,
-			);
-		}
-
-		if(!empty($addedContactBindings))
-		{
-			foreach($addedContactBindings as $contactBinding)
-			{
-				if(isset($contactBinding['CONTACT_ID']) && $contactBinding['CONTACT_ID'] > 0)
-				{
-					ContactController::getInstance()->onLink($contactBinding['CONTACT_ID'], $linkParams);
-				}
-			}
-		}
-
-		if($curCompanyID > 0 && $curCompanyID !== $prevCompanyID)
-		{
-			CompanyController::getInstance()->onLink($curCompanyID, $linkParams);
-		}
-		//endregion
 	}
 
 	public function onDelete($ownerID, array $params)
@@ -750,8 +617,9 @@ class DealController extends EntityController
 				$entityTypeID = isset($entityData['ENTITY_TYPE_ID']) ? (int)$entityData['ENTITY_TYPE_ID'] : 0;
 				$entityID = isset($entityData['ENTITY_ID']) ? (int)$entityData['ENTITY_ID'] : 0;
 
-				if(\CCrmOwnerType::TryGetEntityInfo($entityTypeID, $entityID, $entityInfo, false) && $entityTypeID)
+				if(\CCrmOwnerType::IsDefined($entityTypeID))
 				{
+					\CCrmOwnerType::TryGetEntityInfo($entityTypeID, $entityID, $entityInfo, false);
 					$entityInfo['ENTITY_TYPE_ID'] = $entityTypeID;
 					$entityInfo['ENTITY_ID'] = $entityID;
 					$entityInfos[] = $entityInfo;

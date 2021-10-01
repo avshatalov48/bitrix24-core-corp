@@ -18,6 +18,7 @@ use Bitrix\Main\Page\AssetMode;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 $mobileContext = new \Bitrix\Mobile\Context();
 
@@ -663,7 +664,7 @@ else
 
 	if ($arResult["AJAX_CALL"])
 	{
-		$uri = new \Bitrix\Main\Web\Uri(htmlspecialcharsback(POST_FORM_ACTION_URI));
+		$uri = new Uri(htmlspecialcharsback(POST_FORM_ACTION_URI));
 		$uri->deleteParams([
 			"LAST_LOG_TS",
 			"AJAX_CALL",
@@ -686,7 +687,8 @@ else
 		$uri->addParams($uriParams);
 
 		?><script>
-			<?
+		BX.ready(function() {
+			<?php
 			if (
 				$event_cnt > 0
 				&& $event_cnt >= $arParams["PAGE_SIZE"]
@@ -694,13 +696,13 @@ else
 			{
 				?>
 				BX.MobileLivefeed.PageInstance.setNextPageUrl('<?=CUtil::JSEscape(htmlspecialcharsEx($uri->getUri()))?>');
-				<?
+				<?php
 			}
 			else
 			{
 				?>
 				BX.MobileLivefeed.PageInstance.initScroll(false, true);
-				<?
+				<?php
 				if ($arParams["NEW_LOG_ID"] > 0)
 				{
 					?>
@@ -708,12 +710,13 @@ else
 						oMSL.registerBlocksToCheck();
 						oMSL.checkNodesHeight();
 					}, 1000);
-					<?
+					<?php
 				}
 			}
 			?>
 			BitrixMobile.LazyLoad.showImages(); // when load next page
-		</script><?
+		});
+		</script><?php
 
 		if ($arParams["NEW_LOG_ID"] <= 0)
 		{
@@ -805,7 +808,7 @@ else
 			?></div><? // lenta-wrapper, lenta-wrapper-outer, lenta-wrapper-outer-cont
 		}
 
-		$uri = new \Bitrix\Main\Web\Uri(htmlspecialcharsback(POST_FORM_ACTION_URI));
+		$uri = new Uri(htmlspecialcharsback(POST_FORM_ACTION_URI));
 		$uri->deleteParams([
 			"LAST_LOG_TS",
 			"AJAX_CALL",

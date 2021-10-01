@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main;
+use Bitrix\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Activity;
@@ -8,13 +9,20 @@ use Bitrix\Crm\Activity;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 Loc::loadMessages(__FILE__);
+Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
-class CrmActivityVisitComponent extends \CBitrixComponent
+class CrmActivityVisitComponent extends \CBitrixComponent implements Main\Errorable
 {
 	const ACTION_VIEW = 'VIEW';
 	const ACTION_EDIT = 'EDIT';
 	const ACTION_SOCIAL = 'SOCIAL';
 	const MAX_IMAGE_SIZE = 2097152;
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->errorCollection = new Main\ErrorCollection();
+	}
 
 	public function executeComponent()
 	{
@@ -22,6 +30,11 @@ class CrmActivityVisitComponent extends \CBitrixComponent
 		switch ($action)
 		{
 			case self::ACTION_EDIT:
+				if (!Crm\Restriction\RestrictionManager::getVisitRestriction()->hasPermission())
+				{
+					$this->errorCollection->setError(new Main\Error(Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR'), 'crm-tariff-lock'));
+					return $this->includeComponentTemplate('error');
+				}
 				return $this->executeEditAction();
 				break;
 			case self::ACTION_SOCIAL:
@@ -689,5 +702,21 @@ class CrmActivityVisitComponent extends \CBitrixComponent
 			}
 		}
 		return '';
+	}
+	/**
+	 * @param string $code
+	 * @return Main\Error|null
+	 */
+	public function getErrorByCode($code)
+	{
+		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	/**
+	 * @return Main\Error[]
+	 */
+	public function getErrors()
+	{
+		return $this->errorCollection->toArray();
 	}
 }

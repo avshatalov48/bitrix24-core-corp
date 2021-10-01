@@ -13,6 +13,8 @@ CJSCore::Init(array(
 	'ui.viewer',
 	'ui.ears',
 	'ui.tilegrid',
+	'ui.info-helper',
+	'ui.dialogs.messagebox',
 	'disk.users',
 	'disk.external-link',
 	'disk.sharing-legacy-popup',

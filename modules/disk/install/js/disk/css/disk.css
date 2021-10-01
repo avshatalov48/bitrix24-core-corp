@@ -1106,11 +1106,6 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
     opacity:.6;
 }
 
-.feed-add-post-destination-block {
-	overflow: hidden;
-    position: relative;
-}
-
 .feed-add-post-destination-title,
 .feed-add-post-tags-title {
     color: #000;

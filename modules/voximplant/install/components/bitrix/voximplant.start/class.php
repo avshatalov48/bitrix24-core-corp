@@ -43,15 +43,13 @@ class VoximplantStartComponent extends \CBitrixComponent
 		$result['RECORD_LIMIT'] = \CVoxImplantAccount::GetRecordLimit();
 		$result['TELEPHONY_AVAILABLE'] = \Bitrix\Voximplant\Limits::canManageTelephony();
 
-		$result['SHOW_EOS_WARNING'] = \Bitrix\Voximplant\Limits::canManageTelephony(true)
-			&& !\Bitrix\Voximplant\Limits::canManageTelephony(false);
-
 		if(!$this->isRestOnly())
 		{
 			$apiClient = new CVoxImplantHttp();
 			$accountInfo = $apiClient->GetAccountInfo([
 				'withNumbers' => true,
-				'withCallerIds' => true
+				'withCallerIds' => true,
+				'withSipStatus' => true
 			]);
 
 			if(!$accountInfo)
@@ -59,8 +57,13 @@ class VoximplantStartComponent extends \CBitrixComponent
 				$result['ERROR_MESSAGE'] = $apiClient->GetError()->msg;
 				return $result;
 			}
-
 			$this->account->UpdateAccountInfo($accountInfo);
+			$sip = new CVoxImplantSip();
+
+			$sip->updateSipRegisrations([
+				'sipRegistrations' => $accountInfo->sip_status->result
+			]);
+
 			$rentedNumbers = CVoxImplantPhone::PrepareNumberFields($accountInfo->numbers);
 
 			$numbersNumbersKeys = array_keys($rentedNumbers);

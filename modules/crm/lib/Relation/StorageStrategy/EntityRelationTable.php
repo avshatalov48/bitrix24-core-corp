@@ -6,6 +6,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Relation;
 use Bitrix\Crm\Relation\RelationType;
 use Bitrix\Crm\Relation\StorageStrategy;
+use Bitrix\Crm\Timeline\RelationController;
 use Bitrix\Main\Result;
 
 class EntityRelationTable extends StorageStrategy
@@ -92,7 +93,14 @@ class EntityRelationTable extends StorageStrategy
 			->setRelationType(static::RELATION_TYPE)
 		;
 
-		return $entityObject->save();
+		$result = $entityObject->save();
+
+		if ($result->isSuccess())
+		{
+			RelationController::getInstance()->onItemsBind($parent, $child);
+		}
+
+		return $result;
 	}
 
 	/**
@@ -100,11 +108,18 @@ class EntityRelationTable extends StorageStrategy
 	 */
 	protected function deleteBinding(ItemIdentifier $parent, ItemIdentifier $child): Result
 	{
-		return static::$tableClass::delete([
+		$result = static::$tableClass::delete([
 			'SRC_ENTITY_TYPE_ID' => $parent->getEntityTypeId(),
 			'SRC_ENTITY_ID' => $parent->getEntityId(),
 			'DST_ENTITY_TYPE_ID' => $child->getEntityTypeId(),
 			'DST_ENTITY_ID' => $child->getEntityId(),
 		]);
+
+		if ($result->isSuccess())
+		{
+			RelationController::getInstance()->onItemsUnbind($parent, $child);
+		}
+
+		return $result;
 	}
 }

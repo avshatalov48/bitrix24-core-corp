@@ -17,6 +17,19 @@ Loc::loadMessages(__FILE__);
 /**
  * Class AdsFormLinkTable.
  * @package Bitrix\Crm\Ads\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AdsFormLink_Query query()
+ * @method static EO_AdsFormLink_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AdsFormLink_Result getById($id)
+ * @method static EO_AdsFormLink_Result getList(array $parameters = array())
+ * @method static EO_AdsFormLink_Entity getEntity()
+ * @method static \Bitrix\Crm\Ads\Internals\EO_AdsFormLink createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Ads\Internals\EO_AdsFormLink_Collection createCollection()
+ * @method static \Bitrix\Crm\Ads\Internals\EO_AdsFormLink wakeUpObject($row)
+ * @method static \Bitrix\Crm\Ads\Internals\EO_AdsFormLink_Collection wakeUpCollection($rows)
  */
 class AdsFormLinkTable extends Entity\DataManager
 {

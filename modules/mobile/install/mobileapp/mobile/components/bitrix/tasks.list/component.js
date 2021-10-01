@@ -1209,9 +1209,10 @@ include('InAppNotifier');
 
 			this.cache = TasksListCache.getInstance(`tasks.task.list_v2_${owner}`);
 
+			this.getTaskLimitExceeded();
+			this.getEfficiencyCounter();
 			this.checkDeadlinesUpdate();
 			this.prepareTaskGroupList();
-			this.getEfficiencyCounter();
 
 			BX.addCustomEvent('onPullEvent-tasks', (command, params) => {
 				if (command === 'user_counter')
@@ -1626,13 +1627,14 @@ include('InAppNotifier');
 				}
 			}
 
+			this.getTaskLimitExceeded();
+			this.getEfficiencyCounter();
 			this.checkDeadlinesUpdate();
 		}
 
 		runOnAppActiveRepeatedActions()
 		{
 			this.filter.updateCounters();
-			this.getEfficiencyCounter();
 			this.reload();
 
 			this.prepareTaskGroupList();
@@ -1642,6 +1644,14 @@ include('InAppNotifier');
 		{
 			TaskGroupList.loadLastActiveProjects();
 			TaskGroupList.validateLastSearchedProjects();
+		}
+
+		getTaskLimitExceeded()
+		{
+			(new Request()).call('limit.isExceeded').then((response) => {
+				console.log('taskList:limit.isExceeded', response.result);
+				this.taskLimitExceeded = response.result || false;
+			});
 		}
 
 		checkDeadlinesUpdate()
@@ -2091,6 +2101,11 @@ include('InAppNotifier');
 			if (!this.isMyList())
 			{
 				actions = actions.filter(action => !['pin', 'unpin'].includes(action.identifier));
+			}
+
+			if (this.taskLimitExceeded)
+			{
+				actions = actions.filter(action => action.identifier !== 'delegate');
 			}
 
 			if (platform === 'ios')

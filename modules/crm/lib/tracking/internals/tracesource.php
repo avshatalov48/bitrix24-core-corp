@@ -7,6 +7,19 @@ use Bitrix\Main\ORM\Data\DataManager;
  * Class TraceSourceTable
  *
  * @package Bitrix\Crm\Tracking\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TraceSource_Query query()
+ * @method static EO_TraceSource_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TraceSource_Result getById($id)
+ * @method static EO_TraceSource_Result getList(array $parameters = array())
+ * @method static EO_TraceSource_Entity getEntity()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_TraceSource createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_TraceSource_Collection createCollection()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_TraceSource wakeUpObject($row)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_TraceSource_Collection wakeUpCollection($rows)
  */
 class TraceSourceTable extends DataManager
 {

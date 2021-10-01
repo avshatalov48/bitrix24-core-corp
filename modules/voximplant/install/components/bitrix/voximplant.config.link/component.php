@@ -18,12 +18,6 @@ else
 
 $arResult['CALLER_ID'] = CVoxImplantPhone::GetCallerId();
 
-$arResult["TRIAL_TEXT"] = '';
-if (!CVoxImplantAccount::IsPro() || CVoxImplantAccount::IsDemo())
-{
-	$arResult["TRIAL_TEXT"] = CVoxImplantMain::GetTrialText();
-}
-
 $arResult['IFRAME'] = $_REQUEST['IFRAME'] === 'Y';
 
 if (!(isset($arParams['TEMPLATE_HIDE']) && $arParams['TEMPLATE_HIDE'] == 'Y'))

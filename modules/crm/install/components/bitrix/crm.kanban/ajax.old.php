@@ -29,22 +29,29 @@ $newState = $request->get('status');
 $extra = $request->get('extra');
 $version = $request->get('version');
 $force = $request->get('force');
+$onlyItems = $request->get('onlyItems');
 $result = null;
 
 //get one or more items
 if ($action == 'get' && (!empty($id) || $minId))
 {
-	$result = $APPLICATION->IncludeComponent('bitrix:crm.kanban', '', array(
-		'IS_AJAX' => 'Y',
-		'ENTITY_TYPE' => $type,
-		'GET_AVATARS' => 'Y',
-		'FORCE_FILTER' => $force,
-		'ADDITIONAL_FILTER' =>
-			!empty($id)
-			? array('ID' => $id)
-			: array('>ID' => $minId),
-		'EXTRA' => $extra
-	));
+	$result = $APPLICATION->IncludeComponent(
+		'bitrix:crm.kanban',
+		'',
+		[
+			'IS_AJAX' => 'Y',
+			'ENTITY_TYPE' => $type,
+			'GET_AVATARS' => 'Y',
+			'FORCE_FILTER' => $force,
+			'ADDITIONAL_FILTER' => (
+				!empty($id)
+					? ['ID' => $id]
+					: ['>ID' => $minId]
+			),
+			'EXTRA' => $extra,
+			'ONLY_ITEMS' => ($onlyItems ?? 'N'),
+		]
+	);
 }
 //refresh Kanban
 elseif ($action == 'get')

@@ -9,12 +9,33 @@ if (!(\Bitrix\Main\Loader::includeModule('im') && \Bitrix\Main\Loader::includeMo
 	return false;
 }
 
+use \Bitrix\Main\Web\Json;
+
+
 /**
  * @global \CMain $APPLICATION
  */
 if ($APPLICATION instanceof \CMain)
 {
 	$APPLICATION->RestartBuffer();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'HEAD')
+{
+	echo '{"RESULT":"OK"}';
+	return true;
+}
+elseif ($_SERVER['REQUEST_METHOD'] !== 'POST')
+{
+	\Bitrix\ImBot\Log::write($_SERVER['REQUEST_METHOD'], "Request type is invalid");
+
+	echo Json::encode([
+		'ERROR' => [[
+			'code' => 'PERMISSION_DENIED',
+			'message' => "You don't have access to this page.",
+		]]
+	]);
+	return false;
 }
 
 \Bitrix\ImBot\Log::write($_POST, 'PORTAL HIT');
@@ -99,15 +120,21 @@ if ($params['BX_IFRAME'] == 'Y')
 		));
 	}
 }
-else if (
+else if
+(
 	(
-		$params['BX_TYPE'] == \Bitrix\ImBot\Http::TYPE_BITRIX24 &&
-		\Bitrix\ImBot\Http::requestSign($params['BX_TYPE'], md5(implode("|", $params)."|".BX24_HOST_NAME)) === $hash
+		isset($params['BX_TYPE'])
+		&& !empty($hash)
+		&& $params['BX_TYPE'] === \Bitrix\ImBot\Http::TYPE_BITRIX24
+		&& defined('BX24_HOST_NAME')
+		&& \Bitrix\ImBot\Http::requestSign($params['BX_TYPE'], md5(implode("|", $params)."|".BX24_HOST_NAME)) === $hash
 	)
 	||
 	(
-		$params['BX_TYPE'] == \Bitrix\ImBot\Http::TYPE_CP &&
-		\Bitrix\ImBot\Http::requestSign($params['BX_TYPE'], md5(implode("|", $params))) === $hash
+		isset($params['BX_TYPE'])
+		&& !empty($hash)
+		&& $params['BX_TYPE'] === \Bitrix\ImBot\Http::TYPE_CP
+		&& \Bitrix\ImBot\Http::requestSign($params['BX_TYPE'], md5(implode("|", $params))) === $hash
 	)
 )
 {
@@ -121,22 +148,73 @@ else if (
 	{
 		$result = \Bitrix\ImBot\Controller::sendToBot($params['BX_BOT_NAME'], $params['BX_COMMAND'], $params);
 	}
+
 	if (is_null($result))
 	{
-		echo "You don't have access to this page.";
+		\Bitrix\ImBot\Log::write("-empty-", "EMPTY RESULT");
+
+		echo Json::encode([
+			'ERROR' => [[
+				'code' => 'PERMISSION_DENIED',
+				'message' => "You don't have access to this page.",
+			]]
+		]);
+	}
+	elseif ($result instanceof \Bitrix\Main\Result)
+	{
+		if ($result->isSuccess())
+		{
+			\Bitrix\ImBot\Log::write($result->getData(), 'RESULT');
+
+			echo Json::encode($result->getData());
+		}
+		else
+		{
+			$errors = $result->getErrors();
+			$log = [];
+			foreach ($errors as $error)
+			{
+				$log[] = [
+					'code' => $error->getCode(),
+					'message' => $error->getMessage(),
+					'data' => $error->getCustomData(),
+				];
+			}
+			\Bitrix\ImBot\Log::write($log, 'ERROR RESULT');
+
+			// last error
+			$lastError = array_pop($errors);
+
+			echo Json::encode([
+				'ERROR' => [[
+					'code' => $lastError->getCode(),
+					'message' => $lastError->getMessage(),
+				]]
+			]);
+		}
 	}
 	else
 	{
-		if ($result instanceof \Bitrix\ImBot\Error)
+		if (
+			$result instanceof \Bitrix\ImBot\Error
+			|| $result instanceof \Bitrix\Main\Error
+		)
 		{
 			\Bitrix\ImBot\Log::write($result, 'ERROR RESULT');
 		}
-		echo \Bitrix\Main\Web\Json::encode($result);
+		echo Json::encode($result);
 	}
 }
 else
 {
-	echo "You don't have access to this page.";
+	\Bitrix\ImBot\Log::write($hash, "Request sign is invalid");
+
+	echo Json::encode([
+		'ERROR' => [[
+			'code' => 'PERMISSION_DENIED',
+			'message' => "You don't have access to this page.",
+		]]
+	]);
 }
 
 \CMain::FinalActions();

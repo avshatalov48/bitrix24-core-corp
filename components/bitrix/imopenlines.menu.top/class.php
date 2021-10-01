@@ -44,6 +44,7 @@ class ImopenlinesMenuTop extends \CBitrixComponent
 		{
 			$arParams['COMPONENT_BASE_DIR'] = Common::getPublicFolder();
 		}
+		$arParams['CONTACT_CENTER_BASE_DIR'] = Common::getContactCenterPublicFolder();
 	}
 
 	/**
@@ -60,7 +61,7 @@ class ImopenlinesMenuTop extends \CBitrixComponent
 			{
 				$result[] = [
 					'TEXT' => Loc::getMessage('IMOL_MENU_TOP_STATISTICS'),
-					'URL' => $this->arParams['COMPONENT_BASE_DIR'],
+					'URL' => $this->arParams['CONTACT_CENTER_BASE_DIR'] . 'dialog_statistics/',
 					'ID' => 'menu_contact_center_statistics'
 				];
 			}
@@ -91,29 +92,20 @@ class ImopenlinesMenuTop extends \CBitrixComponent
 			foreach ($listActiveConnector as $idConnector => $fullName)
 			{
 				$result[] = [
-					'TEXT' => empty($listActiveConnector[$idConnector]['short_name']) ? $listActiveConnector[$idConnector]['name'] : $listActiveConnector[$idConnector]['short_name'],
-					'TITLE' => $listActiveConnector[$idConnector]['name'],
-					'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'connector/?ID=' . $idConnector,
+					'TEXT' => empty($fullName['short_name']) ? $fullName['name'] : $fullName['short_name'],
+					'TITLE' => $fullName['name'],
+					'URL' => $this->arParams['CONTACT_CENTER_BASE_DIR'] . 'connector/?ID=' . $idConnector,
 					'ID' => 'menu_openlines_connector_' . str_replace('.', '_', $idConnector),
 
 				];
 			}
 		}
 
-		if (Helper::isCrmWidgetEnabled())
-		{
-			$result[] = [
-				'TEXT' => Loc::getMessage('IMOL_MENU_TOP_BUTTON'),
-				'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'button.php',
-				'ID' => 'menu_openlines_button'
-			];
-		}
-
 		if (Helper::isStatisticsMenuEnabled())
 		{
 			$result[] = [
 				'TEXT' => Loc::getMessage('IMOL_MENU_TOP_DETAILED_STATISTICS'),
-				'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'statistics.php',
+				'URL' => $this->arParams['CONTACT_CENTER_BASE_DIR'] . 'dialog_list/',
 				'ID' => 'menu_openlines_detail_statistics'
 			];
 		}
@@ -122,11 +114,7 @@ class ImopenlinesMenuTop extends \CBitrixComponent
 		{
 			$result[] = [
 				'TEXT' => Loc::getMessage('IMOL_MENU_TOP_PERMISSIONS'),
-				'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'permissions.php',
-				'IS_ACTIVE' => (
-					mb_strpos($this->request->getRequestUri(), $this->arParams['COMPONENT_BASE_DIR'] . 'editrole.php') === 0 ||
-					mb_strpos($this->request->getRequestUri(), $this->arParams['COMPONENT_BASE_DIR'] . 'permissions.php') === 0
-				),
+				'URL' => $this->arParams['CONTACT_CENTER_BASE_DIR'] . 'permissions/',
 				'ID' => 'menu_openlines_permission'
 			];
 		}

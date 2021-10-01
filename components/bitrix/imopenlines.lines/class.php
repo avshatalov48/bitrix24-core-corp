@@ -93,11 +93,11 @@ class CImOpenLinesListComponent extends \CBitrixComponent
 
 		$this->arResult['PERM_CAN_EDIT'] = true;
 		$this->arResult['LINES'] = $result;
-		$this->arResult['PUBLIC_PATH'] = \Bitrix\ImOpenLines\Common::getPublicFolder();
-		$this->arResult['PATH_TO_EDIT'] = \Bitrix\ImOpenLines\Common::getPublicFolder() . "list/edit.php?ID=#ID#";
-		$this->arResult['PATH_TO_LIST'] = \Bitrix\ImOpenLines\Common::getPublicFolder() . "list/";
-		$this->arResult['PATH_TO_STATISTICS'] = \Bitrix\ImOpenLines\Common::getPublicFolder() . "statistics.php?CONFIG_ID=#ID#";
-		$this->arResult['PATH_TO_CONNECTOR'] = \Bitrix\ImOpenLines\Common::getPublicFolder() . "connector/?ID=#ID#&LINE=#LINE#&LINE_SETTING=Y&IFRAME=Y";
+		$this->arResult['PUBLIC_PATH'] = \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder();
+		$this->arResult['PATH_TO_EDIT'] = \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder() . 'lines_edit/?ID=#ID#';
+		$this->arResult['PATH_TO_LIST'] = \Bitrix\ImOpenLines\Common::getPublicFolder() . 'list/';
+		$this->arResult['PATH_TO_STATISTICS'] = \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder() . 'dialog_list/?CONFIG_ID=#ID#';
+		$this->arResult['PATH_TO_CONNECTOR'] = \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder() . 'connector/?ID=#ID#&LINE=#LINE#&LINE_SETTING=Y&IFRAME=Y';
 
 		$this->includeComponentTemplate();
 

@@ -3,6 +3,7 @@
 use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Restriction\ItemsMutator;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Main\Localization\Loc;
@@ -320,23 +321,51 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				$this->entityTypeId
 			);
 
+			$itemsData = [];
+			$itemsColumns = [];
 			foreach($list as $item)
 			{
-				$jsEventData = CUtil::PhpToJSObject(['entityTypeId' => $this->entityTypeId, 'id' => $item->getId()]);
+				$itemData = $this->getItemData($item);
+				$itemsData[$itemData['ID']] = $itemData;
+				$itemsColumns[$itemData['ID']] = array_merge($itemData, $this->getItemColumn($item));
+			}
+			$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getWebFormResultsRestriction();
+			if (!$restriction->hasPermission())
+			{
+				$itemIds = array_column($itemsData, 'ID');
+				$restrictedItemIds = $restriction->filterRestrictedItemIds(
+					$this->entityTypeId,
+					$itemIds
+				);
+				$restrictedItemIds = array_flip($restrictedItemIds);
+				if (!empty($restrictedItemIds))
+				{
+					$mutator = new ItemsMutator($restriction->getFieldsToShow());
+					foreach ($itemsData as &$item)
+					{
+						if (isset($restrictedItemIds[$item['ID']]))
+						{
+							$item = $mutator->processItem($item, '<img onclick="if(BX && BX.onCustomEvent){BX.onCustomEvent(window, \'onCrmRestrictedValueClick\')}" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyIiB2aWV3Qm94PSIwIDAgMTI4IDEyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjQyIiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiIGZpbGw9IiNFREVFRUYiLz48cmVjdCB4PSI2NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEyIiBmaWxsPSIjRTdFOEVBIi8+PHJlY3QgeD0iODQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iI0VCRUNFRSIvPjxyZWN0IHg9IjEwNiIgd2lkdGg9IjIyIiBoZWlnaHQ9IjEyIiBmaWxsPSIjRjdGN0Y4Ii8+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEyIiBmaWxsPSIjRUFFQkVEIi8+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEyIiBmaWxsPSIjRUFFQkVEIi8+PC9zdmc+Cg=="/>');
+						}
+					}
+					foreach ($itemsColumns as &$item)
+					{
+						if (isset($restrictedItemIds[$item['ID']]))
+						{
+							$item = $mutator->processItem($item, '<img onclick="if(BX && BX.onCustomEvent){BX.onCustomEvent(window, \'onCrmRestrictedValueClick\')}" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyIiB2aWV3Qm94PSIwIDAgMTI4IDEyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjQyIiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiIGZpbGw9IiNFREVFRUYiLz48cmVjdCB4PSI2NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEyIiBmaWxsPSIjRTdFOEVBIi8+PHJlY3QgeD0iODQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iI0VCRUNFRSIvPjxyZWN0IHg9IjEwNiIgd2lkdGg9IjIyIiBoZWlnaHQ9IjEyIiBmaWxsPSIjRjdGN0Y4Ii8+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEyIiBmaWxsPSIjRUFFQkVEIi8+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEyIiBmaWxsPSIjRUFFQkVEIi8+PC9zdmc+Cg=="/>');
+						}
+					}
+					unset($item);
+					$this->arResult['RESTRICTED_VALUE_CLICK_CALLBACK'] = $restriction->prepareInfoHelperScript();
+				}
+			}
+			foreach($list as $item)
+			{
 				$result[] = [
 					'id' => $item->getId(),
-					'data' => $this->getItemData($item),
-					'columns' => $this->getItemColumn($item),
-					'actions' => [
-						[
-							'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_EDIT'),
-							'HREF' => Container::getInstance()->getRouter()->getItemDetailUrl($this->entityTypeId, $item->getId()),
-						],
-						[
-							'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_DELETE'),
-							'ONCLICK' => "BX.Event.EventEmitter.emit('BX.Crm.ItemListComponent:onClickDelete', ".$jsEventData.")",
-						]
-					]
+					'data' => $itemsData[$item->getId()],
+					'columns' => $itemsColumns[$item->getId()],
+					'actions' => $this->getContextActions($item),
 				];
 			}
 		}
@@ -344,11 +373,29 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		return $result;
 	}
 
+	protected function getContextActions(Item $item): array
+	{
+		$jsEventData = CUtil::PhpToJSObject(['entityTypeId' => $this->entityTypeId, 'id' => $item->getId()]);
+
+		$actions = [
+			[
+				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_EDIT'),
+				'HREF' => Container::getInstance()->getRouter()->getItemDetailUrl($this->entityTypeId, $item->getId()),
+			],
+			[
+				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_DELETE'),
+				'ONCLICK' => "BX.Event.EventEmitter.emit('BX.Crm.ItemListComponent:onClickDelete', {$jsEventData})",
+			],
+		];
+
+		return $actions;
+	}
+
 	protected function getItemData(Item $item): array
 	{
 		$itemData = $item->getData();
 
-		$this->display->addValues($item->getId(), $item->getData());
+		$this->display->addValues($item->getId(), $itemData);
 		$preparedUfData = $this->display->getValues($item->getId());
 		if ($preparedUfData)
 		{
@@ -401,8 +448,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->appendOptionalColumns($item, $result);
 		$this->appendParentColumns($item, $result);
 
-		/** @noinspection AdditionOperationOnArraysInspection */
-		return $result + $this->getItemData($item);
+		return $result;
 	}
 
 	protected function appendOptionalColumns(Item $item, array &$columns): void

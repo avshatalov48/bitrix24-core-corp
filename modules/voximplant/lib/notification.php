@@ -48,7 +48,7 @@ class Notification
 	 */
 	public static function shouldShowWarningForFreePortals($ignoreClosed = false)
 	{
-		if (Limits::canManageTelephony(false))
+		if (Limits::canManageTelephony())
 		{
 			return false;
 		}

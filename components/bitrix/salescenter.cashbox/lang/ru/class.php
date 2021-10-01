@@ -17,5 +17,6 @@ $MESS["SC_CASHBOX_FIELDS_NUMBER_KKM_HINT"] = "Для АТОЛ.Онлайн и О
 $MESS["SC_CASHBOX_FIELDS_USE_OFFLINE"] = "Используется оффлайн";
 $MESS["SC_CASHBOX_FIELDS_EMAIL"] = "E-mail для отправки уведомлений";
 $MESS["SC_CASHBOX_FIELDS_EMAIL_HINT"] = "В случае возникновения ошибок при печати чеков на данный email будут отправляться уведомления";
+$MESS["SC_CASHBOX_FIELDS_KKM_ID"] = "Марка ККМ";
 
 $MESS["SC_CASHBOX_FILE_LABEL"] = "Загрузить файл";

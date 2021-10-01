@@ -7,6 +7,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class DuplicateEntityStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DuplicateEntityStatistics_Query query()
+ * @method static EO_DuplicateEntityStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DuplicateEntityStatistics_Result getById($id)
+ * @method static EO_DuplicateEntityStatistics_Result getList(array $parameters = array())
+ * @method static EO_DuplicateEntityStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateEntityStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateEntityStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateEntityStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateEntityStatistics_Collection wakeUpCollection($rows)
+ */
 class DuplicateEntityStatisticsTable extends Entity\DataManager
 {
 	public static function getTableName()

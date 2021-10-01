@@ -2442,6 +2442,11 @@ class CCrmExternalSaleImport
 			$USER = new CUser();
 		}
 
+		if (\Bitrix\Crm\Restriction\RestrictionManager::getIntegrationShopRestriction()->isExceeded())
+		{
+			return '';
+		}
+
 		$id = intval($id);
 
 		$i = new CCrmExternalSaleImport($id);

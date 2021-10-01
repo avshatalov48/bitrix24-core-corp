@@ -1,6 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Restriction\OrderRestriction;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Tracking;
 /**
@@ -132,10 +133,12 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arOrder['PATH_TO_ORDER_EDIT'])."')"
 		);
 
+		$copyButtonOnClickHandler = "BX.Crm.Page.open('".CUtil::JSEscape($arOrder['PATH_TO_ORDER_COPY'])."')";
+
 		$arActions[] = array(
 			'TITLE' => GetMessage('CRM_ORDER_COPY_TITLE'),
 			'TEXT' => GetMessage('CRM_ORDER_COPY'),
-			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arOrder['PATH_TO_ORDER_COPY'])."')"
+			'ONCLICK' => $copyButtonOnClickHandler,
 		);
 	}
 
@@ -426,7 +429,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		foreach ($arOrder['PROPS'] as $group)
 		{
 			$items = '';
-			
+
 			foreach ($group['ITEMS'] as $property)
 			{
 				$items .= "<div>{$property["NAME"]}: {$property["VALUE"]}</div>";
@@ -575,7 +578,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		$arOrder['ID'],
 		$resultItem['columns']
 	);
-	
+
 	$userActivityID = isset($arOrder['USER_ACTIVITY_ID']) ? intval($arOrder['USER_ACTIVITY_ID']) : 0;
 	$commonActivityID = isset($arOrder['C_ACTIVITY_ID']) ? intval($arOrder['C_ACTIVITY_ID']) : 0;
 	if($userActivityID > 0)

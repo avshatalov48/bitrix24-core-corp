@@ -1,17 +1,17 @@
 <?php
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Web\Uri,
-	\Bitrix\Main\Data\Cache,
-	\Bitrix\Main\Application,
-	\Bitrix\Main\Config\Option,
-	\Bitrix\Main\LoaderException,
-	\Bitrix\Main\Localization\Loc;
-use \Bitrix\ImConnector\Limit,
-	\Bitrix\ImConnector\Output,
-	\Bitrix\ImConnector\Status,
-	\Bitrix\ImConnector\Library,
-	\Bitrix\ImConnector\Connector;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Data\Cache;
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImConnector\Limit;
+use Bitrix\ImConnector\Output;
+use Bitrix\ImConnector\Status;
+use Bitrix\ImConnector\Library;
+use Bitrix\ImConnector\Connector;
 
 class ImConnectorImessage extends CBitrixComponent
 {
@@ -19,9 +19,9 @@ class ImConnectorImessage extends CBitrixComponent
 	private $connector = 'imessage';
 	private $error = [];
 	private $messages = [];
-	/** @var \Bitrix\ImConnector\Output */
+	/** @var Output */
 	private $connectorOutput;
-	/** @var \Bitrix\ImConnector\Status */
+	/** @var Status */
 	private $status;
 
 	protected $pageId = 'page_imess';
@@ -78,7 +78,7 @@ class ImConnectorImessage extends CBitrixComponent
 		return '<script type="text/javascript">
 			BX.message({
 				IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_TITLE: \'' . GetMessageJS('IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_TITLE') . '\',
-				IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_DESCRIPTION: \'' . GetMessageJS('IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_DESCRIPTION_NEW', ['#ID#' => $this->helpDeskParams, '#ID_LIMIT#' => $this->helpLimitDeskParams]) . '\',
+				IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_DESCRIPTION: \'' . GetMessageJS('IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_DESCRIPTION_NEW_2', ['#ID#' => $this->helpDeskParams, '#ID_LIMIT#' => $this->helpLimitDeskParams]) . '\',
 				IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_BUTTON_OK: \'' . GetMessageJS('IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_BUTTON_OK') . '\',
 				IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_BUTTON_CANCEL: \'' . GetMessageJS('IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_BUTTON_CANCEL') . '\',
 				IMCONNECTOR_COMPONENT_IMESSAGE_LINE_ID: \'' . $this->arParams['LINE'] . '\',
@@ -130,7 +130,8 @@ class ImConnectorImessage extends CBitrixComponent
 		$this->arResult['CONNECTION_STATUS'] = $this->status->getConnection();
 		$this->arResult['REGISTER_STATUS'] = $this->status->getRegister();
 		$this->arResult['ERROR_STATUS'] = $this->status->getError();
-		$this->arResult['CAN_USE_CONNECTION'] = Limit::canUseIMessage();
+		$this->arResult['CAN_USE_CONNECTION'] = Limit::canUseConnector($this->connector);
+		$this->arResult['INFO_HELPER_LIMIT'] = Limit::getIdInfoHelperConnector($this->connector);
 		$this->arResult['HELP_LIMIT_DESK_PARAMS'] = $this->helpLimitDeskParams;
 
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);

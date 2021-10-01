@@ -1,8 +1,11 @@
 <?php
+
 namespace Bitrix\Crm\Conversion;
 
+use Bitrix\Crm;
+use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\Tracking;
-
+use Bitrix\Main;
 
 abstract class EntityConverter
 {
@@ -358,33 +361,8 @@ abstract class EntityConverter
 		unset($this->resultData[$entityTypeName], $this->resultData[$isNewKeyName]);
 	}
 
-	/**
-	 * Finalization phase. Called for every entity.
-	 * Uses for calling common conversion code for every converted entity.
-	 *
-	 * @return void
-	 */
-	protected function onFinalizationPhase()
-	{
-		foreach($this->getSupportedDestinationTypeIDs() as $entityTypeID)
-		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-			$entityID = self::getDestinationEntityID($entityTypeName, $this->resultData);
-			if($entityID <= 0)
-			{
-				continue;
-			}
-
-			Tracking\Entity::copyTrace(
-				$this->getEntityTypeID(),
-				$this->getEntityID(),
-				$entityTypeID,
-				$entityID
-			);
-		}
-	}
-
 	//endregion
+
 	//region Permissions
 	/**
 	 * Check permission for CREATE operation.
@@ -507,4 +485,183 @@ abstract class EntityConverter
 		return \CCrmAuthorizationHelper::CheckUpdatePermission($entityTypeName, $entityID, $permissions);
 	}
 	//endregion
+	/**
+	 * Finalization phase. Called for every entity.
+	 * Uses for calling common conversion code for every converted entity.
+	 *
+	 * @return void
+	 */
+	protected function onFinalizationPhase()
+	{
+		$this->createConversionTimelineRecord();
+
+		if ($this->isAttachingSourceActivitiesEnabled())
+		{
+			$this->attachSourceActivitiesToDestination();
+		}
+
+		$this->copySourceTraceToDestination();
+	}
+
+	protected function createConversionTimelineRecord(): void
+	{
+		/**
+		 * @todo move to operation after refactoring old entities on factory
+		 * @see \Bitrix\Crm\Service\Operation\Conversion::createTimelineRecord()
+		 */
+		$controller = Crm\Timeline\TimelineManager::resolveController(
+			[
+				'ASSOCIATED_ENTITY_TYPE_ID' => $this->getEntityTypeID(),
+			]
+		);
+
+		if ($controller)
+		{
+			$controller->onConvert(
+				$this->getEntityID(),
+				[
+					'ENTITIES' => $this->resultData,
+				]
+			);
+		}
+	}
+
+	/**
+	 * Returns true if activities from source entity should be copied to destination entity
+	 *
+	 * @return bool
+	 */
+	protected function isAttachingSourceActivitiesEnabled(): bool
+	{
+		// If this functionality is not needed in some source type, overwrite this method and return false
+		return true;
+	}
+
+	protected function attachSourceActivitiesToDestination(): void
+	{
+		$entityCreationTime = new Main\Type\DateTime();
+		$entityCreationTime->add('T1S');
+
+		foreach ($this->getSupportedDestinationTypeIDs() as $entityTypeID)
+		{
+			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+
+			$entityID = static::getDestinationEntityID($entityTypeName, $this->resultData);
+			if ($entityID <= 0)
+			{
+				continue;
+			}
+
+			$this->attachEntity($entityTypeID, $entityID);
+			if (static::isNewDestinationEntity($entityTypeName, $entityID, $this->resultData))
+			{
+				//HACK: We are trying to shift events of created entities
+				Crm\Timeline\CreationEntry::shiftEntity($entityTypeID, $entityID, $entityCreationTime);
+				Crm\Timeline\LinkEntry::shiftAllEntriesForTimelineOwner($entityTypeID, $entityID, $entityCreationTime);
+			}
+		}
+	}
+
+	/**
+	 * Attach source entity's activities, timeline objects and channel trackers to specified entity.
+	 *
+	 * @param int $dstEntityTypeId Entity Type ID.
+	 * @param int $dstEntityId Entity ID.
+	 */
+	protected function attachEntity($dstEntityTypeId, $dstEntityId)
+	{
+		Crm\Timeline\Entity\TimelineBindingTable::attach(
+			$this->getEntityTypeID(),
+			$this->getEntityID(),
+			$dstEntityTypeId,
+			$dstEntityId,
+			$this->getTimelineEntryTypesToAttach()
+		);
+
+		\CCrmActivity::AttachBinding($this->getEntityTypeID(), $this->getEntityID(), $dstEntityTypeId, $dstEntityId);
+
+		if ($dstEntityTypeId === \CCrmOwnerType::Deal)
+		{
+			DealChannelBinding::attach($this->getEntityTypeID(), $this->getEntityID(), $dstEntityId);
+		}
+	}
+
+	/**
+	 * Detach source entity's activities, timeline objects and channel trackers from specified entity.
+	 *
+	 * @param int $dstEntityTypeId Entity Type ID.
+	 * @param int $dstEntityId Entity ID.
+	 */
+	protected function detachEntity($dstEntityTypeId, $dstEntityId)
+	{
+		Crm\Timeline\Entity\TimelineBindingTable::detach(
+			$this->getEntityTypeID(),
+			$this->getEntityID(),
+			$dstEntityTypeId,
+			$dstEntityId,
+			$this->getTimelineEntryTypesToAttach()
+		);
+
+		\CCrmActivity::DetachBinding($this->getEntityTypeID(), $this->getEntityID(), $dstEntityTypeId, $dstEntityId);
+
+		if ($dstEntityTypeId === \CCrmOwnerType::Deal)
+		{
+			DealChannelBinding::detach($this->getEntityTypeID(), $this->getEntityID(), $dstEntityId);
+		}
+	}
+
+	protected function getTimelineEntryTypesToAttach(): array
+	{
+		return [
+			Crm\Timeline\TimelineType::ACTIVITY,
+			Crm\Timeline\TimelineType::CREATION,
+			Crm\Timeline\TimelineType::MARK,
+			Crm\Timeline\TimelineType::COMMENT
+		];
+	}
+
+	protected function copySourceTraceToDestination(): void
+	{
+		foreach ($this->getSupportedDestinationTypeIDs() as $entityTypeID)
+		{
+			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+			$entityID = self::getDestinationEntityID($entityTypeName, $this->resultData);
+			if ($entityID <= 0)
+			{
+				continue;
+			}
+
+			Tracking\Entity::copyTrace(
+				$this->getEntityTypeID(),
+				$this->getEntityID(),
+				$entityTypeID,
+				$entityID
+			);
+		}
+	}
+
+	protected function getAddOptions(): array
+	{
+		$options = $this->getUpdateOptions();
+
+		if (isset($this->contextData['USER_ID']))
+		{
+			$options['USER_ID'] = $this->contextData['USER_ID'];
+			$options['CURRENT_USER'] = $options['USER_ID'];
+		}
+
+		$options['DISABLE_USER_FIELD_CHECK'] = !$this->isUserFieldCheckEnabled();
+
+		return $options;
+	}
+
+	protected function getUpdateOptions(): array
+	{
+		return [
+			'EXCLUDE_FROM_RELATION_REGISTRATION' => [
+				// current conversion source
+				new Crm\ItemIdentifier($this->getEntityTypeID(), $this->getEntityID()),
+			],
+		];
+	}
 }

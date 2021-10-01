@@ -19,19 +19,26 @@ final class MessageSender
 	 */
 	public static function send(array $sendersOptions, array $options = []): Result
 	{
-		$sender = SenderPicker::getCurrentSender();
-		if (!$sender)
+		if (!$sendersOptions)
 		{
-			return (new Result())->addError(new Error('Sender has not been set up'));
+			return (new Result())->addError(new Error('Sender options have not been specified'));
 		}
 
-		if (!isset($sendersOptions[$sender::getSenderCode()]))
+		$currentSender = SenderPicker::getCurrentSender();
+		if ($currentSender && isset($sendersOptions[$currentSender::getSenderCode()]))
 		{
-			return (new Result())->addError(new Error('Unexpected sender code'));
+			$sender = $currentSender;
+			$senderOptions = $sendersOptions[$sender::getSenderCode()];
 		}
 		else
 		{
-			$senderOptions = $sendersOptions[$sender::getSenderCode()];
+			$sender = SenderPicker::getSenderByCode(key($sendersOptions));
+			$senderOptions = current($sendersOptions);
+		}
+
+		if (!$sender)
+		{
+			return (new Result())->addError(new Error('Sender has not been found'));
 		}
 
 		if (!$sender::canSendMessage())

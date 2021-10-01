@@ -21,6 +21,7 @@ BX.Tasks.Kanban.Item = function(options)
 	this.timer = null;
 
 	this.isSprintView = (options.isSprintView === 'Y');
+	this.networkEnabled = options.networkEnabled || false;
 	this.storyPoints = (this.data.storyPoints ? this.data.storyPoints : '');
 
 	this.calendarSettings = (options.calendarSettings ? options.calendarSettings : {});
@@ -453,7 +454,7 @@ BX.Tasks.Kanban.Item.prototype = {
 						id: 'user',
 						options: {
 							emailUsers: true,
-							networkUsers: true,
+							networkUsers: this.networkEnabled,
 							extranetUsers: true,
 							inviteGuestLink: true,
 							myEmailUsers: true

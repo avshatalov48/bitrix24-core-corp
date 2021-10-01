@@ -206,7 +206,10 @@ class CAllCrmCompany
 				),
 				'LEAD_ID' => array(
 					'TYPE' => 'crm_lead',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
+					'SETTINGS' => [
+						'parentEntityTypeId' => \CCrmOwnerType::Lead,
+					],
 				),
 				'ORIGINATOR_ID' => array(
 					'TYPE' => 'string'
@@ -1245,16 +1248,35 @@ class CAllCrmCompany
 			{
 				CCrmSearch::UpdateSearch(array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'), 'COMPANY', true);
 			}
+			$contactBindings = null;
 			if (isset($arFields['CONTACT_ID']) && is_array($arFields['CONTACT_ID']))
 			{
-					\Bitrix\Crm\Binding\ContactCompanyTable::bindContactIDs($arFields['ID'], $arFields['CONTACT_ID']);
-					if (isset($GLOBALS["USER"]))
-					{
-						if (!class_exists('CUserOptions'))
-							include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
+				$contactBindings = Crm\Binding\EntityBinding::prepareEntityBindings(\CCrmOwnerType::Contact, $arFields['CONTACT_ID']);
+				\Bitrix\Crm\Binding\ContactCompanyTable::bindContactIDs($arFields['ID'], $arFields['CONTACT_ID']);
+				if (isset($GLOBALS["USER"]))
+				{
+					if (!class_exists('CUserOptions'))
+						include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
 
-						CUserOptions::SetOption('crm', 'crm_contact_search', array('last_selected' => implode(',', $arFields['CONTACT_ID'])));
-					}
+					CUserOptions::SetOption('crm', 'crm_contact_search', array('last_selected' => implode(',', $arFields['CONTACT_ID'])));
+				}
+			}
+
+			if (!$isRestoration)
+			{
+				CCrmEntityHelper::registerAdditionalTimelineEvents([
+					'entityTypeId' => \CCrmOwnerType::Company,
+					'entityId' => $ID,
+					'fieldsInfo' => static::GetFieldsInfo(),
+					'previousFields' => [],
+					'currentFields' => $arFields,
+					'options' => $options,
+					'bindings' => [
+						'entityTypeId' => \CCrmOwnerType::Contact,
+						'previous' => [],
+						'current' => $contactBindings,
+					],
+				]);
 			}
 
 			//region Search content index
@@ -1861,16 +1883,20 @@ class CAllCrmCompany
 			}
 
 			$arFields['ID'] = $ID;
+			$originalContactBindings = ContactCompanyTable::getCompanyBindings($ID);
+			$contactBindings = null;
 			if (isset($arFields['CONTACT_ID']) && is_array($arFields['CONTACT_ID']))
 			{
 				$arFields['CONTACT_ID'] = array_filter($arFields['CONTACT_ID']);
+				$contactBindings = Crm\Binding\EntityBinding::prepareEntityBindings(\CCrmOwnerType::Contact, $arFields['CONTACT_ID']);
+
 				if (empty($arFields['CONTACT_ID']))
 				{
 					\Bitrix\Crm\Binding\ContactCompanyTable::unbindAllContacts($arFields['ID']);
 				}
 				else
 				{
-					$arCurrentContact = \Bitrix\Crm\Binding\ContactCompanyTable::getCompanyContactIDs($arFields['ID']);
+					$arCurrentContact = Crm\Binding\EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $originalContactBindings);
 					$arAdd = array_diff($arFields['CONTACT_ID'], $arCurrentContact);
 					$arDelete = array_diff($arCurrentContact, $arFields['CONTACT_ID']);
 
@@ -1886,6 +1912,20 @@ class CAllCrmCompany
 					}
 				}
 			}
+
+			CCrmEntityHelper::registerAdditionalTimelineEvents([
+				'entityTypeId' => \CCrmOwnerType::Company,
+				'entityId' => $ID,
+				'fieldsInfo' => static::GetFieldsInfo(),
+				'previousFields' => $arRow,
+				'currentFields' => $arFields,
+				'options' => $arOptions,
+				'bindings' => [
+					'entityTypeId' => \CCrmOwnerType::Contact,
+					'previous' => $originalContactBindings,
+					'current' => $contactBindings,
+				]
+			]);
 
 			//region Search content index
 			Bitrix\Crm\Search\SearchContentBuilderFactory::create(CCrmOwnerType::Company)

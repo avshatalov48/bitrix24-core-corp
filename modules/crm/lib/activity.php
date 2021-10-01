@@ -13,6 +13,22 @@ use Bitrix\Main\ORM\Fields\TextField;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class ActivityTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Activity_Query query()
+ * @method static EO_Activity_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Activity_Result getById($id)
+ * @method static EO_Activity_Result getList(array $parameters = array())
+ * @method static EO_Activity_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_Activity createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_Activity_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_Activity wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_Activity_Collection wakeUpCollection($rows)
+ */
 class ActivityTable extends Entity\DataManager
 {
 	/**
@@ -142,6 +158,9 @@ class ActivityTable extends Entity\DataManager
 			),
 			'DESCRIPTION' => array(
 				'data_type' => 'string',
+			),
+			'DESCRIPTION_TYPE' => array(
+				'data_type' => 'integer',
 			),
 			'COMPLETED' => array(
 				'data_type' => 'boolean',

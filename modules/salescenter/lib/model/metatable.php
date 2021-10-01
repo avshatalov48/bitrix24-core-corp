@@ -7,6 +7,22 @@ use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 
+/**
+ * Class MetaTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Meta_Query query()
+ * @method static EO_Meta_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Meta_Result getById($id)
+ * @method static EO_Meta_Result getList(array $parameters = array())
+ * @method static EO_Meta_Entity getEntity()
+ * @method static \Bitrix\SalesCenter\Model\Meta createObject($setDefaultValues = true)
+ * @method static \Bitrix\SalesCenter\Model\EO_Meta_Collection createCollection()
+ * @method static \Bitrix\SalesCenter\Model\Meta wakeUpObject($row)
+ * @method static \Bitrix\SalesCenter\Model\EO_Meta_Collection wakeUpCollection($rows)
+ */
 class MetaTable extends Main\ORM\Data\DataManager
 {
 	const HASH_LENGTH = 8;

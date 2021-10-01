@@ -62,6 +62,7 @@ DROP TABLE IF EXISTS b_crm_quote_contact;
 DROP TABLE IF EXISTS b_crm_entity_cfg;
 DROP TABLE IF EXISTS b_crm_ps_rq_conv_relation;
 DROP TABLE IF EXISTS b_crm_act_mail_meta;
+DROP TABLE IF EXISTS b_crm_act_mail_body;
 DROP TABLE IF EXISTS b_crm_deal_category;
 DROP TABLE IF EXISTS b_crm_webform;
 DROP TABLE IF EXISTS b_crm_webform_counter;

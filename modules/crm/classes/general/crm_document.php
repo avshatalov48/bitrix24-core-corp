@@ -699,26 +699,17 @@ class CCrmDocument
 		}
 		else if ($arFieldType['Type'] == 'UF:crm')
 		{
-				$arEntity = $arFieldType['Options'];
-				if (empty($arEntity))
-					$arEntity = array('LEAD' => 'Y', 'CONTACT' => 'Y', 'COMPANY' => 'Y', 'DEAL' => 'Y');
-				$result .= '<input type="checkbox" id="WFSFormOptionsXL" name="ENITTY[]" value="LEAD" '.($arEntity['LEAD'] == 'Y'? 'checked="checked"': '').'> '.GetMessage('CRM_DOCUMENT_CRM_ENTITY_TYPE_LEAD').' <br/>';
-				$result .= '<input type="checkbox" id="WFSFormOptionsXC"  name="ENITTY[]" value="CONTACT" '.($arEntity['CONTACT'] == 'Y'? 'checked="checked"': '').'> '.GetMessage('CRM_DOCUMENT_CRM_ENTITY_TYPE_CONTACT').'<br/>';
-				$result .= '<input type="checkbox" id="WFSFormOptionsXCO" name="ENITTY[]" value="COMPANY" '.($arEntity['COMPANY'] == 'Y'? 'checked="checked"': '').'> '.GetMessage('CRM_DOCUMENT_CRM_ENTITY_TYPE_COMPANY').'<br/>';
-				$result .= '<input type="checkbox" id="WFSFormOptionsXD"  name="ENITTY[]" value="DEAL" '.($arEntity['DEAL'] == 'Y'? 'checked="checked"': '').'> '.GetMessage('CRM_DOCUMENT_CRM_ENTITY_TYPE_DEAL').'<br/>';
-				$result .= '<input type="button" onclick="'.$jsFunctionName.'(WFSFormOptionsXCRM())" value="'.GetMessage('CRM_DOCUMENT_CRM_ENTITY_OK').'" />';
-				$result .= '<script>
-					function WFSFormOptionsXCRM()
-					{
-						var a = {};
-						a["LEAD"] = BX("WFSFormOptionsXL").checked ? "Y" : "N";
-						a["CONTACT"] = BX("WFSFormOptionsXC").checked ? "Y" : "N";
-						a["COMPANY"] = BX("WFSFormOptionsXCO").checked ? "Y" : "N";
-						a["DEAL"] = BX("WFSFormOptionsXD").checked ? "Y" : "N";
-						return a;
-					}
-				</script>';
-				$result .= '<!--__modifyOptionsPromt:'.GetMessage('CRM_DOCUMENT_CRM_ENTITY').'-->';
+			$settings = $arFieldType['Options'] ?? null;
+			if (empty($settings))
+			{
+				$settings = \Bitrix\Crm\Integration\BizProc\FieldType\Crm::getDefaultFieldSettings();
+			}
+			$settings['buttonLabel'] = GetMessage('CRM_DOCUMENT_CRM_ENTITY_OK');
+			$htmlPieces = \Bitrix\Crm\Integration\BizProc\FieldType\Crm::renderSettingsHtmlPieces($jsFunctionName, $settings);
+			$result .= $htmlPieces['inputs'];
+			$result .= $htmlPieces['button'];
+			$result .= "<script>\n" . $htmlPieces['collectSettingsFunction'] . "\n</script>";
+			$result .= '<!--__modifyOptionsPromt:'.GetMessage('CRM_DOCUMENT_CRM_ENTITY').'-->';
 		}
 		elseif ($arFieldType["Type"] == "select")
 		{
@@ -2555,10 +2546,16 @@ class CCrmDocument
 			$fieldName = "UF_CRM_{$fieldName}";
 		}
 
+		$userFieldEntityId = CCrmOwnerType::ResolveUserFieldEntityID(CCrmOwnerType::ResolveID($arDocumentID['TYPE']));
+		if ($userFieldEntityId === '')
+		{
+			$userFieldEntityId = 'CRM_' . $arDocumentID['TYPE'];
+		}
+
 		$arFieldsTmp = array(
 			'USER_TYPE_ID' => $userTypeID,
 			'FIELD_NAME' => $fieldName,
-			'ENTITY_ID' => 'CRM_'.$arDocumentID['TYPE'],
+			'ENTITY_ID' => $userFieldEntityId,
 			'SORT' => 150,
 			'MULTIPLE' => $arFields['multiple'] == 'Y' ? 'Y' : 'N',
 			'MANDATORY' => $arFields['required'] == 'Y' ? 'Y' : 'N',
@@ -2963,6 +2960,37 @@ class CCrmDocument
 				$workflowId,
 				$status
 			);
+		}
+
+		if (
+			$rootActivity->getDocumentEventType() === CBPDocumentEventType::Script
+			&& (
+				$status === CBPWorkflowStatus::Running
+				|| $status === CBPWorkflowStatus::Created
+			)
+		)
+		{
+			$clientCode = 'bizproc_script_' . ($status === CBPWorkflowStatus::Created ? 'start' : 'execution');
+			self::logScriptExecution($rootActivity->getWorkflowTemplateId(), $clientCode);
+		}
+	}
+
+	private static function logScriptExecution($tplId, $clientCode): void
+	{
+		if (
+			\Bitrix\Main\Loader::includeModule('rest')
+			&& method_exists(\Bitrix\Rest\UsageStatTable::class, 'logBizProc')
+		)
+		{
+			$row = \Bitrix\Bizproc\Script\Entity\ScriptTable::getList([
+				'filter' => ['=WORKFLOW_TEMPLATE_ID' => $tplId],
+				'select' => ['ORIGIN_ID'],
+			])->fetch();
+
+			if ($row['ORIGIN_ID'])
+			{
+				\Bitrix\Rest\UsageStatTable::logBizProc($row['ORIGIN_ID'], $clientCode);
+			}
 		}
 	}
 

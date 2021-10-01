@@ -7,6 +7,19 @@ use Bitrix\Main;
  * Class SourceExpensesTable
  *
  * @package Bitrix\Crm\Tracking\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_SourceExpenses_Query query()
+ * @method static EO_SourceExpenses_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_SourceExpenses_Result getById($id)
+ * @method static EO_SourceExpenses_Result getList(array $parameters = array())
+ * @method static EO_SourceExpenses_Entity getEntity()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_SourceExpenses createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_SourceExpenses_Collection createCollection()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_SourceExpenses wakeUpObject($row)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_SourceExpenses_Collection wakeUpCollection($rows)
  */
 class SourceExpensesTable extends Main\ORM\Data\DataManager
 {

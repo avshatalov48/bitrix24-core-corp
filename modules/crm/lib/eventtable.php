@@ -7,6 +7,22 @@ use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 
+/**
+ * Class EventTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Event_Query query()
+ * @method static EO_Event_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Event_Result getById($id)
+ * @method static EO_Event_Result getList(array $parameters = array())
+ * @method static EO_Event_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_Event createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_Event_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_Event wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_Event_Collection wakeUpCollection($rows)
+ */
 class EventTable extends DataManager
 {
 	public static function getTableName(): string

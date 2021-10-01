@@ -252,6 +252,11 @@ class CBPCrmChangeDealCategoryActivity
 				$text = GetMessage('CRM_CDCA_MOVE_ERROR_STAGE_NOT_FOUND');
 				break;
 			}
+			case Crm\Category\DealCategoryChangeError::RESTRICTION_APPLIED:
+			{
+				$text = Crm\Restriction\RestrictionManager::getWebFormResultsRestriction()->getErrorMessage();
+				break;
+			}
 
 			default:
 			{

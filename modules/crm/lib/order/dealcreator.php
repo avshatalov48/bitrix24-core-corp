@@ -121,7 +121,7 @@ class DealCreator
 				'QUANTITY' => $basketItem->getQuantity(),
 				'MEASURE_CODE' => $basketItem->getField('MEASURE_CODE'),
 				'MEASURE_NAME' => $basketItem->getField('MEASURE_NAME'),
-				'TAX_RATE' => $basketItem->getVatRate(),
+				'TAX_RATE' => $basketItem->getVatRate() * 100,
 				'DISCOUNT_SUM' => 0,
 				'TAX_INCLUDED' => $basketItem->isVatInPrice() ? 'Y' : 'N',
 				'SORT' => $sort,

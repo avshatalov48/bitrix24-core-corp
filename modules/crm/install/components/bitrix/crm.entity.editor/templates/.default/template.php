@@ -15,8 +15,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @var string $componentPath
  */
 
-use \Bitrix\Main;
-use \Bitrix\Crm;
+use Bitrix\Crm;
+use Bitrix\Main;
+
 Main\UI\Extension::load("ui.label");
 Main\UI\Extension::load("crm.entity-editor");
 Main\UI\Extension::load("crm.entity-editor.field.requisite");
@@ -211,6 +212,8 @@ if(!empty($htmlEditorConfigs))
 	BX.ready(
 		function()
 		{
+			BX.message(<?=\Bitrix\Main\Web\Json::encode(Crm\Service\Container::getInstance()->getLocalization()->loadMessages())?>);
+
 			BX.CrmEntityType.setCaptions(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetJavascriptDescriptions())?>);
 			BX.CrmEntityType.setNotFoundMessages(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetNotFoundMessages())?>);
 			<?php if (
@@ -832,7 +835,7 @@ if(!empty($htmlEditorConfigs))
 						showEmptyFields: <?=$arResult['SHOW_EMPTY_FIELDS'] ? 'true' : 'false'?>,
                         ajaxData: <?=CUtil::PhpToJSObject($arResult['COMPONENT_AJAX_DATA'])?>,
 						isEmbedded: <?=$arResult['IS_EMBEDDED'] ? 'true' : 'false'?>,
-						ufAccessRights: <?=CUtil::PhpToJSObject($arResult['USER_FIELD_ACCESS_RIGHTS'])?>
+						restrictions: <?=CUtil::PhpToJSObject($arResult['RESTRICTIONS'])?>
 					}
 				)
 			);

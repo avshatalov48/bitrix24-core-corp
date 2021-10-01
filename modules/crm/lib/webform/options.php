@@ -98,6 +98,7 @@ class Options
 		$formData = $this->form->get();
 		$config = $this->config->toArray();
 		$dynamicCategory = $formData['FORM_SETTINGS']['DYNAMIC_CATEGORY'] ?? null;
+		$dynamicDcEnabled = ($formData['FORM_SETTINGS']['DYNAMIC_DC_ENABLED'] ?? 'N') === 'Y';
 		return [
 			'data' => $config['data'],
 
@@ -125,6 +126,7 @@ class Options
 				],
 				'dynamic' => [
 					'category' => $dynamicCategory === null ? null : (int)$dynamicCategory,
+					'duplicatesEnabled' => $dynamicDcEnabled,
 				],
 			],
 
@@ -334,6 +336,7 @@ class Options
 
 			'FORM_SETTINGS' => [
 				'DYNAMIC_CATEGORY' => $options['document']['dynamic']['category'] ?? null,
+				'DYNAMIC_DC_ENABLED' => ($options['document']['dynamic']['duplicatesEnabled'] ?? false) ? 'Y' : 'N',
 				'DEAL_CATEGORY' => $options['document']['deal']['category'],
 				'DEAL_DC_ENABLED' => $options['document']['deal']['duplicatesEnabled'] ? 'Y' : 'N',
 				'REDIRECT_DELAY' => $options['result']['redirectDelay'],

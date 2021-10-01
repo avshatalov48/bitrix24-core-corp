@@ -71,6 +71,8 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 					continue;
 				}
 
+				$logoParams = \CFile::_GetImgParams($service['LOGOTIP']);
+
 				$flatServices[$service['ID']] = [
 					'id' => $service['ID'],
 					'name' => $service['NAME'],
@@ -80,10 +82,15 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 						: '',
 
 					'restrictions' => $this->makeServiceRestrictions($service['CODE']),
+					'tags' => Delivery\Services\Manager::getObjectById($service['ID'])->getTags(),
 					'code' => $isChild ? $service['CODE'] : $installedHandler->getCode(),
-					'logo' => $isChild
-						? \CFile::getPath($service['LOGOTIP'])
-						: $installedHandler->getWorkingImagePath(),
+					'logo' => $logoParams
+						? [
+							'src' => $logoParams['SRC'],
+							'width' => $logoParams['WIDTH'],
+							'height' => $logoParams['HEIGHT'],
+						]
+						: null,
 					'parentId' => (int)$service['PARENT_ID'],
 					'profiles' => [],
 				];
@@ -137,6 +144,8 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 					'PROPERTY_CODE' => 'lPROPERTY.CODE',
 					'PROPERTY_REQUIRED' => 'lPROPERTY.REQUIRED',
 					'PROPERTY_NAME' => 'lPROPERTY.NAME',
+					'PROPERTY_IS_ADDRESS_FROM' => 'lPROPERTY.IS_ADDRESS_FROM',
+					'PROPERTY_IS_ADDRESS_TO' => 'lPROPERTY.IS_ADDRESS_TO',
 				]
 			]
 		);
@@ -152,7 +161,9 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 					'id' => $relatedProperty['PROPERTY_ID'],
 					'code' => $relatedProperty['PROPERTY_CODE'],
 					'type' => $relatedProperty['PROPERTY_TYPE'],
-					'required' => ($relatedProperty['PROPERTY_REQUIRED'] == 'Y'),
+					'isAddressFrom' => $relatedProperty['PROPERTY_IS_ADDRESS_FROM'] === 'Y',
+					'isAddressTo' => $relatedProperty['PROPERTY_IS_ADDRESS_TO'] === 'Y',
+					'required' => $relatedProperty['PROPERTY_REQUIRED'] === 'Y',
 					'initValue' => $relatedProperty['PROPERTY_DEFAULT_VALUE'],
 					'settings' => empty($relatedProperty['PROPERTY_SETTINGS']) ? null : $relatedProperty['PROPERTY_SETTINGS'],
 					'name' => $relatedProperty['PROPERTY_NAME'],

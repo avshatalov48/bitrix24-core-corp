@@ -188,10 +188,11 @@ class EntityAuthorization
 			$factory = Container::getInstance()->getFactory($entityTypeID);
 			if ($factory)
 			{
+				$categoryId = $params['CATEGORY_ID'] ?? $factory->getItemCategoryId($entityID) ?? 0;
 				return Container::getInstance()->getUserPermissions()->checkReadPermissions(
 					$entityTypeID,
 					$entityID,
-					$factory->getItemCategoryId($entityID) ?? 0
+					$categoryId
 				);
 			}
 

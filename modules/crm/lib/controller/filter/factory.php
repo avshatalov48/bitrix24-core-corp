@@ -14,15 +14,17 @@ class Factory extends \Bitrix\Main\Engine\ActionFilter\Base
 	{
 		$entityTypeId = $this->getAction()->getController()->getRequest()->get('entityTypeId') ?? 0;
 		$factory = Container::getInstance()->getFactory($entityTypeId);
-		if (!$factory)
+		if ($factory)
+		{
+			$this->getAction()->getController()->setFactory($factory);
+		}
+		else
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND'),
 				\Bitrix\Crm\Controller\Base::ERROR_CODE_NOT_FOUND)
 			);
 		}
-
-		$this->getAction()->getController()->setFactory($factory);
 
 		return new EventResult(
 			$this->errorCollection->isEmpty() ? EventResult::SUCCESS : EventResult::ERROR,

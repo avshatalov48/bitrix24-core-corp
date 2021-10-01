@@ -644,7 +644,7 @@ BX.Tasks.QuickForm.UserSelector.prototype.initDialog = function()
 				id: 'user',
 				options: {
 					emailUsers: true,
-					networkUsers: true,
+					networkUsers: this.form.parameters.networkEnabled,
 					extranetUsers: true,
 					inviteGuestLink: true,
 					myEmailUsers: true

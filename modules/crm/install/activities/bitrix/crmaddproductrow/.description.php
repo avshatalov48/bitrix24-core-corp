@@ -13,8 +13,8 @@ $arActivityDescription = [
 	'JSCLASS' => 'BizProcActivity',
 	'CATEGORY' => [
 		'ID' => 'document',
-		"OWN_ID" => 'crm',
-		"OWN_NAME" => 'CRM',
+		'OWN_ID' => 'crm',
+		'OWN_NAME' => 'CRM',
 	],
 	'FILTER' => [
 		'INCLUDE' => [

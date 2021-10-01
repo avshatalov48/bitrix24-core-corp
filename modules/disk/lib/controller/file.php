@@ -391,6 +391,13 @@ class File extends BaseObject
 			return null;
 		}
 
+		if (!Disk\Sharing::hasRightToKnowAboutEntity($currentUserId, $entity))
+		{
+			$this->addError(new Error("Could not share to entity {$entity}."));
+
+			return null;
+		}
+
 		$sharing = Disk\Sharing::add(
 			[
 				'FROM_ENTITY' => Disk\Sharing::CODE_USER . $currentUserId,

@@ -1,0 +1,5 @@
+<?php
+$MESS["DISK_DELETION_MANAGER_NOTIFY_ABOUT_DELETION_FILE_F"] = "Deleted file #NAME# to the Recycle Bin.";
+$MESS["DISK_DELETION_MANAGER_NOTIFY_ABOUT_DELETION_FILE_M"] = "Deleted file #NAME# to the Recycle Bin.";
+$MESS["DISK_DELETION_MANAGER_NOTIFY_ABOUT_DELETION_FOLDER_F"] = "Deleted folder #NAME# to the Recycle Bin.";
+$MESS["DISK_DELETION_MANAGER_NOTIFY_ABOUT_DELETION_FOLDER_M"] = "Deleted folder #NAME# to the Recycle Bin.";

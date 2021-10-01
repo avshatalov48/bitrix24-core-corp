@@ -11,9 +11,15 @@ class TasksWidgetButtonsComponent extends TasksBaseComponent
 {
 	protected function checkParameters()
 	{
-		$this->tryParseArrayParameter($this->arParams['SCHEME'], array());
+		static::tryParseArrayParameter($this->arParams['SCHEME'], []);
+		static::tryParseBooleanParameter($this->arParams['IS_SCRUM_TASK']);
 
-		$this->tryParseBooleanParameter($this->arParams['IS_SCRUM_TASK']);
+		$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter(
+			$this->arParams['TASK_LIMIT_EXCEEDED']
+		);
+		$this->arResult['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter(
+			$this->arParams['TEMPLATE_SUBTASK_LIMIT_EXCEEDED']
+		);
 
 		$buttons = array();
 		$groups = array();
@@ -61,12 +67,6 @@ class TasksWidgetButtonsComponent extends TasksBaseComponent
 
 		$this->arResult['BUTTONS'] = $buttons;
 		$this->arResult['GROUPS'] = $groups;
-
-		$taskLimitExceeded = $this->arParams['TASK_LIMIT_EXCEEDED'];
-		if ($taskLimitExceeded)
-		{
-			$this->arResult['TASK_LIMIT_EXCEEDED'] = true;
-		}
 
 		return $this->errors->checkNoFatals();
 	}

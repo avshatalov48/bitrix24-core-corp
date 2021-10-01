@@ -1,8 +1,16 @@
 <?php
+
 namespace Bitrix\Crm\Restriction;
+
 use Bitrix\Main;
+use Bitrix\Main\Loader;
 use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Main\Type\Date;
+use Bitrix\Crm\Activity\Provider\Visit;
+use Bitrix\Crm\Service\Container;
+
 
 class RestrictionManager
 {
@@ -59,34 +67,50 @@ class RestrictionManager
 	private static $leadsRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $quotesRestriction;
+	/** @var OrderRestriction|null  */
+	private static $orderRestriction;
+	/** @var Bitrix24AccessRestriction  */
+	private static $observersRestriction;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $contactExportRestriction;
+	/** @var IntegrationShopRestriction  */
+	private static $integrationShopRestriction;
+	/** @var Bitrix24AccessRestriction */
+	private static $chatInDetailsRestriction;
+	/** @var Bitrix24AccessRestriction */
+	private static $visitRestriction;
+	/** @var WebFormResultsRestriction  */
+	private static $webFormResultsRestriction;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $invoicesRestriction;
 
 	/**
-	* @return SqlRestriction
-	*/
+	 * @return SqlRestriction
+	 */
 	public static function getSqlRestriction()
 	{
 		self::initialize();
 		return self::$sqlRestriction;
 	}
 	/**
-	* @return AccessRestriction
-	*/
+	 * @return AccessRestriction
+	 */
 	public static function getConversionRestriction()
 	{
 		self::initialize();
 		return self::$conversionRestriction;
 	}
 	/**
-	* @return AccessRestriction
-	*/
+	 * @return AccessRestriction
+	 */
 	public static function getDuplicateControlRestriction()
 	{
 		self::initialize();
 		return self::$dupControlRestriction;
 	}
 	/**
-	* @return AccessRestriction
-	*/
+	 * @return AccessRestriction
+	 */
 	public static function getHistoryViewRestriction()
 	{
 		self::initialize();
@@ -274,8 +298,8 @@ class RestrictionManager
 	}
 
 	/**
-	* @return void
-	*/
+	 * @return void
+	 */
 	public static function reset()
 	{
 		self::initialize();
@@ -329,22 +353,22 @@ class RestrictionManager
 		self::$isInitialized = false;
 	}
 	/**
-	* @return bool
-	*/
+	 * @return bool
+	 */
 	public static function isConversionPermitted()
 	{
 		return self::getConversionRestriction()->hasPermission();
 	}
 	/**
-	* @return bool
-	*/
+	 * @return bool
+	 */
 	public static function isDuplicateControlPermitted()
 	{
 		return self::getDuplicateControlRestriction()->hasPermission();
 	}
 	/**
-	* @return bool
-	*/
+	 * @return bool
+	 */
 	public static function isHistoryViewPermitted()
 	{
 		return self::getHistoryViewRestriction()->hasPermission();
@@ -766,7 +790,7 @@ class RestrictionManager
 				'crm_leads',
 				false,
 				null,
-				['ID' => 'limit_crm_leads']
+				['ID' => 'limit_crm_lead_unlimited']
 			);
 			if(!self::$leadsRestriction->load())
 			{
@@ -787,7 +811,7 @@ class RestrictionManager
 				'crm_quotes',
 				false,
 				null,
-				['ID' => 'limit_crm_quotes']
+				['ID' => 'limit_crm_commercial_offers']
 			);
 			if(!self::$quotesRestriction->load())
 			{
@@ -800,4 +824,354 @@ class RestrictionManager
 		return self::$quotesRestriction;
 	}
 
+	public static function getOrderRestriction(): OrderRestriction
+	{
+		if (self::$orderRestriction === null)
+		{
+			self::$orderRestriction = new OrderRestriction(
+				'shop_orders',
+				false,
+				null
+			);
+		}
+
+		return self::$orderRestriction;
+	}
+
+	public static function getObserversRestriction(): Bitrix24AccessRestriction
+	{
+		if (self::$observersRestriction === null)
+		{
+			self::$observersRestriction = new Bitrix24AccessRestriction(
+				'crm_observers_card_deal',
+				false,
+				null,
+				['ID' => 'limit_crm_observers_card_deal']
+			);
+			if(!self::$observersRestriction->load())
+			{
+				self::$observersRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_observers_card_deal')
+				);
+			}
+		}
+
+		return self::$observersRestriction;
+	}
+
+	public static function getContactExportRestriction(): Bitrix24AccessRestriction
+	{
+		if (!static::$contactExportRestriction)
+		{
+			static::$contactExportRestriction = new Bitrix24AccessRestriction(
+				'crm_contacts',
+				false,
+				null,
+				['ID' => 'limit_crm_free_export_contacts']
+			);
+			if(!static::$contactExportRestriction->load())
+			{
+				static::$contactExportRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_contacts_export')
+				);
+			}
+		}
+
+		return static::$contactExportRestriction;
+	}
+
+	public static function getIntegrationShopRestriction(): IntegrationShopRestriction
+	{
+		if (!static::$integrationShopRestriction)
+		{
+			static::$integrationShopRestriction = new IntegrationShopRestriction();
+		}
+
+		return static::$integrationShopRestriction;
+	}
+
+	public static function getUserFieldAddRestriction(): UserFieldAddRestriction
+	{
+		static $restriction;
+		if (!$restriction)
+		{
+			$restriction = new UserFieldAddRestriction();
+		}
+
+		return $restriction;
+	}
+
+	public static function getResourceBookingRestriction(): Bitrix24AccessRestriction
+	{
+		static $restriction;
+
+		if (!$restriction)
+		{
+			$restriction = new Bitrix24AccessRestriction(
+				'calendar_resourcebooking_limit',
+				false,
+				null,
+				['ID' => 'limit_crm_booking']
+			);
+			if(!$restriction->load())
+			{
+				$permitted = true;
+				if (Loader::includeModule('calendar'))
+				{
+					$limit = \Bitrix\Calendar\UserField\ResourceBooking::getBitrx24Limitation();
+					$permitted = ($limit !== 0); // Creating resourcebooking is restricted only if $limit = 0
+				}
+				$restriction->permit($permitted);
+			}
+		}
+
+		return $restriction;
+	}
+
+	public static function getChatInDetailsRestriction(): Bitrix24AccessRestriction
+	{
+		if (is_null(static::$chatInDetailsRestriction))
+		{
+			static::$chatInDetailsRestriction = new Bitrix24AccessRestriction(
+				'crm_chat_in_details_card',
+				false,
+				null,
+				[
+					'ID' => 'limit_crm_chat_card_crm',
+				],
+			);
+
+			if (!static::$chatInDetailsRestriction->load())
+			{
+				static::$chatInDetailsRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_chat_in_details_card')
+				);
+			}
+		}
+
+		return static::$chatInDetailsRestriction;
+	}
+
+	public static function getVisitRestriction(): Bitrix24AccessRestriction
+	{
+		if (is_null(static::$visitRestriction))
+		{
+			static::$visitRestriction = new Bitrix24AccessRestriction(
+				'crm_visit_tracker',
+				false,
+				null,
+				[
+					// intentional typo 'vizit treker'. We were provided with this exact code and can not change it
+					'ID' => 'limit_crm_vizit_treker',
+				],
+			);
+
+			if (!static::$visitRestriction->load())
+			{
+				static::$visitRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_visit_tracker')
+				);
+			}
+		}
+
+		return static::$visitRestriction;
+	}
+
+	public static function getActivityRestriction(
+		int $activityTypeId,
+		string $providerTypeId = ''
+	): Bitrix24AccessRestriction
+	{
+		if ($activityTypeId === \CCrmActivityType::Provider)
+		{
+			if (empty($providerTypeId))
+			{
+				throw new Main\ArgumentException(
+					'providerTypeId is required if activityTypeId is \CCrmActivityType::Provider',
+					'providerTypeId',
+				);
+			}
+
+			if ($providerTypeId === Visit::PROVIDER_ID)
+			{
+				return static::getVisitRestriction();
+			}
+		}
+
+		return new Bitrix24AccessRestriction('', true);
+	}
+	public static function getItemDetailPageRestriction(int $entityTypeId, int $entityId = 0): Bitrix24AccessRestriction
+	{
+		if ($entityTypeId === \CCrmOwnerType::Lead)
+		{
+			return static::getLeadsRestriction();
+		}
+		if ($entityTypeId === \CCrmOwnerType::Quote)
+		{
+			return static::getQuotesRestriction();
+		}
+		if ($entityId > 0 && $entityTypeId === \CCrmOwnerType::Order)
+		{
+			$orderRestriction = static::getOrderRestriction();
+
+			if ($orderRestriction->isItemRestricted(new ItemIdentifier($entityTypeId, $entityId)))
+			{
+				return $orderRestriction;
+			}
+		}
+		if (
+			$entityId > 0
+			&& (
+				$entityTypeId === \CCrmOwnerType::Deal
+				|| \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
+			)
+		)
+		{
+			if ($entityTypeId === \CCrmOwnerType::Deal)
+			{
+				$orderRestriction = static::getOrderRestriction();
+
+				if ($orderRestriction->isItemRestricted(new ItemIdentifier($entityTypeId, $entityId)))
+				{
+					return $orderRestriction;
+				}
+			}
+
+			$webFormRestriction = static::getWebFormResultsRestriction();
+
+			if ($webFormRestriction->isItemRestricted(new ItemIdentifier($entityTypeId, $entityId)))
+			{
+				return new Bitrix24AccessRestriction(
+					$webFormRestriction->getName(),
+					false,
+					null,
+					[
+						'ID' => WebFormResultsRestriction::SLIDER_ID,
+					]
+				);
+			}
+		}
+
+		return new Bitrix24AccessRestriction('', true);
+	}
+
+	public static function getUpdateOperationRestriction(ItemIdentifier $identifier): Bitrix24AccessRestriction
+	{
+		$entityTypeId = $identifier->getEntityTypeId();
+		if (!static::isWebFormResultsRestrictionCanBeAppliedTo($entityTypeId))
+		{
+			return new Bitrix24AccessRestriction('', true);
+		}
+		$webForResultsRestriction = static::getWebFormResultsRestriction();
+		if ($webForResultsRestriction->isItemRestricted($identifier))
+		{
+			$restriction = new Bitrix24AccessRestriction(
+				$webForResultsRestriction->getName(),
+				false,
+				null,
+				[
+					'ID' => WebFormResultsRestriction::SLIDER_ID,
+				]
+			);
+			Container::getInstance()->getLocalization()->loadMessages();
+			$restriction->setErrorMessage(Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR'));
+
+			return $restriction;
+		}
+
+		return new Bitrix24AccessRestriction('', true);
+	}
+
+	public static function isWebFormResultsRestrictionCanBeAppliedTo(int $entityTypeId): bool
+	{
+		return ($entityTypeId === \CCrmOwnerType::Deal || \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId));
+	}
+
+	/**
+	 * Returns object that represents restriction to items created by crm forms above limit
+	 *
+	 * @return WebFormResultsRestriction
+	 */
+	public static function getWebFormResultsRestriction(): WebFormResultsRestriction
+	{
+		if (!static::$webFormResultsRestriction)
+		{
+			static::$webFormResultsRestriction = new WebFormResultsRestriction(
+				'crm_form_results_count',
+				false,
+				null,
+				[
+					'ID' => WebFormResultsRestriction::SLIDER_ID,
+				]
+			);
+			if(!static::$webFormResultsRestriction->load())
+			{
+				$resultsLimit = Bitrix24Manager::getVariable('crm_form_results_count');
+				$startDateVariable = Bitrix24Manager::getVariable('crm_form_results_start_date');
+				if ($resultsLimit > 0 && !empty($startDateVariable))
+				{
+					$defaultStartDate = '2021-09-01';
+					try
+					{
+						$startDate = new Date($startDateVariable, 'Y-m-d');
+					}
+					catch (Main\ObjectException $e)
+					{
+						$startDate = new Date($defaultStartDate, 'Y-m-d');
+					}
+
+					static::$webFormResultsRestriction->setResultsLimit($resultsLimit, $startDate);
+				}
+				else
+				{
+					static::$webFormResultsRestriction->permit(true);
+				}
+			}
+		}
+
+		return static::$webFormResultsRestriction;
+	}
+	public static function getInvoicesRestriction(): Bitrix24AccessRestriction
+	{
+		if (self::$invoicesRestriction === null)
+		{
+			self::$invoicesRestriction = new Bitrix24AccessRestriction(
+				'crm_invoices',
+				false,
+				null,
+				['ID' => 'limit_crm_free_invoices']
+			);
+			if(!self::$invoicesRestriction->load())
+			{
+				self::$invoicesRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_invoices')
+				);
+			}
+		}
+		return self::$invoicesRestriction;
+	}
+
+	public static function getReportRestriction(): Bitrix24AccessRestriction
+	{
+		static $restriction;
+
+		if (!$restriction)
+		{
+			$restriction = new Bitrix24AccessRestriction(
+				'crm_report',
+				false,
+				null,
+				['ID' => 'limit_crm_tasks_constructor_reports']
+			);
+			if(!$restriction->load())
+			{
+				$restriction->permit(
+					Bitrix24Manager::isFeatureEnabled('report')
+					&& Bitrix24Manager::isFeatureEnabled('crm_report')
+				);
+			}
+		}
+
+		return $restriction;
+	}
 }

@@ -286,6 +286,7 @@ else
 	if(\Bitrix\Main\Loader::includeModule('bitrix24'))
 	{
 		$data["restricted"] = \Bitrix\Bitrix24\Limits\User::isUserRestricted($USER->getId());
+		$data["blocked"] = \Bitrix\Bitrix24\LicenseScanner\Manager::getInstance()->shouldLockPortal();
 	}
 
 	$needAppPass = \Bitrix\Main\Context::getCurrent()->getServer()->get("HTTP_BX_APP_PASS");

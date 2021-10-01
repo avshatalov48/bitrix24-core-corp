@@ -11,9 +11,9 @@ return [
 		'main.core.events',
 		'currency',
 		'ui.notification',
+		'pull.client',
 		'ui.vue',
 		'main.core',
-		'pull.client',
 	],
 	'skip_core' => false,
 ];

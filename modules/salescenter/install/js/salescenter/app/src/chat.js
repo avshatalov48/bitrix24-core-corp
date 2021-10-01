@@ -4,6 +4,7 @@ import {Manager} from 'salescenter.manager';
 import {Loader} from 'main.loader';
 import {Type, Uri} from 'main.core';
 import {MixinTemplatesType} from './components/templates-type-mixin';
+import StageBlocksList from './components/chat-receiving-payment/stage-blocks-list';
 import ComponentMixin from './component-mixin';
 import Product from './product';
 import Start from './start';
@@ -44,6 +45,7 @@ export default {
 			'product': Product,
 			'start': Start,
 			'no-payment-systems-banner': NoPaymentSystemsBanner,
+			'chat-receiving-payment': StageBlocksList,
 		},
 	updated()
 	{
@@ -125,7 +127,11 @@ export default {
 			{
 				this.isShowPayment = false;
 				this.isShowPreview = true;
-				if(this.pages && this.pages.length > 0)
+				if (this.$root.$app.isPaymentCreationAvailable)
+				{
+					this.showPaymentForm();
+				}
+				else if(this.pages && this.pages.length > 0)
 				{
 					let firstWebformPage = false;
 					let pageToOpen = false;
@@ -330,7 +336,7 @@ export default {
 				this.isShowPreview = false;
 				if(this.isOrderPublicUrlAvailable)
 				{
-					this.setPageTitle(this.localize.SALESCENTER_LEFT_PAYMENT_ADD_2);
+					this.setPageTitle(this.localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY);
 				}
 				else
 				{
@@ -459,14 +465,7 @@ export default {
 			{
 				this.$root.$app.fillPages().then(() =>
 				{
-					if(!this.isShowPayment)
-					{
-						this.openFirstPage();
-					}
-					else
-					{
-						this.showPaymentForm();
-					}
+					this.openFirstPage();
 				});
 			},
 			startFrameCheckTimeout()
@@ -747,10 +746,15 @@ export default {
 		<div
 			:class="wrapperClass"
 			:style="wrapperStyle"
-			class="salescenter-app-wrapper"
+			class="salescenter-app-wrapper salescenter-app-chat-wrapper"
 		>
 			<div class="ui-sidepanel-sidebar salescenter-app-sidebar" ref="sidebar">
 				<ul class="ui-sidepanel-menu" ref="sidepanelMenu">
+					<li v-if="this.$root.$app.isPaymentCreationAvailable" :class="{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}" class="ui-sidepanel-menu-item" @click="showPaymentForm">
+						<a class="ui-sidepanel-menu-link">
+							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY}}</div>
+						</a>
+					</li>
 					<li :class="{'salescenter-app-sidebar-menu-active': isPagesOpen}" class="ui-sidepanel-menu-item">
 						<a class="ui-sidepanel-menu-link" @click.stop.prevent="isPagesOpen = !isPagesOpen;">
 							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAGES}}</div>
@@ -773,11 +777,6 @@ export default {
 								<span class="salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add">+</span><span class="salescenter-app-helper-nav-item-text">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>
 							</li>
 						</ul>
-					</li>
-					<li v-if="this.$root.$app.isPaymentCreationAvailable" :class="{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}" class="ui-sidepanel-menu-item" @click="showPaymentForm">
-						<a class="ui-sidepanel-menu-link">
-							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAYMENT_ADD_2}}</div>
-						</a>
 					</li>
 					<li v-if="this.$root.$app.isWithOrdersMode" @click="showOrdersList">
 						<a class="ui-sidepanel-menu-link">
@@ -860,12 +859,11 @@ export default {
 			        <div ref="paymentsLimit" v-show="isShowPayment && !isShowStartInfo"></div>
 				</template>
 				<template v-else>
-					<product v-if="isShowPayment && !isShowStartInfo" :key="order.basketVersion">
-						<template v-if="isNoPaymentSystemsBannerVisible" v-slot:footer>
-							<no-payment-systems-banner @on-hide="hideNoPaymentSystemsBanner">
-							</no-payment-systems-banner>
-						</template>
-					</product>
+					<chat-receiving-payment
+						v-if="isShowPayment && !isShowStartInfo"
+						:key="order.basketVersion"
+						@stage-block-send-on-send="send($event)"
+					/>
 		        </template>
 			</div>
 			<div class="ui-button-panel-wrapper salescenter-button-panel" ref="buttonsPanel">

@@ -5,28 +5,12 @@ use Bitrix\Main;
 
 class CallTrackerController extends EntityController
 {
-	/** @var CallTrackerController|null */
-	private static $instance = null;
-
-	private function __construct()
+	protected function __construct()
 	{
 	}
 
-	private function __clone()
+	protected function __clone()
 	{
-	}
-
-	/**
-	 * @return CallTrackerController
-	 */
-	public static function getInstance(): ?CallTrackerController
-	{
-		if (self::$instance === null)
-		{
-			self::$instance = new static();
-		}
-
-		return self::$instance;
 	}
 
 	public function onCreate($ownerId, array $params): void

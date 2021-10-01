@@ -1,6 +1,8 @@
 <?php
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 $this->IncludeLangFile("edit.php");
+use \Bitrix\Main;
+use \Bitrix\Main\Localization\Loc;
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -12,7 +14,8 @@ $this->IncludeLangFile("edit.php");
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var \Bitrix\Disk\Internals\BaseComponent $component */
-\Bitrix\Main\UI\Extension::load([
+
+Main\UI\Extension::load([
 	'file_dialog',
 	'ajax',
 	'dd',
@@ -24,191 +27,200 @@ $this->IncludeLangFile("edit.php");
 	'ui.viewer',
 	'disk.document',
 	'disk.viewer.actions',
+	'ui.progressround',
+	'ui.icons',
+	'ui.ears',
+	'popup',
+	'ui.draganddrop.draggable',
 ]);
-
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/disk/css/legacy_uf_common.css');
-
-$addClass = ((mb_strpos($_SERVER['HTTP_USER_AGENT'], 'Mac OS') !== false) ? 'diskuf-filemacos' : '');
-$mess = GetMessage('WD_FILE_LOADING');
-$thumb = <<<HTML
-<td class="files-name">
-	<span class="files-text">
-		<span class="f-wrap">
-			#name#
-			<span class="wd-files-icon feed-file-icon-#ext#"></span>
-		</span>
-	</span>
-</td>
-<td class="files-size">#size#</td>
-<td class="files-storage">
-	<span>{$mess}</span>
-	<span class="feed-add-post-loading-wrap">
-		<span class="feed-add-post-loading">
-			<span class="feed-add-post-loading-cancel del-but" id="wdu#id#TerminateButton"></span>
-		</span>
-		<span class="feed-add-post-load-indicator" id="wdu#id#Progressbar" style="width:5%;">
-			<span class="feed-add-post-load-number" id="wdu#id#ProgressbarText">5%</span>
-		</span>
-	</span>
-</td>
-HTML;
-
-$uploadedFile = <<<HTML
-<td class="files-name">
-	<span class="files-text">
-		<input type="text" value="#label#" class="files-name-edit-inp">
-		<span class="f-wrap">#name#</span>
-		<span class="wd-files-icon files-preview-wrap" style="display: none;">
-			<span class="files-preview-border">
-				<span class="files-preview-alignment">
-					<img class="files-preview" src="#preview_url#" data-bx-width="#width#" data-bx-height="#height#" data-bx-src="#preview_url#" onload="BX.onCustomEvent('onDiskPreviewIsReady', [this, BX('disk-edit-attach#id#')]);" onerror="this.parentNode.removeChild(this);" />
-				</span>
-			</span>
-		</span><span class="wd-files-icon feed-file-icon-#ext#"></span>
-		<span class="files-name-edit-btn"></span>
-	</span>
-	<span class="files-notification">#notification#</span>
-</td>
-<td class="files-size">#size#</td>
-<td class="files-storage">
-	<div class="files-storage-block">
-		<a style="display: none" class="files-path" href="javascript:void(0);">#storage#</a>
-		<span class="files-placement">#storage#</span>
-		<input id="diskuf-doc#id#" type="hidden" name="#control_name#" value="#id#" />
-	</div>
-</td>
-HTML;
-$thumb = preg_replace("/[\n\t]+/", "", $thumb);
-$uploadedFile =  preg_replace("/[\n\t]+/", "", $uploadedFile);
-
+Main\Page\Asset::getInstance()->addCss('/bitrix/js/disk/css/legacy_uf_common.css');
+//Main\Page\Asset::getInstance()->addJs($templateFolder.'/edit.js');
 $hideSelectDialog = isset($arParams['PARAMS']['HIDE_SELECT_DIALOG']) ?
 	$arParams['PARAMS']['HIDE_SELECT_DIALOG'] == 'Y' : false;
-$hideCheckboxAllowEdit = isset($arParams['PARAMS']['HIDE_CHECKBOX_ALLOW_EDIT']) ?
-	$arParams['PARAMS']['HIDE_CHECKBOX_ALLOW_EDIT'] == 'Y' : false;
-if($hideSelectDialog)
-{
-	$show = '';
-}
-else
-{
-	$show = 'show';
-}
-include_once(str_replace(array("\\", "//"), "/", __DIR__."/functions.php"));
-if(empty($arResult['FILES']) || $hideSelectDialog):?>
-	<a href="javascript:void(0);" id="diskuf-selectdialogswitcher-<?=$arResult['UID']?>"
-	   class="diskuf-selectdialog-switcher" onclick="BX.onCustomEvent(this.parentNode, 'DiskLoadFormController', ['<?=$show?>']);
-	   return false;"><span><?=GetMessage("WDUF_UPLOAD_DOCUMENT")?></span></a>
-<?endif?>
-<div id="diskuf-selectdialog-<?=$arResult['UID']?>" class="diskuf-files-entity diskuf-selectdialog bx-disk" <?if(empty($arResult['FILES']) || $hideSelectDialog){?> style="display:none;"<?}?>>
-	<div class="diskuf-files-block"<?if(!empty($arResult['FILES'])){?> style="display:block;"<?}?>>
-		<div class="diskuf-label">
-			<?=GetMessage("WDUF_ATTACHMENTS")?>
-			<span class="diskuf-label-icon"></span>
-		</div>
-		<div class="diskuf-placeholder">
-			<table cellspacing="0" class="files-list">
-				<tbody class="diskuf-placeholder-tbody">
-<?
-foreach ($arResult['FILES'] as $file)
-{
-	if (array_key_exists("IMAGE", $file))
-	{
-		CFile::ScaleImage(
-			$file["IMAGE"]["WIDTH"],
-			$file["IMAGE"]["HEIGHT"],
-			\Bitrix\Disk\Uf\Controller::$previewParams,
-			BX_RESIZE_IMAGE_PROPORTIONAL,
-			$bNeedCreatePicture,
-			$arSourceSize,
-			$arDestinationSize
-		);
-		$file["width"] = $arDestinationSize["width"];
-		$file["height"] = $arDestinationSize["height"];
-	}
-	else
-	{
-		$file["preview_url"] = "data:image/png;base64,";
-	}
-?>
-				<tr class="wd-inline-file" id="disk-edit-attach<?=$file['ID']?>" bx-attach-file-id="<?=\Bitrix\Disk\Uf\FileUserType::NEW_FILE_PREFIX?><?=$file['FILE_ID']?>"<?
-					if($file['XML_ID']): ?> bx-attach-xml-id="<?=$file['XML_ID']?>"<?endif;
-					if($file['TYPE_FILE']): ?> bx-attach-file-type="<?=$file['TYPE_FILE'];?>"<?endif;?>><?
-					$f = str_replace(array("#control_name#", "#CONTROL_NAME#", '<span class="files-name-edit-btn"></span>'), array($arResult['controlName'], $arResult['controlName'], ''), $uploadedFile);
-					foreach ($file as $k => $v)
-					{
-						if(is_array($v))
-						{
-							continue;
-						}
-						if($k == 'EXTENSION')
-						{
-							$k = 'ext';
-						}
 
-						$f = str_replace(array("#".mb_strtoupper($k)."#", "#".mb_strtolower($k)."#"), htmlspecialcharsbx($v), $f);
-					}
-					?><?=$f?>
-				</tr>
-<?
-}  // foreach
+if (empty($arResult['FILES']) || $hideSelectDialog)
+{
+	?>
+	<a href="javascript:void(0);" id="diskuf-selectdialog-<?=$arResult['UID']?>-switcher" class="diskuf-selectdialog-switcher" onclick="BX.onCustomEvent(this.parentNode, 'DiskLoadFormController', ['show']); return false;">
+		<span><?=GetMessage("WDUF_UPLOAD_DOCUMENT")?></span>
+	</a><?php
+}
 ?>
-			</tbody>
-		</table>
-		<? if(!empty($arResult['DISK_ATTACHED_OBJECT_ALLOW_EDIT']) && !$hideCheckboxAllowEdit) { ?>
-		<div class="feed-add-post-files-activity">
-			<div class="feed-add-post-files-activity-item">
-				<input name="<?= $arResult['INPUT_NAME_OBJECT_ALLOW_EDIT'] ?>" <?= (empty($arResult['SHARE_EDIT_ON_OBJECT_UF'])? '' : 'checked="checked"') ?> value="1" type="checkbox" id="diskuf-edit-rigths-doc" class="feed-add-post-files-activity-checkbox"><label class="feed-add-post-files-activity-label" for="diskuf-edit-rigths-doc"><?= GetMessage('WDUF_FILE_EDIT_BY_DESTINATION_USERS'); ?></label>
+<div id="diskuf-selectdialog-<?=$arResult['UID']?>" class="disk-file-control" style="display: none;">
+	<input type="hidden" name="<?=htmlspecialcharsbx($arResult['controlName'])?>" value="">
+	<div class="disk-file-thumb-box" data-bx-role="placeholder"><?$files = array_map(function($file) use ($arResult) {
+			?><input name="<?= CUtil::JSEscape($arResult['controlName'])?>" data-bx-role="reserve-item" type="hidden" value="<?=$file["ID"]?>" /><?
+			return $file;
+		}, $arResult['FILES']);?></div>
+	<div class="disk-file-control-panel" data-bx-role="control-panel">
+		<div class="disk-file-control-panel-file-wrap" data-bx-role="control-panel-main-actions">
+			<input type="file" name="<?=htmlspecialcharsbx($arResult['controlName'])?>" <?=($arParams['arUserField']['MULTIPLE'] == 'Y' ? " multiple='multiple'" : "")?> id="diskuf-input-<?=$arResult['UID']?>" style="display: none;">
+			<label for="diskuf-input-<?=$arResult['UID']?>" class="disk-file-control-panel-card-box disk-file-control-panel-card-file">
+				<div class="disk-file-control-panel-card disk-file-control-panel-card-icon--upload">
+					<div class="disk-file-control-panel-card-content">
+						<div class="disk-file-control-panel-card-icon"></div>
+						<div class="disk-file-control-panel-card-btn"></div>
+						<div class="disk-file-control-panel-card-name"><?=Loc::getMessage('WDUF_UPLOAD')?></div>
+					</div>
+				</div>
+			</label>
+			<div class="disk-file-control-panel-card-box disk-file-control-panel-card-file" data-bx-role="file-local-controller">
+				<div class="disk-file-control-panel-card disk-file-control-panel-card-icon--b24">
+					<div class="disk-file-control-panel-card-content">
+						<div class="disk-file-control-panel-card-icon"></div>
+						<div class="disk-file-control-panel-card-btn"></div>
+						<div class="disk-file-control-panel-card-name"><?=Loc::getMessage('WDUF_MY_DISK')?></div>
+					</div>
+				</div>
+			</div>
+			<div class="disk-file-control-panel-card-divider"></div>
+			<?php
+$handlersManager = \Bitrix\Disk\Driver::getInstance()->getDocumentHandlersManager();
+if (array_filter($handlersManager->getHandlersForImport(), function($handler){
+	return $handler instanceof \Bitrix\Disk\Document\GoogleHandler;
+}))
+{
+	?>
+			<div class="disk-file-control-panel-card-box disk-file-control-panel-card-file" data-bx-role="file-external-controller" data-bx-doc-handler="gdrive">
+				<div class="disk-file-control-panel-card disk-file-control-panel-card-icon--google-docs">
+					<div class="disk-file-control-panel-card-content">
+						<div class="disk-file-control-panel-card-icon"></div>
+						<div class="disk-file-control-panel-card-btn"></div>
+						<div class="disk-file-control-panel-card-name"><?=Loc::getMessage('DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_GDRIVE')?></div>
+					</div>
+				</div>
+			</div>
+		<?php
+}
+?>
+			<div class="disk-file-control-panel-card-box disk-file-control-panel-card-file" data-bx-role="file-external-controller" data-bx-doc-handler="office365">
+				<div class="disk-file-control-panel-card disk-file-control-panel-card-icon--office365">
+					<div class="disk-file-control-panel-card-content">
+						<div class="disk-file-control-panel-card-icon"></div>
+						<div class="disk-file-control-panel-card-btn"></div>
+						<div class="disk-file-control-panel-card-name"><?=Loc::getMessage('DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_OFFICE365')?></div>
+					</div>
+				</div>
+			</div>
+			<div class="disk-file-control-panel-card-box disk-file-control-panel-card-file" data-bx-role="file-external-controller" data-bx-doc-handler="dropbox">
+				<div class="disk-file-control-panel-card disk-file-control-panel-card-icon--dropbox">
+					<div class="disk-file-control-panel-card-content">
+						<div class="disk-file-control-panel-card-icon"></div>
+						<div class="disk-file-control-panel-card-btn"></div>
+						<div class="disk-file-control-panel-card-name"><?=Loc::getMessage('DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_DROPBOX')?></div>
+					</div>
+				</div>
 			</div>
 		</div>
-		<? } ?>
+		<div class="disk-file-control-panel-btn-upload-box">
+			<label for="diskuf-input-<?=$arResult['UID']?>" class="disk-file-control-panel-btn-upload"><?=Loc::getMessage("WDUF_DND_AREA_TITLE")?></label>
+			<div data-bx-role="setting" class="disk-file-control-panel-btn-settings"></div>
 		</div>
+		<? if(!isset($arParams['PARAMS']['HIDE_CHECKBOX_ALLOW_EDIT']) || $arParams['PARAMS']['HIDE_CHECKBOX_ALLOW_EDIT'] !== 'Y') { ?>
+			<input name="<?= $arResult['INPUT_NAME_OBJECT_ALLOW_EDIT'] ?>" style="display: none;" data-bx-role="settings-allow-edit" <?= (empty($arResult['SHARE_EDIT_ON_OBJECT_UF'])? '' : 'checked="checked"') ?> value="1" type="checkbox">
+		<? }
+		$templateView = $arParams['TEMPLATE_VIEW'];
+		if ($arParams['arUserField']['ENTITY_VALUE_ID'] <= 0)
+		{
+			$settings = \CUserOptions::getOption('disk', 'disk.uf.file');
+			if (!is_array($settings))
+			{
+				$settings = ['template_view' => '.default'];
+			}
+
+			if (isset($settings['template_view_for_'.$arParams['arUserField']['ENTITY_ID']]))
+			{
+				$settings = ['template_view' => $settings['template_view_for_'.$arParams['arUserField']['ENTITY_ID']]];
+			}
+			elseif (isset($arParams['arUserField']['SETTINGS']['TEMPLATE_VIEW']))
+			{
+				$settings['template_view'] = $arParams['arUserField']['SETTINGS']['TEMPLATE_VIEW'];
+			}
+			else if ($arParams['arUserField']['ENTITY_ID'] === 'BLOG_POST') //TODO remove these strings after disk 21.700.0. Only for hotfix 21.600.100
+			{
+				$settings['template_view'] = 'grid';
+			}
+			$templateView = $settings['template_view'];
+		}
+		?>
+		<input name="<?= $arResult['INPUT_NAME_TEMPLATE_VIEW'] ?>" value="gallery" type="hidden" />
+		<input name="<?= $arResult['INPUT_NAME_TEMPLATE_VIEW'] ?>" style="display: none;" <?
+			?>data-bx-role="settings-allow-grid" value="grid" type="checkbox" <?
+			?>data-bx-save="<?=$arParams['arUserField']['ENTITY_VALUE_ID'] > 0 ? 'N' : 'Y'?>" <?
+			?>data-bx-name="template_view_for_<?=htmlspecialcharsbx($arParams['arUserField']['ENTITY_ID'])?>" <?
+			?><?=$templateView === 'grid' ? 'checked' : ''?>/>
 	</div>
-	<div class="diskuf-extended">
-	<? if($arParams['arUserField']['MULTIPLE'] == 'Y') { ?>
-		<input type="hidden" name="<?=htmlspecialcharsbx($arResult['controlName'])?>" value="" />
-	<? } ?>
-		<div class="diskuf-extended-overlay">
-			<div class="diskuf-extended-overlay-inner">
-				<span class="diskuf-extended-overlay-icon"></span>
-				<span class="diskuf-extended-overlay-text"><?=GetMessage("WDUF_SELECT_ATTACHMENTS")?><span><?=GetMessage("WDUF_DROP_ATTACHMENTS")?></span></span>
+<?
+if (!empty($arResult['CAN_CREATE_FILE_BY_CLOUD']))
+{
+?>	<div class="disk-file-control-panel" data-bx-role="document-area" style="display: none;">
+		<div class="disk-file-control-panel-doc-wrap">
+			<div class="disk-file-control-panel-card-box" data-bx-role="handler" data-bx-handler="docx">
+				<div class="disk-file-control-panel-card disk-file-control-panel-card--doc">
+					<div class="disk-file-control-panel-card-icon"></div>
+					<div class="disk-file-control-panel-card-btn"></div>
+					<div class="disk-file-control-panel-card-name"><?=GetMessage('WDUF_CREATE_DOCX')?></div>
+				</div>
+			</div>
+			<div class="disk-file-control-panel-card-box" data-bx-role="handler" data-bx-handler="xlsx">
+				<div class="disk-file-control-panel-card disk-file-control-panel-card--xls">
+					<div class="disk-file-control-panel-card-icon"></div>
+					<div class="disk-file-control-panel-card-btn"></div>
+					<div class="disk-file-control-panel-card-name"><?=GetMessage('WDUF_CREATE_XLSX')?></div>
+				</div>
+			</div>
+			<div class="disk-file-control-panel-card-box" data-bx-role="handler" data-bx-handler="pptx">
+				<div class="disk-file-control-panel-card disk-file-control-panel-card--ppt">
+					<div class="disk-file-control-panel-card-icon"></div>
+					<div class="disk-file-control-panel-card-btn"></div>
+					<div class="disk-file-control-panel-card-name"><?=GetMessage('WDUF_CREATE_PPTX')?></div>
+				</div>
 			</div>
 		</div>
-		<?= DiskRenderTable(!empty($arResult['CAN_CREATE_FILE_BY_CLOUD']), $addClass, $arResult['DEFAULT_DOCUMENT_SERVICE_EDIT_NAME']); ?>
 	</div>
-	<div class="diskuf-simple">
-	<? if($arParams['arUserField']['MULTIPLE'] == 'Y') { ?>
-		<input type="hidden" name="<?=htmlspecialcharsbx($arResult['controlName'])?>" value="" />
-	<? } ?>
-		<?= DiskRenderTable(!empty($arResult['CAN_CREATE_FILE_BY_CLOUD']), $addClass, $arResult['DEFAULT_DOCUMENT_SERVICE_EDIT_NAME']); ?>
-	</div>
+<?
+}
+?>
 <script type="text/javascript">
 BX.ready(function(){
-	<? if($arParams['DISABLE_LOCAL_EDIT']){ ?>
+	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
+<? if($arParams['DISABLE_LOCAL_EDIT']){ ?>
 	BX.Disk.Document.Local.Instance.disable();
 	<? } ?>
-	BX.Disk.UF.add({
-		UID : '<?=$arResult['UID']?>',
-		controlName : '<?= CUtil::JSEscape($arResult['controlName'])?>',
-		hideSelectDialog : '<?=$hideSelectDialog?>',
-		urlSelect : '<?=CUtil::JSEscape('/bitrix/tools/disk/uf.php?action=selectFile&SITE_ID=')?>' + BX.message('SITE_ID'),
-		urlRenameFile : '<?=CUtil::JSEscape('/bitrix/tools/disk/uf.php?action=renameFile')?>',
-		urlDeleteFile : '<?=CUtil::JSEscape('/bitrix/tools/disk/uf.php?action=deleteFile')?>',
-		urlUpload : '<?= CUtil::JSUrlEscape($arResult['UPLOAD_FILE_URL']) ?>'
+	BX.Disk.UF.Options.set({
+		urlUpload: '<?= CUtil::JSUrlEscape($arResult['UPLOAD_FILE_URL']) ?>',
+		documentHandlers: <?= Main\Web\Json::encode($arResult['DOCUMENT_HANDLERS']) ?>
 	});
-
-	BX.Disk.UF.setDocumentHandlers(<?= \Bitrix\Main\Web\Json::encode($arResult['DOCUMENT_HANDLERS']) ?>);
+	new BX.Disk.UF.Form({
+			container: BX('diskuf-selectdialog-<?=$arResult['UID']?>'),
+			eventObject: BX('diskuf-selectdialog-<?=$arResult['UID']?>').parentNode,
+			id: '<?=$arResult['UID']?>',
+			fieldName: '<?= CUtil::JSEscape($arResult['controlName'])?>',
+			input: BX('diskuf-input-<?=$arResult['UID']?>')<?php
+			if (is_array($arParams['PARAMS']['PARSER_PARAMS']))
+			{
+			?>,
+			parserParams: <?= CUtil::PhpToJSObject(array_change_key_case($arParams['PARAMS']['PARSER_PARAMS'], CASE_LOWER))?><?php
+			}
+			?>
+		},
+		<?=CUtil::PhpToJSObject($arResult['FILES'])?>
+	);
 });
 BX.message({
 	DISK_FOLDER_TOOLBAR_LABEL_LOCAL_BDISK_EDIT: '<?= CUtil::JSEscape(\Bitrix\Disk\Document\LocalDocumentController::getName()) ?>',
 	DISK_UF_CONTROLLER_TRANSFORMATION_UPGRADE_POPUP_CONTENT: '<?=CUtil::JSEscape(GetMessage('DISK_UF_CONTROLLER_TRANSFORMATION_UPGRADE_POPUP_CONTENT'));?>',
-	DISK_UF_CONTROLLER_TRANSFORMATION_UPGRADE_POPUP_TITLE: '<?=CUtil::JSEscape(GetMessage('DISK_UF_CONTROLLER_TRANSFORMATION_UPGRADE_POPUP_TITLE'));?>'
-
+	DISK_UF_CONTROLLER_TRANSFORMATION_UPGRADE_POPUP_TITLE: '<?=CUtil::JSEscape(GetMessage('DISK_UF_CONTROLLER_TRANSFORMATION_UPGRADE_POPUP_TITLE'));?>',
+	DISK_CREATE_BLANK_URL : '<?= CUtil::JSUrlEscape($arResult['CREATE_BLANK_URL']) ?>',
+	DISK_RENAME_FILE_URL : '<?= CUtil::JSUrlEscape($arResult['RENAME_FILE_URL']) ?>',
+	DISK_THUMB_WIDTH : '<?=\Bitrix\Disk\Uf\Controller::$previewParams["width"]?>',
+	DISK_THUMB_HEIGHT : '<?=\Bitrix\Disk\Uf\Controller::$previewParams["height"]?>',
+	wd_service_edit_doc_default: "<?= CUtil::JSEscape($arResult['CLOUD_DOCUMENT']['DEFAULT_SERVICE']) ?>"
 });
 </script>
 </div>
-<?
+<?php
 if(\Bitrix\Disk\Integration\Bitrix24Manager::isEnabled() && \Bitrix\Disk\Integration\Bitrix24Manager::isLicensePaid())
 {
 	\Bitrix\Disk\Integration\Bitrix24Manager::initLicenseInfoPopupJS('disk_transformation_video_limit');
 }
-?>

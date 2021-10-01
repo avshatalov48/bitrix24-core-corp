@@ -54,7 +54,44 @@ class Im
 			}
 
 		}
-		$messageFields['ATTACH'] = $attach;
+		if (!$attach->IsEmpty())
+		{
+			$messageFields['ATTACH'] = $attach;
+		}
+
+		foreach ($admins as $adminId)
+		{
+			$message = $messageFields;
+			$message['TO_USER_ID'] = $adminId;
+			\CIMNotify::Add($message);
+		}
+	}
+
+	public static function notifyChangeSipRegistrationStatus($notification)
+	{
+		if(!Loader::includeModule('im'))
+		{
+			return;
+		}
+		
+		$notification = Encoding::convertEncodingToCurrent($notification);
+
+		$admins = array();
+		$cursor = \CAllGroup::GetGroupUserEx(1);
+		while($user = $cursor->fetch())
+		{
+			$admins[] = $user["USER_ID"];
+		}
+
+		$messageFields = array(
+			"FROM_USER_ID" => 0,
+			"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
+			"NOTIFY_MODULE" => "voximplant",
+			"NOTIFY_EVENT" => "status_notifications",
+			//"NOTIFY_TAG" => "TELEPHONY_NOTIFICATION",
+			"NOTIFY_MESSAGE" => $notification,
+			"NOTIFY_MESSAGE_OUT" => strip_tags($notification)
+		);
 
 		foreach ($admins as $adminId)
 		{

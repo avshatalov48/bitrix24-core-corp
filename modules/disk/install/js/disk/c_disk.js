@@ -197,6 +197,11 @@ if(!BX.Disk.pathToUser)
 						return;
 					}
 
+					if (response.data.documentSessionInfo.isFinished)
+					{
+						return;
+					}
+
 					BX.UI.Notification.Center.notify({
 						id: 'session-' + session.hash,
 						autoHide: false,

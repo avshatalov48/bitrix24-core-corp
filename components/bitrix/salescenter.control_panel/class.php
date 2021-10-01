@@ -84,6 +84,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		$tiles = [
 			$this->getCrmWithEshopTile(),
 			$this->getCrmStoreTile(),
+			$this->getCrmFormTile(),
 		];
 
 		if (RestManager::getInstance()->isEnabled())
@@ -508,6 +509,33 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		];
 
 		return $menu;
+	}
+
+	protected function getCrmFormTile(): array
+	{
+		$path = \CComponentEngine::makeComponentPath('bitrix:salescenter.crmform.panel');
+		$path = getLocalPath('components'.$path.'/slider.php');
+		$path = new \Bitrix\Main\Web\Uri($path);
+		$path->addParams([
+			'analyticsLabel' => 'salescenterClickCrmFormTile',
+		]);
+
+		\CBitrixComponent::includeComponentClass('bitrix:salescenter.crmform.panel');
+		$isTileActive = \SalesCenterCrmFormPanel::hasFormsWithTemplates();
+
+		return [
+			'id' => 'crmform',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CRM_FORM'),
+			'image' => $this->getImagePath().'crm-form.svg',
+			'data' => [
+				'url' => (string)$path,
+				'active' => $isTileActive,
+				'activeColor' => '#2FC6F6',
+				'activeImage' => $this->getImagePath().'crm-form-active.svg',
+				'isDependsOnConnection' => false,
+				'label' => self::LABEL_NEW,
+			],
+		];
 	}
 
 	protected function getPaymentSystemsTile(): array

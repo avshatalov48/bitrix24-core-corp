@@ -1,10 +1,9 @@
 <?php
-
 namespace Bitrix\ImOpenLines;
 
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -49,11 +48,34 @@ class Common
 		return $type;
 	}
 
-	public static function getPublicFolder()
+	/**
+	 * @return string
+	 */
+	public static function getPublicFolder():string
 	{
-		return self::GetPortalType() == self::TYPE_BITRIX24 || file_exists($_SERVER['DOCUMENT_ROOT'].'/openlines/')? '/openlines/': SITE_DIR . 'services/openlines/';
+		return
+			self::GetPortalType() === self::TYPE_BITRIX24
+			|| file_exists($_SERVER['DOCUMENT_ROOT'] . '/openlines/')?
+				'/openlines/':
+				SITE_DIR . 'services/openlines/';
 	}
 
+	/**
+	 * @return string
+	 */
+	public static function getContactCenterPublicFolder():string
+	{
+		return
+			self::GetPortalType() === self::TYPE_BITRIX24
+			|| file_exists($_SERVER['DOCUMENT_ROOT'] . '/contact_center/')?
+				'/contact_center/':
+				SITE_DIR . 'services/contact_center/';
+	}
+
+	/**
+	 * @param string $connectorId
+	 * @return string|null
+	 */
 	public static function getAddConnectorUrl(string $connectorId): ?string
 	{
 		if (!Loader::includeModule('imconnector'))
@@ -66,7 +88,7 @@ class Common
 			return null;
 		}
 
-		return Common::getPublicFolder() . "connector/" . "?ID=" . $connectorId;
+		return Common::getContactCenterPublicFolder() . 'connector/' . '?ID=' . $connectorId;
 	}
 
 	public static function getServerAddress()
@@ -152,12 +174,17 @@ class Common
 		return \Bitrix\ImOpenLines\Common::getServerAddress().'/pub/imol.php?id='.$agreementId.'&sec='.$data['SECURITY_CODE'].($iframe? '&iframe=Y': '').($languageId? '&user_lang='.$languageId: '');
 	}
 
-	public static function getHistoryLink($sessionId, $configId)
+	/**
+	 * @param $sessionId
+	 * @param $configId
+	 * @return string
+	 */
+	public static function getHistoryLink($sessionId, $configId): string
 	{
-		$sessionId = intval($sessionId);
-		$configId = intval($configId);
+		$sessionId = (int)$sessionId;
+		$configId = (int)$configId;
 
-		return \Bitrix\ImOpenLines\Common::getServerAddress().\Bitrix\ImOpenLines\Common::getPublicFolder()."statistics.php?".($configId? 'CONFIG_ID='.$configId.'&': '').'IM_HISTORY=imol|'.$sessionId;
+		return self::getServerAddress() . self::getContactCenterPublicFolder() . 'dialog_list/?' . ($configId? 'CONFIG_ID=' . $configId . '&': '') . 'IM_HISTORY=imol|' . $sessionId;
 	}
 
 	public static function getBitrixUrlByLang($lang = null)
@@ -311,7 +338,7 @@ class Common
 			return false;
 		}
 
-		$userData = \Bitrix\Main\UserTable::getList([
+		$userData = UserTable::getList([
 			'select' => ['ID', 'EXTERNAL_AUTH_ID'],
 			'filter' => ['=ID' => $entity['connectorUserId']]
 		])->fetch();
@@ -325,7 +352,7 @@ class Common
 
 	public static function depersonalizationLinesUser($userId)
 	{
-		$userData = \Bitrix\Main\UserTable::getList([
+		$userData = UserTable::getList([
 			'select' => ['ID', 'EXTERNAL_AUTH_ID', 'PERSONAL_PHOTO', ],
 			'filter' => ['=ID' => $userId]
 		])->fetch();
@@ -356,5 +383,28 @@ class Common
 		]);
 
 		return true;
+	}
+
+	/**
+	 * List of administrator users.
+	 * @return int[]
+	 */
+	public static function getAdministrators(): array
+	{
+		$users = [];
+		if (Loader::includeModule('bitrix24'))
+		{
+			$users = \CBitrix24::getAllAdminId();
+		}
+		else
+		{
+			$res = \CGroup::GetGroupUserEx(1);
+			while ($row = $res->fetch())
+			{
+				$users[] = (int)$row['USER_ID'];
+			}
+		}
+
+		return $users;
 	}
 }

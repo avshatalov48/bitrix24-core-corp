@@ -22,15 +22,12 @@ class ConnectorSettingsAjaxController extends Controller
 	 *
 	 * @param $configId
 	 * @param array $queue
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return bool|string[]
 	 */
 	public function saveUsersAction($configId, array $queue)
 	{
 		$configId = (int)$configId;
+		$result = false;
 
 		if(
 			Loader::includeModule('imopenlines')
@@ -53,7 +50,12 @@ class ConnectorSettingsAjaxController extends Controller
 				}
 
 				$configManager = new Config();
-				$result = $configManager->update($configId, $config);
+				$resultUpdate = $configManager->update($configId, $config);
+
+				if($resultUpdate->isSuccess())
+				{
+					$result = true;
+				}
 			}
 			else
 			{

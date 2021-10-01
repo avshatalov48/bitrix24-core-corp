@@ -150,6 +150,9 @@ export class App
 		if(!Type.isUndefined(options.sendingMethod))
 		{
 			this.sendingMethod = options.sendingMethod;
+		}
+		if(!Type.isUndefined(options.sendingMethodDesc))
+		{
 			this.sendingMethodDesc = this.options.sendingMethodDesc;
 		}
 
@@ -828,6 +831,16 @@ export class App
 		{
 			return new Promise((resolve, reject) => {});
 		}
+	}
+
+	hasClientContactInfo()
+	{
+		if (this.options.sendingMethod === 'chat')
+		{
+			return this.options.dialogId !== '';
+		}
+
+		return this.options.contactPhone !== '';
 	}
 
 	emitGlobalEvent(eventName, data)

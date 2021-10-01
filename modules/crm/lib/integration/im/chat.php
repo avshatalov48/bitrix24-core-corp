@@ -9,9 +9,10 @@
 
 namespace Bitrix\Crm\Integration\Im;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Im;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 class Chat
@@ -100,13 +101,19 @@ class Chat
 
 	public static function onAddChatUser(array $eventArgs)
 	{
+		$observersRestriction = Crm\Restriction\RestrictionManager::getObserversRestriction();
+		if (!$observersRestriction->hasPermission())
+		{
+			return;
+		}
 		$chatID = isset($eventArgs['CHAT_ID']) ? (int)$eventArgs['CHAT_ID'] : 0;
 		if($chatID <= 0)
 		{
 			return;
 		}
 
-		$userIDs = isset($eventArgs['NEW_USERS']) && is_array($eventArgs['NEW_USERS']) ? $eventArgs['NEW_USERS'] : null;
+		$userIDs = isset($eventArgs['NEW_USERS']) && is_array($eventArgs['NEW_USERS']) ? $eventArgs['NEW_USERS'] : [];
+		Main\Type\Collection::normalizeArrayValuesByInt($userIDs);
 		if(empty($userIDs))
 		{
 			return;
@@ -141,6 +148,25 @@ class Chat
 		elseif($entityInfo['ENTITY_TYPE_ID'] === \CCrmOwnerType::Lead)
 		{
 			\CCrmLead::AddObserverIDs($entityInfo['ENTITY_ID'], $userIDs);
+		}
+		else
+		{
+			$factory = Container::getInstance()->getFactory((int)$entityInfo['ENTITY_TYPE_ID']);
+			if ($factory && $factory->isObserversEnabled())
+			{
+				$item = $factory->getItem((int)$entityInfo['ENTITY_ID']);
+				if ($item)
+				{
+					$currentObservers = $item->getObservers();
+					$currentAndNewObservers = array_merge($currentObservers, $userIDs);
+					$item->setObservers($currentAndNewObservers);
+
+					$factory->getUpdateOperation($item)
+						->disableCheckAccess()
+						->launch()
+					;
+				}
+			}
 		}
 	}
 
@@ -531,7 +557,7 @@ class Chat
 		if (empty($message))
 		{
 			$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
-			$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if ($factory)
 			{
 				$message = Loc::getMessage(
@@ -596,7 +622,7 @@ class Chat
 		}
 
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
-		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if ($factory)
 		{
 			return Loc::getMessage(
@@ -739,7 +765,7 @@ class Chat
 		}
 		else
 		{
-			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::ResolveID($entityType));
+			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::ResolveID($entityType));
 			if ($factory && $item = $factory->getItem((int) $entityId))
 			{
 				return $item->getData();
@@ -765,4 +791,3 @@ class Chat
 		return $data;
 	}
 }
-?>

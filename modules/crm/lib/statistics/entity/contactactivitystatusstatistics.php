@@ -5,6 +5,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Crm;
 
+/**
+ * Class ContactActivityStatusStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ContactActivityStatusStatistics_Query query()
+ * @method static EO_ContactActivityStatusStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ContactActivityStatusStatistics_Result getById($id)
+ * @method static EO_ContactActivityStatusStatistics_Result getList(array $parameters = array())
+ * @method static EO_ContactActivityStatusStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_ContactActivityStatusStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_ContactActivityStatusStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_ContactActivityStatusStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_ContactActivityStatusStatistics_Collection wakeUpCollection($rows)
+ */
 class ContactActivityStatusStatisticsTable  extends Entity\DataManager
 {
 	/**

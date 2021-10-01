@@ -1,4 +1,4 @@
-import type {Attempt, Context, User, UserManagerOptions} from "./types";
+import type {Context, User, UserManagerOptions} from "./types";
 import {PULL} from "pull.client";
 import {ajax as Ajax} from "main.core";
 import {Users} from "disk.users";
@@ -71,7 +71,7 @@ export default class UserManager
 			return;
 		}
 
-		PULL.sendMessage([-1], 'disk', 'hiToDocument', {
+		PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'hiToDocument', {
 			user: {
 				id: this.context.currentUser.id,
 				name: this.context.currentUser.name,
@@ -99,7 +99,7 @@ export default class UserManager
 			return;
 		}
 
-		PULL.sendMessage([-1], 'disk', 'welcomeToDocument', {
+		PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'welcomeToDocument', {
 			user: {
 				id: this.context.currentUser.id,
 				name: this.context.currentUser.name,
@@ -115,7 +115,7 @@ export default class UserManager
 			return;
 		}
 
-		PULL.sendMessage([-1], 'disk', 'pingDocument', {
+		PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'pingDocument', {
 			fromUserId: this.context.currentUser.id,
 			infoToken: this.context.currentUser.infoToken,
 		});

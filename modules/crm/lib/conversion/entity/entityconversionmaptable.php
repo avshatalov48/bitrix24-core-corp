@@ -10,6 +10,22 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class EntityConversionMapTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EntityConversionMap_Query query()
+ * @method static EO_EntityConversionMap_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EntityConversionMap_Result getById($id)
+ * @method static EO_EntityConversionMap_Result getList(array $parameters = array())
+ * @method static EO_EntityConversionMap_Entity getEntity()
+ * @method static \Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap_Collection createCollection()
+ * @method static \Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap wakeUpObject($row)
+ * @method static \Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap_Collection wakeUpCollection($rows)
+ */
 class EntityConversionMapTable extends DataManager
 {
 	/**

@@ -110,9 +110,9 @@ if (mb_strpos($this->__page, "show") === 0)
 		}
 	}
 }
-elseif(mb_strpos($this->__page, "error") === false)
+elseif(mb_strpos($this->__page, "edit") === 0)
 {
-	$http_query = \Bitrix\Disk\Uf\Controller::$previewParams + array("cache_image" => "Y");
+	$http_query = ['width' => 115, 'height' => 115, 'cache_image' => 'Y'];
 	foreach ($arResult['FILES'] as $id => $arElement)
 	{
 		if (

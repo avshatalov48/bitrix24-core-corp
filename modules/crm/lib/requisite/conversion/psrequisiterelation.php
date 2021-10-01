@@ -3,6 +3,22 @@ namespace Bitrix\Crm\Requisite\Conversion;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
+/**
+ * Class PSRequisiteRelationTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_PSRequisiteRelation_Query query()
+ * @method static EO_PSRequisiteRelation_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_PSRequisiteRelation_Result getById($id)
+ * @method static EO_PSRequisiteRelation_Result getList(array $parameters = array())
+ * @method static EO_PSRequisiteRelation_Entity getEntity()
+ * @method static \Bitrix\Crm\Requisite\Conversion\EO_PSRequisiteRelation createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Requisite\Conversion\EO_PSRequisiteRelation_Collection createCollection()
+ * @method static \Bitrix\Crm\Requisite\Conversion\EO_PSRequisiteRelation wakeUpObject($row)
+ * @method static \Bitrix\Crm\Requisite\Conversion\EO_PSRequisiteRelation_Collection wakeUpCollection($rows)
+ */
 class PSRequisiteRelationTable extends Entity\DataManager
 {
 	public static function getTableName()

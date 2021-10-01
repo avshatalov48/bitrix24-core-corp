@@ -63,7 +63,7 @@ if(typeof BX.Crm.EntityEditorSection === "undefined")
 				editor: child ? child._editor : null,
 				config: child ? BX.prop.getObject(data, "visibilityConfigs", null) : null,
 				field: child ? child : null,
-				ufAccessRights: this._editor._ufAccessRights}
+				restriction: this._editor.getRestriction('userFieldAccessRights')}
 		);
 		params.visibilityConfigurator = this._visibilityConfigurator;
 
@@ -475,8 +475,9 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 		this._isPayButtonControlVisible = (this._model.getField("IS_PAY_BUTTON_CONTROL_VISIBLE", 'Y') === 'Y');
 
 		var modeWithOrders = this._model.getField('MODE_WITH_ORDERS', true);
+		var isCopyMode = this._model.getField('IS_COPY_MODE', false);
 
-		if (!modeWithOrders)
+		if (!modeWithOrders && !isCopyMode)
 		{
 			var paymentDocumentsOptions = {
 				DEAL_ID: this._model.getField('ID'),

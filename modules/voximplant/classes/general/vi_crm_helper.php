@@ -520,6 +520,10 @@ class CVoxImplantCrmHelper
 		if($callFields['INCOMING'] == CVoxImplantMain::CALL_INCOMING || $callFields['INCOMING'] == CVoxImplantMain::CALL_CALLBACK)
 		{
 			$activityFields['COMPLETED'] = $callFields['CALL_FAILED_CODE'] != '304';
+			if ($callFields['CALL_FAILED_CODE'] === '304')
+			{
+				$activityFields['SETTINGS']['MISSED_CALL'] = true;
+			}
 		}
 		else
 		{

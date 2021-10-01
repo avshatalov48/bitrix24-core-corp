@@ -1,30 +1,17 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main;
 use Bitrix\Crm\Recurring;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
 class DealRecurringController extends DealController
 {
-	//region Singleton
-	/** @var DealRecurringController|null */
-	protected static $instance = null;
-
 	const CONTROLLER_NAME = __CLASS__;
 	const PUSH_COMMAND_DEAL_ADD = "timeline_deal_add";
 	const PUSH_COMMAND_DEAL_MODIFY = "timeline_activity_add";
-
-	public static function getInstance()
-	{
-		if (!(self::$instance instanceof self))
-		{
-			self::$instance = new DealRecurringController();
-		}
-		return self::$instance;
-	}
 
 	public function onCreate($ownerID, array $params)
 	{
@@ -301,7 +288,6 @@ class DealRecurringController extends DealController
 
 		return EntityController::prepareHistoryDataModel($data, $options);
 	}
-	//endregion
 
 	protected function pushHistory($historyEntryID, $ownerID, $command)
 	{

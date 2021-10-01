@@ -12,6 +12,7 @@ $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION"] = "Підходи�
 $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_1"] = "Замовлення з інтернет-магазину зберігаються тільки в замовленнях CRM і не потрапляють в угоди";
 $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_2"] = "Угоди створюються окремо (наприклад, для надання послуг клієнтам або для іншого напрямку бізнесу)";
 $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_3"] = "Частина менеджерів працює з угодами, частина – із замовленнями з інтернет-магазину";
+$MESS["CRM_SCENARIO_SELECTION_SAVE_ERROR"] = "Під час переключення режиму сталася помилка";
 $MESS["CRM_SCENARIO_SELECTION_SELECT"] = "Обрати";
 $MESS["CRM_SCENARIO_SELECTION_SELECTED"] = "Обрано";
 $MESS["CRM_SCENARIO_SELECTION_TITLE"] = "Режим роботи із замовленнями";

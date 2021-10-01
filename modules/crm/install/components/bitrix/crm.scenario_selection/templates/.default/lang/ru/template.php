@@ -15,3 +15,4 @@ $MESS['CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_3'] = 'Част
 $MESS['CRM_SCENARIO_SELECTION_ACTIVE_ORDERS'] = 'Активных заказов: #ORDER_COUNT#';
 $MESS['CRM_SCENARIO_SELECTION_DEALS_ONLY_WARNING'] = 'При работе только со сделками обработка заказов станет недоступна.';
 $MESS['CRM_SCENARIO_SELECTION_CONVERT_ACTIVE_ORDERS'] = 'Конвертировать активные заказы в сделки при смене режима';
+$MESS['CRM_SCENARIO_SELECTION_SAVE_ERROR'] = 'При переключении режима произошла ошибка';

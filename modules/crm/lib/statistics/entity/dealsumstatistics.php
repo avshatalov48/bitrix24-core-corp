@@ -5,6 +5,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\DatetimeField;
 
+/**
+ * Class DealSumStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DealSumStatistics_Query query()
+ * @method static EO_DealSumStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DealSumStatistics_Result getById($id)
+ * @method static EO_DealSumStatistics_Result getList(array $parameters = array())
+ * @method static EO_DealSumStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealSumStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealSumStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealSumStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealSumStatistics_Collection wakeUpCollection($rows)
+ */
 class DealSumStatisticsTable  extends Entity\DataManager
 {
 	const MAX_SUM_SLOT_COUNT = 5;

@@ -702,9 +702,16 @@ BX.namespace('Tasks.Component');
 					}
 
 					if (
-						(flagName === 'REPLICATE' || flagName === 'SAVE_AS_TEMPLATE')
+						(
+							flagName === 'SAVE_AS_TEMPLATE'
+							|| flagName === 'REPLICATE'
+						)
 						&& flagNode.value === 'Y'
-						&& this.option('auxData').TASK_LIMIT_EXCEEDED
+						&&
+						(
+							this.option('auxData').TASK_LIMIT_EXCEEDED
+							|| this.option('auxData').TASK_RECURRENT_RESTRICT
+						)
 					)
 					{
 						flagNode.value = 'N';
@@ -722,7 +729,11 @@ BX.namespace('Tasks.Component');
 				if (name == 'REPLICATE')
 				{
 					var taskLimitExceeded = this.option('auxData').TASK_LIMIT_EXCEEDED;
-					if (!taskLimitExceeded || (taskLimitExceeded && !value))
+					var taskRecurrentRestrict = this.option('auxData').TASK_RECURRENT_RESTRICT;
+					if (
+						!taskLimitExceeded
+						|| (taskLimitExceeded && !value)
+					)
 					{
 						BX.Tasks.Util.fadeSlideToggleByClass(this.control('replication-panel'));
 						this.toggleOption('SAVE_AS_TEMPLATE', value);

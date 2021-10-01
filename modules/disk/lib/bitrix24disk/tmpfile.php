@@ -8,9 +8,11 @@ use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Model;
 use Bitrix\Disk\Internals\TmpFileTable;
 use Bitrix\Disk\User;
+use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\IO;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Security\Random;
 use Bitrix\Main\Type\DateTime;
 use CCloudStorageUpload;
 use CTempFile;
@@ -283,9 +285,8 @@ class TmpFile extends Model
 			return;
 		}
 
-		$self = $this;
-		register_shutdown_function(function() use ($self){
-			$self->delete();
+		Application::getInstance()->addBackgroundJob(function () {
+			$this->delete();
 		});
 
 		$this->isRegisteredShutdownFunction = true;
@@ -294,12 +295,12 @@ class TmpFile extends Model
 	protected static function generateTokenByPath($path)
 	{
 		$name = bx_basename($path);
-		if (preg_match('%^[0-9a-f]{32}$%', $name))
+		if (preg_match('%^[0-9a-z]{32}$%', $name))
 		{
 			return $name;
 		}
 
-		return md5($name . mt_rand() . mt_rand());
+		return Random::getString(32);
 	}
 
 	protected static function prepareDataToInsertFromFileArray(array $fileData, array $data, ErrorCollection $errorCollection)
@@ -598,7 +599,7 @@ class TmpFile extends Model
 
 	protected static function generatePath()
 	{
-		$tmpName = md5(mt_rand() . mt_rand());
+		$tmpName = Random::getString(32);
 		$dir = rtrim(CTempFile::getDirectoryName(24, Driver::INTERNAL_MODULE_ID), '/') . '/';
 		checkDirPath($dir); //make folder recursive
 		$pathItems = explode(CTempFile::getAbsoluteRoot(), $dir . $tmpName);

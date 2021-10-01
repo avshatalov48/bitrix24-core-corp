@@ -127,6 +127,10 @@
 
 	BX.CrmActivityVisit.prototype.showEdit = function()
 	{
+		if (BX.getClass('BX.Crm.Restriction.Bitrix24') && BX.Crm.Restriction.Bitrix24.isRestricted('visit'))
+		{
+			return BX.Crm.Restriction.Bitrix24.getHandler('visit').call();
+		}
 		var self = this;
 		var params = {
 			ajax_action: 'EDIT'

@@ -43,7 +43,7 @@ CJSCore::Init('file_dialog');
 
 			while($row = $iterator->fetch()):
 				?>
-				<option value="<?=htmlspecialcharsbx($row['ID'])?>" <?if ($row['ID'] == $value) echo 'selected'?>>[<?=htmlspecialcharsbx($row['SITE_ID'])?>] <?=htmlspecialcharsbx($row['NAME'])?></option>
+				<option value="<?=htmlspecialcharsbx($row['ID'])?>" <?if ($row['ID'] == $value) echo 'selected'?>>[<?=htmlspecialcharsbx($row['SITE_ID'])?>] <?=htmlspecialcharsbx(\Bitrix\Main\Text\Emoji::decode($row['NAME']))?></option>
 				<?
 			endwhile;
 			?>

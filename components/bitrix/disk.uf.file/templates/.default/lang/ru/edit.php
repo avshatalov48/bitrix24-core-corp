@@ -1,6 +1,25 @@
 <?
-$MESS["WD_FILE_LOADING"] = "Загрузка";
 $MESS["WDUF_UPLOAD_DOCUMENT"] = "Загрузить документы";
-$MESS["WDUF_ATTACHMENTS"] = "Прикрепленные файлы и картинки: ";
-$MESS["WDUF_FILE_EDIT_BY_DESTINATION_USERS"] = "Разрешить редактировать документы получателям сообщения?";
-?>
+$MESS["WDUF_UPLOAD"] = "Загрузить";
+$MESS["WDUF_MY_DISK"] = "Мой диск";
+$MESS["WDUF_ALLOW_EDIT"] = "Разрешить редактирование документов";
+$MESS["WDUF_ALLOW_COLLAGE"] = "Разрешить коллаж фото";
+$MESS["WDUF_DND_AREA_TITLE"] = "Вы можете просто перетащить файл сюда";
+$MESS["WDUF_CREATE_DOCUMENT"] = "Создать документ";
+$MESS["WDUF_CREATE_DOCX"] = "Документ";
+$MESS["WDUF_CREATE_XLSX"] = "Таблица";
+$MESS["WDUF_CREATE_PPTX"] = "Презентация";
+$MESS["WDUF_FILE_IS_EXISTS"] = "Файл уже существует.";
+$MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_GDRIVE"] = "Google Drive";
+$MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_DROPBOX"] = "Dropbox";
+$MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_OFFICE365"] = "Office365";
+$MESS["WDUF_ITEM_MENU_INSERT_INTO_THE_TEXT"] = "Вставить в текст";
+$MESS["WDUF_ITEM_MENU_DELETE"] = "Удалить";
+$MESS["WDUF_ITEM_MENU_EDIT"] = "Редактировать";
+$MESS["WDUF_ITEM_MENU_RENAME"] = "Переименовать";
+$MESS["WDUF_ITEM_MENU_RENAME_TITLE"] = "Переименовать";
+$MESS["WDUF_ITEM_MENU_RENAME_SAVE"] = "Сохранить";
+$MESS["WDUF_ITEM_MENU_RENAME_CANCEL"] = "Отменить";
+$MESS["WDUF_ITEM_MENU_FILE"] = "Файл";
+$MESS["WDUF_ITEM_ERROR"] = "Ошибка";
+$MESS["DISK_UF_FILE_EDIT_SERVICE_LABEL"] = "Создавать документ через #NAME#";

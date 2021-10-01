@@ -822,7 +822,7 @@ class CVoxImplantHistory
 
 	public static function getStatusText($statusCode)
 	{
-		return in_array($statusCode, array("200","304","603-S","603","403","404","486","484","503","480","402","423", "402-B24")) ? GetMessage("VI_STATUS_".$statusCode) : GetMessage("VI_STATUS_OTHER");
+		return in_array($statusCode, array("200","304","603-S","603","403","404","486","484","500", "503","480","402","423", "402-B24")) ? GetMessage("VI_STATUS_".$statusCode) : GetMessage("VI_STATUS_OTHER");
 	}
 
 	/**

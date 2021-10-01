@@ -188,5 +188,11 @@ if($componentPage === 'index')
 {
 	$componentPage = 'list';
 }
+
+if (!Crm\Restriction\RestrictionManager::getInvoicesRestriction()->hasPermission())
+{
+	$componentPage = 'restrictions';
+}
+
 $this->IncludeComponentTemplate($componentPage);
 ?>

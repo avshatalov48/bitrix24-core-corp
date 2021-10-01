@@ -6,6 +6,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Kanban\TimeLineTable;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 
@@ -202,6 +203,11 @@ class Tasks extends \IRestService
 		if (!$userId)
 		{
 			$userId = $currentUserId;
+		}
+
+		if (KpiLimit::isLimitExceeded())
+		{
+			return false;
 		}
 
 		if (

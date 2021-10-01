@@ -127,7 +127,7 @@ class SessionCheckTable extends DataManager
 	{
 		$result = new EventResult;
 
-		$data = $event->getParameter("fields");
+		$data = $event->getParameter('fields');
 
 		if (array_key_exists('DATE_QUEUE', $data) && empty($data['DATE_QUEUE']) && !array_key_exists('UNDISTRIBUTED', $data))
 		{
@@ -146,7 +146,7 @@ class SessionCheckTable extends DataManager
 	public static function OnAfterUpdate(Event $event)
 	{
 		$result = new EventResult;
-		$data = $event->getParameter("fields");
+		$data = $event->getParameter('fields');
 
 		if (isset($data['DATE_QUEUE']) && !empty($data['DATE_QUEUE']))
 		{

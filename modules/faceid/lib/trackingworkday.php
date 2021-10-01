@@ -6,7 +6,20 @@ use Bitrix\Main;
 
 /**
  * Class TrackingWorkdayTable
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TrackingWorkday_Query query()
+ * @method static EO_TrackingWorkday_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TrackingWorkday_Result getById($id)
+ * @method static EO_TrackingWorkday_Result getList(array $parameters = array())
+ * @method static EO_TrackingWorkday_Entity getEntity()
+ * @method static \Bitrix\Faceid\EO_TrackingWorkday createObject($setDefaultValues = true)
+ * @method static \Bitrix\Faceid\EO_TrackingWorkday_Collection createCollection()
+ * @method static \Bitrix\Faceid\EO_TrackingWorkday wakeUpObject($row)
+ * @method static \Bitrix\Faceid\EO_TrackingWorkday_Collection wakeUpCollection($rows)
+ */
 class TrackingWorkdayTable extends Main\Entity\DataManager
 {
 	/**

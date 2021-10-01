@@ -30,6 +30,19 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		return static::GetDocumentInfo($documentId)['TYPE'];
 	}
 
+	public static function getDocumentTypeName($documentType)
+	{
+		if (is_string($documentType))
+		{
+			$typeId = \CCrmOwnerType::ResolveID($documentType);
+			$factory = Container::getInstance()->getFactory($typeId);
+
+			return isset($factory) ? $factory->getEntityDescription() : null;
+		}
+
+		return null;
+	}
+
 	public static function GetDocumentAdminPage($documentId)
 	{
 		$documentInfo = static::GetDocumentInfo($documentId);
@@ -74,6 +87,9 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		$documentFieldsMap = static::getEntityFields($entityTypeId);
 		$compatibleFields = [];
 
+		static::prepareContactFields($fields);
+		self::prepareStageFields($factory, $fields);
+
 		foreach ($fields as $fieldId => $fieldValue)
 		{
 			if (array_key_exists($fieldId, $documentFieldsMap))
@@ -100,8 +116,9 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			}
 		}
 
+		$userId = $compatibleFields[Crm\Item::FIELD_NAME_CREATED_BY] ?? 0;
 		$newItem->setFromCompatibleData($compatibleFields);
-		$addOperation = $factory->getAddOperation($newItem, static::getContext());
+		$addOperation = $factory->getAddOperation($newItem, static::getContext($userId));
 
 		$result = static::launchOperation($addOperation);
 		$errorMessages = $result->getErrorMessages();
@@ -121,7 +138,16 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 		$item = isset($factory) ? $factory->getItem($entityId) : null;
 
+		if (is_null($item))
+		{
+			$errorMessage = Loc::getMessage('CRM_ENTITY_EXISTENCE_ERROR', ['#DOCUMENT_ID#', $documentId]);
+			throw new ArgumentException($errorMessage);
+		}
+
 		$fieldsMap = static::getEntityFields($entityTypeId);
+
+		static::prepareContactFields($fields);
+		static::prepareStageFields($factory, $fields);
 
 		$compatibleFields = [];
 		foreach ($fields as $fieldId => $fieldValue)
@@ -226,13 +252,47 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		return mb_substr($fieldId, 0, 3) === 'UF_';
 	}
 
+	protected static function prepareContactFields(array& $fieldsValues): void
+	{
+		if (isset($fieldsValues[Crm\Item::FIELD_NAME_CONTACT_ID]))
+		{
+			if (!isset($fieldsValues['CONTACT_IDS']) || !is_array($fieldsValues['CONTACT_IDS']))
+			{
+				$fieldsValues['CONTACT_IDS'] = [];
+			}
+			$fieldsValues['CONTACT_IDS'][] = $fieldsValues[Crm\Item::FIELD_NAME_CONTACT_ID];
+			unset($fieldsValues[Crm\Item::FIELD_NAME_CONTACT_ID]);
+		}
+	}
+
+	protected static function prepareStageFields(Crm\Service\Factory $factory, array& $fields): void
+	{
+		if (
+			isset($fields[Crm\Item::FIELD_NAME_STAGE_ID])
+			&& $factory->isCategoriesSupported()
+			&& !isset($fields[Crm\Item::FIELD_NAME_CATEGORY_ID])
+		)
+		{
+			$stage = $factory->getStage($fields[Crm\Item::FIELD_NAME_STAGE_ID]);
+			$fields[Crm\Item::FIELD_NAME_CATEGORY_ID] = $stage['CATEGORY_ID'];
+		}
+	}
+
 	public static function DeleteDocument($documentId)
 	{
 		$documentInfo = static::GetDocumentInfo($documentId);
 		[$entityTypeId, $entityId] = [$documentInfo['TYPE_ID'], $documentInfo['ID']];
 
 		$factory = Container::getInstance()->getFactory($entityTypeId);
-		$deleteOperation = $factory->getDeleteOperation($factory->getItem($entityId), static::getContext());
+		$item = isset($factory) ? $factory->getItem($entityId) : null;
+
+		if (is_null($item))
+		{
+			$errorMessage = Loc::getMessage('CRM_ENTITY_EXISTENCE_ERROR', ['#DOCUMENT_ID#', $documentId]);
+			throw new ArgumentException($errorMessage);
+		}
+
+		$deleteOperation = $factory->getDeleteOperation($item, static::getContext());
 
 		return static::launchOperation($deleteOperation->disableBizProc())->isSuccess();
 	}
@@ -277,10 +337,10 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		return $operationResult;
 	}
 
-	protected static function getContext(): Crm\Service\Context
+	protected static function getContext(int $userId = 0): Crm\Service\Context
 	{
-		$context = Container::getInstance()->getContext();
-		$context->setUserId(0);
+		$context = clone Container::getInstance()->getContext();
+		$context->setUserId($userId);
 		$context->setScope(Crm\Service\Context::SCOPE_AUTOMATION);
 
 		return $context;
@@ -351,6 +411,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 				'Multiple' => $multiple,
 			];
 		}
+		static::fitEntityFieldsToInterface($entityFields);
 
 		$entityFields += static::getAssignedByFields();
 		$entityFields += static::getCommunicationFields();
@@ -386,6 +447,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 
 	protected static function getFieldName(Crm\Service\Factory $factory, string $fieldId): string
 	{
+		$internalFieldIds = [Crm\Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY];
 		try
 		{
 			$fieldName = $factory->getFieldCaption($fieldId);
@@ -395,7 +457,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			$fieldName = $fieldId;
 		}
 
-		if ($fieldName === $fieldId)
+		if ($fieldName === $fieldId || in_array($fieldId, $internalFieldIds, true))
 		{
 			$fieldName = Loc::getMessage("CRM_BP_DOCUMENT_ITEM_FIELD_{$fieldId}") ?: $fieldName;
 		}
@@ -513,6 +575,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 
 						$settings['Groups'][] = [
 							'name' => $category->getName(),
+							'category_id' => $category->getId(),
 							'items' => $stages,
 						];
 					}
@@ -539,5 +602,13 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 	protected static function getStages(Crm\Service\Factory $factory, ?Category $category): Crm\EO_Status_Collection
 	{
 		return $factory->getStages(isset($category) ? $category->getId() : null);
+	}
+
+	protected static function fitEntityFieldsToInterface(array& $entityFields): void
+	{
+		if (array_key_exists(Crm\Item::FIELD_NAME_CATEGORY_ID, $entityFields))
+		{
+			$entityFields[Crm\Item::FIELD_NAME_CATEGORY_ID]['Type'] = FieldType::SELECT;
+		}
 	}
 }

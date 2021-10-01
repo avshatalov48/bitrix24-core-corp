@@ -41,8 +41,8 @@ if ($arResult['CAN_USE_CONNECTION'] === true)
 	$onClickManuallyCode = 'BX.submit(BX(\'' . $arResult['CONNECTOR'] . '_action_form\'));';
 } else
 {
-	$onClickConnectCode = 'BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONNECTOR_IMESSAGE . '\'); return false;';
-	$onClickManuallyCode = 'BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONNECTOR_IMESSAGE . '\'); return false;';
+	$onClickConnectCode = 'BX.UI.InfoHelper.show(\'' . $arResult['INFO_HELPER_LIMIT'] . '\'); return false;';
+	$onClickManuallyCode = 'BX.UI.InfoHelper.show(\'' . $arResult['INFO_HELPER_LIMIT'] . '\'); return false;';
 }
 ?>
 
@@ -66,7 +66,7 @@ if (empty($arResult['PAGE'])) //case when not first open
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED')?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED_NEW')?>
 					</div>
 					<div class="imconnector-field-box-content">
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_CHANGE_ANY_TIME')?>
@@ -192,7 +192,7 @@ else
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED')?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED_NEW')?>
 					</div>
 					<div class="imconnector-field-box-content">
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_FINAL_FORM_DESCRIPTION')?>

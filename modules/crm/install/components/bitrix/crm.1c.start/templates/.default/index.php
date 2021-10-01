@@ -11,7 +11,7 @@ $APPLICATION->SetTitle(Bitrix\Main\Localization\Loc::getMessage("CRM_1C_START_IN
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
-\Bitrix\Main\UI\Extension::load("ui.icons.service");
+\Bitrix\Main\UI\Extension::load("ui.icons.service", "ui.feedback.form");
 
 if (!is_array($arResult["ITEMS"]) || empty($arResult["ITEMS"]))
 	return;
@@ -106,12 +106,29 @@ if (is_array($arResult['PLACEMENT_ITEMS']) && !empty($arResult["PLACEMENT_ITEMS"
 	</div>
 <?
 }
+?>
 
+<br>
+<br>
+
+<div class="crm-onec-block-title"><?=Loc::getMessage('CRM_1C_START_HELPER_TITLE')?></div>
+<div class="onec-block">
+	<div class="onec-wrap crm-onec-helper" id="onec-wrap">
+		<?$APPLICATION->IncludeComponent("bitrix:ui.tile.list", "", [
+			'ID' => $arResult['HELPER_TILE_ID'],
+			'LIST' => $arResult['HELPER_ITEMS'],
+		]);?>
+	</div>
+</div>
+
+<?php
 $jsParams = array(
 	"tileManagerId" => $arResult['TILE_ID'],
 	"synchroTileManagerId" => $arResult['SYNCHRO_TILE_ID'],
 	"integrationTileManagerId" => $arResult['INTEGRATION_TILE_ID'],
-	"otherTileManagerId" => $arResult['OTHER_TILE_ID']
+	"otherTileManagerId" => $arResult['OTHER_TILE_ID'],
+	"helperTileManagerId" => $arResult['HELPER_TILE_ID'],
+	"formPortalUri" => $arResult['FORM_PORTAL_URI'],
 );
 ?>
 <script>

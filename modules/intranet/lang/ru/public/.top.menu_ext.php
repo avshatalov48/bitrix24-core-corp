@@ -5,6 +5,7 @@ $MESS["TOP_MENU_GROUPS_EXTRANET"] = "Группы экстранет";
 $MESS["TOP_MENU_DEPARTMENTS"] = "Подразделения";
 $MESS["TOP_MENU_TELEPHONY"] = "Телефония";
 $MESS["TOP_MENU_MARKETPLACE_2"] = "Приложения";
+$MESS["TOP_MENU_MARKETPLACE_3"] = "Маркет";
 $MESS["TOP_MENU_ONEC"] = "1С + CRM Битрикс24";
 $MESS["TOP_MENU_OPENLINES"] = "Открытые линии";
 $MESS["TOP_MENU_LIVE_FEED"] = "Живая лента";

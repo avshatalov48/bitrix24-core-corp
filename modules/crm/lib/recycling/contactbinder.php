@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Recycling;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main;
 
 class ContactBinder extends BaseBinder
 {
@@ -49,7 +49,13 @@ class ContactBinder extends BaseBinder
 				}
 
 				$fields = array('COMPANY_BINDINGS' => $bindings);
-				$entity->Update($entityID, $fields, false, false);
+				$entity->Update(
+					$entityID,
+					$fields,
+					false,
+					false,
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 		else
@@ -78,7 +84,13 @@ class ContactBinder extends BaseBinder
 				}
 
 				$fields = array('COMPANY_BINDINGS' => $bindings);
-				$entity->Update($entityID, $fields, false, false);
+				$entity->Update(
+					$entityID,
+					$fields,
+					false,
+					false,
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 		else
@@ -107,7 +119,13 @@ class ContactBinder extends BaseBinder
 				Crm\Binding\EntityBinding::markFirstAsPrimary($bindings);
 			}
 			$fields = array('COMPANY_BINDINGS' => $bindings);
-			$entity->Update($entityID, $fields, false, false);
+			$entity->Update(
+				$entityID,
+				$fields,
+				false,
+				false,
+				$this->getUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
+			);
 		}
 		else
 		{

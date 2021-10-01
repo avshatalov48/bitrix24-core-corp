@@ -7,6 +7,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\ORM\Event;
 
+/**
+ * Class DealCategoryTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DealCategory_Query query()
+ * @method static EO_DealCategory_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DealCategory_Result getById($id)
+ * @method static EO_DealCategory_Result getList(array $parameters = array())
+ * @method static EO_DealCategory_Entity getEntity()
+ * @method static \Bitrix\Crm\Category\Entity\EO_DealCategory createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Category\Entity\EO_DealCategory_Collection createCollection()
+ * @method static \Bitrix\Crm\Category\Entity\EO_DealCategory wakeUpObject($row)
+ * @method static \Bitrix\Crm\Category\Entity\EO_DealCategory_Collection wakeUpCollection($rows)
+ */
 class DealCategoryTable extends Entity\DataManager
 {
 	public static function getTableName()

@@ -237,6 +237,10 @@ class PhaseColorScheme
 					'offset' => $offset,
 				]);
 			}
+			elseif(mb_strpos($stage['COLOR'], '#') !== 0)
+			{
+				$stage['COLOR'] = '#' . $stage['COLOR'];
+			}
 		}
 
 		return $stages;

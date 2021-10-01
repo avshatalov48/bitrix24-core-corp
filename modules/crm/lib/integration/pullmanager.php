@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration;
 
 use Bitrix\Crm\Kanban\Entity;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
@@ -283,22 +284,27 @@ class PullManager
 			'_',
 			str_replace(self::EVENT_KANBAN_UPDATED . '_', '', $eventName)
 		);
-		$type = (
+		$typeName = (
 			$typeWithCategoryId[0] === 'DYNAMIC'
 				? $typeWithCategoryId[0] . '_' . $typeWithCategoryId[1]
 				: $typeWithCategoryId[0]
 		);
 
 		$result = [];
-		if($entity = Entity::getInstance($type))
+
+		$entityTypeId = \CCrmOwnerType::ResolveID($typeName);
+		if (\CCrmOwnerType::IsEntity($entityTypeId))
 		{
 			foreach($userIds as $userId)
 			{
 				$userId = (int)$userId;
 				if($userId > 0)
 				{
-					$permissions = \CCrmPerms::GetUserPermissions($userId);
-					if($entity->checkReadPermissions($item['id'], $permissions))
+					if (Container::getInstance()->getUserPermissions($userId)->checkReadPermissions(
+						$entityTypeId,
+						$item['id'],
+						$item['data']['categoryId'] ?? 0
+					))
 					{
 						$result[$userId] = $userId;
 					}

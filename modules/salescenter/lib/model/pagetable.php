@@ -8,6 +8,22 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\SalesCenter\Integration\LandingManager;
 
+/**
+ * Class PageTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Page_Query query()
+ * @method static EO_Page_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Page_Result getById($id)
+ * @method static EO_Page_Result getList(array $parameters = array())
+ * @method static EO_Page_Entity getEntity()
+ * @method static \Bitrix\SalesCenter\Model\Page createObject($setDefaultValues = true)
+ * @method static \Bitrix\SalesCenter\Model\EO_Page_Collection createCollection()
+ * @method static \Bitrix\SalesCenter\Model\Page wakeUpObject($row)
+ * @method static \Bitrix\SalesCenter\Model\EO_Page_Collection wakeUpCollection($rows)
+ */
 class PageTable extends Main\ORM\Data\DataManager
 {
 	/**

@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @global CDatabase $DB
  */
 
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
@@ -346,17 +347,23 @@ if($arParams['TYPE'] === 'list')
 
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 
+		$lockScript = null;
+		if (!RestrictionManager::getContactExportRestriction()->hasPermission())
+		{
+			$lockScript = RestrictionManager::getContactExportRestriction()->prepareInfoHelperScript();
+		}
+
 		$arResult['BUTTONS'][] = array(
 			'TITLE' => Loc::getMessage('CRM_CONTACT_EXPORT_CSV_TITLE'),
 			'TEXT' => Loc::getMessage('CRM_CONTACT_EXPORT_CSV'),
-			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_CSV').showDialog()",
+			'ONCLICK' => ($lockScript ?? "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_CSV').showDialog()"),
 			'ICON' => 'btn-export'
 		);
 
 		$arResult['BUTTONS'][] = array(
 			'TITLE' => Loc::getMessage('CRM_CONTACT_EXPORT_EXCEL_TITLE'),
 			'TEXT' => Loc::getMessage('CRM_CONTACT_EXPORT_EXCEL'),
-			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_EXCEL').showDialog()",
+			'ONCLICK' => ($lockScript ?? "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_EXCEL').showDialog()"),
 			'ICON' => 'btn-export'
 		);
 
@@ -377,7 +384,7 @@ if($arParams['TYPE'] === 'list')
 			$arResult['BUTTONS'][] = array(
 				'TITLE' => GetMessage('CRM_CONTACT_EXPORT_OUTLOOK_TITLE'),
 				'TEXT' => GetMessage('CRM_CONTACT_EXPORT_OUTLOOK'),
-				'ONCLICK' => \Bitrix\WebService\StsSync::getUrl('contacts', 'contacts_crm', $APPLICATION->GetCurPage(), $sPrefix, GetMessage('CRM_OUTLOOK_TITLE_CONTACTS'), $GUID),
+				'ONCLICK' => ($lockScript ?? \Bitrix\WebService\StsSync::getUrl('contacts', 'contacts_crm', $APPLICATION->GetCurPage(), $sPrefix, GetMessage('CRM_OUTLOOK_TITLE_CONTACTS'), $GUID)),
 				'ICON' => 'btn-export'
 			);
 			$arResult['BUTTONS'][] = array('SEPARATOR' => true);
@@ -390,7 +397,7 @@ if($arParams['TYPE'] === 'list')
 
 	if ($bDedupe)
 	{
-		$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getDuplicateControlRestriction();
+		$restriction = RestrictionManager::getDuplicateControlRestriction();
 		if($restriction->hasPermission())
 		{
 			$dedupePath = CComponentEngine::MakePathFromTemplate(

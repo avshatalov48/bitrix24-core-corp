@@ -1,6 +1,7 @@
-import {Type, Event, Loc} from 'main.core';
+import {Type, Event, Loc, Text, Tag, Dom} from 'main.core';
+import {Popup} from 'main.popup';
 
-export class Popup
+export class UserPopup
 {
 	constructor(parent)
 	{
@@ -8,6 +9,7 @@ export class Popup
 		this.signedParameters = this.parent.signedParameters;
 		this.componentName = this.parent.componentName;
 		this.userInnerBlockNode = this.parent.userInnerBlockNode || "";
+		this.timemanNode = this.parent.timemanNode;
 		this.circleNode = this.parent.circleNode || "";
 		this.isPopupShown = false;
 		this.popupCurrentPage = {};
@@ -23,8 +25,8 @@ export class Popup
 
 		if (this.parent.isTimemanAvailable && Type.isDomNode(this.parent.timemanNode))
 		{
-			let openedNode = this.parent.timemanNode.querySelector('.js-ustat-online-timeman-opened-block');
-			let closedNode = this.parent.timemanNode.querySelector('.js-ustat-online-timeman-closed-block');
+			let openedNode = this.timemanNode.querySelector('.js-ustat-online-timeman-opened-block');
+			let closedNode = this.timemanNode.querySelector('.js-ustat-online-timeman-closed-block');
 
 			Event.bind(openedNode, 'click', () => {
 				this.showPopup('getOpenedTimemanUser', openedNode);
@@ -39,6 +41,7 @@ export class Popup
 	getPopupTitle(action)
 	{
 		let title = "";
+
 		if (action === "getAllOnlineUser")
 		{
 			title = Loc.getMessage("INTRANET_USTAT_ONLINE_USERS");
@@ -71,7 +74,7 @@ export class Popup
 		this.popupInnerContainer = "";
 		this.renderedUsers = [];
 
-		this.allOnlineUserPopup = new BX.PopupWindow('intranet-ustat-online-popup', bindNode, {
+		this.allOnlineUserPopup = new Popup(`intranet-ustat-online-popup-${Text.getRandom()}`, bindNode, {
 			lightShadow : true,
 			offsetLeft: action === 'getClosedTimemanUser' ? -60 : -22,
 			offsetTop: topOffset,
@@ -89,101 +92,61 @@ export class Popup
 				}
 			},
 			events : {
-				onPopupDestroy : function() {
+				onPopupDestroy: () => {
 					this.isPopupShown = false;
-				}.bind(this),
-				onPopupClose: function() {
-					this.destroy();
 				},
-				onAfterPopupShow: function(popup)
-				{
-					let popupContent = popup.contentContainer;
+				onPopupClose: () => {
+					this.allOnlineUserPopup.destroy();
+				},
+				onAfterPopupShow: (popup) => {
 
-					let popupContainer = BX.create('div', {
-						props: {
-							className: 'intranet-ustat-online-popup-container'
-						},
+					let popupContent = Tag.render`
+						<div>
+							<span class="intranet-ustat-online-popup-name-title">
+								${this.getPopupTitle(action)}
+							</span>
+							<div class="intranet-ustat-online-popup-container">
+								<div class="intranet-ustat-online-popup-content">
+									<div class="intranet-ustat-online-popup-content-box">
+										<div class="intranet-ustat-online-popup-inner"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					`;
+
+					popup.contentContainer.appendChild(popupContent);
+					this.popupInnerContainer = popupContent.querySelector(".intranet-ustat-online-popup-inner");
+					this.loader = this.showLoader({
+						node: popupContent.querySelector(".intranet-ustat-online-popup-content"),
+						loader: null,
+						size: 40
 					});
-
-					let popupTitle = BX.create('span', {
-						props: {
-							className: 'intranet-ustat-online-popup-name-title'
-						},
-						text: this.getPopupTitle(action)
-					});
-
-					this.popupInnerContainer = BX.create('div', {
-						props: {
-							className: 'intranet-ustat-online-popup-inner'
-						},
-					});
-
-					let popupInnerContent = BX.create('div', {
-						props: {
-							className: 'intranet-ustat-online-popup-content'
-						},
-					});
-
-					let popupInnerContentBox = BX.create('div', {
-						props: {
-							className: 'intranet-ustat-online-popup-content-box'
-						},
-					});
-
-					popupContent.appendChild(popupTitle);
-					popupContent.appendChild(popupContainer);
-					popupContainer.appendChild(popupInnerContent);
-					popupInnerContent.appendChild(popupInnerContentBox);
-					popupInnerContentBox.appendChild(this.popupInnerContainer);
-
-					this.loader = this.showLoader({node: popupInnerContent, loader: null, size: 40});
 					this.showUsersInPopup(action);
-
 					this.isPopupShown = true;
-
-				}.bind(this)
+				}
 			},
 			className: 'intranet-ustat-online-popup'
 		});
 
-		/*BX.bind(BX('intranet-ustat-online-popup'), 'mouseout' , BX.delegate(function() {
-			clearTimeout(this.popupTimeout);
-			this.popupTimeout = setTimeout(BX.delegate(function() {
-				this.allOnlineUserPopup.close();
-			}, this), 1000);
-		}, this));
-
-		BX.bind(BX('intranet-ustat-online-popup'), 'mouseover' , BX.delegate(function() {
-			clearTimeout(this.popupTimeout);
-			clearTimeout(this.mouseLeaveTimeoutId);
-		}, this));
-
-		BX.bind(this.userInnerBlockNode, 'mouseleave' , BX.delegate(function() {
-			this.mouseLeaveTimeoutId = setTimeout(BX.delegate(function() {
-				this.allOnlineUserPopup.close();
-			}, this), 1000);
-		}, this));*/
-
 		this.popupScroll(action);
-
 		this.allOnlineUserPopup.show();
 	}
 
 	popupScroll(action)
 	{
-		if (!BX.type.isDomNode(this.popupInnerContainer))
+		if (!Type.isDomNode(this.popupInnerContainer))
 		{
 			return;
 		}
 
-		BX.bind(this.popupInnerContainer, 'scroll', BX.delegate(function() {
-			var _this = BX.proxy_context;
-			if (_this.scrollTop > (_this.scrollHeight - _this.offsetHeight) / 1.5)
+		Event.bind(this.popupInnerContainer, 'scroll', () => {
+			if (this.popupInnerContainer.scrollTop > (this.popupInnerContainer.scrollHeight - this.popupInnerContainer.offsetHeight) / 1.5)
 			{
 				this.showUsersInPopup(action);
-				BX.unbindAll(_this);
+				Event.unbindAll(this.popupInnerContainer, 'scroll');
 			}
-		}, this));
+		});
 	};
 
 	showUsersInPopup(action)
@@ -203,7 +166,7 @@ export class Popup
 			data: {
 				pageNum: this.popupCurrentPage[action]
 			}
-		}).then(function (response) {
+		}).then((response) => {
 			if (response.data)
 			{
 				this.renderPopupUsers(response.data);
@@ -218,96 +181,63 @@ export class Popup
 				}
 			}
 			this.hideLoader({loader: this.loader});
-		}.bind(this), function (response) {
+		}, (response) =>{
 			this.hideLoader({loader: this.loader});
-		}.bind(this));
+		});
 	}
 
 	renderPopupUsers(users)
 	{
-		if (!this.allOnlineUserPopup || !BX.type.isDomNode(this.popupInnerContainer))
+		if (
+			!this.allOnlineUserPopup
+			|| !Type.isDomNode(this.popupInnerContainer)
+			|| !Type.isObjectLike(users)
+		)
 		{
 			return;
 		}
 
-		if (!users || typeof users !== "object")
+		for (let i in users)
 		{
-			return;
-		}
-
-		for (var i in users)
-		{
-			if (!users.hasOwnProperty(i))
+			if (!users.hasOwnProperty(i) || this.renderedUsers.indexOf(users[i]['ID']) >= 0)
 			{
 				continue;
 			}
 
-			if (this.renderedUsers.indexOf(users[i]['ID']) >= 0)
-			{
-				continue;
-			}
 			this.renderedUsers.push(users[i]['ID']);
 
-			let avatarNode;
+			let avatarIcon = "<i></i>";
 
-			if (BX.type.isNotEmptyString(users[i]['AVATAR']))
+			if (Type.isString(users[i]['AVATAR']) && users[i]['AVATAR'])
 			{
-				avatarNode = BX.create("div", {
-					props: {className: "ui-icon ui-icon-common-user intranet-ustat-online-popup-avatar-img"},
-					children: [
-						BX.create('i', {
-							style : { backgroundImage : "url('" + users[i]['AVATAR'] + "')"}
-						})
-					]
-				});
-			}
-			else
-			{
-				avatarNode = BX.create("div", {
-					props: {className: "ui-icon ui-icon-common-user intranet-ustat-online-popup-avatar-img"},
-					children: [
-						BX.create('i', {})
-					]
-				});
+				avatarIcon = `<i style="background-image: url('${users[i]['AVATAR']}')"></i>`;
 			}
 
-			this.popupInnerContainer.appendChild(
-				BX.create("A", {
-					attrs: {
-						href: users[i]['PATH_TO_USER_PROFILE'],
-						target: '_blank',
-					},
-					props: {
-						className: "intranet-ustat-online-popup-item"
-					},
-					children: [
-						BX.create("SPAN", {
-							props: {
-								className: "intranet-ustat-online-popup-avatar-new"
-							},
-							children: [
-								avatarNode,
-								BX.create("SPAN", {
-									props: {className: "intranet-ustat-online-popup-avatar-status-icon"}
-								})
-							]
-						}),
-						BX.create("SPAN", {
-							props: {
-								className: "intranet-ustat-online-popup-name"
-							},
-							html: users[i]['NAME']
-						})
-					]
-				})
-			);
+			const userNode = Tag.render`
+				<a 
+					class="intranet-ustat-online-popup-item"
+					href="${users[i]['PATH_TO_USER_PROFILE']}" 
+					target="_blank"
+				>
+					<span class="intranet-ustat-online-popup-avatar-new">
+						<div class="ui-icon ui-icon-common-user intranet-ustat-online-popup-avatar-img">
+							${avatarIcon}
+						</div>
+						<span class="intranet-ustat-online-popup-avatar-status-icon"></span>
+					</span>
+					<span class="intranet-ustat-online-popup-name">
+						${users[i]['NAME']}
+					</span>
+				</a>
+			`;
+
+			this.popupInnerContainer.appendChild(userNode);
 		}
-
 	}
 
 	showLoader(params)
 	{
-		var loader = null;
+		let loader = null;
 
 		if (params.node)
 		{
@@ -338,7 +268,7 @@ export class Popup
 
 		if (params.node)
 		{
-			BX.cleanNode(params.node);
+			Dom.clean(params.node);
 		}
 
 		if (params.loader !== null)

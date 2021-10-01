@@ -8,6 +8,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class DuplicateIndexMismatchTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DuplicateIndexMismatch_Query query()
+ * @method static EO_DuplicateIndexMismatch_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DuplicateIndexMismatch_Result getById($id)
+ * @method static EO_DuplicateIndexMismatch_Result getList(array $parameters = array())
+ * @method static EO_DuplicateIndexMismatch_Entity getEntity()
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateIndexMismatch createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateIndexMismatch_Collection createCollection()
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateIndexMismatch wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateIndexMismatch_Collection wakeUpCollection($rows)
+ */
 class DuplicateIndexMismatchTable extends Entity\DataManager
 {
 	public static function getTableName()

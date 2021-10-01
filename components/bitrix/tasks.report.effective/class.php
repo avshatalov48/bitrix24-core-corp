@@ -4,7 +4,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\UI\Filter;
@@ -13,6 +12,7 @@ use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -81,14 +81,19 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		$this->arResult['FILTERS'] = static::getFilterList();
 		$this->arResult['PRESETS'] = static::getPresetList();
 
-		if (TaskLimit::isLimitExceeded())
+		if (
+			TaskLimit::isLimitExceeded()
+			|| KpiLimit::isLimitExceeded()
+		)
 		{
 			$this->arResult['TASK_LIMIT_EXCEEDED'] = true;
+			$this->arResult['KPI_LIMIT_EXCEEDED'] = true;
 			$efficiencyData = $this->getDefaultEfficiencyData();
 		}
 		else
 		{
 			$this->arResult['TASK_LIMIT_EXCEEDED'] = false;
+			$this->arResult['KPI_LIMIT_EXCEEDED'] = false;
 			$efficiencyData = (
 				$this->arParams['PLATFORM'] === 'mobile'
 					? $this->getEfficiencyDataForMobile($this->userId, $this->groupId)

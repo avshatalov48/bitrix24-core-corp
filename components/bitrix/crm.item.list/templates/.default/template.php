@@ -81,5 +81,11 @@ $messages = array_merge(Container::getInstance()->getLocalization()->loadMessage
 		var params = <?=CUtil::PhpToJSObject($arResult['jsParams'], false, false, true);?>;
 		params.errorTextContainer = document.getElementById('crm-type-item-list-error-text-container');
 		(new BX.Crm.ItemListComponent(params)).init();
+
+		<?php if (isset($arResult['RESTRICTED_VALUE_CLICK_CALLBACK'])):?>
+		BX.addCustomEvent(window, 'onCrmRestrictedValueClick', function() {
+			<?=$arResult['RESTRICTED_VALUE_CLICK_CALLBACK'];?>
+		});
+		<?php endif;?>
 	});
 </script>

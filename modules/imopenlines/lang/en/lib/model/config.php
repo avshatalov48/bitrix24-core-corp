@@ -44,6 +44,7 @@ $MESS["CONFIG_ENTITY_NO_ANSWER_TIME_FIELD"] = "Mark enquiry as unanswered in";
 $MESS["CONFIG_ENTITY_OPERATOR_DATA_FIELD"] = "Agent information";
 $MESS["CONFIG_ENTITY_QUEUE_TIME_FIELD_NEW"] = "Forward to next in queue delay time";
 $MESS["CONFIG_ENTITY_QUEUE_TYPE_FIELD"] = "Call distribution mode";
+$MESS["CONFIG_ENTITY_SEND_NOTIFICATION_EMPTY_QUEUE"] = "Sends an empty Open Channel notification";
 $MESS["CONFIG_ENTITY_TEMPORARY_FIELD"] = "Temporary preferences";
 $MESS["CONFIG_ENTITY_VOTE_BEFORE_FINISH_FIELD"] = "Allow users to rate ongoing conversations";
 $MESS["CONFIG_ENTITY_VOTE_CLOSING_DELAY_FIELD_NEW"] = "Close session when client rating is received";

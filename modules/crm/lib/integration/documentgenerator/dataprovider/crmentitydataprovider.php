@@ -12,6 +12,7 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Timeline\DocumentController;
 use Bitrix\Crm\Timeline\DocumentEntry;
 use Bitrix\Crm\Timeline\TimelineType;
@@ -45,6 +46,18 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 
 	abstract public function getCrmOwnerType();
 
+	public function getTimelineItemIdentifier(): ?ItemIdentifier
+	{
+		$entityTypeId = (int)$this->getCrmOwnerType();
+		$entityId = (int)$this->source;
+		if ($entityTypeId > 0 && $entityId > 0)
+		{
+			return new ItemIdentifier($entityTypeId, $entityId);
+		}
+
+		return null;
+	}
+
 	/**
 	 * @return mixed
 	 */
@@ -55,18 +68,26 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		$userId = $this->getDocumentUserId($document);
 		Loc::loadLanguageFile(__FILE__);
 		$text = Loc::getMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_COMMENT', ['#TITLE#' => htmlspecialcharsbx($document->getTitle())]);
+		$timelineIdentifier = $this->getTimelineItemIdentifier();
+		$entityTypeId = $timelineIdentifier ? $timelineIdentifier->getEntityTypeId() : $this->getCrmOwnerType();
+		$entityId = $timelineIdentifier ? $timelineIdentifier->getEntityId() : $this->source;
 		$entryID = DocumentEntry::create([
 			'TEXT' => $text,
 			'AUTHOR_ID' => $userId,
-			'BINDINGS' => [['ENTITY_TYPE_ID' => $this->getCrmOwnerType(), 'ENTITY_ID' => $this->source]],
+			'BINDINGS' => [
+				[
+					'ENTITY_TYPE_ID' => $entityTypeId,
+					'ENTITY_ID' => $entityId,
+				]
+			],
 			'TYPE_CATEGORY_ID' => TimelineType::CREATION,
 		], $document->ID);
 		if($entryID > 0)
 		{
 			$saveData = array(
 				'COMMENT' => $text,
-				'ENTITY_TYPE_ID' => $this->getCrmOwnerType(),
-				'ENTITY_ID' => $this->source,
+				'ENTITY_TYPE_ID' => $entityTypeId,
+				'ENTITY_ID' => $entityId,
 				'USER_ID' => $userId,
 				'DOCUMENT_ID' => $document->ID,
 			);
@@ -97,10 +118,13 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		$entries = DocumentEntry::getListByDocumentId($document->ID);
 		foreach($entries as $entry)
 		{
+			$timelineIdentifier = $this->getTimelineItemIdentifier();
+			$entityTypeId = $timelineIdentifier ? $timelineIdentifier->getEntityTypeId() : $this->getCrmOwnerType();
+			$entityId = $timelineIdentifier ? $timelineIdentifier->getEntityId() : $this->source;
 			DocumentController::getInstance()->onDelete($entry['ID'], [
 				'TYPE_CATEGORY_ID' => (int)$entry['TYPE_CATEGORY_ID'],
-				'ENTITY_TYPE_ID' => $this->getCrmOwnerType(),
-				'ENTITY_ID' => $this->source,
+				'ENTITY_TYPE_ID' => $entityTypeId,
+				'ENTITY_ID' => $entityId,
 			]);
 		}
 	}
@@ -114,6 +138,9 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	public function onDocumentUpdate(Document $document)
 	{
 		Loc::loadLanguageFile(__FILE__);
+		$timelineIdentifier = $this->getTimelineItemIdentifier();
+		$entityTypeId = $timelineIdentifier ? $timelineIdentifier->getEntityTypeId() : $this->getCrmOwnerType();
+		$entityId = $timelineIdentifier ? $timelineIdentifier->getEntityId() : $this->source;
 		$entries = DocumentEntry::getListByDocumentId($document->ID);
 		foreach($entries as $entry)
 		{
@@ -132,8 +159,8 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			}
 			$saveData = array(
 				'TITLE' => $document->getTitle(),
-				'ENTITY_TYPE_ID' => $this->getCrmOwnerType(),
-				'ENTITY_ID' => $this->source,
+				'ENTITY_TYPE_ID' => $entityTypeId,
+				'ENTITY_ID' => $entityId,
 				'USER_ID' => $this->getDocumentUserId($document),
 				'DOCUMENT_ID' => $document->ID,
 			);
@@ -159,10 +186,18 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 
 		if($isFirstTime)
 		{
+			$timelineIdentifier = $this->getTimelineItemIdentifier();
+			$entityTypeId = $timelineIdentifier ? $timelineIdentifier->getEntityTypeId() : $this->getCrmOwnerType();
+			$entityId = $timelineIdentifier ? $timelineIdentifier->getEntityId() : $this->source;
 			$text = Loc::getMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_PULIC_LINK_VIEWED', ['#TITLE#' => htmlspecialcharsbx($document->getTitle())]);
 			$entryId = DocumentEntry::create([
 				'TEXT' => $text,
-				'BINDINGS' => [['ENTITY_TYPE_ID' => $this->getCrmOwnerType(), 'ENTITY_ID' => $this->source]],
+				'BINDINGS' => [
+					[
+						'ENTITY_TYPE_ID' => $entityTypeId,
+						'ENTITY_ID' => $entityId,
+					],
+				],
 				'TYPE_CATEGORY_ID' => TimelineType::MODIFICATION,
 			], $document->ID);
 
@@ -170,8 +205,8 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			{
 				$saveData = array(
 					'COMMENT' => $text,
-					'ENTITY_TYPE_ID' => $this->getCrmOwnerType(),
-					'ENTITY_ID' => $this->source,
+					'ENTITY_TYPE_ID' => $entityTypeId,
+					'ENTITY_ID' => $entityId,
 					'DOCUMENT_ID' => $document->ID,
 				);
 				DocumentController::getInstance()->addToStack($entryId, 'timeline_document_add', $saveData);
@@ -204,107 +239,16 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	{
 		if($this->fields === null)
 		{
-			$fields = parent::getFields();
-
-			if(!$this->isLightMode())
-			{
-				$fields['MY_COMPANY'] = [
-					'PROVIDER' => Company::class,
-					'VALUE' => [$this, 'getMyCompanyId'],
-					'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_MY_COMPANY_TITLE'),
-					'OPTIONS' => [
-						'MY_COMPANY' => 'Y',
-						'VALUES' => [
-							'REQUISITE' => $this->getMyCompanyRequisiteId(),
-							'BANK_DETAIL' => $this->getMyCompanyBankDetailId(),
-						]
-					],
-				];
-			}
-
-			$fields['REQUISITE'] = [
-				'PROVIDER' => Requisite::class,
-				'VALUE' => [$this, 'getRequisiteId'],
-				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CUSTOMER_REQUISITE_TITLE'),
-			];
-			$fields['BANK_DETAIL'] = [
-				'PROVIDER' => BankDetail::class,
-				'VALUE' => [$this, 'getBankDetailId'],
-				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_BANK_DETAIL_TITLE'),
-			];
-
-			$fields['COMPANY'] = [
-				'PROVIDER' => Company::class,
-				'VALUE' => [$this, 'getCompanyId'],
-				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_COMPANY_TITLE'),
-				'OPTIONS' => [
-					'DISABLE_MY_COMPANY' => true,
-					'VALUES' => [
-						'REQUISITE' => $this->getRequisiteId(),
-						'BANK_DETAIL' => $this->getBankDetailId(),
-					],
-				]
-			];
-			$fields['CONTACT'] = [
-				'PROVIDER' => Contact::class,
-				'VALUE' => [$this, 'getContactId'],
-				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CONTACT_TITLE'),
-				'OPTIONS' => [
-					'DISABLE_MY_COMPANY' => true,
-				],
-			];
-
-			$fields['ASSIGNED'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_ASSIGNED_TITLE'),
-				'VALUE' => [$this, 'getAssignedId'],
-				'PROVIDER' => User::class,
-				'OPTIONS' => [
-					'FORMATTED_NAME_FORMAT' => [
-						'format' => $this->getNameFormat(),
-					]
-				]
-			];
-
-			$fields['CLIENT_PHONE'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_PHONE_TITLE'),
-				'VALUE' => [$this, 'getClientPhone'],
-				'TYPE' => 'PHONE',
-				'FORMAT' => [
-					'mfirst' => true,
-				],
-			];
-			$fields['CLIENT_EMAIL'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_EMAIL_TITLE'),
-				'VALUE' => [$this, 'getClientEmail'],
-				'FORMAT' => [
-					'mfirst' => true,
-				],
-			];
-			$fields['CLIENT_WEB'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_WEB_TITLE'),
-				'VALUE' => [$this, 'getClientWeb'],
-				'FORMAT' => [
-					'mfirst' => true,
-				],
-			];
-
-			if($this->hasLeadField())
-			{
-				$fields['LEAD'] = [
-					'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_LEAD_TITLE'),
-					'PROVIDER' => Lead::class,
-					'VALUE' => 'LEAD_ID',
-				];
-			}
+			$fields = array_merge(parent::getFields(), $this->getCommonFields());
 
 			$this->fields = $fields;
 			$fields = $this->getUserFields();
 			$this->fields = array_merge($this->fields, $fields);
 			foreach($this->fields as $placeholder => $field)
 			{
-				if(mb_substr($placeholder, 0, 3) == 'UF_')
+				if(mb_substr($placeholder, 0, 3) === 'UF_')
 				{
-					if(mb_substr($placeholder, -7) == '_SINGLE')
+					if(mb_substr($placeholder, -7) === '_SINGLE')
 					{
 						unset($this->fields[$placeholder]);
 					}
@@ -318,6 +262,114 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		}
 
 		return $this->fields;
+	}
+
+	protected function isEnableMyCompany(): bool
+	{
+		if (!$this->isLightMode())
+		{
+			return true;
+		}
+
+		return isset($this->options['enableMyCompany']) && $this->options['enableMyCompany'] === true;
+	}
+
+	public function getCommonFields(): array
+	{
+		$fields = [];
+
+		if ($this->isEnableMyCompany())
+		{
+			$fields['MY_COMPANY'] = [
+				'PROVIDER' => Company::class,
+				'VALUE' => [$this, 'getMyCompanyId'],
+				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_MY_COMPANY_TITLE'),
+				'OPTIONS' => [
+					'MY_COMPANY' => 'Y',
+					'VALUES' => [
+						'REQUISITE' => $this->getMyCompanyRequisiteId(),
+						'BANK_DETAIL' => $this->getMyCompanyBankDetailId(),
+					]
+				],
+			];
+		}
+
+		$fields['REQUISITE'] = [
+			'PROVIDER' => Requisite::class,
+			'VALUE' => [$this, 'getRequisiteId'],
+			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CUSTOMER_REQUISITE_TITLE'),
+		];
+		$fields['BANK_DETAIL'] = [
+			'PROVIDER' => BankDetail::class,
+			'VALUE' => [$this, 'getBankDetailId'],
+			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_BANK_DETAIL_TITLE'),
+		];
+
+		$fields['COMPANY'] = [
+			'PROVIDER' => Company::class,
+			'VALUE' => [$this, 'getCompanyId'],
+			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_COMPANY_TITLE'),
+			'OPTIONS' => [
+				'DISABLE_MY_COMPANY' => true,
+				'VALUES' => [
+					'REQUISITE' => $this->getRequisiteId(),
+					'BANK_DETAIL' => $this->getBankDetailId(),
+				],
+			]
+		];
+		$fields['CONTACT'] = [
+			'PROVIDER' => Contact::class,
+			'VALUE' => [$this, 'getContactId'],
+			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CONTACT_TITLE'),
+			'OPTIONS' => [
+				'DISABLE_MY_COMPANY' => true,
+			],
+		];
+
+		$fields['ASSIGNED'] = [
+			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_ASSIGNED_TITLE'),
+			'VALUE' => [$this, 'getAssignedId'],
+			'PROVIDER' => User::class,
+			'OPTIONS' => [
+				'FORMATTED_NAME_FORMAT' => [
+					'format' => static::getNameFormat(),
+				]
+			]
+		];
+
+		$fields['CLIENT_PHONE'] = [
+			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_PHONE_TITLE'),
+			'VALUE' => [$this, 'getClientPhone'],
+			'TYPE' => 'PHONE',
+			'FORMAT' => [
+				'mfirst' => true,
+			],
+		];
+		$fields['CLIENT_EMAIL'] = [
+			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_EMAIL_TITLE'),
+			'VALUE' => [$this, 'getClientEmail'],
+			'FORMAT' => [
+				'mfirst' => true,
+			],
+		];
+		$fields['CLIENT_WEB'] = [
+			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_WEB_TITLE'),
+			'VALUE' => [$this, 'getClientWeb'],
+			'FORMAT' => [
+				'mfirst' => true,
+			],
+		];
+
+		if($this->hasLeadField())
+		{
+			$fields['LEAD'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_LEAD_TITLE'),
+				'PROVIDER' => Lead::class,
+				'VALUE' => 'LEAD_ID',
+			];
+		}
+
+		return $fields;
 	}
 
 	/**
@@ -702,7 +754,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				{
 					if(!is_numeric($val))
 					{
-						list(, $val) = explode('_', $val);
+						[, $val] = explode('_', $val);
 					}
 					$val = intval($val);
 					if($val > 0)
@@ -762,10 +814,11 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	 */
 	protected function getCrmUserTypeManager()
 	{
-		if($this->crmUserTypeManager === null)
+		$userFieldEntityId = $this->getUserFieldEntityID();
+		if($this->crmUserTypeManager === null && !empty($userFieldEntityId))
 		{
 			global $USER_FIELD_MANAGER;
-			$this->crmUserTypeManager = new \CCrmUserType($USER_FIELD_MANAGER, $this->getUserFieldEntityID());
+			$this->crmUserTypeManager = new \CCrmUserType($USER_FIELD_MANAGER, $userFieldEntityId);
 		}
 
 		return $this->crmUserTypeManager;

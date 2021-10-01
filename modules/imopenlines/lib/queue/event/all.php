@@ -90,10 +90,6 @@ class All extends Queue
 	 *
 	 * @param $userId
 	 * @param string $reasonReturn
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function returnNotAcceptedSessionsToQueue($userId = 0, $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
 	{
@@ -139,28 +135,24 @@ class All extends Queue
 	 * Return to the queue not distributed sessions
 	 *
 	 * @param string $reasonReturn
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function returnNotDistributedSessionsToQueue($reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
+	public function returnNotDistributedSessionsToQueue(string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
-		$sessionListManager = SessionTable::getList(
+		$sessionListManager = SessionCheckTable::getList(
 			[
 				'select' => [
-					'ID'
+					'SESSION_ID'
 				],
 				'filter' => [
-					'OPERATOR_ID' => 0,
-					'CONFIG_ID' => $this->configLine['ID']
-				]
+					'SESSION.OPERATOR_ID' => 0,
+					'SESSION.CONFIG_ID' => $this->configLine['ID']
+				],
+				'order' => ['SESSION_ID' => 'ASC'],
+				'limit' => self::MAX_SESSION_RETURN
 			]
 		);
 
-		while ($sessionId = $sessionListManager->fetch()['ID'])
+		while ($sessionId = $sessionListManager->fetch()['SESSION_ID'])
 		{
 			ImOpenLines\Queue::returnSessionToQueue($sessionId, $reasonReturn);
 		}
@@ -246,11 +238,6 @@ class All extends Queue
 
 	/**
 	 * OnChatAnswer event handler for filling free slots
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function checkFreeSlotOnChatAnswer()
 	{
@@ -259,12 +246,6 @@ class All extends Queue
 
 	/**
 	 * OnChatSkip/OnChatMarkSpam/OnChatFinish/OnOperatorTransfer event handler for filling free slots
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function checkFreeSlotOnChatFinish()
 	{

@@ -4,6 +4,22 @@ namespace Bitrix\Crm\Pseudoactivity\Entity;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
+/**
+ * Class WaitTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Wait_Query query()
+ * @method static EO_Wait_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Wait_Result getById($id)
+ * @method static EO_Wait_Result getList(array $parameters = array())
+ * @method static EO_Wait_Entity getEntity()
+ * @method static \Bitrix\Crm\Pseudoactivity\Entity\EO_Wait createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Pseudoactivity\Entity\EO_Wait_Collection createCollection()
+ * @method static \Bitrix\Crm\Pseudoactivity\Entity\EO_Wait wakeUpObject($row)
+ * @method static \Bitrix\Crm\Pseudoactivity\Entity\EO_Wait_Collection wakeUpCollection($rows)
+ */
 class WaitTable  extends Entity\DataManager
 {
 	/**

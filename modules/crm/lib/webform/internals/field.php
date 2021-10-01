@@ -13,6 +13,22 @@ use Bitrix\Crm\WebForm\Helper;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class FieldTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Field_Query query()
+ * @method static EO_Field_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Field_Result getById($id)
+ * @method static EO_Field_Result getList(array $parameters = array())
+ * @method static EO_Field_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Field createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Field_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Field wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Field_Collection wakeUpCollection($rows)
+ */
 class FieldTable extends Entity\DataManager
 {
 	const TYPE_ENUM_SECTION = 'section';

@@ -7,6 +7,19 @@ use Bitrix\Main;
  * Class SourceChildTable
  *
  * @package Bitrix\Crm\Tracking\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_SourceChild_Query query()
+ * @method static EO_SourceChild_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_SourceChild_Result getById($id)
+ * @method static EO_SourceChild_Result getList(array $parameters = array())
+ * @method static EO_SourceChild_Entity getEntity()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_SourceChild createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_SourceChild_Collection createCollection()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_SourceChild wakeUpObject($row)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_SourceChild_Collection wakeUpCollection($rows)
  */
 class SourceChildTable extends Main\ORM\Data\DataManager
 {

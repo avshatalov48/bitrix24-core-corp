@@ -298,6 +298,23 @@ class OnecStartComponent extends CBitrixComponent
 					]
 				];
 
+				$this->arResult['HELPER_TILE_ID'] = 'crm-onec-helper';
+				$this->arResult['HELPER_ITEMS'] = [
+					[
+						'id' => 'helper',
+						'name' => Loc::getMessage('CRM_1C_START_HELPER'),
+						'button' => true,
+						'data' => [
+							'buttonName' => Loc::getMessage('CRM_1C_START_CONNECT'),
+						],
+					]
+				];
+
+				$this->arResult['FORM_PORTAL_URI'] = Loader::includeModule('intranet')
+					? \Bitrix\Intranet\Util::CP_BITRIX_PATH
+					: ''
+				;
+
 				break;
 
 		}

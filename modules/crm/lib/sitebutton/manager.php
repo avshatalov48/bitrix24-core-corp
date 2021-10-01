@@ -269,7 +269,7 @@ class Manager
 		}
 
 		$resultButtonId = self::updateScriptCache($fromButtonId);
-		if ($resultButtonId)
+		if ($resultButtonId && $resultButtonId <> $fromButtonId)
 		{
 			return '\\Bitrix\\Crm\\SiteButton\\Manager::updateScriptCacheAgent(' . $resultButtonId . ');';
 		}
@@ -288,6 +288,20 @@ class Manager
 		}
 
 		$isAdded = true;
+
+		$agent = new \CAllAgent();
+		$list = $agent->getList(
+			["ID" => "DESC"],
+			[
+				"MODULE_ID" => "crm",
+				"NAME" => "\\Bitrix\\Crm\\SiteButton\\Manager::updateScriptCacheAgent%"
+			]
+		);
+		if ($list->fetch())
+		{
+			return;
+		}
+
 		\CAgent::addAgent('\\Bitrix\\Crm\\SiteButton\\Manager::updateScriptCacheAgent();', "crm", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::getOffset(), "FULL"));
 	}
 

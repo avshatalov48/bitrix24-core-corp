@@ -1,80 +1,116 @@
-import {Reflection} from "main.core";
-
-const namespace = Reflection.namespace('BX.Crm.Kanban');
-
 export default class PullQueue
 {
-	#queue;
-	#grid;
-	#isProgress;
+	#queue: Set<number>;
+	#grid: BX.CRM.Kanban.Grid;
+	#isProgress: boolean;
+	#isFreeze: boolean;
 
-	constructor(grid)
+	constructor(grid: BX.CRM.Kanban.Grid): void
 	{
 		this.#grid = grid;
-		this.#queue = [];
+		this.#queue = new Set();
 		this.#isProgress = false;
+		this.#isFreeze = false;
 	}
 
-	loadItem(isForce)
+	loadItem(isForce: boolean): void
 	{
-		isForce = (isForce || false);
-		if (this.#isProgress && !isForce)
-		{
-			return;
-		}
-
-		const id = this.pop();
-
-		if (id)
-		{
-			this.#isProgress = true;
-			this.#grid.loadNew(id, false, true).then(
-				function (response)
+		setTimeout(
+			() => {
+				isForce = (isForce || false);
+				if (this.#isProgress && !isForce)
 				{
-					if (this.peek())
-					{
-						this.loadItem(true);
-					}
-					else
-					{
+					return;
+				}
+
+				if (document.hidden || this.isOverflow() || this.isFreezed())
+				{
+					return;
+				}
+
+				const id = this.pop();
+				if (id)
+				{
+					const loadNextOnSuccess = (response) => {
+						if (this.peek())
+						{
+							this.loadItem(true);
+						}
 						this.#isProgress = false;
-					}
-				}.bind(this)
-			);
-		}
+					};
+					const doNothingOnError = (err) => {};
+
+					this.#isProgress = true;
+					this.#grid.loadNew(id, false, true, true).then(loadNextOnSuccess, doNothingOnError);
+				}
+			},
+			1000
+		);
 	}
 
-	push(id)
+	push(id: number): PullQueue
 	{
 		id = parseInt(id, 10);
-		const index = this.getAll().indexOf(id);
-
-		if (index !== -1)
+		if (this.#queue.has(id))
 		{
-			this.splice(index);
+			this.#queue.delete(id);
 		}
 
-		this.#queue.push(id);
+		this.#queue.add(id);
 		return this;
 	}
 
-	pop()
+	pop(): number
 	{
-		return this.#queue.shift();
+		const values = this.#queue.values();
+		const first = values.next();
+		if (first.value !== undefined)
+		{
+			this.#queue.delete(first.value);
+		}
+		return first.value;
 	}
 
-	peek()
+	peek(): number|null
 	{
-		return (this.#queue.length ? this.#queue[0] : null)
+		const values = this.#queue.values();
+		const first = values.next();
+		return (first.value !== undefined ? first.value : null);
 	}
 
-	getAll()
+	delete(id: number): void
 	{
-		return this.#queue;
+		this.#queue.delete(id);
 	}
 
-	splice(index)
+	has(id: number): boolean
 	{
-		this.#queue.splice(index, 1);
+		return this.#queue.has(id);
+	}
+
+	clear(): void
+	{
+		this.#queue.clear();
+	}
+
+	isOverflow(): boolean
+	{
+		const MAX_PENDING_ITEMS = 10;
+		return (this.#queue.size > MAX_PENDING_ITEMS);
+	}
+
+	freeze(): void
+	{
+		this.#isFreeze = true;
+	}
+
+	unfreeze(): void
+	{
+		this.#isFreeze = false;
+	}
+
+	isFreezed(): boolean
+	{
+		return this.#isFreeze;
 	}
 }

@@ -114,7 +114,7 @@ export default {
 		},
 		isAllowedPaymentDeliverySubmitButton()
 		{
-			if (this.$root.$app.options.contactPhone === '')
+			if (!this.$root.$app.hasClientContactInfo())
 			{
 				return false;
 			}

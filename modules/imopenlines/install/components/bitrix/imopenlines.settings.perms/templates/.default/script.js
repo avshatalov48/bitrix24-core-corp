@@ -1,4 +1,4 @@
-BX.ViPermissionEdit = function(element)
+BX.IMOLPermissionEdit = function(element)
 {
 	this.elements = {
 		main: element,
@@ -10,7 +10,7 @@ BX.ViPermissionEdit = function(element)
 	this.init();
 };
 
-BX.ViPermissionEdit.prototype =
+BX.IMOLPermissionEdit.prototype =
 {
 	init: function()
 	{
@@ -51,15 +51,16 @@ BX.ViPermissionEdit.prototype =
 			selectRoleNodes[i].addEventListener('change', this.handleSelectRoleChange.bind(this));
 		}
 
-		BX.addCustomEvent(
-			"SidePanel.Slider:onMessage",
-			BX.delegate(function(event) {
-				if (event.getEventId() === "ImOpenLines:reloadRoles")
-				{
-					document.location.reload();
-				}
-			}, this)
+		BX.bind(
+			BX('imol_permissions_edit_form'),
+			'submit',
+			this.formSubmitAction
 		);
+	},
+
+	formSubmitAction: function()
+	{
+		BX.SidePanel.Instance.close();
 	},
 
 	handleDeleteRoleClick: function(e)

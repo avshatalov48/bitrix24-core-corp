@@ -141,6 +141,12 @@ class SipTable extends Entity\DataManager
 				'data_type' => 'Bitrix\Voximplant\Config',
 				'reference' => array('=this.CONFIG_ID' => 'ref.ID'),
 			),
+			'REGISTRATION_STATUS_CODE' => array(
+				'data_type' => 'integer',
+			),
+			'REGISTRATION_ERROR_MESSAGE' => array(
+				'data_type' => 'text',
+			),
 		);
 	}
 	/**

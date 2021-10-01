@@ -10,7 +10,7 @@ $MESS["VI_GET_USER_INFO"] = "Error getting user information.";
 $MESS["VI_TOS_RU"] = "<p>You will be redirected to <a href=\"https://billing.voximplant.com/\" target=\"_blank\">https://billing.voximplant.com/</a> (hereafter referred to as the Provider) to top-up your balance.</p>
 <p>By clicking \"Top-Up\":</p>
 <ol>
-	<li>Allow Bitrix Inc. to give the Provider access to your personal data (email, IP address etc) the Provider may need to provide services to the full extent. <strong>Bitrix Inc. will not be held liable for any action the Provider may take upon your data.</strong> The Provider bears full responsibility for your data as stated in the Provider's Terms: <a href=\"https://voximplant.ru/assets/uploads/privacy_policy_ru.pdf\" target=\"_blank\">https://voximplant.ru/assets/uploads/privacy_policy_ru.pdf</a>.</li>
+	<li>Allow Bitrix24 to give the Provider access to your personal data (email, IP address etc) the Provider may need to provide services to the full extent. <strong>Bitrix24 will not be held liable for any action the Provider may take upon your data.</strong> The Provider bears full responsibility for your data as stated in the Provider's Terms: <a href=\"https://voximplant.ru/assets/uploads/privacy_policy_ru.pdf\" target=\"_blank\">https://voximplant.ru/assets/uploads/privacy_policy_ru.pdf</a>.</li>
 	<li>You will not use the Provider services:
 		<ul>
 			<li>to perform any action prohibited by the local Law;</li> 
@@ -18,6 +18,7 @@ $MESS["VI_TOS_RU"] = "<p>You will be redirected to <a href=\"https://billing.vox
 		</ul>
 	</li>
 </ol>";
+$MESS["VI_TOS_EN"] = "You are about to leave Bitrix24 website and will be forwarded to Voximplant website. By continuing to this service you accept Voximplant data processing agreement <a href=\"https://voximplant.com/assets/uploads/data-processing-addendum.pdf\" target=\"_blank\">https://voximplant.com/assets/uploads/data-processing-addendum.pdf</a>";
 $MESS["VI_TRIAL_CALL_INTERCEPT_TEXT"] = "Use call interception to take an inbound call that cannot be served by other employees. The employees involved must be members of the same queue group responsible for inbound calls.";
 $MESS["VI_TRIAL_CALL_INTERCEPT_TITLE"] = "Call interception is available in selected commercial plans";
 $MESS["VI_TRIAL_FEATURES_1"] = "Record all calls (over 100 monthly)";

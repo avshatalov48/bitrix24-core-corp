@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Product;
 
 use Bitrix\Main\Loader;
 use Bitrix\Iblock;
-use Bitrix\Main\Localization\Loc;
 
 if (Loader::includeModule('catalog'))
 {
@@ -35,14 +34,14 @@ if (Loader::includeModule('catalog'))
 			$code = $fields['CODE'];
 			$code['DEFAULT_VALUE'] = unserialize($code['DEFAULT_VALUE'], ['allowed_classes' => false]);
 			$code['DEFAULT_VALUE']['TRANSLITERATION'] = 'Y';
-			//$code['DEFAULT_VALUE']['UNIQUE'] = 'Y'; - unpredictable consequences
+			$code['DEFAULT_VALUE']['UNIQUE'] = 'Y';
 			$code['DEFAULT_VALUE']['USE_GOOGLE'] = 'N';
 			$code['DEFAULT_VALUE']['TRANS_LEN'] = 255;
 
 			$sectionCode = $fields['SECTION_CODE'];
 			$sectionCode['DEFAULT_VALUE'] = unserialize($sectionCode['DEFAULT_VALUE'], ['allowed_classes' => false]);
 			$sectionCode['DEFAULT_VALUE']['TRANSLITERATION'] = 'Y';
-			//$sectionCode['DEFAULT_VALUE']['UNIQUE'] = 'Y'; - unpredictable consequences
+			$sectionCode['DEFAULT_VALUE']['UNIQUE'] = 'Y';
 			$sectionCode['DEFAULT_VALUE']['USE_GOOGLE'] = 'N';
 			$sectionCode['DEFAULT_VALUE']['TRANS_LEN'] = 255;
 

@@ -213,4 +213,5 @@ $MESS["TASKS_TASK_DISABLE_CHANGES_CONFIRMATION_POPUP_HEADER"] = "Подтвер�
 $MESS["TASKS_TASK_DISABLE_CHANGES_CONFIRMATION_POPUP_CONTENT"] = "Уверены, что хотите отменить изменения?";
 $MESS["TASKS_TASK_DISABLE_CHANGES_CONFIRMATION_POPUP_BUTTON_YES"] = "Да";
 $MESS["TASKS_TASK_DISABLE_CHANGES_CONFIRMATION_POPUP_BUTTON_NO"] = "Нет";
+$MESS["TASKS_TASK_NETWORK_DISABLING_WARNING"] = "В задаче участвуют пользователи из другой компании, приглашенные через сеть Битрикс24.Network. Мы больше не поддерживаем задачи между разными Битрикс24, поэтому внешние участники не получат сообщений или уведомлений из этой задачи. #LINK_START#Подробнее#LINK_END#";
 ?>

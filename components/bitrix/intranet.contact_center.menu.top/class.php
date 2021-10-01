@@ -44,10 +44,11 @@ class IntranetContactCenterMenuTop extends \CBitrixComponent
 	{
 		$result = [
 			[
-			'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER'),
-			'URL' => $this->arParams['COMPONENT_BASE_DIR'],
-			'ID' => 'menu_contact_center'
-		]
+				'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER'),
+				'URL' => $this->arParams['COMPONENT_BASE_DIR'],
+				'ID' => 'menu_contact_center',
+				'IS_ACTIVE' => $this->arParams['SECTION_ACTIVE'] === 'contact_center'
+			]
 		];
 
 		if (
@@ -57,16 +58,18 @@ class IntranetContactCenterMenuTop extends \CBitrixComponent
 		{
 			$result[] = [
 				'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER_IMOL_DETAILED_STATISTICS'),
-				'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'openlines/statistics.php',
-				'ID' => 'menu_contact_center_detail_statistics'
+				'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'dialog_list/',
+				'ID' => 'menu_contact_center_detail_statistics',
+				'IS_ACTIVE' => $this->arParams['SECTION_ACTIVE'] === 'dialog_list'
 			];
 
 			if(Limit::canUseReport())
 			{
 				$result[] = [
 					'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER_IMOL_STATISTICS'),
-					'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'openlines/',
-					'ID' => 'menu_contact_center_statistics'
+					'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'dialog_statistics/',
+					'ID' => 'menu_contact_center_statistics',
+					'IS_ACTIVE' => $this->arParams['SECTION_ACTIVE'] === 'dialog_statistics'
 				];
 			}
 			else

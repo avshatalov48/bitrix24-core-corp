@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports,disk_users,main_polyfill_intersectionobserver,main_loader,main_popup,clipboard,disk_externalLink,disk_sharingLegacyPopup,main_core,ui_ears,main_core_events) {
+(function (exports,disk_users,main_polyfill_intersectionobserver,main_loader,main_popup,clipboard,disk_externalLink,disk_sharingLegacyPopup,ui_dialogs_messagebox,main_core,ui_ears,main_core_events) {
 	'use strict';
 
 	var intersectionObserver;
@@ -592,19 +592,49 @@ this.BX.Disk = this.BX.Disk || {};
 	      createProcess.start();
 	    }
 	  }, {
+	    key: "resolveServiceCode",
+	    value: function resolveServiceCode(service) {
+	      if (!service) {
+	        service = BX.Disk.getDocumentService();
+	      }
+
+	      if (service) {
+	        return service;
+	      }
+
+	      if (BX.Disk.isAvailableOnlyOffice()) {
+	        return 'onlyoffice';
+	      }
+
+	      BX.Disk.InformationPopups.openWindowForSelectDocumentService({});
+	      return null;
+	    }
+	  }, {
 	    key: "createDocx",
 	    value: function createDocx(service) {
-	      this.runCreating('docx', service);
+	      var code = this.resolveServiceCode(service);
+
+	      if (code) {
+	        this.runCreating('docx', code);
+	      }
 	    }
 	  }, {
 	    key: "createXlsx",
 	    value: function createXlsx(service) {
-	      this.runCreating('xlsx', service);
+	      var code = this.resolveServiceCode(service);
+
+	      if (code) {
+	        this.runCreating('xlsx', code);
+	      }
 	    }
 	  }, {
 	    key: "createPptx",
 	    value: function createPptx(service) {
-	      this.runCreating('pptx', service);
+	      var code = this.resolveServiceCode(service);
+
+	      if (code) {
+	        this.runCreating('pptx', code);
+	      }
 	    }
 	  }, {
 	    key: "createByDefault",
@@ -816,9 +846,17 @@ this.BX.Disk = this.BX.Disk || {};
 
 	    babelHelpers.classCallCheck(this, ItemExternalLink);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemExternalLink).call(this, objectId, itemData));
+	    var shouldBlockFeature = itemData['dataset']['shouldBlockFeature'];
+	    var blocker = itemData['dataset']['blocker'];
 
 	    _this.data['onclick'] = function () {
 	      this.emit('close');
+
+	      if (shouldBlockFeature && blocker) {
+	        eval(blocker);
+	        return;
+	      }
+
 	      disk_externalLink.ExternalLinkForTrackedObject.showPopup(this.trackedObjectId);
 	    }.bind(babelHelpers.assertThisInitialized(_this));
 
@@ -978,7 +1016,66 @@ this.BX.Disk = this.BX.Disk || {};
 	  return ItemSharing;
 	}(Item);
 
-	var itemMappings = [ItemOpen, ItemShareSection, ItemSharing, ItemInternalLink, ItemExternalLink, ItemRename];
+	var ItemDelete = /*#__PURE__*/function (_Item) {
+	  babelHelpers.inherits(ItemDelete, _Item);
+
+	  function ItemDelete(trackedObjectId, itemData) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, ItemDelete);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemDelete).call(this, trackedObjectId, itemData));
+	    _this.object = {
+	      id: itemData['dataset']['objectId'],
+	      name: itemData['dataset']['objectName']
+	    };
+	    _this.data['onclick'] = _this.handleClick.bind(babelHelpers.assertThisInitialized(_this));
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(ItemDelete, [{
+	    key: "handleClick",
+	    value: function handleClick() {
+	      this.emit('close');
+	      ui_dialogs_messagebox.MessageBox.show({
+	        title: main_core.Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_TITLE'),
+	        message: main_core.Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_MESSAGE', {
+	          '#NAME#': this.object.name
+	        }),
+	        modal: true,
+	        buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+	        okCaption: main_core.Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_OK_BUTTON'),
+	        onOk: this.handleClickDelete.bind(this)
+	      });
+	    }
+	  }, {
+	    key: "handleClickDelete",
+	    value: function handleClickDelete() {
+	      var _this2 = this;
+
+	      main_core.ajax.runAction('disk.api.commonActions.markDeleted', {
+	        analyticsLabel: 'folder.list.dd',
+	        data: {
+	          objectId: this.object.id
+	        }
+	      }).then(function (response) {
+	        if (response.status === 'success') {
+	          var grid = BX.Main.gridManager.getInstanceById(Options.getGridId());
+	          var row = grid.getRows().getById(_this2.trackedObjectId);
+	          row.remove();
+	        }
+	      });
+	      return true;
+	    }
+	  }], [{
+	    key: "detect",
+	    value: function detect(itemData) {
+	      return itemData['id'] === 'delete';
+	    }
+	  }]);
+	  return ItemDelete;
+	}(Item);
+
+	var itemMappings = [ItemOpen, ItemShareSection, ItemSharing, ItemInternalLink, ItemExternalLink, ItemRename, ItemDelete];
 	function getMenuItem(trackedObjectId, itemData) {
 	  var itemClassName = Item;
 	  itemMappings.forEach(function (itemClass) {
@@ -1274,5 +1371,5 @@ this.BX.Disk = this.BX.Disk || {};
 	exports.TileGridEmptyBlockGenerator = TileGridEmptyBlockGenerator;
 	exports.Backend = Backend;
 
-}((this.BX.Disk.Documents = this.BX.Disk.Documents || {}),BX.Disk,BX,BX,BX.Main,BX,BX.Disk,BX.Disk.Sharing,BX,BX.UI,BX.Event));
+}((this.BX.Disk.Documents = this.BX.Disk.Documents || {}),BX.Disk,BX,BX,BX.Main,BX,BX.Disk,BX.Disk.Sharing,BX.UI.Dialogs,BX,BX.UI,BX.Event));
 //# sourceMappingURL=script.js.map

@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main;
 use Bitrix\Crm;
 
 class CBPCrmAddProductRow extends CBPActivity
@@ -60,11 +61,10 @@ class CBPCrmAddProductRow extends CBPActivity
 			$row['DISCOUNT_RATE'] = (float)$discountRate;
 		}
 
-		$taxRate = $this->RowTaxRate;
-		if (!CBPHelper::isEmptyValue($taxRate))
+		if ($product['VAT_RATE'])
 		{
-			$row['TAX_RATE'] = (float)$taxRate;
-			$row['TAX_INCLUDED'] = $this->RowTaxIncluded === 'Y' ? 'Y' : 'N';
+			$row['TAX_RATE'] = $product['VAT_RATE'];
+			$row['TAX_INCLUDED'] = $product['VAT_INCLUDED'];
 		}
 
 		$price = $this->RowPriceAccount;
@@ -73,7 +73,7 @@ class CBPCrmAddProductRow extends CBPActivity
 			$price = $product['PRICE'];
 		}
 
-		$row['PRICE'] = $price;
+		$this->calculatePrices($row, $price);
 
 		$addResult = \CCrmDeal::addProductRows($entityId, [$row], [], false);
 
@@ -101,12 +101,34 @@ class CBPCrmAddProductRow extends CBPActivity
 		$dbProduct = CCrmProduct::GetList(
 			[],
 			['ID' => $id],
-			['ID', 'NAME', 'PRICE']
+			['ID', 'NAME', 'PRICE', 'VAT_ID', 'VAT_INCLUDED']
 		);
 
 		$product = $dbProduct->fetch();
 
-		return  $product ?: null;
+		if ($product)
+		{
+			$product['VAT_RATE'] = null;
+
+			if ($product['VAT_ID'])
+			{
+				$product['VAT_RATE'] = self::getVatRate($product['VAT_ID']);
+			}
+
+			return $product;
+		}
+
+		return  null;
+	}
+
+	private function calculatePrices(array &$row, $price): void
+	{
+		if (isset($row['DISCOUNT_RATE']))
+		{
+			$price = Crm\Discount::calculatePrice($price, $row['DISCOUNT_RATE']);
+		}
+
+		$row['PRICE'] = $price;
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')
@@ -134,6 +156,15 @@ class CBPCrmAddProductRow extends CBPActivity
 
 	private static function getPropertiesMap(): array
 	{
+		$productSettings = [];
+		if (Main\Loader::includeModule('iblock') && Main\Loader::includeModule('catalog'))
+		{
+			$productSettings = [
+				'iblockId' => \Bitrix\Crm\Product\Catalog::getDefaultId(),
+				'basePriceId' => \Bitrix\Crm\Product\Price::getBaseId(),
+			];
+		}
+
 		return [
 			'ProductId' => [
 				'Name' => GetMessage('CRM_APR_PRODUCT_ID'),
@@ -141,6 +172,7 @@ class CBPCrmAddProductRow extends CBPActivity
 				'Type' => 'int',
 				'Required' => true,
 				'AllowSelection' => true,
+				'Settings' => $productSettings
 			],
 			'RowPriceAccount' => [
 				'Name' => GetMessage('CRM_APR_ROW_PRICE_ACCOUNT'),
@@ -161,34 +193,20 @@ class CBPCrmAddProductRow extends CBPActivity
 				'Type' => 'double',
 				'AllowSelection' => true,
 			],
-			'RowTaxRate' => [
-				'Name' => GetMessage('CRM_APR_ROW_TAX_RATE'),
-				'FieldName' => 'row_tax_rate',
-				'Type' => 'select',
-				'Options' => self::getTaxRateOptions(),
-			],
-			'RowTaxIncluded' => [
-				'Name' => GetMessage('CRM_APR_ROW_TAX_INCLUDED'),
-				'FieldName' => 'row_tax_included',
-				'Type' => 'bool',
-				'Default' => 'N',
-				'AllowSelection' => true,
-			],
 		];
 	}
 
-	private static function getTaxRateOptions(): array
+	private static function getVatRate(int $vatId): ?float
 	{
-		$options = [];
-
 		foreach (CCrmTax::GetVatRateInfos() as $vatRow)
 		{
-			$options[$vatRow['VALUE']] = $vatRow['VALUE'] . ' %';
+			if ($vatId === $vatRow['ID'])
+			{
+				return $vatRow['VALUE'];
+			}
 		}
 
-		asort($options, SORT_NUMERIC);
-
-		return $options;
+		return null;
 	}
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)

@@ -106,6 +106,7 @@ BX.namespace('Tasks.Component');
 
 						userType: this.option('userType'),
 						taskLimitExceeded: this.option('taskLimitExceeded'),
+						networkEnabled: this.option('networkEnabled'),
 					};
 
 					var types = this.option('types');
@@ -303,6 +304,7 @@ BX.namespace('Tasks.Component');
 			getDialogEntities: function()
 			{
 				var mode = this.option('mode');
+				var networkEnabled = this.option('networkEnabled');
 				var entities = [];
 
 				if (mode === 'user')
@@ -312,7 +314,7 @@ BX.namespace('Tasks.Component');
 							id: 'user',
 							options: {
 								emailUsers: true,
-								networkUsers: true,
+								networkUsers: networkEnabled,
 								extranetUsers: true,
 								inviteGuestLink: true,
 								myEmailUsers: true

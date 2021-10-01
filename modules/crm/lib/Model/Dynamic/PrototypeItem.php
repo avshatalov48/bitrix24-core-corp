@@ -13,6 +13,7 @@ use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\StatusTable;
+use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
@@ -423,6 +424,7 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 			ProductRowTable::deleteByItem($entityTypeId, $id);
 			AssignedTable::deleteByItem($entityTypeId, $id);
 			EntityRelationTable::deleteByItem($entityTypeId, $id);
+			TimelineEntry::deleteByOwner($entityTypeId, $id);
 
 			static::getFullTextDataClass()::delete($id);
 		}

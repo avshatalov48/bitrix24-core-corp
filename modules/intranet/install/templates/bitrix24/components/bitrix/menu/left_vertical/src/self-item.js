@@ -185,7 +185,7 @@ export class SelfItem
 				itemData: itemData
 			},
 			analyticsLabel: {
-				analyticsLabel: 'selfItem'
+				type: 'self'
 			}
 		}).then((response) => {
 

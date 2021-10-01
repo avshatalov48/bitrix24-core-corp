@@ -9,5 +9,7 @@ class DealCategoryChangeError
 	const CATEGORY_NOT_CHANGED = 40;
 	const RESPONSIBLE_NOT_FOUND = 50;
 	const STAGE_NOT_FOUND = 50;
+	const USER_EVENT_FAILURE = 60;
+	public const RESTRICTION_APPLIED = 70;
 	const HAS_WORKFLOWS = 1000;
 }

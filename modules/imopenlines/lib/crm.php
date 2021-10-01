@@ -1419,7 +1419,7 @@ class Crm
 						$relations = \CIMChat::GetRelationById($session->getData('CHAT_ID'));
 						\Bitrix\Pull\Event::add(array_keys($relations), Array(
 							'module_id' => 'im',
-							'command' => 'updateUser',
+							'command' => 'userUpdate',
 							'params' => Array(
 								'user' => ImUser::getInstance($session->getData('USER_ID'))->getFields()
 							),
@@ -1506,10 +1506,6 @@ class Crm
 
 	/**
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getResponsibleCrmId()
 	{
@@ -1553,11 +1549,14 @@ class Crm
 					$result = current($queueUserList);
 				}
 
-				if(empty($result) && Loader::includeModule('bitrix24'))
+				if(empty($result))
 				{
-					$adminList = \CBitrix24::getAllAdminId();
+					$adminList = Common::getAdministrators();
 
-					if(!empty($adminList) && is_array($adminList))
+					if(
+						!empty($adminList)
+						&& is_array($adminList)
+					)
 					{
 						$result = current($adminList);
 					}

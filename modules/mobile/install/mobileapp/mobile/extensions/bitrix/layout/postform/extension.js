@@ -1822,7 +1822,8 @@
 			const coloredMessage = this.getColoredMessageStatus();
 			const postFormData = BX.componentParameters.get('POST_FORM_DATA', {});
 			const medalsList = BX.componentParameters.get('MEDALS_LIST', {});
-			const moduleVoteInstalled = BX.componentParameters.get('MODULE_VOTE_INSTALLED', 'N') == 'Y';
+			const moduleVoteInstalled = BX.componentParameters.get('MODULE_VOTE_INSTALLED', 'N') === 'Y';
+			const useImportant = BX.componentParameters.get('USE_IMPORTANT', 'Y') === 'Y';
 
 			const backgroundAvailable = !(
 				medal
@@ -2058,6 +2059,7 @@
 					onClickShowHideTitleItem: (params) => this.onClickShowHideTitleItem(params),
 					onClickVoteMenuItem: () => this.onClickVoteMenuItem(),
 					moduleVoteInstalled,
+					useImportant,
 					backgroundAvailable,
 					onHide: () => this.hideActionSheet(),
 					animation: ( this.height.root === null ? {} : { duration: 0.5, delay: 0.0, }),

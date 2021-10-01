@@ -1,38 +1,20 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Timeline\TimelineManager;
-use Bitrix\Crm\Timeline\TimelineEntry;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Disk;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 Loc::loadMessages(__FILE__);
 
 class CommentController extends EntityController
 {
-	//region Singleton
-	/** @var CommentController|null */
-	protected static $instance = null;
 	protected static $parser = null;
 
 	const UF_FIELD_NAME = 'CRM_TIMELINE';
 	const UF_COMMENT_FILE_NAME = 'UF_CRM_COMMENT_FILES';
-
-	/**
-	 * @return CommentController
-	 */
-	public static function getInstance()
-	{
-		if (self::$instance === null)
-		{
-			self::$instance = new CommentController();
-		}
-		return self::$instance;
-	}
 
 	private static function getParser()
 	{
@@ -121,7 +103,7 @@ class CommentController extends EntityController
 			if ($fileFields && !empty($fileFields[self::UF_COMMENT_FILE_NAME]['VALUE']))
 			{
 				$rules["USERFIELDS"] = $fileFields[self::UF_COMMENT_FILE_NAME];
-				
+
 				if ($options['LAZYLOAD'] === 'Y')
 					$parser->LAZYLOAD = 'Y';
 

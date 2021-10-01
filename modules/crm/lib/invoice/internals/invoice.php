@@ -8,6 +8,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class InvoiceTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Invoice_Query query()
+ * @method static EO_Invoice_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Invoice_Result getById($id)
+ * @method static EO_Invoice_Result getList(array $parameters = array())
+ * @method static EO_Invoice_Entity getEntity()
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Invoice createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Invoice_Collection createCollection()
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Invoice wakeUpObject($row)
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Invoice_Collection wakeUpCollection($rows)
+ */
 class InvoiceTable extends Main\Entity\DataManager
 {
 	/**

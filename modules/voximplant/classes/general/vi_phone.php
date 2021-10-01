@@ -26,19 +26,29 @@ class CVoxImplantPhone
 
 	public static function GetUserPhone($userId)
 	{
-		$phones = VI\PhoneTable::getByUserId($userId);
-
-		if (isset($phones['PERSONAL_MOBILE']))
+		$userRecord = \Bitrix\Main\UserTable::getRow([
+			'select' => ['WORK_PHONE', 'PERSONAL_PHONE', 'PERSONAL_MOBILE'],
+			'filter' => ['=ID' => $userId]
+		]);
+		if (!is_array($userRecord))
 		{
-			return $phones['PERSONAL_MOBILE'];
+			return false;
 		}
-		else if (isset($phones['PERSONAL_PHONE']))
+		foreach ($userRecord as $key => $value)
 		{
-			return $phones['PERSONAL_PHONE'];
+			$userRecord[$key] = CVoxImplantPhone::stripLetters($value);
 		}
-		else if (isset($phones['WORK_PHONE']))
+		if ($userRecord['PERSONAL_MOBILE'] != '')
 		{
-			return $phones['WORK_PHONE'];
+			return $userRecord['PERSONAL_MOBILE'];
+		}
+		if ($userRecord['PERSONAL_PHONE'] != '')
+		{
+			return $userRecord['PERSONAL_PHONE'];
+		}
+		if ($userRecord['WORK_PHONE'] != '')
+		{
+			return $userRecord['WORK_PHONE'];
 		}
 
 		return false;
@@ -942,19 +952,33 @@ class CVoxImplantPhone
 	public static function getNumberDescription($numberFields)
 	{
 		$price = $numberFields["PRICE"];
+
+		if($numberFields["TO_DELETE"] == "Y")
+		{
+			return Loc::getMessage("VI_PHONE_DESCRIPTION_RENT_TO_DELETE_DESCRIPTION");
+		}
+		else
+		{
+			return Loc::getMessage("VI_PHONE_DESCRIPTION_RENT_DESCRIPTION", [
+				"#PRICE#" => CVoxImplantMain::formatMoney($price)
+			]);
+		}
+	}
+
+	public static function getNumberStatus($numberFields)
+	{
 		$paidUntil = $numberFields["PAID_BEFORE"];
 
 		if($numberFields["TO_DELETE"] == "Y")
 		{
-			return Loc::getMessage("VI_PHONE_DESCRIPTION_RENT_TO_DELETE", [
+			return Loc::getMessage("VI_PHONE_DESCRIPTION_RENT_TO_DELETE_STATUS", [
 				"#DISCONNECT_DATE#" => $numberFields["DATE_DELETE"] ? $numberFields["DATE_DELETE"]->toString() : ""
 			]);
 		}
 		else
 		{
-			return Loc::getMessage("VI_PHONE_DESCRIPTION_RENT", [
+			return Loc::getMessage("VI_PHONE_DESCRIPTION_RENT_STATUS", [
 				"#PAID_UNTIL#" => $paidUntil,
-				"#PRICE#" => CVoxImplantMain::formatMoney($price)
 			]);
 		}
 	}

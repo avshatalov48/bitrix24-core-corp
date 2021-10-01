@@ -23,38 +23,57 @@ class Helper
 			static::ENUM_TEMPLATE_COLORED => Loc::getMessage('IMOL_HELPER_TEMPLATE_COLORED'),
 		);
 	}
-	
-	public static function getAddUrl()
+
+	/**
+	 * @return string
+	 */
+	public static function getAddUrl(): string
 	{
-		return \Bitrix\ImOpenLines\Common::getPublicFolder() . "list/edit.php?ID=0";
-	}
-	
-	public static function getEditUrl($lineId = 0)
-	{
-		$lineId = intval($lineId);
-		return \Bitrix\ImOpenLines\Common::getPublicFolder() . 'list/' . ($lineId? "edit.php?ID=".$lineId: '');
-	}
-	
-	public static function getListUrl()
-	{
-		return \Bitrix\ImOpenLines\Common::getPublicFolder() . 'list/';
+		return Common::getContactCenterPublicFolder() . 'lines_edit/?ID=?ID=0';
 	}
 
-	public static function getConnectorUrl($connectorId, $lineId = 0)
+	/**
+	 * @param int $lineId
+	 * @return string
+	 */
+	public static function getEditUrl($lineId = 0):string
 	{
-		$lineId = intval($lineId);
+		$lineId = (int)$lineId;
+		return Common::getContactCenterPublicFolder() . ($lineId? 'lines_edit/?ID=' . $lineId: '');
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getListUrl(): string
+	{
+		return Common::getContactCenterPublicFolder();
+	}
+
+	/**
+	 * @param $connectorId
+	 * @param int $lineId
+	 * @return string
+	 */
+	public static function getConnectorUrl($connectorId, $lineId = 0): string
+	{
+		$lineId = (int)$lineId;
 
 		if(!empty($connectorId))
-			return \Bitrix\ImOpenLines\Common::getPublicFolder() . 'connector/?ID=' . $connectorId . ($lineId ? "&LINE=" . $lineId : '');
+		{
+			return Common::getContactCenterPublicFolder() . 'connector/?ID=' . $connectorId . ($lineId ? '&LINE=' . $lineId : '');
+		}
 		else
-			return \Bitrix\ImOpenLines\Common::getPublicFolder() . 'list/edit.php?ID=' . ($lineId ? $lineId : '0');
+		{
+			return Common::getContactCenterPublicFolder() . 'lines_edit/?ID=' . ($lineId ?: '0');
+		}
 	}
-	
+
 	public static function isAvailable()
 	{
 		return \Bitrix\ImOpenLines\Config::available();
 	}
-	
+
 	public static function isLiveChatAvailable()
 	{
 		return \Bitrix\ImOpenLines\LiveChatManager::available();

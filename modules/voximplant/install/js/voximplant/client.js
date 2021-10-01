@@ -259,7 +259,10 @@
 				}
 			};
 			client.addEventListener(VoxImplant.Events.AuthResult, onAuthResult);
-			client.requestOneTimeLoginKey(authData.login + '@' + authData.server);
+			client.requestOneTimeLoginKey(authData.login + '@' + authData.server).catch(function(e)
+			{
+				reject(e);
+			});
 		});
 	};
 

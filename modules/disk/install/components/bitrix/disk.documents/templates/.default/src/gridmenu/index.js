@@ -5,6 +5,7 @@ import ItemInternalLink from './iteminternallink';
 import ItemExternalLink from './itemexternallink';
 import ItemRename from './itemrename';
 import ItemSharing from "./item-sharing";
+import ItemDelete from "./item-delete";
 
 const itemMappings = [
 	ItemOpen,
@@ -13,6 +14,7 @@ const itemMappings = [
 	ItemInternalLink,
 	ItemExternalLink,
 	ItemRename,
+	ItemDelete,
 ];
 
 export default function getMenuItem(trackedObjectId, itemData)

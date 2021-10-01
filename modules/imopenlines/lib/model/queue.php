@@ -1,16 +1,19 @@
 <?php
 namespace Bitrix\ImOpenLines\Model;
 
-use \Bitrix\Main,
-	\Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UserTable;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Entity\Validator\Length;
 
-use \Bitrix\Main\ORM\Event,
-	\Bitrix\Main\ORM\Query\Join,
-	\Bitrix\Main\ORM\EventResult,
-	\Bitrix\Main\ORM\Fields\StringField,
-	\Bitrix\Main\ORM\Fields\IntegerField,
-	\Bitrix\Main\ORM\Fields\DatetimeField,
-	\Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Event;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\EventResult;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\DatetimeField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 
 Loc::loadMessages(__FILE__);
 
@@ -42,14 +45,14 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\ImOpenLines\Model\EO_Queue_Collection wakeUpCollection($rows)
  */
 
-class QueueTable extends Main\ORM\Data\DataManager
+class QueueTable extends DataManager
 {
 	/**
 	 * Returns DB table name for entity.
 	 *
 	 * @return string
 	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_imopenlines_queue';
 	}
@@ -58,10 +61,8 @@ class QueueTable extends Main\ORM\Data\DataManager
 	 * Returns entity map definition.
 	 *
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return [
 			new IntegerField('ID', [
@@ -105,7 +106,7 @@ class QueueTable extends Main\ORM\Data\DataManager
 			]),
 			new Reference(
 				'USER',
-				\Bitrix\Main\UserTable::class,
+				UserTable::class,
 				Join::on('this.USER_ID', 'ref.ID')
 			),
 			new Reference(
@@ -119,9 +120,6 @@ class QueueTable extends Main\ORM\Data\DataManager
 	/**
 	 * @param Event $event
 	 * @return EventResult|void
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function onDelete(Event $event)
 	{
@@ -147,22 +145,20 @@ class QueueTable extends Main\ORM\Data\DataManager
 	/**
 	 * Return current date for LAST_ACTIVITY_DATE field.
 	 *
-	 * @return Main\Type\DateTime
-	 * @throws Main\ObjectException
+	 * @return DateTime
 	 */
-	public static function getCurrentDate()
+	public static function getCurrentDate(): DateTime
 	{
-		return new \Bitrix\Main\Type\DateTime();
+		return new DateTime();
 	}
 
 	/**
-	 * @return array
-	 * @throws Main\ArgumentTypeException
+	 * @return Length[]
 	 */
-	public static function validateString()
+	public static function validateString(): array
 	{
 		return [
-			new Main\Entity\Validator\Length(null, 255),
+			new Length(null, 255),
 		];
 	}
 }

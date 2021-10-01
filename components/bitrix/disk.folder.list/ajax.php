@@ -277,7 +277,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				'NEGATIVE' => 1,
 			);
 		}
-		unset($rightOnObject);
 
 		if($newRights)
 		{
@@ -342,7 +341,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					}
 				}
 			}
-			unset($right);
 		}
 
 		$this->sendJsonSuccessResponse(array(
@@ -438,7 +436,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				unset($allListNormalizeRights[$i]);
 			}
 		}
-		unset($rightOnObject);
 
 		foreach($allListNormalizeRights as $rightOnObject)
 		{
@@ -542,7 +539,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					);
 				}
 			}
-			unset($accessCode, $right);
 
 			if(empty($newRights))
 			{
@@ -651,7 +647,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 				$newRights[] = $newRight;
 			}
-			unset($accessCode, $right);
 		}
 
 		$detachedRightsFromPost = $this->request->getPost('detachedRights');
@@ -683,7 +678,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					);
 				}
 			}
-			unset($accessCode, $right);
 		}
 		if (!$specificOnlyNegativeRights->isEmpty())
 		{
@@ -701,7 +695,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				}
 			}
 		}
-		unset($negativeRight);
 
 		$changedDomainRights = $this->getChangedDomainRights($specificRights, $newRights);
 		$newRights = $this->addDomainToNewRights($changedDomainRights, $newRights);
@@ -742,7 +735,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 							$newRights[$i]['DOMAIN'] = $old['DOMAIN'];
 						}
 					}
-					unset($newRight);
 
 					break;
 			}
@@ -808,9 +800,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				//will be new right on same access code and with different task.
 				$changedDomainRights[] = array($right, $newRight);
 			}
-			unset($newRight);
 		}
-		unset($right);
 
 		return $changedDomainRights;
 	}
@@ -938,7 +928,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		{
 			$selected[] = $entity['entityId'];
 		}
-		unset($entity);
 		$destination = Ui\Destination::getSocNetDestination($this->getUser()->getId(), $selected);
 
 		$rightsManager = Driver::getInstance()->getRightsManager();
@@ -1041,7 +1030,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					unset($newExtendedRightsReformat[$sharingRow['TO_ENTITY']]);
 				}
 			}
-			unset($sharingRow);
 
 			$needToAdd = $newExtendedRightsReformat;
 			if($needToAdd)
@@ -1062,7 +1050,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 						unset($needToAdd[$entityId]);
 					}
 				}
-				unset($entityId, $right);
 
 				if($needToAdd)
 				{
@@ -1114,6 +1101,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		\Bitrix\Disk\Driver::getInstance()->getTrackedObjectManager()->refresh($object);
 
+		$currentUserId = $this->getUser()->getId();
 		$entityToNewShared = $this->request->getPost('entityToNewShared');
 		if(!empty($entityToNewShared) && is_array($entityToNewShared))
 		{
@@ -1159,13 +1147,21 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					$needToDelete[$sharingRow['TO_ENTITY']] = $sharingRow;
 				}
 			}
-			unset($sharingRow);
 
 			$needToAdd = array_diff_key($newExtendedRightsReformat, $needToOverwrite);
+			foreach ($needToAdd as $entity => $taskName)
+			{
+				if (!Sharing::hasRightToKnowAboutEntity($currentUserId, $entity))
+				{
+					unset($needToAdd[$entity]);
+				}
+			}
+
 			if($needToAdd)
 			{
+
 				$sharings = Sharing::addToManyEntities(array(
-					'FROM_ENTITY' => Sharing::CODE_USER . $this->getUser()->getId(),
+					'FROM_ENTITY' => Sharing::CODE_USER . $currentUserId,
 					'REAL_OBJECT' => $object,
 					'CREATED_BY' => $this->getUser()->getId(),
 					'CAN_FORWARD' => false,
@@ -1195,7 +1191,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				{
 					$rightsManager->deleteByDomain($object->getRealObject(), $rightsManager->getSharingDomain($sharingRow['ID']));
 				}
-				unset($sharingRow);
 
 				$newRights = array();
 				foreach($needToOverwrite as $sharingRow)
@@ -1220,7 +1215,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 						));
 					}
 				}
-				unset($sharingRow);
 
 				if($newRights)
 				{
@@ -1234,28 +1228,22 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				{
 					$ids[] = $sharingRow['ID'];
 				}
-				unset($sharingRow);
 
 				foreach(Sharing::getModelList(array('filter' => array('ID' => $ids))) as $sharing)
 				{
-					$sharing->delete($this->getUser()->getId());
+					$sharing->delete($currentUserId);
 				}
-				unset($sharing);
 			}
-
-			unset($right);
 
 			$this->sendJsonSuccessResponse();
 		}
 		else
 		{
 			//user delete all sharing
-			$userId = $this->getUser()->getId();
 			foreach($object->getRealObject()->getSharingsAsReal() as $sharing)
 			{
-				$sharing->delete($userId);
+				$sharing->delete($currentUserId);
 			}
-			unset($sharing);
 
 			$this->sendJsonSuccessResponse();
 		}
@@ -1685,7 +1673,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				);
 			}
 		}
-		unset($subFolder);
 		\Bitrix\Main\Type\Collection::sortByColumn($subFolders, 'name');
 
 
@@ -1877,7 +1864,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		{
 			$countQuery->registerRuntimeField('', $field);
 		}
-		unset($field);
 
 		$totalData = $countQuery->setLimit(null)->setOffset(null)->exec()->fetch();
 		$this->sendJsonSuccessResponse(array(
@@ -1953,7 +1939,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		{
 			$fileIds[] = $file->getId();
 		}
-		unset($file);
 
 		$this->sendJsonSuccessResponse(array(
 			'downloadArchiveUrl' => \Bitrix\Disk\Driver::getInstance()->getUrlManager()->getUrlDownloadController('downloadArchive', array(

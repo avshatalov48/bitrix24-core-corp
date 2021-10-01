@@ -146,23 +146,6 @@ else
         {
             if (!result.data[k].SUCCESS && result.data[k].OPERATION !== 'task.dependence.add')
             {
-				var message = '';
-            	var errors = result.data[k].ERRORS;
-
-            	errors.forEach(function(error)
-				{
-					if (error.CODE === 'ACTION_NOT_ALLOWED.RESTRICTED')
-					{
-						message = error.MESSAGE;
-					}
-				});
-
-            	if (message !== '')
-				{
-					BX.UI.InfoHelper.show('limit_tasks_gantt');
-					return;
-				}
-
                 return showAjaxErrorPopup(result.data[k].ERRORS);
             }
 
@@ -348,38 +331,52 @@ else
                             callback();
                         }
                     },
-                    onTaskChange: function (updatedTasks) {
-
+                    onTaskChange: function(updatedTasks) {
                         query.deleteAll();
-
-                        for (var i = 0; i < updatedTasks.length; i++) {
-                            if (updatedTasks[i].changes.length) {
+                        for (var i = 0; i < updatedTasks.length; i++)
+						{
+                            if (updatedTasks[i].changes.length)
+							{
                                 var delta = {};
-                                if (BX.util.in_array("dateDeadline", updatedTasks[i].changes)) {
+
+                                if (BX.util.in_array("dateDeadline", updatedTasks[i].changes))
+								{
                                     delta['DEADLINE'] = tasksFormatDate(updatedTasks[i].dateDeadline);
                                 }
-                                if (BX.util.in_array("dateStart", updatedTasks[i].changes)) {
+                                if (BX.util.in_array("dateStart", updatedTasks[i].changes))
+								{
                                     delta['START_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateStart);
+									if (updatedTasks[i].dateEnd)
+									{
+										delta['END_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateEnd);
+									}
                                 }
-                                if (BX.util.in_array("dateEnd", updatedTasks[i].changes)) {
+                                if (BX.util.in_array("dateEnd", updatedTasks[i].changes))
+								{
                                     delta['END_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateEnd);
+									if (updatedTasks[i].dateStart)
+									{
+										delta['START_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateStart);
+									}
                                 }
 
-                                query.add('task.update', {
-                                    id: updatedTasks[i].task.id,
-                                    data: delta,
-                                    parameters: {
-                                        RETURN_OPERATION_RESULT_DATA: true,
-                                        THROTTLE_MESSAGES: true
-                                    }
-                                }, {
-                                    code: 'task_update'
-                                });
+                                query.add(
+									'task.update',
+									{
+										id: updatedTasks[i].task.id,
+										data: delta,
+										parameters: {
+											RETURN_OPERATION_RESULT_DATA: true,
+											THROTTLE_MESSAGES: true
+										}
+									},
+									{
+                                    	code: 'task_update'
+                                	}
+								);
                             }
                         }
-
                         query.execute();
-
                         ganttAux.notificationRelease();
                     },
                     onTaskMove: function (sourceId, targetId, before, newProjectId, newParentId) {

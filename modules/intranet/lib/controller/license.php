@@ -117,7 +117,7 @@ class License extends \Bitrix\Main\Engine\Controller
 		)
 			? true : false;
 
-		$analyticaLabel = '?analyticsLabel[headerPopup]=Y&analyticsLabel[licenseType]='.$licenseType;
+		$analyticsLabel = '?analyticsLabel[headerPopup]=Y&analyticsLabel[licenseType]='.$licenseType;
 		$isMarketAvailable = Loader::includeModule('rest') && \Bitrix\Rest\Marketplace\Client::isSubscriptionAccess();
 
 		$licenseData = [
@@ -125,9 +125,9 @@ class License extends \Bitrix\Main\Engine\Controller
 				'name' => \CBitrix24::getLicenseName(),
 				'type' => $licenseType,
 				'tillMessage' => $licenseTillMessage,
-				'demoPath' => \CBitrix24::PATH_LICENSE_DEMO . $analyticaLabel,
-				'allPath' => \CBitrix24::PATH_LICENSE_ALL . $analyticaLabel,
-				'myPath' => \CBitrix24::PATH_LICENSE_MY . $analyticaLabel,
+				'demoPath' => \CBitrix24::PATH_LICENSE_DEMO . $analyticsLabel,
+				'allPath' => \CBitrix24::PATH_LICENSE_ALL . $analyticsLabel,
+				'myPath' => \CBitrix24::PATH_LICENSE_MY . $analyticsLabel,
 				'ordersPath' => "/settings/order/",
 				'isDemo' => \CBitrix24::IsDemoLicense(),
 				'isFreeTariff' => $licenseFamily === 'project',

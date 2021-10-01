@@ -3,6 +3,22 @@ namespace Bitrix\Crm\Automation\Trigger\Entity;
 
 use Bitrix\Main;
 
+/**
+ * Class TriggerAppTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TriggerApp_Query query()
+ * @method static EO_TriggerApp_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TriggerApp_Result getById($id)
+ * @method static EO_TriggerApp_Result getList(array $parameters = array())
+ * @method static EO_TriggerApp_Entity getEntity()
+ * @method static \Bitrix\Crm\Automation\Trigger\Entity\EO_TriggerApp createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Automation\Trigger\Entity\EO_TriggerApp_Collection createCollection()
+ * @method static \Bitrix\Crm\Automation\Trigger\Entity\EO_TriggerApp wakeUpObject($row)
+ * @method static \Bitrix\Crm\Automation\Trigger\Entity\EO_TriggerApp_Collection wakeUpCollection($rows)
+ */
 class TriggerAppTable extends Main\Entity\DataManager
 {
 	/**

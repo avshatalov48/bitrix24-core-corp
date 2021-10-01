@@ -7,6 +7,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class TaxTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Tax_Query query()
+ * @method static EO_Tax_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Tax_Result getById($id)
+ * @method static EO_Tax_Result getList(array $parameters = array())
+ * @method static EO_Tax_Entity getEntity()
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Tax createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Tax_Collection createCollection()
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Tax wakeUpObject($row)
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_Tax_Collection wakeUpCollection($rows)
+ */
 class TaxTable extends Main\Entity\DataManager
 {
 	public static function getTableName()

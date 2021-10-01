@@ -117,8 +117,8 @@ class EntityBinding
 		$indexMax = count($bindings);
 		for ($index = 1; $index < $indexMax; $index++)
 		{
-			$currentEntityId = $innerEntityId = self::resolveEntityID($entityTypeID, $bindings[$index]);
-			$previousEntityId = $innerEntityId = self::resolveEntityID($entityTypeID, $bindings[$index - 1]);
+			$currentEntityId = self::resolveEntityID($entityTypeID, $bindings[$index]);
+			$previousEntityId = self::resolveEntityID($entityTypeID, $bindings[$index - 1]);
 
 			if ($currentEntityId === $previousEntityId)
 			{
@@ -230,13 +230,14 @@ class EntityBinding
 		}
 		return $bindings;
 	}
+
 	/**
 	 * Extract entity IDs from bindings.
+	 *
 	 * @param int $entityTypeID Entity Type ID.
-	 * @param array $bindings Bindings.
-	 * @return array
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\NotSupportedException
+	 * @param array[] $bindings Bindings.
+	 *
+	 * @return int[]
 	 */
 	public static function prepareEntityIDs($entityTypeID, array $bindings)
 	{
@@ -438,16 +439,20 @@ class EntityBinding
 		$index = self::findBindingIndexByEntityID($entityTypeID, $entityID, $bindings);
 		return $index >= 0 ? $bindings[$index] : null;
 	}
+
 	/**
-	 * Prepare binding changes.
+	 * Prepare binding changes, for example, newly bound/unbound entities, changed SORT field, changed primary bindings.
+	 * All possible changes that can happen to bindings are taken into account in this method.
+	 *
+	 * It's primary purpose is to prepare $added and $removed arrays to pass them to bind/unbind methods.
+	 *
 	 * @param int $entityTypeID Entity Type ID.
 	 * @param array $origin Origin bindings.
 	 * @param array $current Current bindings.
 	 * @param array &$added Added bindings (output parameter).
 	 * @param array &$removed Removed bindings (output parameter).
+	 *
 	 * @return void
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\NotSupportedException
 	 */
 	public static function prepareBindingChanges($entityTypeID, array $origin, array $current, array &$added, array &$removed)
 	{
@@ -576,6 +581,57 @@ class EntityBinding
 
 		$removed = array_values($removed);
 		$added = array_values($added);
+	}
+
+	/**
+	 * Find entities that were bound or unbound based on previous and current bindings.
+	 * Changes in secondary fields (SORT, IS_PRIMARY) are ignored.
+	 * The only thing that matters here - was entity bound or unbound
+	 *
+	 * @param int $entityTypeId
+	 * @param array[] $previousBindings
+	 * @param array[] $currentBindings
+	 *
+	 * @return array[][] = [
+	 *     [], // array of bindings that were added
+	 *     [], // array of bindings that were removed
+	 * ]
+	 */
+	public static function prepareBoundAndUnboundEntities(
+		int $entityTypeId,
+		array $previousBindings,
+		array $currentBindings
+	): array
+	{
+		static::validateEntityTypeId($entityTypeId);
+
+		$previousIds = static::prepareEntityIDs($entityTypeId, $previousBindings);
+		$currentIds = static::prepareEntityIDs($entityTypeId, $currentBindings);
+
+		$addedIds = array_diff($currentIds, $previousIds);
+		$removedIds = array_diff($previousIds, $currentIds);
+
+		$bindingsOfAddedEntities = [];
+		foreach ($addedIds as $addedId)
+		{
+			$indexOfAddedBinding = static::findBindingIndexByEntityID($entityTypeId, $addedId, $currentBindings);
+			if ($indexOfAddedBinding >= 0)
+			{
+				$bindingsOfAddedEntities[] = $currentBindings[$indexOfAddedBinding];
+			}
+		}
+
+		$bindingsOfRemovedEntities = [];
+		foreach ($removedIds as $removedId)
+		{
+			$indexOfRemovedBinding = static::findBindingIndexByEntityID($entityTypeId, $removedId, $previousBindings);
+			if ($indexOfRemovedBinding >= 0)
+			{
+				$bindingsOfRemovedEntities[] = $previousBindings[$indexOfRemovedBinding];
+			}
+		}
+
+		return [$bindingsOfAddedEntities, $bindingsOfRemovedEntities];
 	}
 
 	/**

@@ -2,7 +2,7 @@
 {
 	BX.namespace("BX.Voximplant");
 
-	var gridId = "voximplant_lines_list";
+	var gridId = "voximplant_lines";
 
 	BX.Voximplant.Lines = {
 		init: function(config)

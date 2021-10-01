@@ -1,14 +1,14 @@
 <?php
+
 namespace Bitrix\Crm\Conversion;
 
-use Bitrix\Main;
-
 use Bitrix\Crm;
-use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
-use Bitrix\Crm\Settings\ConversionSettings;
+use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Requisite\EntityLink;
-use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Settings\ConversionSettings;
+use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
+use Bitrix\Main;
 
 class QuoteConverter extends EntityConverter
 {
@@ -204,7 +204,13 @@ class QuoteConverter extends EntityConverter
 
 					$entity = new \CCrmDeal(false);
 					$fields = array('QUOTE_ID' => $this->entityID);
-					$entity->Update($entityID, $fields, false, false);
+					$entity->Update(
+						$entityID,
+						$fields,
+						false,
+						false,
+						$this->getUpdateOptions()
+					);
 					$this->resultData[$entityTypeName] = $entityID;
 				}
 				else//if($entityTypeID === \CCrmOwnerType::Invoice)
@@ -223,7 +229,7 @@ class QuoteConverter extends EntityConverter
 					$fields = array('UF_QUOTE_ID' => $this->entityID);
 					try
 					{
-						$entity->Update($entityID, $fields);
+						$entity->Update($entityID, $fields, $this->getUpdateOptions());
 					}
 					catch(Main\DB\SqlQueryException $e)
 					{
@@ -303,23 +309,10 @@ class QuoteConverter extends EntityConverter
 				);
 			}
 
-			//region Entity Creation Options
-			$entityCreationOptions = array();
-			if(isset($this->contextData['USER_ID']))
-			{
-				$entityCreationOptions['CURRENT_USER'] = $entityCreationOptions['USER_ID'] = $this->contextData['USER_ID'];
-			}
-
-			if(!$this->isUserFieldCheckEnabled())
-			{
-				$entityCreationOptions['DISABLE_USER_FIELD_CHECK'] = true;
-			}
-			//endregion
-
 			if($entityTypeID === \CCrmOwnerType::Deal)
 			{
 				$entity = new \CCrmDeal(false);
-				if(!$entity->CheckFields($fields, false, $entityCreationOptions))
+				if(!$entity->CheckFields($fields, false, $this->getAddOptions()))
 				{
 					throw new EntityConversionException(
 						\CCrmOwnerType::Quote,
@@ -330,7 +323,7 @@ class QuoteConverter extends EntityConverter
 					);
 				}
 
-				$entityID = $entity->Add($fields, true, $entityCreationOptions);
+				$entityID = $entity->Add($fields, true, $this->getAddOptions());
 				if($entityID <= 0)
 				{
 					throw new EntityConversionException(
@@ -484,7 +477,7 @@ class QuoteConverter extends EntityConverter
 				$entity = new \CCrmInvoice(false);
 				$isSuccessful = \CCrmStatusInvoice::isStatusSuccess($fields['STATUS_ID']);
 				$isFailed = !$isSuccessful && \CCrmStatusInvoice::isStatusFailed($fields['STATUS_ID']);
-				if(!$entity->CheckFields($fields, false, $isSuccessful, $isFailed, $entityCreationOptions))
+				if(!$entity->CheckFields($fields, false, $isSuccessful, $isFailed, $this->getAddOptions()))
 				{
 					throw new EntityConversionException(
 						\CCrmOwnerType::Quote,
@@ -496,7 +489,7 @@ class QuoteConverter extends EntityConverter
 				}
 
 				$recalculated = false;
-				$entityID = $entity->Add($fields, $recalculated, SITE_ID, $entityCreationOptions);
+				$entityID = $entity->Add($fields, $recalculated, SITE_ID, $this->getAddOptions());
 				if($entityID <= 0)
 				{
 					throw new EntityConversionException(

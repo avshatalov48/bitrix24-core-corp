@@ -71,7 +71,7 @@ if(\Bitrix\Main\Loader::includeModule("bitrix24"))
 		</div>
 		<div class="crm-webform-list-widget-container crm-webform-list-widget-left crm-webform-list-widget-number <?=$line['viewClassName']?> <?=($line['ACTIVE'] == 'Y' ? '' : 'crm-webform-list-widget-inactive')?>" data-bx-crm-webform-item-view="">
 			<div class="crm-webform-list-widget">
-				<a href="<?=str_replace('#ID#', $line['ID'], $arResult['PATH_TO_EDIT'])?>">
+				<a onclick="BX.SidePanel.Instance.open('<?=str_replace('#ID#', $line['ID'], $arResult['PATH_TO_EDIT'])?>', {width: 996})" style="cursor: pointer;">
 					<div class="crm-webform-list-widget-head">
 						<span class="crm-webform-list-widget-title-container">
 							<span class="crm-webform-list-widget-title-inner">
@@ -186,7 +186,7 @@ if(\Bitrix\Main\Loader::includeModule("bitrix24"))
 								<<?
 								if($line['CAN_EDIT_CONNECTOR']):?>a<?else:?>span<?endif;
 								if($line['CAN_EDIT_CONNECTOR']):?>
-									onclick="BX.SidePanel.Instance.open('<?=CUtil::JSEscape(str_replace(array('#ID#', '#LINE#'), array($id, $line['ID']), $arResult['PATH_TO_CONNECTOR']))?>', {width: 700})"
+									onclick="BX.SidePanel.Instance.open('<?=CUtil::JSEscape(str_replace(['#ID#', '#LINE#'], [$id, $line['ID']], $arResult['PATH_TO_CONNECTOR']))?>', {width: 700})"
 								<?endif;
 								?> class="<?if($line['CAN_EDIT_CONNECTOR']):?>crm-webform-list-social-icon-cursor<?endif;?> crm-webform-list-social-icon ui-icon ui-icon-service-<?=$arResult['ICON_MAP'][$id]?>" title="<?=$name?>"><i></i></<?
 								if($line['CAN_EDIT_CONNECTOR']):?>a<?else:?>span<?endif;

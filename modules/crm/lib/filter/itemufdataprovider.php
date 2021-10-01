@@ -3,9 +3,8 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm\UI\Filter\EntityHandler;
-use Bitrix\Main\Filter\EntityUFDataProvider;
 
-class ItemUfDataProvider extends EntityUFDataProvider
+class ItemUfDataProvider extends UserFieldDataProvider
 {
 	public function getGridColumns(): array
 	{

@@ -16,7 +16,7 @@ const Error = {
 		}
 	},
 	template: `
-		<div class="ui-alert ui-alert-danger ui-alert-xs ui-alert-icon-danger salescenter-app-payment-by-sms-item-container-alert">
+		<div class="ui-alert ui-alert-warning ui-alert-xs ui-alert-icon-danger salescenter-app-payment-by-sms-item-container-alert">
 			<span class="ui-alert-message">
 				{{error.text}}
 			</span>

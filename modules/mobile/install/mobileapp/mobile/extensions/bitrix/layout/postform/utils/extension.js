@@ -448,7 +448,7 @@
 				let icon = this.Utils.getFileType({
 					extension,
 				});
-				icon = icon ?? 'empty';
+				icon = (icon ? icon : 'empty');
 
 				result = View({
 						testId: 'pinnedFileContainer',

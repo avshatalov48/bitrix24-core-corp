@@ -1,15 +1,25 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main;
-use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Entity\Query;
-
 use Bitrix\Crm;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Main;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Type\DateTime;
 
 class TimelineEntry
 {
+	/**
+	 * @abstract
+	 *
+	 * @param array $params
+	 *
+	 * @return int
+	 */
+	public static function create(array $params)
+	{
+	}
+
 	public static function getByID($ID)
 	{
 		$dbResult = Entity\TimelineTable::getList(array('filter' => array('=ID' => $ID), 'limit' => 1));
@@ -265,10 +275,12 @@ class TimelineEntry
 		Entity\TimelineSearchTable::deleteByOwner($ID);
 		Entity\TimelineTable::delete($ID);
 	}
+
 	public static function prepareEntityPushTag($entityTypeID, $entityID)
 	{
-		$ownerTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-		return $entityID > 0 ? "CRM_TIMELINE_{$ownerTypeName}_{$entityID}" : "CRM_TIMELINE_{$ownerTypeName}";
+		$pusher = Crm\Service\Container::getInstance()->getTimelinePusher();
+
+		return $pusher->prepareEntityPushTag((int)$entityTypeID, (int)$entityID);
 	}
 
 	protected static function prepareBindingChanges(array $origin, array $current, array &$added, array &$removed)

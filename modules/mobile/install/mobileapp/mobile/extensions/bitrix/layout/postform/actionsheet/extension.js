@@ -18,6 +18,7 @@
 		onClickShowHideTitleItem,
 		onClickVoteMenuItem,
 		moduleVoteInstalled,
+		useImportant,
 		backgroundAvailable,
 		onHide,
 		animation
@@ -110,12 +111,16 @@
 						iconUrl: currentDomain + postFormData.backgroundIcon,
 						config,
 					}),
-					ActionSheetItem({
-						iconName: 'post_important',
-						title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_IMPORTANT'),
-						onClick: onClickImportantMenuItem,
-						config,
-					}),
+					(
+						useImportant
+							? ActionSheetItem({
+								iconName: 'post_important',
+								title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_IMPORTANT'),
+								onClick: onClickImportantMenuItem,
+								config,
+							})
+							: null
+					),
 					ActionSheetItem({
 						iconName: 'post_thanks',
 						title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_GRATITUDE'),

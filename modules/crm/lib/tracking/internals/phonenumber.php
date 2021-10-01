@@ -7,6 +7,22 @@ use Bitrix\Main\DB;
 
 use Bitrix\Crm\Communication;
 
+/**
+ * Class PhoneNumberTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_PhoneNumber_Query query()
+ * @method static EO_PhoneNumber_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_PhoneNumber_Result getById($id)
+ * @method static EO_PhoneNumber_Result getList(array $parameters = array())
+ * @method static EO_PhoneNumber_Entity getEntity()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_PhoneNumber createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_PhoneNumber_Collection createCollection()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_PhoneNumber wakeUpObject($row)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_PhoneNumber_Collection wakeUpCollection($rows)
+ */
 class PhoneNumberTable extends Orm\Data\DataManager
 {
 	/**

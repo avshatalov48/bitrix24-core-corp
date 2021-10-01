@@ -21,6 +21,7 @@ $MESS["SALESCENTER_SP_PARAMS_FORM_LOGOTIP_HINT"] = "Рекомендований
 $MESS["SALESCENTER_SP_PARAMS_FORM_LOGOTIP_LOAD_BUTTON"] = "Завантажити";
 $MESS["SALESCENTER_SP_PARAMS_FORM_NAME"] = "Назва";
 $MESS["SALESCENTER_SP_PARAMS_FORM_NAME_HINT"] = "Наприклад &laquoОплата картами Visa і MasterCard на сайті&raquo. Назва буде відображатися для відвідувачів Вашого сайту в переліку способів оплати";
+$MESS["SALESCENTER_SP_PARAMS_FORM_NAME_HINT_V2"] = "Наприклад &laquo;Оплата картами Visa та MasterCard на сайті&raquo;. Відвідувачі вашого сайту побачать цю назву в списку способів оплати";
 $MESS["SALESCENTER_SP_PARAMS_FORM_TITLE"] = "Параметри";
 $MESS["SALESCENTER_SP_PAYSYSTEM_ALFABANK_DESCRIPTION"] = "Прийом платежів через платіжні методи Альфа-банку";
 $MESS["SALESCENTER_SP_PAYSYSTEM_ALFABANK_PUBLIC_DESCRIPTION"] = "Для оплати карткою вкажіть її номер, термін дії, ім'я власника карти і CVC.";

@@ -1,11 +1,14 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Imopenlines\Limit;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+use Bitrix\Imopenlines\Limit;
+
+use Bitrix\Main\Loader;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	'ui.buttons',
 	'ui.alerts',
 	'ui.hint',
@@ -15,23 +18,27 @@ Loc::loadMessages(__FILE__);
 	'ui.forms'
 ]);
 CUtil::InitJSCore(['socnetlogdest', 'sidepanel']);
-if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+if (Loader::includeModule('bitrix24'))
 {
 	$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 	\CBitrix24::initLicenseInfoPopupJS();
 }
-
 $APPLICATION->SetTitle($arResult['PAGE_TITLE']);
 ?>
 <script>
 	BX.ready(function(){
-		BX.OpenLinesConfigEdit.init();
+		BX.OpenLinesConfigEdit.init(
+			{
+				isSuccessSendForm: <?=CUtil::PhpToJSObject($arResult['IS_SUCCESS_SEND_FORM'])?>
+			}
+		);
 	});
 	BX.message({
 		'IMOL_CONFIG_EDIT_POPUP_LIMITED_TITLE_DEFAULT': '<?=GetMessageJS('IMOL_CONFIG_EDIT_POPUP_LIMITED_TITLE_DEFAULT')?>',
 		'IMOL_CONFIG_EDIT_LIMIT_INFO_HELPER_CUSTOMER_RATE': '<?=Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_CUSTOMER_RATE?>',
 		'IMOL_CONFIG_EDIT_LIMIT_INFO_HELPER_WORKHOUR_SETTING': '<?=Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_WORKHOUR_SETTING?>',
 		'IMOL_CONFIG_EDIT_LIMIT_INFO_HELPER_MESSAGE_TO_ALL': '<?=Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_MESSAGE_TO_ALL?>',
+		'IMOL_CONFIG_EDIT_LIMIT_INFO_HELPER_QUICK_ANSWERS': '<?=Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_QUICK_ANSWERS?>',
 		'IMOL_CONFIG_EDIT_NO_ANSWER_RULE_FORM': '<?=GetMessageJS('IMOL_CONFIG_EDIT_NO_ANSWER_RULE_FORM')?>',
 		'IMOL_CONFIG_EDIT_NO_ANSWER_RULE_TEXT': '<?=GetMessageJS('IMOL_CONFIG_EDIT_NO_ANSWER_RULE_TEXT')?>',
 		'IMOL_CONFIG_EDIT_NO_ANSWER_RULE_QUEUE': '<?=GetMessageJS('IMOL_CONFIG_EDIT_NO_ANSWER_RULE_QUEUE')?>',
@@ -72,7 +79,7 @@ $APPLICATION->IncludeComponent('bitrix:ui.sidepanel.wrappermenu', '', [
 		foreach ($arResult['CONFIG_MENU'] as $key => $menuItem)
 		{
 			?>
-			<div data-imol-page="<?=$key?>" class="<?if($key == $arResult['PAGE']){?>imopenlines-page-show<?}else{?>imopenlines-page-hide invisible<?}?>">
+			<div data-imol-page="<?=$key?>" class="<?if($key === $arResult['PAGE']){?>imopenlines-page-show<?}else{?>imopenlines-page-hide invisible<?}?>">
 				<?include $menuItem['PAGE']; ?>
 				<div data-imol-title="<?=$menuItem['NAME']?>" class="invisible"></div>
 			</div>

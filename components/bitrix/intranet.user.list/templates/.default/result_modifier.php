@@ -387,7 +387,11 @@ $arResult['TOOLBAR_MENU'] = [
 	[
 		'TYPE' => 'EXPORT_EXCEL',
 		'TITLE' => Loc::getMessage('INTRANET_USER_LIST_MENU_EXPORT_EXCEL_TITLE'),
-		'LINK' => UrlManager::getInstance()->createByBitrixComponent($this->getComponent(), 'export', [ 'type' => 'excel' ])
+		'LINK' => (
+			$arResult['EXCEL_EXPORT_LIMITED']
+				? "javascript:BX.UI.InfoHelper.show('limit_crm_export_excel');"
+				: UrlManager::getInstance()->createByBitrixComponent($this->getComponent(), 'export', [ 'type' => 'excel' ])
+		)
 	],
 	[
 		'TYPE' => 'SYNC_OUTLOOK',

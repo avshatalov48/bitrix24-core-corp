@@ -16,6 +16,22 @@ use Bitrix\Main,
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class InvoiceRecurTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_InvoiceRecur_Query query()
+ * @method static EO_InvoiceRecur_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_InvoiceRecur_Result getById($id)
+ * @method static EO_InvoiceRecur_Result getList(array $parameters = array())
+ * @method static EO_InvoiceRecur_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_InvoiceRecur createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_InvoiceRecur_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_InvoiceRecur wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_InvoiceRecur_Collection wakeUpCollection($rows)
+ */
 class InvoiceRecurTable extends Entity\DataManager
 {
 	public static function getTableName()

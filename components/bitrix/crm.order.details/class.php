@@ -381,6 +381,13 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			return;
 		}
 
+		$restrictedModes = [ComponentMode::CREATION, ComponentMode::COPING];
+		if (in_array($this->getMode(), $restrictedModes) && Crm\Restriction\OrderRestriction::isOrderLimitReached())
+		{
+			$this->includeComponentTemplate('restrictions');
+			return;
+		}
+
 		$this->obtainOrder();
 		$this->prepareEntityData($this->mode);
 
@@ -735,6 +742,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			\CPullWatch::Add($this->userID, 'CRM_ENTITY_ORDER');
 			\CPullWatch::Add($this->userID, 'CRM_ENTITY_ORDER_PAYMENT');
 			\CPullWatch::Add($this->userID, 'CRM_ENTITY_ORDER_SHIPMENT');
+			\CPullWatch::Add($this->userID, 'SALE_DELIVERY_SERVICE');
+			\CPullWatch::Add($this->userID, 'SALE_DELIVERY_REQUEST');
 		}
 
 		$this->includeComponentTemplate();
@@ -965,6 +974,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		$this->arResult['ENTITY_FIELDS'][] = array(
 			'name' => 'SHIPMENT_PROPERTIES',
+			'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_PROPS'),
 			'type' => 'order_property_wrapper',
 			'transferable' => false,
 			'editable' => true,
@@ -976,6 +986,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			],
 			'data' => [
 				'entityType' => 'shipment',
+				'doNotDisplayInShowFieldList' => true
 			]
 		);
 

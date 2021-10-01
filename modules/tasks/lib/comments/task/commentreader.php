@@ -143,7 +143,10 @@ class CommentReader
 				case 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2':
 					foreach ($this->members as $member)
 					{
-						$usersToSkipReading[] = $member['USER_ID'];
+						if ($member['TYPE'] !== MemberTable::MEMBER_TYPE_AUDITOR)
+						{
+							$usersToSkipReading[] = $member['USER_ID'];
+						}
 					}
 					break;
 
@@ -184,7 +187,6 @@ class CommentReader
 					break;
 
 				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ACCOMPLICES':
-				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_AUDITORS':
 					$ids = [];
 					preg_match_all('/(?<=\[USER=)\d+(?=])/', $replaces['#NEW_VALUE#'], $ids);
 					$usersToSkipReading = array_merge($usersToSkipReading, array_map('intval', $ids[0]));
@@ -227,40 +229,8 @@ class CommentReader
 					break;
 
 				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_5_V2':
-					$members = $this->getMembersByRole();
-					$createdBy = current($members[MemberTable::MEMBER_TYPE_ORIGINATOR]);
-					$responsibleMembers = array_merge(
-						$members[MemberTable::MEMBER_TYPE_RESPONSIBLE],
-						$members[MemberTable::MEMBER_TYPE_ACCOMPLICE]
-					);
-					if ($this->comment->getAuthorId() === $createdBy)
-					{
-						$usersToSkipReading = array_merge($usersToSkipReading, $responsibleMembers);
-					}
-					else if (!in_array($this->comment->getAuthorId(), $responsibleMembers, true))
-					{
-						$usersToSkipReading = array_merge(
-							$usersToSkipReading,
-							$responsibleMembers,
-							$members[MemberTable::MEMBER_TYPE_ORIGINATOR]
-						);
-					}
-					break;
-
 				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_5_APPROVE_V2':
-					$members = $this->getMembersByRole();
-					$createdBy = current($members[MemberTable::MEMBER_TYPE_ORIGINATOR]);
-					if ($this->comment->getAuthorId() !== $createdBy)
-					{
-						$usersToSkipReading = array_merge(
-							$usersToSkipReading,
-							$members[MemberTable::MEMBER_TYPE_RESPONSIBLE],
-							$members[MemberTable::MEMBER_TYPE_ACCOMPLICE],
-							$members[MemberTable::MEMBER_TYPE_ORIGINATOR]
-						);
-					}
-					break;
-
+				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_AUDITORS':
 				default:
 					break;
 			}

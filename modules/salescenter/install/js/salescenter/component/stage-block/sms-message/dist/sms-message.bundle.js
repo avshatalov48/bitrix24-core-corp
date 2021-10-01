@@ -23,7 +23,7 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	      this.$emit('on-configure');
 	    }
 	  },
-	  template: "\n\t\t<div class=\"ui-alert ui-alert-danger ui-alert-xs ui-alert-icon-danger salescenter-app-payment-by-sms-item-container-alert\">\n\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t{{error.text}}\n\t\t\t</span>\n\t\t\t<span\n\t\t\t\tv-if=\"error.fixer && error.fixText\"\n\t\t\t\tclass=\"salescenter-app-payment-by-sms-item-container-alert-config\"\n\t\t\t\t@click=\"openSlider()\"\n\t\t\t>\n\t\t\t\t{{error.fixText}}\n\t\t\t</span>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"ui-alert ui-alert-warning ui-alert-xs ui-alert-icon-danger salescenter-app-payment-by-sms-item-container-alert\">\n\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t{{error.text}}\n\t\t\t</span>\n\t\t\t<span\n\t\t\t\tv-if=\"error.fixer && error.fixText\"\n\t\t\t\tclass=\"salescenter-app-payment-by-sms-item-container-alert-config\"\n\t\t\t\t@click=\"openSlider()\"\n\t\t\t>\n\t\t\t\t{{error.fixText}}\n\t\t\t</span>\n\t\t</div>\n\t"
 	};
 
 	var MessageControl = {
@@ -139,7 +139,7 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	      this.$emit('view-on-mouseleave');
 	    },
 	    getSmsMessage: function getSmsMessage() {
-	      var link = "<span class=\"salescenter-app-payment-by-sms-item-container-sms-content-message-link\">".concat(this.orderPublicUrl, "</span><sapn class=\"salescenter-app-payment-by-sms-item-container-sms-content-message-link-ref\">xxxxx</sapn>") + " ";
+	      var link = "<span class=\"salescenter-app-payment-by-sms-item-container-sms-content-message-link\">".concat(this.orderPublicUrl, "</span><span class=\"salescenter-app-payment-by-sms-item-container-sms-content-message-link-ref\">xxxxx</span>") + " ";
 	      var text = this.text;
 	      return main_core.Text.encode(text).replace(/#LINK#/g, link);
 	    }
@@ -154,6 +154,10 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    editor: {
 	      type: Object,
 	      required: true
+	    },
+	    isReadOnly: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  data: function data() {
@@ -180,7 +184,7 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	  },
 	  methods: {
 	    isEditable: function isEditable() {
-	      return this.mode === MODE_EDIT;
+	      return this.mode === MODE_EDIT && !this.isReadOnly;
 	    },
 	    resetError: function resetError() {
 	      this.hasError = false;
@@ -267,7 +271,7 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    } //endregion
 
 	  },
-	  template: "\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-message\">\t\n\t\t\t\t<template v-if=\"isEditable()\">\n\t\t\t\t\t<sms-message-edit-block\t\t\t\t\n\t\t\t\t\t\t:text=\"text\"\n\t\t\t\t\t\tv-on:edit-on-before-blur=\"beforeBlur\"\n\t\t\t\t\t\tv-on:edit-on-after-press-key=\"afterPressKey\"\n\t\t\t\t\t\tv-on:edit-on-update-template=\"updateTemplate\"\n\t\t\t\t\t\tv-on:edit-on-has-link-error=\"showHasLinkErrorHint\"\n\t\t\t\t\t/>\n\t\t\t\t</template> \n\t\t\t\t<template v-else>\n\t\t\t\t\t<sms-message-view-block\n\t\t\t\t\t\t:text=\"text\"\n\t\t\t\t\t\t:orderPublicUrl=\"orderPublicUrl\"\n\t\t\t\t\t\tv-on:view-on-mouseenter=\"showSmsMessagePopupHint\"\n\t\t\t\t\t\tv-on:view-on-mouseleave=\"hidePopupHint\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t\t<sms-message-control-block \n\t\t\t\t\t:editable=\"isEditable()\"\n\t\t\t\t\tv-on:control-on-save=\"afterSaveControl\"\n\t\t\t\t/>\n\t\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-message\">\t\n\t\t\t\t<template v-if=\"isEditable()\">\n\t\t\t\t\t<sms-message-edit-block\t\t\t\t\n\t\t\t\t\t\t:text=\"text\"\n\t\t\t\t\t\tv-on:edit-on-before-blur=\"beforeBlur\"\n\t\t\t\t\t\tv-on:edit-on-after-press-key=\"afterPressKey\"\n\t\t\t\t\t\tv-on:edit-on-update-template=\"updateTemplate\"\n\t\t\t\t\t\tv-on:edit-on-has-link-error=\"showHasLinkErrorHint\"\n\t\t\t\t\t/>\n\t\t\t\t</template> \n\t\t\t\t<template v-else>\n\t\t\t\t\t<sms-message-view-block\n\t\t\t\t\t\t:text=\"text\"\n\t\t\t\t\t\t:orderPublicUrl=\"orderPublicUrl\"\n\t\t\t\t\t\tv-on:view-on-mouseenter=\"showSmsMessagePopupHint\"\n\t\t\t\t\t\tv-on:view-on-mouseleave=\"hidePopupHint\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t\t<sms-message-control-block v-if=\"!isReadOnly\"\n\t\t\t\t\t:editable=\"isEditable()\"\n\t\t\t\t\tv-on:control-on-save=\"afterSaveControl\"\n\t\t\t\t/>\n\t\t\t</div>\n\t"
 	};
 
 	var SenderList = {

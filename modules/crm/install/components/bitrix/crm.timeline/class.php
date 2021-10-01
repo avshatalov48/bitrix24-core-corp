@@ -6,7 +6,6 @@ use Bitrix\Main;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\Base;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
@@ -16,6 +15,7 @@ use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Crm\Timeline\ActivityController;
 use Bitrix\Crm\Timeline\TimelineEntry;
+use Bitrix\Crm\Integration;
 
 Loc::loadMessages(__FILE__);
 
@@ -187,14 +187,15 @@ class CCrmTimelineComponent extends CBitrixComponent
 			$this->arResult['ENABLE_MEETING'] = isset($this->arParams['~ENABLE_MEETING']) ? (bool)$this->arParams['~ENABLE_MEETING'] : true;
 		}
 
-		if(!Crm\Activity\Provider\Visit::isAvailable())
+		if(Crm\Activity\Provider\Visit::isAvailable())
 		{
-			$this->arResult['ENABLE_VISIT'] = false;
+			$this->arResult['ENABLE_VISIT'] = (bool)($this->arParams['~ENABLE_VISIT'] ?? true);
+			$this->arResult['IS_VISIT_RESTRICTED'] = !Crm\Restriction\RestrictionManager::getVisitRestriction()->hasPermission();
+			$this->arResult['VISIT_PARAMETERS'] = Crm\Activity\Provider\Visit::getPopupParameters();
 		}
 		else
 		{
-			$this->arResult['ENABLE_VISIT'] = isset($this->arParams['~ENABLE_VISIT']) ? (bool)$this->arParams['~ENABLE_VISIT'] : true;
-			$this->arResult['VISIT_PARAMETERS'] = Crm\Activity\Provider\Visit::getPopupParameters();
+			$this->arResult['ENABLE_VISIT'] = false;
 		}
 
 		$this->arResult['ADDITIONAL_TABS'] = array();
@@ -254,16 +255,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->prepareHistoryItems();
 		$this->prepareHistoryFixedItems();
 
-		//region Chat
-		$this->arResult['CHAT_DATA'] = array();
-		$this->arResult['CHAT_DATA']['ENABLED'] = $this->entityID > 0
-			&& \Bitrix\Crm\Integration\Im\Chat::isEntitySupported($this->entityTypeID)
-			&& Main\ModuleManager::isModuleInstalled('im');
-		if($this->arResult['CHAT_DATA']['ENABLED'])
-		{
-			$this->prepareChatData();
-		}
-		//endregion
+		$this->prepareChatData();
 
 		//region  Push&Pull
 		if(Bitrix\Main\Loader::includeModule('pull'))
@@ -439,7 +431,9 @@ class CCrmTimelineComponent extends CBitrixComponent
 					'ENTRY_CATEGORY_ID' => array(
 						Crm\Filter\TimelineEntryCategory::CREATION,
 						Crm\Filter\TimelineEntryCategory::MODIFICATION,
-						Crm\Filter\TimelineEntryCategory::CONVERSION
+						Crm\Filter\TimelineEntryCategory::CONVERSION,
+						Crm\Filter\TimelineEntryCategory::LINK,
+						Crm\Filter\TimelineEntryCategory::UNLINK,
 					)
 				)
 			),
@@ -728,44 +722,88 @@ class CCrmTimelineComponent extends CBitrixComponent
 		\Bitrix\Crm\Timeline\TimelineManager::prepareDisplayData($itemsMap, $this->userID, $this->userPermissions);
 		return array_values($itemsMap);
 	}
+
 	public function prepareChatData()
 	{
-		if(!Main\Loader::includeModule('im'))
+		$this->arResult['CHAT_DATA'] = $this->getChatData();
+	}
+
+	private function getChatData(): array
+	{
+		$chatData = [];
+
+		$isEnabled =
+			$this->entityID > 0
+			&& \Bitrix\Crm\Integration\Im\Chat::isEntitySupported($this->entityTypeID)
+			&& Main\Loader::includeModule('im')
+		;
+
+		$chatData['ENABLED'] = $isEnabled;
+		if (!$isEnabled)
 		{
-			return;
+			return $chatData;
+		}
+
+		$chatData['IS_RESTRICTED'] = false;
+
+		$chatRestriction = Crm\Restriction\RestrictionManager::getChatInDetailsRestriction();
+		if (!$chatRestriction->hasPermission())
+		{
+			$chatData['IS_RESTRICTED'] = true;
+			$chatData['LOCK_SCRIPT'] = $chatRestriction->prepareInfoHelperScript();
 		}
 
 		$chatID = Crm\Integration\Im\Chat::getChatId($this->entityTypeID, $this->entityID);
-		if($chatID <= 0)
+		if ($chatID <= 0)
 		{
-			$this->arResult['CHAT_DATA']['USER_INFOS'] = Crm\Integration\Im\Chat::prepareUserInfos(
+			$chatData['USER_INFOS'] = Crm\Integration\Im\Chat::prepareUserInfos(
 				Crm\Integration\Im\Chat::getEntityUserIDs($this->entityTypeID, $this->entityID)
 			);
+
+			return $chatData;
 		}
-		else
+
+		$chatData['CHAT_ID'] = $chatID;
+		$chatData['USER_INFOS'] = [];
+		$relations = \Bitrix\Im\Chat::getRelation(
+			$chatID,
+			[
+				'SELECT' => [
+					'ID',
+					'USER_ID',
+					'COUNTER',
+				],
+			],
+		);
+
+		foreach ($relations as $relation)
 		{
-			$this->arResult['CHAT_DATA']['CHAT_ID'] = $chatID;
-			$this->arResult['CHAT_DATA']['USER_INFOS'] = array();
-			$relations = \Bitrix\Im\Chat::getRelation(
-				$chatID,
-				array('SELECT' => array('ID', 'USER_ID', 'COUNTER'))
-			);
-
-			foreach($relations as $relation)
-			{
-				$userID = $relation['USER_ID'];
-				$userInfo = \Bitrix\Im\User::getInstance($userID)->getArray(array('JSON' => 'Y'));
-				$userInfo['counter'] = $relation['COUNTER'];
-				$this->arResult['CHAT_DATA']['USER_INFOS'][$userID] = $userInfo;
-			}
-
-			$messageData = \Bitrix\Im\Chat::getMessages($chatID, null, ['LIMIT' => 1, 'USER_TAG_SPREAD' => 'Y', 'JSON' => 'Y']);
-			if(isset($messageData['messages']) && is_array($messageData['messages']) && !empty($messageData['messages']))
-			{
-				$messageData['messages'][0]['text'] = preg_replace_callback("/\[USER=([0-9]{1,})\]\[\/USER\]/i", Array('\Bitrix\Im\Text', 'modifyShortUserTag'), $messageData['messages'][0]['text']);
-				$this->arResult['CHAT_DATA']['MESSAGE'] = $messageData['messages'][0];
-			}
+			$userID = $relation['USER_ID'];
+			$userInfo = \Bitrix\Im\User::getInstance($userID)->getArray(['JSON' => 'Y']);
+			$userInfo['counter'] = $relation['COUNTER'];
+			$chatData['USER_INFOS'][$userID] = $userInfo;
 		}
+
+		$messageData = \Bitrix\Im\Chat::getMessages(
+			$chatID,
+			null,
+			[
+				'LIMIT' => 1,
+				'USER_TAG_SPREAD' => 'Y',
+				'JSON' => 'Y',
+			],
+		);
+		if (is_array($messageData) && !empty($messageData['messages']) && is_array($messageData['messages']))
+		{
+			$messageData['messages'][0]['text'] = preg_replace_callback(
+				"/\[USER=([0-9]{1,})\]\[\/USER\]/i",
+				['\Bitrix\Im\Text', 'modifyShortUserTag'],
+				$messageData['messages'][0]['text'],
+			);
+			$chatData['MESSAGE'] = $messageData['messages'][0];
+		}
+
+		return $chatData;
 	}
 
 	private function getExcludingOrderFilter(int $dealId)

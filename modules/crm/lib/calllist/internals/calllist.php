@@ -5,6 +5,22 @@ namespace Bitrix\Crm\CallList\Internals;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Type;
 
+/**
+ * Class CallListTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CallList_Query query()
+ * @method static EO_CallList_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CallList_Result getById($id)
+ * @method static EO_CallList_Result getList(array $parameters = array())
+ * @method static EO_CallList_Entity getEntity()
+ * @method static \Bitrix\Crm\CallList\Internals\EO_CallList createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\CallList\Internals\EO_CallList_Collection createCollection()
+ * @method static \Bitrix\Crm\CallList\Internals\EO_CallList wakeUpObject($row)
+ * @method static \Bitrix\Crm\CallList\Internals\EO_CallList_Collection wakeUpCollection($rows)
+ */
 class CallListTable extends Entity\DataManager
 {
 	/**

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Context;
 
 class Settings
@@ -9,6 +10,7 @@ class Settings
 	/** @var Context */
 	protected $context;
 
+	protected $isCheckLimitsEnabled = true;
 	protected $isCheckAccessEnabled = true;
 	protected $isCheckFieldsEnabled = true;
 	protected $iscCheckRequiredUserFields = true;
@@ -16,6 +18,8 @@ class Settings
 	protected $isBizProcEnabled = true;
 	protected $isFieldProcessionEnabled = true;
 	protected $isSaveToHistoryEnabled = true;
+	/** @var ItemIdentifier[] */
+	protected $itemsThatExcludedFromTimelineRelationEventsRegistration = [];
 	protected $isBeforeSaveActionsEnabled = true;
 	protected $isAfterSaveActionsEnabled = true;
 	protected $isCheckWorkflowsEnabled = true;
@@ -62,6 +66,7 @@ class Settings
 	public function disableAllChecks(): self
 	{
 		return $this->disableCheckWorkflows()
+			->disableCheckLimits()
 			->disableCheckAccess()
 			->disableCheckFields()
 			->disableCheckRequiredUserFields();
@@ -170,6 +175,40 @@ class Settings
 	}
 
 	/**
+	 * Enables limits check.
+	 *
+	 * @return $this
+	 */
+	public function enableCheckLimits(): self
+	{
+		$this->isCheckLimitsEnabled = true;
+
+		return $this;
+	}
+
+	/**
+	 * Disables limits check.
+	 *
+	 * @return $this
+	 */
+	public function disableCheckLimits(): self
+	{
+		$this->isCheckLimitsEnabled = false;
+
+		return $this;
+	}
+
+	/**
+	 * Returns true if limits check is enabled
+	 *
+	 * @return bool
+	 */
+	public function isCheckLimitsEnabled(): bool
+	{
+		return $this->isCheckLimitsEnabled;
+	}
+
+	/**
 	 * Enables fields business logic procession in an Operation
 	 *
 	 * @return $this
@@ -235,6 +274,30 @@ class Settings
 	public function isSaveToHistoryEnabled(): bool
 	{
 		return $this->isSaveToHistoryEnabled;
+	}
+
+	/**
+	 * Exclude the specified items from being registered in this item's timeline as bound item
+	 *
+	 * @param ItemIdentifier[] $itemsToExclude
+	 *
+	 * @return $this
+	 */
+	public function excludeItemsFromTimelineRelationEventsRegistration(array $itemsToExclude): self
+	{
+		$this->itemsThatExcludedFromTimelineRelationEventsRegistration = $itemsToExclude;
+
+		return $this;
+	}
+
+	/**
+	 * Get items that are excluded from being registered in this item's timeline as bound item
+	 *
+	 * @return ItemIdentifier[]
+	 */
+	public function getItemsThatExcludedFromTimelineRelationEventsRegistration(): array
+	{
+		return $this->itemsThatExcludedFromTimelineRelationEventsRegistration;
 	}
 
 	/**

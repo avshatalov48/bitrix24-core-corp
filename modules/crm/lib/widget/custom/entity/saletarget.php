@@ -4,6 +4,22 @@ namespace Bitrix\Crm\Widget\Custom\Entity;
 use Bitrix\Main;
 use Bitrix\Crm\Widget\Custom\SaleTarget;
 
+/**
+ * Class SaleTargetTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_SaleTarget_Query query()
+ * @method static EO_SaleTarget_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_SaleTarget_Result getById($id)
+ * @method static EO_SaleTarget_Result getList(array $parameters = array())
+ * @method static EO_SaleTarget_Entity getEntity()
+ * @method static \Bitrix\Crm\Widget\Custom\Entity\EO_SaleTarget createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Widget\Custom\Entity\EO_SaleTarget_Collection createCollection()
+ * @method static \Bitrix\Crm\Widget\Custom\Entity\EO_SaleTarget wakeUpObject($row)
+ * @method static \Bitrix\Crm\Widget\Custom\Entity\EO_SaleTarget_Collection wakeUpCollection($rows)
+ */
 class SaleTargetTable  extends Main\Entity\DataManager
 {
 	/**

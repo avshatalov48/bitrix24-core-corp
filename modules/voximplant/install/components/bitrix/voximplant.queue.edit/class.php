@@ -86,10 +86,7 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 				$userIds[] = $row['USER_ID'];
 			}
 		}
-		else
-		{
 
-		}
 		$result['DESTINATION'] = $this->getDestinationParams($userIds);
 
 		$result['QUEUE_LIST'] = \Bitrix\Voximplant\Model\QueueTable::getList(array(
@@ -134,8 +131,6 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 
 	/**
 	 * @return \Bitrix\Main\Result
-	 * @throws Exception
-	 * @throws \Bitrix\Voximplant\Model\ArgumentException
 	 */
 	public static function save($request)
 	{
@@ -187,19 +182,30 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 			}
 		}
 
-		if($request['TYPE'] === CVoxImplantConfig::QUEUE_TYPE_ALL)
+		if ($request['TYPE'] === CVoxImplantConfig::QUEUE_TYPE_ALL && !\Bitrix\Voximplant\Limits::isQueueAllAllowed())
 		{
-			if(CVoxImplantAccount::IsPro())
-				$queueFields['TYPE'] = CVoxImplantConfig::QUEUE_TYPE_ALL;
-			else
-				$queueFields['TYPE'] = CVoxImplantConfig::QUEUE_TYPE_EVENLY;
+			$queueFields['TYPE'] = CVoxImplantConfig::QUEUE_TYPE_EVENLY;
 		}
 		else
 		{
 			$queueFields['TYPE'] = (string)$request['TYPE'];
 		}
 
-		if($queueFields['NO_ANSWER_RULE'] == CVoxImplantIncoming::RULE_PSTN_SPECIFIC)
+		if ($queueFields['NO_ANSWER_RULE'] === CVoxImplantIncoming::RULE_NEXT_QUEUE && !\Bitrix\Voximplant\Limits::isRedirectToQueueAllowed())
+		{
+			$queueFields['NO_ANSWER_RULE'] = CVoxImplantIncoming::RULE_VOICEMAIL;
+		}
+
+		if($queueFields['NO_ANSWER_RULE'] === CVoxImplantIncoming::RULE_NEXT_QUEUE)
+		{
+			$queueFields['NEXT_QUEUE_ID'] = (int)$request['NEXT_QUEUE_ID'];
+		}
+		else
+		{
+			$queueFields['NEXT_QUEUE_ID'] = null;
+		}
+
+		if($queueFields['NO_ANSWER_RULE'] === CVoxImplantIncoming::RULE_PSTN_SPECIFIC)
 		{
 			$queueFields['FORWARD_NUMBER'] = (string)$request['FORWARD_NUMBER'];
 		}
@@ -208,15 +214,20 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 			$queueFields['FORWARD_NUMBER'] = null;
 		}
 
-		if($queueFields['NO_ANSWER_RULE'] == CVoxImplantIncoming::RULE_NEXT_QUEUE && $queueFields['TYPE'])
-			$queueFields['NEXT_QUEUE_ID'] = (int)$request['NEXT_QUEUE_ID'];
-		else
-			$queueFields['NEXT_QUEUE_ID'] = null;
+		if (!$id && !\Bitrix\Voximplant\Limits::canCreateGroup())
+		{
+			$result->addError(new \Bitrix\Main\Error(Loc::getMessage("VI_CONFIG_ERROR_MAX_GROUP_COUNT_REACHED")));
+			return $result;
+		}
 
 		if($id > 0)
+		{
 			$dbResult = \Bitrix\Voximplant\Model\QueueTable::update($id, $queueFields);
+		}
 		else
+		{
 			$dbResult = \Bitrix\Voximplant\Model\QueueTable::add($queueFields);
+		}
 
 		if(!$dbResult->isSuccess())
 		{
@@ -224,7 +235,7 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 			return $result;
 		}
 
-		if($id == 0)
+		if($id === 0)
 		{
 			$id = $dbResult->getId();
 		}
@@ -246,8 +257,10 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 				return $result;
 			}
 			$currentUserCount++;
-			if($maximumUsers > 0 && $currentUserCount >= $maximumUsers)
+			if ($maximumUsers > -1 && $currentUserCount >= $maximumUsers)
+			{
 				break;
+			}
 		}
 		$result->setData(array(
 			'GROUP' => $queueFields

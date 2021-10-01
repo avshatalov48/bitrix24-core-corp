@@ -1,6 +1,6 @@
 <?php
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_DISABLED_ACCESS_INSTAGRAM_DIRECT_MESSAGES"] = "To connect IG Direct, please enable access for your Instagram account messages. #A#Learn more.#A_END#";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_IG_ACCOUNT_IS_NOT_ELIGIBLE_API"] = "Unfortunately, due to Facebook regulations, only users with Instagram accounts having subscriber count from 10 000 to 100 000 can connect IG Direct. #A#Details.#A_END#";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_IG_ACCOUNT_IS_NOT_ELIGIBLE_API_2"] = "Unfortunately, due to Facebook regulations, only users with Instagram accounts having subscriber count from 1 000 to 100 000 can connect IG Direct. #A#Details.#A_END#";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_REQUEST_INFORMATION_FROM_SERVER"] = "Server error.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INVALID_OAUTH_ACCESS_TOKEN"] = "Cannot manage public page because access was lost. You have to reconnect to your public page.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_MODULE_NOT_INSTALLED"] = "The \"External IM Connectors\" module is not installed.";
@@ -14,4 +14,3 @@ $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_OK_DEL_USER"] = "Your user accoun
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_REMOVED_REFERENCE_TO_PAGE"] = "This connector was configured for use with a workgroup you currently don't have administrator access to.<br> Please configure the connector again.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_REPEATING_ERROR"] = "If the problem persists, you may need to disconnect the channel and configure it again.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_SESSION_HAS_EXPIRED"] = "Your session has expired. Please submit the form again.";
-

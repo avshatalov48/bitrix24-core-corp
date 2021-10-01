@@ -11,6 +11,23 @@ class CCrmProductSearchDialogComponent extends \CBitrixComponent
 			return;
 		}
 
+		if (!CCrmSecurityHelper::IsAuthorized())
+		{
+			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+			return;
+		}
+
+		/** @var $permissions CCrmPerms */
+		$permissions = CCrmPerms::GetCurrentUserPermissions();
+		if (
+			!(CCrmPerms::IsAccessEnabled($permissions)
+			&& $permissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+		)
+		{
+			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+			return;
+		}
+
 		$catalogID = isset($this->arParams['CATALOG_ID']) ? intval($this->arParams['CATALOG_ID']) : 0;
 		if ($catalogID <= 0)
 			$catalogID = CCrmCatalog::EnsureDefaultExists();

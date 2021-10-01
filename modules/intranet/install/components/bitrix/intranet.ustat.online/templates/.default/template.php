@@ -73,7 +73,7 @@ $containerDataId = 'intranet-ustat-online-container-' . rand();
 			currentUserId: <?=$USER->GetID()?>,
 			limitOnlineSeconds: <?=$arResult["LIMIT_ONLINE_SECONDS"]?>,
 			maxOnlineUserCountToday: '<?=$arResult["MAX_ONLINE_USER_COUNT_TODAY"]?>',
-			maxUserToShow: '<?=$arResult["MAX_USER_TO_SHOW"]?>',
+			maxUserToShow: <?=$arResult["MAX_USER_TO_SHOW"]?>,
 			allOnlineUserIdToday: <?=CUtil::PhpToJSObject($arResult["ALL_ONLINE_USER_ID_TODAY"])?>,
 			ustatOnlineContainerNode: document.querySelector("[data-id='<?=$containerDataId?>']"),
 			isTimemanAvailable: '<?=$arResult["IS_FEATURE_TIMEMAN_AVAILABLE"] ? "Y" : "N"?>',

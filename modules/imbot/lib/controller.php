@@ -17,35 +17,31 @@ class Controller
 	 */
 	public static function sendToBot($botName, $command, $params)
 	{
-		$result = null;
-
 		$botName = trim(preg_replace("/[^a-z]/", "", mb_strtolower($botName)));
-		if (!$botName)
+		if ($botName)
 		{
-			return $result;
-		}
+			$params = self::prepareParams($params);
 
-		$params = self::prepareParams($params);
-
-		if ($params['BOT_ID'])
-		{
-			$bot = \Bitrix\Im\Bot::getCache($params['BOT_ID']);
-			if ($bot && class_exists($bot['CLASS']) && method_exists($bot['CLASS'], 'onAnswerAdd'))
+			if ($params['BOT_ID'])
 			{
-				return call_user_func_array(array($bot['CLASS'], 'onAnswerAdd'), Array($command, $params));
+				$bot = \Bitrix\Im\Bot::getCache($params['BOT_ID']);
+				if ($bot && class_exists($bot['CLASS']) && method_exists($bot['CLASS'], 'onAnswerAdd'))
+				{
+					return call_user_func_array(array($bot['CLASS'], 'onAnswerAdd'), array($command, $params));
+				}
+			}
+
+			$className = '\\Bitrix\\ImBot\\Bot\\'.ucfirst($botName);
+			if (
+				class_exists($className, true) &&
+				method_exists($className, 'onAnswerAdd')
+			)
+			{
+				return call_user_func_array([$className, 'onAnswerAdd'], [$command, $params]);
 			}
 		}
 
-		$className = '\\Bitrix\\ImBot\\Bot\\'.ucfirst($botName);
-		if (
-			class_exists($className, true) &&
-			method_exists($className, 'onAnswerAdd')
-		)
-		{
-			return call_user_func_array([$className, 'onAnswerAdd'], [$command, $params]);
-		}
-
-		return $result;
+		return null;
 	}
 
 	/**
@@ -57,26 +53,22 @@ class Controller
 	 */
 	public static function sendToService($serviceName, $command, $params)
 	{
-		$result = null;
-
 		$serviceName = trim(preg_replace("/[^a-z]/", "", mb_strtolower($serviceName)));
-		if (!$serviceName)
+		if ($serviceName)
 		{
-			return $result;
+			$className = '\\Bitrix\\ImBot\\Service\\'.ucfirst($serviceName);
+			if (
+				class_exists($className, true) &&
+				method_exists($className, 'onReceiveCommand')
+			)
+			{
+				$params = self::prepareParams($params);
+
+				return call_user_func_array([$className, 'onReceiveCommand'], [$command, $params]);
+			}
 		}
 
-		$className = '\\Bitrix\\ImBot\\Service\\'.ucfirst($serviceName);
-		if (
-			class_exists($className, true) &&
-			method_exists($className, 'onReceiveCommand')
-		)
-		{
-			$params = self::prepareParams($params);
-
-			return call_user_func_array([$className, 'onReceiveCommand'], [$command, $params]);
-		}
-
-		return $result;
+		return null;
 	}
 
 	/**

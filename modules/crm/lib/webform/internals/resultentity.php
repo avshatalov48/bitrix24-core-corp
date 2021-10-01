@@ -7,12 +7,33 @@
  */
 namespace Bitrix\Crm\WebForm\Internals;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\WebForm\Helper;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Main\Type\Collection;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class ResultEntityTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ResultEntity_Query query()
+ * @method static EO_ResultEntity_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ResultEntity_Result getById($id)
+ * @method static EO_ResultEntity_Result getList(array $parameters = array())
+ * @method static EO_ResultEntity_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_ResultEntity createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_ResultEntity_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_ResultEntity wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_ResultEntity_Collection wakeUpCollection($rows)
+ */
 class ResultEntityTable extends Entity\DataManager
 {
 	public static function getTableName()
@@ -38,7 +59,12 @@ class ResultEntityTable extends Entity\DataManager
 			'ITEM_ID' => array(
 				'data_type' => 'integer',
 				'required' => true,
-			)
+			),
+			new Reference(
+				'RESULT',
+				ResultTable::class,
+				Join::on("this.RESULT_ID", "ref.ID")
+			),
 		);
 	}
 
@@ -63,5 +89,81 @@ class ResultEntityTable extends Entity\DataManager
 		{
 			FormCounterTable::incEntityCounters($formId, $counterEntities);
 		}
+	}
+
+	public static function getCountOfUniqueResultIds(): int
+	{
+		return (int)static::query()
+			->addSelect(
+				Query::expr()->countDistinct('RESULT_ID'),
+				'CNT'
+			)
+			->exec()
+			->fetch()['CNT'];
+	}
+
+	public static function getMinUniqueResultIdHigherThan(int $limit): int
+	{
+		$row = static::query()
+			->addSelect('RESULT_ID')
+			->addGroup('RESULT_ID')
+			->setOffset($limit)
+			->setLimit(1)
+			->addOrder('RESULT_ID')
+			->exec()
+			->fetch()
+		;
+
+		return $row ? (int)$row['RESULT_ID'] : 0;
+	}
+
+	public static function isResultExistsForItemHigherThan(ItemIdentifier $identifier, int $resultId): bool
+	{
+		$entityName = \CCrmOwnerType::ResolveName($identifier->getEntityTypeId());
+
+		return static::query()
+			->addSelect('ITEM_ID')
+			->addFilter('>RESULT_ID', $resultId)
+			->addFilter('=ENTITY_NAME', $entityName)
+			->addFilter('=ITEM_ID', $identifier->getEntityId())
+			->exec()
+			->fetch() !== false
+		;
+	}
+
+	public static function getEntityIdsHigherThan(int $entityTypeId, int $resultId): array
+	{
+		$entityName = \CCrmOwnerType::ResolveName($entityTypeId);
+
+		return static::query()
+			->addSelect('ITEM_ID')
+			->addOrder('ITEM_ID')
+			->addFilter('>RESULT_ID', $resultId)
+			->addFilter('=ENTITY_NAME', $entityName)
+			->exec()
+			->fetchCollection()
+			->getItemIdList()
+		;
+	}
+
+	public static function getItemIdsThatHasResultsHigherThan(int $entityTypeId, int $resultId, array $itemIds): array
+	{
+		Collection::normalizeArrayValuesByInt($itemIds);
+		if (empty($itemIds))
+		{
+			return [];
+		}
+		$entityName = \CCrmOwnerType::ResolveName($entityTypeId);
+
+		return static::query()
+			->addSelect('ITEM_ID')
+			->addOrder('ITEM_ID')
+			->addFilter('>RESULT_ID', $resultId)
+			->addFilter('=ENTITY_NAME', $entityName)
+			->addFilter('@ITEM_ID', $itemIds)
+			->exec()
+			->fetchCollection()
+			->getItemIdList()
+		;
 	}
 }

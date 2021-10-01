@@ -20,6 +20,7 @@ $MESS["DISK_MAX_SIZE_FOR_VIDEO_TRANSFORMATION"] = "Maximum size of source media 
 $MESS["DISK_SETTINGS_AUTO_LOCK_ON_OBJECT_EDIT"] = "Auto lock file when editing";
 $MESS["DISK_SETTINGS_AUTO_RELEASE_LOCK_ON_SAVE"] = "Auto unlock file upon saving";
 $MESS["DISK_SETTINGS_ONLYOFFICE_HEAD"] = "OnlyOffice integration";
+$MESS["DISK_SETTINGS_ONLYOFFICE_MAX_FILESIZE"] = "Maximum file size for viewing";
 $MESS["DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"] = "Secret key";
 $MESS["DISK_SETTINGS_ONLYOFFICE_SERVER"] = "Server address (including http:// or https://)";
 $MESS["DISK_SETTINGS_SECTION_HEAD_FILE_LOCK"] = "Document locking";

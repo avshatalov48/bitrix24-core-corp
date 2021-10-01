@@ -14,6 +14,19 @@ use Bitrix\Crm\UI\Webpack;
 /**
  * Class LandingTable
  * @package Bitrix\Crm\WebForm\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Landing_Query query()
+ * @method static EO_Landing_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Landing_Result getById($id)
+ * @method static EO_Landing_Result getList(array $parameters = array())
+ * @method static EO_Landing_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Landing createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Landing_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Landing wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Landing_Collection wakeUpCollection($rows)
  */
 class LandingTable extends ORM\Data\DataManager
 {

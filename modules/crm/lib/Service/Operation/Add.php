@@ -5,9 +5,13 @@ namespace Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Timeline\FactoryBasedController;
+use Bitrix\Crm\Timeline\MarkController;
+use Bitrix\Crm\Timeline\RelationController;
 use Bitrix\Crm\Timeline\TimelineManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -48,10 +52,64 @@ class Add extends Operation
 
 	protected function createTimelineRecord(): void
 	{
-		$timelineController = TimelineManager::resolveController(['ASSOCIATED_ENTITY_TYPE_ID' => $this->item->getEntityTypeId()]);
+		$timelineController = TimelineManager::resolveController([
+			'ASSOCIATED_ENTITY_TYPE_ID' => $this->item->getEntityTypeId()
+		]);
+
 		if ($timelineController)
 		{
-			$timelineController->onCreate($this->item->getId(), $this->item->getData());
+			/** @see FactoryBasedController::onCreate() */
+			$timelineController->onCreate(
+				$this->item->getId(),
+				[
+					'FIELDS' => $this->item->getData(),
+				]
+			);
+		}
+
+		RelationController::getInstance()->registerEventsByFieldsChange(
+			$this->getItemIdentifier(),
+			$this->fieldsCollection->toArray(),
+			[],
+			$this->item->getCompatibleData(),
+			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
+		);
+
+		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
+
+		if ($factory->isClientEnabled())
+		{
+			RelationController::getInstance()->registerEventsByBindingsChange(
+				$this->getItemIdentifier(),
+				\CCrmOwnerType::Contact,
+				[],
+				$this->item->getContactBindings(),
+				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
+			);
+		}
+
+		if (!$factory->isStagesSupported())
+		{
+			return;
+		}
+
+		$newStage = $factory->getStage((string)$this->item->getStageId());
+		if (!$newStage)
+		{
+			return;
+		}
+
+		$wasItemMovedToFinalStage = (
+			$factory->isStagesEnabled()
+			&& PhaseSemantics::isFinal($newStage->getSemantics())
+		);
+
+		if ($wasItemMovedToFinalStage)
+		{
+			MarkController::getInstance()->onItemMoveToFinalStage(
+				$this->getItemIdentifier(),
+				$newStage->getSemantics()
+			);
 		}
 	}
 

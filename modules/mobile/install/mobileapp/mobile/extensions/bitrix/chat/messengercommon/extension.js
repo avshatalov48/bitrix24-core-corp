@@ -64,7 +64,7 @@ ChatMessengerCommon.getUserStatus = function(userData, onlyStatus) // after chan
 	}
 	else if (this.getUserIdleStatus(userData, online))
 	{
-		status = 'idle';
+		status = userData.status === 'break'? 'break-idle': 'idle';
 		statusText = BX.message('IM_STATUS_AWAY_TITLE').replace('#TIME#', this.getUserIdle(userData));
 	}
 	else

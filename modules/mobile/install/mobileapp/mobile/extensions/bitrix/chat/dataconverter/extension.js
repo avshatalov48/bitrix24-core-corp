@@ -87,9 +87,16 @@ ChatDataConverter.getElementFormat = function(element)
 		item.title = element.chat.name;
 		item.imageUrl = ChatUtils.getAvatar(element.chat.avatar);
 
-		if (element.chat.id == this.generalChatId && !item.imageUrl)
+		if (!item.imageUrl)
 		{
-			item.imageUrl = this.imagePath+'/avatar_general_x3.png';
+			if (element.chat.id == this.generalChatId)
+			{
+				item.imageUrl = this.imagePath+'/avatar_general_x3.png';
+			}
+			else if (element.chat.type == 'support24Notifier')
+			{
+				item.imageUrl = this.imagePath+'/avatar_24_x3.png';
+			}
 		}
 
 		item.color = element.chat.color;
@@ -230,7 +237,18 @@ ChatDataConverter.getAvatarFormat = function(element)
 	let result = {};
 	if (element.type == 'user')
 	{
-		if (element.invited && !element.user.last_activity_date)
+		if (element.user.network && element.user.external_auth_id === 'support24')
+		{
+			if (ChatUtils.getAvatar(element.user.avatar))
+			{
+				result = {
+					image : {
+						url: this.imagePath+'/status_24_x3.png'
+					}
+				}
+			}
+		}
+		else if (element.invited && !element.user.last_activity_date)
 		{
 			result = {
 				image : {
@@ -241,7 +259,20 @@ ChatDataConverter.getAvatarFormat = function(element)
 		else
 		{
 			let status = this.getUserImageCode(element);
-			if (status)
+			if (
+				status === 'idle'
+				|| status === 'break-idle'
+				|| status === 'break'
+				|| status === 'video'
+			)
+			{
+				result = {
+					image : {
+						url: this.imagePath+'/status_user_'+status+'_x3.png'
+					}
+				}
+			}
+			else if (status)
 			{
 				result = {image: {name: 'status_'+status}};
 			}
@@ -271,8 +302,21 @@ ChatDataConverter.getAvatarFormat = function(element)
 				if (ChatUtils.getAvatar(element.chat.avatar))
 				{
 					result = {
-						image: {name: 'status_dialog_general'}
-					};
+						image : {
+							url: this.imagePath+'/avatar_general_x3.png'
+						}
+					}
+				}
+			}
+			else if (element.chat.type == 'support24Notifier')
+			{
+				if (ChatUtils.getAvatar(element.chat.avatar))
+				{
+					result = {
+						image : {
+							url: this.imagePath+'/status_24_x3.png'
+						}
+					}
 				}
 			}
 			else if (element.chat.type == 'chat')
@@ -385,6 +429,12 @@ ChatDataConverter.getTitleFormat = function(type, entity)
 		{
 			result = {
 				image: {name: 'name_status_call'},
+			};
+		}
+		else if (entity.type == 'support24Notifier')
+		{
+			result = {
+				color: '#0165af',
 			};
 		}
 		else
@@ -533,8 +583,11 @@ ChatDataConverter.getUserImageCode = function(element)
 		|| data.originStatus == 'dnd'
 		|| data.originStatus == 'guest'
 		|| data.originStatus == 'idle'
+		|| data.originStatus == 'break-idle'
+		|| data.originStatus == 'break'
 		|| data.originStatus == 'mobile'
 		|| data.originStatus == 'call'
+		|| data.originStatus == 'video'
 	)
 	{
 		icon = data.originStatus;
@@ -1001,9 +1054,16 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 		item.shortTitle = element.chat.name;
 		item.subtitle = element.chat.type == "open"? BX.message('IM_LIST_CHAT_OPEN_NEW'): BX.message('IM_LIST_CHAT_NEW');
 		item.imageUrl = ChatUtils.getAvatar(element.chat.avatar);
-		if (element.chat.id == this.generalChatId)
+		if (!item.imageUrl)
 		{
-			item.imageUrl = this.imagePath + '/avatar_general_x3.png';
+			if (element.chat.id == this.generalChatId)
+			{
+				item.imageUrl = this.imagePath + '/avatar_general_x3.png';
+			}
+			else if (element.chat.type == 'support24Notifier')
+			{
+				item.imageUrl = this.imagePath+'/avatar_24_x3.png';
+			}
 		}
 		item.color = element.chat.color;
 	}
@@ -1082,9 +1142,16 @@ ChatDataConverter.getListElementByChat = function(element)
 	item.useLetterImage = true;
 	item.title = item.source.name;
 	item.imageUrl = ChatUtils.getAvatar(item.source.avatar);
-	if (item.source.id == this.generalChatId)
+	if (!item.imageUrl)
 	{
-		item.imageUrl = this.imagePath + '/avatar_general_x3.png';
+		if (item.source.id == this.generalChatId)
+		{
+			item.imageUrl = this.imagePath + '/avatar_general_x3.png';
+		}
+		else if (item.source.type == 'support24Notifier')
+		{
+			item.imageUrl = this.imagePath+'/avatar_24_x3.png';
+		}
 	}
 
 	item.color = item.source.color;

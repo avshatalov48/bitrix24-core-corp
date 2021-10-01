@@ -2136,11 +2136,6 @@ class Session
 	 *
 	 * @param bool $manual
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function transferToNextInQueue($manual = true)
 	{

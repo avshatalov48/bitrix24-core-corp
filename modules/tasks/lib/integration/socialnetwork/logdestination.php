@@ -12,6 +12,7 @@ namespace Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Tasks\Integration\Network\MemberSelector;
 use Bitrix\Tasks\Util\User;
 
 class LogDestination

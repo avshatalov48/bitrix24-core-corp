@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\UserField\Types\EnumType;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
@@ -40,15 +43,15 @@ $arToolbarButtons[] = array(
 	"TITLE"=>GetMessage("CRM_FE_TOOLBAR_FIELDS_TITLE"),
 	"LINK"=>$arResult["FIELDS_LIST_URL"],
 	"ICON"=>"btn-view-fields",
-);	
-if (!$arResult["NEW_FIELD"]) 
+);
+if (!$arResult["NEW_FIELD"])
 {
 	$arToolbarButtons[] = array(
 		"TEXT"=>GetMessage("CRM_FE_TOOLBAR_ADD"),
 		"TITLE"=>GetMessage("CRM_FE_TOOLBAR_ADD_TITLE"),
 		"LINK"=>$arResult["FIELD_ADD_URL"],
 		"ICON"=>"btn-add-field",
-	);	
+	);
 	$arToolbarButtons[] = array(
 		"SEPARATOR"=>"Y",
 	);
@@ -57,7 +60,7 @@ if (!$arResult["NEW_FIELD"])
 		"TITLE"=>GetMessage("CRM_FE_TOOLBAR_DELETE_TITLE"),
 		"LINK"=>"javascript:jsDelete('".CUtil::JSEscape("form_".$arResult["FORM_ID"])."', '".GetMessage("CRM_FE_TOOLBAR_DELETE_WARNING")."')",
 		"ICON"=>"btn-delete-field",
-	);	
+	);
 	$arToolbarButtons[] = array(
 		"SEPARATOR"=>"Y",
 	);
@@ -273,7 +276,7 @@ $APPLICATION->IncludeComponent(
 		"FORM_ID"=>$arResult["FORM_ID"],
 		"TABS"=>$arTabs,
 		"BUTTONS"=>array(
-			"back_url"=>$arResult["~FIELDS_LIST_URL"], 
+			"back_url"=>$arResult["~FIELDS_LIST_URL"],
 			"custom_html"=>$custom_html
 		),
 		"DATA"=>$arResult["FORM_DATA"],
@@ -290,6 +293,13 @@ $APPLICATION->IncludeComponent(
 		function()
 		{
 			var form = BX('form_field_edit');
+			<?if (isset($arResult['RESTRICTION_CALLBACK']) && $arResult['RESTRICTION_CALLBACK'] !== ''):?>
+				form.onsubmit = function()
+				{
+					<?=$arResult['RESTRICTION_CALLBACK']?>;
+					return false;
+				};
+			<?endif?>
 			var commonLabelInput = BX.findChild(form, { "tagName":"INPUT", "attr":{ "name":"COMMON_EDIT_FORM_LABEL" }  }, true, false);
 			var commonLabelContainer = BX.findParent(commonLabelInput, { "tagName":"TR"});
 
@@ -332,11 +342,23 @@ $APPLICATION->IncludeComponent(
 	);
 </script>
 <?if($arResult["FORM_DATA"]["USER_TYPE_ID"] === 'enumeration'):
+	$eDisplay = ($arResult['FIELD']['E_DISPLAY'] ?? null);
+	$displayAvailablesShowList = [
+		EnumType::DISPLAY_CHECKBOX,
+	];
+	if (defined('\Bitrix\Main\UserField\Types\EnumType::DISPLAY_DIALOG'))
+	{
+		$displayAvailablesShowList[] = EnumType::DISPLAY_DIALOG;
+	}
+
+	$isDisplayAvailableShowListHeight = !in_array($eDisplay, $displayAvailablesShowList, true);
+	$display = ($isDisplayAvailableShowListHeight ? 'true' : 'false');
 ?><script type="text/javascript">
 	BX.ready(
 			function()
 			{
-				display_list_length(<?= !isset($arResult['FIELD']['E_DISPLAY']) || $arResult['FIELD']['E_DISPLAY'] !== 'CHECKBOX' ? 'true' : 'false'?>);
+				display_list_length(<?= $display ?>);
+				var displayAvailablesShowList = <?= \CUtil::PhpToJSObject($displayAvailablesShowList) ?>;
 				var s = BX.findChild(document.body, { "tagName":"SELECT", "attr":{ "name":"E_DISPLAY" }  }, true, false);
 				if(s)
 				{
@@ -345,7 +367,9 @@ $APPLICATION->IncludeComponent(
 							"change",
 							function()
 							{
-								display_list_length(s.value !== "CHECKBOX");
+								display_list_length(
+									(displayAvailablesShowList.indexOf(s.value) === -1)
+								);
 							}
 					);
 				}

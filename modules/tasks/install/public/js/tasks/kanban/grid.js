@@ -16,6 +16,7 @@ BX.Tasks.Kanban.Grid = function(options)
 	this.groupId = Number(options.groupId);
 	this.groupingMode = Boolean(options.isGroupingMode);
 	this.isSprintView = (options.isSprintView === 'Y');
+	this.networkEnabled = options.networkEnabled || false;
 
 	this.gridHeader = Boolean(options.gridHeader);
 	this.parentTaskId = parseInt(options.parentTaskId, 10);

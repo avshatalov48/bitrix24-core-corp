@@ -7,6 +7,22 @@ use Bitrix\Main\DB;
 
 use Bitrix\Crm\Communication;
 
+/**
+ * Class PoolTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Pool_Query query()
+ * @method static EO_Pool_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Pool_Result getById($id)
+ * @method static EO_Pool_Result getList(array $parameters = array())
+ * @method static EO_Pool_Entity getEntity()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_Pool createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_Pool_Collection createCollection()
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_Pool wakeUpObject($row)
+ * @method static \Bitrix\Crm\Tracking\Internals\EO_Pool_Collection wakeUpCollection($rows)
+ */
 class PoolTable extends DataManager
 {
 	/**

@@ -28,3 +28,4 @@ $MESS["DISK_SETTINGS_TIME_AUTO_RELEASE_OBJECT_LOCK"] = "Автоматическ
 $MESS["DISK_SETTINGS_ONLYOFFICE_HEAD"] = "Интеграция с OnlyOffice";
 $MESS["DISK_SETTINGS_ONLYOFFICE_SERVER"] = "Адрес сервера (с http://, https://)";
 $MESS["DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"] = "Секретный код для интеграции";
+$MESS["DISK_SETTINGS_ONLYOFFICE_MAX_FILESIZE"] = "Максимальный размер файла для просмотра";

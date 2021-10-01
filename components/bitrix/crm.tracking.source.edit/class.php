@@ -9,9 +9,9 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Contract\Controllerable;
-use Bitrix\Bitrix24\Feature;
 
 use Bitrix\Seo;
+use Bitrix\Intranet;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\Webpack;
 
@@ -156,7 +156,23 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 
 	public function configureActions()
 	{
-		return [];
+		return [
+			'disconnect' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				]
+			],
+			'getAccounts' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				]
+			],
+			'getProvider' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				]
+			],
+		];
 	}
 
 	protected function listKeysSignedParameters()
@@ -215,16 +231,7 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 			}
 		}
 
-		$this->arResult['FEATURE_CODE'] = (
-			!$hasCode
-			&& Loader::includeModule('bitrix24')
-			&& !Feature::isFeatureEnabled("crm_tracking_sources_own")
-		)
-			? "crm_tracking_sources_own"
-			: null
-		;
-
-		if ($this->request->isPost() && check_bitrix_sessid() && $this->arResult['ROW']['CONFIGURABLE'] && !$this->arResult['FEATURE_CODE'])
+		if ($this->request->isPost() && check_bitrix_sessid() && $this->arResult['ROW']['CONFIGURABLE'])
 		{
 			$this->preparePost();
 		}

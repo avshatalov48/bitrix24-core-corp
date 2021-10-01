@@ -8,7 +8,7 @@ use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Tasks\Manager;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TemplateSubtaskLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -237,7 +237,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 	protected function getAuxData()
 	{
-		$this->arResult['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
+		$this->arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] = TemplateSubtaskLimit::isLimitExceeded();
 	}
 
 	/**

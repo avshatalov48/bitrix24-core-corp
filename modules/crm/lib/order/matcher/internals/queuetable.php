@@ -6,6 +6,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class QueueTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Queue_Query query()
+ * @method static EO_Queue_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Queue_Result getById($id)
+ * @method static EO_Queue_Result getList(array $parameters = array())
+ * @method static EO_Queue_Entity getEntity()
+ * @method static \Bitrix\Crm\Order\Matcher\Internals\EO_Queue createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Order\Matcher\Internals\EO_Queue_Collection createCollection()
+ * @method static \Bitrix\Crm\Order\Matcher\Internals\EO_Queue wakeUpObject($row)
+ * @method static \Bitrix\Crm\Order\Matcher\Internals\EO_Queue_Collection wakeUpCollection($rows)
+ */
 class QueueTable extends Entity\DataManager
 {
 	public static function getTableName()

@@ -5,7 +5,6 @@ $MESS["VOX_START_AUTO_PROLONG"] = "Auto renewal enabled";
 $MESS["VOX_START_CALLER_IDS"] = "Connected numbers";
 $MESS["VOX_START_CURRENT_BALANCE"] = "Current balance";
 $MESS["VOX_START_MY_NUMBERS"] = "My numbers";
-$MESS["VOX_START_NOT_TELEPHONY_FOR_FREE"] = "<strong>Attention!</strong> As of January 1, 2021 Telephony will be available on commercial plans only. Select the plan that fits you best and get a 40% discount. <a href=\"#LINK#\">Details</a>";
 $MESS["VOX_START_NO_BALANCE"] = "Your balance is available in your telephony provider account";
 $MESS["VOX_START_NUMBERS"] = "Phone numbers";
 $MESS["VOX_START_PARTNERS"] = "Telephony integrations";

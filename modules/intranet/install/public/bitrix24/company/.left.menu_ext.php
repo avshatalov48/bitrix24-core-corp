@@ -19,20 +19,30 @@ $aMenuLinks = Array(
 	)
 );
 
-if (IsModuleInstalled("lists"))
+if (IsModuleInstalled('lists'))
 {
+	$listUrl = 'https://helpdesk.bitrix24.ru/open/5316091/';
+
+	if (CModule::IncludeModule('ui'))
+	{
+		\Bitrix\Main\UI\Extension::load('ui.info-helper');
+
+		$listUrl = 'javascript:BX.UI.InfoHelper.show("limit_office_records_management");';
+	}
+
 	if (
-		!IsModuleInstalled("bitrix24")
-		|| CModule::IncludeModule("lists") && CLists::isFeatureEnabled("lists")
+		!IsModuleInstalled('bitrix24')
+		|| CModule::IncludeModule('lists') && CLists::isFeatureEnabled('lists')
 	)
 	{
-		$aMenuLinks[] = Array(
-			GetMessage("MENU_LISTS"),
-			"/company/lists/",
-			Array(),
-			Array("menu_item_id"=>"menu_lists"),
-			""
-		);
+		$listUrl = '/company/lists/';
 	}
+
+	$aMenuLinks[] = [
+		GetMessage('MENU_LISTS'),
+		$listUrl,
+		[],
+		['menu_item_id' => 'menu_lists'],
+		'',
+	];
 }
-?>

@@ -59,6 +59,7 @@ export default {
 				totalResultLabel: this.$root.$app.options.mode === 'delivery' ? Loc.getMessage('SALESCENTER_SHIPMENT_PRODUCT_BLOCK_TOTAL') : null,
 				urlBuilderContext: this.$root.$app.options.urlProductBuilderContext,
 				hideUnselectedProperties: (this.$root.$app.options.templateMode === 'view'),
+				showCompilationModeSwitcher: (this.$root.$app.options.showCompilationModeSwitcher === 'Y'),
 			}
 		);
 
@@ -96,7 +97,7 @@ export default {
 					});
 
 					this.productForm.setData({...data, ...{basket: preparedBasket}});
-					
+
 					if (Type.isArray(data.basket))
 					{
 						this.$store.commit('orderCreation/setBasket', data.basket);
@@ -173,7 +174,8 @@ export default {
 
 			if (
 				basket.length <= 0
-				|| (this.productForm && this.productForm.hasErrors())
+				//|| !this.$root.$app.hasClientContactInfo()
+				|| (this.productForm && Type.isFunction(this.productForm.hasErrors) && this.productForm.hasErrors())
 			)
 			{
 				return true;

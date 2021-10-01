@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Order\BindingsMaker;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Order\Payment;
 use Bitrix\Crm\Order\Shipment;
+use Bitrix\Sale\Delivery\Requests;
 
 /**
  * Class Base
@@ -66,6 +67,26 @@ abstract class Base
 		$result = static::makeByOrder($order, $options);
 
 		$result[] = static::makeBinding(\CCrmOwnerType::OrderShipment, $shipment->getId());
+
+		return $result;
+	}
+
+	/**
+	 * @param int $deliveryRequestId
+	 * @param array $options
+	 * @return array
+	 */
+	public static function makeByDeliveryRequestId(int $deliveryRequestId, array $options = []): array
+	{
+		$result = [];
+
+		/** @var Shipment[] $shipments */
+		$shipments = Requests\Helper::getShipmentsByRequestId($deliveryRequestId);
+
+		foreach ($shipments as $shipment)
+		{
+			$result += static::makeByShipment($shipment, $options);
+		}
 
 		return $result;
 	}

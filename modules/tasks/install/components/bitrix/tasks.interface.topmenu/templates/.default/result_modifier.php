@@ -9,6 +9,7 @@ use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 
 $arResult['BX24_RU_ZONE'] = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') &&
 							preg_match("/^(ru)_/", COption::GetOptionString("main", "~controller_group_name", ""));
@@ -142,7 +143,10 @@ $efficiencyItem = [
 	"IS_ACTIVE" => ($arParams["MARK_SECTION_EFFECTIVE"] == "Y"),
 	"COUNTER" => (int)$arResult['EFFECTIVE_COUNTER'],
 ];
-if (TaskLimit::isLimitExceeded())
+if (
+	TaskLimit::isLimitExceeded()
+	|| KpiLimit::isLimitExceeded()
+)
 {
 	unset($efficiencyItem['COUNTER']);
 }
@@ -208,14 +212,14 @@ if (TaskAccessController::can($arParams['LOGGED_USER_ID'], ActionDictionary::ACT
 		'IS_ACTIVE' => false,
 		'IS_DISABLED' => true,
 	];
-	if (Bitrix24::checkFeatureEnabled('tasks_permissions'))
+	if (Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_PERMISSIONS))
 	{
 		$rightsButton['URL'] = '/tasks/config/permissions/';
 	}
 	else
 	{
 		$sliderCode = 'limit_task_access_permissions';
-		$rightsButton['ON_CLICK'] = "BX.UI.InfoHelper.show('{$sliderCode}');";
+		$rightsButton['ON_CLICK'] = "top.BX.UI.InfoHelper.show('{$sliderCode}');";
 		$rightsButton['CLASS'] = 'tasks-tariff-lock';
 		$rightsButton['CLASS_SUBMENU_ITEM'] = 'tasks-tariff-lock';
 	}

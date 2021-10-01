@@ -8,6 +8,7 @@ define('DisableEventsCheck', true);
 
 use Bitrix\Catalog;
 use Bitrix\Crm\Order\Order;
+use Bitrix\Crm\Restriction\OrderRestriction;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
@@ -60,6 +61,12 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		if($isNew && !Permissions\Order::checkCreatePermission($this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_DA_INSUFFICIENT_RIGHTS'));
+			return;
+		}
+
+		if ($isNew && OrderRestriction::isOrderLimitReached())
+		{
+			$this->addError('You have reached the order limit for your plan');
 			return;
 		}
 

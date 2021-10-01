@@ -186,7 +186,7 @@ Extension::load([
 							<input type="text" name="NAME" id="NAME" class="ui-ctl-element" value="<?=htmlspecialcharsbx($name)?>">
 						</div>
 						<div style="margin-top: 5px;" class="ui-ctl-label-text">
-							<span class="salescenter-editor-content-logo-hint"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_NAME_HINT')?></span>
+							<span class="salescenter-editor-content-logo-hint"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_NAME_HINT_V2')?></span>
 						</div>
 					</div>
 					<div class="salescenter-editor-content-block">

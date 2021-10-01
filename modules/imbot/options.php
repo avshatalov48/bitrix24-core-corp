@@ -47,22 +47,26 @@ if($_POST['Update'] <> '' && check_bitrix_sessid())
 	}
 	else if($_POST['Update'] <> '')
 	{
-		Main\Config\Option::set("imbot", "portal_url", $_POST['PUBLIC_URL']);
-
-		if (\Bitrix\ImBot\Bot\Network::checkPublicUrl() !== true)
+		if (!defined('BOT_CLIENT_URL'))
 		{
-			$error = \Bitrix\ImBot\Bot\Base::getError();
-			if ($error->error)
+			if (\Bitrix\ImBot\Bot\Network::checkPublicUrl() !== true)
 			{
-				$message = Loc::getMessage('IMBOT_ACCOUNT_ERROR_PUBLIC_CHECK', ['#ERROR#' => $error->msg]);
+				$error = \Bitrix\ImBot\Bot\Base::getError();
+				if ($error->error)
+				{
+					$message = Loc::getMessage('IMBOT_ACCOUNT_ERROR_PUBLIC_CHECK', ['#ERROR#' => $error->msg]);
+				}
+				else
+				{
+					$message = Loc::getMessage('IMBOT_ACCOUNT_ERROR_PUBLIC');
+				}
+				$APPLICATION->ThrowException($message);
 			}
 			else
 			{
-				$message = Loc::getMessage('IMBOT_ACCOUNT_ERROR_PUBLIC');
+				Main\Config\Option::set("imbot", "portal_url", $_POST['PUBLIC_URL']);
 			}
-			$APPLICATION->ThrowException($message);
 		}
-
 
 		Main\Config\Option::set("imbot", "debug", isset($_POST['DEBUG_MODE']));
 		if (isset($_POST['DEBUG_MODE']))

@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Recycling;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main;
 
 class LeadBinder extends BaseBinder
 {
@@ -54,7 +54,13 @@ class LeadBinder extends BaseBinder
 			foreach($entityIDs as $entityID)
 			{
 				$fields = array('COMPANY_ID' => 0);
-				$entity->Update($entityID, $fields, false, false);
+				$entity->Update(
+					$entityID,
+					$fields,
+					false,
+					false,
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 		elseif($associatedEntityTypeID === \CCrmOwnerType::Contact)
@@ -69,7 +75,13 @@ class LeadBinder extends BaseBinder
 				}
 
 				$fields = array('CONTACT_BINDINGS' => $bindings);
-				$entity->Update($entityID, $fields, false, false);
+				$entity->Update(
+					$entityID,
+					$fields,
+					false,
+					false,
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 		else
@@ -91,7 +103,13 @@ class LeadBinder extends BaseBinder
 			foreach($entityIDs as $entityID)
 			{
 				$fields = array('COMPANY_ID' => $associatedEntityID);
-				$entity->Update($entityID, $fields, false, false);
+				$entity->Update(
+					$entityID,
+					$fields,
+					false,
+					false,
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 		elseif($associatedEntityTypeID === \CCrmOwnerType::Contact)
@@ -106,7 +124,13 @@ class LeadBinder extends BaseBinder
 				}
 
 				$fields = array('CONTACT_BINDINGS' => $bindings);
-				$entity->Update($entityID, $fields, false, false);
+				$entity->Update(
+					$entityID,
+					$fields,
+					false,
+					false,
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 		else
@@ -126,7 +150,13 @@ class LeadBinder extends BaseBinder
 		if($associatedEntityTypeID === \CCrmOwnerType::Company)
 		{
 			$fields = array('COMPANY_ID' => $associatedEntityIDs[0]);
-			$entity->Update($entityID, $fields, false, false);
+			$entity->Update(
+				$entityID,
+				$fields,
+				false,
+				false,
+				$this->getUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
+			);
 		}
 		elseif($associatedEntityTypeID === \CCrmOwnerType::Contact)
 		{
@@ -140,7 +170,13 @@ class LeadBinder extends BaseBinder
 				Crm\Binding\EntityBinding::markFirstAsPrimary($bindings);
 			}
 			$fields = array('CONTACT_BINDINGS' => $bindings);
-			$entity->Update($entityID, $fields, false, false);
+			$entity->Update(
+				$entityID,
+				$fields,
+				false,
+				false,
+				$this->getUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
+			);
 		}
 		else
 		{

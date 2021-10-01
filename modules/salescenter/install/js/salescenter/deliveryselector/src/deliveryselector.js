@@ -8,6 +8,7 @@ import CheckboxService from './services/checkbox';
 import DropdownService from './services/dropdown';
 import Hint from 'salescenter.component.stage-block.hint';
 import {Tag, Text} from 'main.core';
+import {Loc} from 'main.core';
 import 'currency';
 
 import './css/deliveryselector.css';
@@ -220,6 +221,7 @@ export default {
 				})).init();
 
 				this.emitChange();
+				this.recalculateRelatedServiceAvailabilities();
 			});
 		},
 		calculate()
@@ -327,9 +329,21 @@ export default {
 				this.emitChange();
 			}
 		},
+		isNoDeliveryService(service)
+		{
+			return service['code'] === 'NO_DELIVERY';
+		},
 		isServiceAvailable(service)
 		{
 			return this.availableServices.hasOwnProperty(service.id);
+		},
+		isServiceProfitable(service)
+		{
+			return (
+				service.hasOwnProperty('tags')
+				&& Array.isArray(service.tags)
+				&& service.tags.includes('profitable')
+			);
 		},
 		onPropValueChanged(event, relatedProp)
 		{
@@ -379,6 +393,20 @@ export default {
 			}
 			return this.initRelatedPropsOptions.hasOwnProperty(relatedProp.id) ? this.initRelatedPropsOptions[relatedProp.id] : null;
 		},
+		getPropName(relatedProp)
+		{
+			if (relatedProp.isAddressFrom)
+			{
+				return Loc.getMessage('SALE_DELIVERY_SERVICE_SHIPMENT_ADDRESS_FROM_LABEL');
+			}
+
+			if (relatedProp.isAddressTo)
+			{
+				return Loc.getMessage('SALE_DELIVERY_SERVICE_SHIPMENT_ADDRESS_TO_LABEL');
+			}
+
+			return relatedProp.name;
+		},
 		getServiceValue(relatedService)
 		{
 			if (!this.relatedServicesValues)
@@ -420,6 +448,10 @@ export default {
 			this.restrictionsHintPopup = new Hint.Popup();
 			this.restrictionsHintPopup.show(e.target, this.buildRestrictionsNode(profile));
 
+		},
+		isVisibleProfileRestriction(profile)
+		{
+			return (profile.restrictions && Array.isArray(profile.restrictions) && profile.restrictions.length > 0);
 		},
 		buildRestrictionsNode(profile)
 		{
@@ -468,6 +500,49 @@ export default {
 				'pointer-events': this.isRelatedServiceAvailable(relatedService) ? 'auto' : 'none',
 			};
 		},
+		getProfileLogoStyle(logo)
+		{
+			if (!logo)
+			{
+				return {};
+			}
+
+			return {
+				backgroundImage: 'url(' + logo.src + ')',
+				backgroundSize: (logo.width < 55)
+					? 'auto'
+					: 'contain'
+			};
+		},
+		recalculateRelatedServiceAvailabilities()
+		{
+			for (let i = 0; i < this.relatedServices.length; i++)
+			{
+				let relatedService = this.relatedServices[i];
+
+				let isAvailable = false;
+				for (let deliveryServiceId of relatedService.deliveryServiceIds)
+				{
+					if (this.availableServices.hasOwnProperty(deliveryServiceId))
+					{
+						if (
+							this.availableServices[deliveryServiceId] === null
+							|| (
+								Array.isArray(this.availableServices[deliveryServiceId])
+								&& this.availableServices[deliveryServiceId].includes(relatedService.id)
+							)
+						) {
+							isAvailable = true;
+							break;
+						}
+					}
+				}
+
+				relatedService.isAvailable = isAvailable;
+
+				Vue.set(this.relatedServices, i, relatedService);
+			}
+		},
 	},
 	created()
 	{
@@ -502,34 +577,9 @@ export default {
 				this.enteredDeliveryPrice = 0.00;
 			}
 		},
-		availableServices(newValue, oldValue)
+		availableServices(newValue)
 		{
-			for (let i = 0; i < this.relatedServices.length; i++)
-			{
-				let relatedService = this.relatedServices[i];
-
-				let isAvailable = false;
-				for (let deliveryServiceId of relatedService.deliveryServiceIds)
-				{
-					if (newValue.hasOwnProperty(deliveryServiceId))
-					{
-						if (
-							newValue[deliveryServiceId] === null
-							|| (
-								Array.isArray(newValue[deliveryServiceId])
-								&& newValue[deliveryServiceId].includes(relatedService.id)
-							)
-						) {
-							isAvailable = true;
-							break;
-						}
-					}
-				}
-
-				relatedService.isAvailable = isAvailable;
-
-				Vue.set(this.relatedServices, i, relatedService);
-			}
+			this.recalculateRelatedServiceAvailabilities();
 		},
 	},
 	computed: {
@@ -576,7 +626,7 @@ export default {
 		},
 		selectedNoDelivery()
 		{
-			return this.selectedDeliveryService && this.selectedDeliveryService['code'] === 'NO_DELIVERY';
+			return this.selectedDeliveryService && this.isNoDeliveryService(this.selectedDeliveryService);
 		},
 		isCalculatingAllowed()
 		{
@@ -826,7 +876,8 @@ export default {
 						:data-role="isParentDeliveryServiceSelected(deliveryService) ? 'ui-ears-active' : ''"
 					>
 						<div class="salescenter-delivery-method-image">
-							<img :src="deliveryService.logo">
+							<img v-if="deliveryService.logo" :src="deliveryService.logo.src">
+							<div v-else-if="!isNoDeliveryService(deliveryService)" class="salescenter-delivery-method-image-blank"></div>
 						</div>
 						<div class="salescenter-delivery-method-info">
 							<div v-if="deliveryService.title" class="salescenter-delivery-method-title">{{deliveryService.title}}</div>
@@ -853,19 +904,19 @@ export default {
 						:class="getProfileClass(profile)"
 						:data-role="selectedDeliveryService.id == profile.id ? 'ui-ears-active' : ''"
 					>
-						<div v-show="index === 0" class="salescenter-delivery-car-lable">
+						<div v-show="isServiceProfitable(profile)" class="salescenter-delivery-car-lable">
 							{{localize.SALE_DELIVERY_SERVICE_SELECTOR_PROFITABLE}}
 						</div>
 						<div class="salescenter-delivery-car-container">
 							<div
 								class="salescenter-delivery-car-image"
-								:style="{ backgroundImage: 'url(' + profile.logo + ')' }"
+								:style="getProfileLogoStyle(profile.logo)"
 							></div>
 							<div class="salescenter-delivery-car-param">
 								<div class="salescenter-delivery-car-title">
 									{{profile.name}}
 									<div
-										v-show="profile.restrictions"
+										v-show="isVisibleProfileRestriction(profile)"
 										@mouseenter="onRestrictionsHintShow($event, profile)"
 										@mouseleave="onRestrictionsHintHide($event)"
 										class="salescenter-delivery-car-title-info"
@@ -897,26 +948,29 @@ export default {
 				<div
 					v-for="(relatedProp, index) in relatedPropsOfAddressType"
 					v-show="relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)"
+					:style="{'margin-bottom': '30px'}"
 					class="salescenter-delivery-path-item"
 				>
-					<div class="salescenter-delivery-path-title">{{relatedProp.name}}</div>
+					<div class="salescenter-delivery-path-title">
+						{{getPropName(relatedProp)}}
+					</div>
 					<component
 						:is="'ADDRESS-control'"
 						:key="relatedProp.id"
 						:name="'PROPS_' + relatedProp.id"							
 						:initValue="getPropValue(relatedProp)"
 						:options="getPropOptions(relatedProp)"
-						:isStartMarker="index === 0"
+						:isStartMarker="relatedProp.isAddressFrom"
 						@change="onPropValueChanged($event, relatedProp)"
 					></component>
 				</div>
 			</div>
-			
-			<div v-show="relatedPropsOfOtherTypeCount > 0" class="salescenter-delivery-path">
+			<div v-show="relatedPropsOfOtherTypeCount > 0" class="salescenter-delivery-path --without-bg">
 				<div
 					v-for="(relatedProp, index) in relatedPropsOfOtherTypes"
 					v-show="relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)"
 					class="salescenter-delivery-path-item"
+					:style="{'margin-bottom': '30px'}"
 				>
 					<div class="salescenter-delivery-path-title-ordinary">{{relatedProp.name}}</div>
 					<div class="salescenter-delivery-path-control">

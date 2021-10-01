@@ -156,7 +156,7 @@ class CrmActivityEmailAjax
 				while ($item = $res->fetch())
 				{
 					if (array_key_exists($item['ACTIVITY_ID'], $clients))
-						continue; 
+						continue;
 
 					\CCrmActivity::prepareCommunicationInfo($item);
 
@@ -321,6 +321,8 @@ class CrmActivityEmailAjax
 
 		if ($error === false)
 		{
+			\Bitrix\Crm\Activity\Provider\Email::uncompressActivity($activity);
+
 			switch ((int) $activity['DESCRIPTION_TYPE'])
 			{
 				case \CCrmContentType::BBCode:

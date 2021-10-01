@@ -143,18 +143,21 @@ if ($arResult["showAll"] === "Y")
 		]);
 	}
 
-	$this->SetViewTarget("above_pagetitle", 150);
+	if (!empty($menuItems))
+	{
+		$this->SetViewTarget("above_pagetitle", 150);
 
-	$menuId = "blog_messages_panel_menu";
-	$APPLICATION->IncludeComponent(
-		"bitrix:main.interface.buttons",
-		"",
-		[
-			"ID" => $menuId,
-			"ITEMS" => $menuItems,
-			"DISABLE_SETTINGS" => true
-		]
-	);
+		$menuId = "blog_messages_panel_menu";
+		$APPLICATION->IncludeComponent(
+			"bitrix:main.interface.buttons",
+			"",
+			[
+				"ID" => $menuId,
+				"ITEMS" => $menuItems,
+				"DISABLE_SETTINGS" => true
+			]
+		);
 
-	$this->EndViewTarget();
+		$this->EndViewTarget();
+	}
 }

@@ -133,6 +133,8 @@ elseif ($firstKeyDefault !== 'general')
 	$arResult["Urls"]["General"] = $urlGeneralSpecific;
 }
 
+unset($arResult['Urls']['chat']);
+
 if ($arParams['PAGE_ID'] === 'group')
 {
 	$redirectUrl = false;
@@ -141,7 +143,7 @@ if ($arParams['PAGE_ID'] === 'group')
 	{
 		if (
 			(
-				(string)$firstMenuItemCode !== (string)$firstKeyDefault
+				$firstMenuItemCode !== (string)$firstKeyDefault
 				|| (string)$firstKeyDefault !== 'general'
 			)
 			&& isset($arResult["Urls"][$firstMenuItemCode])
@@ -154,7 +156,10 @@ if ($arParams['PAGE_ID'] === 'group')
 			}
 		}
 	}
-	elseif (!$arResult['CanView']['blog'])
+	elseif (
+		!$arResult['CanView']['blog']
+		&& $firstKeyDefault !== 'marketplace'
+	)
 	{
 		$redirectUrl = $arResult['Urls'][$firstKeyDefault];
 	}
@@ -394,7 +399,7 @@ foreach ($arResult['Urls'] as $key => $value)
 	{
 		$arResult['OnClicks'][$key] = "BX.SidePanel.Instance.open('" . (new Uri($value))->addParams([ 'IFRAME' => 'Y' ])->getUri() . "', {
 			customLeftBoundary: 270,
-			loader: '" . ($sliderPages[$key]['loader'] ?? '') . "', 
+			loader: '" . ($sliderPages[$key]['loader'] ?? '') . "',
 			newWindowLabel: true,
 			copyLinkLabel: true,
 		})";
@@ -434,6 +439,11 @@ foreach ($arResult['Urls'] as $key => $value)
 		$uri = new Uri($value);
 		$arResult['OnClicks'][$key] = "top.location.href = '" . $uri->getUri() . "'";
 	}
+}
+
+if (!$firstMenuItemCode)
+{
+	$firstMenuItemCode = $firstKeyDefault;
 }
 
 $arResult['IS_CURRENT_PAGE_FIRST'] = \Bitrix\Socialnetwork\ComponentHelper::isCurrentPageFirst([

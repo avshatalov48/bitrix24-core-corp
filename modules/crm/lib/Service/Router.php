@@ -322,7 +322,7 @@ class Router
 			}
 			else
 			{
-				$uri = new Uri($this->getFullPath());
+				$uri = new Uri($this->getFullPath('type', $entityTypeId));
 				$params = [
 					static::GET_COMPONENT_NAME => $componentName,
 					static::GET_COMPONENT_PARAMETERS => $parameters,

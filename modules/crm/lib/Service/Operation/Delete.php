@@ -2,11 +2,10 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
-use Bitrix\Crm\Search\SearchContentBuilderFactory;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Timeline\FactoryBasedController;
 use Bitrix\Crm\Timeline\TimelineManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -54,7 +53,8 @@ class Delete extends Operation
 		$timelineController = TimelineManager::resolveController(['ASSOCIATED_ENTITY_TYPE_ID' => $this->item->getEntityTypeId()]);
 		if ($timelineController)
 		{
-			$timelineController->onDelete($this->itemBeforeSave->getId(), $this->itemBeforeSave->getData());
+			/** @see FactoryBasedController::onDelete() */
+			$timelineController->onDelete($this->itemBeforeSave->getId(), ['FIELDS' => $this->itemBeforeSave->getData()]);
 		}
 	}
 
@@ -95,6 +95,6 @@ class Delete extends Operation
 
 	protected function getPullData(): array
 	{
-		return  $this->getItemBeforeSave()->getCompatibleData();
+		return $this->getItemBeforeSave()->getCompatibleData();
 	}
 }

@@ -5,9 +5,14 @@ namespace Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Timeline\FactoryBasedController;
+use Bitrix\Crm\Timeline\MarkController;
+use Bitrix\Crm\Timeline\RelationController;
 use Bitrix\Crm\Timeline\TimelineManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -86,22 +91,73 @@ class Update extends Operation
 
 	protected function saveToHistory(): Result
 	{
-		$trackedObject = Container::getInstance()->getFactory($this->item->getEntityTypeId())->getTrackedObject($this->itemBeforeSave, $this->item);
+		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
+		$trackedObject = $factory->getTrackedObject($this->itemBeforeSave, $this->item);
 
 		return Container::getInstance()->getEventHistory()->registerUpdate($trackedObject);
 	}
 
 	protected function createTimelineRecord(): void
 	{
-		$timelineController = TimelineManager::resolveController(['ASSOCIATED_ENTITY_TYPE_ID' => $this->item->getEntityTypeId()]);
+		$timelineController = TimelineManager::resolveController([
+			'ASSOCIATED_ENTITY_TYPE_ID' => $this->item->getEntityTypeId()
+		]);
+
 		if ($timelineController)
 		{
+			/** @see FactoryBasedController::onModify() */
 			$timelineController->onModify(
 				$this->itemBeforeSave->getId(),
 				[
 					'PREVIOUS_FIELDS' => $this->itemBeforeSave->getData(Values::ACTUAL),
 					'CURRENT_FIELDS' => $this->item->getData(),
 				]
+			);
+		}
+
+		RelationController::getInstance()->registerEventsByFieldsChange(
+			$this->getItemIdentifier(),
+			$this->fieldsCollection->toArray(),
+			$this->itemBeforeSave->getCompatibleData(Values::ACTUAL),
+			$this->item->getCompatibleData(),
+			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
+		);
+
+		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
+
+		if ($factory->isClientEnabled())
+		{
+			RelationController::getInstance()->registerEventsByBindingsChange(
+				$this->getItemIdentifier(),
+				\CCrmOwnerType::Contact,
+				$this->itemBeforeSave->remindActual(Item::FIELD_NAME_CONTACT_BINDINGS),
+				$this->item->getContactBindings(),
+				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
+			);
+		}
+
+		if (!$factory->isStagesSupported())
+		{
+			return;
+		}
+
+		$newStage = $factory->getStage((string)$this->item->getStageId());
+		if (!$newStage)
+		{
+			return;
+		}
+
+		$wasItemMovedToFinalStage = (
+			$factory->isStagesEnabled()
+			&& ($this->itemBeforeSave->remindActual(Item::FIELD_NAME_STAGE_ID) !== $this->item->getStageId())
+			&& PhaseSemantics::isFinal($newStage->getSemantics())
+		);
+
+		if ($wasItemMovedToFinalStage)
+		{
+			MarkController::getInstance()->onItemMoveToFinalStage(
+				$this->getItemIdentifier(),
+				$newStage->getSemantics()
 			);
 		}
 	}
@@ -169,6 +225,16 @@ class Update extends Operation
 		if ($restriction->isUpdateItemRestricted($this->item->getEntityTypeId()))
 		{
 			$result->addError($restriction->getUpdateItemRestrictedError());
+		}
+		$updateOperationRestriction = RestrictionManager::getUpdateOperationRestriction(ItemIdentifier::createByItem($this->item));
+		if (!$updateOperationRestriction->hasPermission())
+		{
+			$result->addError(
+				new Error(
+					$updateOperationRestriction->getErrorMessage(),
+					$updateOperationRestriction->getErrorCode()
+				)
+			);
 		}
 
 		return $result;

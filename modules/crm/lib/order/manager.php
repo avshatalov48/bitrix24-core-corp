@@ -80,7 +80,7 @@ final class Manager
 				}
 			}
 		}
-			
+
 		$res = $order->save();
 		if(!$res->isSuccess())
 		{

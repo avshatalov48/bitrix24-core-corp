@@ -8,6 +8,22 @@ use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Result;
 
+/**
+ * Class EventRelationsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EventRelations_Query query()
+ * @method static EO_EventRelations_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EventRelations_Result getById($id)
+ * @method static EO_EventRelations_Result getList(array $parameters = array())
+ * @method static EO_EventRelations_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_EventRelations createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_EventRelations_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_EventRelations wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_EventRelations_Collection wakeUpCollection($rows)
+ */
 class EventRelationsTable extends DataManager
 {
 	public static function getTableName(): string

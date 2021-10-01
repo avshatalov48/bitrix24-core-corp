@@ -13,6 +13,10 @@ const MessageEditor = {
 			type: Object,
 			required: true
 		},
+		isReadOnly: {
+			type: Boolean,
+			default: false,
+		}
 	},
 	data()
 	{
@@ -46,7 +50,7 @@ const MessageEditor = {
 	{
 		isEditable()
 		{
-			return this.mode === MODE_EDIT;
+			return this.mode === MODE_EDIT && !this.isReadOnly;
 		},
 		resetError()
 		{
@@ -183,7 +187,7 @@ const MessageEditor = {
 						v-on:view-on-mouseleave="hidePopupHint"
 					/>
 				</template>
-				<sms-message-control-block 
+				<sms-message-control-block v-if="!isReadOnly"
 					:editable="isEditable()"
 					v-on:control-on-save="afterSaveControl"
 				/>

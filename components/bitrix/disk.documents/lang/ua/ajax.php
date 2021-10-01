@@ -1,6 +1,7 @@
 <?php
 $MESS["DISK_DOCUMENTS_ACT_COPIED_INTERNAL_LINK"] = "Посилання скопійовано в буфер";
 $MESS["DISK_DOCUMENTS_ACT_COPY_INTERNAL_LINK"] = "Скопіювати внутрішнє посилання";
+$MESS["DISK_DOCUMENTS_ACT_DELETE"] = "Видалити";
 $MESS["DISK_DOCUMENTS_ACT_DETAILS"] = "Детальніше";
 $MESS["DISK_DOCUMENTS_ACT_DOWNLOAD"] = "Завантажити";
 $MESS["DISK_DOCUMENTS_ACT_EDIT"] = "Редагувати";

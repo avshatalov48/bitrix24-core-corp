@@ -18,21 +18,21 @@ $isBitrix24Template && $this->setViewTarget('below_pagetitle');
 		<div class="disk-documents-control-panel-label">
 			<div class="disk-documents-control-panel-label-item"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE')?></div>
 		</div>
-		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createDocx(BX.Disk.getDocumentService());">
+		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createDocx();">
 			<div class="disk-documents-control-panel-card disk-documents-control-panel-card--doc">
 				<div class="disk-documents-control-panel-card-icon"></div>
 				<div class="disk-documents-control-panel-card-btn"></div>
 				<div class="disk-documents-control-panel-card-name"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_DOC')?></div>
 			</div>
 		</div>
-		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createXlsx(BX.Disk.getDocumentService());">
+		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createXlsx();">
 			<div class="disk-documents-control-panel-card disk-documents-control-panel-card--xls">
 				<div class="disk-documents-control-panel-card-icon"></div>
 				<div class="disk-documents-control-panel-card-btn"></div>
 				<div class="disk-documents-control-panel-card-name"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_XLS')?></div>
 			</div>
 		</div>
-		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createPptx(BX.Disk.getDocumentService());">
+		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createPptx();">
 			<div class="disk-documents-control-panel-card disk-documents-control-panel-card--ppt">
 				<div class="disk-documents-control-panel-card-icon"></div>
 				<div class="disk-documents-control-panel-card-btn"></div>

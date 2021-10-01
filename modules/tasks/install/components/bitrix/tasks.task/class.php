@@ -1244,6 +1244,7 @@ class TasksTaskComponent extends TasksBaseComponent
 		);
 		$this->arResult['AUX_DATA']['DISK_FOLDER_ID'] = Integration\Disk::getFolderForUploadedFiles($this->userId)->getData()['FOLDER_ID'];
 		$this->arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
+		$this->arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'] = Util\Restriction\Bitrix24Restriction\Limit\RecurringLimit::isLimitExceeded();
 	}
 
 	protected function getDataTemplates()
@@ -1452,6 +1453,7 @@ class TasksTaskComponent extends TasksBaseComponent
 		$this->arResult['DATA']['USER'] = User::getData($this->users2Get);
 
 		$this->getCurrentUserData();
+		$this->checkIsNetworkTask();
 	}
 
 	protected function getCurrentUserData()
@@ -1477,6 +1479,22 @@ class TasksTaskComponent extends TasksBaseComponent
 		$currentUser['ROLES'] = $roles;
 
 		$this->arResult['AUX_DATA']['USER'] = $currentUser;
+	}
+
+	protected function checkIsNetworkTask(): void
+	{
+		$isNetworkTask = false;
+
+		foreach ($this->arResult['DATA']['USER'] as $user)
+		{
+			if ($user['IS_NETWORK_USER'])
+			{
+				$isNetworkTask = true;
+				break;
+			}
+		}
+
+		$this->arResult['DATA']['IS_NETWORK_TASK'] = $isNetworkTask;
 	}
 
 	protected function formatData()

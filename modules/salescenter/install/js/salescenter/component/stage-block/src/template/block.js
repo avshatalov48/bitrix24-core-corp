@@ -41,6 +41,10 @@ const Block = {
 				'salescenter-app-payment-by-sms-item-show': !this.collapse,
 			}
 		},
+		hintClassModifier()
+		{
+			return this.config.hintClassModifier || '';
+		},
 		bodyStyle()
 		{
 			return {
@@ -100,7 +104,7 @@ const Block = {
 					<slot name="block-title-title"></slot>
 				</template>
 				<template v-slot:item-hint v-if="config.showHint">
-					<block-hint v-on:on-hint.stop.prevent="onHint">
+					<block-hint v-on:on-hint.stop.prevent="onHint" :class="hintClassModifier">
 						<template v-slot:default>
 							<slot name="block-hint-title"></slot>
 						</template>

@@ -1,7 +1,7 @@
 import {Type, Dom, Reflection, Event} from 'main.core';
 import {rest} from "rest.client";
 import "pull.client";
-import {Popup} from './popup';
+import {UserPopup} from './popup';
 import {Timeman} from './timeman';
 import {Circle} from 'ui.graph.circle';
 
@@ -46,7 +46,6 @@ class UstatOnline
 		});
 
 		this.online = [].concat(this.users);
-
 		this.counter = 0;
 
 		//-------------- for IndexedDb
@@ -71,10 +70,10 @@ class UstatOnline
 			BX.UI.Hint.init(this.ustatOnlineContainerNode);
 		}
 
-		new Popup(this);
+		new UserPopup(this);
 		this.timemanObj = new Timeman(this);
 
-		let now = new Date();
+		const now = new Date();
 		this.currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).valueOf();
 
 		this.checkOnline();
@@ -131,8 +130,8 @@ class UstatOnline
 
 	checkNewDay()
 	{
-		let now = new Date();
-		let today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).valueOf();
+		const now = new Date();
+		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).valueOf();
 
 		if (this.currentDate < today) //new day
 		{
@@ -153,7 +152,7 @@ class UstatOnline
 
 	setUserOnline(params)
 	{
-		let userId = this.getNumberUserId(params.id);
+		const userId = this.getNumberUserId(params.id);
 
 		this.findUser(userId).then(user => {
 			user.id = this.getNumberUserId(user.id);
@@ -185,6 +184,7 @@ class UstatOnline
 				isUserOnline = true;
 			}
 		});
+
 		if (!isUserOnline)
 		{
 			this.online.unshift(user);
@@ -224,7 +224,8 @@ class UstatOnline
 				return false;
 			}
 
-			let requestCount = this.maxUserToShow-counterFindUser;
+			const requestCount = this.maxUserToShow-counterFindUser;
+
 			if (requestCount <= 0)
 			{
 				return true;
@@ -246,7 +247,7 @@ class UstatOnline
 						continue;
 					}
 
-					let userData = collection[userId];
+					const userData = collection[userId];
 					if (!userData)
 					{
 						continue;
@@ -482,36 +483,33 @@ class UstatOnline
 
 		let renderedUserNodes = this.userBlockNode.querySelectorAll(".js-ustat-online-user");
 
-		if (this.online.length > 100 && renderedUserNodes >= this.maxUserToShow)
+		if (this.online.length > 100 && renderedUserNodes.length >= this.maxUserToShow)
 		{
 			return;
 		}
 
-		if (renderedUserNodes)
+		for (let item in renderedUserNodes)
 		{
-			for (let item in renderedUserNodes)
+			if (!renderedUserNodes.hasOwnProperty(item))
 			{
-				if (!renderedUserNodes.hasOwnProperty(item))
-				{
-					continue;
-				}
-				let renderedItemId = parseInt(renderedUserNodes[item].getAttribute("data-user-id"));
+				continue;
+			}
+			let renderedItemId = parseInt(renderedUserNodes[item].getAttribute("data-user-id"));
 
-				if (newUserIds.indexOf(renderedItemId) === -1)
+			if (newUserIds.indexOf(renderedItemId) === -1)
+			{
+				if (Type.isDomNode(renderedUserNodes[item]))
 				{
-					if (Type.isDomNode(renderedUserNodes[item]))
-					{
-						Dom.remove(renderedUserNodes[item]); //remove offline avatars
-						/*renderedUserNodes[item].classList.add('intranet-ustat-online-icon-hide');
-						setTimeout( () => {
+					Dom.remove(renderedUserNodes[item]); //remove offline avatars
+					/*renderedUserNodes[item].classList.add('intranet-ustat-online-icon-hide');
+					setTimeout( () => {
 
-						}, 800);*/
-					}
+					}, 800);*/
 				}
-				else
-				{
-					renderedUserIds.push(parseInt(renderedItemId));
-				}
+			}
+			else
+			{
+				renderedUserIds.push(parseInt(renderedItemId));
 			}
 		}
 

@@ -22,6 +22,7 @@ UI\Extension::load([
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.notification',
+	'ui.info-helper',
 ]);
 
 if (Loader::includeModule('bitrix24'))
@@ -96,7 +97,8 @@ if (
 			userRole: '<?=$arResult["CurrentUserPerms"]["UserRole"]?>',
 			userIsMember: <?=($arResult["CurrentUserPerms"]["UserIsMember"] ? 'true' : 'false')?>,
 			userIsAutoMember: <?=(isset($arResult["CurrentUserPerms"]["UserIsAutoMember"]) && $arResult["CurrentUserPerms"]["UserIsAutoMember"] ? 'true' : 'false')?>,
-			editFeaturesAllowed: <?=(\Bitrix\Socialnetwork\Item\Workgroup::getEditFeaturesAvailability() ? 'true' : 'false')?>,
+			editFeaturesAllowed: <?=(\Bitrix\Socialnetwork\Helper\Workgroup::getEditFeaturesAvailability() ? 'true' : 'false')?>,
+			copyFeatureAllowed: <?=(\Bitrix\Socialnetwork\Helper\Workgroup::isGroupCopyFeatureEnabled() ? 'true' : 'false')?>,
 			canPickTheme: <?= (
 				$arResult['inIframe']
 				&& \Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker::isAvailable()

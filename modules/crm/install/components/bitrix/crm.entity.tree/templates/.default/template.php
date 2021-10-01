@@ -23,15 +23,15 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 	/*
 	 * Draw activity block for one entity.
 	 */
-	function CrmEntityTreeDrawActivity($id, $type, $activity, $leadId = null)
+	function CrmEntityTreeDrawActivity($id, $type, $activity, $leadId = null, $document = [])
 	{
-		static $label = null;
-		static $activityTypes = array();
+		static $activityLabel = null;
+		static $documentLabel = null;
+		static $activityTypes = [];
 
-		if ($label === null)
-		{
-			$label = Loc::getMessage('CRM_ENTITY_TREE_ACTIVITY');
-		}
+		$activityLabel = ($activityLabel ?? Loc::getMessage('CRM_ENTITY_TREE_ACTIVITY'));
+		$documentLabel = ($documentLabel ?? Loc::getMessage('CRM_ENTITY_TREE_DOCUMENT'));
+
 		if (empty($activityTypes))
 		{
 			//crm.activity.list/templates/grid
@@ -83,7 +83,29 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 			);
 		}
 
-		if (!empty($activity[$type][$id])){
+		$generateDocDropHtml = static function(
+			string $classType,
+			int $id,
+			int $type,
+			string $label,
+			int $count
+		): string
+		{
+			$result = '';
+
+			if ($count)
+			{
+				$target = "crm-doc-{$classType}-droplist-wrapper-{$type}-{$id}";
+				$result = '<div class="crm-doc-drop-link" data-role="drop-link" data-target="' . $target . '">';
+				$result .= '<span class="crm-doc-drop-link-border">' . $label . '</span>';
+				$result .= '<span class="crm-doc-drop-link-number"> (' . $count . ')</span>';
+				$result .= '</div>';
+			}
+
+			return $result;
+		};
+
+		if (!empty($activity[$type][$id]) || !empty($document[$type][$id])){
 			//add parent lead's activity
 			if (
 				$leadId &&
@@ -93,13 +115,24 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 				ksort($activity[$type][$id]);
 				$activity[$type][$id] = array_reverse($activity[$type][$id], true);
 			}
+
+			$activityCount = count($activity[$type][$id]);
+			$documentCount = count($document[$type][$id]);
+
 			?>
 			<div class="crm-doc-drop">
-				<div class="crm-doc-drop-link" data-role="drop-link"><?
-					?><span class="crm-doc-drop-link-border"><?= $label?></span> <?
-					?><span class="crm-doc-drop-link-number">(<?= count($activity[$type][$id])?>)</span><?
-				?></div>
-				<div class="crm-doc-droplist-wrapper">
+				<?= $generateDocDropHtml('activity', $id, $type, $activityLabel, $activityCount) ?>
+				<?= $generateDocDropHtml('document', $id, $type, $documentLabel, $documentCount) ?>
+
+				<?php
+				if ($activityCount)
+				{
+				?>
+
+				<div
+					class="crm-doc-droplist-wrapper"
+					id="crm-doc-activity-droplist-wrapper-<?= $type ?>-<?= $id ?>"
+				>
 					<ul class="crm-doc-droplist">
 						<?foreach ($activity[$type][$id] as $item):
 							$visual = $activityTypes['default'];
@@ -127,6 +160,45 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 						<?endforeach;?>
 					</ul>
 				</div>
+
+				<?php
+				}
+
+				if ($documentCount)
+				{
+				?>
+				<div
+					class="crm-doc-droplist-wrapper"
+					id="crm-doc-document-droplist-wrapper-<?= $type ?>-<?= $id ?>"
+				>
+					<ul class="crm-doc-droplist<?=($documentCount === 1) ? ' one-item' : '' ?>">
+						<?php
+						foreach ($document[$type][$id] as $item)
+						{
+							?>
+							<li class="crm-doc-droplist-item">
+								<a
+									href="javascript:void(0);"
+									onclick="BX.DocumentGenerator.Document.onBeforeCreate(
+										'/bitrix/components/bitrix/crm.document.view/slider.php?documentId=<?= $item['ID'] ?>',
+										 {},
+										 '/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg'
+										 )">
+									<?= Loc::getMessage('CRM_ENTITY_TREE_DOCUMENT_LABEL', [
+										'#TITLE#' => htmlspecialcharsbx($item['TITLE']),
+										'#DATE#' => $item['CREATE_TIME'],
+									]) ?>
+								</a>
+							</li>
+						<?php
+						}
+						?>
+					</ul>
+				</div>
+
+				<?php
+				}
+				?>
 			</div>
 			<?
 		}
@@ -242,7 +314,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 								</tbody>
 							</table>
 						</div>
-						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY']);?>
+						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], null, $result['DOCUMENT']);?>
 					</div>
 				</div>
 				<?
@@ -273,7 +345,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 							<?if ($item['TREE_TYPE'] === \CCrmOwnerType::Company && $item['COMPANY_TYPE']):?>
 							<div class="crm-doc-cart-user-company"><?= htmlspecialcharsbx($statuses['COMPANY_TYPE'][$item['COMPANY_TYPE']]['NAME'])?></div>
 							<?endif;?>
-							<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID']);?>
+							<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID'], $result['DOCUMENT']);?>
 						</div>
 					</div>
 					<?if (isset($item['FM_VALUES'])):?>
@@ -336,7 +408,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 							])?>
 						</div>
 						<?endif;?>
-						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID']);?>
+						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID'], $result['DOCUMENT']);?>
 					</div>
 					<div class="crm-doc-cart-param">
 						<div class="crm-doc-info-progress">
@@ -386,6 +458,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 							])?>
 						</div>
 						<?endif;?>
+						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID'], $result['DOCUMENT']);?>
 					</div>
 					<div class="crm-doc-cart-param">
 						<div class="crm-doc-info-progress">
@@ -433,6 +506,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 						])?>
 						</div>
 						<?endif;?>
+						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], null, $result['DOCUMENT']);?>
 					</div>
 					<div class="crm-doc-cart-param">
 						<div class="crm-doc-info-progress">
@@ -551,18 +625,42 @@ if (!function_exists('CrmEntityTreeDrawRecur'))
 	BX.ready(function ()
 	{
 		var dropLink = document.querySelectorAll('[data-role="drop-link"]');
+		var openClass = 'crm-doc-drop-open';
+		var openItemClass = 'crm-doc-drop-item-open';
+		var openedElement = null;
+
 		for(var i = 0; i <= dropLink.length; i++) {
 			BX.bind(dropLink[i], 'click', function ()
 			{
-				var getNextEl = this.nextElementSibling;
-				var getNextElheight = getNextEl.offsetHeight;
-				var getNextInner = getNextEl.firstElementChild.offsetHeight;
-				if(getNextElheight > 0){
-					getNextEl.style.height = "0px";
-					this.parentNode.classList.remove('crm-doc-drop-open');
-				} else {
-					getNextEl.style.height = getNextInner + "px";
-					this.parentNode.classList.add('crm-doc-drop-open');
+				if ('target' in this.dataset)
+				{
+					var openItems = document.querySelectorAll('.' + openItemClass);
+					Array.from(openItems).forEach(function(openItem){
+						openItem.classList.remove(openItemClass);
+					});
+
+					if (openedElement)
+					{
+						openedElement.style.height = '0px';
+						openedElement.parentNode.classList.remove(openClass);
+					}
+
+					var target = this.dataset.target;
+					var targetElement = document.getElementById(target);
+					var getNextElheight = targetElement.offsetHeight;
+					var getNextInner = targetElement.firstElementChild.offsetHeight;
+					if (getNextElheight > 0)
+					{
+						targetElement.style.height = '0px';
+						this.parentNode.classList.remove(openClass);
+					}
+					else
+					{
+						targetElement.style.height = getNextInner + 'px';
+						this.parentNode.classList.add(openClass);
+						this.classList.add(openItemClass);
+						openedElement = targetElement;
+					}
 				}
 			})
 		}

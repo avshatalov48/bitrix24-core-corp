@@ -1211,9 +1211,12 @@ class CCrmUserType
 			);
 
 			$enums = array();
-			while($arEnum = $rsEnum->GetNext())
+			if (is_object($rsEnum))
 			{
-				$enums[strval($arEnum['ID'])] = $arEnum;
+				while ($arEnum = $rsEnum->GetNext())
+				{
+					$enums[strval($arEnum['ID'])] = $arEnum;
+				}
 			}
 
 			$fieldName = 'VALUE';

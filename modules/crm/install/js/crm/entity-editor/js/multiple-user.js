@@ -312,8 +312,45 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		this._model.setMappedField(this._map, "data", values);
 		this._model.setSchemeField(this._schemeElement, "infos", infos);
 	};
+	BX.Crm.EntityEditorMultipleUser.prototype.fireOnBeforeSelectorEvent = function()
+	{
+		var event = {
+			isCanceled: false
+		};
+		BX.onCustomEvent(this._editor, this.eventsNamespace + ":onMultipleUserBeforeSelectorOpen", [ this, event ]);
+		if (!event.isCanceled)
+		{
+			var restriction = this._schemeElement.getDataObjectParam('restriction');
+			if (restriction && restriction.isRestricted === true)
+			{
+				event.isCanceled = true;
+				if (BX.Type.isString(restriction.action))
+				{
+					try
+					{
+						eval(restriction.action);
+					}
+					catch (e)
+					{
+						console.log('canceled by restriction');
+					}
+				}
+				else
+				{
+					console.log('canceled by restriction');
+				}
+			}
+		}
+
+		return event;
+	};
 	BX.Crm.EntityEditorMultipleUser.prototype.onTopButtonClick = function(e)
 	{
+		var event = this.fireOnBeforeSelectorEvent();
+		if (event.isCanceled)
+		{
+			return;
+		}
 		//If any other control has changed try to switch to edit mode.
 		if(this._mode === BX.UI.EntityEditorMode.view && this.isEditInViewEnabled() && this.getEditor().isChanged())
 		{
@@ -326,6 +363,11 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 	};
 	BX.Crm.EntityEditorMultipleUser.prototype.onBottomButtonClick = function(e)
 	{
+		var event = this.fireOnBeforeSelectorEvent();
+		if (event.isCanceled)
+		{
+			return;
+		}
 		this.getSelector().open(this._bottomButton);
 	};
 	BX.Crm.EntityEditorMultipleUser.prototype.getSelector = function()

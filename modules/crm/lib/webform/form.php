@@ -1369,9 +1369,22 @@ class Form
 			$activityFieldValues = array();
 			if(is_array($field['items']) && count($field['items']) > 0)
 			{
+				if (!empty($field['values'][0]['id']))
+				{
+					$fieldValues = array_column($field['values'], 'id');
+				}
+				elseif (!empty($field['values'][0]['value']))
+				{
+					$fieldValues = array_column($field['values'], 'value');
+				}
+				else
+				{
+					$fieldValues = $field['values'];
+				}
+
 				foreach($field['items'] as $item)
 				{
-					if(!in_array($item['value'], $field['values']))
+					if(!in_array($item['value'], $fieldValues))
 					{
 						continue;
 					}

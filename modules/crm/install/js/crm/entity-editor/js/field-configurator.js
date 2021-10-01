@@ -9,6 +9,37 @@ if(typeof BX.Crm.EntityConfigurationManager === "undefined")
 		BX.Crm.EntityConfigurationManager.superclass.constructor.apply(this);
 	};
 	BX.extend(BX.Crm.EntityConfigurationManager, BX.UI.EntityConfigurationManager);
+	BX.Crm.EntityConfigurationManager.prototype.getTypeInfos = function()
+	{
+		var typeInfos = BX.Crm.EntityConfigurationManager.superclass.getTypeInfos.apply(this);
+		var ufAddRestriction = this._editor.getRestriction('userFieldAdd');
+		var ufResourceBookingRestriction = this._editor.getRestriction('userFieldResourceBooking');
+
+		if (ufAddRestriction && !ufAddRestriction['isPermitted'] && ufAddRestriction['restrictionCallback'])
+		{
+			for(var i = 0, length = typeInfos.length; i < length; i++)
+			{
+				typeInfos[i].callback = function()
+				{
+					eval(ufAddRestriction['restrictionCallback']);
+				};
+			}
+		}
+		else if (ufResourceBookingRestriction &&!ufResourceBookingRestriction['isPermitted'] && ufResourceBookingRestriction['restrictionCallback'])
+		{
+			for(var j = 0; j < typeInfos.length; j++)
+			{
+				if (typeInfos[j].name === 'resourcebooking')
+				{
+					typeInfos[j].callback = function()
+					{
+						eval(ufResourceBookingRestriction['restrictionCallback']);
+					};
+				}
+			}
+		}
+		return typeInfos;
+	};
 	BX.Crm.EntityConfigurationManager.prototype.getUserFieldConfigurator = function(params, parent)
 	{
 		if(!BX.type.isPlainObject(params))

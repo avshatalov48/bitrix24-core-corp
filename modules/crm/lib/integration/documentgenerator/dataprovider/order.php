@@ -4,11 +4,14 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Order\OrderStatus;
 use Bitrix\Crm\Requisite\EntityLink;
+use Bitrix\Crm\Service;
+use Bitrix\Crm\StatusTable;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProvider\User;
 use Bitrix\DocumentGenerator\DataProviderManager;
-use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Internals;
@@ -21,6 +24,8 @@ class Order extends ProductsDataProvider
 
 	protected $order;
 	protected $contacts;
+	protected $payments;
+	protected $shipments;
 
 	public function getFields()
 	{
@@ -55,6 +60,7 @@ class Order extends ProductsDataProvider
 			$this->fields['DATE_DEDUCTED']['TITLE'] = Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_ORDER_DATE_DEDUCTED_TITLE');
 			$this->fields['REASON_UNDO_DEDUCTED']['TITLE'] = Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_ORDER_REASON_UNDO_DEDUCTED_TITLE');
 			$this->fields['STATUS']['TITLE'] = Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_ORDER_STATUS_TITLE');
+			$this->fields['STATUS']['VALUE'] = [$this, 'getStatus'];
 			$this->fields['USER_DESCRIPTION']['TITLE'] = Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_ORDER_USER_DESCRIPTION_TITLE');
 			$this->fields['COMMENTS']['TITLE'] = Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_ORDER_COMMENTS_TITLE');
 			$this->fields['COMPANY']['OPTIONS'] = [
@@ -64,20 +70,51 @@ class Order extends ProductsDataProvider
 					'BANK_DETAIL' => $this->getBuyerBankDetailId(),
 				]
 			];
-			$this->fields['CONTACTS'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACTS_TITLE'),
-				'PROVIDER' => ArrayDataProvider::class,
-				'OPTIONS' => [
-					'ITEM_PROVIDER' => Contact::class,
-					'ITEM_NAME' => 'CONTACT',
-					'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACT_TITLE'),
-					'ITEM_OPTIONS' => [
-						'DISABLE_MY_COMPANY' => true,
-						'isLightMode' => true,
+			if (!$this->isLightMode())
+			{
+				$this->fields['CONTACTS'] = [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACTS_TITLE'),
+					'PROVIDER' => ArrayDataProvider::class,
+					'OPTIONS' => [
+						'ITEM_PROVIDER' => Contact::class,
+						'ITEM_NAME' => 'CONTACT',
+						'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACT_TITLE'),
+						'ITEM_OPTIONS' => [
+							'DISABLE_MY_COMPANY' => true,
+							'isLightMode' => true,
+						],
 					],
-				],
-				'VALUE' => [$this, 'getContacts'],
-			];
+					'VALUE' => [$this, 'getContacts'],
+				];
+
+				$this->fields['PAYMENTS'] = [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_ORDER_PAYMENTS_TITLE'),
+					'PROVIDER' => ArrayDataProvider::class,
+					'OPTIONS' => [
+						'ITEM_PROVIDER' => Payment::class,
+						'ITEM_NAME' => 'PAYMENT',
+						'ITEM_TITLE' => Payment::getLangName(),
+						'ITEM_OPTIONS' => [
+							'isLightMode' => true,
+						],
+					],
+					'VALUE' => [$this, 'getPayments'],
+				];
+
+				$this->fields['SHIPMENTS'] = [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_ORDER_SHIPMENTS_TITLE'),
+					'PROVIDER' => ArrayDataProvider::class,
+					'OPTIONS' => [
+						'ITEM_PROVIDER' => Shipment::class,
+						'ITEM_NAME' => 'SHIPMENT',
+						'ITEM_TITLE' => Shipment::getLangName(),
+						'ITEM_OPTIONS' => [
+							'isLightMode' => true,
+						],
+					],
+					'VALUE' => [$this, 'getShipments'],
+				];
+			}
 		}
 
 		return $this->fields;
@@ -187,7 +224,15 @@ class Order extends ProductsDataProvider
 	 */
 	public function hasAccess($userId)
 	{
-		return true;
+		if($this->isLoaded())
+		{
+			return Service\Container::getInstance()->getUserPermissions($userId)->checkReadPermissions(
+				$this->getCrmOwnerType(),
+				(int)$this->source
+			);
+		}
+
+		return false;
 	}
 
 	/**
@@ -330,31 +375,43 @@ class Order extends ProductsDataProvider
 				]
 			]);
 
-			while($product = $dbRes->fetch())
+			while($basketItem = $dbRes->fetch())
 			{
-				$result[] = [
-					'ID' => $product['ID'],
-					'OWNER_ID' => $this->source,
-					'OWNER_TYPE' => $this->getCrmProductOwnerType(),
-					'PRODUCT_ID' => $product['PRODUCT_ID'] ?? 0,
-					'NAME' => $product['NAME'] ?? '',
-					'PRICE' => $product['PRICE'],
-					'QUANTITY' => (float) ($product['QUANTITY'] ?? 0),
-					'DISCOUNT_TYPE_ID' => Discount::MONETARY,
-					'DISCOUNT_SUM' => $product['DISCOUNT_PRICE'],
-					'PRICE_BRUTTO' => $product['BASE_PRICE'],
-					'DISCOUNT_RATE' => $product['DISCOUNT_RATE'] ?? ($product['DISCOUNT_PRICE'] * 100 / $product['BASE_PRICE']),
-					'TAX_RATE' => $product['VAT_RATE'] * 100,
-					'TAX_INCLUDED' => $product['VAT_INCLUDED'] ?? 'N',
-					'MEASURE_CODE' => $product['MEASURE_CODE'] ?? '',
-					'MEASURE_NAME' => $product['MEASURE_NAME'] ?? '',
-					'CUSTOMIZED' => $product['CUSTOM_PRICE'] ?? 'N',
-					'CURRENCY_ID' => $this->getCurrencyId(),
-				];
+				$result[] = static::getProductProviderDataByBasketItem(
+					$basketItem,
+					new ItemIdentifier(
+						(int)$this->getCrmOwnerType(),
+						(int)$this->source
+					),
+					$this->getCurrencyId()
+				);
 			}
 		}
 
 		return $result;
+	}
+
+	public static function getProductProviderDataByBasketItem(array $basketItem, ItemIdentifier $owner, string $currencyId): array
+	{
+		return [
+			'ID' => $basketItem['ID'],
+			'OWNER_ID' => $owner->getEntityId(),
+			'OWNER_TYPE' => $owner->getEntityTypeId(),
+			'PRODUCT_ID' => $basketItem['PRODUCT_ID'] ?? 0,
+			'NAME' => $basketItem['NAME'] ?? '',
+			'PRICE' => $basketItem['PRICE'],
+			'QUANTITY' => (float) ($basketItem['QUANTITY'] ?? 0),
+			'DISCOUNT_TYPE_ID' => Discount::MONETARY,
+			'DISCOUNT_SUM' => $basketItem['DISCOUNT_PRICE'],
+			'PRICE_BRUTTO' => $basketItem['BASE_PRICE'],
+			'DISCOUNT_RATE' => $basketItem['DISCOUNT_RATE'] ?? ($basketItem['DISCOUNT_PRICE'] * 100 / $basketItem['BASE_PRICE']),
+			'TAX_RATE' => $basketItem['VAT_RATE'] * 100,
+			'TAX_INCLUDED' => $basketItem['VAT_INCLUDED'] ?? 'N',
+			'MEASURE_CODE' => $basketItem['MEASURE_CODE'] ?? '',
+			'MEASURE_NAME' => $basketItem['MEASURE_NAME'] ?? '',
+			'CUSTOMIZED' => $basketItem['CUSTOM_PRICE'] ?? 'N',
+			'CURRENCY_ID' => $currencyId,
+		];
 	}
 
 	/**
@@ -421,6 +478,60 @@ class Order extends ProductsDataProvider
 		}
 
 		return $this->contacts;
+	}
+
+	public function getPayments(): array
+	{
+		if($this->payments === null)
+		{
+			$this->payments = [];
+			$order = $this->getOrder();
+			if($order)
+			{
+				$payments = $order->getPaymentCollection();
+				foreach($payments as $payment)
+				{
+					$this->payments[] = DataProviderManager::getInstance()->getDataProvider(
+						Payment::class,
+						$payment->getId(),
+						[
+							'isLightMode' => true,
+							'data' => $payment->getFields()->getValues(),
+						],
+						$this
+					);
+				}
+			}
+		}
+
+		return $this->payments;
+	}
+
+	public function getShipments(): array
+	{
+		if($this->shipments === null)
+		{
+			$this->shipments = [];
+			$order = $this->getOrder();
+			if($order)
+			{
+				$shipments = $order->getShipmentCollection()->getNotSystemItems();
+				foreach($shipments as $shipment)
+				{
+					$this->shipments[] = DataProviderManager::getInstance()->getDataProvider(
+						Shipment::class,
+						$shipment->getId(),
+						[
+							'isLightMode' => true,
+							'data' => $shipment->getFields()->getValues(),
+						],
+						$this
+					);
+				}
+			}
+		}
+
+		return $this->shipments;
 	}
 
 	/**
@@ -524,6 +635,10 @@ class Order extends ProductsDataProvider
 			'BY_RECOMMENDATION',
 			'PRODUCTS_QUANT',
 			'COMPANY_ID',
+			'IS_SYNC_B24',
+			'SEARCH_CONTENT',
+			'ORDER_DISCOUNT_RULES',
+			'TRADING_PLATFORM',
 		]);
 	}
 
@@ -580,5 +695,14 @@ class Order extends ProductsDataProvider
 		}
 
 		return null;
+	}
+
+	public function getStatus(): ?string
+	{
+		$statusesList = OrderStatus::getListInCrmFormat();
+		$statusId = $this->data['STATUS_ID'] ?? '';
+		$status = $statusesList[$statusId] ?? [];
+
+		return $status['NAME'] ?? null;
 	}
 }

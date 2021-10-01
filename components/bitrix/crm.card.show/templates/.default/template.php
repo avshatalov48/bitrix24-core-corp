@@ -66,7 +66,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 			<div class="crm-card-show-detail-header-user">
 				<div id="crm-card-user-photo" class="crm-card-show-detail-header-user-image">
 					<? if(isset($arResult['ENTITY']['PHOTO_URL'])): ?>
-						<div class="crm-card-show-detail-header-user-image-item" style="background-image: url(<?=$arResult['ENTITY']['PHOTO_URL']?>)"></div>
+						<div class="crm-card-show-detail-header-user-image-item" style="background-image: url('<?=$arResult['ENTITY']['PHOTO_URL']?>')"></div>
 					<? else: ?>
 						<div class="crm-card-show-detail-header-user-image-item"></div>
 					<? endif ?>

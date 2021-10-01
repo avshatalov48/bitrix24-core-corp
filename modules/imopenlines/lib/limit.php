@@ -4,24 +4,27 @@ namespace Bitrix\Imopenlines;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ModuleManager;
+
 use Bitrix\Bitrix24\Feature;
 
 class Limit
 {
-	const OPTION_TRACKER_LIMIT = 'tracker_limit';
-	const OPTION_LAST_TRACKER_COUNTER_UPDATE = 'tracker_month';
-	const TRACKER_COUNTER = 'tracker_count';
-	const OPTION_REPORT = 'report_open_lines';
+	public const OPTION_TRACKER_LIMIT = 'tracker_limit';
+	public const OPTION_LAST_TRACKER_COUNTER_UPDATE = 'tracker_month';
+	public const TRACKER_COUNTER = 'tracker_count';
+	public const OPTION_REPORT = 'report_open_lines';
+	public const OPTION_QUICK_ANSWERS = 'imopenlines_can_use_quick_answers';
 
-	const INFO_HELPER_LIMIT_CONTACT_CENTER_OL_NUMBER = 'limit_contact_center_ol_number';
-	const INFO_HELPER_LIMIT_CONTACT_CENTER_CUSTOMER_RATE = 'limit_contact_center_ol_customer_rate';
-	const INFO_HELPER_LIMIT_CONTACT_CENTER_MESSAGE_TO_ALL = 'limit_contact_center_ol_message_to_all';
-	const INFO_HELPER_LIMIT_CONTACT_CENTER_ACCESS_PERMISSIONS = 'limit_contact_center_ol_access_permissions';
-	const INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE = 'limit_contact_center_ol_boss_rate';
-	const INFO_HELPER_LIMIT_CONTACT_CENTER_ANALYTICS_REPORTS = 'limit_contact_center_ol_analytics_reports';
-	const INFO_HELPER_LIMIT_CONTACT_CENTER_WORKHOUR_SETTING = 'limit_contact_center_ol_workhour_settings';
-	const INFO_HELPER_LIMIT_CONTACT_CENTER_STATISTICS_EXCEL = 'limit_contact_center_ol_statistics_excel';
-	const INFO_HELPER_LIMIT_CONTACT_CENTER_OL_CHAT_TRANSFER = 'limit_contact_center_ol_chat_transfer';
+	public const INFO_HELPER_LIMIT_CONTACT_CENTER_OL_NUMBER = 'limit_contact_center_ol_number';
+	public const INFO_HELPER_LIMIT_CONTACT_CENTER_CUSTOMER_RATE = 'limit_contact_center_ol_customer_rate';
+	public const INFO_HELPER_LIMIT_CONTACT_CENTER_MESSAGE_TO_ALL = 'limit_contact_center_ol_message_to_all';
+	public const INFO_HELPER_LIMIT_CONTACT_CENTER_ACCESS_PERMISSIONS = 'limit_contact_center_ol_access_permissions';
+	public const INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE = 'limit_contact_center_ol_boss_rate';
+	public const INFO_HELPER_LIMIT_CONTACT_CENTER_ANALYTICS_REPORTS = 'limit_contact_center_ol_analytics_reports';
+	public const INFO_HELPER_LIMIT_CONTACT_CENTER_WORKHOUR_SETTING = 'limit_contact_center_ol_workhour_settings';
+	public const INFO_HELPER_LIMIT_CONTACT_CENTER_STATISTICS_EXCEL = 'limit_contact_center_ol_statistics_excel';
+	public const INFO_HELPER_LIMIT_CONTACT_CENTER_OL_CHAT_TRANSFER = 'limit_contact_center_ol_chat_transfer';
+	public const INFO_HELPER_LIMIT_CONTACT_CENTER_QUICK_ANSWERS = 'limit_contact_center_ol_quick_answers';
 
 	/**
 	 * @return bool
@@ -162,6 +165,21 @@ class Limit
 	}
 
 	/**
+	 * @return bool
+	 */
+	public static function canUseQuickAnswers(): bool
+	{
+		$result = true;
+
+		if(\CModule::IncludeModule('bitrix24'))
+		{
+			$result = Feature::isFeatureEnabled(self::OPTION_QUICK_ANSWERS);
+		}
+
+		return $result;
+	}
+
+	/**
 	 * @param \Bitrix\Main\Event $event
 	 */
 	public static function onBitrix24LicenseChange(\Bitrix\Main\Event $event)
@@ -189,6 +207,8 @@ class Limit
 
 		return (int)Option::get('imopenlines', self::OPTION_TRACKER_LIMIT);
 	}
+
+
 
 	/**
 	 * @deprecated

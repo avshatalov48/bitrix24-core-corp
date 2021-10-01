@@ -35,6 +35,7 @@ class PostFormManager
 					'MODULE_DISK_INSTALLED': (BX.message('MOBILE_EXT_LIVEFEED_DISK_INSTALLED') == 'Y' ? 'Y' : 'N'),
 					'MODULE_WEBDAV_INSTALLED': (BX.message('MOBILE_EXT_LIVEFEED_WEBDAV_INSTALLED') == 'Y' ? 'Y' : 'N'),
 					'MODULE_VOTE_INSTALLED': (BX.message('MOBILE_EXT_LIVEFEED_VOTE_INSTALLED') == 'Y' ? 'Y' : 'N'),
+					'USE_IMPORTANT': (BX.message('MOBILE_EXT_LIVEFEED_USE_IMPORTANT') === 'N' ? 'N' : 'Y'),
 					'FILE_ATTACH_PATH': BX.message('MOBILE_EXT_LIVEFEED_FILE_ATTACH_PATH'),
 					'BACKGROUND_IMAGES_DATA': Instance.getOption('backgroundImagesData', {}),
 					'BACKGROUND_COMMON': Instance.getOption('backgroundCommon', {}),

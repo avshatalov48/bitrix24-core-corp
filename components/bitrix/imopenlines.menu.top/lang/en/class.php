@@ -1,5 +1,4 @@
 <?php
-$MESS["IMOL_MENU_TOP_BUTTON"] = "Website widget";
 $MESS["IMOL_MENU_TOP_DETAILED_STATISTICS"] = "Detailed statistics";
 $MESS["IMOL_MENU_TOP_LIST_LINES"] = "List";
 $MESS["IMOL_MENU_TOP_MODULE_NOT_INSTALLED"] = "The Open Channels module is not installed.";

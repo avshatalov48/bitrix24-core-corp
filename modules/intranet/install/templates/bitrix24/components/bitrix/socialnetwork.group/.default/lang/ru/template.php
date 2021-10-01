@@ -50,4 +50,5 @@ $MESS["SONET_UM_SEARCH_BUTTON_TITLE_PROJECT"] = "Поиск по проекту"
 $MESS["SONET_SGM_T_CHAT_TITLE"] = "Открыть чат группы";
 $MESS["SONET_SGM_T_CHAT_TITLE_PROJECT"] = "Открыть чат проекта";
 $MESS["SONET_C6_T_AJAX_ERROR"] = "Произошла ошибка обработки запроса";
+$MESS["SONET_C6_ACT_MODN_SCRUM_PROJECT"] = "Команда разработки";
 ?>

@@ -81,6 +81,7 @@ $arAllOptions = array_filter(array(
 	Configuration::isEnabledDocuments() ? array("section" => GetMessage("DISK_SETTINGS_ONLYOFFICE_HEAD")) : null,
 	Configuration::isEnabledDocuments() ? array("disk_onlyoffice_server", GetMessage("DISK_SETTINGS_ONLYOFFICE_SERVER"), '', Array("text", "32")) : null,
 	Configuration::isEnabledDocuments() ? array("disk_onlyoffice_secret_key", GetMessage("DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"), '', Array("text", "32")) : null,
+	Configuration::isEnabledDocuments() ? array("disk_onlyoffice_max_filesize", GetMessage("DISK_SETTINGS_ONLYOFFICE_MAX_FILESIZE"), '', Array("text", "32")) : null,
 ));
 $aTabs = array(
 	array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "ib_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),

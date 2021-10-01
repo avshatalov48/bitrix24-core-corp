@@ -22,7 +22,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Crm\Invoice\Internals
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_InvoiceRound_Query query()
+ * @method static EO_InvoiceRound_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_InvoiceRound_Result getById($id)
+ * @method static EO_InvoiceRound_Result getList(array $parameters = array())
+ * @method static EO_InvoiceRound_Entity getEntity()
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_InvoiceRound createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_InvoiceRound_Collection createCollection()
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_InvoiceRound wakeUpObject($row)
+ * @method static \Bitrix\Crm\Invoice\Internals\EO_InvoiceRound_Collection wakeUpCollection($rows)
+ */
 
 class InvoiceRoundTable extends Main\Entity\DataManager
 {

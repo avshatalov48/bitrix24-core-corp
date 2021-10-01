@@ -39,7 +39,7 @@ this.BX = this.BX || {};
 	      return this.settings && this.settings.MULTILINE === 'Y';
 	    }
 	  },
-	  template: "\n\t\t<div class=\"ui-ctl ui-ctl-w100\">\n\t\t\t<textarea v-if=\"isMultiline\" @input=\"onInput\" :name=\"name\" class=\"ui-ctl-element salescenter-delivery-comment-textarea\" rows=\"1\">{{value}}</textarea>\n\t\t\t<input v-else :disabled=\"!editable\" @input=\"onInput\" type=\"text\" :name=\"name\" :value=\"value\" class=\"ui-ctl-element ui-ctl-textbox\" />\n\t\t</div>\t\t\t\t\t\n\t"
+	  template: "\n\t\t<div class=\"ui-ctl ui-ctl-w100\">\n\t\t\t<textarea v-if=\"isMultiline\" @input=\"onInput\" :name=\"name\" class=\"ui-ctl-element salescenter-delivery-comment-textarea\" rows=\"1\">{{value}}</textarea>\n\t\t\t<input v-else @input=\"onInput\" type=\"text\" :name=\"name\" :value=\"value\" class=\"ui-ctl-element ui-ctl-textbox\" />\n\t\t</div>\t\t\t\t\t\n\t"
 	};
 
 	var handleOutsideClick;
@@ -851,6 +851,8 @@ this.BX = this.BX || {};
 	        }).init();
 
 	        _this.emitChange();
+
+	        _this.recalculateRelatedServiceAvailabilities();
 	      });
 	    },
 	    calculate: function calculate() {
@@ -950,8 +952,14 @@ this.BX = this.BX || {};
 	        this.emitChange();
 	      }
 	    },
+	    isNoDeliveryService: function isNoDeliveryService(service) {
+	      return service['code'] === 'NO_DELIVERY';
+	    },
 	    isServiceAvailable: function isServiceAvailable(service) {
 	      return this.availableServices.hasOwnProperty(service.id);
+	    },
+	    isServiceProfitable: function isServiceProfitable(service) {
+	      return service.hasOwnProperty('tags') && Array.isArray(service.tags) && service.tags.includes('profitable');
 	    },
 	    onPropValueChanged: function onPropValueChanged(event, relatedProp) {
 	      ui_vue.Vue.set(this.relatedPropsValues, relatedProp.id, event);
@@ -995,6 +1003,17 @@ this.BX = this.BX || {};
 	      }
 
 	      return this.initRelatedPropsOptions.hasOwnProperty(relatedProp.id) ? this.initRelatedPropsOptions[relatedProp.id] : null;
+	    },
+	    getPropName: function getPropName(relatedProp) {
+	      if (relatedProp.isAddressFrom) {
+	        return main_core.Loc.getMessage('SALE_DELIVERY_SERVICE_SHIPMENT_ADDRESS_FROM_LABEL');
+	      }
+
+	      if (relatedProp.isAddressTo) {
+	        return main_core.Loc.getMessage('SALE_DELIVERY_SERVICE_SHIPMENT_ADDRESS_TO_LABEL');
+	      }
+
+	      return relatedProp.name;
 	    },
 	    getServiceValue: function getServiceValue(relatedService) {
 	      if (!this.relatedServicesValues) {
@@ -1043,6 +1062,9 @@ this.BX = this.BX || {};
 	      this.restrictionsHintPopup = new Hint.Popup();
 	      this.restrictionsHintPopup.show(e.target, this.buildRestrictionsNode(profile));
 	    },
+	    isVisibleProfileRestriction: function isVisibleProfileRestriction(profile) {
+	      return profile.restrictions && Array.isArray(profile.restrictions) && profile.restrictions.length > 0;
+	    },
 	    buildRestrictionsNode: function buildRestrictionsNode(profile) {
 	      var restrictionsNodes = profile.restrictions.map(function (restriction) {
 	        return "<div>".concat(main_core.Text.encode(restriction), "</div>");
@@ -1075,6 +1097,45 @@ this.BX = this.BX || {};
 	        'opacity': this.isRelatedServiceAvailable(relatedService) ? 1 : 0.5,
 	        'pointer-events': this.isRelatedServiceAvailable(relatedService) ? 'auto' : 'none'
 	      };
+	    },
+	    getProfileLogoStyle: function getProfileLogoStyle(logo) {
+	      if (!logo) {
+	        return {};
+	      }
+
+	      return {
+	        backgroundImage: 'url(' + logo.src + ')',
+	        backgroundSize: logo.width < 55 ? 'auto' : 'contain'
+	      };
+	    },
+	    recalculateRelatedServiceAvailabilities: function recalculateRelatedServiceAvailabilities() {
+	      for (var i = 0; i < this.relatedServices.length; i++) {
+	        var relatedService = this.relatedServices[i];
+	        var isAvailable = false;
+
+	        var _iterator7 = _createForOfIteratorHelper$2(relatedService.deliveryServiceIds),
+	            _step7;
+
+	        try {
+	          for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
+	            var deliveryServiceId = _step7.value;
+
+	            if (this.availableServices.hasOwnProperty(deliveryServiceId)) {
+	              if (this.availableServices[deliveryServiceId] === null || Array.isArray(this.availableServices[deliveryServiceId]) && this.availableServices[deliveryServiceId].includes(relatedService.id)) {
+	                isAvailable = true;
+	                break;
+	              }
+	            }
+	          }
+	        } catch (err) {
+	          _iterator7.e(err);
+	        } finally {
+	          _iterator7.f();
+	        }
+
+	        relatedService.isAvailable = isAvailable;
+	        ui_vue.Vue.set(this.relatedServices, i, relatedService);
+	      }
 	    }
 	  },
 	  created: function created() {
@@ -1106,34 +1167,8 @@ this.BX = this.BX || {};
 	        this.enteredDeliveryPrice = 0.00;
 	      }
 	    },
-	    availableServices: function availableServices(newValue, oldValue) {
-	      for (var i = 0; i < this.relatedServices.length; i++) {
-	        var relatedService = this.relatedServices[i];
-	        var isAvailable = false;
-
-	        var _iterator7 = _createForOfIteratorHelper$2(relatedService.deliveryServiceIds),
-	            _step7;
-
-	        try {
-	          for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
-	            var deliveryServiceId = _step7.value;
-
-	            if (newValue.hasOwnProperty(deliveryServiceId)) {
-	              if (newValue[deliveryServiceId] === null || Array.isArray(newValue[deliveryServiceId]) && newValue[deliveryServiceId].includes(relatedService.id)) {
-	                isAvailable = true;
-	                break;
-	              }
-	            }
-	          }
-	        } catch (err) {
-	          _iterator7.e(err);
-	        } finally {
-	          _iterator7.f();
-	        }
-
-	        relatedService.isAvailable = isAvailable;
-	        ui_vue.Vue.set(this.relatedServices, i, relatedService);
-	      }
+	    availableServices: function availableServices(newValue) {
+	      this.recalculateRelatedServiceAvailabilities();
 	    }
 	  },
 	  computed: {
@@ -1170,7 +1205,7 @@ this.BX = this.BX || {};
 	      return this.selectedDeliveryService.parentId ? this.getDeliveryServiceById(this.selectedDeliveryService.parentId) : this.selectedDeliveryService;
 	    },
 	    selectedNoDelivery: function selectedNoDelivery() {
-	      return this.selectedDeliveryService && this.selectedDeliveryService['code'] === 'NO_DELIVERY';
+	      return this.selectedDeliveryService && this.isNoDeliveryService(this.selectedDeliveryService);
 	    },
 	    isCalculatingAllowed: function isCalculatingAllowed() {
 	      return this.selectedDeliveryServiceId && this.arePropValuesReady && this.isSelectedDeliveryServiceAvailable && !this.isCalculating;
@@ -1415,7 +1450,7 @@ this.BX = this.BX || {};
 	      return this.selectedDeliveryService && this.isServiceAvailable(this.selectedDeliveryService);
 	    }
 	  },
-	  template: "\n\t\t<div class=\"salescenter-delivery\">\n\t\t\t<div class=\"salescenter-delivery-header\">\n\t\t\t\t<div class=\"salescenter-delivery-car-title--sm\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_METHOD}}</div>\n\t\t\t\t<div class=\"salescenter-delivery-method\" ref=\"delivery-methods\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-for=\"deliveryService in deliveryServices\"\n\t\t\t\t\t\t@click=\"onDeliveryServiceChanged(deliveryService)\"\n\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t'salescenter-delivery-method-item': true,\n\t\t\t\t\t\t\t'salescenter-delivery-method-item--selected': isParentDeliveryServiceSelected(deliveryService)\n\t\t\t\t\t\t}\"\n\t\t\t\t\t\t:data-role=\"isParentDeliveryServiceSelected(deliveryService) ? 'ui-ears-active' : ''\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-image\">\n\t\t\t\t\t\t\t<img :src=\"deliveryService.logo\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t\t<div v-if=\"deliveryService.title\" class=\"salescenter-delivery-method-title\">{{deliveryService.title}}</div>\n\t\t\t\t\t\t\t<div v-else=\"deliveryService.title\" class=\"salescenter-delivery-method-title\"></div>\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">{{deliveryService.name}}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div @click=\"onAddMoreClicked\" class=\"salescenter-delivery-method-item salescenter-delivery-method-item--add\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-image-more\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">\n\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_ADD_MORE}}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-show=\"areProfilesVisible\">\n\t\t\t\t<div class=\"salescenter-delivery-car-title--sm\">{{selectedParentServiceName}}: {{localize.SALE_DELIVERY_SERVICE_SELECTOR_SHIPPING_SERVICES}}</div>\n\t\t\t\t<div ref=\"delivery-profiles\" class=\"salescenter-delivery-car salescenter-delivery-car--ya-delivery\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-for=\"(profile, index) in selectedParentServiceProfiles\"\n\t\t\t\t\t\t@click=\"onDeliveryServiceChanged(profile)\"\n\t\t\t\t\t\t:class=\"getProfileClass(profile)\"\n\t\t\t\t\t\t:data-role=\"selectedDeliveryService.id == profile.id ? 'ui-ears-active' : ''\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div v-show=\"index === 0\" class=\"salescenter-delivery-car-lable\">\n\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_PROFITABLE}}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-car-container\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"salescenter-delivery-car-image\"\n\t\t\t\t\t\t\t\t:style=\"{ backgroundImage: 'url(' + profile.logo + ')' }\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-param\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-title\">\n\t\t\t\t\t\t\t\t\t{{profile.name}}\n\t\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\t\tv-show=\"profile.restrictions\"\n\t\t\t\t\t\t\t\t\t\t@mouseenter=\"onRestrictionsHintShow($event, profile)\"\n\t\t\t\t\t\t\t\t\t\t@mouseleave=\"onRestrictionsHintHide($event)\"\n\t\t\t\t\t\t\t\t\t\tclass=\"salescenter-delivery-car-title-info\"\n\t\t\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-info\">{{profile.description}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\t\t\t\t\n\t\t\t<div v-show=\"extraServicesCount > 0\" class=\"salescenter-delivery-additionally\">\n\t\t\t\t<div class=\"salescenter-delivery-additionally-options\">\n\t\t\t\t\t<component\n\t\t\t\t\t\tv-for=\"relatedService in relatedServices\"\n\t\t\t\t\t\tv-show=\"isRelatedServiceRelevant(relatedService)\"\n\t\t\t\t\t\t:is=\"relatedService.type + '-service'\"\n\t\t\t\t\t\t:key=\"relatedService.id\"\n\t\t\t\t\t\t:name=\"relatedService.name\"\n\t\t\t\t\t\t:initValue=\"getServiceValue(relatedService)\"\t\t\t\t\t\t\n\t\t\t\t\t\t:options=\"relatedService.options\"\n\t\t\t\t\t\t:style=\"getRelatedServiceStyle(relatedService)\"\n\t\t\t\t\t\t@change=\"onServiceValueChanged($event, relatedService)\"\n\t\t\t\t\t>\n\t\t\t\t\t</component>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\n\t\t\t<div v-show=\"relatedPropsOfAddressTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfAddressType\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title\">{{relatedProp.name}}</div>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'ADDRESS-control'\"\n\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t:options=\"getPropOptions(relatedProp)\"\n\t\t\t\t\t\t:isStartMarker=\"index === 0\"\n\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t></component>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<div v-show=\"relatedPropsOfOtherTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfOtherTypes\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title-ordinary\">{{relatedProp.name}}</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-control\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"relatedProp.type + '-control'\"\n\t\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\n\t\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t\t:settings=\"relatedProp.settings\"\n\t\t\t\t\t\t\t:options=\"getPropOptions(relatedProp)\"\n\t\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isResponsibleUserSectionVisible\" class=\"salescenter-delivery-manager-wrapper\">\n\t\t\t\t<div class=\"ui-ctl-label-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_RESPONSIBLE_MANAGER}}</div>\n\t\t\t\t<div class=\"salescenter-delivery-manager\">\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-avatar\" :style=\"responsibleUser.photo ? {'background-image': 'url(' + responsibleUser.photo + ')'} : {}\"></div>\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-content\">\n\t\t\t\t\t\t<div @click=\"responsibleUserClicked\" class=\"salescenter-delivery-manager-name\">{{responsibleUser.name}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div @click=\"openChangeResponsibleDialog\" class=\"salescenter-delivery-manager-edit\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CHANGE_RESPONSIBLE}}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\t\t\n\t\t\t<div v-show=\"!selectedNoDelivery\">\n\t\t\t\t<template v-if=\"calculateErrors\">\n\t\t\t\t\t<div v-for=\"(error, index) in calculateErrors\" class=\"ui-alert ui-alert-danger ui-alert-icon-danger salescenter-delivery-errors-container-alert\">\n\t\t\t\t\t\t<span  class=\"ui-alert-message\">\n\t\t\t\t\t\t\t<span v-html=\"error\"></span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div class=\"salescenter-delivery-bottom\">\n\t\t\t\t\t<div class=\"salescenter-delivery-bottom-row\">\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<span v-show=\"!isCalculating\" @click=\"calculate\" :class=\"calculateDeliveryPriceButtonClass\">{{isCalculated ? localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE_UPDATE : localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE}}</span>\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<span v-show=\"isCalculating\" class=\"salescenter-delivery-waiter\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-alert\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_LABEL}}</span>\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_REQUEST_SENT}} {{selectedParentDeliveryService ? selectedParentDeliveryService.name : ''}}</span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-show=\"isSelectedDeliveryServiceAvailable && isCalculated\" class=\"salescenter-delivery-bottom-row\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<table class=\"salescenter-delivery-table-total\">\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_EXPECTED_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"estimatedDeliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-md ui-ctl-wa salescenter-delivery-bottom-input-symbol\">\n\t\t\t\t\t\t\t\t\t\t\t<input v-model=\"enteredDeliveryPrice\" @keypress=\"isNumber($event)\" type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{externalSumLabel}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"externalSumFormatted\"></span><span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_DELIVERY}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"deliveryPrice > 0\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"deliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"!deliveryPrice\" class=\"salescenter-delivery-status salescenter-delivery-status--success\">\n\t\t\t\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE_FREE}}\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t<tr class=\"salescenter-delivery-table-total-result\">\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_TOTAL}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"totalPriceFormatted\"></span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-delivery\">\n\t\t\t<div class=\"salescenter-delivery-header\">\n\t\t\t\t<div class=\"salescenter-delivery-car-title--sm\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_METHOD}}</div>\n\t\t\t\t<div class=\"salescenter-delivery-method\" ref=\"delivery-methods\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-for=\"deliveryService in deliveryServices\"\n\t\t\t\t\t\t@click=\"onDeliveryServiceChanged(deliveryService)\"\n\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t'salescenter-delivery-method-item': true,\n\t\t\t\t\t\t\t'salescenter-delivery-method-item--selected': isParentDeliveryServiceSelected(deliveryService)\n\t\t\t\t\t\t}\"\n\t\t\t\t\t\t:data-role=\"isParentDeliveryServiceSelected(deliveryService) ? 'ui-ears-active' : ''\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-image\">\n\t\t\t\t\t\t\t<img v-if=\"deliveryService.logo\" :src=\"deliveryService.logo.src\">\n\t\t\t\t\t\t\t<div v-else-if=\"!isNoDeliveryService(deliveryService)\" class=\"salescenter-delivery-method-image-blank\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t\t<div v-if=\"deliveryService.title\" class=\"salescenter-delivery-method-title\">{{deliveryService.title}}</div>\n\t\t\t\t\t\t\t<div v-else=\"deliveryService.title\" class=\"salescenter-delivery-method-title\"></div>\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">{{deliveryService.name}}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div @click=\"onAddMoreClicked\" class=\"salescenter-delivery-method-item salescenter-delivery-method-item--add\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-image-more\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">\n\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_ADD_MORE}}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-show=\"areProfilesVisible\">\n\t\t\t\t<div class=\"salescenter-delivery-car-title--sm\">{{selectedParentServiceName}}: {{localize.SALE_DELIVERY_SERVICE_SELECTOR_SHIPPING_SERVICES}}</div>\n\t\t\t\t<div ref=\"delivery-profiles\" class=\"salescenter-delivery-car salescenter-delivery-car--ya-delivery\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-for=\"(profile, index) in selectedParentServiceProfiles\"\n\t\t\t\t\t\t@click=\"onDeliveryServiceChanged(profile)\"\n\t\t\t\t\t\t:class=\"getProfileClass(profile)\"\n\t\t\t\t\t\t:data-role=\"selectedDeliveryService.id == profile.id ? 'ui-ears-active' : ''\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div v-show=\"isServiceProfitable(profile)\" class=\"salescenter-delivery-car-lable\">\n\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_PROFITABLE}}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-car-container\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"salescenter-delivery-car-image\"\n\t\t\t\t\t\t\t\t:style=\"getProfileLogoStyle(profile.logo)\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-param\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-title\">\n\t\t\t\t\t\t\t\t\t{{profile.name}}\n\t\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\t\tv-show=\"isVisibleProfileRestriction(profile)\"\n\t\t\t\t\t\t\t\t\t\t@mouseenter=\"onRestrictionsHintShow($event, profile)\"\n\t\t\t\t\t\t\t\t\t\t@mouseleave=\"onRestrictionsHintHide($event)\"\n\t\t\t\t\t\t\t\t\t\tclass=\"salescenter-delivery-car-title-info\"\n\t\t\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-info\">{{profile.description}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\t\t\t\t\n\t\t\t<div v-show=\"extraServicesCount > 0\" class=\"salescenter-delivery-additionally\">\n\t\t\t\t<div class=\"salescenter-delivery-additionally-options\">\n\t\t\t\t\t<component\n\t\t\t\t\t\tv-for=\"relatedService in relatedServices\"\n\t\t\t\t\t\tv-show=\"isRelatedServiceRelevant(relatedService)\"\n\t\t\t\t\t\t:is=\"relatedService.type + '-service'\"\n\t\t\t\t\t\t:key=\"relatedService.id\"\n\t\t\t\t\t\t:name=\"relatedService.name\"\n\t\t\t\t\t\t:initValue=\"getServiceValue(relatedService)\"\t\t\t\t\t\t\n\t\t\t\t\t\t:options=\"relatedService.options\"\n\t\t\t\t\t\t:style=\"getRelatedServiceStyle(relatedService)\"\n\t\t\t\t\t\t@change=\"onServiceValueChanged($event, relatedService)\"\n\t\t\t\t\t>\n\t\t\t\t\t</component>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\n\t\t\t<div v-show=\"relatedPropsOfAddressTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfAddressType\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\t:style=\"{'margin-bottom': '30px'}\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title\">\n\t\t\t\t\t\t{{getPropName(relatedProp)}}\n\t\t\t\t\t</div>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'ADDRESS-control'\"\n\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t:options=\"getPropOptions(relatedProp)\"\n\t\t\t\t\t\t:isStartMarker=\"relatedProp.isAddressFrom\"\n\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t></component>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-show=\"relatedPropsOfOtherTypeCount > 0\" class=\"salescenter-delivery-path --without-bg\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfOtherTypes\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t\t:style=\"{'margin-bottom': '30px'}\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title-ordinary\">{{relatedProp.name}}</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-control\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"relatedProp.type + '-control'\"\n\t\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\n\t\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t\t:settings=\"relatedProp.settings\"\n\t\t\t\t\t\t\t:options=\"getPropOptions(relatedProp)\"\n\t\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isResponsibleUserSectionVisible\" class=\"salescenter-delivery-manager-wrapper\">\n\t\t\t\t<div class=\"ui-ctl-label-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_RESPONSIBLE_MANAGER}}</div>\n\t\t\t\t<div class=\"salescenter-delivery-manager\">\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-avatar\" :style=\"responsibleUser.photo ? {'background-image': 'url(' + responsibleUser.photo + ')'} : {}\"></div>\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-content\">\n\t\t\t\t\t\t<div @click=\"responsibleUserClicked\" class=\"salescenter-delivery-manager-name\">{{responsibleUser.name}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div @click=\"openChangeResponsibleDialog\" class=\"salescenter-delivery-manager-edit\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CHANGE_RESPONSIBLE}}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\t\t\n\t\t\t<div v-show=\"!selectedNoDelivery\">\n\t\t\t\t<template v-if=\"calculateErrors\">\n\t\t\t\t\t<div v-for=\"(error, index) in calculateErrors\" class=\"ui-alert ui-alert-danger ui-alert-icon-danger salescenter-delivery-errors-container-alert\">\n\t\t\t\t\t\t<span  class=\"ui-alert-message\">\n\t\t\t\t\t\t\t<span v-html=\"error\"></span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div class=\"salescenter-delivery-bottom\">\n\t\t\t\t\t<div class=\"salescenter-delivery-bottom-row\">\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<span v-show=\"!isCalculating\" @click=\"calculate\" :class=\"calculateDeliveryPriceButtonClass\">{{isCalculated ? localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE_UPDATE : localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE}}</span>\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<span v-show=\"isCalculating\" class=\"salescenter-delivery-waiter\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-alert\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_LABEL}}</span>\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_REQUEST_SENT}} {{selectedParentDeliveryService ? selectedParentDeliveryService.name : ''}}</span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-show=\"isSelectedDeliveryServiceAvailable && isCalculated\" class=\"salescenter-delivery-bottom-row\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<table class=\"salescenter-delivery-table-total\">\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_EXPECTED_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"estimatedDeliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-md ui-ctl-wa salescenter-delivery-bottom-input-symbol\">\n\t\t\t\t\t\t\t\t\t\t\t<input v-model=\"enteredDeliveryPrice\" @keypress=\"isNumber($event)\" type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{externalSumLabel}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"externalSumFormatted\"></span><span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_DELIVERY}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"deliveryPrice > 0\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"deliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"!deliveryPrice\" class=\"salescenter-delivery-status salescenter-delivery-status--success\">\n\t\t\t\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE_FREE}}\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t<tr class=\"salescenter-delivery-table-total-result\">\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_TOTAL}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"totalPriceFormatted\"></span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	exports.default = deliveryselector;

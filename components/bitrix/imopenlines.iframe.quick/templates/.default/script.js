@@ -46,14 +46,21 @@ quickAnswersManager = function(params, callback)
 
 	this.init(callback);
 
-	if(this.allCount === 0)
+	if(params.canUse === true)
 	{
-		this.showInfo();
+		if(this.allCount === 0)
+		{
+			this.showInfo();
+		}
+		else
+		{
+			this.showSearch();
+			this.search();
+		}
 	}
 	else
 	{
-		this.showSearch();
-		this.search();
+		this.showInfoHelper();
 	}
 };
 
@@ -139,9 +146,9 @@ quickAnswersManager.prototype.frameCommunicationSend = function(data)
 	if (!frameCommunication.postMessageOrigin)
 	{
 		clearTimeout(frameCommunication.timeout[encodedData]);
-		frameCommunication.timeout[encodedData] = setTimeout(function(){
+		frameCommunication.timeout[encodedData] = setTimeout(BX.delegate(function(){
 			this.frameCommunicationSend(data);
-		}, 10);
+		}, this), 10);
 		return true;
 	}
 
@@ -345,7 +352,7 @@ quickAnswersManager.prototype.renderResults = function(items)
 							'data-bx-item-text': BX.Text.encode(items[i].text),
 							className: 'imopenlines-iframe-quick-result-item'
 						},
-						html: BX.Text.encode(items[i].name),
+						html: BX.Text.encode(items[i].text),
 						events: {
 							click: function()
 							{
@@ -745,4 +752,10 @@ quickAnswersManager.prototype.bindMenuEvents = function()
 quickAnswersManager.prototype.getSearchSectionsMenuMoreButton = function()
 {
 	return BX('search_category_list_more_button');
+};
+
+quickAnswersManager.prototype.showInfoHelper = function()
+{
+	this.frameCommunicationSend({'action': 'restriction', 'code': BX.message('IMOL_QUICK_ANSWERS_INFO_HELPER_LIMIT')});
+	this.frameCommunicationSend({'action': 'close'});
 };

@@ -690,17 +690,14 @@ class CVoxImplantMain
 	public static function GetTOS()
 	{
 		$account = new CVoxImplantAccount();
-		if ($account->GetAccountLang(false) !== "ru")
-		{
-			return "";
-		}
+		$accountLang = $account->GetAccountLang(false);
 
 		$sanitizer = new \CBXSanitizer();
 		$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_HIGH);
 		$sanitizer->AddTags([
 			"a" => ["href", "target"]
 		]);
-		return $sanitizer->SanitizeHtml(GetMessage("VI_TOS_RU"));
+		return $sanitizer->SanitizeHtml($accountLang === 'ru' ? GetMessage("VI_TOS_RU") : GetMessage("VI_TOS_EN"));
 	}
 
 	public static function GetDemoTopUpWarning()
@@ -902,6 +899,16 @@ class CVoxImplantMain
 		{
 			return $amount . ' ' . $currency;
 		}
+	}
+
+	public static function getSdkUrl(): string
+	{
+		if (defined('VOXIMPLANT_SDK_URL'))
+		{
+			return VOXIMPLANT_SDK_URL;
+		}
+
+		return '/bitrix/js/voximplant/voximplant.min.js';
 	}
 
 	/**

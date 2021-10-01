@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Recycling;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Timeline\TimelineManager;
 use Bitrix\Main;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
@@ -339,10 +340,22 @@ class DynamicController extends BaseController
 		Relation::deleteJunks();
 		//endregion
 
+		$this->createRecoveryTimelineRecord($item);
+
 		$this->rebuildSearchIndex($newEntityID);
 		$this->startRecoveryWorkflows($newEntityID);
 
 		return true;
+	}
+
+	protected function createRecoveryTimelineRecord(Crm\Item $item): void
+	{
+		$timelineController = TimelineManager::resolveController(['ASSOCIATED_ENTITY_TYPE_ID' => $this->getEntityTypeID()]);
+		if ($timelineController)
+		{
+			/** @see FactoryBasedController::onRestore() */
+			$timelineController->onRestore($item->getId(), ['FIELDS' => $item->getData()]);
+		}
 	}
 
 	protected function recoverDependenceElements(int $recyclingEntityID, int $newEntityID): void

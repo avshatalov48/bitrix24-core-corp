@@ -1,10 +1,10 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Pseudoactivity\WaitEntry;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Main;
 
 class WaitController extends EntityController
 {
@@ -12,21 +12,6 @@ class WaitController extends EntityController
 	private static $userID = null;
 	/** @var  \CCrmPerms|null */
 	private static $userPermissions = null;
-	//region Singleton
-	/** @var WaitController|null */
-	protected static $instance = null;
-	/**
-	 * @return WaitController
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new WaitController();
-		}
-		return self::$instance;
-	}
-	//endregion
 
 	//region EntityController
 	public function getEntityTypeID()

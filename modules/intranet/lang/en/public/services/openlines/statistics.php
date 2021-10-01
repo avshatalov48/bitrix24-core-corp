@@ -1,4 +1,0 @@
-<?
-$MESS["OL_PAGE_STATISTICS_DETAIL_TITLE"] = "Open Channel Statistics";
-$MESS["OL_PAGE_STATISTICS_DETAIL_TITLE_NEW"] = "Chat List";
-?>

@@ -2,7 +2,6 @@
 namespace Bitrix\Crm\Recycling;
 
 use Bitrix\Main;
-use Bitrix\Crm;
 
 class InvoiceBinder extends BaseBinder
 {
@@ -88,7 +87,11 @@ class InvoiceBinder extends BaseBinder
 		{
 			if(isset($fields[$fieldName]) && $fields[$fieldName] == $associatedEntityID)
 			{
-				$entity->Update($fields['ID'], array($fieldName => null));
+				$entity->Update(
+					$fields['ID'],
+					array($fieldName => null),
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 	}
@@ -130,7 +133,11 @@ class InvoiceBinder extends BaseBinder
 		{
 			if(!(isset($fields[$fieldName]) && $fields[$fieldName] > 0))
 			{
-				$entity->Update($fields['ID'], array($fieldName => $associatedEntityID));
+				$entity->Update(
+					$fields['ID'],
+					array($fieldName => $associatedEntityID),
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 	}

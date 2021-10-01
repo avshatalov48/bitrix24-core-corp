@@ -8,6 +8,22 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 
+/**
+ * Class EntityRelationTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EntityRelation_Query query()
+ * @method static EO_EntityRelation_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EntityRelation_Result getById($id)
+ * @method static EO_EntityRelation_Result getList(array $parameters = array())
+ * @method static EO_EntityRelation_Entity getEntity()
+ * @method static \Bitrix\Crm\Relation\EO_EntityRelation createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Relation\EO_EntityRelation_Collection createCollection()
+ * @method static \Bitrix\Crm\Relation\EO_EntityRelation wakeUpObject($row)
+ * @method static \Bitrix\Crm\Relation\EO_EntityRelation_Collection wakeUpCollection($rows)
+ */
 class EntityRelationTable extends DataManager
 {
 	public static function getTableName(): string

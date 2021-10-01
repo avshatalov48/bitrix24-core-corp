@@ -116,7 +116,7 @@ div.b24-form-loader {
 	color: #fff;
 }
 
-.b24-form-error .b24-form-btn {
+.b24-form-state-container .b24-form-error .b24-form-btn {
 	margin: 0 0 15px;
 	color: #fff;
 	border-color: #fff;

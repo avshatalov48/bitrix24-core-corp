@@ -14,7 +14,7 @@
 		canSelectLine: false,
 		isTimemanInstalled: false,
 		isBitrix24: false,
-		maximumGroups: 0
+		maximumGroups: -1
 	};
 
 	var ajaxUrl = '/bitrix/components/bitrix/voximplant.config.edit/ajax.php';
@@ -181,7 +181,7 @@
 				BX('vi_timeman').checked = false;
 				BX.Voximplant.alert(
 					BX.message("VI_CONFIG_EDIT_ERROR"),
-					defaults.isBitrix24 ? BX.message("VI_CONFIG_EDIT_TIMEMAN_SUPPORT_B24") : BX.message("VI_CONFIG_EDIT_TIMEMAN_SUPPORT_CP")
+					defaults.isBitrix24 ? BX.message("VI_CONFIG_EDIT_TIMEMAN_SUPPORT_B24_2") : BX.message("VI_CONFIG_EDIT_TIMEMAN_SUPPORT_CP")
 				);
 			});
 		}
@@ -593,10 +593,17 @@
 		var groupCount = e.target.options.length - 2;
 		if (groupId === 'new')
 		{
-			if (defaults.maximumGroups > 0 && groupCount >= defaults.maximumGroups)
+			if (defaults.maximumGroups > -1 && groupCount >= defaults.maximumGroups)
 			{
 				e.target.value = e.target.options.item(2).value;
-				BX.UI.InfoHelper.show('limit_contact_center_telephony_groups');
+				if (defaults.maximumGroups == 0)
+				{
+					BX.UI.InfoHelper.show('limit_contact_center_telephony_groups_zero');
+				}
+				else
+				{
+					BX.UI.InfoHelper.show('limit_contact_center_telephony_groups');
+				}
 			}
 			else
 			{

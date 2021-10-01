@@ -15,12 +15,8 @@ class Strictly extends Queue
 	 * @param int $currentOperator
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getOperatorsQueue($currentOperator = 0)
+	public function getOperatorsQueue($currentOperator = 0): array
 	{
 		$queueTime = $this->getQueueTime();
 
@@ -35,6 +31,7 @@ class Strictly extends Queue
 		$operators = [];
 		$queueHistory = $this->session['QUEUE_HISTORY'];
 		$operatorId = 0;
+		$fullCountOperators = 0;
 
 		$select = [
 			'ID',
@@ -55,11 +52,14 @@ class Strictly extends Queue
 
 		while($queueUser = $res->fetch())
 		{
+			$fullCountOperators++;
 			if($this->isOperatorAvailable($queueUser['USER_ID'], $currentOperator))
 			{
 				$operators[$queueUser['USER_ID']] = $queueUser;
 			}
 		}
+
+		$this->processingEmptyQueue($this->config['ID'], $fullCountOperators);
 
 		if(!empty($operators))
 		{

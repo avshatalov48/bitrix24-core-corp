@@ -82,6 +82,7 @@ const SmsMessage = {
 				counter: this.counter,
 				checked: this.counterCheckedMixin,
 				showHint: true,
+				hintClassModifier: 'salescenter-app-payment-by-sms-item-title-info--link-gray',
 			}
 		},
 		editor()
@@ -115,9 +116,9 @@ const SmsMessage = {
 					}
 
 					result.push({
-						text: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_' + sender.code.toUpperCase() + '_NOT_CONNECTED'),
+						text: this.getConnectionErrorText(sender),
 						fixer: this.getFixer(sender.connectUrl),
-						fixText: Loc.getMessage('SALESCENTER_PRODUCT_DISCOUNT_EDIT_PAGE_URL_TITLE'),
+						fixText: this.getConnectionErrorFixText(sender),
 					});
 
 					if (sender.code === 'bitrix24')
@@ -143,9 +144,9 @@ const SmsMessage = {
 					else
 					{
 						result.push({
-							text: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_' + this.currentSender.code.toUpperCase() + '_NOT_CONNECTED'),
+							text: this.getConnectionErrorText(this.currentSender),
 							fixer: this.getFixer(this.currentSender.connectUrl),
-							fixText: Loc.getMessage('SALESCENTER_PRODUCT_DISCOUNT_EDIT_PAGE_URL_TITLE'),
+							fixText: this.getConnectionErrorFixText(this.currentSender),
 						});
 
 						if (this.currentSender.code === 'bitrix24')
@@ -175,6 +176,20 @@ const SmsMessage = {
 		this.initialize(this.initCurrentSenderCode, this.initSenders, this.initPushedToUseBitrix24Notifications);
 	},
 	methods: {
+		getConnectionErrorText(sender)
+		{
+			const messageCode = 'SALESCENTER_SEND_ORDER_BY_SMS_' + sender.code.toUpperCase() + '_NOT_CONNECTED_WARNING';
+			const fallback = 'SALESCENTER_SEND_ORDER_BY_SMS_' + sender.code.toUpperCase() + '_NOT_CONNECTED';
+
+			return Loc.getMessage(messageCode) || Loc.getMessage(fallback);
+		},
+		getConnectionErrorFixText(sender)
+		{
+			const messageCode = 'SALESCENTER_SEND_ORDER_BY_SMS_' + sender.code.toUpperCase() + '_NOT_CONNECTED_FIX';
+			const fallback = 'SALESCENTER_PRODUCT_DISCOUNT_EDIT_PAGE_URL_TITLE';
+
+			return Loc.getMessage(messageCode) || Loc.getMessage(fallback);
+		},
 		getFixer(fixUrl)
 		{
 			return () => {
@@ -244,7 +259,7 @@ const SmsMessage = {
 				v-if="showHint"
 				v-slot:block-hint-title
 			>
-				${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS_SHORTER_VERSION')}
+				${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS_V3')}
 			</template>
 			<template v-slot:block-container>
 				<div :class="containerClassMixin" class="salescenter-app-payment-by-sms-item-container-offtop">

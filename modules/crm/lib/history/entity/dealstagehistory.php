@@ -5,6 +5,22 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Crm\History\HistoryEntryType;
 
+/**
+ * Class DealStageHistoryTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DealStageHistory_Query query()
+ * @method static EO_DealStageHistory_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DealStageHistory_Result getById($id)
+ * @method static EO_DealStageHistory_Result getList(array $parameters = array())
+ * @method static EO_DealStageHistory_Entity getEntity()
+ * @method static \Bitrix\Crm\History\Entity\EO_DealStageHistory createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\History\Entity\EO_DealStageHistory_Collection createCollection()
+ * @method static \Bitrix\Crm\History\Entity\EO_DealStageHistory wakeUpObject($row)
+ * @method static \Bitrix\Crm\History\Entity\EO_DealStageHistory_Collection wakeUpCollection($rows)
+ */
 class DealStageHistoryTable extends Entity\DataManager
 {
 	public static function getTableName()

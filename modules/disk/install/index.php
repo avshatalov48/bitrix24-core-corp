@@ -487,6 +487,7 @@ Class disk extends CModule
 						'b_disk_cloud_import' => 'OBJECT_ID',
 						'b_disk_object_lock' => 'OBJECT_ID',
 						'b_disk_onlyoffice_document_session' => 'OBJECT_ID',
+						'b_disk_onlyoffice_document_info' => 'OBJECT_ID',
 						'b_disk_tracked_object' => 'OBJECT_ID',
 						'b_disk_tracked_object^' => 'REAL_OBJECT_ID',
 						'b_disk_recently_used' => 'OBJECT_ID',
@@ -518,11 +519,17 @@ Class disk extends CModule
 						'b_disk_edit_session' => 'VERSION_ID',
 						'b_disk_cloud_import' => 'VERSION_ID',
 						'b_disk_onlyoffice_document_session' => 'VERSION_ID',
+						'b_disk_onlyoffice_document_info' => 'VERSION_ID',
 					)
 				),
 				'b_disk_tmp_file' => array(
 					'ID' => array(
 						'b_disk_cloud_import' => 'TMP_FILE_ID',
+					)
+				),
+				'b_disk_onlyoffice_document_info' => array(
+					'EXTERNAL_HASH' => array(
+						'b_disk_onlyoffice_document_session' => 'EXTERNAL_HASH',
 					)
 				),
 			),
@@ -553,6 +560,7 @@ Class disk extends CModule
 						'b_disk_object_lock' => 'CREATED_BY',
 						'b_disk_onlyoffice_document_session' => 'USER_ID',
 						'b_disk_onlyoffice_document_session^' => 'OWNER_ID',
+						'b_disk_onlyoffice_document_info' => 'OWNER_ID',
 						'b_disk_recently_used' => 'USER_ID',
 					)
 				),

@@ -114,6 +114,24 @@ final class TrackedObject extends Model
 		return false;
 	}
 
+	public function canMarkDeleted(int $userId): bool
+	{
+		if (!$this->getFileId())
+		{
+			return false;
+		}
+
+		$file = $this->getFile();
+		if (!$file)
+		{
+			return false;
+		}
+
+		$securityContext = $file->getStorage()->getSecurityContext($userId);
+
+		return $file->canMarkDeleted($securityContext);
+	}
+
 	public function canShare(int $userId): bool
 	{
 		if ($this->getFileId())

@@ -23,4 +23,3 @@ $MESS["VOX_START_SIP_BUY"] = "Подключить";
 $MESS["VOX_START_SIP_PROLONG"] = "Продлить";
 $MESS["VOX_START_TARIFFS"] = "Тарифы";
 $MESS["VOX_START_RECORD_LIMIT"] = "Записи звонков:#STRONG_START# #RECORDS_REMAINING# из #RECORDS_TOTAL# в месяц#STRONG_END#";
-$MESS["VOX_START_NOT_TELEPHONY_FOR_FREE"] = "<strong>Обратите внимание!</strong> С 1 января 2021 Телефония будет доступна только на коммерческих тарифах. Подберите нужный тариф заранее со скидкой 40%. <a href=\"#LINK#\">Подробнее</a>";

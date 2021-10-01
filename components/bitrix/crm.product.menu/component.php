@@ -10,15 +10,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
  * @global CDatabase $DB
  */
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Catalog;
+use Bitrix\Crm;
 
-if (!CModule::IncludeModule('crm'))
+if (!Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
 
-if (!CModule::IncludeModule('iblock'))
+if (!Loader::includeModule('iblock'))
 {
 	ShowError(GetMessage('IBLOCK_MODULE_NOT_INSTALLED'));
 	return;
@@ -33,6 +36,7 @@ $arResult['LIST_SECTION_ID'] =
 
 $isCopyMode = $arResult['IS_COPY_MODE'] = (isset($_REQUEST['copy']) && !empty($_REQUEST['copy']));
 
+$arParams['CATALOG_ID'] = (int)($arParams['CATALOG_ID'] ?? 0);
 $arParams['PRODUCT_COUNT'] = isset($arParams['PRODUCT_COUNT']) ? (int)$arParams['PRODUCT_COUNT'] : 20;
 $arParams['PATH_TO_PRODUCT_LIST'] = CrmCheckPath('PATH_TO_PRODUCT_LIST', $arParams['PATH_TO_PRODUCT_LIST'], '?#section_id#');
 $arParams['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath('PATH_TO_PRODUCT_SHOW', $arParams['PATH_TO_PRODUCT_SHOW'], '?product_id=#product_id#&show');
@@ -51,13 +55,26 @@ if (!isset($arParams['TYPE']))
 
 $arResult['BUTTONS'] = array();
 
-$sectionID = isset($arParams['SECTION_ID']) ? intval($arParams['SECTION_ID']) : 0;
-$productID = isset($arParams['PRODUCT_ID']) ? intval($arParams['PRODUCT_ID']) : 0;
+$sectionID = (int)($arParams['SECTION_ID'] ?? 0);
+$productID = (int)($arParams['PRODUCT_ID'] ?? 0);
 
 $CrmPerms = new CCrmPerms($USER->GetID());
 
 $productAdd = $sectionAdd = $productEdit = $productCopy = $productDelete = $bImport = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 $productShow = $sectionShow = $permToExport = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
+
+if ($productAdd)
+{
+	if (Loader::includeModule('catalog'))
+	{
+		$productLimit = Catalog\Config\State::getExceedingProductLimit($arParams['CATALOG_ID']);
+	}
+	else
+	{
+		$productLimit = Crm\Config\State::getExceedingProductLimit($arParams['CATALOG_ID']);
+	}
+	$productAdd = empty($productLimit);
+}
 
 $exists = $productID > 0 && CCrmProduct::Exists($productID);
 

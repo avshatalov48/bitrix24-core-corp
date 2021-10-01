@@ -1082,6 +1082,13 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		$this->arParams['categoryId'] = $data['CATEGORY_ID'] ?? null;
 		$this->mode = isset($data['MODE']) ? (int)$data['MODE'] : $this->mode;
 
+		$sourceEntityTypeId = (int)($data['CONVERSION_SOURCE']['entityTypeId'] ?? 0);
+		$sourceEntityId = (int)($data['CONVERSION_SOURCE']['entityId'] ?? 0);
+		if (($sourceEntityId > 0) && \CCrmOwnerType::IsDefined($sourceEntityTypeId))
+		{
+			$this->conversionSource = new ItemIdentifier($sourceEntityTypeId, $sourceEntityId);
+		}
+
 		$this->init();
 		if($this->getErrors())
 		{
@@ -1217,6 +1224,19 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				$this->getEntityTypeID(),
 				$this->item->getId()
 			);
+		}
+
+		$conversionWizard = $this->getConversionWizard();
+		if ($this->isConversionMode() && !is_null($conversionWizard))
+		{
+			$conversionWizard->attachNewlyCreatedEntity($this->factory->getEntityName(), $this->item->getId());
+			$conversionRedirectUrl = $conversionWizard->getRedirectUrl();
+			if (!empty($conversionRedirectUrl))
+			{
+				// override redirect url
+				$result['REDIRECT_URL'] = $conversionRedirectUrl;
+				$result['EVENT_PARAMS'] = $conversionWizard->getClientEventParams();
+			}
 		}
 
 		return $result;
@@ -1376,6 +1396,15 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			}
 		}
 
+		if ($this->isConversionMode() && !is_null($this->getConversionSource()))
+		{
+			$this->operation
+				->excludeItemsFromTimelineRelationEventsRegistration([
+					$this->getConversionSource()
+				])
+			;
+		}
+
 		return $this->operation;
 	}
 
@@ -1486,6 +1515,15 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		$context = [
 			'MODE' => $this->mode,
 		];
+
+		if ($this->isConversionMode())
+		{
+			$context = array_merge(
+				$context,
+				$this->getConversionWizard()->prepareEditorContextParams($this->factory->getEntityTypeId())
+			);
+		}
+
 		if($this->category)
 		{
 			$context['CATEGORY_ID'] = $this->category->getId();

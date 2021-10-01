@@ -8,6 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 class CIntranetUstatOnlineComponent extends UstatOnline
 {
+	private $errors = [];
+
 	protected function checkParams(): void
 	{
 		if (isset($this->arParams['MODE']) && $this->arParams['MODE'] === 'popup')

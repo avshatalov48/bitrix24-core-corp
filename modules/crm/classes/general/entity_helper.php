@@ -1,4 +1,9 @@
 <?php
+
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Timeline;
+
 class CCrmEntityHelper
 {
 	private static $ENTITY_KEY = '/^\s*(L|D|C|CO)_([0-9]+)\s*$/i';
@@ -157,5 +162,136 @@ class CCrmEntityHelper
 
 			unset($arFilter[$fieldType]);
 		}
+	}
+
+	/**
+	 * Simple method-adapter that is used to avoid copy-paste in compatible Crm entities
+	 * Used, for example, in @see \CAllCrmDeal and other entities
+	 *
+	 * @param array $params = [
+	 *     'entityTypeId' => 0,
+	 *     'entityId' => 0,
+	 *     'fieldsInfo' => [], // fields description from static::getFieldsInfo
+	 *     'previousFields' => [],
+	 *     'currentFields' => [],
+	 *     'previousStageSemantics' => '', // constant of PhaseSemantics. UNDEFINED by default
+	 *     'currentStageSemantics' => '', // constant of PhaseSemantics.  UNDEFINED by default
+	 *     'options' => [], // options that are passed to a CRUD method
+	 *     'bindings' => [
+	 *         'entityTypeId' => 0, // entityTypeId that is passed in EntityBinding methods
+	 *         'previous' => [],
+	 *         'current' => null, // array|null. Null if bindings are not changed
+	 *     ],
+	 *     'isMarkEventRegistrationEnabled' => true, // pass false here if you want to disable mark event registration
+	 * ]
+	 *
+	 */
+	public static function registerAdditionalTimelineEvents(array $params): void
+	{
+		$entityTypeId = (int)($params['entityTypeId'] ?? 0);
+		$entityId = (int)($params['entityId'] ?? 0);
+		if (($entityId <= 0) || !\CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			return;
+		}
+
+		$itemIdentifier = new ItemIdentifier($entityTypeId, $entityId);
+
+		static::registerRelationEvents($itemIdentifier, $params);
+
+		$isMarkEventRegistrationEnabled = (bool)($params['isMarkEventRegistrationEnabled'] ?? true);
+		if ($isMarkEventRegistrationEnabled)
+		{
+			static::registerMarkEvent($itemIdentifier, $params);
+		}
+	}
+
+	protected static function registerRelationEvents(ItemIdentifier $itemIdentifier, array $params): void
+	{
+		$options = static::extractArrayFromParams($params, 'options');
+		$excludeFromRelationRegistration = static::extractArrayFromParams($options, 'EXCLUDE_FROM_RELATION_REGISTRATION');
+
+		Timeline\RelationController::getInstance()->registerEventsByFieldsChange(
+			$itemIdentifier,
+			static::extractArrayFromParams($params, 'fieldsInfo'),
+			static::extractArrayFromParams($params, 'previousFields'),
+			static::extractArrayFromParams($params, 'currentFields'),
+			$excludeFromRelationRegistration
+		);
+
+		$bindings = static::extractArrayFromParams($params, 'bindings');
+		// current bindings are null if they were not changed in this call
+		$currentBindings =
+			isset($bindings['current']) && is_array($bindings['current'])
+				? $bindings['current']
+				: null
+		;
+		if (!empty($bindings) && !is_null($currentBindings))
+		{
+			Timeline\RelationController::getInstance()->registerEventsByBindingsChange(
+				$itemIdentifier,
+				(int)($bindings['entityTypeId'] ?? 0),
+				static::extractArrayFromParams($bindings, 'previous'),
+				$currentBindings,
+				$excludeFromRelationRegistration
+			);
+		}
+	}
+
+	protected static function registerMarkEvent(ItemIdentifier $itemIdentifier, array $params): void
+	{
+		$fieldsInfo = static::extractArrayFromParams($params, 'fieldsInfo');
+
+		if (!static::isStagesSupportedForEntity($fieldsInfo))
+		{
+			return;
+		}
+
+		$previousSemantics = (string)($params['previousStageSemantics'] ?? PhaseSemantics::UNDEFINED);
+		$currentSemantics = (string)($params['currentStageSemantics'] ?? PhaseSemantics::UNDEFINED);
+
+		if (
+			$previousSemantics !== $currentSemantics
+			&& PhaseSemantics::isFinal($currentSemantics)
+		)
+		{
+			Timeline\MarkController::getInstance()->onItemMoveToFinalStage(
+				$itemIdentifier,
+				$currentSemantics
+			);
+		}
+	}
+
+	protected static function isStagesSupportedForEntity(array $fieldsInfo): bool
+	{
+		return !empty(static::getStageIdFieldName($fieldsInfo));
+	}
+
+	protected static function getStageIdFieldName(array $fieldsInfo): ?string
+	{
+		foreach ($fieldsInfo as $fieldName => $singleFieldInfo)
+		{
+			$type = $singleFieldInfo['TYPE'] ?? null;
+
+			if (
+				$type === \Bitrix\Crm\Field::TYPE_CRM_STATUS
+				&& \CCrmFieldInfoAttr::isFieldHasAttribute($singleFieldInfo, \CCrmFieldInfoAttr::Progress)
+			)
+			{
+				return $fieldName;
+			}
+		}
+
+		return null;
+	}
+
+	protected static function extractArrayFromParams(array $params, string $key): array
+	{
+		if (isset($params[$key]) && is_array($params[$key]))
+		{
+			return $params[$key];
+		}
+
+		return [];
 	}
 }

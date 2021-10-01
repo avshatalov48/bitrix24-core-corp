@@ -727,10 +727,27 @@ select.crm-entity-product-control-select-field:hover {
 	padding-top: 6px !important;
 }
 
+.main-grid-cell-head[data-name="MAIN_INFO"] .main-grid-head-title {
+	padding-left: 46px;
+}
+
 .main-grid-cell-head[data-name="MAIN_INFO"] {
 	min-width: 420px;
 }
 
 .catalog-product-edit {
+	width: 100%;
 	max-width: 800px;
+}
+
+.main-grid-row-number {
+	vertical-align: top;
+	padding-top: 12px;
+	padding-right: 10px;
+	width: 20px;
+	text-align: right;
+}
+
+.main-grid-editor.main-grid-editor-custom[data-name="MAIN_INFO"] {
+	display: flex;
 }

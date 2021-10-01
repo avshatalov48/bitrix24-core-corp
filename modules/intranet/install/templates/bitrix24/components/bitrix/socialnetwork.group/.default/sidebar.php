@@ -218,7 +218,14 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 		?>
 		<div class="socialnetwork-group-users socialnetwork-group-moderator">
 			<div class="socialnetwork-group-users-inner">
-				<div class="socialnetwork-group-title"><?=GetMessage($arResult['Group']['PROJECT'] == 'Y' ? "SONET_C6_ACT_MODN_PROJECT" : "SONET_C6_ACT_MODN")?>
+				<div class="socialnetwork-group-title">
+					<?=
+						GetMessage($arResult['Group']['PROJECT'] == 'Y'
+							? $arResult["isScrumProject"]
+								? "SONET_C6_ACT_MODN_SCRUM_PROJECT"
+								: "SONET_C6_ACT_MODN_PROJECT"
+							: "SONET_C6_ACT_MODN")
+					?>
 					<? if (count($arResult["Moderators"]["List"]) > $itemsLimit):?>
 						(<a
 							href="<?=htmlspecialcharsback($arResult["Urls"]["GroupMods"])?>"><?

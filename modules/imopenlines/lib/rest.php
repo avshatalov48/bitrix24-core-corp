@@ -460,12 +460,18 @@ class Rest extends \IRestService
 		return true;
 	}
 
-	public static function configGetPath($arParams, $n, \CRestServer $server)
+	/**
+	 * @param $arParams
+	 * @param $n
+	 * @param \CRestServer $server
+	 * @return array
+	 */
+	public static function configGetPath($arParams, $n, \CRestServer $server): array
 	{
-		return array(
+		return [
 			'SERVER_ADDRESS' => \Bitrix\ImOpenLines\Common::getServerAddress(),
-			'PUBLIC_PATH' => \Bitrix\ImOpenLines\Common::getPublicFolder()
-		);
+			'PUBLIC_PATH' => \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder()
+		];
 	}
 
 	public static function networkJoin($arParams, $n, \CRestServer $server)
@@ -1093,6 +1099,8 @@ class Rest extends \IRestService
 	 */
 	public static function configUpdate($arParams, $n, \CRestServer $server)
 	{
+		$result = false;
+
 		$arParams['CONFIG_ID'] = (int)$arParams['CONFIG_ID'];
 
 		if ($arParams['CONFIG_ID'] <= 0)
@@ -1108,7 +1116,13 @@ class Rest extends \IRestService
 		$arParams['PARAMS'] = !empty($arParams['PARAMS']) && is_array($arParams['PARAMS']) ? $arParams['PARAMS'] : [];
 		$config = new Config();
 
-		return $config->update($arParams['CONFIG_ID'], $arParams['PARAMS']);
+		$resultUpdate = $config->update($arParams['CONFIG_ID'], $arParams['PARAMS']);
+		if($resultUpdate->isSuccess())
+		{
+			$result = true;
+		}
+
+		return $result;
 	}
 
 	/**

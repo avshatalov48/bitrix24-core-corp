@@ -139,9 +139,7 @@ abstract class Factory
 	 *
 	 * @param string $commonFieldName
 	 *
-	 * @return string|null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return string
 	 */
 	public function getFieldCaption(string $commonFieldName): string
 	{
@@ -442,6 +440,12 @@ abstract class Factory
 	 */
 	public function getItemsCount(array $filter = []): int
 	{
+		$tableName = $this->getDataClass()::getTableName();
+		if (!Application::getConnection()->isTableExists($tableName))
+		{
+			return 0;
+		}
+
 		$params = $this->replaceCommonFieldNames(['filter' => $filter]);
 		$normalizedFilter = $params['filter'] ?? [];
 
@@ -820,6 +824,13 @@ abstract class Factory
 		}
 
 		return null;
+	}
+
+	public function clearCategoriesCache(): self
+	{
+		$this->categories = null;
+
+		return $this;
 	}
 	//endregion
 

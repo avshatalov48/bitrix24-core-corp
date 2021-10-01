@@ -5,6 +5,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Crm;
 
+/**
+ * Class CompanyGrowthStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CompanyGrowthStatistics_Query query()
+ * @method static EO_CompanyGrowthStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CompanyGrowthStatistics_Result getById($id)
+ * @method static EO_CompanyGrowthStatistics_Result getList(array $parameters = array())
+ * @method static EO_CompanyGrowthStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyGrowthStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyGrowthStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyGrowthStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyGrowthStatistics_Collection wakeUpCollection($rows)
+ */
 class CompanyGrowthStatisticsTable  extends Entity\DataManager
 {
 	/**

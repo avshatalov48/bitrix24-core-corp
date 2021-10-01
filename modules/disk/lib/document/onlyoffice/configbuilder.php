@@ -259,6 +259,7 @@ final class ConfigBuilder
 				'callbackUrl' => (string)$this->callbackUrl,
 				'customization' => [
 					'forcesave' => true,
+					// 'loaderName' => 'Bitrix24',
 					'customer' => [
 						'address' => '',
 						'info' => Loc::getMessage('DISK_ONLYOFFICE_CONFIGBUILDER_CUSTOMER_INFO'),
@@ -274,6 +275,7 @@ final class ConfigBuilder
 					],
 					'reviewDisplay' => self::REVIEW_DISPLAY_MARKUP,
 					'chat' => false,
+					'hideRightMenu' => true,
 					'compactHeader' => true,
 					'goback' => false,
 					'plugins' => false,

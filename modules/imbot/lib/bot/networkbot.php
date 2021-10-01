@@ -10,6 +10,12 @@ namespace Bitrix\Imbot\Bot;
 interface NetworkBot extends ChatBot
 {
 	/**
+	 * Returns OL code.
+	 * @return string
+	 */
+	public static function getBotCode();
+
+	/**
 	 * Unregister bot at portal.
 	 *
 	 * @param string $code Open Line Id.

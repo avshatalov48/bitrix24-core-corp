@@ -30,7 +30,7 @@ const RequisiteBlock = {
 	},
 	template: `   
 			<div>
-				<div class="salescenter-company-contacts-text">{{loc.SC_MYCOMPANY_SETTINGS_COMPANY_REQUISITE_INFO}}</div>
+				<div class="salescenter-company-contacts-text">{{loc.SC_MYCOMPANY_SETTINGS_COMPANY_REQUISITE_INFO_V2}}</div>
 				<div class="salescenter-company-contacts-text salescenter-company-contacts-text--link" @click="openSlider">{{loc.SC_MYCOMPANY_SETTINGS_COMPANY_REQUISITE_EDIT}}</div>
 			</div>`
 };

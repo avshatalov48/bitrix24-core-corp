@@ -137,7 +137,7 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 			$addSubTemplateAction = [
 				'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_CREATE_SUB_TEMPLATE'),
 			];
-			if ($arResult['TASK_LIMIT_EXCEEDED'])
+			if ($arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'])
 			{
 				$addSubTemplateAction['onclick'] = "BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');";
 				$addSubTemplateAction['className'] = 'tasks-list-menu-popup-item-lock';

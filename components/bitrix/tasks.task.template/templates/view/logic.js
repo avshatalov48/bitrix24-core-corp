@@ -211,7 +211,10 @@ BX.namespace('Tasks.Component');
 
 			onSubTemplateAddClick: function(e)
 			{
-				if (this.option('auxData').TASK_LIMIT_EXCEEDED)
+				if (
+					this.option('auxData').TASK_LIMIT_EXCEEDED
+					|| this.option('auxData').TEMPLATE_SUBTASK_LIMIT_EXCEEDED
+				)
 				{
 					e.preventDefault();
 					BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');

@@ -5,6 +5,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Crm;
 
+/**
+ * Class EntityConfigTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EntityConfig_Query query()
+ * @method static EO_EntityConfig_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EntityConfig_Result getById($id)
+ * @method static EO_EntityConfig_Result getList(array $parameters = array())
+ * @method static EO_EntityConfig_Entity getEntity()
+ * @method static \Bitrix\Crm\Config\Entity\EO_EntityConfig createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Config\Entity\EO_EntityConfig_Collection createCollection()
+ * @method static \Bitrix\Crm\Config\Entity\EO_EntityConfig wakeUpObject($row)
+ * @method static \Bitrix\Crm\Config\Entity\EO_EntityConfig_Collection wakeUpCollection($rows)
+ */
 class EntityConfigTable extends Entity\DataManager
 {
 	/**

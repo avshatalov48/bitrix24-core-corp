@@ -122,6 +122,29 @@ class User
 					'filter' => ['=ID' => $entity->getId()]
 				]);
 				return self::getDataByFieldsMap($fields, $map) + self::getClientDataByFields($fields);
+
+			default:
+				if (!\CCrmOwnerType::isPossibleDynamicTypeId($entity->getTypeId()))
+				{
+					break;
+				}
+
+				$dynamicFactory = Crm\Service\Container::getInstance()->getFactory($entity->getTypeId());
+				$dynamicItem = $dynamicFactory->getItem($entity->getId());
+				if (!$dynamicItem)
+				{
+					break;
+				}
+
+				if (!$dynamicItem->getContactId() && !$dynamicItem->getCompanyId())
+				{
+					break;
+				}
+
+				return self::getClientDataByFields([
+					'CONTACT_ID' => $dynamicItem->getContactId(),
+					'COMPANY_ID' => $dynamicItem->getCompanyId(),
+				]);
 		}
 
 		return $data;

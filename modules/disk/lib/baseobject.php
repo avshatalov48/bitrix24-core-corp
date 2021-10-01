@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk;
 
+use Bitrix\Disk\Document\Online\ObjectEvent;
 use Bitrix\Disk\Internals\Entity\ModelSynchronizer;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\ObjectPathTable;
@@ -14,14 +15,12 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Event;
-use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\Emoji;
 use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
-
-Loc::loadMessages(__FILE__);
 
 abstract class BaseObject extends Internals\Model implements \JsonSerializable
 {
@@ -1587,7 +1586,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 					$entityList[] = array(
 						'sharingId' => $sharing->getId(),
 						'entityId' => Sharing::CODE_SOCNET_GROUP . $groupRow['ID'],
-						'name' => $groupRow['NAME'],
+						'name' => Emoji::decode($groupRow['NAME']),
 						'right' => $sharing->getTaskName(),
 						'avatar' => Avatar::getGroup($groupRow['IMAGE_ID']),
 						'type' => 'groups',
@@ -1673,6 +1672,11 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 			),
 			$this->errorCollection
 		);
+	}
+
+	public function makeObjectEvent(string $category, array $data = []): ObjectEvent
+	{
+		return new ObjectEvent($this, $category, $data);
 	}
 
 	/**

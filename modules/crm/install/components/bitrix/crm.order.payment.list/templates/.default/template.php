@@ -438,9 +438,10 @@ if ($isInternal && (int)$arParams['INTERNAL_FILTER']['ORDER_ID'] > 0)
 		BX.ready(
 			function()
 			{
-				if (typeof BX.Crm.EntityEvent !== "undefined")
+				BX.namespace('BX.Crm.Order.PaymentList');
+				if (typeof BX.Crm.Order.PaymentList.handlerOnUpdate === "undefined")
 				{
-					BX.addCustomEvent(BX.Crm.EntityEvent.names.update, BX.delegate(function(event){
+					BX.Crm.Order.PaymentList.handlerOnUpdate = function(event){
 						if (
 							BX.type.isPlainObject(event.entityData)
 							&& parseInt(event.entityData.ID) === parseInt(<?=(int)$arParams['INTERNAL_FILTER']['ORDER_ID']?>)
@@ -448,7 +449,13 @@ if ($isInternal && (int)$arParams['INTERNAL_FILTER']['ORDER_ID'] > 0)
 						{
 							BX.Main.gridManager.reload('<?= CUtil::JSEscape($arResult['GRID_ID'])?>');
 						}
-					}));
+					};
+				}
+
+				if (typeof BX.Crm.EntityEvent !== "undefined")
+				{
+					BX.removeCustomEvent(window, BX.Crm.EntityEvent.names.update, BX.Crm.Order.PaymentList.handlerOnUpdate);
+					BX.addCustomEvent(window, BX.Crm.EntityEvent.names.update, BX.Crm.Order.PaymentList.handlerOnUpdate);
 				}
 			}
 		);

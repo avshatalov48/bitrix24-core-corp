@@ -1,0 +1,8 @@
+<?php
+$MESS["CRM_UDA_ADD_CONDITION"] = "Select field";
+$MESS["CRM_UDA_DELETE_CONDITION"] = "Delete";
+$MESS["CRM_UDA_DYNAMIC_ID"] = "SPA item ID";
+$MESS["CRM_UDA_DYNAMIC_TYPE"] = "SPA item type";
+$MESS["CRM_UDA_ENTITY_EXISTENCE_ERROR"] = "#TYPE_NAME# entity ID #ENTITY_ID# does not exist";
+$MESS["CRM_UDA_ENTITY_ID_ERROR"] = "Entity ID must be greater than zero";
+$MESS["CRM_UDA_ENTITY_TYPE_ERROR"] = "Incorrect entity type selected";

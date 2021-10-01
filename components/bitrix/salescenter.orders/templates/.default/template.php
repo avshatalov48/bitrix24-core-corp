@@ -6,7 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 $this->SetViewTarget('inside_pagetitle', 10000);
 ?>
 <button class="ui-btn ui-btn-md ui-btn-light-border <?=(!$arResult['isSitePublished'] || !$arResult['isOrderPublicUrlAvailable'] || $arResult['disableSendButton'] || $arResult['isPaymentsLimitReached']) ? ' ui-btn-disabled' : ''?>" onclick="BX.Salescenter.Orders.sendGridOrders();"><?=\Bitrix\Main\Localization\Loc::getMessage('SALESCENTER_SEND_ORDER');?></button>
-<button class="ui-btn ui-btn-md ui-btn-primary" onclick="BX.Salescenter.Manager.showOrderAdd();"><?=\Bitrix\Main\Localization\Loc::getMessage('SALESCENTER_ADD_ORDER');?></button>
+<button class="ui-btn ui-btn-md ui-btn-primary" onclick="<?= $arResult['addOrderOnClick'] ?>"><?=\Bitrix\Main\Localization\Loc::getMessage('SALESCENTER_ADD_ORDER');?></button>
 <?
 $this->EndViewTarget();
 

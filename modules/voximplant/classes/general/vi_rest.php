@@ -358,6 +358,13 @@ class CVoxImplantRestService extends IRestService
 		$viSip = new CVoxImplantSip();
 		$result = $viSip->GetSipRegistrations($arParams['REG_ID']);
 
+		$viSip->updateSipRegistrationStatus([
+			'sip_registration_id' => $result->reg_id,
+			'error_message' => $result->error_message,
+			'status_code' => $result->status_code,
+			'successful' => $result->status_result === 'success'
+		]);
+
 		if (!$result)
 		{
 			throw new Bitrix\Rest\RestException($viSip->GetError()->msg, $viSip->GetError()->code, CRestServer::STATUS_WRONG_REQUEST);
@@ -400,7 +407,7 @@ class CVoxImplantRestService extends IRestService
 		return $result;
 	}
 
-	public static function statisticGet($arParams, $nav, $server)
+	public static function statisticGet($arParams, $start, $server)
 	{
 		$permissions = Security\Permissions::createWithCurrentUser();
 		if (!$permissions->canPerform(Security\Permissions::ENTITY_CALL_DETAIL, Security\Permissions::ACTION_VIEW))
@@ -423,12 +430,9 @@ class CVoxImplantRestService extends IRestService
 			$arFilter['PORTAL_USER_ID'] = $allowedUserIds;
 		}
 
-		$dbResCnt = \Bitrix\Voximplant\StatisticTable::getList(array(
-			'filter' => $arFilter,
-			'select' => array("CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')),
-		));
-		$arResCnt = $dbResCnt->fetch();
-		$arNavParams = self::getNavData($nav, true);
+		$totalCount = $start >= 0 ? \Bitrix\Voximplant\StatisticTable::getCount($arFilter) : 0;
+
+		$arNavParams = self::getNavData($start, true);
 
 		$arSort = array();
 		if ($sort && $order)
@@ -464,7 +468,7 @@ class CVoxImplantRestService extends IRestService
 		return self::setNavData(
 			$result,
 			array(
-				"count" => $arResCnt['CNT'],
+				"count" => $totalCount,
 				"offset" => $arNavParams['offset']
 			)
 		);
@@ -1591,6 +1595,8 @@ class CVoxImplantRestService extends IRestService
 		$result = Rest\Helper::deleteExternalLine($params['NUMBER'], $appId);
 		if(!$result->isSuccess())
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
+
+		\CVoxImplantUser::clearCache();
 
 		return $result->getData();
 	}

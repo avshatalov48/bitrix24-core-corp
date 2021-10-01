@@ -4,6 +4,22 @@ namespace Bitrix\SalesCenter\Model;
 
 use Bitrix\Main\ORM;
 
+/**
+ * Class PageParamTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_PageParam_Query query()
+ * @method static EO_PageParam_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_PageParam_Result getById($id)
+ * @method static EO_PageParam_Result getList(array $parameters = array())
+ * @method static EO_PageParam_Entity getEntity()
+ * @method static \Bitrix\SalesCenter\Model\EO_PageParam createObject($setDefaultValues = true)
+ * @method static \Bitrix\SalesCenter\Model\EO_PageParam_Collection createCollection()
+ * @method static \Bitrix\SalesCenter\Model\EO_PageParam wakeUpObject($row)
+ * @method static \Bitrix\SalesCenter\Model\EO_PageParam_Collection wakeUpCollection($rows)
+ */
 class PageParamTable extends ORM\Data\DataManager
 {
 	public static function getTableName(): string

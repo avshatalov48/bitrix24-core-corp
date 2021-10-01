@@ -199,7 +199,10 @@ class CAllCrmLead
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
 				),
 				'COMPANY_ID' => array(
-					'TYPE' => 'crm_company'
+					'TYPE' => 'crm_company',
+					'SETTINGS' => [
+						'parentEntityTypeId' => \CCrmOwnerType::Company,
+					],
 				),
 				'CONTACT_ID' => array(
 					'TYPE' => 'crm_contact',
@@ -1571,6 +1574,23 @@ class CAllCrmLead
 		else
 		{
 			Bitrix\Crm\Timeline\LeadController::getInstance()->onCreate($ID, array('FIELDS' => $arFields));
+
+			CCrmEntityHelper::registerAdditionalTimelineEvents([
+				'entityTypeId' => \CCrmOwnerType::Lead,
+				'entityId' => $ID,
+				'fieldsInfo' => static::GetFieldsInfo(),
+				'previousFields' => [],
+				'currentFields' => $arFields,
+				'previousStageSemantics' => Crm\PhaseSemantics::UNDEFINED,
+				'currentStageSemantics' => $arFields['STATUS_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
+				'options' => $options,
+				'bindings' => [
+					'entityTypeId' => \CCrmOwnerType::Contact,
+					'previous' => [],
+					'current' => $contactBindings,
+				],
+				'isMarkEventRegistrationEnabled' => false,
+			]);
 		}
 
 		//region Duplicate communication data
@@ -2614,6 +2634,23 @@ class CAllCrmLead
 				$ID,
 				array('CURRENT_FIELDS' => $arFields, 'PREVIOUS_FIELDS' => $arRow)
 			);
+
+			CCrmEntityHelper::registerAdditionalTimelineEvents([
+				'entityTypeId' => \CCrmOwnerType::Lead,
+				'entityId' => $ID,
+				'fieldsInfo' => static::GetFieldsInfo(),
+				'previousFields' => $arRow,
+				'currentFields' => $arFields,
+				'previousStageSemantics' => $arRow['STATUS_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
+				'currentStageSemantics' => $arFields['STATUS_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
+				'options' => $options,
+				'bindings' => [
+					'entityTypeId' => \CCrmOwnerType::Contact,
+					'previous' => $originalContactBindings,
+					'current' => $contactBindings,
+				],
+				'isMarkEventRegistrationEnabled' => false,
+			]);
 
 			Bitrix\Crm\Integration\Im\Chat::onEntityModification(
 				CCrmOwnerType::Lead,
@@ -3815,6 +3852,11 @@ class CAllCrmLead
 		$params['CAN_CONVERT_TO_DEAL'] = $canEdit && $canCreateDeal;
 		$params['CAN_CONVERT'] = $params['CONVERT'] = $canEdit && ($canCreateContact || $canCreateCompany || $canCreateDeal);
 		$params['CONVERSION_PERMITTED'] = true;
+
+		if (!Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermission())
+		{
+			$params['CAN_CONVERT'] = false;
+		}
 	}
 
 	public static function PrepareFilter(&$arFilter, $arFilter2Logic = null)
@@ -4484,6 +4526,13 @@ class CAllCrmLead
 	{
 		//We have to call update for each entity for synchronize customer type.
 		$entity = new CCrmLead(false);
+
+		$contactIdentifier = null;
+		if ($contactID > 0)
+		{
+			$contactIdentifier = new Crm\ItemIdentifier(\CCrmOwnerType::Contact, (int)$contactID);
+		}
+
 		foreach(\Bitrix\Crm\Binding\LeadContactTable::getContactLeadIDs($contactID) as $ID)
 		{
 			$fields = array(
@@ -4495,7 +4544,18 @@ class CAllCrmLead
 					}
 				)
 			);
-			$entity->Update($ID, $fields);
+
+			$entity->Update(
+				$ID,
+				$fields,
+				true,
+				true,
+				[
+					'EXCLUDE_FROM_RELATION_REGISTRATION' => [
+						$contactIdentifier,
+					],
+				],
+			);
 		}
 	}
 	public static function ProcessCompanyDeletion($companyID)
@@ -4508,11 +4568,27 @@ class CAllCrmLead
 			array('ID')
 		);
 
+		$companyIdentifier = null;
+		if ($companyID > 0)
+		{
+			$companyIdentifier = new Crm\ItemIdentifier(\CCrmOwnerType::Company, (int)$companyID);
+		}
+
 		$entity = new CCrmLead(false);
 		while($fields = $dbResult->Fetch())
 		{
 			$fields['COMPANY_ID'] = 0;
-			$entity->Update($fields['ID'], $fields);
+			$entity->Update(
+				$fields['ID'],
+				$fields,
+				true,
+				true,
+				[
+					'EXCLUDE_FROM_RELATION_REGISTRATION' => [
+						$companyIdentifier,
+					],
+				],
+			);
 		}
 	}
 	/**

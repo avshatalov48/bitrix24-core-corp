@@ -17,7 +17,14 @@ Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'ui.sidepan
 			</div>
 			<div class="ui-slider-content-box">
 				<div class="ui-slider-heading-4 salescenter-main-header-title-container">
-					<?=Loc::getMessage($arResult['handlerDescription']['title'])?>
+					<?php
+					$title = Loc::getMessage($arResult['handlerDescription']['title']);
+					if (!$title)
+					{
+						$title = $arResult['handlerDescription']['title'];
+					}
+					?>
+					<?= $title ?>
 					<div class="salescenter-main-header-feedback-container">
 						<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
 					</div>

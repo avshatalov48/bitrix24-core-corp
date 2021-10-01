@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
 $MESS["BIZPROC_MODULE_NOT_INSTALLED"] = "Модуль Бизнес-процессы не установлен.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
@@ -55,4 +55,3 @@ $MESS["CRM_COLUMN_COMMUNICATION_TYPE"] = "Способ связи";
 $MESS["CRM_COLUMN_HONORIFIC"] = "Обращение";
 $MESS["CRM_COLUMN_ACTIVITY_COUNTER_V2"] = "Дела";
 $MESS["CRM_HONORIFIC_NOT_SELECTED"] = "Не выбрано";
-?>

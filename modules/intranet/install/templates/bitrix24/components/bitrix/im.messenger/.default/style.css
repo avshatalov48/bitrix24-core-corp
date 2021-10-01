@@ -80,8 +80,8 @@
 
 .bx-im-informer-icon {
 	border-radius: 50%;
-	width: 32px;
-	height: 32px;
+	width: 34px;
+	height: 34px;
 	position: relative;
 	top: 5px;
 	left: 16px;
@@ -101,8 +101,8 @@
 
 .bx-im-informer-ol-icon {
 	border-radius: 50%;
-	height: 32px;
-	width: 32px;
+	height: 34px;
+	width: 34px;
 	position: relative;
 	top: 9px;
 	left: 16px;
@@ -110,8 +110,9 @@
 
 .bitrix24-light-theme .bx-im-informer-ol-icon {
 	background: rgba(255, 255, 255, 0.2) url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2218%22%20height%3D%2217%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.422%2010.986A6.4%206.4%200%200%201%204.738%203.89c1.843-1.859%204.683-2.418%207.165-1.41%202.927%201.21%204.618%204.234%204.058%207.256-.56%203.02-3.22%205.217-6.381%205.268-2.682-.008-5.116-1.596-6.158-4.018zm13.004%202.51c2.553-3.502%201.985-8.35-1.325-11.288C11.81-.705%206.812-.707%203.61%202.204.394%205.138-.025%209.986%202.637%2013.49c2.632%203.492%207.542%204.476%2011.293%202.266.034.025.07.045.11.062l2.333.611a.58.58%200%200%200%20.557-.148.563.563%200%200%200%20.142-.553l-.645-2.232zm-4.614-3.595a.496.496%200%200%200-.5-.144.523.523%200%200%200-.358.391.585.585%200%200%200%20.144.534l.264.279H6.58a.424.424%200%200%200-.407.444l.004.217a.44.44%200%200%200%20.421.444h4.785l-.255.279a.573.573%200%200%200-.127.534.545.545%200%200%200%20.37.391.485.485%200%200%200%20.496-.144l1.12-1.22a.583.583%200%200%200-.012-.782L11.812%209.9zM7.754%207.01a.584.584%200%200%200-.012-.781l-.264-.279h4.786a.422.422%200%200%200%20.407-.444l-.004-.215a.439.439%200%200%200-.421-.445H7.46l.256-.279a.58.58%200%200%200-.015-.778.494.494%200%200%200-.725-.003L5.857%205.01a.582.582%200%200%200%20.012.78l1.16%201.22c.092.102.226.16.365.16a.48.48%200%200%200%20.36-.16zm-1.06.926a.424.424%200%200%200-.408.445l.003.22a.44.44%200%200%200%20.422.444h5.784a.423.423%200%200%200%20.408-.445l-.004-.216a.44.44%200%200%200-.421-.448H6.694z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E') no-repeat 6px center;
-	background-size: 19px 18px;
 	opacity: .9;
+	background-position: center center;
+    background-size: 20px;
 }
 
 .bitrix24-dark-theme .bx-im-informer-ol-icon,
@@ -119,6 +120,8 @@
 .bx-im-bar-default .bx-im-informer-ol-icon {
 	background: rgba(82, 92, 105, .11) url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2218%22%20height%3D%2217%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.422%2010.986A6.4%206.4%200%200%201%204.738%203.89c1.843-1.859%204.683-2.418%207.165-1.41%202.927%201.21%204.618%204.234%204.058%207.256-.56%203.02-3.22%205.217-6.381%205.268-2.682-.008-5.116-1.596-6.158-4.018zm13.004%202.51c2.553-3.502%201.985-8.35-1.325-11.288C11.81-.705%206.812-.707%203.61%202.204.394%205.138-.025%209.986%202.637%2013.49c2.632%203.492%207.542%204.476%2011.293%202.266.034.025.07.045.11.062l2.333.611a.58.58%200%200%200%20.557-.148.563.563%200%200%200%20.142-.553l-.645-2.232zm-4.614-3.595a.496.496%200%200%200-.5-.144.523.523%200%200%200-.358.391.585.585%200%200%200%20.144.534l.264.279H6.58a.424.424%200%200%200-.407.444l.004.217a.44.44%200%200%200%20.421.444h4.785l-.255.279a.573.573%200%200%200-.127.534.545.545%200%200%200%20.37.391.485.485%200%200%200%20.496-.144l1.12-1.22a.583.583%200%200%200-.012-.782L11.812%209.9zM7.754%207.01a.584.584%200%200%200-.012-.781l-.264-.279h4.786a.422.422%200%200%200%20.407-.444l-.004-.215a.439.439%200%200%200-.421-.445H7.46l.256-.279a.58.58%200%200%200-.015-.778.494.494%200%200%200-.725-.003L5.857%205.01a.582.582%200%200%200%20.012.78l1.16%201.22c.092.102.226.16.365.16a.48.48%200%200%200%20.36-.16zm-1.06.926a.424.424%200%200%200-.408.445l.003.22a.44.44%200%200%200%20.422.444h5.784a.423.423%200%200%200%20.408-.445l-.004-.216a.44.44%200%200%200-.421-.448H6.694z%22%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E') no-repeat 6px center;
 	opacity: .9;
+	background-position: center center;
+    background-size: 20px;
 }
 
 .bx-im-informer-num {
@@ -179,10 +182,9 @@
 
 .bx-im-scroll-wrap {
 	height: 100%;
-	margin-right: -30px;
 	overflow: auto;
 	padding-right: 30px;
-	width: 65px;
+	width: 82px;
 }
 
 .bx-im-users-block {
@@ -275,85 +277,6 @@
 	margin-top: 6px;
 }
 
-.bx-im-avatar-img {
-	display: block;
-	border-radius: 50%;
-	max-height: 100%;
-	max-width: 100%;
-}
-
-.bx-im-user-counter {
-	background-color: #e15655;
-	border-radius: 6px;
-	color: #fff;
-	min-width: 8px;
-	height: 14px;
-	line-height: 14px;
-	font-size: 11px;
-	right: -6px;
-	top: 0;
-	padding: 0 4px;
-	position: absolute;
-}
-
-.bx-im-user-status {
-	border: 2px solid #fff;
-	bottom: -1px;
-	border-radius: 50%;
-	height: 8px;
-	right: -2px;
-	position: absolute;
-	width: 8px;
-}
-
-.bx-im-online .bx-im-user-status {
-	background-color: #8dcf1c;
-}
-
-.bx-im-busy .bx-im-user-status {
-	background-color: #df5758;
-}
-
-.bx-im-away .bx-im-user-status {
-	background-color: #f6a43a;
-}
-
-.bx-im-away-green .bx-im-user-status {
-	background-color: #fff;
-	-webkit-box-shadow: inset 0 0 0 1px #93d228;
-	box-shadow: inset 0 0 0 1px #93d228;
-}
-
-.bx-im-offline .bx-im-avatar-wrap {
-	background-color: #515a67;
-}
-
-.bx-im-offline .bx-im-avatar-img {
-	opacity: 0.4;
-}
-
-.bx-im-offline .bx-im-user-status {
-	background-color: #a7abb0;
-}
-
-.bx-im-mobile .bx-im-user-status {
-	background: url(images/im-bar-sprite.png) no-repeat -5px -152px;
-	border: none;
-	border-radius: 0;
-	height: 12px;
-	right: 0;
-	width: 8px;
-}
-
-.bx-im-vacation .bx-im-user-status {
-	background: url(images/im-bar-sprite.png) no-repeat -3px -131px #fff;
-	bottom: -4px;
-	right: -5px;
-	height: 12px;
-	width: 12px;
-}
-
-
 .bx-im-user-top-status {
 	border-radius: 50%;
 	height: 14px;
@@ -361,10 +284,6 @@
 	top: 0;
 	position: absolute;
 	width: 15px;
-}
-
-.bx-im-birthday .bx-im-user-top-status {
-	background: url(images/im-bar-sprite.png) no-repeat -1px -175px #41c6f1;
 }
 
 .bx-im-bottom-block {
@@ -433,92 +352,6 @@
 .bx-im-btn-download .bx-im-btn {
 	background-color: #a7abb0;
 	background-position: 9px -196px;
-}
-
-.bx-im-users-wrap .bx-messenger-recent-group {
-	display: none;
-}
-
-.bx-im-users-wrap .bx-messenger-panel-title-chat-input {
-	width: 100% !important;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-user {
-	display: none;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-count {
-	position: absolute;
-	right: 6px !important;
-	margin-top: -1px !important;
-	background-color: #f84932;
-	font: 10px/13px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
-	text-align: center;
-	opacity: .9;
-}
-.bx-im-users-wrap .bx-messenger-cl-status-muted .bx-messenger-cl-count {
-    background-color: #888888;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-count-digit {
-	padding: 0 3px;
-	min-width: 10px;
-	height: 13px;
-	border-radius: 10px;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status {
-	margin-left: -9px;
-	margin-top: 22px;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-group-title {
-	padding: 0 7px 0 15px !important;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-group-title:before {
-	left: 4px !important;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-group-open .bx-messenger-cl-group-title:before {
-	left: 4px !important;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-avatar {
-	margin: 0;
-	float: none;
-	width: 32px;
-	height: 32px;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-item {
-	margin: 0;
-	border-radius: 0;
-	padding: 5px 15px 5px 16px;
-	position: relative;
-	width: 34px;
-	transition: none;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-item-empty {
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: #606162;
-	height: 21px;
-	text-align: center;
-	white-space: nowrap;
-	-webkit-transform: rotate(90deg);
-	-moz-transform: rotate(90deg);
-	-o-transform: rotate(90deg);
-	-ms-transform: rotate(90deg);
-	transform: rotate(90deg);
-	position: absolute;
-	top: calc(50% - 50px);
-	left: -12px;
-	padding: 0;
-}
-
-.bitrix24-light-theme .bx-im-users-wrap .bx-messenger-cl-item-empty {
-	color: rgba(255,255,255,.7);
 }
 
 .bitrix24-dark-theme .bx-im-search:hover,
@@ -868,305 +701,6 @@
 	}
 }
 
-.bx-im-users-wrap .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2018%2020%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M16.79%2015.354c0-.77-1.026-1.65-3.047-2.163a6.926%206.926%200%200%201-1.929-.862c-.13-.072-.11-.745-.11-.745l-.65-.097c0-.055-.056-.862-.056-.862.779-.257.698-1.772.698-1.772.495.27.817-.93.817-.93.585-1.665-.291-1.564-.291-1.564.153-1.017.153-2.05%200-3.067-.39-3.373-6.254-2.457-5.559-1.356-1.713-.31-1.322%203.518-1.322%203.518l.371.991c-.73.465-.222%201.027-.197%201.674.036.955.632.757.632.757.036%201.577.828%201.782.828%201.782.149.99.056.822.056.822l-.705.083a2.7%202.7%200%200%201-.055.672c-.829.362-1.007.575-1.83.93-1.592.684-3.321%201.574-3.629%202.772C.505%2017.136.22%2019.746.22%2019.746h17.433l-.862-4.392z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-position: center 4px;
-	background-repeat: no-repeat;
-	background-size: 18px 20px;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-avatar-chat .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2014%2019%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7.792%2014.125v1.986H6.22v-1.986a1.259%201.259%200%200%201-.464-.978c0-.695.56-1.259%201.25-1.259.691%200%201.251.564%201.251%201.259%200%20.395-.18.747-.464.978zm-4.21-8.068c0-1.903%201.533-3.445%203.424-3.445%201.89%200%203.424%201.542%203.424%203.445v2.912H3.581V6.057zm8.658%202.912V6.057C12.24%203.148%209.896.79%207.006.79S1.772%203.148%201.772%206.057v2.912H.182v9.974H13.83V8.969h-1.59z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 14px 19px;
-	background-position: center 5px;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-avatar-open .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2019%2015%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M12.03%2011.929v1.394a.7.7%200%200%201-.7.7H5.892a.7.7%200%200%201-.7-.7V9.987L3.899%209.62l-2.225.525v.353a.5.5%200%200%201-.5.5H.676a.5.5%200%200%201-.5-.5V4.242a.5.5%200%200%201%20.5-.5h.498a.5.5%200%200%201%20.5.5v.335l2.3.505L16.31%201.595v-.127a.5.5%200%200%201%20.5-.5h1.45a.5.5%200%200%201%20.5.5v11.804a.5.5%200%200%201-.5.5h-1.45a.5.5%200%200%201-.5-.5v-.128l-4.28-1.215zm-1.368-.389L6.56%2010.375v2.333h4.103V11.54z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 19px 15px;
-	background-position: 6px 9px;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-avatar-call .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2018%2018%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M17.302%202.034c.683.681.796%202.738.435%202.754-.36.015-4.36%201.853-4.721%201.869-.36.016-1.59-1.212-1.949-1.57-.359-.36-3.478%202.4-3.537%202.452-.053.06-2.815%203.175-2.458%203.53.356.353%201.589%201.585%201.573%201.945-.016.36-1.857%204.353-1.872%204.715-.016.36-2.077.246-2.759-.435-.583-.582-2.7-3.596%201.079-8.837.331-.574%201.09-1.485%202.473-2.865l.002-.003.003-.003.003-.003.003-.002C6.96%204.2%207.872%203.443%208.447%203.112%2013.7-.66%2016.72%201.452%2017.302%202.034z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 18px 18px;
-	background-position: center center;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-avatar-structure .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAOCAYAAAArMezNAAAAAXNSR0IArs4c6QAAAYRJREFUOBGNk88rRFEYhu+dkKEhGZRJWfiRoiyUDcqfoCxnp2xk4Y8ws5VEiiJlaYOi1CwsLGzJpMgslIUNUmpqxvPVPe47dyYzXz2d93u/755z7znnel4DUS6Xx+AQcpBu4BHP1yYeaiNfhi7Y8X3/Dc/0IyTBogR91N6pJdBLYPPs430yVgeNGXBxbh0k886QcTiobYu3Wz1j4NB0LY0faB96oCS+yclg4jvx8zpxTBP0uOQd6AFohootI7c9b2EcARdDeHGX/I2Yo7K6k4uIGFw5gzEPrTAhnpMzbkJ94wJmxhUYj6DAgdhhZcU/wPshf4FN8bfQc5KHkmVX3dKMdhPs8DrhVPxn9GBQaxd/HV25ZRhpuJWmC3QS1sCuVTSKGHuQgqwU79Ertqi9URz01E33wgnUi1caEvAVaUzZHtsl1094ILefYQHqRT8N03ATaUw0Ydikl1LIoackrydnaTiGb2ksig4ln7UR+bT/0rPwyVDZG9eKbsynWoUaXvVPQdMvXEfn1S8is0kAAAAASUVORK5CYII=');
-	background-size: 22px 14px;
-	background-position: center center;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-avatar-videoconf .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2222%22%20height%3D%2213%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M14.318.898A27.29%2027.29%200%20007.904.125c-2.147%200-4.337.26-6.57.779-.48.111-.82.548-.82%201.053v8.623c0%20.488.319.915.778%201.042%202.134.59%204.269.886%206.404.886%202.147%200%204.361-.299%206.641-.896.466-.122.793-.552.793-1.046V1.948c0-.5-.337-.936-.812-1.05zm7.388.37a.33.33%200%2000-.02-.116.314.314%200%2000-.408-.188L16.51%202.82a.324.324%200%2000-.203.302v5.853c0%20.135.08.255.203.303l4.767%201.855a.31.31%200%2000.112.02.32.32%200%2000.316-.323V1.267zM7.739%207.294a1.034%201.034%200%20100-2.068%201.034%201.034%200%20000%202.068zm-3.336%200a1.034%201.034%200%20100-2.068%201.034%201.034%200%20000%202.068zm7.708-1.034a1.034%201.034%200%2011-2.068%200%201.034%201.034%200%20012.068%200z%22%20fill%3D%22%23fff%22/%3E%3C/svg%3E');
-	background-repeat: no-repeat;
-	background-size: 19px 13px;
-	background-position: center;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-bot .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2019%2017%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M14.588%204.796l.967-3.245a.832.832%200%200%200-.187-.803.81.81%200%200%200-1.375.327l-.827%202.785a8.765%208.765%200%200%200-8.21.009l-.832-2.794A.814.814%200%200%200%203.107.523a.827.827%200%200%200-.545%201.028l.97%203.258a9.295%209.295%200%200%200-3.436%207.254c0%205.092%204.015%203.842%208.973%203.842%204.957%200%208.972%201.25%208.972-3.842a9.286%209.286%200%200%200-3.453-7.267zM9.06%2011.371c-3.538%200-6.408.371-6.408-1.146s2.87-2.749%206.408-2.749c3.539%200%206.413%201.23%206.413%202.75%200%201.517-2.87%201.145-6.413%201.145zM6.13%208.613a.98.98%200%200%200-.79%201.084.974.974%200%200%200%201.022.862.978.978%200%200%200%20.913-.98%201.068%201.068%200%200%200-1.146-.966zm5.07%201.086a.975.975%200%200%200%201.025.861.978.978%200%200%200%20.912-.98%201.067%201.067%200%200%200-1.15-.967.982.982%200%200%200-.786%201.086z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 19px 17px;
-	background-position: center 7px;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-network .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2020%2016%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M16.707%207.407l.002-.1c0-2.244-1.745-4.065-3.897-4.065-.442%200-.88.078-1.294.23A4.009%204.009%200%200%200%207.812.877C5.6.877%203.81%202.748%203.81%205.055c0%20.025%200%20.05.002.075A5.101%205.101%200%200%200%20.56%209.94c0%202.821%202.193%205.109%204.898%205.109.054%200%20.109-.003.163-.005v.005h10.132a3.812%203.812%200%200%200%203.706-3.889%203.866%203.866%200%200%200-2.752-3.753zm-6.756%205.028a3.617%203.617%200%201%201%203.473-3.615%203.546%203.546%200%200%201-3.473%203.615zm1.658-3.612h-1.414V7.081a.429.429%200%201%200-.857%200v2.187a.438.438%200%200%200%20.43.447h1.841a.446.446%200%200%200-.001-.892h.001z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 20px 16px;
-	background-position: center 7px;
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-lines .bx-messenger-panel-avatar-img-default,
-.bx-im-users-wrap .bx-messenger-cl-avatar-lines .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%208%2020%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M.386%207.476h5.577v9.591h1.979v1.989H.386v-1.989h1.647V9.465H.386v-1.99zM3.748.858a2.316%202.316%200%201%201%200%204.632%202.316%202.316%200%200%201%200-4.632z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 8px 20px;
-	background-position: center 7px;
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-telegrambot .bx-messenger-panel-avatar-img-default,
-.bx-im-users-wrap .bx-messenger-cl-avatar-telegrambot .bx-messenger-cl-avatar-img-default  {
-	background-color: #2fc6f6!important;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2018%2016%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M14.017%203.677L7.643%209.575a1.313%201.313%200%200%200-.41.787l-.217%201.601c-.029.214-.33.235-.39.028l-.835-2.92a.773.773%200%200%201%20.34-.871l7.723-4.735c.139-.085.282.102.163.212M17.11.418L.892%206.646a.463.463%200%200%200%20.004.867l3.952%201.468%201.53%204.897c.097.313.483.43.738.221l2.203-1.787a.66.66%200%200%201%20.801-.023l3.973%202.872a.466.466%200%200%200%20.73-.28L17.733.944a.465.465%200%200%200-.623-.527%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 18px 16px;
-	background-position: center 5px;
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-vkgroup .bx-messenger-panel-avatar-img-default,
-.bx-im-users-wrap .bx-messenger-cl-avatar-vkgroup .bx-messenger-cl-avatar-img-default {
-	background-color: #3871ba!important;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2020%2012%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M19.13%2010.617a1.292%201.292%200%200%200-.064-.123c-.327-.589-.951-1.312-1.873-2.17l-.02-.02-.009-.009-.01-.01h-.01c-.418-.4-.683-.668-.794-.805-.203-.262-.248-.527-.137-.796.078-.202.373-.631.882-1.286.268-.347.48-.625.637-.834%201.131-1.506%201.621-2.468%201.471-2.887l-.058-.098c-.04-.059-.141-.113-.304-.162-.164-.05-.373-.057-.628-.024l-2.823.02a.366.366%200%200%200-.196.004l-.128.03-.049.024-.039.03a.436.436%200%200%200-.108.103.674.674%200%200%200-.098.172%2016.044%2016.044%200%200%201-1.049%202.209c-.242.406-.464.757-.667%201.055a5.078%205.078%200%200%201-.51.658c-.137.14-.26.254-.372.339-.111.085-.196.121-.255.108a7.174%207.174%200%200%201-.166-.04.653.653%200%200%201-.22-.24%201.078%201.078%200%200%201-.114-.383%204.228%204.228%200%200%201-.034-.398%208.32%208.32%200%200%201%20.005-.471c.007-.203.01-.34.01-.412%200-.25.005-.52.014-.81l.025-.693c.007-.17.01-.35.01-.54%200-.19-.012-.338-.035-.447a1.53%201.53%200%200%200-.102-.314.529.529%200%200%200-.201-.235%201.132%201.132%200%200%200-.329-.133C10.436.95%209.995.908%209.46.901c-1.216-.013-1.997.066-2.343.236-.138.072-.262.17-.373.295-.118.144-.134.222-.049.235.392.06.67.2.833.422l.06.118c.045.085.09.236.136.452.046.216.076.455.089.717.032.478.032.887%200%201.227-.033.34-.064.606-.093.795a1.594%201.594%200%200%201-.25.678.169.169%200%200%201-.05.049.733.733%200%200%201-.264.05c-.092%200-.203-.047-.334-.138a2.353%202.353%200%200%201-.406-.379%205.053%205.053%200%200%201-.476-.672c-.176-.288-.36-.629-.549-1.021l-.157-.285c-.098-.183-.232-.45-.402-.8-.17-.35-.32-.69-.45-1.017a.647.647%200%200%200-.236-.314l-.049-.03a.67.67%200%200%200-.157-.083%201.04%201.04%200%200%200-.225-.064l-2.686.02c-.275%200-.461.062-.56.187l-.039.059a.318.318%200%200%200-.029.157c0%20.072.02.16.059.265.392.923.818%201.813%201.28%202.67.46.858.86%201.549%201.2%202.072.34.524.686%201.018%201.04%201.483.352.465.586.762.7.893.115.131.205.23.27.295l.245.235c.157.158.387.346.691.565.304.22.64.435%201.01.648.37.213.799.386%201.29.52.49.135.966.189%201.43.163h1.128c.229-.02.402-.092.52-.216l.039-.05c.026-.039.05-.1.073-.181a.999.999%200%200%200%20.034-.27%203.24%203.24%200%200%201%20.064-.76c.049-.227.105-.397.167-.511a1.255%201.255%200%200%201%20.377-.432.64.64%200%200%201%20.079-.035c.156-.052.341-.001.554.153.212.153.411.343.598.569.186.226.41.48.671.76.262.282.49.492.687.63l.196.117c.13.079.3.15.51.216.208.066.391.082.548.05l2.51-.04c.248%200%20.441-.041.578-.123.138-.082.22-.172.246-.27a.762.762%200%200%200%20.005-.334%201.234%201.234%200%200%200-.07-.26z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22nonzero%22/%3E%3C/svg%3E');
-	background-size: 20px 12px;
-	background-position: center center;
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-skype .bx-messenger-panel-avatar-img-default,
-.bx-im-users-wrap .bx-messenger-cl-avatar-skype .bx-messenger-cl-avatar-img-default {
-	background-color: #02aff0!important;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2020%2020%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M18.344%2011.276a8.5%208.5%200%200%200-9.722-9.721%205.136%205.136%200%200%200-7.068%207.069%208.498%208.498%200%200%200%209.721%209.721%205.136%205.136%200%200%200%207.069-7.069zm-4.36%202.538c-.359.518-.887.923-1.577%201.213-.692.292-1.51.437-2.453.437-1.132%200-2.068-.198-2.808-.598a3.638%203.638%200%200%201-1.278-1.149c-.328-.479-.494-.948-.494-1.406%200-.27.102-.504.303-.696a1.08%201.08%200%200%201%20.771-.29c.252%200%20.469.077.645.227.175.15.322.37.442.658.144.334.3.614.466.837.166.22.398.404.7.548.298.144.694.216%201.19.216.68%200%201.228-.147%201.648-.437.423-.292.625-.648.625-1.078%200-.343-.109-.615-.333-.827a2.222%202.222%200%200%200-.881-.493%2015.877%2015.877%200%200%200-1.465-.367c-.823-.18-1.51-.389-2.067-.629-.558-.24-1.002-.57-1.331-.985-.33-.42-.495-.942-.495-1.56%200-.59.174-1.117.522-1.576.347-.46.85-.812%201.505-1.057.653-.245%201.422-.368%202.303-.368.705%200%201.314.081%201.83.244.514.163.943.379%201.286.65.34.269.592.554.75.852.159.3.239.593.239.878%200%20.266-.103.507-.304.718-.2.211-.457.32-.756.318-.27%200-.482-.062-.63-.194-.143-.128-.293-.33-.455-.614-.206-.395-.452-.703-.738-.923-.279-.216-.739-.329-1.378-.327-.592%200-1.066.12-1.423.357-.36.24-.532.52-.533.846%200%20.205.06.378.178.525.12.15.288.278.503.387.215.11.434.196.654.258.222.063.591.154%201.105.275.643.138%201.227.293%201.752.462.523.17.97.375%201.34.619.371.243.662.553.87.927.209.375.313.834.313%201.373%200%20.649-.18%201.233-.54%201.75z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22nonzero%22/%3E%3C/svg%3E');
-	background-size: 20px 20px;
-	background-position: center center;
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-facebook .bx-messenger-panel-avatar-img-default,
-.bx-im-users-wrap .bx-messenger-cl-avatar-facebook .bx-messenger-cl-avatar-img-default {
-	background-color: #38659f!important;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%209%2018%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1.855%206.075H.133v2.951h1.722v8.772h3.538v-8.77h2.374s.223-1.416.331-2.964H5.407V4.046c0-.302.385-.707.767-.707h1.928V.266H5.48c-3.712%200-3.625%202.954-3.625%203.396v2.413z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 9px 18px;
-	background-position: center center;
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-network .bx-messenger-panel-avatar-img-default,
-.bx-im-users-wrap .bx-messenger-panel-avatar-network .bx-messenger-panel-avatar-img-default,
-.bx-im-users-wrap .bx-messenger-cl-avatar-network .bx-messenger-cl-avatar-img-default {
-	background-color: #3ac8f5!important;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2020%2016%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M16.707%207.407l.002-.1c0-2.244-1.745-4.065-3.897-4.065-.442%200-.88.078-1.294.23A4.009%204.009%200%200%200%207.812.877C5.6.877%203.81%202.748%203.81%205.055c0%20.025%200%20.05.002.075A5.101%205.101%200%200%200%20.56%209.94c0%202.821%202.193%205.109%204.898%205.109.054%200%20.109-.003.163-.005v.005h10.132a3.812%203.812%200%200%200%203.706-3.889%203.866%203.866%200%200%200-2.752-3.753zm-6.756%205.028a3.617%203.617%200%201%201%203.473-3.615%203.546%203.546%200%200%201-3.473%203.615zm1.658-3.612h-1.414V7.081a.429.429%200%201%200-.857%200v2.187a.438.438%200%200%200%20.43.447h1.841a.446.446%200%200%200-.001-.892h.001z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 20px 16px;
-	background-position: center center;
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-livechat .bx-messenger-panel-avatar-img-default,
-.bx-im-users-wrap .bx-messenger-cl-avatar-livechat .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2016%2014%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M12.862%204.296H2.584c-.203%200-.366-.135-.366-.303V2.747c0-.169.163-.304.366-.304h10.278c.204%200%20.366.135.366.304v1.246c.04.168-.162.303-.366.303m0%203.714H2.584c-.203%200-.366-.134-.366-.303V6.461c0-.169.163-.303.366-.303h10.278c.204%200%20.366.134.366.303v1.246c.04.169-.162.303-.366.303m.672-7.888H1.879C.982.122.233.796.233%201.604v7.58c0%20.809.749%201.482%201.646%201.482h7.556c.113%200%20.188.034.262.101l2.32%202.258c.224.202.598.067.598-.203V10.97c0-.169.15-.304.337-.304h.62c.897%200%201.645-.673%201.645-1.482v-7.58C15.18.796%2014.432.122%2013.534.122%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 16px 14px;
-	background-position: center 10px;
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-viber .bx-messenger-panel-avatar-img-default,
-.bx-im-users-wrap .bx-messenger-cl-avatar-viber .bx-messenger-cl-avatar-img-default {
-	background-color: #995aca!important;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2019%2020%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M18.085%204.826l-.005-.022c-.436-1.782-2.401-3.694-4.206-4.092l-.02-.005a23.11%2023.11%200%200%200-8.797%200l-.02.005C3.231%201.11%201.266%203.022.83%204.804l-.005.022a17.61%2017.61%200%200%200%200%207.502l.005.022c.417%201.706%202.236%203.531%203.973%204.033v1.99c0%20.72.868%201.073%201.361.554l1.993-2.096a22.952%2022.952%200%200%200%205.696-.384l.02-.004c1.805-.398%203.77-2.31%204.206-4.093l.005-.022a17.61%2017.61%200%200%200%200-7.502zm-1.65%206.927c-.288%201.129-1.765%202.532-2.938%202.791-1.536.29-3.084.414-4.63.371a.11.11%200%200%200-.082.033l-1.44%201.467-1.532%201.559c-.112.116-.309.037-.309-.123v-3.199a.11.11%200%200%200-.09-.108c-1.174-.259-2.65-1.662-2.939-2.79a15.219%2015.219%200%200%201%200-6.581C2.764%204.044%204.24%202.64%205.413%202.382a21.712%2021.712%200%200%201%208.084%200c1.174.259%202.65%201.662%202.938%202.79.48%202.184.48%204.398%200%206.581zm-4.662%201.697c-.185-.056-.362-.094-.525-.163-1.699-.707-3.262-1.62-4.5-3.02-.704-.795-1.255-1.693-1.72-2.644-.222-.45-.408-.92-.598-1.385-.173-.424.082-.863.35-1.183.252-.3.576-.53.927-.699.274-.132.544-.056.744.178.433.504.83%201.033%201.152%201.617.197.36.143.799-.215%201.044-.087.059-.167.129-.248.196a.814.814%200%200%200-.187.198.544.544%200%200%200-.036.476c.442%201.22%201.187%202.168%202.41%202.68.196.081.392.176.617.15.378-.044.5-.46.765-.678.258-.212.589-.215.867-.038.279.177.549.367.817.56.264.188.526.372.769.587.234.207.314.478.183.759-.241.513-.592.94-1.098%201.213-.142.077-.313.102-.474.152-.185-.057.161-.05%200%200zM9.82%203.72c2.024.062%203.686%201.527%204.042%203.71.06.372.082.752.11%201.13.01.158-.072.309-.229.31-.162.003-.235-.145-.246-.304-.02-.314-.035-.63-.075-.941-.209-1.644-1.411-3.005-2.911-3.297-.226-.044-.457-.055-.686-.082-.145-.016-.334-.026-.366-.222a.262.262%200%200%201%20.244-.303c.039-.003.078%200%20.117%200%202.024.061-.039%200%200%200zm2.742%204.646c-.05.217-.333.244-.398.025a.754.754%200%200%201-.022-.21c0-.458-.086-.915-.285-1.314-.205-.41-.82-.998-1.185-1.207a2.288%202.288%200%200%200-.704-.251c-.106-.02-.214-.033-.32-.05-.13-.02-.198-.117-.192-.264.005-.14.093-.239.223-.23.427.028.84.135%201.22.369.772.475%201.515%201.47%201.644%202.472.006.045.015.09.018.136.008.112.012.225.02.373-.003.027-.005.09-.019.15zm-1.101-.068c-.226.004-.347-.12-.37-.322-.017-.142-.03-.286-.064-.423a1.189%201.189%200%200%200-.448-.69%201.18%201.18%200%200%200-.365-.173c-.166-.046-.338-.034-.503-.073-.18-.043-.28-.186-.25-.351a.324.324%200%200%201%20.342-.256c1.047.074%201.795.605%201.902%201.814.008.085.017.175-.003.257a.267.267%200%200%201-.241.217c-.226.004.103-.007%200%200z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22nonzero%22/%3E%3C/svg%3E');
-	background-size: 19px 20px;
-	background-position: center 7px;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-item-chat-general .bx-messenger-cl-avatar-img-default {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2019%2013%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M6.198%203.918c0-1.066-.882-1.44-1.82-1.44-1.258%200-2.29.411-3.248.841L.473%201.355C1.543.87%203.026.327%204.791.327c2.759%200%204.091%201.384%204.091%203.329%200%203.404-4.692%204.358-5.48%206.958h5.65v2.17H.06C.567%206.705%206.198%206.35%206.198%203.918zm6.814%203.872h1.126V6.462c0-.954.075-2.058.113-2.3l-2.797%203.684a30.661%2030.661%200%200%201%201.558-.056zM8.6%208.22L14.795.364h1.84V7.79h1.839v2.057h-1.84v2.937h-2.496V9.847H8.601V8.22z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
-	background-size: 19px 13px;
-	background-position: center 9px;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status {
-	background: none;
-	background-repeat: no-repeat;
-	background-size: 11px 11px;
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-chat .bx-messenger-panel-avatar-status,
-.bx-im-users-wrap .bx-messenger-cl-avatar-chat .bx-messenger-cl-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2011%2011%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20fill%3D%22%2347A0BA%22%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22/%3E%3Cpath%20d%3D%22M7.863%204.724v-.982c0-1.2-1.062-2.176-2.366-2.176-1.303%200-2.365.976-2.365%202.176v.982h-.505v4.024h5.74V4.724h-.504zM5.905%207.646h-.81l.121-1.103a.486.486%200%200%201-.252-.413c0-.27.24-.488.533-.488.293%200%20.534.218.534.488a.468.468%200%200%201-.252.413l.126%201.103zm1.068-2.922H4.028v-.982c0-.746.66-1.355%201.475-1.355.81%200%201.47.609%201.47%201.355v.982z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-open .bx-messenger-panel-avatar-status,
-.bx-im-users-wrap .bx-messenger-cl-avatar-open .bx-messenger-cl-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2011%2011%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20fill%3D%22%23A3BB47%22%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22/%3E%3Cpath%20d%3D%22M8.726%203.065c-.007-.17-.093-.244-.245-.215-.47.111-.939.23-1.408.341-.727.178-1.461.364-2.189.541-.773.186-1.54.379-2.314.564-.165.037-.33.081-.503.119-.033-.245-.052-.267-.264-.267h-.126c-.218%200-.251.037-.251.281V6.564c0%20.186.053.238.212.238h.172c.198%200%20.231-.03.257-.26.02%200%20.033-.007.053%200%20.304.074.609.156.92.23.079.015.092.052.092.126v1.045c0%20.282.205.527.443.527h2.136c.218%200%20.41-.2.443-.445.02-.156.02-.319.033-.49.767.193%201.534.379%202.3.572.153.037.239-.045.246-.215v-.134-4.56c-.007-.044-.007-.088-.007-.133zM5.802%207.892c0%20.081-.022.118-.111.118H3.48c-.08%200-.125-.03-.125-.111v-.994c.163.03.311.06.46.09.622.133%201.252.274%201.875.407.089.015.119.052.111.134a2.85%202.85%200%200%200%200%20.356z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-telegrambot .bx-messenger-panel-avatar-status,
-.bx-im-users-wrap .bx-messenger-cl-avatar-telegrambot .bx-messenger-cl-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2011%2011%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20fill%3D%22%2321A2E5%22%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22/%3E%3Cpath%20d%3D%22M8.237%202.46l-6.87%202.65c-.172.066-.166.303%200%20.369l1.677.624.647%202.086a.2.2%200%200%200%20.315.095l.933-.761a.285.285%200%200%201%20.339-.012L6.96%208.735c.113.084.28.024.309-.119l1.23-5.93c.03-.155-.119-.286-.262-.226zM6.924%203.844L4.226%206.352a.567.567%200%200%200-.172.333l-.09.684c-.011.089-.142.1-.166.011l-.356-1.242a.325.325%200%200%201%20.142-.368L6.86%203.755c.053-.035.119.042.065.09z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-vkgroup .bx-messenger-panel-avatar-status,
-.bx-im-users-wrap .bx-messenger-cl-avatar-vkgroup .bx-messenger-cl-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2211%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22%20fill%3D%22%234875A8%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M8.434%207.095c-.227-.27-.492-.503-.746-.751-.228-.222-.244-.352-.06-.606.2-.281.417-.552.617-.828.189-.26.378-.519.481-.833.065-.2.005-.286-.195-.319-.032-.005-.07-.005-.108-.005H7.217c-.151%200-.233.065-.281.195-.07.178-.146.356-.227.53-.19.389-.406.768-.709%201.087-.065.07-.14.157-.249.124-.14-.049-.178-.281-.178-.357V3.937c-.027-.2-.07-.287-.27-.325H4.046c-.167%200-.248.065-.34.168-.054.06-.065.103.038.119.205.038.324.173.357.384.048.335.048.67.016%201.006a1.05%201.05%200%200%201-.065.287c-.06.146-.157.173-.287.086a1.069%201.069%200%200%201-.276-.308%206.54%206.54%200%200%201-.735-1.369c-.06-.14-.157-.221-.303-.227a36.422%2036.422%200%200%200-1.087%200c-.217.006-.282.108-.195.309.395.876.833%201.73%201.406%202.51.292.4.633.751%201.071%201%20.498.281%201.028.368%201.59.34.265-.01.341-.08.352-.34.01-.179.027-.357.119-.52.087-.156.216-.189.368-.091.075.048.14.113.2.178.146.162.292.33.443.487.195.195.422.314.709.287h1.109c.178-.011.27-.233.167-.433a2.263%202.263%200%200%200-.27-.39z%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-skype .bx-messenger-panel-avatar-status,
-.bx-im-users-wrap .bx-messenger-cl-avatar-skype .bx-messenger-cl-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2011%2011%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20fill%3D%22%2321A2E5%22%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22/%3E%3Cpath%20d%3D%22M8.724%205.97a3.41%203.41%200%200%200-3.997-3.997%201.915%201.915%200%200%200-2.702%202.703%203.41%203.41%200%200%200%203.997%203.997%201.915%201.915%200%200%200%202.612-.09c.72-.715.75-1.858.09-2.613zM5.442%207.43c-1.007%200-1.852-.45-1.852-1.003%200-.242.135-.467.45-.467.485%200%20.53.687%201.357.687.4%200%20.653-.174.653-.405%200-.282-.247-.327-.641-.428L4.75%205.65c-.653-.164-1.154-.428-1.154-1.177%200-.912.9-1.25%201.678-1.25.85%200%201.705.338%201.705.85%200%20.26-.174.49-.467.49-.44%200-.45-.512-1.154-.512-.388%200-.642.107-.642.343%200%20.26.254.321.597.4l.467.107c.636.146%201.39.41%201.39%201.193-.005.912-.889%201.335-1.728%201.335z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-facebook .bx-messenger-panel-avatar-status,
-.bx-im-users-wrap .bx-messenger-cl-avatar-facebook .bx-messenger-cl-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2011%2011%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20fill%3D%22%233E559B%22%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22/%3E%3Cpath%20d%3D%22M6.491%203.49h.858V2.184H6.186c-1.647%200-1.61%201.256-1.61%201.443v1.025h-.765v1.25h.765v3.725h1.567V5.902h1.05s.1-.603.15-1.256H6.149v-.852c0-.13.174-.304.342-.304z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-network-user .bx-messenger-panel-avatar-status,
-.bx-im-users-wrap .bx-messenger-cl-status-network-user .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-network .bx-messenger-panel-avatar-status,
-.bx-im-users-wrap .bx-messenger-cl-avatar-network .bx-messenger-cl-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%0A%3Csvg%20viewBox%3D%220%200%2011%2011%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%0A%20%20%20%20%3C%21--%20Generator%3A%20Sketch%2053.2%20%2872643%29%20-%20https%3A//sketchapp.com%20--%3E%0A%20%20%20%20%3Ctitle%3EGroup%3C/title%3E%0A%20%20%20%20%3Cdesc%3ECreated%20with%20Sketch.%3C/desc%3E%0A%20%20%20%20%3Cg%20id%3D%22Page-1%22%20stroke%3D%22none%22%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20id%3D%22%u0435%u0441%u0442%u044C-02%22%20transform%3D%22translate%28-48.000000%2C%20-216.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cg%20id%3D%22%u0421%u0442%u0430%u0442%u0443%u0441%u044B%22%20transform%3D%22translate%2848.000000%2C%2040.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cg%20id%3D%22Group%22%20transform%3D%22translate%280.000000%2C%20176.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20id%3D%22Oval%22%20fill%3D%22%2362D0E5%22%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22%3E%3C/circle%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M8.23086451%2C2.85651606%20L2.73166877%2C2.85651606%20C2.33141086%2C2.85651606%202.00656385%2C3.19296475%202.00656385%2C3.5990235%20L2.00656385%2C7.40437414%20C2.00656385%2C7.8104329%202.33141086%2C8.14688158%202.73166877%2C8.14688158%20L6.06715142%2C8.14688158%20C6.1077573%2C8.14688158%206.14836317%2C8.1642841%206.17736737%2C8.19908913%20L7.19251426%2C9.33605365%20C7.28532769%2C9.44046876%207.45355203%2C9.37085869%207.45355203%2C9.23163854%20L7.45355203%2C8.2977034%20C7.45355203%2C8.21069081%207.52316211%2C8.14688158%207.60437386%2C8.14688158%20L8.23086451%2C8.14688158%20C8.63112243%2C8.14688158%208.95596943%2C7.8104329%208.95596943%2C7.40437414%20L8.95596943%2C3.5990235%20C8.95596943%2C3.19296475%208.63112243%2C2.85651606%208.23086451%2C2.85651606%20Z%20M7.72619148%2C6.49364236%20C7.72619148%2C6.58065495%207.65658141%2C6.64446418%207.57536966%2C6.64446418%20L3.38716363%2C6.64446418%20C3.30595187%2C6.64446418%203.2363418%2C6.57485411%203.2363418%2C6.49364236%20L3.2363418%2C5.8671517%20C3.2363418%2C5.78013911%203.30595187%2C5.71632988%203.38716363%2C5.71632988%20L7.57536966%2C5.71632988%20C7.65658141%2C5.71632988%207.72619148%2C5.78593995%207.72619148%2C5.8671517%20L7.72619148%2C6.49364236%20Z%20M7.72619148%2C4.94481824%20C7.72619148%2C5.02602999%207.65658141%2C5.09564006%207.57536966%2C5.09564006%20L3.38716363%2C5.09564006%20C3.30595187%2C5.09564006%203.2363418%2C5.02602999%203.2363418%2C4.94481824%20L3.2363418%2C4.31252675%20C3.2363418%2C4.22551416%203.30595187%2C4.16170492%203.38716363%2C4.16170492%20L7.57536966%2C4.16170492%20C7.65658141%2C4.16170492%207.72619148%2C4.231315%207.72619148%2C4.31252675%20L7.72619148%2C4.94481824%20Z%22%20id%3D%22Shape%22%20fill%3D%22%23FFFFFF%22%3E%3C/path%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-viber .bx-messenger-panel-avatar-status,
-.bx-im-users-wrap .bx-messenger-cl-avatar-viber .bx-messenger-cl-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2011%2011%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20fill%3D%22%2380509B%22%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22/%3E%3Cpath%20d%3D%22M8.965%203.691c-.145-.565-.884-1.27-1.47-1.4a10.868%2010.868%200%200%200-4.047-.019c-.586.127-1.325.825-1.47%201.39a7.643%207.643%200%200%200%200%203.29c.145.565.884%201.271%201.47%201.401a.062.062%200%200%201%20.043.058v1.597c0%20.08.098.12.156.061l.767-.778.72-.731a.058.058%200%200%201%20.04-.018%2010.83%2010.83%200%200%200%202.317-.174c.587-.127%201.325-.826%201.47-1.39a7.46%207.46%200%200%200%20.004-3.287zM7.517%207.057c-.116.247-.276.478-.536.583a.695.695%200%200%201-.489-.007c-.829-.344-1.589-.786-2.193-1.462a5.651%205.651%200%200%201-.84-1.278c-.109-.217-.2-.442-.29-.666-.083-.207.04-.417.17-.569.123-.144.283-.253.453-.333.134-.061.264-.025.362.087.21.243.405.5.56.782.099.178.07.391-.111.507a.324.324%200%200%200-.07.054c-.05.044-.1.076-.133.13a.253.253%200%200%200-.018.229c.217.586.579%201.046%201.173%201.295.094.04.192.087.3.073.185-.022.243-.22.373-.326a.359.359%200%200%201%20.423-.018c.138.087.268.177.399.271.126.091.257.181.376.286.116.098.156.229.09.362zM6.3%205.01c-.007-.058-.01-.116-.025-.17a.485.485%200%200%200-.181-.28.444.444%200%200%200-.145-.068c-.065-.018-.134-.014-.202-.033-.073-.018-.113-.076-.102-.14a.125.125%200%200%201%20.138-.102c.42.032.72.25.763.738.004.037.008.073%200%20.105a.103.103%200%200%201-.09.087h-.018c-.087-.01-.13-.058-.138-.137zm-.115-.989a1.624%201.624%200%200%200-.41-.126%203.228%203.228%200%200%200-.184-.026c-.076-.01-.116-.058-.112-.13.003-.069.054-.12.13-.112.25.014.489.069.71.184.448.24.705.612.781%201.108l.011.069.011.185a.413.413%200%200%201-.01.076c-.03.108-.193.119-.232.01a.335.335%200%200%201-.015-.105c0-.228-.05-.456-.166-.651a1.2%201.2%200%200%200-.514-.482zm1.39%201.542c-.087%200-.127-.072-.13-.148-.012-.152-.019-.308-.04-.456a1.939%201.939%200%200%200-1.557-1.61c-.12-.023-.246-.03-.366-.04-.076-.008-.177-.015-.195-.11-.015-.079.054-.144.13-.148h.062s.018%200%20.043.004c.033%200%20.076.004.101.007%201.018.09%201.836.79%202.017%201.806.032.181.043.366.058.55.003.07-.04.142-.123.145z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-panel-avatar-botframework_slack .bx-messenger-panel-avatar-status,
-.bx-im-users-wrap .bx-messenger-cl-avatar-botframework_slack .bx-messenger-cl-status  {
-	display: inline-block;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2011%2011%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20fill%3D%22%237BD3B6%22%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22/%3E%3Cpath%20d%3D%22M9.412%205.453a.645.645%200%200%200-.863-.34l-.315.145-.806-1.845.315-.145c.328-.15.479-.548.328-.881-.145-.34-.536-.491-.863-.34l-.315.144-.139-.32a.645.645%200%200%200-.862-.34.672.672%200%200%200-.328.88l.139.322-1.801.825-.139-.321c-.144-.34-.535-.491-.862-.34-.328.15-.479.548-.328.881l.139.321-.315.145a.672.672%200%200%200-.327.882c.144.34.535.491.862.34l.315-.145.806%201.845-.315.145a.672.672%200%200%200-.327.881c.145.34.535.492.863.34l.314-.144.139.32c.145.34.535.492.863.34a.672.672%200%200%200%20.327-.88l-.139-.322%201.801-.825.139.321c.145.34.535.491.863.34a.672.672%200%200%200%20.327-.881l-.139-.321.315-.145a.672.672%200%200%200%20.328-.882zM5.243%206.631l-.806-1.845%201.801-.825.806%201.845-1.8.825z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-cl-notify-blocked .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-notify-block {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2211%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%225.479%22%20cy%3D%225.507%22%20r%3D%224.753%22%20fill%3D%22%23EDEEF0%22/%3E%3Cpath%20fill%3D%22%23AFB5B6%22%20d%3D%22M7.488%203.067h-3.73a.746.746%200%200%200-.746.747V6.05c0%20.413.333.747.746.747h1.075l1.813%201.494V6.797h.842a.746.746%200%200%200%20.746-.747V3.814a.748.748%200%200%200-.746-.747z%22/%3E%3Cpath%20fill%3D%22%23FF5752%22%20d%3D%22M8.393%201.733l.84.84-6.546%206.548-.84-.841z%22/%3E%3Cpath%20fill%3D%22%23FF5752%22%20d%3D%22M5.5%2011a5.5%205.5%200%201%201%200-11%205.5%205.5%200%200%201%200%2011zm.03-.959a4.5%204.5%200%201%200%200-9%204.5%204.5%200%200%200%200%209z%22/%3E%3C/g%3E%3C/svg%3E');
-	display: inline-block;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-online .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-online .bx-messenger-panel-avatar-status {
-	display: none;
-	width: 11px;
-	height: 11px;
-	border-radius: 100%;
-	background-color: #97c535;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-offline .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-offline .bx-messenger-panel-avatar-status {
-	display: none;
-	width: 11px;
-	height: 11px;
-	border-radius: 100%;
-	background-color: #e43a41;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-birthday .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-birthday .bx-messenger-panel-avatar-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2211%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22%20fill%3D%22%23EDEEF0%22/%3E%3Cpath%20fill%3D%22%236DAA3A%22%20d%3D%22M2.614%209.286h2.29v-2.27h-2.29v2.27zm-.953-3.232h3.247V4.637H1.661v1.417zm4.261%203.232h2.29v-2.27h-2.29v2.27zm-.028-4.65v1.418H9.14V4.637H5.894zm1.332-.487a1.45%201.45%200%201%200-1.45-1.45c0%20.222-.005.682-.01.947h-.711c-.005-.27-.005-.668-.005-.867a1.45%201.45%200%201%200-1.45%201.45h1.27v.398h1.01V4.15h.194%201.152zm-.849-1.45a.848.848%200%201%201%20.849.848h-.853c.004-.27.004-.65.004-.849zm-2.782.923a.848.848%200%201%201%20.849-.848c0%20.2.004.578.004.848-.275.005-.663%200-.853%200z%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-dnd .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-dnd .bx-messenger-panel-avatar-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2211%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22%20fill%3D%22%23828B95%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M4.329%207.618a2.334%202.334%200%200%200%203.174-3.174.758.758%200%200%201-.205.373L4.702%207.413a.758.758%200%200%201-.373.205zM3.42%206.71a.758.758%200%200%201%20.205-.373L6.221%203.74a.758.758%200%200%201%20.373-.205A2.334%202.334%200%200%200%203.42%206.71zm2.042%202.487a3.62%203.62%200%201%201%200-7.239%203.62%203.62%200%200%201%200%207.24z%22%20opacity%3D%22.9%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-na .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-na .bx-messenger-panel-avatar-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2211%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20transform%3D%22translate%28-.5%29%22%3E%3Ccircle%20cx%3D%226.1%22%20cy%3D%226.278%22%20r%3D%224.615%22%20fill%3D%22%23EDEEF0%22/%3E%3Cpath%20fill%3D%22%23FF5752%22%20d%3D%22M4.347%208.586a3.5%203.5%200%200%200%204.739-4.739L4.347%208.586zM2.93%207.182L7.682%202.43A3.5%203.5%200%200%200%202.93%207.182zM6%2011A5.5%205.5%200%201%201%206%200a5.5%205.5%200%200%201%200%2011z%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-away .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-away .bx-messenger-panel-avatar-status {
-	width: 11px;
-	height: 11px;
-	border-radius: 100%;
-	background-color: #f79d54;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-idle .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-idle .bx-messenger-panel-avatar-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2211%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22%20fill%3D%22%23FD9E32%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M4.159%202.747h1.308v4.236H4.159z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M7.931%205.567H5.327v1.415h2.604z%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-guest .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-guest .bx-messenger-panel-avatar-status {
-	width: 11px;
-	height: 11px;
-	border-radius: 100%;
-	background-color: #bcbcbc;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-mobile .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-mobile .bx-messenger-panel-avatar-status {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%20width%3D%2211%22%20height%3D%2211%22%3E%3Cdefs%3E%3Ccircle%20id%3D%22a%22%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22/%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cmask%20id%3D%22b%22%20fill%3D%22%23fff%22%3E%3Cuse%20xlink%3Ahref%3D%22%23a%22/%3E%3C/mask%3E%3Cuse%20fill%3D%22%2321B0DD%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M3.3%201.757h4.4a.3.3%200%200%201%20.3.3v6.971a.3.3%200%200%201-.3.3H3.3a.3.3%200%200%201-.3-.3V2.057a.3.3%200%200%201%20.3-.3zm.815%201.355v3.919h2.77V3.112h-2.77zM5.441%208.62h.088a.483.483%200%200%200%20.483-.483v-.077a.483.483%200%200%200-.483-.483H5.44a.483.483%200%200%200-.483.483v.077c0%20.267.216.483.483.483z%22%20mask%3D%22url%28%23b%29%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-vacation .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-vacation .bx-messenger-panel-avatar-status {
-	position: relative;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2211%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22%20fill%3D%22%23EDEEF0%22/%3E%3Cpath%20fill%3D%22%23CC7449%22%20d%3D%22M3.484%209.708s.321-3.05%202.086-4.815c.578-.257.514-.048.546.144-.963%201.784-.53%204.655-.53%204.655l-2.102.016z%22/%3E%3Cpath%20fill%3D%22%236EA441%22%20d%3D%22M5.73%204.732c-.17-.164-1.492-1.235-4.044.033.177-.45%201.429-2.504%202.89-2.248%201.46.257%201.155%202.214%201.155%202.214v.001zm.017%200s.305-1.91%201.574-2.15c1.27-.242%202.327%201.38%202.327%201.38-.696-.096-1.4-.129-2.102-.097a4.477%204.477%200%200%200-1.799.866v.001z%22/%3E%3Cpath%20fill%3D%22%236EA441%22%20d%3D%22M5.717%204.82l-.099-.232.121-.179c.104.033.212.05.32.053.053-.014.158.112.21.097.717-.183%201.989-.345%202.43-.069.738.462.986%202.085%201.014%202.485-2.389-2.193-3.997-2.157-3.997-2.157v.001z%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-cl-status-writing .bx-messenger-cl-status,
-.bx-im-users-wrap .bx-messenger-panel-avatar-status-writing .bx-messenger-panel-avatar-status {
-	display: inline-block;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2211%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22%20fill%3D%22%23EDEEF0%22/%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M7.177%202.211c-.011-.01-.026-.01-.037%200l-.709.71c-.01.01-.01.025%200%20.036L8.085%204.61c.01.01.025.01.036%200l.71-.71c.01-.01.01-.025%200-.036L7.176%202.211zM5.805%203.543L2.617%206.731c-.047.047%200%201.69%200%201.69s1.643.047%201.69%200l3.188-3.188c.01-.01.01-.025%200-.036L5.841%203.543c-.007-.01-.025-.01-.036%200zM4.13%207.69h-.768v-.767h.768v.767z%22%20opacity%3D%22.608%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
-.bx-im-users-wrap .bx-messenger-cl-item-user-invited .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-status-writing .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-status-vacation .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-status-mobile .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-status-idle .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-status-away .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-status-na .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-status-dnd .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-avatar-chat .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-avatar-open .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-status-birthday .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-notify-blocked .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-avatar-botframework_slack .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-avatar-viber .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-avatar-network .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-avatar-facebook .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-avatar-skype .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-avatar-vkgroup .bx-messenger-cl-avatar-img,
-.bx-im-users-wrap .bx-messenger-cl-avatar-telegrambot .bx-messenger-cl-avatar-img {
-	-webkit-clip-path: url("#clip-avatar"/*://*/); /* a hack for Bitrix Assets */
-	clip-path: url("#clip-avatar"/*://*/);
-    transform: translateZ(0);
-}
-
-.bx-im-users-wrap .bx-messenger-cl-avatar-status-hide .bx-messenger-cl-avatar-img {
-	-webkit-clip-path: none;
-	clip-path: none;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-crm,
-.bx-im-users-wrap .bx-messenger-panel-avatar-crm {
-	height: 9px;
-	width: 21px;
-	margin-left: -37px;
-	margin-top: -4px;
-	vertical-align: top;
-	background: none;
-	background-repeat: no-repeat;
-	position: absolute;
-	z-index: 10;
-	display: none;
-}
-
-.bx-im-users-wrap .bx-messenger-cl-crm {
-	display: inline-block;
-	margin-top: -2px;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2021%209%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M15.577.026H4.532a4.458%204.458%200%200%200-4.46%204.46%204.458%204.458%200%200%200%204.46%204.46h11.045a4.458%204.458%200%200%200%204.46-4.46%204.458%204.458%200%200%200-4.46-4.46z%22%20fill%3D%22%23B37156%22/%3E%3Cpath%20d%3D%22M5.312%202.851c.175%200%20.355.035.54.1.185.065.365.14.545.23l.33-.85a3.216%203.216%200%200%200-1.41-.345c-.46%200-.86.105-1.205.31-.34.205-.605.5-.785.885-.185.385-.275.835-.275%201.345%200%20.81.185%201.435.56%201.87.37.435.91.65%201.61.65.49%200%20.93-.085%201.325-.25v-.875c-.48.175-.89.26-1.23.26-.805%200-1.21-.55-1.21-1.645%200-.525.105-.94.315-1.235.205-.3.505-.45.89-.45zm5.185%201.45c.155-.225.235-.485.235-.77%200-.495-.155-.865-.47-1.11-.315-.245-.8-.365-1.455-.365H7.402v4.92h1.025v-1.89h.545l1.15%201.89h1.135c-.22-.325-.695-1.04-1.42-2.145.28-.13.505-.305.66-.53zm-1.03-.23c-.155.11-.395.165-.715.165h-.33v-1.33h.31c.33%200%20.575.05.73.15.155.1.235.265.235.5s-.075.405-.23.515zm5.72-2.015l-1.21%203.76h-.02l-1.14-3.76h-1.39v4.92h.915v-2.29c0-.265-.02-.785-.065-1.57h.03l1.16%203.86h.935l1.245-3.855h.03l-.045%201.145c-.005.145-.005.27-.005.38v2.33h.955v-4.92h-1.395z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E');
-}
-
 .bx-im-bar-mobile {
 	height: 48px;
 	width: 65px;
@@ -1197,4 +731,86 @@
 	background: #55cfdff0 url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2035%2040%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M21.36.144c1.958%200%203.486%201.324%203.687%203.117l.017.201.006.205v3.508H21.5V4.532H3.88V32.08H25.07v3.54c0%201.814-1.497%203.41-3.494%203.518l-.215.006H4.176c-2.03%200-3.598-1.534-3.704-3.33l-.006-.194V3.667C.466%201.739%201.964.249%203.96.149l.216-.005H21.36zM12.768%2033.27a2.356%202.356%200%2000-2.35%202.35%202.356%202.356%200%20002.35%202.349%202.356%202.356%200%20002.35-2.35%202.356%202.356%200%2000-2.35-2.35zm7.117-23.05a5.683%205.683%200%20014.682%202.48%204.621%204.621%200%20011.563-.27c2.421.002%204.41%201.867%204.64%204.252%202.32.511%204.057%202.6%204.055%205.096-.003%202.877-2.313%205.208-5.16%205.207-.1%200-.2-.003-.298-.009H16.408c-.11%200-.22-.004-.33-.012-2.928-.067-5.282-2.487-5.282-5.462.001-1.45.572-2.84%201.587-3.865a5.406%205.406%200%20011.806-1.204%205.799%205.799%200%20011.658-4.525%205.68%205.68%200%20014.038-1.687z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22nonzero%22/%3E%3C/svg%3E') no-repeat 11px center;
 	opacity: .9;
 	background-size: 16px auto;
+}
+
+.bx-im-bar .bx-messenger-cl-status {
+	margin-top: 22px;
+}
+
+
+.bx-im-bar .bx-messenger-recent-group {
+	display: none;
+}
+
+.bx-im-bar .bx-messenger-panel-title-chat-input {
+	width: 100% !important;
+}
+
+.bx-im-bar .bx-messenger-cl-user {
+	display: none;
+}
+
+.bx-im-bar .bx-messenger-cl-item {
+	position: relative;
+	padding: 6px 16px;
+	margin: 0;
+	border-radius: 0;
+}
+
+.bx-im-bar .bx-messenger-cl-avatar {
+	margin-right: 0;
+	float: none;
+}
+
+.bx-im-bar .bx-messenger-cl-count {
+	position: absolute;
+	margin-left: 24px;
+	margin-top: -1px !important;
+	background-color: #f84932;
+	font: 10px/13px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	text-align: center;
+	opacity: .9;
+}
+.bx-im-bar .bx-messenger-cl-status-muted .bx-messenger-cl-count {
+    background-color: #888888;
+}
+
+.bx-im-bar .bx-messenger-cl-count-digit {
+	padding: 0 3px;
+	min-width: 10px;
+	height: 13px;
+	border-radius: 10px;
+}
+
+.bx-im-bar .bx-messenger-cl-group-title {
+	padding: 0 7px 0 15px !important;
+}
+
+.bx-im-bar .bx-messenger-cl-group-title:before {
+	left: 4px !important;
+}
+
+.bx-im-bar .bx-messenger-cl-group-open .bx-messenger-cl-group-title:before {
+	left: 4px !important;
+}
+
+.bx-im-bar .bx-messenger-cl-item-empty {
+	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #606162;
+	height: 21px;
+	text-align: center;
+	white-space: nowrap;
+	-webkit-transform: rotate(90deg);
+	-moz-transform: rotate(90deg);
+	-o-transform: rotate(90deg);
+	-ms-transform: rotate(90deg);
+	transform: rotate(90deg);
+	position: absolute;
+	top: calc(50% - 50px);
+	left: -12px;
+	padding: 0;
+}
+
+.bitrix24-light-theme .bx-im-bar .bx-messenger-cl-item-empty {
+	color: rgba(255,255,255,.7);
 }

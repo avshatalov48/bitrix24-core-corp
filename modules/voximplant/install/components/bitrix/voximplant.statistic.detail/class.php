@@ -51,7 +51,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 	protected function init()
 	{
 		Loader::includeModule("voximplant");
-		$this->enableExport = CVoxImplantAccount::IsPro();
+		$this->enableExport = \Bitrix\Voximplant\Limits::canExportCalls();
 		$this->gridOptions = new \Bitrix\Main\Grid\Options($this->gridId);
 
 		$this->userPermissions = Permissions::createWithCurrentUser();
@@ -411,7 +411,6 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 	protected function prepareData()
 	{
 		$this->arResult["ENABLE_EXPORT"] = $this->enableExport;
-		$this->arResult["TRIAL_TEXT"] = CVoxImplantMain::GetTrialText();
 
 		$this->arResult["GRID_ID"] = $this->gridId;
 		$this->arResult["FILTER_ID"] = $this->filterId;
@@ -616,7 +615,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			array("id" => "CALL_FAILED_REASON", "name" => GetMessage("TELEPHONY_HEADER_STATUS"), "default" => true, "editable" => false),
 			array("id" => "COST_TEXT", "name" => GetMessage("TELEPHONY_HEADER_COST"), "default" => true, "editable" => false),
 			array("id" => "TRANSCRIPT_COST_TEXT", "name" => GetMessage("TELEPHONY_HEADER_TRANSCRIPT_COST"), "default" => false, "editable" => false),
-			array("id" => "CALL_VOTE", "name" => GetMessage("TELEPHONY_HEADER_VOTE"), "default" => CVoxImplantAccount::IsPro(), "editable" => false),
+			array("id" => "CALL_VOTE", "name" => GetMessage("TELEPHONY_HEADER_VOTE"), "default" => Voximplant\Limits::canVote(), "editable" => false),
 			array("id" => "RECORD", "name" => GetMessage("TELEPHONY_HEADER_RECORD"), "default" => false, "editable" => false),
 			array("id" => "LOG", "name" => GetMessage("TELEPHONY_HEADER_LOG"), "default" => false, "editable" => false),
 			array("id" => "CRM", "name" => GetMessage("TELEPHONY_HEADER_CRM"), "default" => true, "editable" => false),

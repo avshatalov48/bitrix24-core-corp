@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Integration;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\UserField\Renderer;
 use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
@@ -121,23 +122,14 @@ class IBlockElementProperty
 				? $property['USER_TYPE_SETTINGS'] : static::$listDefaultEntity,
 			'USER_TYPE' => $userType
 		);
-		ob_start();
-		$APPLICATION->includeComponent(
-			'bitrix:system.field.edit',
-			'crm',
-			array(
-				'arUserField' => $userField,
-				'bVarsFromForm' => false,
-				'form_name' => $controlSettings['FORM_NAME'],
-				'createNewEntity' => $createNewEntity
-			),
-			false,
-			array('HIDE_ICONS' => 'Y')
-		);
-		$html = ob_get_contents();
-		ob_end_clean();
+		$field = new Renderer($userField, [
+			'mode' => 'main.edit',
+			'bVarsFromForm' => false,
+			'form_name' => $controlSettings['FORM_NAME'],
+			'createNewEntity' => $createNewEntity,
+		]);
 
-		return  $html;
+		return $field->render();
 	}
 
 	/**
@@ -265,21 +257,14 @@ class IBlockElementProperty
 				? $property['USER_TYPE_SETTINGS'] : static::$listDefaultEntity,
 			'USER_TYPE' => $userType
 		);
-		ob_start();
-		$APPLICATION->includeComponent(
-			'bitrix:system.field.view',
-			'crm',
-			array(
-				'arUserField' => $userField,
-				'bVarsFromForm' => false,
-				'form_name' => $controlSettings['FORM_NAME']
-			),
-			false,
-			array('HIDE_ICONS' => 'Y')
-		);
-		$html = ob_get_contents();
-		ob_end_clean();
-		return  $html;
+
+		$field = new Renderer($userField, [
+			'mode' => 'main.view',
+			'bVarsFromForm' => false,
+			'form_name' => $controlSettings['FORM_NAME'],
+		]);
+
+		return $field->render();
 	}
 
 	/**
@@ -327,44 +312,41 @@ class IBlockElementProperty
 	{
 		$html = '';
 
-		if(!is_array($property['USER_TYPE_SETTINGS']))
-			$property['USER_TYPE_SETTINGS'] = static::$listDefaultEntity;
-		if(!array_key_exists('VISIBLE', $property['USER_TYPE_SETTINGS']))
-			$property['USER_TYPE_SETTINGS']['VISIBLE'] = 'Y';
+		if (!is_array($property['USER_TYPE_SETTINGS']))
+		{
+			$property['USER_TYPE_SETTINGS'] = array_merge(
+				\Bitrix\Crm\Integration\BizProc\FieldType\Crm::getDefaultFieldSettings(),
+				static::$listDefaultEntity
+			);
+		}
+		$property['USER_TYPE_SETTINGS']['VISIBLE'] = $property['USER_TYPE_SETTINGS']['VISIBLE'] ?? 'Y';
+
+		$callbackFunction = $controlSettings['CALLBACK_FUNCTION'] ?? 'console.log';
+		$settings = $property['USER_TYPE_SETTINGS'];
+		$settings['buttonLabel'] = Loc::getMessage('CRM_IBLOCK_PROPERTY_ENTITY_SAVE');
+		$settings['settingsName'] = $controlSettings["NAME"];
+		$settings['isAssociativeValues'] = true;
+		$settings['collectSettingsFunctionName'] = 'WFSFormOptionsECrm';
+		$htmlPieces = \Bitrix\Crm\Integration\BizProc\FieldType\Crm::renderSettingsHtmlPieces(
+			$callbackFunction,
+			$settings
+		);
 
 		$useBp = !empty($controlSettings['USE_BP']) && isset($controlSettings['CALLBACK_FUNCTION']);
 
 		$html .= '<tr>';
-		if(!$useBp)
+		if (!$useBp)
+		{
 			$html .= '<td>'.Loc::getMessage('CRM_IBLOCK_PROPERTY_SETTINGS_LABLE_ENTITY').'</td>';
+		}
 		$html .= '<td>';
-		$html .= '<input type="checkbox" name="'.$controlSettings["NAME"].'[LEAD]" value="Y" '
-			.($property['USER_TYPE_SETTINGS']['LEAD']=="Y"?'checked="checked"':'').' id="WFSFormOptionsXL">'
-			.Loc::getMessage('CRM_IBLOCK_PROPERTY_ENTITY_LEAD').'<br />';
-		$html .= '<input type="checkbox" name="'.$controlSettings["NAME"].'[CONTACT]" value="Y" '
-			.($property['USER_TYPE_SETTINGS']['CONTACT']=="Y"?'checked="checked"':'').' id="WFSFormOptionsXC">'
-			.Loc::getMessage('CRM_IBLOCK_PROPERTY_ENTITY_CONTACT').'<br />';
-		$html .= '<input type="checkbox" name="'.$controlSettings["NAME"].'[COMPANY]" value="Y" '
-			.($property['USER_TYPE_SETTINGS']['COMPANY']=="Y"?'checked="checked"':'').' id="WFSFormOptionsXCO">'
-			.Loc::getMessage('CRM_IBLOCK_PROPERTY_ENTITY_COMPANY').'<br />';
-		$html .= '<input type="checkbox" name="'.$controlSettings["NAME"].'[DEAL]" value="Y" '
-			.($property['USER_TYPE_SETTINGS']['DEAL']=="Y"?'checked="checked"':'').' id="WFSFormOptionsXD">'
-			.Loc::getMessage('CRM_IBLOCK_PROPERTY_ENTITY_DEAL').'<br />';
+		$html .= $htmlPieces['inputs'];
 		$html .= '</td></tr>';
 
 		if($useBp)
 		{
-			$html .= '<input type="button" onclick="'.$controlSettings['CALLBACK_FUNCTION']
-				.'(WFSFormOptionsECrm())" value="'.Loc::getMessage('CRM_IBLOCK_PROPERTY_ENTITY_SAVE').'" />';
-			$html .= '<script>
-					function WFSFormOptionsECrm() {
-						var a = {};
-						a["LEAD"] = BX("WFSFormOptionsXL").checked ? "Y" : "N";
-						a["CONTACT"] = BX("WFSFormOptionsXC").checked ? "Y" : "N";
-						a["COMPANY"] = BX("WFSFormOptionsXCO").checked ? "Y" : "N";
-						a["DEAL"] = BX("WFSFormOptionsXD").checked ? "Y" : "N";
-						return a;
-					}</script>';
+			$html .= $htmlPieces['button'];
+			$html .= "<script>\n" . $htmlPieces['collectSettingsFunction'] . "\n</script>";
 		}
 		else
 		{
@@ -520,7 +502,7 @@ class IBlockElementProperty
 			{
 				if($usePrefix)
 				{
-					$entityPrefix = array_search($entityType, self::$listDefaultEntityKey);
+					$entityPrefix = \CCrmOwnerTypeAbbr::ResolveByTypeName($entityType);
 					foreach($listEntityId as $entityId)
 					{
 						$filter[$controlSettings['VALUE']][] = $entityPrefix.'_'.$entityId;

@@ -14,6 +14,19 @@ use Bitrix\Sale\Internals\PaymentTable;
 
 /**
  * ORM class represents current payment stage
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_OrderPaymentStage_Query query()
+ * @method static EO_OrderPaymentStage_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_OrderPaymentStage_Result getById($id)
+ * @method static EO_OrderPaymentStage_Result getList(array $parameters = array())
+ * @method static EO_OrderPaymentStage_Entity getEntity()
+ * @method static \Bitrix\Crm\Binding\EO_OrderPaymentStage createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Binding\EO_OrderPaymentStage_Collection createCollection()
+ * @method static \Bitrix\Crm\Binding\EO_OrderPaymentStage wakeUpObject($row)
+ * @method static \Bitrix\Crm\Binding\EO_OrderPaymentStage_Collection wakeUpCollection($rows)
  */
 class OrderPaymentStageTable extends ORM\Data\DataManager
 {

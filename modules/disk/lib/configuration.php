@@ -415,18 +415,24 @@ final class UserConfiguration
 		$defaultService = $userSettings['default'] ?? '';
 		$primaryService = $userSettings['primary'] ?? '';
 
-		if ($primaryService === OnlyOfficeHandler::getCode() || empty($primaryService))
+		if ($primaryService === OnlyOfficeHandler::getCode() && OnlyOfficeHandler::isEnabled())
 		{
-			if (Configuration::isEnabledDocuments())
-			{
-				$defaultHandlerForView = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
-				if ($defaultHandlerForView instanceof OnlyOfficeHandler)
-				{
-					$service = OnlyOfficeHandler::getCode();
+			$service = OnlyOfficeHandler::getCode();
 
-					return $service;
-				}
+			return $service;
+		}
+		if (!$primaryService && OnlyOfficeHandler::isEnabled())
+		{
+			$defaultHandlerForView = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
+			if ($defaultHandlerForView instanceof OnlyOfficeHandler)
+			{
+				$service = OnlyOfficeHandler::getCode();
+
+				return $service;
 			}
+		}
+		if ($primaryService === OnlyOfficeHandler::getCode() && !OnlyOfficeHandler::isEnabled())
+		{
 			$primaryService = '';
 		}
 

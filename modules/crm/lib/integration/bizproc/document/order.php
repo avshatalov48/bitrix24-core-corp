@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace Bitrix\Crm\Integration\BizProc\Document;
 
@@ -11,14 +11,13 @@ use Bitrix\Crm\Order\Permissions;
 use Bitrix\Crm;
 
 if (!Main\Loader::includeModule('bizproc'))
-	return;
-
-Loc::loadMessages(__FILE__);
-
-class Order extends \CCrmDocument
-	implements \IBPWorkflowDocument
 {
-	static public function GetDocumentFields($documentType)
+	return;
+}
+
+class Order extends \CCrmDocument implements \IBPWorkflowDocument
+{
+	public static function GetDocumentFields($documentType)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentType.'_0');
 		if (empty($arDocumentID))
@@ -243,7 +242,7 @@ class Order extends \CCrmDocument
 		}
 	}
 
-	static public function GetDocument($documentId)
+	public static function GetDocument($documentId)
 	{
 		$arDocumentID = static::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
@@ -319,7 +318,7 @@ class Order extends \CCrmDocument
 		}
 	}
 
-	static public function GetDocumentType($documentId)
+	public static function GetDocumentType($documentId)
 	{
 		$arDocumentID = static::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
@@ -343,7 +342,7 @@ class Order extends \CCrmDocument
 		throw new NotImplementedException('Currently unavailable.');
 	}
 
-	static public function UpdateDocument($documentId, $arFields)
+	public static function updateDocument($documentId, $arFields, $modifiedById = null)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
@@ -369,16 +368,21 @@ class Order extends \CCrmDocument
 				}
 			}
 
+			if (isset($arFields['STATUS_ID']) && $modifiedById)
+			{
+				$arFields['EMP_STATUS_ID'] = $modifiedById;
+			}
+
 			$order->setFields($arFields);
 			$result = $order->save();
 		}
 	}
 
-	static public function DeleteDocument($documentId)
+	public static function DeleteDocument($documentId)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
-			throw new CBPArgumentNullException('documentId');
+			throw new \CBPArgumentNullException('documentId');
 
 		$result = Crm\Order\Order::delete($arDocumentID['ID']);
 		return $result->isSuccess();

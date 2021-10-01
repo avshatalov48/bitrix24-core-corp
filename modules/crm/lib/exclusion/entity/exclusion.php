@@ -18,6 +18,19 @@ use Bitrix\Crm\Communication;
  * Class ExclusionTable
  *
  * @package Bitrix\Crm\Exclusion\Entity
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Exclusion_Query query()
+ * @method static EO_Exclusion_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Exclusion_Result getById($id)
+ * @method static EO_Exclusion_Result getList(array $parameters = array())
+ * @method static EO_Exclusion_Entity getEntity()
+ * @method static \Bitrix\Crm\Exclusion\Entity\EO_Exclusion createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Exclusion\Entity\EO_Exclusion_Collection createCollection()
+ * @method static \Bitrix\Crm\Exclusion\Entity\EO_Exclusion wakeUpObject($row)
+ * @method static \Bitrix\Crm\Exclusion\Entity\EO_Exclusion_Collection wakeUpCollection($rows)
  */
 class ExclusionTable extends Entity\DataManager
 {

@@ -1,5 +1,5 @@
 .imconnector-field-container {
-	margin: 20px;
+    margin-bottom: 20px;
 }
 
 .imconnector-field-section {
@@ -690,4 +690,8 @@ select {
 
 .imconnector-hint-popup-contents {
 	padding: 10px;
+}
+
+#workarea-content {
+	background-color: transparent !important;
 }

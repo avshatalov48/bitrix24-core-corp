@@ -1,7 +1,9 @@
 import UserManager from "./user-manager";
 import SharingControlType from "./sharing-control-type";
+import OnlyOffice from "./onlyoffice";
 
 export type WaitingOptions = {
+	targetNode: HTMLElement,
 	documentSession: DocumentSession,
 	object: BaseObject,
 };
@@ -14,13 +16,15 @@ export type EditorOptions = {
 	userBoxNode: HTMLElement,
 	currentUser: User,
 	editorWrapper: HTMLElement,
-	panelButtonUniqIds: ButtonUniqIds
+	panelButtonUniqIds: ButtonUniqIds,
 	documentSession: DocumentSession,
 	linkToEdit: string,
+	linkToView: string,
 	object: BaseObject,
 	attachedObject: AttachedObject,
 	editorJson: any,
 	pullConfig: any,
+	publicChannel: string,
 	sharingControlType: ?SharingControlType,
 };
 
@@ -36,10 +40,17 @@ export type DocumentSession = {
 	hash: string,
 }
 
+export type DocumentSessionInfo = {
+	contentStatus: ?number,
+	wasFinallySaved: boolean,
+}
+
 export type BaseObject = {
 	id: number,
 	name: string,
+	publicChannel: ?string,
 	size: ?number,
+	updatedBy: ?number,
 }
 
 export type AttachedObject = {
@@ -59,6 +70,7 @@ export type UserManagerOptions = {
 export type CommandOptions = {
 	userManager: UserManager,
 	context: Context,
+	onlyOffice: OnlyOffice,
 }
 
 export type User = {
@@ -92,4 +104,17 @@ export type PingDocumentMessage = {
 
 export type ExitDocumentMessage = {
 	fromUserId: number,
+}
+
+export type DocumentSavedMessage = {
+	documentSession: DocumentSession,
+	documentSessionInfo: DocumentSessionInfo,
+	event: string,
+}
+
+export type ContentUpdatedMessage = {
+	object: BaseObject,
+	updatedBy: {
+		infoToken: string,
+	},
 }

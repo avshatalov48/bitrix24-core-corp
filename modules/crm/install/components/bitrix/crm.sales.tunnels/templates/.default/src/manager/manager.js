@@ -454,7 +454,7 @@ export default class Manager
 						})
 						.catch((response) => {
 							const link = event.data.link;
-							link.from.removeLink(link, true);
+							link.from.removeLink(link);
 							this.showErrorPopup(makeErrorMessageFromResponse(response));
 						});
 				}

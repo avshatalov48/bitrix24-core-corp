@@ -1559,10 +1559,12 @@ MobileTelephony = function()
 			get: () => BX.componentParameters.get('isAdmin', false)
 		},
 		server: {
-			get: () => BX.componentParameters.get('voximplantServer', '')
+			get: () => BX.componentParameters.get('voximplantServer', ''),
+			set: (value) => BX.componentParameters.set('voximplantServer', value)
 		},
 		login: {
-			get: () => BX.componentParameters.get('voximplantLogin', '')
+			get: () => BX.componentParameters.get('voximplantLogin', ''),
+			set: (value) => BX.componentParameters.set('voximplantLogin', value)
 		},
 		voximplantInstalled: {
 			get: () => BX.componentParameters.get('voximplantInstalled', false)
@@ -1571,7 +1573,8 @@ MobileTelephony = function()
 			get: () => BX.componentParameters.get('canPerformCalls', false)
 		},
 		lines: {
-			get: () => BX.componentParameters.get('lines',  {})
+			get: () => BX.componentParameters.get('lines',  {}),
+			set: (value) => BX.componentParameters.get('lines',  value)
 		},
 		defaultLineId: {
 			get: () => BX.componentParameters.get('defaultLineId', ''),

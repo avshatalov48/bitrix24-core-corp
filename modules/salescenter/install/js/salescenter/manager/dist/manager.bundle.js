@@ -748,6 +748,12 @@ this.BX = this.BX || {};
 	      Manager.openHelper(event, 'redirect=detail&code=13651476', 'crmstore_how_works');
 	    }
 	  }, {
+	    key: "openHowCrmFormsWorks",
+	    value: function openHowCrmFormsWorks(event, url) {
+	      url = url || 'redirect=detail&code=13774372';
+	      Manager.openHelper(event, url, 'crmforms_how_works');
+	    }
+	  }, {
 	    key: "openHowSmsWorks",
 	    value: function openHowSmsWorks(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=9680407', 'sms_connect');
@@ -791,6 +797,11 @@ this.BX = this.BX || {};
 	    key: "openHowToConfigBusinessRuCashBox",
 	    value: function openHowToConfigBusinessRuCashBox(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=12806492', 'cashbox_connect');
+	    }
+	  }, {
+	    key: "openHowToConfigRobokassaCashBox",
+	    value: function openHowToConfigRobokassaCashBox(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=12849128', 'cashbox_connect');
 	    }
 	  }, {
 	    key: "openHowToSetupCheckboxCashBoxAndKeys",

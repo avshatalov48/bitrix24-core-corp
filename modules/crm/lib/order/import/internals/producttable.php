@@ -8,6 +8,22 @@ use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class ProductTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Product_Query query()
+ * @method static EO_Product_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Product_Result getById($id)
+ * @method static EO_Product_Result getList(array $parameters = array())
+ * @method static EO_Product_Entity getEntity()
+ * @method static \Bitrix\Crm\Order\Import\Internals\EO_Product createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Order\Import\Internals\EO_Product_Collection createCollection()
+ * @method static \Bitrix\Crm\Order\Import\Internals\EO_Product wakeUpObject($row)
+ * @method static \Bitrix\Crm\Order\Import\Internals\EO_Product_Collection wakeUpCollection($rows)
+ */
 class ProductTable extends Entity\DataManager
 {
 	public static function getTableName()

@@ -1,16 +1,23 @@
 <?php
 
+use Bitrix\Crm\Activity;
+use Bitrix\Crm\Integration;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Integration;
-use Bitrix\Crm\Activity;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
-
-Loc::loadMessages(__FILE__);
-
-class CrmActivityPlannerComponent extends \CBitrixComponent
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
+	die();
+}
+
+\Bitrix\Main\Loader::includeModule('crm');
+
+class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
+{
+	/** @var array */
+	private $activityData;
+
 	protected function getActivityId()
 	{
 		return isset($this->arParams['ELEMENT_ID']) ? (int) $this->arParams['ELEMENT_ID'] : 0;
@@ -79,6 +86,40 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 	protected function getStorageElementIds()
 	{
 		return (isset($this->arParams['STORAGE_ELEMENT_IDS']) && is_array($this->arParams['STORAGE_ELEMENT_IDS'])) ? $this->arParams['STORAGE_ELEMENT_IDS'] : [];
+	}
+
+	protected function getActivityData(): array
+	{
+		if (!is_null($this->activityData))
+		{
+			return $this->activityData;
+		}
+
+		$activity = false;
+		if ($this->getActivityId() > 0)
+		{
+			$activity = CCrmActivity::GetByID($this->getActivityId(), false);
+		}
+		elseif ($this->getCalendarEventId() > 0)
+		{
+			$activity = CCrmActivity::GetByCalendarEventId($this->getCalendarEventId(), false);
+		}
+		$activity = is_array($activity) ? $activity : [];
+
+		$provider = $activity ? CCrmActivity::GetActivityProvider($activity) : null;
+
+		if (empty($activity['PROVIDER_ID']) && $provider)
+		{
+			$activity['PROVIDER_ID'] = $provider::getId();
+		}
+		if (empty($activity['PROVIDER_TYPE_ID']) && $provider)
+		{
+			$activity['PROVIDER_TYPE_ID'] = $provider::getTypeId($activity);
+		}
+
+		$this->activityData = $activity;
+
+		return $this->activityData;
 	}
 
 	protected function getActivityAdditionalData($activityId, &$activity, $provider = null)
@@ -250,6 +291,19 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			$APPLICATION->getCurPage().'?deal_id=#deal_id#&details'
 		);
 
+		$this->arResult['ENTITY_TYPE_ID'] = \CCrmOwnerType::Activity;
+
+		$activityTypeId = (int)($this->getActivityData()['TYPE_ID'] ?? 0);
+		$providerTypeId = (string)($this->getActivityData()['PROVIDER_ID'] ?? '');
+		$restriction = RestrictionManager::getActivityRestriction($activityTypeId, $providerTypeId);
+		if (!$restriction->hasPermission())
+		{
+			$this->arResult['RESTRICTIONS_SCRIPT'] = $restriction->prepareInfoHelperScript();
+			$this->initComponentTemplate('restrictions');
+
+			return;
+		}
+
 		$action = $this->getAction();
 
 		switch ($action)
@@ -417,6 +471,11 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 					$activity['PRIORITY'] = $fromActivity['PRIORITY'];
 					if (in_array($activity['TYPE_ID'], array(CCrmActivityType::Call, CCrmActivityType::Meeting, CCrmActivityType::Email)))
 					{
+						if ((int)$fromActivity['TYPE_ID'] === CCrmActivityType::Email)
+						{
+							Activity\Provider\Email::uncompressActivity($fromActivity);
+						}
+
 						$activity['DESCRIPTION'] = $fromActivity['DESCRIPTION'];
 						$activity['DESCRIPTION_TYPE'] = $fromActivity['DESCRIPTION_TYPE'];
 						$activity['DESCRIPTION_HTML'] = $this->makeDescriptionHtml(
@@ -520,6 +579,11 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			$completeResult = \CCrmActivity::Complete($activity['ID']);
 			if ($completeResult)
 				$activity['COMPLETED'] = 'Y';
+		}
+
+		if ((int)$activity['TYPE_ID'] === CCrmActivityType::Email)
+		{
+			Activity\Provider\Email::uncompressActivity($activity);
 		}
 
 		$activity['DESCRIPTION_HTML'] = $this->makeDescriptionHtml(

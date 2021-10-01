@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Recycling;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main;
 
 class QuoteBinder extends BaseBinder
 {
@@ -66,7 +66,13 @@ class QuoteBinder extends BaseBinder
 			foreach($entityIDs as $entityID)
 			{
 				$fields = array($fieldName => 0);
-				$entity->Update($entityID, $fields, false, false);
+				$entity->Update(
+					$entityID,
+					$fields,
+					false,
+					false,
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 		elseif($associatedEntityTypeID === \CCrmOwnerType::Contact)
@@ -81,7 +87,13 @@ class QuoteBinder extends BaseBinder
 				}
 
 				$fields = array('CONTACT_BINDINGS' => $bindings);
-				$entity->Update($entityID, $fields, false, false);
+				$entity->Update(
+					$entityID,
+					$fields,
+					false,
+					false,
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 		else
@@ -106,7 +118,13 @@ class QuoteBinder extends BaseBinder
 			foreach($entityIDs as $entityID)
 			{
 				$fields = array($fieldName => $associatedEntityID);
-				$entity->Update($entityID, $fields, false, false);
+				$entity->Update(
+					$entityID,
+					$fields,
+					false,
+					false,
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 		elseif($associatedEntityTypeID === \CCrmOwnerType::Contact)
@@ -121,7 +139,13 @@ class QuoteBinder extends BaseBinder
 				}
 
 				$fields = array('CONTACT_BINDINGS' => $bindings);
-				$entity->Update($entityID, $fields, false, false);
+				$entity->Update(
+					$entityID,
+					$fields,
+					false,
+					false,
+					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+				);
 			}
 		}
 		else

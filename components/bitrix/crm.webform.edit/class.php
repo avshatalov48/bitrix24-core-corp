@@ -923,6 +923,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			{
 				$formData['BUTTON_CAPTION'] = $this->crmWebForm->getButtonCaption();
 			}
+
 			$formData = $formData + ($this->arResult['FORM']['IS_CALLBACK_FORM']
 				? WebForm\Preset::getCallback('', '')
 				: WebForm\Preset::getById('crm_preset_cd')
@@ -954,7 +955,17 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		{
 			if (intval($id) === 0)
 			{
-				$landingUrl = (new \Bitrix\Main\Web\Uri($landingUrl))->addParams(['formCreated' => 'y'])->getLocator();
+				$landingUrlParams = ['formCreated' => 'y'];
+
+				if ($preset = $this->request->get('PRESET'))
+				{
+					if (preg_match('#^[A-Za-z0-9-_]+$#D', $preset))
+					{
+						$landingUrlParams['preset'] = $preset;
+					}
+				}
+
+				$landingUrl = (new \Bitrix\Main\Web\Uri($landingUrl))->addParams($landingUrlParams)->getLocator();
 			}
 
 			if ($this->request->get('IFRAME') === 'Y')

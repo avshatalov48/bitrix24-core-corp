@@ -60,6 +60,8 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		],
 	];
 
+	protected $documentProvidersMap;
+
 	protected function init()
 	{
 		$this->arParams['STATUSES'] = $this->getStatuses();
@@ -313,6 +315,12 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 				$this->arResult['ACTIVITY'][$entityTypeId] = [];
 			}
 			$this->arResult['ACTIVITY'][$entityTypeId][$row['ID']] = [];
+
+			if (!isset($this->arResult['DOCUMENT'][$entityTypeId]))
+			{
+				$this->arResult['DOCUMENT'][$entityTypeId] = [];
+			}
+			$this->arResult['DOCUMENT'][$entityTypeId][$row['ID']] = [];
 		}
 
 		$row['TREE_TYPE'] = $entityTypeId;
@@ -388,10 +396,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		{
 			return $activity;
 		}
-		unset(
-			$activity[\CCrmOwnerType::Invoice],
-			$activity[\CCrmOwnerType::Quote]
-		);
+		unset($activity[\CCrmOwnerType::Invoice]);
 
 		//make filter
 		$filter = [
@@ -419,6 +424,99 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		return $activity;
 	}
 
+	protected function getDocument($document): array
+	{
+		if (empty($document))
+		{
+			return $document;
+		}
+
+		//make filter
+		$filter = [
+			'LOGIC' => 'OR',
+		];
+		foreach ($document as $entityTypeId => $ids)
+		{
+			$provider = $this->getDocumentProviderName($entityTypeId);
+			if (!$provider)
+			{
+				continue;
+			}
+			$values = [];
+			foreach ($ids as $id => $t)
+			{
+				$values[] = $id;
+			}
+			if (!empty($values))
+			{
+				$filter[] = [
+					'=PROVIDER' => $provider,
+					'@VALUE' => $values,
+				];
+			}
+		}
+
+		if (count($filter) <= 1)
+		{
+			return $document;
+		}
+
+		$documentList = \Bitrix\DocumentGenerator\Model\DocumentTable::getList([
+			'select' => [
+				'ID',
+				'TITLE',
+				'PROVIDER',
+				'VALUE',
+				'CREATE_TIME',
+			],
+			'order' =>  [
+				'ID' => 'DESC',
+			],
+			'filter' => $filter,
+			'limit' => $this->blockSize,
+			'count_total' => true,
+		]);
+
+		while($row = $documentList->fetch())
+		{
+			$entityTypeId = $this->getEntityTypeIdByDocumentProviderName($row['PROVIDER']);
+			if ($entityTypeId)
+			{
+				$document[$entityTypeId][$row['VALUE']][$row['ID']] = $row;
+			}
+		}
+
+		return $document;
+	}
+
+	protected function getDocumentProvidersMap(): array
+	{
+		if ($this->documentProvidersMap === null)
+		{
+			$providers = \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap();
+			$this->documentProvidersMap = array_map('mb_strtolower', $providers);
+		}
+
+		return $this->documentProvidersMap;
+	}
+
+	/**
+	 * @param int $entityTypeId
+	 * @return string
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	protected function getDocumentProviderName(int $entityTypeId): ?string
+	{
+		return $this->getDocumentProvidersMap()[$entityTypeId] ?? null;
+	}
+
+	protected function getEntityTypeIdByDocumentProviderName(string $provider): ?int
+	{
+		$map = $this->getDocumentProvidersMap();
+
+		return array_search($provider, $map);
+	}
+
 	/**
 	 * Get children by filter
 	 *
@@ -430,7 +528,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 	{
 		//init params
 		$children = [];
-		
+
 		//request
 		$items = $this->loadElements($entityTypeId, $filter, $this->blockPage, $this->blockSize);
 		foreach ($items as $row)
@@ -599,6 +697,11 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 			'=ID' => $id,
 		], 1, 1);
 
+		foreach ($elements as $element)
+		{
+			$this->arResult['DOCUMENT'][$entityTypeId][$element['ID']] = [];
+		}
+
 		return $elements[0] ?? null;
 	}
 
@@ -753,6 +856,8 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		}
 
 		$this->arResult['ACTIVITY'] = [];
+		$this->arResult['DOCUMENT'] = [];
+
 		$currentItem = $this->loadElementById($entityTypeId, $entityId);
 		if (!$currentItem)
 		{
@@ -777,6 +882,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		$this->arResult['TREE'] = $this->hideDuplicate($this->arResult['TREE'], $rootItem['TIMESTAMP']);
 
 		$this->arResult['ACTIVITY'] = $this->getActivity($this->arResult['ACTIVITY']);
+		$this->arResult['DOCUMENT'] = $this->getDocument($this->arResult['DOCUMENT']);
 
 		$this->IncludeComponentTemplate();
 	}

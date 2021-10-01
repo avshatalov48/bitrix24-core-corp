@@ -99,24 +99,34 @@ class CDiskExternalLinkComponent extends DiskComponent
 			}
 		}
 
+		if ($this->externalLink->getObject()->isDeleted())
+		{
+			$this->showNotFoundPage();
+
+			return false;
+		}
+
 		return true;
 	}
 
 	protected function listActions()
 	{
-		return array(
+		return [
 			'goToEdit',
 			'download',
 			'downloadFolderArchive',
 			'downloadFileUnderFolder',
-			'showByGoogleViewer'  => array(
-				'method' => array('GET', 'POST'),
-			),
+			'showByGoogleViewer' => [
+				'method' => ['GET', 'POST'],
+			],
+			'showByOnlyOfficeViewer' => [
+				'method' => ['GET', 'POST'],
+			],
 			'showViewHtml',
 			'showFile',
 			'showPreview',
 			'showView',
-		);
+		];
 	}
 
 	protected function runProcessingExceptionComponent(Exception $e)
@@ -182,7 +192,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$isDocument = $this->isViewableDocument($this->externalLink->getFile()->getExtension());
 		if ($this->defaultHandlerForView instanceof OnlyOffice\OnlyOfficeHandler && $isDocument)
 		{
-			$documentSession = $this->generateDocumentSession();
+			$documentSession = $this->generateDocumentSession($this->externalLink->getFile());
 			if ($documentSession->canTransformUserToEdit(CurrentUser::get()))
 			{
 				$fieldsToCreateUser = [
@@ -241,7 +251,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 			$isDocument = $this->isViewableDocument($this->externalLink->getFile()->getExtension());
 			if ($this->defaultHandlerForView instanceof OnlyOffice\OnlyOfficeHandler && $passwordPassed && $isDocument)
 			{
-				$this->arResult['DOCUMENT_SESSION'] = $this->generateDocumentSession();
+				$this->arResult['DOCUMENT_SESSION'] = $this->generateDocumentSession($this->externalLink->getFile());
 
 				$linkToEdit = Driver::getInstance()->getUrlManager()->getUrlExternalLink(
 					[
@@ -292,15 +302,15 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$this->includeComponentTemplate($isFile? 'template' : 'folder');
 	}
 
-	private function generateDocumentSession(): ?OnlyOffice\Models\DocumentSession
+	private function generateDocumentSession(File $file): ?OnlyOffice\Models\DocumentSession
 	{
-		$documentSessionContext = OnlyOffice\Models\DocumentSessionContext::buildByExternalLink($this->externalLink);
+		$documentSessionContext = new OnlyOffice\Models\DocumentSessionContext($file->getId(), null, $this->externalLink->getId());
 		$sessionManager = new OnlyOffice\DocumentSessionManager();
 		$sessionManager
 			->setUserId($this->getUser()->getId() ?: OnlyOffice\Models\GuestUser::GUEST_USER_ID)
 			->setSessionType(OnlyOffice\Models\DocumentSession::TYPE_VIEW)
 			->setSessionContext($documentSessionContext)
-			->setFile($this->externalLink->getFile())
+			->setFile($file)
 		;
 
 		return $sessionManager->findOrCreateSession();
@@ -476,8 +486,19 @@ class CDiskExternalLinkComponent extends DiskComponent
 			}
 			else
 			{
+				$viewUrl = $urlManager->getUrlExternalLink(
+					[
+						'hash' => $this->externalLink->getHash(),
+						'action' => 'showByOnlyOfficeViewer',
+						'token' => $this->downloadToken,
+						'path' => $relativePath?: '/',
+						'fileId' => $object->getId(),
+					]
+				);
+
 				$attr = Ui\ExternalLinkAttributes::tryBuildByFileId($object->getFileId(), new Uri($exportData['OPEN_URL']))
 					->setTitle($object->getName())
+					->setDocumentViewUrl($viewUrl)
 					->setGroupBy($this->componentId)
 				;
 
@@ -836,6 +857,44 @@ class CDiskExternalLinkComponent extends DiskComponent
 		}
 
 		$this->end();
+	}
+
+	protected function processActionShowByOnlyOfficeViewer(string $path, int $fileId, string $token): void
+	{
+		$file = $this->getTargetFile($path, $fileId);
+		if (!$file)
+		{
+			$this->sendJsonErrorResponse();
+		}
+
+		$passwordPassed = !$this->arResult['PROTECTED_BY_PASSWORD'] || $this->arResult['VALID_PASSWORD'];
+		$isDocument = $this->isViewableDocument($file->getExtension());
+		if (!$passwordPassed || !$isDocument || !($this->defaultHandlerForView instanceof OnlyOffice\OnlyOfficeHandler))
+		{
+			$this->sendJsonErrorResponse();
+		}
+
+		$documentSession = $this->generateDocumentSession($file);
+		if (!$documentSession)
+		{
+			$this->sendJsonErrorResponse();
+		}
+
+		$downloadUrl = Driver::getInstance()->getUrlManager()->getUrlExternalLink(
+			[
+				'hash' => $this->externalLink->getHash(),
+				'action' => 'downloadFileUnderFolder',
+				'token' => $token,
+				'path' => $path,
+				'fileId' => $fileId,
+			]
+		);
+
+		$this->arResult['DOCUMENT_SESSION'] = $documentSession;
+		$this->arResult['LINK_TO_EDIT'] = '';
+		$this->arResult['LINK_TO_DOWNLOAD'] = $downloadUrl;
+
+		$this->includeComponentTemplate('onlyoffice');
 	}
 
 	protected function processActionShowByGoogleViewer($path, $fileId)

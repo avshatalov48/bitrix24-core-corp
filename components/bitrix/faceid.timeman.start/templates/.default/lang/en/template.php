@@ -28,6 +28,7 @@ $MESS["FACEID_TMS_START_INDEX_PROCESS"] = "Indexing employee profile photos";
 $MESS["FACEID_TMS_START_INDEX_PROCESS_NEW"] = "Indexing employee profile photos";
 $MESS["FACEID_TMS_START_WARN"] = "Bitrix24.Time app uses Bitrix24 working time management module and is available in the following plans:";
 $MESS["FACEID_TMS_START_WARN_2"] = "- <a href='T_URL'>Bitrix24 Professional</a>. You get the initial 1000 facial recognitions for free so you could test the service. Subsequent recognitions need to be purchased separately. ";
+$MESS["FACEID_TMS_START_WARN_NEW"] = " ";
 $MESS["FACEID_TMS_START_DONE"] = "You are all set!";
 $MESS["FACEID_TMS_START_SMILE"] = "Start your work day with a smile.";
 $MESS["FACEID_TMS_START_DO_5_NO_TIMEMAN"] = "Click \"Enable\" to start the facial recognition service and application.";

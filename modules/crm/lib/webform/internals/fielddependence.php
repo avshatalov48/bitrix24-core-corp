@@ -12,6 +12,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class FieldDependenceTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_FieldDependence_Query query()
+ * @method static EO_FieldDependence_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_FieldDependence_Result getById($id)
+ * @method static EO_FieldDependence_Result getList(array $parameters = array())
+ * @method static EO_FieldDependence_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FieldDependence createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FieldDependence_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FieldDependence wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FieldDependence_Collection wakeUpCollection($rows)
+ */
 class FieldDependenceTable extends Entity\DataManager
 {
 	const ACTION_ENUM_SHOW = 'show';

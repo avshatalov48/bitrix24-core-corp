@@ -1,11 +1,27 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
-<?
+<?php
+
+use Bitrix\Main\Loader;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
+<?php
 /** CMain $APPLICATION */
 global $APPLICATION;
 define('CRM_REPORT_UPDATE_14_5_2_MESSAGE', 'Y');
 $APPLICATION->ShowViewContent('REPORT_UPDATE_14_5_2_MESSAGE');
 ?>
-<? $APPLICATION->IncludeComponent(
+<?php
+
+$isReportsRestricted = false;
+if (
+	Loader::includeModule('bitrix24')
+	&& !Bitrix\Bitrix24\Feature::isFeatureEnabled('report')
+)
+{
+	$isReportsRestricted = true;
+}
+
+
+$APPLICATION->IncludeComponent(
 	'bitrix:report.list',
 	'',
 	array(
@@ -16,8 +32,14 @@ $APPLICATION->ShowViewContent('REPORT_UPDATE_14_5_2_MESSAGE');
 		'REPORT_HELPER_CLASS' => 'CCrmReportHelper'
 	),
 	false
-);?>
-<?$APPLICATION->IncludeComponent(
+);
+
+if ($isReportsRestricted)
+{
+	return;
+}
+
+$APPLICATION->IncludeComponent(
 	'bitrix:report.list',
 	'',
 	array(
@@ -28,8 +50,8 @@ $APPLICATION->ShowViewContent('REPORT_UPDATE_14_5_2_MESSAGE');
 		'REPORT_HELPER_CLASS' => 'CCrmProductReportHelper'
 	),
 	false
-);?>
-<? $APPLICATION->IncludeComponent(
+);
+$APPLICATION->IncludeComponent(
 	'bitrix:report.list',
 	'',
 	array(
@@ -40,8 +62,8 @@ $APPLICATION->ShowViewContent('REPORT_UPDATE_14_5_2_MESSAGE');
 		'REPORT_HELPER_CLASS' => 'CCrmLeadReportHelper'
 	),
 	false
-);?>
-<? $APPLICATION->IncludeComponent(
+);
+$APPLICATION->IncludeComponent(
 	'bitrix:report.list',
 	'',
 	array(
@@ -52,8 +74,8 @@ $APPLICATION->ShowViewContent('REPORT_UPDATE_14_5_2_MESSAGE');
 		'REPORT_HELPER_CLASS' => 'CCrmInvoiceReportHelper'
 	),
 	false
-);?>
-<? $APPLICATION->IncludeComponent(
+);
+$APPLICATION->IncludeComponent(
 	'bitrix:report.list',
 	'',
 	array(
@@ -64,4 +86,5 @@ $APPLICATION->ShowViewContent('REPORT_UPDATE_14_5_2_MESSAGE');
 		'REPORT_HELPER_CLASS' => 'CCrmActivityReportHelper'
 	),
 	false
-);?>
+);
+?>

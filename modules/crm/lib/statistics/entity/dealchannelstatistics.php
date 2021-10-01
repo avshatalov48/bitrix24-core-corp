@@ -4,6 +4,22 @@ namespace Bitrix\Crm\Statistics\Entity;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
+/**
+ * Class DealChannelStatisticsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DealChannelStatistics_Query query()
+ * @method static EO_DealChannelStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DealChannelStatistics_Result getById($id)
+ * @method static EO_DealChannelStatistics_Result getList(array $parameters = array())
+ * @method static EO_DealChannelStatistics_Entity getEntity()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealChannelStatistics createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealChannelStatistics_Collection createCollection()
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealChannelStatistics wakeUpObject($row)
+ * @method static \Bitrix\Crm\Statistics\Entity\EO_DealChannelStatistics_Collection wakeUpCollection($rows)
+ */
 class DealChannelStatisticsTable  extends Entity\DataManager
 {
 	/**

@@ -341,15 +341,30 @@ class Partner24 extends Network implements NetworkBot
 	}
 
 	/**
+	 * Compatibility alias to the onChatStart method.
+	 * @todo Remove it.
+	 * @deprecated
+	 */
+	public static function onWelcomeMessage($dialogId, $joinFields)
+	{
+		return self::onChatStart($dialogId, $joinFields);
+	}
+
+	/**
+	 * Event handler when bot join to chat.
+	 * @see \Bitrix\Im\Bot::onJoinChat
+	 *
 	 * @param string $dialogId
 	 * @param array $joinFields
 	 *
 	 * @return bool
 	 */
-	public static function onWelcomeMessage($dialogId, $joinFields)
+	public static function onChatStart($dialogId, $joinFields)
 	{
 		if (!Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		$messageFields = $joinFields;
 		$messageFields['DIALOG_ID'] = $dialogId;
@@ -643,8 +658,9 @@ class Partner24 extends Network implements NetworkBot
 
 		$botParams = [
 			'CLASS' => __CLASS__,
-			'METHOD_MESSAGE_ADD' => 'onMessageAdd',
-			'METHOD_WELCOME_MESSAGE' => 'onWelcomeMessage',
+			'METHOD_MESSAGE_ADD' => 'onMessageAdd', /** @see Partner24::onMessageAdd */
+			'METHOD_WELCOME_MESSAGE' => 'onChatStart',  /** @see Partner24::onChatStart */
+			'METHOD_BOT_DELETE' => 'onBotDelete',/** @see Partner24::onBotDelete */
 			'TEXT_CHAT_WELCOME_MESSAGE' => '',
 			'TEXT_PRIVATE_WELCOME_MESSAGE' => '',
 			'VERIFIED' => 'Y',

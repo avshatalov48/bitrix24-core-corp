@@ -7,6 +7,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class DuplicatePersonMatchCodeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DuplicatePersonMatchCode_Query query()
+ * @method static EO_DuplicatePersonMatchCode_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DuplicatePersonMatchCode_Result getById($id)
+ * @method static EO_DuplicatePersonMatchCode_Result getList(array $parameters = array())
+ * @method static EO_DuplicatePersonMatchCode_Entity getEntity()
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicatePersonMatchCode createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicatePersonMatchCode_Collection createCollection()
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicatePersonMatchCode wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicatePersonMatchCode_Collection wakeUpCollection($rows)
+ */
 class DuplicatePersonMatchCodeTable extends Entity\DataManager
 {
 	public static function getTableName()

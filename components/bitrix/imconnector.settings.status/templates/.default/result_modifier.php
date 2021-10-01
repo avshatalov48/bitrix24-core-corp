@@ -9,7 +9,7 @@ Connector::initIconCss();
 Loader::includeModule('imopenlines');
 
 $codeMap = Connector::getIconClassMap();
-$uri = new Uri(\Bitrix\ImOpenLines\Common::getPublicFolder() . 'connector/');
+$uri = new Uri(\Bitrix\ImOpenLines\Common::getContactCenterPublicFolder() . 'connector/');
 $uri->addParams(array('LINE' => $arParams['LINE']));
 $uri->addParams(array('LINE_SETTING' => 'Y'));
 

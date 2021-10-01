@@ -4,6 +4,22 @@ namespace Bitrix\Crm\Timeline\Entity;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
+/**
+ * Class TimelineTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Timeline_Query query()
+ * @method static EO_Timeline_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Timeline_Result getById($id)
+ * @method static EO_Timeline_Result getList(array $parameters = array())
+ * @method static EO_Timeline_Entity getEntity()
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_Timeline createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_Timeline_Collection createCollection()
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_Timeline wakeUpObject($row)
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_Timeline_Collection wakeUpCollection($rows)
+ */
 class TimelineTable  extends Entity\DataManager
 {
 	/**

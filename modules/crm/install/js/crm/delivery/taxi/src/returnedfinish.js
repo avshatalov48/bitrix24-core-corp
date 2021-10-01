@@ -15,7 +15,9 @@ export default Vue.extend({
 				{{localize.TIMELINE_DELIVERY_TAXI_DELIVERY_RETURNED_FINISH_TITLE}}
 			</template>
 			<template v-slot:status>
-				<span class="crm-entity-stream-content-event-process">{{localize.TIMELINE_DELIVERY_TAXI_DELIVERY_RETURN}}</span>
+				<span class="crm-entity-stream-content-event-process">
+					{{localize.TIMELINE_DELIVERY_TAXI_DELIVERY_RETURN}}
+				</span>
 			</template>			
 			<template v-slot:default>
 				<car-logo-info

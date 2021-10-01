@@ -9,10 +9,11 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Activity\CommunicationStatistics;
 
-Loc::loadMessages(__FILE__);
-
 class Email extends Activity\Provider\Base
 {
+
+	protected const TYPE_EMAIL = 'EMAIL';
+	protected const TYPE_EMAIL_COMPRESSED = 'EMAIL_COMPRESSED';
 
 	public static function getId()
 	{
@@ -21,7 +22,12 @@ class Email extends Activity\Provider\Base
 
 	public static function getTypeId(array $activity)
 	{
-		return 'EMAIL';
+		if (isset($activity['PROVIDER_TYPE_ID']) && $activity['PROVIDER_TYPE_ID'] === self::TYPE_EMAIL_COMPRESSED)
+		{
+			return self::TYPE_EMAIL_COMPRESSED;
+		}
+
+		return self::TYPE_EMAIL;
 	}
 
 	public static function getTypes()
@@ -30,7 +36,12 @@ class Email extends Activity\Provider\Base
 			[
 				'NAME' => 'E-mail',
 				'PROVIDER_ID' => static::getId(),
-				'PROVIDER_TYPE_ID' => 'EMAIL',
+				'PROVIDER_TYPE_ID' => self::TYPE_EMAIL,
+			],
+			[
+				'NAME' => 'E-mail (Compressed)',
+				'PROVIDER_ID' => static::getId(),
+				'PROVIDER_TYPE_ID' => self::TYPE_EMAIL_COMPRESSED,
 			],
 		];
 	}
@@ -271,4 +282,65 @@ class Email extends Activity\Provider\Base
 		return false;
 	}
 
+	public static function compressActivity(array &$activity): void
+	{
+		$activity['PROVIDER_ID'] = Crm\Activity\Provider\Email::getId();
+		$activity['PROVIDER_TYPE_ID'] = self::TYPE_EMAIL_COMPRESSED;
+
+		$bodyId = Crm\Activity\MailBodyTable::addByBody($activity['DESCRIPTION']);
+
+		$description = [
+			'DESCRIPTION' => $activity['DESCRIPTION'],
+			'DESCRIPTION_TYPE' => $activity['DESCRIPTION_TYPE']
+		];
+
+		\CCrmActivity::PrepareDescriptionFields(
+			$description,
+			[
+				'ENABLE_HTML' => false,
+				'ENABLE_BBCODE' => false,
+				'LIMIT' => 200,
+			]
+		);
+
+		$activity['DESCRIPTION'] = $description['DESCRIPTION_RAW'];
+		//$activity['DESCRIPTION_TYPE'] = \CCrmContentType::PlainText;
+		$activity['ASSOCIATED_ENTITY_ID'] = $bodyId;
+	}
+
+	public static function uncompressActivity(array &$activity)
+	{
+		if ($activity['PROVIDER_TYPE_ID'] === self::TYPE_EMAIL_COMPRESSED)
+		{
+			$body = Crm\Activity\MailBodyTable::getById($activity['ASSOCIATED_ENTITY_ID'])->fetch();
+
+			if ($body)
+			{
+				$activity['DESCRIPTION'] = $body['BODY'];
+			}
+		}
+	}
+
+	public static function deleteAssociatedEntity($entityId, array $activity, array $options = [])
+	{
+		if ($activity['PROVIDER_TYPE_ID'] === self::TYPE_EMAIL_COMPRESSED)
+		{
+			$row = Crm\ActivityTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'=TYPE_ID' => \CCrmActivityType::Email,
+					'=ASSOCIATED_ENTITY_ID' => $entityId,
+					'!=ID' => $activity['ID'],
+				],
+				'limit' => 1,
+			])->fetch();
+
+			if (!$row)
+			{
+				Activity\MailBodyTable::delete($entityId);
+			}
+		}
+
+		return parent::deleteAssociatedEntity($entityId, $activity, $options);
+	}
 }

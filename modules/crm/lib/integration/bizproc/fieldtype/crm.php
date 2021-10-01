@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Integration\BizProc\FieldType;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main,
 	Bitrix\Bizproc\FieldType,
 	Bitrix\Main\Page\Asset,
@@ -35,36 +36,94 @@ class Crm extends UserFieldBase
 
 		if (empty($entity))
 		{
-			$entity = array('LEAD' => 'Y', 'CONTACT' => 'Y', 'COMPANY' => 'Y', 'DEAL' => 'Y');
+			$entity = static::getDefaultFieldSettings();
 		}
-		$result = '<input type="checkbox" id="WFSFormOptionsXL" name="ENITTY[]" value="LEAD" '
-			.($entity['LEAD'] == 'Y'? 'checked="checked"': '').'> '
-			.\CCrmOwnerType::GetDescription(\CCrmOwnerType::Lead).' <br/>';
-		$result .= '<input type="checkbox" id="WFSFormOptionsXC"  name="ENITTY[]" value="CONTACT" '
-			.($entity['CONTACT'] == 'Y'? 'checked="checked"': '').'> '
-			.\CCrmOwnerType::GetDescription(\CCrmOwnerType::Contact).'<br/>';
-		$result .= '<input type="checkbox" id="WFSFormOptionsXCO" name="ENITTY[]" value="COMPANY" '
-			.($entity['COMPANY'] == 'Y'? 'checked="checked"': '').'> '
-			.\CCrmOwnerType::GetDescription(\CCrmOwnerType::Company).'<br/>';
-		$result .= '<input type="checkbox" id="WFSFormOptionsXD"  name="ENITTY[]" value="DEAL" '
-			.($entity['DEAL'] == 'Y'? 'checked="checked"': '').'> '
-			.\CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal).'<br/>';
-		$result .= '<input type="button" onclick="'
-			.Main\Text\HtmlFilter::encode($callbackFunctionName).'(WFSFormOptionsXCRM())" value="OK" />';
-		$result .= '<script>
-					function WFSFormOptionsXCRM()
-					{
-						var a = {};
-						a["LEAD"] = BX("WFSFormOptionsXL").checked ? "Y" : "N";
-						a["CONTACT"] = BX("WFSFormOptionsXC").checked ? "Y" : "N";
-						a["COMPANY"] = BX("WFSFormOptionsXCO").checked ? "Y" : "N";
-						a["DEAL"] = BX("WFSFormOptionsXD").checked ? "Y" : "N";
-						return a;
-					}
-				</script>';
+		$htmlPieces = static::renderSettingsHtmlPieces($callbackFunctionName, $entity);
+		$result = $htmlPieces['inputs'];
+		$result .= $htmlPieces['button'];
+		$result .= "<script>\n" . $htmlPieces['collectSettingsFunction'] . "\n</script>";
 		$result .= '<!--__modifyOptionsPromt:'.Loc::getMessage('CRM_BP_FIELDTYPE_UF_CRM').'-->';
 
 		return $result;
+	}
+
+	/**
+	 * Return default settings.
+	 *
+	 * @return array|string[]
+	 */
+	public static function getDefaultFieldSettings(): array
+	{
+		return [
+			'LEAD' => 'Y',
+			'CONTACT' => 'Y',
+			'COMPANY' => 'Y',
+			'DEAL' => 'Y'
+		];
+	}
+
+	/**
+	 * Return html pieces to render settings.
+	 *
+	 * @param string $callbackFunctionName
+	 * @param array $settings
+	 * @return array
+	 * @throws Main\InvalidOperationException
+	 */
+	public static function renderSettingsHtmlPieces(
+		string $callbackFunctionName,
+		array $settings = []
+	): array
+	{
+		$idsPrefix = $settings['idsPrefix'] ?? 'WFSFormOptionsX';
+		$buttonLabel = $settings['buttonLabel'] ?? 'OK';
+		$settingsName = $settings['settingsName'] ?? 'ENTITY';
+		$isAssociativeValues = $settings['isAssociativeValues'] ?? false;
+		$collectSettingsFunctionName = $settings['collectSettingsFunctionName'] ?? $idsPrefix . 'CRM';
+		$inputs = '';
+		$collectSettingsFunction = "function " . $collectSettingsFunctionName . "()\n{\n\tvar a = {};";
+		$entityTypeIds = [
+			\CCrmOwnerType::Lead,
+			\CCrmOwnerType::Contact,
+			\CCrmOwnerType::Company,
+			\CCrmOwnerType::Deal,
+		];
+		$dynamicTypes = Container::getInstance()->getDynamicTypesMap()->load([
+			'isLoadCategories' => false,
+			'isLoadStages' => false,
+		])->getTypes();
+
+		foreach ($dynamicTypes as $type)
+		{
+			if ($type->getIsUseInUserfieldEnabled())
+			{
+				$entityTypeIds[] = $type->getEntityTypeId();
+			}
+		}
+		foreach ($entityTypeIds as $entityTypeId)
+		{
+			$entityName = \CCrmOwnerType::ResolveName($entityTypeId);
+			$idAttribute = $idsPrefix . \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+			$isChecked = (isset($settings[$entityName]) && $settings[$entityName] === 'Y');
+			$name = $isAssociativeValues ? $settingsName . '[' . $entityName . ']' : $settingsName . '[]';
+			$value = $isAssociativeValues ? 'Y' : $entityName;
+			$inputs .= '<input type="checkbox" id="' . htmlspecialcharsbx($idAttribute) . '" name="' . $name . '" value="' . $value . '" '
+				. ($isChecked ? 'checked="checked"': '') . '> '
+				. htmlspecialcharsbx(\CCrmOwnerType::GetDescription($entityTypeId)) . '<br/>';
+			$collectSettingsFunction .= "\n\ta[\"" . $entityName . "\"] = document.getElementById(\"" . $idAttribute . "\").checked ? \"Y\" : \"N\";";
+		}
+
+		$button = '<input type="button" onclick="'
+			.htmlspecialcharsbx($callbackFunctionName).'(' . $collectSettingsFunctionName . '())" value="' . htmlspecialcharsbx($buttonLabel) . '" />';
+
+		$collectSettingsFunction .= "\n\treturn a;\n}";
+
+		return [
+			'inputs' => $inputs,
+			'button' => $button,
+			'collectSettingsFunctionName' => $collectSettingsFunctionName,
+			'collectSettingsFunction' => $collectSettingsFunction,
+		];
 	}
 
 	/**

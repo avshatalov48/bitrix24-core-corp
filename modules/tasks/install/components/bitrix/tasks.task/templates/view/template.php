@@ -1,7 +1,7 @@
 <?
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UI;
+use Bitrix\Main\UI;use Bitrix\Tasks\Util;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 /** @var array $arParams */
@@ -25,9 +25,7 @@ $templateData = $arResult["TEMPLATE_DATA"];
 
 if (isset($templateData["ERROR"]))
 {
-	$APPLICATION->IncludeComponent("bitrix:tasks.error", "", [
-
-	]);
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "", []);
 	return;
 }
 
@@ -38,8 +36,9 @@ $diskUfCode = \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode();
 $mailUfCode = \Bitrix\Tasks\Integration\Mail\UserField::getMainSysUFCode();
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
 $taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
+$taskRecurrentRestrict = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
 
-if ($taskLimitExceeded)
+if ($taskLimitExceeded || $taskRecurrentRestrict)
 {
 	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 }
@@ -94,6 +93,29 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 			],
 		]
 	);
+}
+
+if (
+	$arResult['DATA']['IS_NETWORK_TASK']
+	&& (
+		Util::getOption('test_tasks_network_disabled') === 'Y'
+		|| time() > mktime(0, 0, 0, 9, 1, 2021)
+	)
+)
+{
+	$message = str_replace(
+		['#LINK_START#', '#LINK_END#'],
+		[
+			'<span class="ui-link ui-link-primary ui-link-dotted" onclick="top.BX.Helper.show(\'redirect=detail&code=14137758\');">',
+			'</span>',
+		],
+		Loc::getMessage('TASKS_TASK_NETWORK_DISABLING_WARNING')
+	);
+	?>
+	<div class="ui-alert ui-alert-warning ui-alert-icon-warning">
+		<span class="ui-alert-message"><?= $message ?></span>
+	</div>
+	<?php
 }
 ?>
 

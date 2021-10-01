@@ -5,6 +5,15 @@ use \Bitrix\Imopenlines\Limit;
 ?>
 
 <div class="imopenlines-form-settings-section">
+	<?if(!empty($arResult['ERROR'])):?>
+		<div class="ui-alert ui-alert-danger">
+			<span class="ui-alert-message">
+			<?foreach ($arResult['ERROR'] as $error):?>
+				<?= $error ?><br>
+			<?endforeach;?>
+			</span>
+		</div>
+	<?endif;?>
 	<div class="imopenlines-control-checkbox-container">
 		<label class="imopenlines-control-checkbox-label">
 			<input type="checkbox"
@@ -13,7 +22,7 @@ use \Bitrix\Imopenlines\Limit;
 				   name="CONFIG[VOTE_MESSAGE]"
 				   value="Y"
 				   data-limit="<?=!Limit::canUseVoteClient()?'Y':'N';?>"
-				   <? if ($arResult['CONFIG']['VOTE_MESSAGE'] == 'Y') { ?>checked<? } ?>>
+				   <?if($arResult['CONFIG']['VOTE_MESSAGE'] === 'Y') { ?>checked<? } ?>>
 			<?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_MESSAGE_NEW')?>
 			<?if(!Limit::canUseVoteClient()):?>
 				<span class="tariff-lock"></span>
@@ -28,14 +37,14 @@ use \Bitrix\Imopenlines\Limit;
 			<?endif;?>
 		</label>
 	</div>
-	<div id="imol_vote_message_block" <? if ($arResult['CONFIG']['VOTE_MESSAGE'] != 'Y') { ?>class="invisible"<? } ?>>
+	<div id="imol_vote_message_block" <?if($arResult['CONFIG']['VOTE_MESSAGE'] !== 'Y') { ?>class="invisible"<? } ?>>
 		<div class="imopenlines-control-checkbox-container">
 			<label class="imopenlines-control-checkbox-label">
 				<input type="checkbox"
 					   class="imopenlines-control-checkbox"
 					   name="CONFIG[VOTE_BEFORE_FINISH]"
 					   value="Y"
-					   <? if ($arResult['CONFIG']['VOTE_BEFORE_FINISH'] == 'Y') { ?>checked<? } ?>>
+					   <?if($arResult['CONFIG']['VOTE_BEFORE_FINISH'] === 'Y') { ?>checked<? } ?>>
 				<?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_BEFORE_FINISH')?>
 			</label>
 		</div>
@@ -46,7 +55,7 @@ use \Bitrix\Imopenlines\Limit;
 					   <?/*id="imol_vote_message"*/?>
 					   name="CONFIG[VOTE_CLOSING_DELAY]"
 					   value="Y"
-					   <? if ($arResult['CONFIG']['VOTE_CLOSING_DELAY'] == 'Y') { ?>checked<? } ?>>
+					   <?if($arResult['CONFIG']['VOTE_CLOSING_DELAY'] === 'Y') { ?>checked<? } ?>>
 				<?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_CLOSING_DELAY_NEW')?>
 			</label>
 		</div>
@@ -57,24 +66,24 @@ use \Bitrix\Imopenlines\Limit;
 					   class="imopenlines-control-checkbox"
 					   name="CONFIG[VOTE_ENABLE_TIME_LIMIT]"
 					   value="Y"
-					   <? if ($arResult['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] == 'Y') { ?>checked<? } ?>>
+					   <?if($arResult['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] === 'Y') { ?>checked<? } ?>>
 				<?=Loc::getMessage('IMOL_CONFIG_ENABLE_VOTE_TIME_LIMIT')?>
 			</label>
 		</div>
-		<div<? if ($arResult['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] != 'Y') { ?> class="invisible"<? } ?> id="imol_action_vote_time_limit">
+		<div<?if($arResult['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] !== 'Y') { ?> class="invisible"<? } ?> id="imol_action_vote_time_limit">
 			<div class="imopenlines-control-container imopenlines-control-select">
 				<div class="imopenlines-control-subtitle">
 					<?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT')?>
 				</div>
 				<div class="imopenlines-control-inner">
 					<select class="imopenlines-control-input" name="CONFIG[VOTE_TIME_LIMIT]">
-						<option value="86400" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '86400') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_1_DAY')?></option>
-						<option value="172800" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '172800') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_2_DAY')?></option>
-						<option value="259200" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '259200') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_3_DAY')?></option>
-						<option value="345600" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '345600') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_4_DAY')?></option>
-						<option value="432000" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '432000') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_5_DAY')?></option>
-						<option value="604800" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '604800') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_7_DAY')?></option>
-						<option value="2592000" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '2592000') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_30_DAY')?></option>
+						<option value="86400" <?if((int)$arResult['CONFIG']['VOTE_TIME_LIMIT'] === 86400) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_1_DAY')?></option>
+						<option value="172800" <?if((int)$arResult['CONFIG']['VOTE_TIME_LIMIT'] === 172800) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_2_DAY')?></option>
+						<option value="259200" <?if((int)$arResult['CONFIG']['VOTE_TIME_LIMIT'] === 259200) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_3_DAY')?></option>
+						<option value="345600" <?if((int)$arResult['CONFIG']['VOTE_TIME_LIMIT'] === 345600) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_4_DAY')?></option>
+						<option value="432000" <?if((int)$arResult['CONFIG']['VOTE_TIME_LIMIT'] === 432000) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_5_DAY')?></option>
+						<option value="604800" <?if((int)$arResult['CONFIG']['VOTE_TIME_LIMIT'] === 604800) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_7_DAY')?></option>
+						<option value="2592000" <?if((int)$arResult['CONFIG']['VOTE_TIME_LIMIT'] === 2592000) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_30_DAY')?></option>
 					</select>
 				</div>
 			</div>
@@ -129,7 +138,7 @@ use \Bitrix\Imopenlines\Limit;
 									   maxlength="100"
 									   type="text"
 									   name="CONFIG[VOTE_MESSAGE_1_LIKE]"
-									   value="<?=str_replace(array('[BR]', '[br]', '#BR#'), PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_1_LIKE']))?>">
+									   value="<?=str_replace(['[BR]', '[br]', '#BR#'], PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_1_LIKE']))?>">
 							</div>
 						</div>
 					</div>
@@ -154,7 +163,7 @@ use \Bitrix\Imopenlines\Limit;
 							</div>
 							<div class="imopenlines-control-inner">
 								<textarea class="imopenlines-control-input imopenlines-control-input-vote"
-										  name="CONFIG[VOTE_MESSAGE_2_TEXT]"><?=str_replace(array('[BR]', '[br]', '#BR#'), PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_2_TEXT']))?></textarea>
+										  name="CONFIG[VOTE_MESSAGE_2_TEXT]"><?=str_replace(['[BR]', '[br]', '#BR#'], PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_2_TEXT']))?></textarea>
 							</div>
 						</div>
 						<div class="imopenlines-control-container">
@@ -168,7 +177,7 @@ use \Bitrix\Imopenlines\Limit;
 								<input name="CONFIG[VOTE_MESSAGE_2_DISLIKE]"
 									   class="imopenlines-control-input"
 									   type="text"
-									   value="<?=str_replace(array('[BR]', '[br]', '#BR#'), PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_2_DISLIKE']))?>">
+									   value="<?=str_replace(['[BR]', '[br]', '#BR#'], PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_2_DISLIKE']))?>">
 							</div>
 						</div>
 						<div class="imopenlines-control-container">
@@ -182,7 +191,7 @@ use \Bitrix\Imopenlines\Limit;
 								<input name="CONFIG[VOTE_MESSAGE_2_LIKE]"
 									   class="imopenlines-control-input"
 									   type="text"
-									   value="<?=str_replace(array('[BR]', '[br]', '#BR#'), PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_2_LIKE']))?>">
+									   value="<?=str_replace(['[BR]', '[br]', '#BR#'], PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_2_LIKE']))?>">
 							</div>
 						</div>
 					</div>

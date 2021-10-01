@@ -16,6 +16,22 @@ use Bitrix\Main\ORM\Fields\FloatField;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class LeadTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Lead_Query query()
+ * @method static EO_Lead_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Lead_Result getById($id)
+ * @method static EO_Lead_Result getList(array $parameters = array())
+ * @method static EO_Lead_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_Lead createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_Lead_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_Lead wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_Lead_Collection wakeUpCollection($rows)
+ */
 class LeadTable extends Main\ORM\Data\DataManager
 {
 	private static $STATUS_INIT = false;

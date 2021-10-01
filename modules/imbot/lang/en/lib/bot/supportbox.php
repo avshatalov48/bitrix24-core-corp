@@ -10,7 +10,11 @@ Your support level has changed. Important: if you submitted a request prior to t
 $MESS["SUPPORT_BOX_CLOSE_LINE"] = "The current conversation has been closed because Support Open Channel was disconnected.";
 $MESS["SUPPORT_BOX_NAME"] = "Support for Bitrix24 On-premise editions";
 $MESS["SUPPORT_BOX_POSITION"] = "Open Channel";
+$MESS["SUPPORT_BOX_QUEUE_NUMBER"] = "You are number #QUEUE_NUMBER# in the queue now";
+$MESS["SUPPORT_BOX_QUEUE_NUMBER_REFRESH"] = "Refresh";
 $MESS["SUPPORT_BOX_REFRESH_ERROR"] = "Error autoupdating Support Open Channel parameters: [B]#ERROR#[/B]
 [URL=https://helpdesk.bitrix24.com/open/]Connection setup instructions[/URL]";
+$MESS["SUPPORT_BOX_START_DIALOG_F"] = "Conversation started by #USER_FULL_NAME#";
+$MESS["SUPPORT_BOX_START_DIALOG_M"] = "Conversation started by #USER_FULL_NAME#";
 $MESS["SUPPORT_BOX_WELCOME_MESSAGE"] = "Hello #USER_FULL_NAME#! 
 Please activate Open Channel to get support.";

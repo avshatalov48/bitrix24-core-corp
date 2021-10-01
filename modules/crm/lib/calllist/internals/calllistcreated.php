@@ -7,6 +7,22 @@ use Bitrix\Main\DB;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Type;
 
+/**
+ * Class CallListCreatedTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CallListCreated_Query query()
+ * @method static EO_CallListCreated_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CallListCreated_Result getById($id)
+ * @method static EO_CallListCreated_Result getList(array $parameters = array())
+ * @method static EO_CallListCreated_Entity getEntity()
+ * @method static \Bitrix\Crm\CallList\Internals\EO_CallListCreated createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\CallList\Internals\EO_CallListCreated_Collection createCollection()
+ * @method static \Bitrix\Crm\CallList\Internals\EO_CallListCreated wakeUpObject($row)
+ * @method static \Bitrix\Crm\CallList\Internals\EO_CallListCreated_Collection wakeUpCollection($rows)
+ */
 class CallListCreatedTable extends Entity\DataManager
 {
 	/**

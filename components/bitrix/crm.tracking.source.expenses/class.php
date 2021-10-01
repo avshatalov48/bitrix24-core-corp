@@ -8,6 +8,7 @@ use Bitrix\Main\Grid\Options as GridOptions;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Intranet;
 
 use Bitrix\Crm\Tracking;
 
@@ -300,7 +301,23 @@ class CrmTrackingExpensesComponent extends \CBitrixComponent implements Controll
 
 	public function configureActions()
 	{
-		return [];
+		return [
+			'addExpenses' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				]
+			],
+			'remove' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				]
+			],
+			'removeList' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				]
+			],
+		];
 	}
 
 	protected function listKeysSignedParameters()

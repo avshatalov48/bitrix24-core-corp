@@ -1,18 +1,17 @@
 <?php
+
 namespace Bitrix\Crm\Conversion;
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
+
 use Bitrix\Crm;
 use Bitrix\Crm\EntityRequisite;
-use Bitrix\Crm\EntityPreset;
-use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\Merger\CompanyMerger;
 use Bitrix\Crm\Merger\ContactMerger;
-use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Requisite\AddressRequisiteConverter;
+use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Requisite\RequisiteConvertException;
 use Bitrix\Crm\Settings\ConversionSettings;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
+use Bitrix\Main;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -313,18 +312,6 @@ class LeadConverter extends EntityConverter
 
 			if($entityID > 0)
 			{
-				$entityUpdateOptions = array();
-				if(isset($this->contextData['MODE']))
-				{
-					$entityUpdateOptions['MODE'] = $this->contextData['MODE'];
-				}
-				if(isset($this->contextData['USER_ID']))
-				{
-					$entityUpdateOptions['USER_ID'] = $this->contextData['USER_ID'];
-				}
-				//Disable required field check to ensure updated data will be saved.
-				$entityUpdateOptions['DISABLE_USER_FIELD_CHECK'] = true;
-
 				$isNewEntity = self::isNewDestinationEntity($entityTypeName, $entityID, $this->contextData);
 
 				if($entityTypeID === \CCrmOwnerType::Company)
@@ -366,7 +353,7 @@ class LeadConverter extends EntityConverter
 								array('ENABLE_UPLOAD' => true, 'ENABLE_UPLOAD_CHECK' => false)
 							);
 							$fields['LEAD_ID'] = $this->entityID;
-							if($entity->Update($entityID, $fields, true, true, $entityUpdateOptions))
+							if($entity->Update($entityID, $fields, true, true, $this->getUpdateOptions()))
 							{
 								//region BizProcess
 								$arErrors = array();
@@ -429,7 +416,7 @@ class LeadConverter extends EntityConverter
 								array('ENABLE_UPLOAD' => true, 'ENABLE_UPLOAD_CHECK' => false)
 							);
 							$fields['LEAD_ID'] = $this->entityID;
-							if($entity->Update($entityID, $fields, true, true, $entityUpdateOptions))
+							if($entity->Update($entityID, $fields, true, true, $this->getUpdateOptions()))
 							{
 								//region BizProcess
 								$arErrors = array();
@@ -482,7 +469,7 @@ class LeadConverter extends EntityConverter
 				if(!isset($fields['LEAD_ID']) || $fields['LEAD_ID'] <= 0)
 				{
 					$fields = array('LEAD_ID' => $this->entityID);
-					$entity->Update($entityID, $fields, false, false, $entityUpdateOptions);
+					$entity->Update($entityID, $fields, false, false, $this->getUpdateOptions());
 				}
 
 				self::setDestinationEntityID(
@@ -552,19 +539,6 @@ class LeadConverter extends EntityConverter
 				);
 			}
 
-			//region Entity Creation Options
-			$entityCreationOptions = array();
-			if(isset($this->contextData['USER_ID']))
-			{
-				$entityCreationOptions['CURRENT_USER'] = $entityCreationOptions['USER_ID'] = $this->contextData['USER_ID'];
-			}
-
-			if(!$this->isUserFieldCheckEnabled())
-			{
-				$entityCreationOptions['DISABLE_USER_FIELD_CHECK'] = true;
-			}
-			//endregion
-
 			if (isset($this->contextData['RESPONSIBLE_ID']))
 			{
 				$fields['ASSIGNED_BY_ID'] = $this->contextData['RESPONSIBLE_ID'];
@@ -573,7 +547,7 @@ class LeadConverter extends EntityConverter
 			if($entityTypeID === \CCrmOwnerType::Company)
 			{
 				$entity = new \CCrmCompany(false);
-				$entityID = $entity->Add($fields, true, $entityCreationOptions);
+				$entityID = $entity->Add($fields, true, $this->getAddOptions());
 				if($entityID <= 0)
 				{
 					throw new EntityConversionException(
@@ -611,7 +585,7 @@ class LeadConverter extends EntityConverter
 				}
 
 				$entity = new \CCrmContact(false);
-				if(!$entity->CheckFields($fields, false, $entityCreationOptions))
+				if(!$entity->CheckFields($fields, false, $this->getAddOptions()))
 				{
 					throw new EntityConversionException(
 						\CCrmOwnerType::Lead,
@@ -622,7 +596,7 @@ class LeadConverter extends EntityConverter
 					);
 				}
 
-				$entityID = $entity->Add($fields, true, $entityCreationOptions);
+				$entityID = $entity->Add($fields, true, $this->getAddOptions());
 				if($entityID <= 0)
 				{
 					throw new EntityConversionException(
@@ -683,7 +657,7 @@ class LeadConverter extends EntityConverter
 				}
 
 				$entity = new \CCrmDeal(false);
-				$entityID = $entity->Add($fields, true, $entityCreationOptions);
+				$entityID = $entity->Add($fields, true, $this->getAddOptions());
 				if($entityID <= 0)
 				{
 					throw new EntityConversionException(
@@ -799,12 +773,16 @@ class LeadConverter extends EntityConverter
 				if($contactID > 0)
 				{
 					$fields['CONTACT_ID'] = $contactID;
+					$entityUpdateOptions['EXCLUDE_FROM_RELATION_REGISTRATION'][] =
+						new Crm\ItemIdentifier(\CCrmOwnerType::Contact, $contactID);
 				}
 
 				$companyID = self::getDestinationEntityID(\CCrmOwnerType::CompanyName, $this->resultData);
 				if($companyID > 0)
 				{
 					$fields['COMPANY_ID'] = $companyID;
+					$entityUpdateOptions['EXCLUDE_FROM_RELATION_REGISTRATION'][] =
+						new Crm\ItemIdentifier(\CCrmOwnerType::Company, $companyID);
 				}
 
 				if(!empty($fields))
@@ -907,36 +885,6 @@ class LeadConverter extends EntityConverter
 					}
 				}
 
-				//region Timeline
-				Crm\Timeline\LeadController::getInstance()->onConvert(
-					$this->entityID,
-					array('ENTITIES' => $this->resultData)
-				);
-				//endregion
-
-				//region Timeline & Channel Bindings
-				$entityCreationTime = new Main\Type\DateTime();
-				$entityCreationTime->add('T1S');
-
-				foreach($this->getSupportedDestinationTypeIDs() as $entityTypeID)
-				{
-					$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-
-					$entityID = self::getDestinationEntityID($entityTypeName, $this->resultData);
-					if($entityID <= 0)
-					{
-						continue;
-					}
-
-					$this->attachEntity($entityTypeID, $entityID);
-					if(self::isNewDestinationEntity($entityTypeName, $entityID, $this->resultData))
-					{
-						//HACK: We are trying to shift events of created entities
-						Crm\Timeline\CreationEntry::shiftEntity($entityTypeID, $entityID, $entityCreationTime);
-					}
-				}
-				//endregion
-
 				//region Call finalization phase common action from parent
 				$this->onFinalizationPhase();
 				//endregion
@@ -947,63 +895,7 @@ class LeadConverter extends EntityConverter
 
 		return false;
 	}
-	/**
-	 * Attach lead's activities, timeline objects and channel trackers to specified entity.
-	 * @param int $entityTypeID Entity Type ID.
-	 * @param int $entityID Entity ID.
-	 * return void
-	 * @throws Main\Db\SqlQueryException
-	 */
-	protected function attachEntity($entityTypeID, $entityID)
-	{
-		Crm\Timeline\Entity\TimelineBindingTable::attach(
-			\CCrmOwnerType::Lead,
-			$this->entityID,
-			$entityTypeID,
-			$entityID,
-			array(
-				Crm\Timeline\TimelineType::ACTIVITY,
-				Crm\Timeline\TimelineType::CREATION,
-				Crm\Timeline\TimelineType::MARK,
-				Crm\Timeline\TimelineType::COMMENT
-			)
-		);
 
-		\CCrmActivity::AttachBinding(\CCrmOwnerType::Lead, $this->entityID, $entityTypeID, $entityID);
-
-		if($entityTypeID === \CCrmOwnerType::Deal)
-		{
-			DealChannelBinding::attach(\CCrmOwnerType::Lead, $this->entityID, $entityID);
-		}
-	}
-	/**
-	 * Detach lead's activities, timeline objects and channel trackers from specified entity.
-	 * @param int $entityTypeID Entity Type ID.
-	 * @param int $entityID Entity ID.
-	 * return void
-	 */
-	protected function detachEntity($entityTypeID, $entityID)
-	{
-		Crm\Timeline\Entity\TimelineBindingTable::detach(
-			\CCrmOwnerType::Lead,
-			$this->entityID,
-			$entityTypeID,
-			$entityID,
-			array(
-				Crm\Timeline\TimelineType::ACTIVITY,
-				Crm\Timeline\TimelineType::CREATION,
-				Crm\Timeline\TimelineType::MARK,
-				Crm\Timeline\TimelineType::COMMENT
-			)
-		);
-
-		\CCrmActivity::DetachBinding(\CCrmOwnerType::Lead, $this->entityID, $entityTypeID, $entityID);
-
-		if($entityTypeID === \CCrmOwnerType::Deal)
-		{
-			DealChannelBinding::detach(\CCrmOwnerType::Lead, $this->entityID, $entityID);
-		}
-	}
 	/**
 	 * Remove all lead's bindings from specified child entity.
 	 * @param int $entityTypeID Entity Type ID.
@@ -1237,5 +1129,24 @@ class LeadConverter extends EntityConverter
 	protected function doInternalize(array $params)
 	{
 		$this->isReturnCustomer = isset($params['isReturnCustomer']) && $params['isReturnCustomer'] === 'Y';
+	}
+
+	protected function getUpdateOptions(): array
+	{
+		$options = parent::getUpdateOptions();
+
+		if(isset($this->contextData['MODE']))
+		{
+			$options['MODE'] = $this->contextData['MODE'];
+		}
+		if(isset($this->contextData['USER_ID']))
+		{
+			$options['USER_ID'] = $this->contextData['USER_ID'];
+		}
+
+		//Disable required field check to ensure updated data will be saved.
+		$options['DISABLE_USER_FIELD_CHECK'] = true;
+
+		return $options;
 	}
 }

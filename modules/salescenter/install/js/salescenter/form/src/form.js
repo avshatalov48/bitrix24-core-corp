@@ -215,12 +215,19 @@ export class Form
 			required = ' required="required"';
 		}
 
+		let attribute = '';
+		if (field.attribute && Type.isArray(field.attribute))
+		{
+			attribute = field.attribute.join(' ');
+		}
+
 		if(type === 'text')
 		{
 			result = `<input name="${field.name}"
 				class="${this.classes.get('controlInput')}"
 				value="${value}"${required}
-				type="text">`
+				type="text"
+				${attribute}>`
 			;
 		}
 		else if(type === 'boolean')

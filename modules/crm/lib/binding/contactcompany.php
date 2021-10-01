@@ -10,6 +10,22 @@ namespace Bitrix\Crm\Binding;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
+/**
+ * Class ContactCompanyTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ContactCompany_Query query()
+ * @method static EO_ContactCompany_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ContactCompany_Result getById($id)
+ * @method static EO_ContactCompany_Result getList(array $parameters = array())
+ * @method static EO_ContactCompany_Entity getEntity()
+ * @method static \Bitrix\Crm\Binding\EO_ContactCompany createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Binding\EO_ContactCompany_Collection createCollection()
+ * @method static \Bitrix\Crm\Binding\EO_ContactCompany wakeUpObject($row)
+ * @method static \Bitrix\Crm\Binding\EO_ContactCompany_Collection wakeUpCollection($rows)
+ */
 class ContactCompanyTable extends Entity\DataManager
 {
 	/**

@@ -12,6 +12,7 @@ $MESS['OL_COMPONENT_LE_OPTION_BOT'] = 'Подключить чат-бота';
 $MESS['OL_COMPONENT_LE_OPTION_BOT_ID'] = 'Чат-бот';
 $MESS['OL_COMPONENT_LE_OPTION_NONE'] = 'Ничего не делать';
 $MESS['OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_CREATE'] = 'Будет создан автоматически';
+$MESS['OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_NOT_SELECTED'] = 'Не выбрано';
 $MESS['OL_COMPONENT_LE_QUICK_ANSWERS_NO_ACCESS_CREATE'] = 'У вас нет прав на редактирование этой открытой линии';
 $MESS['OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_CREATE_ERROR'] = 'Ошибка при создании списка быстрых ответов. Пожалуйста, обратитесь в техподдержку';
 $MESS['OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_CREATE_ERROR_UNIQUE'] = 'К этой открытой линии уже привязан список быстрых ответов.';
@@ -44,4 +45,8 @@ $MESS['OL_COMPONENT_AUTOMATIC_MESSAGE_CONTINUE_TITLE'] = 'Продолжить �
 $MESS['OL_COMPONENT_AUTOMATIC_MESSAGE_NEW_TITLE'] = 'Новый диалог';
 
 $MESS['OL_COMPONENT_DISABLES_POPUP_HEAD_DEPARTMENT_EXCLUDED_QUEUE_TITLE'] = 'Больше не показывать';
+
+$MESS['OL_COMPONENT_ERROR_EMPTY_DATA_UPDATE'] = 'Нет данных для сохранения';
+$MESS['OL_COMPONENT_ERROR_UPDATE_SESSION_EXPIRED'] = 'Время для сохранения истекло. Попробуйте еще раз';
+$MESS['OL_COMPONENT_ERROR_NO_PERMISSION_FOR_UPDATE'] = 'Нет прав для сохранения настроек';
 ?>

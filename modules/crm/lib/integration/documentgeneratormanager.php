@@ -153,6 +153,8 @@ class DocumentGeneratorManager
 					DataProvider\Lead::class,
 					DataProvider\Quote::class,
 					DataProvider\Order::class,
+					DataProvider\Payment::class,
+					DataProvider\Shipment::class,
 				];
 				$providers = array_merge($providers, array_values(static::getDynamicProviders(true)));
 				foreach($providers as $provider)
@@ -272,6 +274,8 @@ class DocumentGeneratorManager
 			\CCrmOwnerType::Invoice => DataProvider\Invoice::class,
 			\CCrmOwnerType::Quote => DataProvider\Quote::class,
 			\CCrmOwnerType::Order => DataProvider\Order::class,
+			\CCrmOwnerType::OrderPayment => DataProvider\Payment::class,
+			\CCrmOwnerType::OrderShipment => DataProvider\Shipment::class,
 
 			\CCrmOwnerType::SuspendedLead => DataProvider\Suspended::class,
 			\CCrmOwnerType::SuspendedDeal => DataProvider\Suspended::class,

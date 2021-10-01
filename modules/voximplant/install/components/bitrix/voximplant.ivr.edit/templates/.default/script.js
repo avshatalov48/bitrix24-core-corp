@@ -16,7 +16,7 @@
 		USERS: {},
 		IS_ENABLED: false,
 		MAX_DEPTH: 0,
-		MAX_GROUPS: 0
+		MAX_GROUPS: -1
 	};
 
 	var randomString = function(length)
@@ -95,7 +95,7 @@
 		ivrDefaults.USERS = params.USERS || {};
 		ivrDefaults.IS_ENABLED = params.IS_ENABLED == true;
 		ivrDefaults.MAX_DEPTH = params.MAX_DEPTH || 0;
-		ivrDefaults.MAX_GROUPS = params.MAX_GROUPS || 0;
+		ivrDefaults.MAX_GROUPS = BX.prop.getInteger(params, "MAX_GROUPS", -1);
 	};
 
 	BX.IvrEditor.prototype.init = function()
@@ -561,10 +561,17 @@
 										if(e.target.value == 'new')
 										{
 											var groupCount = e.target.options.length - 2;
-											if(ivrDefaults.MAX_GROUPS > 0 && groupCount >= ivrDefaults.MAX_GROUPS)
+											if(ivrDefaults.MAX_GROUPS > -1 && groupCount >= ivrDefaults.MAX_GROUPS)
 											{
 												e.target.value = e.target.options.item(2).value;
-												BX.UI.InfoHelper.show('limit_contact_center_telephony_groups');
+												if (ivrDefaults.MAX_GROUPS == 0)
+												{
+													BX.UI.InfoHelper.show('limit_contact_center_telephony_groups_zero');
+												}
+												else
+												{
+													BX.UI.InfoHelper.show('limit_contact_center_telephony_groups');
+												}
 											}
 											else
 											{
@@ -1167,7 +1174,7 @@
 			BX.create("option", {props: {value: "new"}, text: BX.message('VOX_IVR_HIDE_GROUP_CREATE')}),
 			BX.create("option", {props: {disabled: true}, html: '&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;'})
 		];
-		
+
 		if(!BX.type.isArray(groups))
 			return result;
 
@@ -1413,13 +1420,13 @@
 		if(player)
 			player.resize(200, 24);
 	};
-	
+
 	Uploader.prototype._onUploadButtonClick = function()
 	{
 		if(this.elements.fileInput)
 			this.elements.fileInput.click();
 	};
-	
+
 	Uploader.prototype._onFileSelected = function(e)
 	{
 		var self = this;
@@ -1481,7 +1488,7 @@
 			}
 		});
 	};
-	
+
 	var UserSelector = function(params)
 	{
 		this.id = 'ivr-user-selector-' + randomString(16);
@@ -1504,7 +1511,7 @@
 
 		this.init();
 	};
-	
+
 	UserSelector.create = function(params)
 	{
 		return new UserSelector(params);

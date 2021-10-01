@@ -266,18 +266,18 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 
 			foreach ($itemsList as $itemCode => &$item)
 			{
-				$itemParams = array(
+				$itemParams = [
 					'width' => 700,
 					'moduleId' => 'imopenlines',
 					'itemCode' => $itemCode,
-					'allowChangeHistory' => false
-				);
+					'allowChangeHistory' => true
+				];
 
-				$this->jsParams["menu"][] = array(
-					"element" => "menu" . $itemCode,
-					"bindElement" => "feed-add-post-form-link-text-" . $itemCode,
-					"items" => ($item["LIST"] ?: "")
-				);
+				$this->jsParams['menu'][] = [
+					'element' => 'menu' . $itemCode,
+					'bindElement' => 'feed-add-post-form-link-text-' . $itemCode,
+					'items' => ($item['LIST'] ?: '')
+				];
 
 				if(!$item['CONNECTION_INFO_HELPER_LIMIT'])
 				{

@@ -22,3 +22,27 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		}
 	});
 </script>
+
+<?php
+\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
+\Bitrix\Main\Localization\Loc::getMessage('');
+$APPLICATION->IncludeComponent(
+	'bitrix:main.ui.grid',
+	'',
+	[
+		'GRID_ID'   => 'LEAD_RESTRICTED',
+		'HEADERS'   => [
+			['id' => 'ID', 'name' => 'ID'],
+		],
+		'ROWS'      => [],
+		'STUB'      => [
+			'title' => \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_GRID_TITLE'),
+			'description' => \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_GRID_TEXT'),
+		],
+	],
+	$component,
+	[
+			'HIDE_ICONS' => 'Y',
+	]
+);

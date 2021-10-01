@@ -450,7 +450,6 @@ if (\Bitrix\Main\Loader::includeModule('report') && \Bitrix\Report\VisualConstru
 			),
 			"menu_item_id" => "menu_analytics",
 			"top_menu_id" => "top_menu_id_analytics",
-			"is_beta" => true
 		),
 		""
 	);
@@ -534,7 +533,6 @@ if (CModule::IncludeModule('im'))
 			"class" => "menu-conference",
 			"menu_item_id" => "menu_conference",
 			"top_menu_id" => "top_menu_id_conference",
-			"is_beta" => true
 		],
 		""
 	];

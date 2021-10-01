@@ -7,6 +7,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class PresetTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Preset_Query query()
+ * @method static EO_Preset_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Preset_Result getById($id)
+ * @method static EO_Preset_Result getList(array $parameters = array())
+ * @method static EO_Preset_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_Preset createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_Preset_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_Preset wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_Preset_Collection wakeUpCollection($rows)
+ */
 class PresetTable extends Entity\DataManager
 {
 	/**

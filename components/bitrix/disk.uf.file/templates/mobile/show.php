@@ -26,7 +26,7 @@ if (
 }
 
 if (
-	$arParams['USE_TOGGLE_VIEW'] == 'Y'
+	$arParams['USE_TOGGLE_VIEW']
 	&& (
 		!isset($arParams['CONTROLLER_HIT'])
 		|| !$arParams['CONTROLLER_HIT'] != 'Y'
@@ -42,7 +42,7 @@ if (!empty($arResult['IMAGES']))
 {
 	$imagesBlockClassesList = [ 'post-item-attached-img-wrap' ];
 	$imagesBlockClassesList[] = (!empty($arResult['FILES']) ? 'post-item-attached-img-wrap-files' : 'post-item-attached-img-wrap-no-files');
-	if ($arParams['USE_TOGGLE_VIEW'] === 'Y')
+	if ($arParams['USE_TOGGLE_VIEW'])
 	{
 		$filesBlockClassesList[] = 'post-item-attached-img-wrap-toggle';
 	}
@@ -127,7 +127,7 @@ if (!empty($arResult['IMAGES']))
 		}
 	}
 	?></div><?
-	if ($arParams['USE_TOGGLE_VIEW'] == 'Y')
+	if ($arParams['USE_TOGGLE_VIEW'])
 	{
 		?>
 		<div class="post-item-attached-img-control">
@@ -152,7 +152,7 @@ if (!empty($arResult['FILES']))
 		$filesBlockClassesList[] = 'post-item-attached-file-list-more';
 	}
 
-	if ($arParams['USE_TOGGLE_VIEW'] === 'Y')
+	if ($arParams['USE_TOGGLE_VIEW'])
 	{
 		$filesBlockClassesList[] = 'post-item-attached-file-list-toggle';
 	}
@@ -281,7 +281,7 @@ if(!empty($arResult['DELETED_FILES']))
 <?
 
 if (
-	$arParams['USE_TOGGLE_VIEW'] == 'Y'
+	$arParams['USE_TOGGLE_VIEW']
 	&& (
 		!isset($arParams['CONTROLLER_HIT'])
 		|| !$arParams['CONTROLLER_HIT'] != 'Y'

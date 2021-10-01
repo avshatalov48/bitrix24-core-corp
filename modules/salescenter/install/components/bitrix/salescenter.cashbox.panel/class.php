@@ -222,6 +222,12 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 			];
 		}
 
+		$paySystemCashboxList = $this->getPaySystemCashboxItems();
+		if ($paySystemCashboxList)
+		{
+			$cashboxDescriptions = array_merge($cashboxDescriptions, $paySystemCashboxList);
+		}
+
 		$restHandlers = Sale\Cashbox\Manager::getRestHandlersList();
 		foreach ($restHandlers as $restHandlerCode => $restHandlerConfig)
 		{
@@ -256,7 +262,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 		while($cashbox = $dbRes->fetch())
 		{
 			$code = $cashbox['HANDLER']::getCode();
-			if ($cashbox['KKM_ID'])
+			if ($cashbox['KKM_ID'] && !Sale\Cashbox\Manager::isPaySystemCashbox($cashbox['HANDLER']))
 			{
 				$code .= '_'.$cashbox['KKM_ID'];
 			}
@@ -305,7 +311,15 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 
 			if (isset($handlerCashboxes) && is_array($handlerCashboxes))
 			{
-				$cashboxDescription['data']['menuItems'] = $this->getCashboxMenu($cashboxDescription['data'], $handlerCashboxes);
+				if (Sale\Cashbox\Manager::isPaySystemCashbox($cashboxDescription['data']['handler']))
+				{
+					$cashboxDescription['data']['menuItems'] = $this->getPaySystemCashboxMenu($handlerCashboxes);
+				}
+				else
+				{
+					$cashboxDescription['data']['menuItems'] = $this->getCashboxMenu($cashboxDescription['data'], $handlerCashboxes);
+				}
+
 				foreach($handlerCashboxes as $handlerCashbox)
 				{
 					if($handlerCashbox['ACTIVE'] === 'Y')
@@ -319,6 +333,52 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 		}
 
 		return $cashboxDescriptions;
+	}
+
+	private function getPaySystemCashboxItems(): array
+	{
+		$result = [];
+		$paySystemCashbox = [];
+
+		$cashboxList = Sale\Cashbox\Manager::getListFromCache();
+		foreach ($cashboxList as $cashbox)
+		{
+			if ($cashbox['ACTIVE'] === 'N')
+			{
+				continue;
+			}
+
+			if ($cashbox['HANDLER'] === '\\' . Sale\Cashbox\CashboxRobokassa::class)
+			{
+				$paySystemCashbox = $cashbox;
+				break;
+			}
+		}
+
+		if ($paySystemCashbox)
+		{
+			$code = $paySystemCashbox['HANDLER']::getCode();
+
+			$result[] = [
+				'id' => $code,
+				'title' => Sale\Cashbox\CashboxRobokassa::getName(),
+				'image' => $this->getImagePath().$code.'.svg',
+				'itemSelectedColor' => '#FF5722',
+				'itemSelectedImage' => $this->getImagePath().$code.'_s.svg',
+				'itemSelected' => true,
+				'data' => [
+					'paySystem' => true,
+					'type' => 'cashbox',
+					'handler' => $paySystemCashbox['HANDLER'],
+					'connectPath' => $this->getCashboxEditUrl([
+						'handler' => $paySystemCashbox['HANDLER'],
+					]),
+					'showMenu' => false,
+				]
+			];
+		}
+
+		return $result;
 	}
 
 	/**
@@ -406,6 +466,26 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 				'current_date' => 'y',
 			])
 		];
+
+		return $result;
+	}
+
+	private function getPaySystemCashboxMenu(array $cashboxes): array
+	{
+		$result = [];
+
+		foreach($cashboxes as $cashbox)
+		{
+			$result[] = [
+				'NAME' => Loc::getMessage('SCP_CASHBOX_SETTINGS', [
+					'#CASHBOX_NAME#' => htmlspecialcharsbx($cashbox['NAME'])
+				]),
+				'LINK' => $this->getCashboxEditUrl([
+					'id' => $cashbox['ID'],
+					'handler' => $cashbox['HANDLER'],
+				]),
+			];
+		}
 
 		return $result;
 	}
@@ -530,7 +610,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 				$country = 'RU';
 			}
 
-			$cashboxesByCountry[$country][] = $cashbox['NAME'];
+			$cashboxesByCountry[$country][] = htmlspecialcharsbx($cashbox['NAME']);
 		}
 
 		return $cashboxesByCountry;

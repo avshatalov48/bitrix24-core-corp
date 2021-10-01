@@ -13,8 +13,6 @@ use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
-Loc::loadMessages(__FILE__);
-
 final class Sharing extends Internals\Model
 {
 	const ERROR_EMPTY_USER_ID               = 'DISK_SHARING_22002';
@@ -105,6 +103,39 @@ final class Sharing extends Internals\Model
 		}
 
 		return $successSharing[$data['TO_ENTITY']];
+	}
+
+	public static function hasRightToKnowAboutEntity(int $userId, string $sharingEntity): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return true;
+		}
+
+		[$entityType, $entityId] = self::parseEntityValue($sharingEntity);
+		if ($entityType === self::TYPE_TO_USER)
+		{
+			return \CSocNetUser::canProfileView($userId, $entityId);
+		}
+		elseif ($entityType === self::TYPE_TO_GROUP)
+		{
+			$result = \CSocNetGroup::getList(
+				[],
+				[
+					'ID' => $entityId,
+					'CHECK_PERMISSIONS' => $userId,
+				],
+				false,
+				false,
+				['ID']
+			);
+
+			$result = $result ? $result->fetch() : [];
+
+			return $result && !empty($result['ID']);
+		}
+
+		return true;
 	}
 
 	/**

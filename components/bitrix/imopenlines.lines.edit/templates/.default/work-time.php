@@ -1,34 +1,20 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Imopenlines\Limit;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+use Bitrix\Imopenlines\Limit;
+use Bitrix\Main\Localization\Loc;
 ?>
 
 <div class="imopenlines-form-settings-section">
-	<div class="imopenlines-form-settings-block">
-		<?/*<div class="imopenlines-form-settings-inner">
-			<div class="imopenlines-control-checkbox-container">
-				<label class="imopenlines-control-checkbox-label">
-					<input type="checkbox"
-						   name="CONFIG[AUTO_TIMEZONE]"
-						   value="Y"
-						   id="imol_user_checkbox"
-						   class="imopenlines-control-checkbox">
-					Определить часовой пояс автоматически
-				</label>
-			</div>
+	<?if(!empty($arResult['ERROR'])):?>
+		<div class="ui-alert ui-alert-danger">
+			<span class="ui-alert-message">
+			<?foreach ($arResult['ERROR'] as $error):?>
+				<?= $error ?><br>
+			<?endforeach;?>
+			</span>
 		</div>
-		<div class="imopenlines-form-settings-inner">
-			<div class="imopenlines-control-container">
-				<div class="imopenlines-control-subtitle">Выбор часового пояса</div>
-				<div class="imopenlines-control-inner">
-					<input type="text"
-						   name="CONFIG[TIMEZONE]"
-						   class="imopenlines-control-input"
-						   placeholder="Начните вводить ваше местоположение">
-				</div>
-			</div>
-		</div>*/?>
+	<?endif;?>
+	<div class="imopenlines-form-settings-block">
 		<div class="imopenlines-form-settings-title imopenlines-form-settings-title-other">
 			<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME')?>
 		</div>
@@ -42,7 +28,7 @@ use \Bitrix\Imopenlines\Limit;
 							   id="imol_worktime_checkbox"
 							   class="imopenlines-control-checkbox"
 							   data-limit="<?=!Limit::canWorkHourSettings()?'Y':'N';?>"
-							<? if ($arResult['CONFIG']['WORKTIME_ENABLE'] == 'Y') { ?>checked<? } ?>>
+							<? if ($arResult['CONFIG']['WORKTIME_ENABLE'] === 'Y') { ?>checked<? } ?>>
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_ENABLE')?>
 						<?if(!Limit::canWorkHourSettings()):?>
 							<span class="tariff-lock"></span>
@@ -58,20 +44,20 @@ use \Bitrix\Imopenlines\Limit;
 					</label>
 				</div>
 			</div>
-			<div id="imol_worktime_block" <? if ($arResult['CONFIG']['WORKTIME_ENABLE'] != 'Y') { ?>class="invisible" <? } ?>>
+			<div id="imol_worktime_block" <? if ($arResult['CONFIG']['WORKTIME_ENABLE'] !== 'Y') { ?>class="invisible" <? } ?>>
 				<div class="imopenlines-control-container imopenlines-control-select">
 					<div class="imopenlines-control-subtitle">
-						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_TIMEZONE")?>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_TIMEZONE')?>
 					</div>
 					<div class="imopenlines-control-inner">
 						<select name="CONFIG[WORKTIME_TIMEZONE]" class="imopenlines-control-input">
 							<?
-							if (is_array($arResult["TIME_ZONE_LIST"]) && !empty($arResult["TIME_ZONE_LIST"]))
+							if (is_array($arResult['TIME_ZONE_LIST']) && !empty($arResult['TIME_ZONE_LIST']))
 							{
-								foreach($arResult["TIME_ZONE_LIST"] as $tz => $tz_name)
+								foreach($arResult['TIME_ZONE_LIST'] as $tz => $tz_name)
 								{
 									?>
-									<option value="<?=htmlspecialcharsbx($tz)?>"<?=($arResult["CONFIG"]["WORKTIME_TIMEZONE"] == $tz? ' selected="selected"' : '')?>>
+									<option value="<?=htmlspecialcharsbx($tz)?>"<?=($arResult['CONFIG']['WORKTIME_TIMEZONE'] == $tz? ' selected="selected"' : '')?>>
 										<?=htmlspecialcharsbx($tz_name)?>
 									</option>
 									<?
@@ -82,20 +68,20 @@ use \Bitrix\Imopenlines\Limit;
 					</div>
 				</div>
 				<?
-				if (!empty($arResult["WORKTIME_LIST_FROM"]) && !empty($arResult["WORKTIME_LIST_TO"]))
+				if (!empty($arResult['WORKTIME_LIST_FROM']) && !empty($arResult['WORKTIME_LIST_TO']))
 				{
 					?>
 					<div class="imopenlines-control-container imopenlines-control-select">
 						<div class="imopenlines-control-subtitle">
-							<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_TIME")?>
+							<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_TIME')?>
 						</div>
 						<div class="imopenlines-control-inner">
 							<select name="CONFIG[WORKTIME_FROM]" class="imopenlines-control-input">
 								<?
-								foreach($arResult["WORKTIME_LIST_FROM"] as $key => $val)
+								foreach($arResult['WORKTIME_LIST_FROM'] as $key => $val)
 								{
 									?>
-									<option value="<?= $key?>" <?if ($arResult["CONFIG"]["WORKTIME_FROM"] == $key) echo ' selected="selected" ';?>>
+									<option value="<?= $key?>" <?if($arResult['CONFIG']['WORKTIME_FROM'] == $key) echo ' selected="selected" ';?>>
 										<?= $val?>
 									</option>
 									<?
@@ -104,10 +90,10 @@ use \Bitrix\Imopenlines\Limit;
 							</select>
 							<select name="CONFIG[WORKTIME_TO]" class="imopenlines-control-input">
 								<?
-								foreach($arResult["WORKTIME_LIST_TO"] as $key => $val)
+								foreach($arResult['WORKTIME_LIST_TO'] as $key => $val)
 								{
 									?>
-									<option value="<?= $key?>" <?if ($arResult["CONFIG"]["WORKTIME_TO"] == $key) echo ' selected="selected" ';?>>
+									<option value="<?= $key?>" <?if($arResult['CONFIG']['WORKTIME_TO'] == $key) echo ' selected="selected" ';?>>
 										<?= $val?>
 									</option>
 									<?
@@ -121,16 +107,16 @@ use \Bitrix\Imopenlines\Limit;
 				?>
 				<div class="imopenlines-control-container imopenlines-control-select">
 					<div class="imopenlines-control-subtitle">
-						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_DAYOFF")?>
-						<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_TIP"))?>"></span>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_DAYOFF')?>
+						<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_TIP'))?>"></span>
 					</div>
 					<div class="imopenlines-control-inner">
 						<select size="7" multiple="true" name="CONFIG[WORKTIME_DAYOFF][]" class="imopenlines-control-input  imopenlines-control-select-multiple">
 							<?
-							foreach($arResult["WEEK_DAYS"] as $day)
+							foreach($arResult['WEEK_DAYS'] as $day)
 							{
 								?>
-								<option value="<?=$day?>" <?=(is_array($arResult["CONFIG"]["WORKTIME_DAYOFF"]) && in_array($day, $arResult["CONFIG"]["WORKTIME_DAYOFF"]) ? ' selected="selected"' : '')?>>
+								<option value="<?=$day?>" <?=(is_array($arResult['CONFIG']['WORKTIME_DAYOFF']) && in_array($day, $arResult['CONFIG']['WORKTIME_DAYOFF']) ? ' selected="selected"' : '')?>>
 									<?= Loc::getMessage('IMOL_CONFIG_WEEK_'.$day)?>
 								</option>
 								<?
@@ -141,31 +127,31 @@ use \Bitrix\Imopenlines\Limit;
 				</div>
 				<div class="imopenlines-control-container">
 					<div class="imopenlines-control-subtitle">
-						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_HOLIDAYS")?>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_HOLIDAYS')?>
 					</div>
 					<div class="imopenlines-control-inner">
 						<input type="text"
 							   name="CONFIG[WORKTIME_HOLIDAYS]"
 							   class="imopenlines-control-input"
-							   value="<?=htmlspecialcharsbx($arResult["CONFIG"]["WORKTIME_HOLIDAYS"])?>">
+							   value="<?=htmlspecialcharsbx($arResult['CONFIG']['WORKTIME_HOLIDAYS'])?>">
 					</div>
 					<div class="imopenlines-control-subtitle imopenlines-control-subtitle-decs">
-						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_HOLIDAYS_EXAMPLE")?>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_HOLIDAYS_EXAMPLE')?>
 					</div>
 				</div>
 			</div>
-			<div id="imol_worktime_answer_block" <?php if ($arResult['CONFIG']['CHECK_AVAILABLE'] != 'Y' && $arResult['CONFIG']['WORKTIME_ENABLE'] != 'Y') { ?>class="invisible" <?php } ?>>
+			<div id="imol_worktime_answer_block" <?php if ($arResult['CONFIG']['CHECK_AVAILABLE'] !== 'Y' && $arResult['CONFIG']['WORKTIME_ENABLE'] !== 'Y') { ?>class="invisible" <?php } ?>>
 				<div class="imopenlines-control-container imopenlines-control-select">
 					<div class="imopenlines-control-subtitle">
-						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_RULE_NEW")?>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_RULE_NEW')?>
 					</div>
 					<div class="imopenlines-control-inner">
 						<select name="CONFIG[WORKTIME_DAYOFF_RULE]" id="imol_worktime_dayoff_rule" class="imopenlines-control-input">
 							<?
-							foreach($arResult["SELECT_RULES"] as $value => $name)
+							foreach($arResult['SELECT_RULES'] as $value => $name)
 							{
 								?>
-								<option value="<?=$value?>" <?if($arResult["CONFIG"]["WORKTIME_DAYOFF_RULE"] == $value) { ?>selected<? }?> <?if($value == 'disabled') { ?>disabled<? }?>>
+								<option value="<?=$value?>" <?if($arResult['CONFIG']['WORKTIME_DAYOFF_RULE'] == $value) { ?>selected<? }?> <?if($value === 'disabled') { ?>disabled<? }?>>
 									<?=$name?>
 								</option>
 								<?
@@ -176,13 +162,13 @@ use \Bitrix\Imopenlines\Limit;
 				</div>
 				<div class="imopenlines-control-container imopenlines-control-select invisible" id="imol_worktime_dayoff_rule_form">
 					<div class="imopenlines-control-subtitle">
-						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_FORM_ID")?>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_FORM_ID')?>
 					</div>
 					<div class="imopenlines-control-inner">
 						<select class="imopenlines-control-input" name="CONFIG[WORKTIME_DAYOFF_FORM_ID]"></select>
 					</div>
 					<div class="imopenlines-control-subtitle imopenlines-control-subtitle-decs">
-						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_FORM_ID_NOTICE")?>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_FORM_ID_NOTICE')?>
 					</div>
 				</div>
 				<div class="imopenlines-control-container imopenlines-control-block" id="imol_worktime_dayoff_rule_text">
@@ -195,44 +181,5 @@ use \Bitrix\Imopenlines\Limit;
 				</div>
 			</div>
 		</div>
-		<?/*<div class="imopenlines-form-settings-block">
-			<div class="imopenlines-form-settings-inner">
-				<div class="imopenlines-control-checkbox-container">
-					<label class="imopenlines-control-checkbox-label">
-						<input type="checkbox"
-							   name="CONFIG[NOT_WORKTIME]"
-							   value="Y"
-							   id="imol_user_checkbox"
-							   class="imopenlines-control-checkbox">
-						Обрабатывать обращение в нерабочее время
-					</label>
-				</div>
-			</div>
-			<div class="imopenlines-control-container imopenlines-control-select">
-				<div class="imopenlines-control-subtitle">Если клиент написал в нерабочее время</div>
-				<div class="imopenlines-control-inner">
-					<select name="CONFIG[WORKTIME_DAYOFF_RULE]" id="imol_worktime_dayoff_rule" class="imopenlines-control-input">
-						<?
-						foreach($arResult["SELECT_RULES"] as $value => $name)
-						{
-							?>
-							<option value="<?=$value?>" <?if($arResult["CONFIG"]["WORKTIME_DAYOFF_RULE"] == $value) { ?>selected<? }?> <?if($value == 'disabled') { ?>disabled<? }?>>
-								<?=$name?>
-							</option>
-							<?
-						}
-						?>
-					</select>
-				</div>
-			</div>
-			<div class="imopenlines-control-container imopenlines-control-block" id="imol_worktime_dayoff_rule_text">
-				<div class="imopenlines-control-subtitle">
-					<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_TEXT_NEW')?>
-				</div>
-				<div class="imopenlines-control-inner">
-					<textarea class="imopenlines-control-input imopenlines-control-textarea" name="CONFIG[WORKTIME_DAYOFF_TEXT]"><?=htmlspecialcharsbx($arResult["CONFIG"]["WORKTIME_DAYOFF_TEXT"])?></textarea>
-				</div>
-			</div>
-		</div>*/?>
 	</div>
 </div>

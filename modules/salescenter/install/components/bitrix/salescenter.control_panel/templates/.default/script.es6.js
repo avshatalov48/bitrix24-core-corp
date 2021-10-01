@@ -537,7 +537,7 @@ class PaymentItem extends BaseItem
 
 	opensSlider(): boolean
 	{
-		const tileHasSlider = this.isCrmStoreTile() || this.isCrmWithEshopTile();
+		const tileHasSlider = this.isCrmStoreTile() || this.isCrmWithEshopTile() || this.isCrmFormTile();
 		const tileHasUrl = this.getUrl();
 		const tileHasMenu = this.hasMenu();
 
@@ -557,6 +557,11 @@ class PaymentItem extends BaseItem
 	isCrmWithEshopTile()
 	{
 		return this.id === 'crm-with-eshop';
+	}
+
+	isCrmFormTile()
+	{
+		return this.id && this.id === 'crmform';
 	}
 }
 

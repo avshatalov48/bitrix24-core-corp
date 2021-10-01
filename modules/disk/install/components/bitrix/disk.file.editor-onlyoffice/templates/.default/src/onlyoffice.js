@@ -2,12 +2,15 @@ import {ajax as Ajax, Runtime, Type} from "main.core";
 import { EventEmitter } from "main.core.events";
 import { MenuItem } from 'main.popup';
 import {PULL, PullClient} from "pull.client";
-import type {EditorOptions, DocumentSession, Context, BaseObject} from "./types";
-import {ButtonManager, Button, SplitButton, SaveButton, CloseButton} from "ui.buttons";
+import type {EditorOptions, DocumentSession, Context} from "./types";
+import {ButtonManager, Button, SplitButton} from "ui.buttons";
 import ClientCommandHandler from "./client-command-handler";
+import ServerCommandHandler from "./server-command-handler";
 import UserManager from "./user-manager";
 import {LegacyPopup, SharingControlType} from "disk.sharing-legacy-popup";
 import {ExternalLink} from 'disk.external-link';
+
+const SECONDS_TO_MARK_AS_STILL_WORKING = 60;
 
 export default class OnlyOffice
 {
@@ -19,6 +22,7 @@ export default class OnlyOffice
 	targetNode: HTMLElement = null;
 	documentSession: DocumentSession = null;
 	linkToEdit: string = null;
+	linkToView: string = null;
 	pullConfig: any = null;
 	editButton: SplitButton = null;
 	setupSharingButton: Button = null;
@@ -35,6 +39,7 @@ export default class OnlyOffice
 		this.pullConfig = options.pullConfig;
 		this.documentSession = options.documentSession;
 		this.linkToEdit = options.linkToEdit;
+		this.linkToView = options.linkToView;
 		this.targetNode = options.targetNode;
 		this.userBoxNode = options.userBoxNode;
 		this.editorNode = options.editorNode;
@@ -48,6 +53,7 @@ export default class OnlyOffice
 			object: options.object,
 			attachedObject: options.attachedObject,
 		};
+		this.context.object.publicChannel = options.publicChannel;
 		this.usersInDocument = new UserManager({
 			context: this.context,
 			userBoxNode: this.userBoxNode,
@@ -65,6 +71,26 @@ export default class OnlyOffice
 
 		this.initPull();
 		this.bindEvents();
+		if (this.isEditMode())
+		{
+			this.registerTimerToTrackWork();
+		}
+	}
+
+	registerTimerToTrackWork(): void
+	{
+		setInterval(this.#trackWork.bind(this), SECONDS_TO_MARK_AS_STILL_WORKING*1000);
+	}
+
+	#trackWork(): void
+	{
+			Ajax.runComponentAction('bitrix:disk.file.editor-onlyoffice', 'markAsStillWorkingSession', {
+				mode: 'ajax',
+				json: {
+					documentSessionId: this.context.documentSession.id,
+					documentSessionHash: this.context.documentSession.hash,
+				}
+			});
 	}
 
 	initPull(): void
@@ -144,6 +170,12 @@ export default class OnlyOffice
 		}
 
 		PULL.subscribe(new ClientCommandHandler({
+			onlyOffice: this,
+			context: this.context,
+			userManager: this.usersInDocument,
+		}));
+		PULL.subscribe(new ServerCommandHandler({
+			onlyOffice: this,
 			context: this.context,
 			userManager: this.usersInDocument,
 		}));
@@ -157,6 +189,7 @@ export default class OnlyOffice
 			onDocumentReady: this.handleDocumentReady.bind(this),
 			onMetaChange: this.handleMetaChange.bind(this),
 			onInfo: this.handleInfo.bind(this),
+			onError: this.handleError.bind(this),
 			// onRequestClose: this.handleClose.bind(this),
 		}
 
@@ -248,8 +281,15 @@ export default class OnlyOffice
 		}
 	}
 
-	handleClickSharingByExternalLink(): void
+	handleClickSharingByExternalLink(event, menuItem: MenuItem): void
 	{
+		if (menuItem.dataset.shouldBlockExternalLinkFeature)
+		{
+			eval(menuItem.dataset.blockerExternalLinkFeature);
+
+			return;
+		}
+
 		ExternalLink.showPopup(this.context.object.id);
 	}
 
@@ -289,7 +329,7 @@ export default class OnlyOffice
 
 	handleClose(): void
 	{
-		PULL.sendMessage([-1], 'disk', 'exitDocument', {
+		PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'exitDocument', {
 			fromUserId: this.context.currentUser.id,
 		});
 
@@ -324,9 +364,37 @@ export default class OnlyOffice
 		this.documentWasChanged = true;
 	}
 
+	wasDocumentChanged(): boolean
+	{
+		return this.documentWasChanged;
+	}
+
+	isEditMode(): boolean
+	{
+		return this.editorJson.editorConfig.mode === 'edit';
+	}
+
+	isViewMode(): boolean
+	{
+		return !this.isEditMode();
+	}
+
+	reloadView(): void
+	{
+		if (this.isViewMode())
+		{
+			document.location = this.linkToView;
+		}
+	}
+
 	handleInfo(): void
 	{
 		this.caughtInfoEvent = Date.now();
+	}
+
+	handleError(d): void
+	{
+		console.log('onlyoffice error:', d.data);
 	}
 
 	handleRequestRename(event): void

@@ -1577,7 +1577,11 @@ class Controller extends Internals\Controller
 					(TypeFile::isImage($name) ? [
 						'previewUrl' => $urlManager->getUrlForShowFile(
 							$fileModel,
-							["width" => self::$previewParams["width"], "height" => self::$previewParams["height"], 'exact' => 'Y',]
+							array_merge([
+								'width' => self::$previewParams['width'],
+								'height' => self::$previewParams['height'],
+								'exact' => 'Y',
+							], ($this->request->getPost('previewParams') ?? []))
 						)
 					] : array()),
 					(!empty($fileType) ? array (

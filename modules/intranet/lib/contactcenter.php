@@ -1,10 +1,10 @@
 <?php
 namespace Bitrix\Intranet;
 
-use Bitrix\ImConnector\Tools\Connectors\Notifications;
 use Bitrix\ImOpenLines\Common;
 use Bitrix\ImOpenlines\Security\Helper;
 use Bitrix\ImOpenlines\Security\Permissions;
+use Bitrix\ImConnector;
 use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
@@ -307,25 +307,25 @@ class ContactCenter
 	public function imopenlinesGetItems($filter = array())
 	{
 		$result = new Result();
-		$module = "imopenlines";
+		$module = 'imopenlines';
 		$itemsList = array();
 
 		if (!Loader::includeModule($module))
 		{
-			$result->addError(new Error(Loc::getMessage("CONTACT_CENTER_ERROR_MODULE_NOT_LOADED", array("#MODULE_ID" => $module)), self::CC_MODULE_NOT_LOADED));
+			$result->addError(new Error(Loc::getMessage('CONTACT_CENTER_ERROR_MODULE_NOT_LOADED', ['#MODULE_ID' => $module]), self::CC_MODULE_NOT_LOADED));
 		}
-		elseif (!Loader::includeModule("imconnector"))
+		elseif (!Loader::includeModule('imconnector'))
 		{
-			$result->addError(new Error(Loc::getMessage("CONTACT_CENTER_ERROR_MODULE_NOT_LOADED", array("#MODULE_ID" => "imconnector")), self::CC_MODULE_NOT_LOADED));
+			$result->addError(new Error(Loc::getMessage('CONTACT_CENTER_ERROR_MODULE_NOT_LOADED', ['#MODULE_ID' => 'imconnector']), self::CC_MODULE_NOT_LOADED));
 		}
 		else
 		{
 			//For whole list of botframework instances use getListConnector()
-			$connectors = \Bitrix\ImConnector\Connector::getListConnectorMenu(true);
-			$statusList = \Bitrix\ImConnector\Status::getInstanceAll();
-			$linkTemplate = Common::getPublicFolder() . "connector/";
-			$codeMap = \Bitrix\ImConnector\Connector::getIconClassMap();
-			$cisOnlyConnectors = array("vkgroup", "vkgrouporder", "yandex");
+			$connectors = ImConnector\Connector::getListConnectorMenu(true);
+			$statusList = ImConnector\Status::getInstanceAll();
+			$linkTemplate = Common::getContactCenterPublicFolder() . "connector/";
+			$codeMap = ImConnector\Connector::getIconClassMap();
+			$cisOnlyConnectors = ['vkgroup', 'vkgrouporder', 'yandex'];
 			$cisCheck = $this->cisCheck() && $filter["CHECK_REGION"] !== "N";
 			$configList = $this->getImopenlinesConfigList();
 
@@ -344,21 +344,26 @@ class ContactCenter
 				{
 					foreach ($statusList[$code] as $lineId => $status)
 					{
-						if (($status instanceof \Bitrix\ImConnector\Status))
+						if (($status instanceof ImConnector\Status))
 						{
 							if ($status->isStatus())
 							{
 								$selected = true;
-								$connector["link"] = \CUtil::JSEscape( $linkTemplate . "?ID=" . $code . "&LINE=" . $lineId);
+								$connector['link'] = \CUtil::JSEscape( $linkTemplate . '?ID=' . $code . '&LINE=' . $lineId);
 
-								if ($code != "vkgroup")
+								if ($code !== 'vkgroup')
+								{
 									break;
+								}
 							}
 
-							if ($code == "vkgroup" && !empty($status->getData()))
+							if (
+								$code === 'vkgroup'
+								&& !empty($status->getData())
+							)
 							{
 								$data = $status->getData();
-								if ($data["get_order_messages"] === "Y")
+								if ($data["get_order_messages"] === 'Y')
 								{
 									$selectedOrder = true;
 								}
@@ -367,36 +372,23 @@ class ContactCenter
 					}
 				}
 
-				//Hack for apple business chat
 				if(
-					$code === 'imessage' &&
-					$selected === false &&
-					\Bitrix\ImConnector\Limit::canUseIMessage() !== true
-				)
+					$selected === false
+					&& ImConnector\Limit::canUseConnector($code) !== true)
 				{
-					$connectionInfoHelperLimit = \Bitrix\ImConnector\Limit::INFO_HELPER_LIMIT_CONNECTOR_IMESSAGE;
-				}
-
-				if ($code === \Bitrix\ImConnector\Library::ID_NOTIFICATIONS_CONNECTOR && $selected === false)
-				{
-					/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
-					$toolsNotifications = ServiceLocator::getInstance()->get('ImConnector.toolsNotifications');
-					if (!$toolsNotifications->canUse())
-					{
-						$connectionInfoHelperLimit = \Bitrix\ImConnector\Limit::INFO_HELPER_LIMIT_CONNECTOR_NOTIFICATIONS;
-					}
+					$connectionInfoHelperLimit = ImConnector\Limit::getIdInfoHelperConnector($code);
 				}
 
 				$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"], $selected);
 
 				if ($isAddItemToList)
 				{
-					$itemsList[$code] = array(
+					$itemsList[$code] = [
 						"NAME" => $connector["name"],
 						"SELECTED" => $selected,
 						"CONNECTION_INFO_HELPER_LIMIT" => $connectionInfoHelperLimit,
 						"LOGO_CLASS" => "ui-icon ui-icon-service-" . $codeMap[$code]
-					);
+					];
 
 					$link = \CUtil::JSEscape( $linkTemplate . "?ID=" . $code);
 					if (empty($connector["link"]))
@@ -817,8 +809,8 @@ class ContactCenter
 
 		$connectorCode = htmlspecialcharsbx(\CUtil::JSescape($connectorCode));
 
-		$openLineSliderPath = Common::getPublicFolder() . "connector/?ID={$connectorCode}&LINE=#LINE#&action-line=create";
-		$infoConnectors = \Bitrix\ImConnector\InfoConnectors::getInfoConnectorsList();
+		$openLineSliderPath = Common::getContactCenterPublicFolder() . "connector/?ID={$connectorCode}&LINE=#LINE#&action-line=create";
+		$infoConnectors = ImConnector\InfoConnectors::getInfoConnectorsList();
 
 		if (count($configList) > 0)
 		{
@@ -826,7 +818,7 @@ class ContactCenter
 			{
 				//getting status if connector is connected for the open line
 				$status = $statusList[$connectorCode][$configItem["ID"]];
-				if (!empty($status) && ($status instanceof \Bitrix\ImConnector\Status) && $status->isStatus())
+				if (!empty($status) && ($status instanceof ImConnector\Status) && $status->isStatus())
 				{
 					$configItem["STATUS"] = 1;
 				}
@@ -860,7 +852,7 @@ class ContactCenter
 				}
 
 				$itemPath = str_replace('#LINE#', $configItem["ID"], $openLineSliderPath);
-				$configItem["ONCLICK"] = "BX.SidePanel.Instance.open('".$itemPath."', {width: 700})";
+				$configItem["ONCLICK"] = "BX.SidePanel.Instance.open('" . $itemPath . "', {width: 700})";
 
 			}
 			unset($configItem);
@@ -884,10 +876,10 @@ class ContactCenter
 			if ($userPermissions->canPerform(Permissions::ENTITY_LINES, Permissions::ACTION_MODIFY))
 			{
 				$configList[] = [
-					"NAME" => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_CREATE_OPEN_LINE"),
-					"ID" => 0,
+					'NAME' => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_CREATE_OPEN_LINE"),
+					'ID' => 0,
 					'DELIMITER_BEFORE' => true,
-					"ONCLICK" => "new BX.Imopenlines.CreateLine({path:'{$openLineSliderPath}'});",
+					'ONCLICK' => "new BX.Imopenlines.CreateLine({path:'{$openLineSliderPath}'});",
 				];
 			}
 		}
@@ -1503,7 +1495,7 @@ class ContactCenter
 
 		if (Loader::includeModule("imconnector"))
 		{
-			$style .= \Bitrix\ImConnector\CustomConnectors::getStyleCss();
+			$style .= ImConnector\CustomConnectors::getStyleCss();
 		}
 
 		return $style;

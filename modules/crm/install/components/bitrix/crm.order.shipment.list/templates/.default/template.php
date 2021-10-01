@@ -234,7 +234,9 @@ foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 					)
 				): '',
 			'CUSTOM_PRICE_DELIVERY' => $arOrderShipment['CUSTOM_PRICE_DELIVERY'] == 'Y' ? Loc::getMessage('MAIN_YES') : Loc::getMessage('MAIN_NO'),
-			'COMMENTS' => htmlspecialcharsback($arOrderShipment['COMMENTS']),
+			'COMMENTS' => htmlspecialcharsbx($arOrderShipment['COMMENTS']),
+			'TRACKING_NUMBER' => htmlspecialcharsbx($arOrderShipment['TRACKING_NUMBER']),
+			'DELIVERY_DOC_NUM' => htmlspecialcharsbx($arOrderShipment['DELIVERY_DOC_NUM']),
 			'DATE_INSERT' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrderShipment['DATE_INSERT']), $now),
 			'DATE_ALLOW_DELIVERY' => !empty($arOrderShipment['DATE_ALLOW_DELIVERY']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrderShipment['DATE_ALLOW_DELIVERY']), $now) : '',
 			'DATE_DEDUCTED' => !empty($arOrderShipment['DATE_DEDUCTED']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrderShipment['DATE_DEDUCTED']), $now) : '',
@@ -396,9 +398,10 @@ if ($isInternal && (int)$arParams['INTERNAL_FILTER']['ORDER_ID'] > 0)
 		BX.ready(
 			function()
 			{
-				if (typeof BX.Crm.EntityEvent !== "undefined")
+				BX.namespace('BX.Crm.Order.ShipmentList');
+				if (typeof BX.Crm.Order.ShipmentList.handlerOnUpdate === "undefined")
 				{
-					BX.addCustomEvent(BX.Crm.EntityEvent.names.update, BX.delegate(function(event){
+					BX.Crm.Order.ShipmentList.handlerOnUpdate = function(event){
 						if (
 							BX.type.isPlainObject(event.entityData)
 							&& parseInt(event.entityData.ID) === parseInt(<?=(int)$arParams['INTERNAL_FILTER']['ORDER_ID']?>)
@@ -406,7 +409,13 @@ if ($isInternal && (int)$arParams['INTERNAL_FILTER']['ORDER_ID'] > 0)
 						{
 							BX.Main.gridManager.reload('<?= CUtil::JSEscape($arResult['GRID_ID'])?>');
 						}
-					}));
+					};
+				}
+
+				if (typeof BX.Crm.EntityEvent !== "undefined")
+				{
+					BX.removeCustomEvent(BX.Crm.EntityEvent.names.update, BX.Crm.Order.ShipmentList.handlerOnUpdate);
+					BX.addCustomEvent(BX.Crm.EntityEvent.names.update, BX.Crm.Order.ShipmentList.handlerOnUpdate);
 				}
 			}
 		);

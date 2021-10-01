@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integrity;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main\ArgumentException;
 
+use Bitrix\Crm;
 use Bitrix\Crm\Exclusion;
 use Bitrix\Crm\Communication;
 use Bitrix\Crm\ContactTable;
@@ -62,6 +63,11 @@ use Bitrix\Main\SystemException;
  * @method void setDeals(array $list) Set deals.
  * @method int|null getDealId() Get deal ID.
  * @method void setDealId($id) Set deal ID.
+ *
+ * @method int[] getDynamics() Get dynamics.
+ * @method void setDynamics(array $list) Set dynamics.
+ * @method int|null getDynamicId() Get dynamic ID.
+ * @method void setDynamicId($id) Set dynamic ID.
  *
  * @method int[] getReturnCustomerLeads() Get return customer leads.
  * @method void setReturnCustomerLeads(array $list) Set return customer leads.
@@ -148,6 +154,12 @@ class ActualEntitySelector
 		array(
 			'CODE' => 'contactReturnCustomerLeads',
 			'TYPE_ID' => \CCrmOwnerType::Lead,
+			'ID' => [],
+		),
+		array(
+			'CODE' => 'dynamics',
+			'IS_PRIMARY' => true,
+			'TYPE_ID' => \CCrmOwnerType::Undefined,
 			'ID' => [],
 		),
 		array(
@@ -296,8 +308,7 @@ class ActualEntitySelector
 	public function __construct(array $criteria = array())
 	{
 		$this->fillDynamicEntityDictionary();
-		$this->isAutoUsingFinishedLeadEnabled = LeadSettings::getCurrent()->isAutoUsingFinishedLeadEnabled()
-			&& LeadSettings::getCurrent()->isEnabled();
+		$this->useFinishedLead(null);
 		$this->initialEntities = $this->entities;
 		$this->setCriteria($criteria);
 		$this->search();
@@ -325,6 +336,49 @@ class ActualEntitySelector
 		}
 
 		throw new SystemException("Unknown method name `$name`");
+	}
+
+	/**
+	 * Set dynamic type ID.
+	 *
+	 * @param int $entityTypeId Entity type ID.
+	 * @return $this
+	 */
+	public function setDynamicTypeId($entityTypeId)
+	{
+		$entityTypeId = (int)$entityTypeId;
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			foreach($this->entities as $index => $entity)
+			{
+				if ($entity['CODE'] !== 'dynamics')
+				{
+					continue;
+				}
+
+				if ($entity['TYPE_ID'] === $entityTypeId)
+				{
+					continue;
+				}
+
+				$this->entities[$index]['TYPE_ID'] = $entityTypeId;
+				$this->entities[$index]['ID'] = [];
+				break;
+			}
+		}
+
+		return $this;
+	}
+
+
+	/**
+	 * Get dynamic type ID.
+	 *
+	 * @return int
+	 */
+	public function getDynamicTypeId()
+	{
+		return $this->getRawByCode('dynamics')['TYPE_ID'] ?? \CCrmOwnerType::Undefined;
 	}
 
 	/**
@@ -672,20 +726,27 @@ class ActualEntitySelector
 	 */
 	public function setEntity($entityTypeId, $entityId, $skipRanking = false)
 	{
+		$entityTypeId = (int)$entityTypeId;
+		$entityId = (int)$entityId;
+		$isEntityTypeDynamics = \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId);
+
 		foreach($this->entities as $entity)
 		{
-			if (!isset($entity['IS_PRIMARY']) || !$entity['IS_PRIMARY'])
+			if (empty($entity['IS_PRIMARY']))
 			{
 				continue;
 			}
 
-			if ($entity['TYPE_ID'] != $entityTypeId)
+			if ($entity['TYPE_ID'] !== $entityTypeId)
 			{
-				continue;
+				if (!$isEntityTypeDynamics || $entity['CODE'] !== 'dynamics')
+				{
+					continue;
+				}
 			}
 
 			// check with lead type
-			if ($entityTypeId == \CCrmOwnerType::Lead)
+			if ($entityTypeId === \CCrmOwnerType::Lead)
 			{
 				$isCurrentLeadRC = $entity['CODE'] == 'returnCustomerLeads';
 				$leadRow = LeadTable::getRow([
@@ -712,7 +773,7 @@ class ActualEntitySelector
 
 				$skipRanking = true;
 			}
-			elseif ($entityTypeId == \CCrmOwnerType::Deal)
+			elseif ($entityTypeId === \CCrmOwnerType::Deal)
 			{
 				$dealRows = DealTable::getList([
 					'select' => ['ID', 'CONTACT_ID', 'COMPANY_ID'],
@@ -733,7 +794,7 @@ class ActualEntitySelector
 
 				$skipRanking = true;
 			}
-			elseif ($entityTypeId == \CCrmOwnerType::Order)
+			elseif ($entityTypeId === \CCrmOwnerType::Order)
 			{
 				$orderRows = OrderContactCompanyTable::getList([
 					'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID'],
@@ -753,6 +814,33 @@ class ActualEntitySelector
 					if ($orderRow['ENTITY_TYPE_ID'] == \CCrmOwnerType::Company && !$this->getCompanyId())
 					{
 						$this->setEntity(\CCrmOwnerType::Company, $orderRow['ENTITY_ID'], true);
+					}
+				}
+
+				$skipRanking = true;
+			}
+			elseif ($isEntityTypeDynamics)
+			{
+				$dynamicFactory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+				$dynamicItem = $dynamicFactory->getItem($entityId);
+				if (!$dynamicItem)
+				{
+					continue;
+				}
+
+				$this->setDynamicTypeId($entityTypeId);
+				if ($dynamicItem->getCompanyId())
+				{
+					$this->setEntity(\CCrmOwnerType::Company, $dynamicItem->getCompanyId(), true);
+				}
+
+				$count = 3;
+				foreach ($dynamicItem->getContacts() as $contact)
+				{
+					$this->setEntity(\CCrmOwnerType::Contact, $contact->getId(), true);
+					if (!--$count)
+					{
+						break;
 					}
 				}
 
@@ -840,11 +928,14 @@ class ActualEntitySelector
 	protected function rank($entityTypeId)
 	{
 		// actual ranking
-		return $this->getRanking()->rank(
-			$entityTypeId,
-			$this->getRankableList($entityTypeId),
-			$this->canRank($entityTypeId)
-		);
+		return $this->getRanking()
+			->setDynamicTypeId($this->getDynamicTypeId())
+			->rank(
+				$entityTypeId,
+				$this->getRankableList($entityTypeId),
+				$this->canRank($entityTypeId)
+			)
+		;
 	}
 
 	/**
@@ -866,6 +957,27 @@ class ActualEntitySelector
 	public function disableExclusionChecking()
 	{
 		$this->isExclusionCheckingEnabled = false;
+		return $this;
+	}
+
+	/**
+	 * Use finished lead.
+	 *
+	 * @param bool|null $mode Mode.
+	 * @return $this
+	 */
+	public function useFinishedLead($mode = null)
+	{
+		if (is_bool($mode))
+		{
+			$this->isAutoUsingFinishedLeadEnabled = $mode;
+		}
+		else
+		{
+			$leadSettings = LeadSettings::getCurrent();
+			$this->isAutoUsingFinishedLeadEnabled = $leadSettings->isAutoUsingFinishedLeadEnabled() && $leadSettings->isEnabled();
+		}
+
 		return $this;
 	}
 
@@ -956,6 +1068,12 @@ class ActualEntitySelector
 		$contactId = $ranking->getEntityId();
 		$this->setContactId($contactId);
 		$this->setContactOrders($ranking->getOrders());
+
+		if ($this->getDynamicTypeId())
+		{
+			$this->setDynamics($ranking->getDynamics());
+		}
+
 		if (!$this->getDeals() && !$this->getReturnCustomerLeadId())
 		{
 			// set only if ::setEntity with deals or rc-leads didnt used

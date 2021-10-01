@@ -14,7 +14,6 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $configId
 	 * @param $sessid
 	 * @return array|int
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function addAvatarFileAction($configId)
 	{
@@ -55,7 +54,6 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $configId
 	 * @param $fileId
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function removeAvatarFileAction($configId, $fileId)
 	{
@@ -90,10 +88,6 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $configId
 	 * @param $queue
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getUsersQueueAction($configId, $queue): array
 	{
@@ -106,30 +100,34 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 		{
 			if(Config::canEditLine($configId))
 			{
-				$users = QueueManager::getUsersFromQueue($queue);
-
-				$preselectedUsers = [];
-				foreach ($users as $user)
+				if(!empty($queue))
 				{
-					$preselectedUsers[] = [
-						$user['type'],
-						$user['id']
-					];
+					$users = QueueManager::getUsersFromQueue($queue);
+
+					$preselectedUsers = [];
+					foreach ($users as $user)
+					{
+						$preselectedUsers[] = [
+							$user['type'],
+							$user['id']
+						];
+					}
+
+					//TODO: 279941 (426ad54dd7a8) socialnetwork
+					$userCollections = EntitySelector\Dialog::getSelectedItems($preselectedUsers);
+					$items = $userCollections->getAll();
+					foreach ($items as $item)
+					{
+						$result[] = [
+							'entityId' => $item->getId(),
+							'entityType' => $item->getEntityId(),
+							'name' => $item->getTitle(),
+							'avatar' => $item->getAvatar(),
+							'department' => $users[$item->getId()]['department']
+						];
+					}
 				}
 
-				//TODO: 279941 (426ad54dd7a8) socialnetwork
-				$userCollections = EntitySelector\Dialog::getSelectedItems($preselectedUsers);
-				$items = $userCollections->getAll();
-				foreach ($items as $item)
-				{
-					$result[] = [
-						'entityId' => $item->getId(),
-						'entityType' => $item->getEntityId(),
-						'name' => $item->getTitle(),
-						'avatar' => $item->getAvatar(),
-						'department' => $users[$item->getId()]['department']
-					];
-				}
 			}
 			else
 			{

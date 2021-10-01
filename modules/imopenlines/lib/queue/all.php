@@ -25,9 +25,6 @@ class All extends Queue
 	 * @param $userId
 	 * @param int $currentOperator
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function isOperatorAvailable($userId, $currentOperator = 0)
 	{
@@ -60,21 +57,15 @@ class All extends Queue
 	 */
 	public function getQueueTime()
 	{
-		$queueTime = ImOpenLines\Queue::UNDISTRIBUTED_QUEUE_TIME;
-
-		return $queueTime;
+		return ImOpenLines\Queue::UNDISTRIBUTED_QUEUE_TIME;
 	}
 
 	/**
 	 * @param int $currentOperator
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getOperatorsQueue($currentOperator = 0)
+	public function getOperatorsQueue($currentOperator = 0): array
 	{
 		$queueTime = $this->getQueueTime();
 
@@ -88,6 +79,7 @@ class All extends Queue
 
 		$operatorList = [];
 		$queueHistory = [];
+		$fullCountOperators = 0;
 
 		$res = ImOpenLines\Queue::getList([
 			'select' => [
@@ -105,12 +97,15 @@ class All extends Queue
 
 		while($queueUser = $res->fetch())
 		{
+			$fullCountOperators++;
 			if($this->isOperatorAvailable($queueUser['USER_ID'], $currentOperator))
 			{
 				$operatorList[] = $queueUser['USER_ID'];
 				$queueHistory[$queueUser['USER_ID']] = true;
 			}
 		}
+
+		$this->processingEmptyQueue($this->config['ID'], $fullCountOperators);
 
 		if(!empty($operatorList))
 		{
@@ -131,11 +126,6 @@ class All extends Queue
 	 *
 	 * @param bool $manual
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function transferToNext($manual = true)
 	{

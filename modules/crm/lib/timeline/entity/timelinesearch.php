@@ -4,6 +4,22 @@ namespace Bitrix\Crm\Timeline\Entity;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
+/**
+ * Class TimelineSearchTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TimelineSearch_Query query()
+ * @method static EO_TimelineSearch_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TimelineSearch_Result getById($id)
+ * @method static EO_TimelineSearch_Result getList(array $parameters = array())
+ * @method static EO_TimelineSearch_Entity getEntity()
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineSearch createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineSearch_Collection createCollection()
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineSearch wakeUpObject($row)
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineSearch_Collection wakeUpCollection($rows)
+ */
 class TimelineSearchTable  extends Entity\DataManager
 {
 	/**

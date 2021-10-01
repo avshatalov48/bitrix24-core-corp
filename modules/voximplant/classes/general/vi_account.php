@@ -285,13 +285,10 @@ class CVoxImplantAccount
 
 	public static function IsDemo()
 	{
-		if (!CModule::IncludeModule('bitrix24'))
-			return false;
-
-		if (CBitrix24::IsDemoLicense())
-			return true;
-
-		return false;
+		return (
+			\Bitrix\Main\Loader::includeModule('bitrix24')
+			&& CBitrix24::IsDemoLicense()
+		);
 	}
 
 	public static function GetRecordLimit($mode = false)

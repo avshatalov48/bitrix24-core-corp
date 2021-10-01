@@ -4,6 +4,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Crm\History\HistoryEntryType;
 
+/**
+ * Class LeadStatusHistoryTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_LeadStatusHistory_Query query()
+ * @method static EO_LeadStatusHistory_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_LeadStatusHistory_Result getById($id)
+ * @method static EO_LeadStatusHistory_Result getList(array $parameters = array())
+ * @method static EO_LeadStatusHistory_Entity getEntity()
+ * @method static \Bitrix\Crm\History\Entity\EO_LeadStatusHistory createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\History\Entity\EO_LeadStatusHistory_Collection createCollection()
+ * @method static \Bitrix\Crm\History\Entity\EO_LeadStatusHistory wakeUpObject($row)
+ * @method static \Bitrix\Crm\History\Entity\EO_LeadStatusHistory_Collection wakeUpCollection($rows)
+ */
 class LeadStatusHistoryTable extends Entity\DataManager
 {
 	public static function getTableName()

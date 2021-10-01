@@ -5,6 +5,22 @@ namespace Bitrix\Crm\Kanban;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 
+/**
+ * Class SupervisorTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Supervisor_Query query()
+ * @method static EO_Supervisor_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Supervisor_Result getById($id)
+ * @method static EO_Supervisor_Result getList(array $parameters = array())
+ * @method static EO_Supervisor_Entity getEntity()
+ * @method static \Bitrix\Crm\Kanban\EO_Supervisor createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Kanban\EO_Supervisor_Collection createCollection()
+ * @method static \Bitrix\Crm\Kanban\EO_Supervisor wakeUpObject($row)
+ * @method static \Bitrix\Crm\Kanban\EO_Supervisor_Collection wakeUpCollection($rows)
+ */
 class SupervisorTable extends Entity\DataManager
 {
 	const TTL_ACTIVITY = 1200;

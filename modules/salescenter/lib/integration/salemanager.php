@@ -477,6 +477,20 @@ class SaleManager extends Base
 
 		$result[] = '\Bitrix\Sale\Cashbox\CashboxRest';
 
+		$cashboxList = Sale\Cashbox\Manager::getListFromCache();
+		foreach ($cashboxList as $cashbox)
+		{
+			if ($cashbox['ACTIVE'] === 'N')
+			{
+				continue;
+			}
+
+			if ($cashbox['HANDLER'] === '\\' . Sale\Cashbox\CashboxRobokassa::class)
+			{
+				$result[] = $cashbox['HANDLER'];
+			}
+		}
+
 		return $result;
 	}
 

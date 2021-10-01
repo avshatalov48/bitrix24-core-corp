@@ -6,14 +6,20 @@ use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
+use Bitrix\Crm\Order\DealBinding;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProvider\Filterable;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Nameable;
+use Bitrix\Main\IO\Path;
+use Bitrix\Main\Localization\Loc;
 
 class Deal extends ProductsDataProvider implements Filterable
 {
 	protected $contacts;
+	protected $payments;
+	protected $shipments;
+	protected $order;
 
 	public function getFields()
 	{
@@ -37,20 +43,55 @@ class Deal extends ProductsDataProvider implements Filterable
 			$this->fields['SOURCE'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_SOURCE_TITLE'),
 			];
-			$this->fields['CONTACTS'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACTS_TITLE'),
-				'PROVIDER' => ArrayDataProvider::class,
-				'OPTIONS' => [
-					'ITEM_PROVIDER' => Contact::class,
-					'ITEM_NAME' => 'CONTACT',
-					'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACT_TITLE'),
-					'ITEM_OPTIONS' => [
-						'DISABLE_MY_COMPANY' => true,
-						'isLightMode' => true,
+			if (!$this->isLightMode())
+			{
+				$this->fields['CONTACTS'] = [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACTS_TITLE'),
+					'PROVIDER' => ArrayDataProvider::class,
+					'OPTIONS' => [
+						'ITEM_PROVIDER' => Contact::class,
+						'ITEM_NAME' => 'CONTACT',
+						'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACT_TITLE'),
+						'ITEM_OPTIONS' => [
+							'DISABLE_MY_COMPANY' => true,
+							'isLightMode' => true,
+						],
 					],
-				],
-				'VALUE' => [$this, 'getContacts'],
-			];
+					'VALUE' => [$this, 'getContacts'],
+				];
+
+				if (!\CCrmSaleHelper::isWithOrdersMode())
+				{
+					Loc::loadMessages(Path::combine(__DIR__, 'order.php'));
+					$this->fields['PAYMENTS'] = [
+						'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_ORDER_PAYMENTS_TITLE'),
+						'PROVIDER' => ArrayDataProvider::class,
+						'OPTIONS' => [
+							'ITEM_PROVIDER' => Payment::class,
+							'ITEM_NAME' => 'PAYMENT',
+							'ITEM_TITLE' => Payment::getLangName(),
+							'ITEM_OPTIONS' => [
+								'isLightMode' => true,
+							],
+						],
+						'VALUE' => [$this, 'getPayments'],
+					];
+
+					$this->fields['SHIPMENTS'] = [
+						'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_ORDER_SHIPMENTS_TITLE'),
+						'PROVIDER' => ArrayDataProvider::class,
+						'OPTIONS' => [
+							'ITEM_PROVIDER' => Shipment::class,
+							'ITEM_NAME' => 'SHIPMENT',
+							'ITEM_TITLE' => Shipment::getLangName(),
+							'ITEM_OPTIONS' => [
+								'isLightMode' => true,
+							],
+						],
+						'VALUE' => [$this, 'getShipments'],
+					];
+				}
+			}
 			$this->fields['OPPORTUNITY']['TYPE'] = Money::class;
 			$this->fields['OPPORTUNITY']['FORMAT'] = ['CURRENCY_ID' => $this->getCurrencyId()];
 		}
@@ -248,5 +289,87 @@ class Deal extends ProductsDataProvider implements Filterable
 	protected function hasLeadField()
 	{
 		return true;
+	}
+
+	protected function getOrder()
+	{
+		if ($this->order === null)
+		{
+			$dealId = (int)$this->source;
+			if ($dealId > 0)
+			{
+				// always get the last order
+				$dealBinding = DealBinding::getList([
+					'select' => ['ORDER_ID'],
+					'filter' => [
+						'=DEAL_ID' => $dealId,
+					],
+					'order' => [
+						'ORDER_ID' => 'DESC',
+					],
+					'limit' => 1,
+				])->fetch();
+				if ($dealBinding)
+				{
+					$this->order = \Bitrix\Crm\Order\Order::load((int)$dealBinding['ORDER_ID']);
+				}
+			}
+		}
+
+		return $this->order;
+	}
+
+	public function getPayments(): array
+	{
+		if($this->payments === null)
+		{
+			$this->payments = [];
+			$order = $this->getOrder();
+			if($order)
+			{
+				$payments = $order->getPaymentCollection();
+				foreach($payments as $payment)
+				{
+					$this->payments[] = DataProviderManager::getInstance()->getDataProvider(
+						Payment::class,
+						$payment->getId(),
+						[
+							'isLightMode' => true,
+							'data' => $payment->getFields()->getValues(),
+						],
+						$this
+					);
+				}
+			}
+		}
+
+		return $this->payments;
+	}
+
+	public function getShipments(): array
+	{
+		if($this->shipments === null)
+		{
+			$this->shipments = [];
+			$order = $this->getOrder();
+			if($order)
+			{
+				$shipments = $order->getShipmentCollection()->getNotSystemItems();
+				foreach($shipments as $shipment)
+				{
+					$this->shipments[] = DataProviderManager::getInstance()->getDataProvider(
+						Shipment::class,
+						$shipment->getId(),
+						[
+							'isLightMode' => true,
+							'data' => $shipment->getFields()->getValues(),
+						],
+						$this
+					);
+				}
+			}
+		}
+
+		return $this->shipments;
 	}
 }

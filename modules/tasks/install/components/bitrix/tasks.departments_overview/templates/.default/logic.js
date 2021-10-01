@@ -129,7 +129,6 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 				BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this));
 
 				var filterId = this.option('filterId');
-				var filter = BX.Main.filterManager.getById(filterId);
 				var scope = this.scope();
 
 				BX.bindDelegate(scope, 'click', {
@@ -137,6 +136,7 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 					className: 'js-id-department'
 				}, BX.delegate(function(event) {
 					BX.PreventDefault(event);
+					var filter = BX.Main.filterManager.getById(filterId);
 					if (!!filter && (filter instanceof BX.Main.Filter))
 					{
 						var filterApi = filter.getApi();

@@ -1,15 +1,20 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Main;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Crm\Timeline\Entity\TimelineTable;
 
 class DocumentEntry extends TimelineEntry
 {
-	public static function create(array $params, $documentId)
+	public static function create(array $params, $documentId = null)
 	{
+		if (is_null($documentId))
+		{
+			throw new Main\ArgumentNullException('documentId');
+		}
+
 		$text = isset($params['TEXT']) ? $params['TEXT'] : '';
 		if($text === '')
 		{

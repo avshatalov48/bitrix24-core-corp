@@ -8,6 +8,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class BankDetailTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_BankDetail_Query query()
+ * @method static EO_BankDetail_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_BankDetail_Result getById($id)
+ * @method static EO_BankDetail_Result getList(array $parameters = array())
+ * @method static EO_BankDetail_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_BankDetail createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_BankDetail_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_BankDetail wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_BankDetail_Collection wakeUpCollection($rows)
+ */
 class BankDetailTable extends Entity\DataManager
 {
 	/**

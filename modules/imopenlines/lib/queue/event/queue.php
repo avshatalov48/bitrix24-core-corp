@@ -19,6 +19,8 @@ Loc::loadMessages(__FILE__);
  */
 abstract class Queue
 {
+	public const MAX_SESSION_RETURN = 1000;
+
 	protected $configLine = [];
 
 	/**
@@ -208,13 +210,8 @@ abstract class Queue
 	 * Return to the queue not distributed sessions
 	 *
 	 * @param string $reasonReturn
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function returnNotDistributedSessionsToQueue($reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
+	public function returnNotDistributedSessionsToQueue(string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
 		$sessionListManager = SessionCheckTable::getList(
 			[
@@ -225,7 +222,9 @@ abstract class Queue
 					'SESSION.OPERATOR_ID' => 0,
 					'SESSION.CONFIG_ID' => $this->configLine['ID'],
 					'UNDISTRIBUTED' => 'Y'
-				]
+				],
+				'order' => ['SESSION_ID' => 'ASC'],
+				'limit' => self::MAX_SESSION_RETURN
 			]
 		);
 

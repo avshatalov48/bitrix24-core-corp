@@ -935,17 +935,9 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	 * @param array $contactBinding
 	 *
 	 * @return EntityObject|null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\NotSupportedException
 	 */
 	protected function findBindingInCollection($bindingsCollection, array $contactBinding): ?EntityObject
 	{
-		if ($bindingsCollection instanceof Collection)
-		{
-			return $bindingsCollection->getByPrimary($this->compilePrimaryForBinding($contactBinding));
-		}
-
 		$contactId = EntityBinding::prepareEntityID(\CCrmOwnerType::Contact, $contactBinding);
 		foreach ($bindingsCollection as $bindingObject)
 		{

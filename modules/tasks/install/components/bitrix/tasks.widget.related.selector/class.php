@@ -21,7 +21,9 @@ class TasksWidgetRelatedSelectorComponent extends TasksBaseComponent
 		static::tryParseArrayParameter($this->arParams['TYPES'], $supportedTypes);
 		$this->arParams['TYPES'] = array_map(function(){return true;}, array_flip(array_intersect($this->arParams['TYPES'], $supportedTypes)));
 
-		$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter($this->arParams['TASK_LIMIT_EXCEEDED']);
+		$this->arResult['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter(
+			$this->arParams['TEMPLATE_SUBTASK_LIMIT_EXCEEDED']
+		);
 
 		return $this->errors->checkNoFatals();
 	}

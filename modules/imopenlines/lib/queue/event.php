@@ -80,11 +80,6 @@ class Event
 	 * Changing the queue type.
 	 *
 	 * @param \Bitrix\Main\Event $event
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onQueueTypeChange(\Bitrix\Main\Event $event)
 	{
@@ -94,12 +89,12 @@ class Event
 		{
 			$sessionList = SessionCheckTable::getList(
 				[
-					'select' => array('SESSION_ID'),
-					'filter' => array(
+					'select' => ['SESSION_ID'],
+					'filter' => [
 						'SESSION.CONFIG_ID' => $eventData['line'],
 						'<SESSION.STATUS' => Session::STATUS_ANSWER,
 						'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
-					)
+					]
 				]
 			)->fetchAll();
 

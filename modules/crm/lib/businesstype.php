@@ -7,6 +7,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class BusinessTypeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_BusinessType_Query query()
+ * @method static EO_BusinessType_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_BusinessType_Result getById($id)
+ * @method static EO_BusinessType_Result getList(array $parameters = array())
+ * @method static EO_BusinessType_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_BusinessType createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_BusinessType_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_BusinessType wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_BusinessType_Collection wakeUpCollection($rows)
+ */
 class BusinessTypeTable extends Entity\DataManager
 {
 	protected static $allLangIDs = null;

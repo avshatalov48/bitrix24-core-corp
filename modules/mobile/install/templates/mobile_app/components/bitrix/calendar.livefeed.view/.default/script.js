@@ -32,8 +32,15 @@
 
 			// Invite controls
 			var status = null;
-			if (this.config.EVENT.IS_MEETING)
+
+			if (
+				this.config.EVENT.IS_MEETING
+				&& BX.type.isPlainObject(this.config.attendees[this.userId])
+			)
+			{
 				status = this.config.attendees[this.userId].STATUS;
+			}
+
 			this.ShowUserStatus(status);
 		},
 

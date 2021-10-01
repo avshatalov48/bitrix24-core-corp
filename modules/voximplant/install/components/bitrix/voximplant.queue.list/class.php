@@ -102,7 +102,23 @@ class CVoximplantQueueListComponent extends \CBitrixComponent
 		);
 		$result["GRID_ID"] = $this->gridId;
 		$result["CAN_CREATE_GROUP"] = Limits::canCreateGroup();
-		$result["CREATE_QUEUE_URL"] = $result["CAN_CREATE_GROUP"] ?  CVoxImplantMain::GetPublicFolder().'editgroup.php?ID=0' : 'javascript: BX.UI.InfoHelper.show(\'limit_contact_center_telephony_groups\');';
+		$result["MAXIMUM_GROUPS"] = Limits::getMaximumGroups();
+		if ($result["CAN_CREATE_GROUP"])
+		{
+			$result["CREATE_QUEUE_URL"] = CVoxImplantMain::GetPublicFolder().'editgroup.php?ID=0';
+		}
+		else
+		{
+			if ($result["MAXIMUM_GROUPS"] == 0)
+			{
+				$helperCode = 'limit_contact_center_telephony_groups_zero';
+			}
+			else
+			{
+				$helperCode = 'limit_contact_center_telephony_groups';
+			}
+			$result["CREATE_QUEUE_URL"] = 'javascript: BX.UI.InfoHelper.show(\''.$helperCode.'\');';
+		}
 
 		return $result;
 	}

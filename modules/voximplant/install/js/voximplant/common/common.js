@@ -259,7 +259,14 @@
 			{
 				if (disclaimerAccepted)
 				{
-					window.open(responseData.billingUrl);
+					if (BX.browser.isIPhone())
+					{
+						document.location.href = responseData.billingUrl;
+					}
+					else
+					{
+						window.open(responseData.billingUrl);
+					}
 				}
 				resolve();
 			}).catch(function(response)

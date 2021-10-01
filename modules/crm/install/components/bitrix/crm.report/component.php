@@ -85,6 +85,11 @@ else
 	$arResult['PATH_TO_REPORT_VIEW'] = $APPLICATION->GetCurPage()."?report_id=#report_id#";
 }
 
+if (!\Bitrix\Crm\Restriction\RestrictionManager::getReportRestriction()->hasPermission())
+{
+	$componentPage = 'restrictions';
+}
+
 $arResult = array_merge(
 	array(
 		'VARIABLES' => $arVariables,

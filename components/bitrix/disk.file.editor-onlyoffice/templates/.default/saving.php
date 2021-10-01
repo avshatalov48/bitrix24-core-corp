@@ -31,10 +31,10 @@ Extension::load([
 	'pull.client',
 ]);
 
-$containerId = 'editorForm'.$this->randString();
+$containerId = 'waiting-'.$this->randString();
 ?>
 
-<div id="test" class="disk-file-editor-onlyoffice-loader">
+<div data-id="<?= $containerId ?>" class="disk-file-editor-onlyoffice-loader">
 	<div class="disk-file-editor-onlyoffice-loader-text"><?= Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_WAITING_NEW_VERSION_TITLE') ?></div>
 	<div class="disk-file-editor-onlyoffice-loader-text--sm"><?= Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_WAITING_NEW_VERSION_DESC') ?></div>
 </div>
@@ -43,6 +43,7 @@ $containerId = 'editorForm'.$this->randString();
 	<?='BX.message(' . \CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__)) . ');'?>
 
 	new BX.Disk.Editor.Waiting({
+		targetNode: document.querySelector('[data-id="<?= $containerId ?>"]'),
 		documentSession: {
 			id: <?= $arResult['DOCUMENT_SESSION']['ID'] ?>,
 			hash: '<?= $arResult['DOCUMENT_SESSION']['HASH'] ?>',

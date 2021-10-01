@@ -1257,7 +1257,7 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 		this._isPermitted = true;
 
 		this._items = [];
-		this._ufAccessRights = {};
+		this._restriction = {};
 	};
 
 	BX.Crm.EntityFieldVisibilityConfigurator.prototype =
@@ -1271,8 +1271,8 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 			this._editor = BX.prop.get(this.getSettings(), "editor", {});
 			this._field = BX.prop.get(this.getSettings(), "field", null);
 
-			this._ufAccessRights = BX.prop.getObject(this.getSettings(), "ufAccessRights", {});
-			this._isPermitted = BX.prop.getBoolean(this._ufAccessRights, "IS_PERMITTED", true);
+			this._restriction = BX.prop.getObject(this.getSettings(), "restriction", {});
+			this._isPermitted = BX.prop.getBoolean(this._restriction, "isPermitted", true);
 
 			this._squares = [];
 			this._isEnabled = !this.isEmpty();
@@ -1519,7 +1519,7 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 		},
 		runLockScript: function()
 		{
-			var lockScript = BX.prop.getString(this._ufAccessRights, "LOCK_SCRIPT", "");
+			var lockScript = BX.prop.getString(this._restriction, "restrictionCallback", "");
 			if(lockScript !== "")
 			{
 				eval(lockScript);

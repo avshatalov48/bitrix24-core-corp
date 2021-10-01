@@ -267,17 +267,26 @@ class CVoxImplantEvent
 
 	public static function onGetNotifySchema()
 	{
-		return array(
-			"voximplant" => array(
-				"notifications" => array(
+		return [
+			"voximplant" => [
+				"notifications" => [
 					"NAME" => GetMessage('VI_EVENTS_NOTIFICATIONS'),
 					"SITE" => "Y",
 					"MAIL" => "Y",
 					"XMPP" => "N",
 					"PUSH" => "N",
-					"DISABLED" => array( ),
-				),
-			),
-		);
+					"DISABLED" => [],
+				],
+				"status_notifications" => [
+					"NAME" => GetMessage('VI_EVENTS_SIP_STATUS_NOTIFICATIONS'),
+					"SITE" => "Y",
+					"MAIL" => "Y",
+					"XMPP" => "N",
+					"PUSH" => "N",
+					"DISABLED" => [IM_NOTIFY_FEATURE_PUSH],
+				],
+			],
+		];
 	}
+
 }

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Activity\Provider;
 
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Faceid\AgreementTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -62,7 +63,7 @@ class Visit extends Base
 	{
 		$ownerTypeId = isset($params['OWNER_TYPE_ID']) ? (int)$params['OWNER_TYPE_ID'] : \CCrmOwnerType::Undefined;
 		$ownerId = isset($params['OWNER_ID']) ? (int)$params['OWNER_ID'] : 0;
-		
+
 		$visitParams = self::getPopupParameters();
 		if($ownerTypeId && $ownerId)
 		{
@@ -70,12 +71,16 @@ class Visit extends Base
 			$visitParams['OWNER_ID'] = $ownerId;
 		}
 
-		$buttons[] = array(
+		$visitButton = [
 			'TEXT' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_VISIT_BUTTON'),
 			'TITLE' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_VISIT_BUTTON_TITLE'),
-			'ONCLICK' => "BX.CrmActivityVisit.create(".\CUtil::PhpToJSObject($visitParams).").showEdit()",
-			'ICON' => "btn-new"
-		);
+			'ONCLICK' => 'BX.CrmActivityVisit.create(' . \CUtil::PhpToJSObject($visitParams) . ').showEdit()',
+			'ICON' => 'btn-new',
+			'CLASS_NAME' => RestrictionManager::getVisitRestriction()->hasPermission() ? '' : 'crm-tariff-lock-behind'
+		];
+
+		$buttons[] = $visitButton;
+
 		return 1;
 	}
 

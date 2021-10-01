@@ -5,21 +5,6 @@ use Bitrix\Main;
 
 class BizprocController extends EntityController
 {
-	//region Singleton
-	/** @var $this|null */
-	protected static $instance = null;
-	/**
-	 * @return $this
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
-	//endregion
 	//region BizprocController
 	public function onWorkflowStatusChange($workflowId, $status)
 	{

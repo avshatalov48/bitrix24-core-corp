@@ -7,6 +7,22 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Query\Query;
 
+/**
+ * Class EntityPermsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EntityPerms_Query query()
+ * @method static EO_EntityPerms_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EntityPerms_Result getById($id)
+ * @method static EO_EntityPerms_Result getList(array $parameters = array())
+ * @method static EO_EntityPerms_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_EntityPerms createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_EntityPerms_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_EntityPerms wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_EntityPerms_Collection wakeUpCollection($rows)
+ */
 class EntityPermsTable extends DataManager
 {
 	public static function getTableName(): string

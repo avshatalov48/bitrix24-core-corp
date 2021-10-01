@@ -4,6 +4,7 @@ $MESS["SALESCENTER_IMOPMANAGER_ORDER_ADD_MESSAGE_DISCOUNT"] = "Order discount #D
 $MESS["SALESCENTER_IMOPMANAGER_ORDER_ADD_MESSAGE_TOP"] = "Your order for #SUM# of #DATE#";
 $MESS["SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_BOTTOM"] = "One click payment. Feel free to ask us in the chat should you have any questions!";
 $MESS["SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_TOP"] = "Information about your payment for #SUM# of #DATE#";
+$MESS["SALESCENTER_IMOPMANAGER_PAYMENT_MESSAGE_PREVIEW"] = "This is a review of your payment. Please drop us a note if you have any questions! #LINK#";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_DEAL_ADD_LINK"] = "Payment ##DEAL_ID# of #DEAL_DATE#";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_DEAL_ADD_TEXT"] = "Deal for #SUM# has been created";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_ADD_LINK"] = "Order ##ORDER_ID# of #ORDER_DATE#";

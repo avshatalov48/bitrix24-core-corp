@@ -9,7 +9,6 @@ use Bitrix\Disk\File;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
-use Bitrix\Disk\Internals\AttachedViewTypeTable;
 use Bitrix\Disk\BaseObject;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
@@ -100,6 +99,11 @@ final class UserFieldManager implements IErrorable
 	public function getInputNameForAllowEditByEntityType($entityType)
 	{
 		return $entityType . '_DISK_ATTACHED_OBJECT_ALLOW_EDIT';
+	}
+
+	public function getInputNameForTemplateView($entityType)
+	{
+		return $entityType . '_DISK_ATTACHED_OBJECT_TEMPLATE_VIEW';
 	}
 
 	/**
@@ -209,22 +213,50 @@ final class UserFieldManager implements IErrorable
 		$map = [
 			'DISABLE_LOCAL_EDIT' => false,
 			'DISABLE_CREATING_FILE_BY_CLOUD' => false,
+			'USE_TOGGLE_VIEW' => false,
 		];
 
 		foreach (array_keys($map) as $key)
 		{
-			$map[$key] = (isset($params[$key])? $params[$key] : false);
+			$map[$key] = isset($params[$key]) && ($params[$key] === "Y" || $params[$key] === true);
 		}
 
+		$upperParams = array_change_key_case($params, CASE_UPPER);
 		$APPLICATION->includeComponent(
 			'bitrix:disk.uf.file',
-			$this->getShowTemplate($params, ['mobile', 'mail']),
+			$upperParams['MOBILE'] == 'Y' ? 'mobile' : '.default',
 			[
 				'EDIT' => 'Y',
 				'PARAMS' => $params,
 				'RESULT' => $result,
 				'DISABLE_LOCAL_EDIT' => $map['DISABLE_LOCAL_EDIT'],
 				'DISABLE_CREATING_FILE_BY_CLOUD' => $map['DISABLE_CREATING_FILE_BY_CLOUD'],
+				'TEMPLATE_VIEW' => FileUserType::getTemplateType($params)
+			],
+			$component,
+			['HIDE_ICONS' => 'Y']
+		);
+	}
+
+	/**
+	 * Shows component disk.uf.file (show inline mode).
+	 *
+	 * @param array &$params Component parameters.
+	 * @param array &$result Component results.
+	 * @param null $component Component.
+	 * @return void
+	 */
+	public function showInlineView(&$params, &$result, $component = null)
+	{
+		global $APPLICATION;
+		$upperParams = array_change_key_case($params, CASE_UPPER);
+
+		$APPLICATION->includeComponent(
+			'bitrix:disk.uf.file',
+			$upperParams['MOBILE'] == 'Y' ? 'mobile' : '.default',
+			[
+				'PARAMS' => $params,
+				'RESULT' => $result,
 			],
 			$component,
 			['HIDE_ICONS' => 'Y']
@@ -250,7 +282,7 @@ final class UserFieldManager implements IErrorable
 				'PARAMS' => $params,
 				'RESULT' => $result,
 				'DISABLE_LOCAL_EDIT' => (isset($params['DISABLE_LOCAL_EDIT'])? $params['DISABLE_LOCAL_EDIT'] : false),
-				'USE_TOGGLE_VIEW' => (isset($params['USE_TOGGLE_VIEW']) ? $params['USE_TOGGLE_VIEW'] : 'N'),
+				'USE_TOGGLE_VIEW' => (isset($params['USE_TOGGLE_VIEW']) ? $params['USE_TOGGLE_VIEW'] : false),
 			],
 			$component,
 			['HIDE_ICONS' => 'Y']
@@ -282,60 +314,6 @@ final class UserFieldManager implements IErrorable
 		);
 	}
 
-	/**
-	 * @param array $params
-	 */
-	public static function setTemplateType(array $params = [])
-	{
-		if (
-			!empty($params['ENTITY_ID'])
-			&& !empty($params['ENTITY_VALUE_ID'])
-			&& isset($params['VALUE'])
-		)
-		{
-			AttachedViewTypeTable::set([
-				'ENTITY_TYPE' => $params['ENTITY_ID'],
-				'ENTITY_ID' => $params['ENTITY_VALUE_ID'],
-				'VALUE' => $params['VALUE'],
-			]);
-		}
-	}
-
-	/**
-	 * @param array $params
-	 * @return string
-	 */
-	private static function getTemplateType($params)
-	{
-		$result = '';
-
-		if (isset($params['GRID']) && $params['GRID'] == 'Y')
-		{
-			$result = 'grid';
-		}
-
-		if (
-			isset($params['GRID'])
-			&& !empty($params['ARUSERFIELD'])
-			&& !empty($params['ARUSERFIELD']['ENTITY_ID'])
-			&& !empty($params['ARUSERFIELD']['ENTITY_VALUE_ID'])
-		)
-		{
-			$res = AttachedViewTypeTable::getList([
-				'filter' => [
-					'=ENTITY_TYPE' => $params['ARUSERFIELD']['ENTITY_ID'],
-					'=ENTITY_ID' => $params['ARUSERFIELD']['ENTITY_VALUE_ID']
-				],
-				'select' => [ 'VALUE' ]
-			]);
-			if ($paramFields = $res->fetch())
-			{
-				$result = $paramFields['VALUE'];
-			}
-		}
-
-		return $result;
-	}
 
 	/**
 	 * @param array $params
@@ -345,7 +323,7 @@ final class UserFieldManager implements IErrorable
 	private function getShowTemplate($params, $possibleTemplates)
 	{
 		$upperParams = array_change_key_case($params, CASE_UPPER);
-		$templateType = self::getTemplateType($upperParams);
+		$templateType = FileUserType::getTemplateType($upperParams);
 
 		if ($upperParams['MOBILE'] == 'Y')
 		{

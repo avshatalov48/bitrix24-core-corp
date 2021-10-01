@@ -904,7 +904,7 @@ class ItemDataProvider extends EntityDataProvider
 		{
 			if (!empty($requestFilter[$fieldName]))
 			{
-				$filter['='.$fieldName] = (int)$requestFilter[$fieldName];
+				$filter['='.$fieldName] = $requestFilter[$fieldName];
 			}
 		}
 

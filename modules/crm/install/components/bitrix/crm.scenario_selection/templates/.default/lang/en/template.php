@@ -12,6 +12,7 @@ $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION"] = "Ideal for autom
 $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_1"] = "Online store orders are only saved to CRM orders, not added to deals";
 $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_2"] = "Deals are created as separate entities (e.g. to provide additional services)";
 $MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_3"] = "Some of the sales reps handle deals, while other sales reps process online store orders";
+$MESS["CRM_SCENARIO_SELECTION_SAVE_ERROR"] = "Error changing mode";
 $MESS["CRM_SCENARIO_SELECTION_SELECT"] = "Select";
 $MESS["CRM_SCENARIO_SELECTION_SELECTED"] = "Selected";
 $MESS["CRM_SCENARIO_SELECTION_TITLE"] = "Order handling mode";

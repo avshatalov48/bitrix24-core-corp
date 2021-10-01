@@ -1,7 +1,9 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Loader;
 
 class EntityController extends Controller
 {
@@ -9,18 +11,138 @@ class EntityController extends Controller
 	{
 		return \CCrmOwnerType::Undefined;
 	}
+
+	/**
+	 * Register create event in a timeline
+	 *
+	 * @param $entityID
+	 * @param array $params
+	 */
 	public function onCreate($entityID, array $params)
 	{
 	}
+
+	/**
+	 * Register update event in a timeline
+	 *
+	 * @param $entityID
+	 * @param array $params
+	 */
 	public function onModify($entityID, array $params)
 	{
 	}
+
+	/**
+	 * Register delete event in a timeline
+	 *
+	 * @param $entityID
+	 * @param array $params
+	 */
 	public function onDelete($entityID, array $params)
 	{
 	}
+
+	/**
+	 * Register restore event in a timeline
+	 *
+	 * @param $entityID
+	 * @param array $params
+	 */
 	public function onRestore($entityID, array $params)
 	{
 	}
+
+	/**
+	 * Register conversion event in a timeline of a source entity
+	 * (This entity is a source)
+	 *
+	 * @param $ownerID - id of a source entity, which this controller is associated with
+	 * @param array $params
+	 */
+	public function onConvert($ownerID, array $params)
+	{
+	}
+
+	/**
+	 * This method was create in order to reuse the code without copy-paste
+	 *
+	 * @param $ownerID
+	 * @param array $params
+	 *
+	 * @throws ArgumentException
+	 */
+	protected function onConvertImplementation($ownerID, array $params): void
+	{
+		$ownerID = (int)$ownerID;
+		if ($ownerID <= 0)
+		{
+			throw new ArgumentException('Owner ID must be greater than zero.', 'ownerID');
+		}
+
+		$entities = isset($params['ENTITIES']) && is_array($params['ENTITIES']) ? $params['ENTITIES'] : [];
+		if (empty($entities))
+		{
+			return;
+		}
+
+		$settings = ['ENTITIES' => []];
+		foreach ($entities as $entityTypeName => $entityID)
+		{
+			$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
+			if ($entityTypeID === \CCrmOwnerType::Undefined)
+			{
+				continue;
+			}
+
+			$settings['ENTITIES'][] = ['ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID];
+		}
+
+		$authorID = \CCrmSecurityHelper::GetCurrentUserID();
+		if ($authorID <= 0)
+		{
+			$authorID = static::getDefaultAuthorId();
+		}
+
+		$historyEntryID = ConversionEntry::create(
+			[
+				'ENTITY_TYPE_ID' => $this->getEntityTypeID(),
+				'ENTITY_ID' => $ownerID,
+				'AUTHOR_ID' => $authorID,
+				'SETTINGS' => $settings,
+			]
+		);
+
+		$enableHistoryPush = $historyEntryID > 0;
+		if ($enableHistoryPush && Loader::includeModule('pull'))
+		{
+			$pushParams = [];
+			$historyFields = TimelineEntry::getByID($historyEntryID);
+			if (is_array($historyFields))
+			{
+				$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
+					$historyFields,
+					['ENABLE_USER_INFO' => true]
+				);
+			}
+
+			$tag = TimelineEntry::prepareEntityPushTag($this->getEntityTypeID(), $ownerID);
+			$pushParams['TAG'] = $tag;
+			\CPullWatch::AddToStack(
+				$tag,
+				[
+					'module_id' => 'crm',
+					'command' => 'timeline_activity_add',
+					'params' => $pushParams,
+				]
+			);
+		}
+	}
+
+	/**
+	 * Returns associative array of supported pull commands
+	 *
+	 * @return string[]
+	 */
 	public function getSupportedPullCommands()
 	{
 		return array();
@@ -147,20 +269,8 @@ class EntityController extends Controller
 		}
 	}
 
-	protected static function getDefaultAuthorId()
+	protected function getItemIdentifier(int $entityId): ItemIdentifier
 	{
-		$user = \CUser::GetList(
-			'ID',
-			'ASC',
-			['GROUPS_ID' => [1], 'ACTIVE' => 'Y'],
-			['FIELDS' => ['ID'], 'NAV_PARAMS' => ['nTopCount' => 1]]
-		)->fetch();
-
-		if (is_array($user))
-		{
-			return intval($user['ID']);
-		}
-
-		return 0;
+		return new ItemIdentifier($this->getEntityTypeID(), $entityId);
 	}
 }

@@ -321,7 +321,7 @@ export class StandartItem
 			itemInfo.type = "standard";
 			this.isCurrentPageInLeftMenu = true;
 			this.parent.generateItemHtml(itemInfo);
-			this.parent.saveItemsSort({analyticsLabel: 'standartItem'});
+			this.parent.saveItemsSort({type: 'standard'});
 
 			return;
 		}
@@ -352,7 +352,7 @@ export class StandartItem
 						itemInfo.type = "standard";
 						this.isCurrentPageInLeftMenu = true;
 						this.parent.generateItemHtml(itemInfo);
-						this.parent.saveItemsSort({analyticsLabel: 'standartItem'});
+						this.parent.saveItemsSort({type: 'standard'});
 
 					}, this)
 				})).animate();
@@ -371,7 +371,7 @@ export class StandartItem
 		{
 			BX.remove(BX(itemId));
 			this.isCurrentPageInLeftMenu = false;
-			this.parent.saveItemsSort({analyticsLabel: 'standartItem'});
+			this.parent.saveItemsSort({type: 'standard'});
 
 			return;
 		}
@@ -390,7 +390,7 @@ export class StandartItem
 			{
 				BX.remove(BX(itemId));
 				this.parent.isCurrentPageInLeftMenu = false;
-				this.parent.saveItemsSort({analyticsLabel: 'standartItem'});
+				this.parent.saveItemsSort({type: 'standard'});
 			}, this)
 		})).animate();
 	}

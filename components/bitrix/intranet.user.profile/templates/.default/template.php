@@ -662,7 +662,7 @@ if ($arResult["adminRightsRestricted"])
 	$moveRightsConfirmText = Loc::getMessage("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM");
 	$moveRightsConfirmText.= "<br/><br/><span style='color: #acb1b7'>".Loc::getMessage("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM_PROMO", array(
 		"#LINK_START#" => "<a href=\"javascript:void(0)\" 
-			onclick=\"B24.licenseInfoPopup.show('adminQuantityRestriction', '".Loc::getMessage("INTRANET_USER_PROFILE_RIGHTS_RESTR_TITLE")."', BX.clone(BX('adminRestrContent')))\"	
+			onclick=\"top.BX.UI.InfoHelper.show('limit_admin_quantity_restriction')\"	
 		>",
 		"#LINK_END#" => "</a>"
 	))."</span>";

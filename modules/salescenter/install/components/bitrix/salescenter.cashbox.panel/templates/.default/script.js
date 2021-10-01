@@ -214,7 +214,15 @@
 					}
 				};
 
-				if(!this.itemSelected && !this.data.showMenu)
+				if (
+					this.data.hasOwnProperty('paySystem')
+					&& this.data.paySystem
+					&& this.data.menuItems.length === 1
+				)
+				{
+					BX.SidePanel.Instance.open(this.data.menuItems[0].LINK, sliderOptions);
+				}
+				else if(!this.itemSelected && !this.data.showMenu)
 				{
 					BX.SidePanel.Instance.open(this.data.connectPath, sliderOptions);
 				}

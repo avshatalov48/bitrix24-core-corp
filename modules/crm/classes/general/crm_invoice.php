@@ -1369,7 +1369,7 @@ class CAllCrmInvoice
 				}
 				else
 				{
-					$productRow["PRODUCT_XML_ID"] = "CRM-".randString(8);
+					$productRow["PRODUCT_XML_ID"] = "CRM-".\Bitrix\Main\Security\Random::getString(8, true);
 					$ri = new \Bitrix\Main\Type\RandomSequence($productRow["PRODUCT_XML_ID"]);
 					$productRow["PRODUCT_ID"] = $ri->rand(1000000, 9999999);
 					$productRow['CATALOG_XML_ID'] = '';
@@ -2180,10 +2180,15 @@ class CAllCrmInvoice
 
 		$result = false;
 
-		$saleUserId = intval(CSaleUser::GetAnonymousUserID());
+		$saleUserId = CSaleUser::GetAnonymousUserID();
 		$dbRes = Compatible\BasketHelper::getList(
 			array(),
-			array('PRODUCT_ID' => $productID,'>ORDER_ID' => 0, 'USER_ID' => $saleUserId),
+			array(
+				'PRODUCT_ID' => $productID,
+				'>ORDER_ID' => 0,
+				'USER_ID' => $saleUserId,
+				'=MODULE' => 'catalog',
+			),
 			false,
 			array('nTopCount' => 1),
 			array('ID')

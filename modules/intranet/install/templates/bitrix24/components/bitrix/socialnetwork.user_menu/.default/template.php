@@ -1,8 +1,10 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\Name;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 use Bitrix\Tasks\Util\User;
 
 CUtil::InitJSCore(array("popup"));
@@ -180,32 +182,37 @@ if (
 	));
 }
 
+$userId = $arResult['User']['ID'];
+
 if (
-	is_array($arResult["CanView"])
-	&& !!$arResult["CanView"]['tasks']
-	&& checkEffectiveRights($arResult["User"]["ID"])
+	is_array($arResult['CanView'])
+	&& $arResult['CanView']['tasks']
+	&& checkEffectiveRights($userId)
 )
 {
-	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['tasks']);
-	$uri->addParams(array("IFRAME" => "Y"));
+	$uri = new Uri($arResult['Urls']['tasks']);
+	$uri->addParams(['IFRAME' => 'Y']);
 	$redirect = $uri->getUri();
+
 	\CModule::includeModule('tasks');
 
 	$efficiencyUrl = (
 		$arResult['isExtranetSite']
-			? SITE_DIR."contacts/personal/user/".$arResult["User"]["ID"]."/tasks/effective/"
-			: SITE_DIR."company/personal/user/".$arResult["User"]["ID"]."/tasks/effective/"
+			? SITE_DIR . "contacts/personal/user/{$userId}/tasks/effective/"
+			: SITE_DIR . "company/personal/user/{$userId}/tasks/effective/"
 	);
-	$items['effective_counter'] = array(
-		"TEXT" => GetMessage("SONET_UM_EFFICIENCY"),
-		"ON_CLICK" => "BX.SidePanel.Instance.open('".$efficiencyUrl."', { width: 1000 })",
-		"COUNTER" => Counter::getInstance($arResult["User"]["ID"])->get(Name::EFFECTIVE),
-		'MAX_COUNTER_SIZE'=>100,
+	$efficiencyCounter = (KpiLimit::isLimitExceeded() ? 0 : Counter::getInstance($userId)->get(Name::EFFECTIVE));
+
+	$items['effective_counter'] = [
+		'TEXT' => GetMessage('SONET_UM_EFFICIENCY'),
+		'ON_CLICK' => "BX.SidePanel.Instance.open('{$efficiencyUrl}', { width: 1000 })",
+		'COUNTER' => $efficiencyCounter,
+		'MAX_COUNTER_SIZE' => 100,
 		'COUNTER_ID' => 'effective_counter',
 		'ID' => 'effective_counter',
 		'CLASS' => 'effective_counter',
-		'IS_ACTIVE' => (mb_strpos($requestUri, $efficiencyUrl) === 0)
-	);
+		'IS_ACTIVE' => (mb_strpos($requestUri, $efficiencyUrl) === 0),
+	];
 }
 
 if (

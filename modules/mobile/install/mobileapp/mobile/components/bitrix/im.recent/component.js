@@ -2548,6 +2548,16 @@ RecentList.pull.eventExecute = function(data)
 			}));
 		}
 	}
+	else if (command == 'dialogChange')
+	{
+		if (
+			this.base.isRecent()
+			&& PageManager.getNavigator().isActiveTab()
+		)
+		{
+			this.base.openDialog(params.dialogId);
+		}
+	}
 	else if (command == 'chatRename')
 	{
 		this.base.updateElement('chat'+params.chatId, {
@@ -2614,43 +2624,6 @@ RecentList.pull.eventExecute = function(data)
 
 		this.base.updateElement('chat'+params.chatId, params);
 		this.search.updateElement('chat'+params.chatId, params);
-	}
-	else if (command == 'updateUser' || command == 'updateBot')
-	{
-		if (this.base.isOpenlinesRecent())
-		{
-			return false;
-		}
-		this.base.updateElement(params.user.id, this.getFormattedElement({
-			id: params.user.id,
-			user: params.user,
-		}));
-		this.search.updateElement(params.user.id, this.getFormattedElement({
-			id: params.user.id,
-			user: params.user,
-		}));
-	}
-	else if (command == 'userInvite')
-	{
-		if (this.base.isOpenlinesRecent())
-		{
-			return false;
-		}
-		let index = this.base.list.findIndex((listElement) => listElement && listElement.id == params.userId);
-		if (index == -1)
-		{
-			let element = ChatDataConverter.getElementByEntity('user', params.user);
-			element.invited = params.invited;
-
-			this.base.setElement(params.userId, element);
-		}
-		else
-		{
-			this.base.updateElement(params.userId, {
-				user: params.user,
-				invited: params.invited,
-			});
-		}
 	}
 	else if (command == 'chatMuteNotify')
 	{
@@ -2748,6 +2721,54 @@ RecentList.pull.eventExecute = function(data)
 			this.search.deleteElement('chat'+params.chatId);
 		}
 	}
+	else if (
+		command == 'userUpdate'
+		|| command == 'updateUser'
+		|| command == 'botUpdate'
+		|| command == 'updateBot'
+	)
+	{
+		if (this.base.isOpenlinesRecent())
+		{
+			return false;
+		}
+		this.base.updateElement(params.user.id, this.getFormattedElement({
+			id: params.user.id,
+			user: params.user,
+		}));
+		this.search.updateElement(params.user.id, this.getFormattedElement({
+			id: params.user.id,
+			user: params.user,
+		}));
+	}
+	else if (command == 'userInvite')
+	{
+		if (this.base.isOpenlinesRecent())
+		{
+			return false;
+		}
+		let index = this.base.list.findIndex((listElement) => listElement && listElement.id == params.userId);
+		if (index == -1)
+		{
+			let element = ChatDataConverter.getElementByEntity('user', params.user);
+			element.invited = params.invited;
+
+			this.base.setElement(params.userId, element);
+		}
+		else
+		{
+			this.base.updateElement(params.userId, {
+				user: params.user,
+				invited: params.invited,
+			});
+		}
+	}
+	else if (command == 'generalChatId')
+	{
+		this.base.generalChatId = params.id;
+		ChatDataConverter.generalChatId = this.base.generalChatId;
+		BX.componentParameters.set('IM_GENERAL_CHAT_ID', params.id)
+	}
 	else if (this.base.isRecent())
 	{
 		if (command == 'notifyAdd')
@@ -2818,12 +2839,6 @@ RecentList.pull.eventExecute = function(data)
 				counter: params.counter
 			});
 		}
-	}
-	else if (command == 'generalChatId')
-	{
-		this.base.generalChatId = params.id;
-		ChatDataConverter.generalChatId = this.base.generalChatId;
-		BX.componentParameters.set('IM_GENERAL_CHAT_ID', params.id)
 	}
 };
 

@@ -11,6 +11,22 @@ use Bitrix\Crm\Integrity\DuplicateStatus;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class DuplicateIndexTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DuplicateIndex_Query query()
+ * @method static EO_DuplicateIndex_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DuplicateIndex_Result getById($id)
+ * @method static EO_DuplicateIndex_Result getList(array $parameters = array())
+ * @method static EO_DuplicateIndex_Entity getEntity()
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateIndex createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateIndex_Collection createCollection()
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateIndex wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateIndex_Collection wakeUpCollection($rows)
+ */
 class DuplicateIndexTable extends Entity\DataManager
 {
 	public static function getTableName()

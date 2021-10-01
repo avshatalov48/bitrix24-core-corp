@@ -42,15 +42,13 @@ class StageHistory extends Controller
 
 		return new Page(
 			'items',
-
 			$dataSource::getListFilteredByPermissions([
 				'order' => $this->prepareOrder($order, $fields),
 				'filter' => $preparedFilter,
 				'select' => $this->prepareSelect($select, $fields),
 				'offset' => $pageNavigation->getOffset(),
 				'limit' => $pageNavigation->getLimit(),
-			])
-			,
+			]),
 			function() use ($preparedFilter, $dataSource) {
 				return $dataSource::getItemsCountFilteredByPermissions($preparedFilter);
 			}
@@ -101,13 +99,14 @@ class StageHistory extends Controller
 					'L', //less (<)
 					'IN', // IN (@)
 					'E' // no operation
-				]
+				],
+				true
 			)
 			)
 			{
 				continue;
 			}
-			if ($filterCondition['OPERATION'] == 'E') // if no operation, change to strong equality
+			if ($filterCondition['OPERATION'] === 'E') // if no operation, change to strong equality
 			{
 				$filterKey = '=' . $filterKey;
 			}

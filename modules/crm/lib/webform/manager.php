@@ -69,7 +69,7 @@ class Manager
 	{
 		return ($formId && ($landingOnly || Crm\Settings\WebFormSettings::getCurrent()->isNewEditorEnabled()))
 			? Internals\LandingTable::getLandingEditUrl($formId)
-			: str_replace('#id#', $formId, Option::get('crm', 'path_to_webform_edit', '/crm/webform/edit/#id#/'))
+			: str_replace('#form_id#', $formId, Option::get('crm', 'path_to_webform_edit', '/crm/webform/edit/#form_id#/'))
 		;
 	}
 

@@ -237,6 +237,8 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			'REGISTER_SONET_EVENT' => true,
 		];
 
+		Crm\Activity\Provider\Email::compressActivity($activityFields);
+
 		$id = CCrmActivity::Add($activityFields, false, false, $addOptions);
 		if (!$id)
 		{

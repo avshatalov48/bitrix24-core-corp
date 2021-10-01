@@ -186,5 +186,9 @@ $MESS["VI_PHONE_DESCRIPTION_LINK"] = "Привязан до #VERIFIED_UNTIL#";
 $MESS["VI_PHONE_DESCRIPTION_LINK_UNVERIFIED"] = "Номер не подтвержден";
 $MESS["VI_PHONE_DESCRIPTION_RENT"] = "Оплачен до #PAID_UNTIL#, месячный платеж #PRICE#";
 $MESS["VI_PHONE_DESCRIPTION_RENT_TO_DELETE"] = "Запланирован к отключению #DISCONNECT_DATE#. Автопродление отключено";
+$MESS["VI_PHONE_DESCRIPTION_RENT_DESCRIPTION"] = "Месячный платеж #PRICE#";
+$MESS["VI_PHONE_DESCRIPTION_RENT_STATUS"] = "Оплачен до #PAID_UNTIL#";
+$MESS["VI_PHONE_DESCRIPTION_RENT_TO_DELETE_DESCRIPTION"] = "Автопродление отключено";
+$MESS["VI_PHONE_DESCRIPTION_RENT_TO_DELETE_STATUS"] = "Запланирован к отключению #DISCONNECT_DATE#";
 
 ?>

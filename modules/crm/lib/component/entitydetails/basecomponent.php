@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Component\EntityDetails;
 
 use Bitrix\Crm;
 use Bitrix\Crm\Component\ComponentError;
+use Bitrix\Crm\Conversion;
 use Bitrix\Crm\Entity\Traits\VisibilityConfig;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Security\EntityAuthorization;
@@ -32,8 +33,10 @@ abstract class BaseComponent extends Crm\Component\Base
 	protected $entityID = 0;
 	/** @var int */
 	protected $mode = ComponentMode::UNDEFINED;
-	/** @var Crm\Conversion\EntityConversionWizard|null */
+	/** @var Conversion\EntityConversionWizard|null */
 	protected $conversionWizard;
+	/** @var Crm\ItemIdentifier|null */
+	protected $conversionSource;
 
 	//---
 	/** @var array|null */
@@ -660,9 +663,9 @@ abstract class BaseComponent extends Crm\Component\Base
 		return true;
 	}
 
-	protected function getConversionWizard(): ?Crm\Conversion\EntityConversionWizard
+	protected function getConversionWizard(): ?Conversion\EntityConversionWizard
 	{
-		if (!$this->conversionWizard)
+		if (is_null($this->conversionWizard))
 		{
 			$this->conversionWizard = $this->initializeConversionWizard();
 		}
@@ -670,7 +673,45 @@ abstract class BaseComponent extends Crm\Component\Base
 		return $this->conversionWizard;
 	}
 
-	protected function initializeConversionWizard(): ?Crm\Conversion\EntityConversionWizard
+	protected function getConversionSource(): ?Crm\ItemIdentifier
+	{
+		if (is_null($this->conversionSource))
+		{
+			$this->initializeConversionWizard();
+		}
+
+		return $this->conversionSource;
+	}
+
+	protected function initializeConversionWizard(): ?Conversion\EntityConversionWizard
+	{
+		if (!is_null($this->conversionSource))
+		{
+			$wizardClass = Conversion\ConversionManager::getWizardClass($this->conversionSource->getEntityTypeId());
+			if ($wizardClass)
+			{
+				$wizard = $wizardClass::load($this->conversionSource->getEntityId());
+				if (!is_null($wizard))
+				{
+					$wizard->setSliderEnabled(true);
+
+					return $wizard;
+				}
+			}
+		}
+
+		$wizard = $this->initializeConversionWizardFromRequest($this->request);
+		if (!is_null($wizard))
+		{
+			$this->conversionSource = new Crm\ItemIdentifier($wizard->getEntityTypeID(), $wizard->getEntityID());
+
+			$wizard->setSliderEnabled(true);
+		}
+
+		return $wizard;
+	}
+
+	protected function initializeConversionWizardFromRequest(Main\Request $request): ?Conversion\EntityConversionWizard
 	{
 		return null;
 	}

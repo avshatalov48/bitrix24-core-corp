@@ -186,7 +186,6 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 									{
 										?> src="<?=$file["INLINE"]["src"] ?>"<?
 									}
-									?> data-src="<?=$file["BASIC"]["src"] ?>"<?
 									?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
                                     ?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
 									?> border="0"<?
@@ -222,7 +221,6 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 									{
 										?> style="background-image: url('<?=$file["INLINE"]["src"] ?>')"<?
 									}
-									?> data-src="<?=$file["BASIC"]["src"] ?>"<?
 									?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
                                     ?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
 									?> border="0"<?
@@ -263,7 +261,6 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 							?> class="disk-ui-file-thumbnails-grid-img"<?
 							?> id="<?=$id?>"<?
 							?> src="<?=\Bitrix\Disk\Ui\LazyLoad::getBase64Stub()?>"<?
-							?> data-src="<?=$file["BASIC"]["src"] ?>"<?
 							?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
 							?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
 							?> border="0"<?
@@ -286,7 +283,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 			</div>
 			<?
 
-			if ($arParams['USE_TOGGLE_VIEW'] == 'Y')
+			if ($arParams['USE_TOGGLE_VIEW'])
 			{
 				?>
 				<a href="javascript:void(0);" class="disk-uf-file-switch-control" data-bx-view-type="gallery"><?=Loc::getMessage('DISK_UF_FILE_SHOW_GALLERY')?></a>
@@ -386,8 +383,8 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					}
 					?><span class="feed-con-file-changes-link feed-con-file-changes-link-more" onclick="return DiskActionFileMenu('<?= $file['ID'] ?>', this, BX.Disk.Files['<?= $file['ID'] ?>']); return false;"><?= GetMessage('WDUF_MORE_ACTIONS') ?></span>
 				</span>
-			</div><?      
-		} 
+			</div><?
+		}
 		foreach($arResult['DELETED_FILES'] as $file)
 		{
 			?><div class="<?=$className?>">

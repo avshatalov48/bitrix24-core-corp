@@ -87,7 +87,7 @@ class Catalog
 			{
 				$basketItem->setName($item['NAME']);
 			}
-			if ($item['PRICE'])
+
 			{
 				$basketItem->setPrice($item['PRICE']);
 				$basketItem->setBasePrice($item['PRICE']);

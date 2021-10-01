@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Cashbox;
 
 /**
@@ -40,6 +41,15 @@ class ScenarioSelection extends CBitrixComponent implements Bitrix\Main\Engine\C
 	{
 		Main\Loader::includeModule('sale');
 		Main\Loader::includeModule('crm');
+
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		if (!$userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		{
+			return [
+				'success' => false,
+				'error' => Loc::getMessage('CRM_SCENARIO_SELECTION_NOT_ENOUGH_PERMISSIONS'),
+			];
+		}
 
 		$selectedScenario = $params['selectedScenario'];
 
@@ -97,6 +107,8 @@ class ScenarioSelection extends CBitrixComponent implements Bitrix\Main\Engine\C
 		{
 			$GLOBALS['CACHE_MANAGER']->ClearByTag('bitrix24_left_menu');
 		}
+
+		return ['success' => true];
 	}
 
 	/**

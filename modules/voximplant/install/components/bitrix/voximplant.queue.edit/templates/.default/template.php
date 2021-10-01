@@ -58,7 +58,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 						<? endforeach; ?>
 					</select>
 					<span data-hint-html data-hint="<?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP"))?><br><br><?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP_2"))?><br><i><?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP_ASTERISK_3"))?></i>"></span>
-					<? if (!CVoxImplantAccount::IsPro() || CVoxImplantAccount::IsDemo()): ?>
+					<? if (!\Bitrix\Voximplant\Limits::isQueueAllAllowed() || CVoxImplantAccount::IsDemo()): ?>
 						<div class="tel-lock-holder-select" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
 							<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_call_to_all')"
 								 class="tel-lock tel-lock-half <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>">
@@ -95,13 +95,13 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 						<option value="<?= CVoxImplantIncoming::RULE_QUEUE ?>"<?= (CVoxImplantIncoming::RULE_QUEUE == $arResult["ITEM"]["NO_ANSWER_RULE"] ? " selected" : "") ?>><?= GetMessage("VI_CONFIG_EDIT_NO_ANSWER_ACTION_QUEUE") ?></option>
 						<option value="<?= CVoxImplantIncoming::RULE_NEXT_QUEUE ?>"
 							<?= (CVoxImplantIncoming::RULE_NEXT_QUEUE == $arResult["ITEM"]["NO_ANSWER_RULE"] ? " selected" : "") ?>
-							<?= (CVoxImplantAccount::IsPro() ? '' : 'style="color: #636363;"') ?>
+							<?= (\Bitrix\Voximplant\Limits::isRedirectToQueueAllowed() ? '' : 'style="color: #636363;"') ?>
 						>
 							<?= GetMessage("VI_CONFIG_EDIT_NO_ANSWER_ACTION_7") ?>
 						</option>
 						<option value="<?= CVoxImplantIncoming::RULE_HUNGUP ?>"<?= (CVoxImplantIncoming::RULE_HUNGUP == $arResult["ITEM"]["NO_ANSWER_RULE"] ? " selected" : "") ?>><?= GetMessage("VI_CONFIG_EDIT_NO_ANSWER_ACTION_4") ?></option>
 					</select>
-					<? if (!CVoxImplantAccount::IsPro() || CVoxImplantAccount::IsDemo()): ?>
+					<? if (!\Bitrix\Voximplant\Limits::isRedirectToQueueAllowed() || CVoxImplantAccount::IsDemo()): ?>
 						<div class="tel-lock-holder-select" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
 							<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_missed_call_forward')"
 								 class="tel-lock tel-lock-half <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
@@ -141,7 +141,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 				<? if (!\Bitrix\Voximplant\Limits::canInterceptCall() || CVoxImplantAccount::IsDemo()): ?>
 					<div class="tel-lock-holder-select" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
 						<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_intercept')"
-							 class="tel-lock tel-lock-half <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
+							 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 					</div>
 				<? endif; ?>
 			</div>
@@ -184,7 +184,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 </script>
 
 <script type="text/javascript">
-	<?if (!CVoxImplantAccount::IsPro()):?>
+	<?if (!\Bitrix\Voximplant\Limits::isQueueAllAllowed()):?>
 	var queueType = BX('QUEUE_TYPE');
 	for (var i = 0; i < queueType.options.length; i++)
 	{
@@ -196,7 +196,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 	<?endif;?>
 	BX.bind(BX('QUEUE_TYPE'), 'change', function (e)
 	{
-		<?if (!CVoxImplantAccount::IsPro()):?>
+		<?if (!\Bitrix\Voximplant\Limits::isQueueAllAllowed()):?>
 		if (this.options[this.selectedIndex].value == '<?=CVoxImplantConfig::QUEUE_TYPE_ALL?>')
 		{
 			BX.UI.InfoHelper.show('limit_contact_center_telephony_call_to_all');
@@ -216,7 +216,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 	});
 </script>
 
-<? if (!CVoxImplantAccount::IsPro()): ?>
+<? if (!\Bitrix\Voximplant\Limits::isRedirectToQueueAllowed()): ?>
 	<script>
 		BX.bind(BX('vi_no_answer_rule'), 'bxchange', function (e)
 		{

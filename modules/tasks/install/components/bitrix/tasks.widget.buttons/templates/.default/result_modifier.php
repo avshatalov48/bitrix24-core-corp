@@ -8,3 +8,4 @@ $arResult['HELPER'] = $helper = new \Bitrix\Tasks\UI\Component\TemplateHelper(nu
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 
 $arResult['JS_DATA']['groups'] = $arResult['GROUPS'];
+$arResult['JS_DATA']['templateSubtaskLimitExceeded'] = $arResult['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'];

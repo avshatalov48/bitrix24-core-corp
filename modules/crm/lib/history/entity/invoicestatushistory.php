@@ -4,6 +4,22 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Crm\History\HistoryEntryType;
 
+/**
+ * Class InvoiceStatusHistoryTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_InvoiceStatusHistory_Query query()
+ * @method static EO_InvoiceStatusHistory_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_InvoiceStatusHistory_Result getById($id)
+ * @method static EO_InvoiceStatusHistory_Result getList(array $parameters = array())
+ * @method static EO_InvoiceStatusHistory_Entity getEntity()
+ * @method static \Bitrix\Crm\History\Entity\EO_InvoiceStatusHistory createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\History\Entity\EO_InvoiceStatusHistory_Collection createCollection()
+ * @method static \Bitrix\Crm\History\Entity\EO_InvoiceStatusHistory wakeUpObject($row)
+ * @method static \Bitrix\Crm\History\Entity\EO_InvoiceStatusHistory_Collection wakeUpCollection($rows)
+ */
 class InvoiceStatusHistoryTable extends Entity\DataManager
 {
 	public static function getTableName()

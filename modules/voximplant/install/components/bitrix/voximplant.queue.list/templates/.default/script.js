@@ -8,6 +8,7 @@
 
 	var defaults = {
 		canCreateGroup: false,
+		maximumGroups: -1,
 		createUrl: ''
 	};
 
@@ -180,7 +181,14 @@
 		}
 		else
 		{
-			BX.UI.InfoHelper.show('limit_contact_center_telephony_groups');
+			if (defaults.maximumGroups == 0)
+			{
+				BX.UI.InfoHelper.show('limit_contact_center_telephony_groups_zero');
+			}
+			else
+			{
+				BX.UI.InfoHelper.show('limit_contact_center_telephony_groups');
+			}
 		}
 	};
 

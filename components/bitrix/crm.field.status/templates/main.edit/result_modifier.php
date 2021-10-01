@@ -89,7 +89,18 @@ else
 	$arResult['block'] = $block;
 	$arResult['fieldNameJs'] = \CUtil::JSEscape($arResult['fieldName']);
 
-	Asset::getInstance()->addJs(
-		'/bitrix/components/bitrix/main.field.enum/templates/main.edit/desktop.js'
-	);
+	/**
+	 * @todo Remove this in the future. Made so that there is no hard dependence on the main
+	 * Need to leave only one script display.bundle.js
+	 */
+	if (defined('\Bitrix\Main\UserField\Types\EnumType::DISPLAY_DIALOG'))
+	{
+		$path = '/bitrix/components/bitrix/main.field.enum/templates/main.edit/dist/display.bundle.js';
+	}
+	else
+	{
+		$path = '/bitrix/components/bitrix/main.field.enum/templates/main.edit/desktop.js';
+	}
+
+	Asset::getInstance()->addJs($path);
 }

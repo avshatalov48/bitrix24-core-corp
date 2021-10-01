@@ -20,7 +20,7 @@ class Error extends \Bitrix\Main\Error
 	 * @param string $method
 	 * @param string|array $params
 	 */
-	public function __construct($message = '', $code = 0, $method = '', $params = Array())
+	public function __construct($message = '', $code = 0, $method = '', $params = [])
 	{
 		parent::__construct($message, $code);
 
@@ -29,14 +29,14 @@ class Error extends \Bitrix\Main\Error
 		$this->params = $params;
 
 		$debugBacktrace = debug_backtrace();
-		Log::write(array(
+		Log::write([
 			'message' => $message,
 			'code' => $code,
 			'params' => $params,
 			'file' => $debugBacktrace[0]['file'],
 			'method' => $method,
 			'line' => $debugBacktrace[0]['line'],
-		));
+		]);
 	}
 
 	/**

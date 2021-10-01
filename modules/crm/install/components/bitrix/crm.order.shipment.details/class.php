@@ -430,6 +430,13 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		}
 		//endregion
 
+		if (Bitrix\Main\Loader::includeModule('pull'))
+		{
+			\CPullWatch::Add($this->userID, 'CRM_ENTITY_ORDER_SHIPMENT');
+			\CPullWatch::Add($this->userID, 'SALE_DELIVERY_SERVICE');
+			\CPullWatch::Add($this->userID, 'SALE_DELIVERY_REQUEST');
+		}
+
 		$this->includeComponentTemplate();
 	}
 	protected function prepareFieldInfos()

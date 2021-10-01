@@ -351,14 +351,14 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 											<option value="<?= $ii ?>"<?= ($ii == $arResult["ITEM"]["CRM_SOURCE"] ? " selected" : "") ?>><?= htmlspecialcharsbx($k) ?></option>
 										<? endforeach; ?>
 									</select>
-									<? if (!CVoxImplantAccount::IsPro() || CVoxImplantAccount::IsDemo()): ?>
+									<? if (!\Bitrix\Voximplant\Limits::canSelectCallSource() || CVoxImplantAccount::IsDemo()): ?>
 										<div class="tel-lock-holder-select"
 											 title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
 											<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_source')"
 												 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 										</div>
 									<? endif; ?>
-									<? if (!CVoxImplantAccount::IsPro()): ?>
+									<? if (!\Bitrix\Voximplant\Limits::canSelectCallSource()): ?>
 										<script type="text/javascript">
 											viCrmSource = BX('vi_crm_source_select').options.selectedIndex;
 											BX.bind(BX('vi_crm_source_select'), 'change', function (e)
@@ -464,7 +464,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 						<label for="vi_vote" class="voximplant-number-settings-label">
 							<?= Loc::getMessage("VI_CONFIG_VOTE") ?>
 						</label>
-						<? if (!CVoxImplantAccount::IsPro() || CVoxImplantAccount::IsDemo()): ?>
+						<? if (!\Bitrix\Voximplant\Limits::canVote() || CVoxImplantAccount::IsDemo()): ?>
 							<div class="tel-lock-holder-title" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
 								<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_customer_rate')"
 									 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
@@ -474,7 +474,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 					<div class="voximplant-number-settings-inner">
 						<div class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_VOTE_TIP") ?></div>
 					</div>
-					<? if (!CVoxImplantAccount::IsPro()): ?>
+					<? if (!\Bitrix\Voximplant\Limits::canVote()): ?>
 						<script type="text/javascript">
 							BX.bind(BX('vi_vote'), 'change', function (e)
 							{

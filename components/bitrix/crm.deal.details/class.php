@@ -1146,6 +1146,15 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 
 		$this->arResult['USER_FIELD_FILE_URL_TEMPLATE'] = $this->getFileUrlTemplate();
 
+		if(Bitrix\Main\Loader::includeModule('pull'))
+		{
+			\CPullWatch::Add($this->userID, 'CRM_ENTITY_ORDER');
+			\CPullWatch::Add($this->userID, 'CRM_ENTITY_ORDER_PAYMENT');
+			\CPullWatch::Add($this->userID, 'CRM_ENTITY_ORDER_SHIPMENT');
+			\CPullWatch::Add($this->userID, 'SALE_DELIVERY_SERVICE');
+			\CPullWatch::Add($this->userID, 'SALE_DELIVERY_REQUEST');
+		}
+
 		$this->includeComponentTemplate();
 	}
 	public function isSearchHistoryEnabled()
@@ -1300,6 +1309,8 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				}
 			}
 		}
+
+		$observersRestriction = Crm\Restriction\RestrictionManager::getObserversRestriction();
 
 		$fakeValue = '';
 		$this->entityFieldInfos = array(
@@ -1530,7 +1541,11 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					'map' => array('data' => 'OBSERVER_IDS'),
 					'infos' => 'OBSERVER_INFOS',
 					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE'],
-					'messages' => array('addObserver' => Loc::getMessage('CRM_DEAL_FIELD_ADD_OBSERVER'))
+					'messages' => array('addObserver' => Loc::getMessage('CRM_DEAL_FIELD_ADD_OBSERVER')),
+					'restriction' => [
+						'isRestricted' => !$observersRestriction->hasPermission(),
+						'action' => $observersRestriction->prepareInfoHelperScript(),
+					],
 				)
 			),
 			array(
@@ -2591,6 +2606,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		//endregion
 
 		$this->entityData['MODE_WITH_ORDERS'] = \CCrmSaleHelper::isWithOrdersMode();
+		$this->entityData['IS_COPY_MODE'] = $this->isCopyMode;
 
 		Tracking\UI\Details::prepareEntityData(
 			\CCrmOwnerType::Deal,
