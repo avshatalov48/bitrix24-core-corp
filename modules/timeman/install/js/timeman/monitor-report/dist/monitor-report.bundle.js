@@ -408,7 +408,7 @@ this.BX = this.BX || {};
         }
       },
       // language=Vue
-      template: "\n\t\t<div class=\"bx-monitor-group-item-wrap\">\n\t\t\t<div\n\t\t\t\t:class=\"[\n            \t\t'bx-monitor-group-item',\n\t\t\t\t\tthis.selected ? 'bx-monitor-group-item-' + this.group + '-selected' : ''\n\t\t\t\t]\"\n\t\t\t\t@mouseenter=\"onIntervalSelected\"\n\t\t\t\t@mouseleave=\"onIntervalUnselected\"\n\t\t\t>\n\t\t\t\t<template \n\t\t\t\t\tv-if=\"\n\t\t\t\t\t\ttype !== EntityType.group \n\t\t\t\t\t\t&& type !== EntityType.absenceShort \n\t\t\t\t\t\t&& type !== EntityType.other\n\t\t\t\t\t\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"bx-monitor-group-item-container\">\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-container\">\n\t\t\t\t\t\t \t<template v-if=\"type === EntityType.absence\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-item-icon bx-monitor-group-item-icon-away\"\n                                    v-bx-hint=\"{\n\t\t\t\t\t\t\t\t\t\ttext: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ABSENCE'), \n\t\t\t\t\t\t\t\t\t\tpopupOptions: hintOptions,\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\tv-if=\"type === EntityType.absence\"\n\t\t\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t\t  'bx-monitor-group-item-title': comment, \n\t\t\t\t\t\t\t\t\t  'bx-monitor-group-item-title-small': !comment \n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<template v-if=\"comment\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title\">{{ comment }}</div>\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-subtitle\">{{ title }}</div>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else-if=\"type === EntityType.custom\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tclass=\"ui-icon ui-icon-common-user bx-monitor-group-item-icon\"\n\t\t\t\t\t\t\t\t\tv-bx-hint=\"{\n\t\t\t\t\t\t\t\t\t\ttext: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CUSTOM_HINT'), \n\t\t\t\t\t\t\t\t\t\tpopupOptions: hintOptions,\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<i/>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title\">\n\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<div v-else class=\"bx-monitor-group-item-title\">\n\t\t\t\t\t\t\t\t<template v-if=\"type !== EntityType.site || readOnly\">\n\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<a \n\t\t\t\t\t\t\t\t\t\t@click=\"onDetailClick\" \n\t\t\t\t\t\t\t\t\t\thref=\"#\" \n\t\t\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-site-title\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<bx-hint v-if=\"hint\" :text=\"hint\" :popupOptions=\"hintOptions\"/>\n\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\tv-if=\"group === EntityGroup.working.value && !readOnly\" \n\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-item-button-comment ui-icon ui-icon-xs\"\n\t\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t  'ui-icon-service-imessage': comment, \n\t\t\t\t\t\t\t\t  'ui-icon-service-light-imessage': !comment \n\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<i \n\t\t\t\t\t\t\t\t\t@click=\"onCommentClick\" \n\t\t\t\t\t\t\t\t\t:style=\"{\n\t\t\t\t\t\t\t\t\t\tbackgroundColor: comment ? '#77c18d' : 'transparent'\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-else-if=\"group === EntityGroup.working.value && readOnly && comment\"\n\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-item-icon bx-monitor-group-item-icon-comment\"\n\t\t\t\t\t\t\t\tv-bx-hint=\"{\n\t\t\t\t\t\t\t\t\ttext: comment,\n\t\t\t\t\t\t\t\t\tpopupOptions: hintOptions,\n\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-time\">\n\t\t\t\t\t\t\t{{ time }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"group === EntityGroup.personal.value && !readOnly\"\n\t\t\t\t\t\t@click=\"removePersonal(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round bx-monitor-group-btn-right\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_TO_WORKING') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"\n\t\t\t\t\t\t\tgroup === EntityGroup.working.value \n\t\t\t\t\t\t\t&& (type !== EntityType.unknown && type !== EntityType.custom) \n\t\t\t\t\t\t\t&& !readOnly\n\t\t\t\t\t\t\"\n\t\t\t\t\t\t@click=\"addPersonal(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round bx-monitor-group-btn-right\" \t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_TO_PERSONAL') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"\n\t\t\t\t\t\t\ttype === EntityType.custom\n\t\t\t\t\t\t\t&& !readOnly\n\t\t\t\t\t\t\"\n\t\t\t\t\t\t@click=\"removeEntityByPrivateCode(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-danger-light ui-btn-round bx-monitor-group-btn-right\" \t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_REMOVE') }}\n\t\t\t\t\t</button>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-monitor-group-item-container\">\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-container\">\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-full\">\n\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<bx-hint v-if=\"hint\" :text=\"hint\" :popupOptions=\"hintOptions\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-menu\">\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-time\">\n\t\t\t\t\t\t\t\t{{ time }} / {{ allowedTime }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
+      template: "\n\t\t<div class=\"bx-monitor-group-item-wrap\">\n\t\t\t<div\n\t\t\t\t:class=\"[\n            \t\t'bx-monitor-group-item',\n\t\t\t\t\tthis.selected ? 'bx-monitor-group-item-' + this.group + '-selected' : ''\n\t\t\t\t]\"\n\t\t\t\t@mouseenter=\"onIntervalSelected\"\n\t\t\t\t@mouseleave=\"onIntervalUnselected\"\n\t\t\t>\n\t\t\t\t<template\n\t\t\t\t\tv-if=\"\n\t\t\t\t\t\ttype !== EntityType.group\n\t\t\t\t\t\t&& type !== EntityType.absenceShort\n\t\t\t\t\t\t&& type !== EntityType.other\n\t\t\t\t\t\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"bx-monitor-group-item-container\">\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-container\">\n\t\t\t\t\t\t \t<template v-if=\"type === EntityType.absence\">\n\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-item-icon bx-monitor-group-item-icon-away\"\n\t\t\t\t\t\t\t\t\tv-bx-hint=\"{\n\t\t\t\t\t\t\t\t\t\ttext: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ABSENCE'),\n\t\t\t\t\t\t\t\t\t\tpopupOptions: {\n\t\t\t\t\t\t\t\t\t\t\thintOptions,\n\t\t\t\t\t\t\t\t\t\t\tid: 'bx-vue-hint-monitor-absence-hint',\n\t\t\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\tv-if=\"type === EntityType.absence\"\n\t\t\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t\t  'bx-monitor-group-item-title': comment,\n\t\t\t\t\t\t\t\t\t  'bx-monitor-group-item-title-small': !comment\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<template v-if=\"comment\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title\">{{ comment }}</div>\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-subtitle\">{{ title }}</div>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else-if=\"type === EntityType.custom\">\n\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\tclass=\"ui-icon ui-icon-common-user bx-monitor-group-item-icon\"\n\t\t\t\t\t\t\t\t\tv-bx-hint=\"{\n\t\t\t\t\t\t\t\t\t\ttext: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CUSTOM_HINT'),\n\t\t\t\t\t\t\t\t\t\tpopupOptions: {\n\t\t\t\t\t\t\t\t\t\t\thintOptions,\n\t\t\t\t\t\t\t\t\t\t\tid: 'bx-vue-hint-monitor-custom-hint',\n\t\t\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<i/>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title\">\n\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<div v-else class=\"bx-monitor-group-item-title\">\n\t\t\t\t\t\t\t\t<template v-if=\"type !== EntityType.site || readOnly\">\n\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t\t@click=\"onDetailClick\"\n\t\t\t\t\t\t\t\t\t\thref=\"#\"\n\t\t\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-site-title\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<bx-hint v-if=\"hint\" :text=\"hint\" :popupOptions=\"hintOptions\"/>\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\tv-if=\"group === EntityGroup.working.value && !readOnly\"\n\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-item-button-comment ui-icon ui-icon-xs\"\n\t\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t  'ui-icon-service-imessage': comment,\n\t\t\t\t\t\t\t\t  'ui-icon-service-light-imessage': !comment\n\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<i\n\t\t\t\t\t\t\t\t\t@click=\"onCommentClick\"\n\t\t\t\t\t\t\t\t\t:style=\"{\n\t\t\t\t\t\t\t\t\t\tbackgroundColor: comment ? '#77c18d' : 'transparent'\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-else-if=\"group === EntityGroup.working.value && readOnly && comment\"\n\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-item-icon bx-monitor-group-item-icon-comment\"\n\t\t\t\t\t\t\t\tv-bx-hint=\"{\n\t\t\t\t\t\t\t\t\ttext: comment,\n\t\t\t\t\t\t\t\t\tpopupOptions: {\n\t\t\t\t\t\t\t\t\t\t...hintOptions,\n\t\t\t\t\t\t\t\t\t\tid: 'bx-vue-hint-monitor-comment',\n\t\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-time\">\n\t\t\t\t\t\t\t{{ time }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"group === EntityGroup.personal.value && !readOnly\"\n\t\t\t\t\t\t@click=\"removePersonal(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round bx-monitor-group-btn-right\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_TO_WORKING') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"\n\t\t\t\t\t\t\tgroup === EntityGroup.working.value\n\t\t\t\t\t\t\t&& (type !== EntityType.unknown && type !== EntityType.custom)\n\t\t\t\t\t\t\t&& !readOnly\n\t\t\t\t\t\t\"\n\t\t\t\t\t\t@click=\"addPersonal(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round bx-monitor-group-btn-right\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_TO_PERSONAL') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"\n\t\t\t\t\t\t\ttype === EntityType.custom\n\t\t\t\t\t\t\t&& !readOnly\n\t\t\t\t\t\t\"\n\t\t\t\t\t\t@click=\"removeEntityByPrivateCode(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-danger-light ui-btn-round bx-monitor-group-btn-right\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_REMOVE') }}\n\t\t\t\t\t</button>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-monitor-group-item-container\">\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-container\">\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-full\">\n\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<bx-hint v-if=\"hint\" :text=\"hint\" :popupOptions=\"hintOptions\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-menu\">\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-time\">\n\t\t\t\t\t\t\t\t{{ time }} / {{ allowedTime }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
     });
 
     var Group = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-group', {
@@ -631,10 +631,15 @@ this.BX = this.BX || {};
           if (top.BX.Helper) {
             top.BX.Helper.show('redirect=detail&code=' + code);
           }
+        },
+        showGrantingPermissionLater: function showGrantingPermissionLater() {
+          this.$store.dispatch('monitor/showGrantingPermissionLater').then(function () {
+            BX.SidePanel.Instance.close();
+          });
         }
       },
       // language=Vue
-      template: "\n\t\t<div class=\"bx-timeman-monitor-report-consent\">\n\t\t\t<div class=\"pwt-report-header-container\">\n\t\t\t\t<div class=\"pwt-report-header-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE') }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"pwt-report-content-container pwt-report-consent-content-container\">\n\t\t\t\t<div class=\"pwt-report-content pwt-report-consent-content\">\n\t\t\t\t\t<div class=\"bx-timeman-monitor-report-consent-logo-container\">\n\t\t\t\t\t\t<svg class=\"bx-timeman-monitor-report-consent-logo\"/>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-timeman-monitor-report-consent-description\" v-html=\"$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION')\"/>\n\t\t\t\t\t<div v-if=\"isMac\" class=\"bx-timeman-monitor-report-consent-mac\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC') + ' ' }}\n\t\t\t\t\t\t<span @click=\"openPermissionHelp\" class=\"bx-timeman-monitor-report-consent-link\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC_DETAIL') }}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"pwt-report-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width\" style=\"z-index: 0\">\n\t\t\t\t\t<div class=\"pwt-report-button-panel\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-if=\"isMac\"\n\t\t\t\t\t\t\t@click=\"grantPermissionMac\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-else-if=\"isWindows\"\n\t\t\t\t\t\t\t@click=\"grantPermissionWindows\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+      template: "\n\t\t<div class=\"bx-timeman-monitor-report-consent\">\n\t\t\t<div class=\"pwt-report-header-container\">\n\t\t\t\t<div class=\"pwt-report-header-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE') }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"pwt-report-content-container\">\n\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t<div class=\"bx-timeman-monitor-report-consent-logo-container\">\n\t\t\t\t\t\t<svg class=\"bx-timeman-monitor-report-consent-logo\"/>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-timeman-monitor-report-consent-description\">\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_1') }}</p>\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_2') }}</p>\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_3') }}</p>\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_4') }}</p>\n\t\t\t\t\t\t<p v-if=\"isMac\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC') + ' ' }}\n\t\t\t\t\t\t\t<span @click=\"openPermissionHelp\" class=\"bx-timeman-monitor-report-consent-link\">\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC_DETAIL') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</p>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"pwt-report-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width\" style=\"z-index: 0\">\n\t\t\t\t\t<div class=\"pwt-report-button-panel\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-if=\"isMac\"\n\t\t\t\t\t\t\t@click=\"grantPermissionMac\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-else-if=\"isWindows\"\n\t\t\t\t\t\t\t@click=\"grantPermissionWindows\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"showGrantingPermissionLater\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-light-border\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_LATER') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
     });
 
     var Timeline = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-timeline', {
@@ -760,15 +765,7 @@ this.BX = this.BX || {};
       template: "\n\t\t<div class=\"bx-timeman-monitor-report-popup-confirm\">\n\t\t\t<div class=\"popup-window popup-window-with-titlebar ui-message-box ui-message-box-medium-buttons popup-window-fixed-width popup-window-fixed-height\" style=\"padding: 0\">\n\t\t\t\t<div class=\"bx-timeman-monitor-popup-title popup-window-titlebar\">\n\t\t\t\t\t<span class=\"bx-timeman-monitor-popup--titlebar-text popup-window-titlebar-text\">\n\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"popup-window-content\" style=\"overflow: auto; background: transparent;\">\n\t\t\t\t\t{{ text }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"popup-window-buttons\">\n\t\t\t\t\t<button @click=\"ok\" class=\"ui-btn ui-btn-success\">\n\t\t\t\t\t\t<span class=\"ui-btn-text\">\n\t\t\t\t\t\t\t{{ buttonOkTitle }}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</button>\n\t\t\t\t\t<button @click=\"close\" class=\"ui-btn ui-btn-light\">\n\t\t\t\t\t\t<span class=\"ui-btn-text\">\n\t\t\t\t\t\t\t{{ buttonCancelTitle }}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
     });
 
-    function _templateObject() {
-      var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div id=\"pwt\">\n\t\t\t\t\t\t<div \n\t\t\t\t\t\t\tclass=\"main-ui-loader main-ui-show\" \n\t\t\t\t\t\t\tstyle=\"width: 110px; height: 110px;\" \n\t\t\t\t\t\t\tdata-is-shown=\"true\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<svg class=\"main-ui-loader-svg\" viewBox=\"25 25 50 50\">\n\t\t\t\t\t\t\t\t<circle \n\t\t\t\t\t\t\t\t\tclass=\"main-ui-loader-svg-circle\" \n\t\t\t\t\t\t\t\t\tcx=\"50\" \n\t\t\t\t\t\t\t\t\tcy=\"50\" \n\t\t\t\t\t\t\t\t\tr=\"20\" \n\t\t\t\t\t\t\t\t\tfill=\"none\" \n\t\t\t\t\t\t\t\t\tstroke-miterlimit=\"10\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-      _templateObject = function _templateObject() {
-        return data;
-      };
-
-      return data;
-    }
+    var _templateObject;
 
     var Viewer = /*#__PURE__*/function () {
       function Viewer() {
@@ -833,7 +830,7 @@ this.BX = this.BX || {};
       }, {
         key: "getAppPlaceholder",
         value: function getAppPlaceholder() {
-          return main_core.Tag.render(_templateObject());
+          return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div id=\"pwt\">\n\t\t\t\t\t\t<div \n\t\t\t\t\t\t\tclass=\"main-ui-loader main-ui-show\" \n\t\t\t\t\t\t\tstyle=\"width: 110px; height: 110px;\" \n\t\t\t\t\t\t\tdata-is-shown=\"true\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<svg class=\"main-ui-loader-svg\" viewBox=\"25 25 50 50\">\n\t\t\t\t\t\t\t\t<circle \n\t\t\t\t\t\t\t\t\tclass=\"main-ui-loader-svg-circle\" \n\t\t\t\t\t\t\t\t\tcx=\"50\" \n\t\t\t\t\t\t\t\t\tcy=\"50\" \n\t\t\t\t\t\t\t\t\tr=\"20\" \n\t\t\t\t\t\t\t\t\tfill=\"none\" \n\t\t\t\t\t\t\t\t\tstroke-miterlimit=\"10\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t"])));
         }
       }, {
         key: "createApp",
@@ -969,15 +966,7 @@ this.BX = this.BX || {};
 
     var viewer = new Viewer();
 
-    function _templateObject$1() {
-      var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div id=\"pwt\">\n\t\t\t\t\t\t<div \n\t\t\t\t\t\t\tclass=\"main-ui-loader main-ui-show\" \n\t\t\t\t\t\t\tstyle=\"width: 110px; height: 110px;\" \n\t\t\t\t\t\t\tdata-is-shown=\"true\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<svg class=\"main-ui-loader-svg\" viewBox=\"25 25 50 50\">\n\t\t\t\t\t\t\t\t<circle \n\t\t\t\t\t\t\t\t\tclass=\"main-ui-loader-svg-circle\" \n\t\t\t\t\t\t\t\t\tcx=\"50\" \n\t\t\t\t\t\t\t\t\tcy=\"50\" \n\t\t\t\t\t\t\t\t\tr=\"20\" \n\t\t\t\t\t\t\t\t\tfill=\"none\" \n\t\t\t\t\t\t\t\t\tstroke-miterlimit=\"10\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-      _templateObject$1 = function _templateObject() {
-        return data;
-      };
-
-      return data;
-    }
+    var _templateObject$1;
 
     var MonitorReport = /*#__PURE__*/function () {
       function MonitorReport() {
@@ -988,6 +977,10 @@ this.BX = this.BX || {};
         key: "open",
         value: function open(store) {
           var _this = this;
+
+          if (this.isReportOpen) {
+            return;
+          }
 
           BX.SidePanel.Instance.open("timeman:pwt-report", {
             contentCallback: function contentCallback() {
@@ -1003,10 +996,19 @@ this.BX = this.BX || {};
                   BXIM.desktop.setPreventEsc(true);
                 }
               },
+              onOpenComplete: function onOpenComplete() {
+                _this.isReportOpen = true;
+              },
               onLoad: function onLoad() {
                 return _this.createEditor(store);
               },
               onCloseComplete: function onCloseComplete() {
+                _this.isReportOpen = false;
+
+                if (timeman_monitor.Monitor.shouldShowGrantingPermissionWindow()) {
+                  timeman_monitor.Monitor.showGrantingPermissionLater();
+                }
+
                 if (main_core.Type.isFunction(BXIM.desktop.setPreventEsc)) {
                   BXIM.desktop.setPreventEsc(false);
                 }
@@ -1024,6 +1026,10 @@ this.BX = this.BX || {};
         value: function openPreview(store) {
           var _this2 = this;
 
+          if (this.isReportPreviewOpen) {
+            return;
+          }
+
           BX.SidePanel.Instance.open("timeman:pwt-report-preview", {
             contentCallback: function contentCallback() {
               return _this2.getAppPlaceholder();
@@ -1036,8 +1042,14 @@ this.BX = this.BX || {};
               text: main_core.Loc.getMessage('TIMEMAN_PWT_REPORT_PREVIEW_SLIDER_LABEL')
             },
             events: {
+              onOpenComplete: function onOpenComplete() {
+                _this2.isReportPreviewOpen = true;
+              },
               onLoad: function onLoad() {
                 return _this2.createPreview(store);
+              },
+              onCloseComplete: function onCloseComplete() {
+                _this2.isReportPreviewOpen = false;
               }
             }
           });
@@ -1055,7 +1067,7 @@ this.BX = this.BX || {};
       }, {
         key: "getAppPlaceholder",
         value: function getAppPlaceholder() {
-          return main_core.Tag.render(_templateObject$1());
+          return main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div id=\"pwt\">\n\t\t\t\t\t\t<div \n\t\t\t\t\t\t\tclass=\"main-ui-loader main-ui-show\" \n\t\t\t\t\t\t\tstyle=\"width: 110px; height: 110px;\" \n\t\t\t\t\t\t\tdata-is-shown=\"true\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<svg class=\"main-ui-loader-svg\" viewBox=\"25 25 50 50\">\n\t\t\t\t\t\t\t\t<circle \n\t\t\t\t\t\t\t\t\tclass=\"main-ui-loader-svg-circle\" \n\t\t\t\t\t\t\t\t\tcx=\"50\" \n\t\t\t\t\t\t\t\t\tcy=\"50\" \n\t\t\t\t\t\t\t\t\tr=\"20\" \n\t\t\t\t\t\t\t\t\tfill=\"none\" \n\t\t\t\t\t\t\t\t\tstroke-miterlimit=\"10\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t"])));
         }
       }, {
         key: "createEditorApp",

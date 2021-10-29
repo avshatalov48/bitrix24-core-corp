@@ -343,7 +343,8 @@ this.BX = this.BX || {};
 	          pausedUntil: null,
 	          lastSuccessfulSendDate: null,
 	          lastRemindDate: null,
-	          grantingPermissionDate: null
+	          grantingPermissionDate: null,
+	          deferredGrantingPermissionShowDate: null
 	        },
 	        reportState: {
 	          dateLog: this.getDateLog(),
@@ -429,6 +430,12 @@ this.BX = this.BX || {};
 	        },
 	        grantPermission: function grantPermission(store) {
 	          store.commit('setGrantingPermissionDate', new Date());
+	        },
+	        showGrantingPermissionLater: function showGrantingPermissionLater(store) {
+	          var date = new Date();
+	          date.setDate(date.getDate() + 1);
+	          var formattedDate = MonitorModel.prototype.formatDateLog(date);
+	          store.commit('setDeferredGrantingPermissionShowDate', formattedDate);
 	        },
 	        setLastSuccessfulSendDate: function setLastSuccessfulSendDate(store, date) {
 	          if (main_core.Type.isDate(date) && !isNaN(date)) {
@@ -646,6 +653,10 @@ this.BX = this.BX || {};
 	        },
 	        setGrantingPermissionDate: function setGrantingPermissionDate(state, date) {
 	          state.config.grantingPermissionDate = date;
+	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
+	        },
+	        setDeferredGrantingPermissionShowDate: function setDeferredGrantingPermissionShowDate(state, date) {
+	          state.config.deferredGrantingPermissionShowDate = date;
 	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
 	        },
 	        addPersonal: function addPersonal(state, payload) {
@@ -1114,7 +1125,22 @@ this.BX = this.BX || {};
 	          var minute = 60000; //collecting real intervals
 
 	          history.forEach(function (entry) {
-	            var type = state.personal.includes(entry.privateCode) ? timeman_const.EntityGroup.personal.value : timeman_const.EntityGroup.working.value;
+	            var type;
+
+	            if (state.personal.includes(entry.privateCode)) {
+	              type = timeman_const.EntityGroup.personal.value;
+	            } else if (entry.type === timeman_const.EntityType.custom) {
+	              type = timeman_const.EntityGroup.workingCustom.value;
+	            } else if (entry.type === timeman_const.EntityType.absence) {
+	              var entity = state.entity.find(function (entity) {
+	                return entity.privateCode === entry.privateCode;
+	              });
+	              var comment = MonitorModel.prototype.getCommentByEntity(state, entity);
+	              type = comment ? timeman_const.EntityGroup.workingCustom.value : timeman_const.EntityGroup.working.value;
+	            } else {
+	              type = timeman_const.EntityGroup.working.value;
+	            }
+
 	            entry.time.forEach(function (interval) {
 	              var start = new Date(interval.start);
 	              var finish = interval.finish ? new Date(interval.finish) : new Date();
@@ -1531,8 +1557,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDateLog",
 	    value: function getDateLog() {
-	      var date = new Date();
-
+	      return this.formatDateLog(new Date());
+	    }
+	  }, {
+	    key: "formatDateLog",
+	    value: function formatDateLog(date) {
 	      var addZero = function addZero(num) {
 	        return num >= 0 && num <= 9 ? '0' + num : num;
 	      };
@@ -2162,6 +2191,12 @@ this.BX = this.BX || {};
 	      if (!this.getStorage().state.monitor.config.grantingPermissionDate) {
 	        logger.log('History access not provided. Monitor is not started.');
 	        debug.log('History access not provided. Monitor is not started.');
+
+	        if (this.shouldShowGrantingPermissionWindow()) {
+	          this.openReport();
+	          BXDesktopWindow.ExecuteCommand('show.active');
+	        }
+
 	        return;
 	      }
 
@@ -2334,6 +2369,32 @@ this.BX = this.BX || {};
 	      } else {
 	        throw Error('Pause must be set as a date in the future');
 	      }
+	    }
+	  }, {
+	    key: "shouldShowGrantingPermissionWindow",
+	    value: function shouldShowGrantingPermissionWindow() {
+	      var config = this.getStorage().state.monitor.config;
+
+	      if (!config) {
+	        return false;
+	      }
+
+	      if (config.grantingPermissionDate !== null) {
+	        return false;
+	      }
+
+	      var deferredGrantingPermissionShowDate = config.deferredGrantingPermissionShowDate;
+
+	      if (deferredGrantingPermissionShowDate === null) {
+	        return true;
+	      }
+
+	      return new Date(MonitorModel.prototype.getDateLog()) >= new Date(deferredGrantingPermissionShowDate);
+	    }
+	  }, {
+	    key: "showGrantingPermissionLater",
+	    value: function showGrantingPermissionLater() {
+	      return this.getStorage().dispatch('monitor/showGrantingPermissionLater');
 	    }
 	  }, {
 	    key: "play",

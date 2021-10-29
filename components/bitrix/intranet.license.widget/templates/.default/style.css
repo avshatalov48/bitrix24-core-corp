@@ -54,6 +54,10 @@
 	transition: all 0.15s linear;
 }
 
+.license-widget-item--split > div {
+	border-radius: 0 0 12px 12px;
+}
+
 .license-widget-item:hover,
 .license-widget-option:hover {
 	transform: translate(0, -1px);
@@ -68,6 +72,36 @@
 	cursor: default;
 	overflow: visible;
 }
+
+.license-widget-item.license-widget-item-margin-y-0x,
+.license-widget-item.license-widget-item-margin-top-0x {
+	margin-top: 0;
+}
+
+.license-widget-item.license-widget-item-margin-y-1x,
+.license-widget-block.license-widget-item-margin-y-1x,
+.license-widget-item.license-widget-item-margin-top-1x,
+.license-widget-block.license-widget-item-margin-top-1x { margin-top: 12px; }
+
+.license-widget-item.license-widget-item-margin-y-2x,
+.license-widget-block.license-widget-item-margin-y-2x,
+.license-widget-item.license-widget-item-margin-top-2x,
+.license-widget-block.license-widget-item-margin-top-2x { margin-top: 24px; }
+
+.license-widget-item.license-widget-item-margin-y-0x,
+.license-widget-item.license-widget-item-margin-bottom-0x {
+	margin-bottom: 0;
+}
+
+.license-widget-item.license-widget-item-margin-y-1x,
+.license-widget-block.license-widget-item-margin-y-1x,
+.license-widget-item.license-widget-item-margin-bottom-1x,
+.license-widget-block.license-widget-item-margin-bottom-1x { margin-bottom: 12px; }
+
+.license-widget-item.license-widget-item-margin-y-2x,
+.license-widget-block.license-widget-item-margin-y-2x,
+.license-widget-item.license-widget-item-margin-bottom-2x,
+.license-widget-block.license-widget-item-margin-bottom-2x { margin-bottom: 24px; }
 
 .license-widget-option {
 	text-align: center;
@@ -102,14 +136,42 @@
 }
 
 .license-widget-item--wide,
+.license-widget-item--scanner,
+.license-widget-item--split > div,
 .license-widget-item--main {
-	padding: 7px 14px 6px 12px;
+	padding: 7px 14px 7px 12px;
 	box-sizing: border-box;
 }
 
 .license-widget-item--main {
+	min-height: 66px;
+	background: #fff;
+}
+
+.license-widget-item--main .license-widget-inner-addon {
+	background: #f8f8f9;
+}
+
+.license-widget-item--expired .license-widget-inner-addon {
+	background: #e95450;
+}
+
+.license-widget-item--scanner {
 	margin-bottom: 12px;
 	min-height: 66px;
+	border: 2px solid #fa726e;
+	background: #fff;
+}
+
+.license-widget-item--scanner.license-widget-item-angle-top-left:after,
+.license-widget-item--scanner.license-widget-item-angle-top-right:after {
+	border-top: 2px solid #fa726e;
+	border-left: 2px solid #fa726e;
+
+}
+
+.license-widget-item--scanner.license-widget-item-angle-top-left:before,
+.license-widget-item--scanner.license-widget-item-angle-top-right:before {
 	background: #fff;
 }
 
@@ -117,16 +179,24 @@
 	min-height: 56px;
 }
 
+.license-widget-item--split,
+.license-widget-inner,
+.license-widget-inner-addon,
 .license-widget-option-list,
 .license-widget-item--wide,
+.license-widget-item--scanner,
 .license-widget-item--main {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
-	overflow: hidden;
 }
 
+.license-widget-item--split {
+	flex-direction: column;
+}
+
+.license-widget-item--split,
 .license-widget-item--no-padding {
 	padding: 0;
 }
@@ -142,6 +212,16 @@
 .license-widget-item-name {
 	color: #67707b;
 	font: 13px/18px "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.license-widget-item-desc {
+	font: 11px/15px "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #525c69;
+}
+
+.license-widget-item--expired .license-widget-item-desc {
+	opacity: 0.7;
+	color: #fff;
 }
 
 .license-widget-item-name a {
@@ -176,42 +256,109 @@
 	position: relative;
 }
 
-.license-widget-item:hover .license-widget-item-btn {
+.license-widget-item-btn-secondary {
+	height: 21px;
+	font: 10px/19px "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	background: #fff;
+	border-radius: 13.5px;
+	cursor: pointer;
+	outline: none;
+	border: 1px solid rgba(82, 92, 105, 0.2);
+	box-sizing: border-box;
+	color: #525c69;
+	white-space: nowrap;
+	padding: 0 12px;
+	transition: all .2s linear;
+	margin-top: 5px;
+	position: relative;
+}
+
+.license-widget-inner:hover .license-widget-item-btn {
 	border-color: #edeef0;
 	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .18);
 }
 
-.license-widget-item:hover .license-widget-item-btn:hover {
+
+.license-widget-inner:hover .license-widget-item-btn-secondary {
+	border-color: rgba(82, 92, 105, 0.5);
+}
+
+.license-widget-inner .license-widget-item-btn:hover {
 	border-color: #bedbf8;
 	color: #525c69;
 }
 
-.license-widget-item--main:hover .license-widget-item-btn {
-	background: rgba(179, 230, 0, .5);
-	box-shadow: none;
-	border-color: transparent;
+.license-widget-inner .license-widget-item-btn-secondary:hover  {
+	border-color: rgba(82, 92, 105, 0.9);
 }
 
-.license-widget-item--main:hover .license-widget-item-btn:hover {
-	background: rgba(179, 230, 0, 1);
-	border-color: transparent;
-}
-
-.license-widget-item--main .license-widget-item-btn {
+.license-widget-item--main .license-widget-item-btn,
+.license-widget-item--split .license-widget-item-btn,
+.license-widget-item--scanner .license-widget-item-btn {
+	display: inline-block;
+	overflow: hidden;
 	height: 26px;
 	line-height: 24px;
 	font-size: 12px;
 	box-shadow: none;
 	border: 1px solid #bad9f8;
 	margin-top: 0;
-	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
 
-.license-widget-item--wide .license-widget-item-btn {
-	margin-top: 0;
+.license-widget-inner-addon .license-widget-item-btn {
+	height: 21px;
+	line-height: 19px;
+	font-size: 10px;
+	color: #525c69;
+	background-color: rgba(255, 255, 255, 0.2);
+	border: 1px solid rgba(82, 92, 105, 0.2);
+	box-shadow: none;
 }
+
+.license-widget-item--expired .license-widget-inner-addon .license-widget-item-btn {
+	background-color: rgba(255, 255, 255, 0) !important;
+	border: 1px solid rgba(255, 255, 255, 0.5);
+	color: #fff;
+}
+
+.license-widget-item--main .license-widget-inner:hover .license-widget-item-btn,
+.license-widget-item--main .license-widget-inner-addon:hover .license-widget-item-btn,
+.license-widget-item--scanner .license-widget-inner:hover .license-widget-item-btn,
+.license-widget-item--scanner .license-widget-inner-addon:hover .license-widget-item-btn {
+	background: rgba(179, 230, 0, .5);
+	box-shadow: none;
+	border-color: transparent;
+}
+
+.license-widget-item--main .license-widget-inner .license-widget-item-btn:hover,
+.license-widget-item--main .license-widget-inner-addon .license-widget-item-btn:hover,
+.license-widget-item--scanner .license-widget-inner .license-widget-item-btn:hover,
+.license-widget-item--scanner .license-widget-inner-addon .license-widget-item-btn:hover {
+	background: rgba(179, 230, 0, 1);
+	border-color: transparent;
+}
+
+.license-widget-item--expired .license-widget-inner:hover .license-widget-item-btn,
+.license-widget-item--expired .license-widget-inner .license-widget-item-btn:hover {
+	background: #fff;
+	color: #333;
+	border-color: transparent;
+}
+
+.license-widget-item--expired .license-widget-inner .license-widget-item-btn-secondary {
+	background: transparent;
+	color: rgba(255, 255, 255, 0.7);
+	border-color: rgba(255, 255, 255, 0.7);
+}
+
+.license-widget-item--expired .license-widget-inner .license-widget-item-btn-secondar:hover {
+	color: rgba(255, 255, 255, 0.9);
+	border-color: rgba(255, 255, 255, 0.9);
+}
+
+.license-widget-item--wide .license-widget-item-btn { margin-top: 0; }
 
 .license-widget-item--main .license-widget-item-btn--free {
 	background: #c9ed4c;
@@ -219,8 +366,9 @@
 	border: none;
 }
 
-.license-widget-item:hover .license-widget-item-btn--free,
-.license-widget-item:hover .license-widget-item-btn--free:hover {
+.license-widget-item .license-widget-item-btn--free:hover,
+.license-widget-item .license-widget-inner:hover .license-widget-item-btn--free,
+.license-widget-item .license-widget-inner-addon:hover .license-widget-item-btn--free {
 	background: #c9ed4c;
 }
 
@@ -229,15 +377,34 @@
 	box-shadow: none;
 }
 
-.license-widget-item--active:hover .license-widget-item-btn {
+.license-widget-item--active .license-widget-inner:hover .license-widget-item-btn,
+.license-widget-item--active .license-widget-inner-addon:hover .license-widget-item-btn {
 	border-color: #9bc2ed;
 }
 
-.license-widget-item--active:hover .license-widget-item-btn:hover {
-	border-color: #86b8ec;
+.license-widget-item--active .license-widget-item-btn:hover { border-color: #86b8ec; }
+
+.license-widget-inner-addon:hover .license-widget-item-btn {
+	background-color: rgba(255, 255, 255, 0.5);
+	border: 1px solid rgba(82, 92, 105, 0.5);
 }
 
-.license-widget-item--main .license-widget-item-name {
+.license-widget-inner-addon .license-widget-item-btn:hover {
+	background-color: rgba(255, 255, 255, 0.9);
+	border: 1px solid rgba(82, 92, 105, 0.8);
+}
+
+.license-widget-item--expired .license-widget-inner-addon:hover .license-widget-item-btn {
+	background-color: rgba(255, 255, 255, 0.3);
+	border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.license-widget-item--expired .license-widget-inner-addon .license-widget-item-btn:hover {
+	background-color: rgba(255, 255, 255, 0.5);
+	border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.license-widget-item--main .license-widget-inner .license-widget-item-name {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -248,28 +415,17 @@
 	max-width: 155px;
 }
 
-.license-widget-item--main .license-widget-item-name span {
-	word-break: break-word;
-}
+.license-widget-item--main .license-widget-item-name span { word-break: break-word; }
 
-.license-widget-item--main .license-widget-item-content,
-.license-widget-item--wide .license-widget-item-content {
-	margin-right: 5px;
-	padding-top: 0;
-}
-
-.license-widget-item--main .license-widget-item-content {
-	padding-bottom: 5px;
-	max-width: calc(100% - 36px);
-	overflow: hidden;
-}
-
-.license-widget-item--main .license-widget-item-icon {
+.license-widget-item--main .license-widget-inner .license-widget-item-icon,
+.license-widget-item--split .license-widget-inner .license-widget-item-icon {
 	height: 36px;
 	width: 36px;
 	margin-top: 0;
 	margin-right: 10px;
 }
+
+.license-widget-inner-addon .license-widget-item-icon { margin-right: 19px; }
 
 .license-widget-item-link {
 	line-height: 16px;
@@ -285,9 +441,7 @@
 	transition: all .2s linear;
 }
 
-.license-widget-item-link-text:hover {
-	color: #525c69;
-}
+.license-widget-item-link-text:hover { color: #525c69; }
 
 .license-widget-item-info {
 	color: #519eed;
@@ -322,18 +476,14 @@ a.license-widget-item-info-text {
 	border-bottom: 1px dashed #a6cbf2;
 }
 
-a.license-widget-item-info-text:hover {
-	color: #2b89ea;
-}
+a.license-widget-item-info-text:hover { color: #2b89ea; }
 
 .license-widget-item-info--exp {
 	color: #fa726e;
 	line-height: 14px;
 }
 
-.license-widget-item-info--exp .license-widget-item-info-text:before {
-	content: none;
-}
+.license-widget-item-info--exp .license-widget-item-info-text:before { content: none; }
 
 .license-widget-item-content {
 	padding: 5px 0;
@@ -343,6 +493,16 @@ a.license-widget-item-info-text:hover {
 	align-items: flex-start;
 }
 
+.license-widget-item--main .license-widget-item-content,
+.license-widget-item--wide .license-widget-item-content {
+	padding-right: 5px;
+}
+
+.license-widget-item--main .license-widget-item-content {
+	max-width: calc(100% - 36px);
+	overflow: hidden;
+}
+
 .license-widget-item-icon {
 	border-radius: 50%;
 	height: 26px;
@@ -350,9 +510,10 @@ a.license-widget-item-info-text:hover {
 	background-repeat: no-repeat;
 	background-position: center;
 	margin-right: 8px;
-	margin-top: 13px;
 	flex-shrink: 0;
 }
+
+.license-widget-inner-addon .license-widget-item-icon {margin-top: 0;}
 
 .license-widget-item-icon--start {
 	background-color: #207ede;
@@ -380,6 +541,17 @@ a.license-widget-item-info-text:hover {
 .license-widget-item-icon--mp {
 	background-color: #e8e9ec;
 	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.77.004l-.036.018-5.54%202.193c-.14.065-.19.206-.194.373v7.06c.002.159.084.309.193.351l5.487%202.17a.36.36%200%2000.23.006l5.537-2.187c.11-.045.19-.198.19-.356V2.634c.003-.216-.051-.342-.194-.408L5.873.022c-.037-.02-.067-.028-.102-.018zm.034.752l4.599%201.826-4.6%201.814-4.602-1.82L5.804.756z%22%20opacity%3D%22.5%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--sc {
+	background-color: #edeef0;
+	background-size: 18px auto !important;
+	background-image: url("data:image/svg+xml,%3Csvg width='19' height='15' viewBox='0 0 19 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M15.0268 0.0148926C16.1314 0.0148926 17.0268 0.910323 17.0268 2.01489L17.0261 4.94489L17.2766 4.94529C17.8289 4.94529 18.2766 5.39301 18.2766 5.94529C18.2766 6.49758 17.8289 6.94529 17.2766 6.94529L17.0261 6.94489L17.0268 12.0471C17.0268 13.1517 16.1314 14.0471 15.0268 14.0471H3.94318C2.83861 14.0471 1.94318 13.1517 1.94318 12.0471L1.94308 6.94489L1.33508 6.94529C0.782798 6.94529 0.335083 6.49758 0.335083 5.94529C0.335083 5.39301 0.782798 4.94529 1.33508 4.94529L1.94308 4.94489L1.94318 2.01489C1.94318 0.910323 2.83861 0.0148926 3.94318 0.0148926H15.0268ZM6.40008 6.94489H3.92608L3.92649 12.0296L6.40008 12.0289V6.94489ZM10.6451 6.94489H8.40008V12.0289H10.6451V6.94489ZM14.9571 6.94489H12.6451V12.0289L14.9573 12.0296L14.9571 6.94489ZM14.9573 1.98148H3.92649L3.92608 4.94489H6.40008L6.4009 2.01489H8.4009L8.40008 4.94489H10.6451L10.646 2.01489H12.646L12.6451 4.94489H14.9571L14.9573 1.98148Z' fill='%239FA4AC'/%3E%3C/svg%3E%0A");
+}
+
+.license-widget-item--expired .license-widget-item-icon--sc {
+	background-color: #fb8e8b;
+	background-image: url("data:image/svg+xml,%3Csvg width='19' height='15' viewBox='0 0 19 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M15.0268 0.0148926C16.1314 0.0148926 17.0268 0.910323 17.0268 2.01489L17.0261 4.94489L17.2766 4.94529C17.8289 4.94529 18.2766 5.39301 18.2766 5.94529C18.2766 6.49758 17.8289 6.94529 17.2766 6.94529L17.0261 6.94489L17.0268 12.0471C17.0268 13.1517 16.1314 14.0471 15.0268 14.0471H3.94318C2.83861 14.0471 1.94318 13.1517 1.94318 12.0471L1.94308 6.94489L1.33508 6.94529C0.782798 6.94529 0.335083 6.49758 0.335083 5.94529C0.335083 5.39301 0.782798 4.94529 1.33508 4.94529L1.94308 4.94489L1.94318 2.01489C1.94318 0.910323 2.83861 0.0148926 3.94318 0.0148926H15.0268ZM6.40008 6.94489H3.92608L3.92649 12.0296L6.40008 12.0289V6.94489ZM10.6451 6.94489H8.40008V12.0289H10.6451V6.94489ZM14.9571 6.94489H12.6451V12.0289L14.9573 12.0296L14.9571 6.94489ZM14.9573 1.98148H3.92649L3.92608 4.94489H6.40008L6.4009 2.01489H8.4009L8.40008 4.94489H10.6451L10.646 2.01489H12.646L12.6451 4.94489H14.9571L14.9573 1.98148Z' fill='white'/%3E%3C/svg%3E%0A");
 }
 
 .license-widget-item-icon--low {
@@ -446,14 +618,10 @@ a.license-widget-item-info-text:hover {
 	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M7%200a7%207%200%20100%2014A7%207%200%20007%200zM2.516%2010.855a4.63%204.63%200%2001-.17.145%206.507%206.507%200%2001-.903-1.647A7.011%207.011%200%20011%206.878c0-.296.018-.59.053-.878.323.47.676%201.106.798%201.296.198.311.419.617.612.933.324.532.663%201.26.49%201.922-.074.284-.239.515-.437.704zm6.93-5.195c.232.835.843%201.218%201.835%201.149.47-.033.44%201.124.14%201.602-.372.592-.276%201.295-.627%201.885-.221.373-.597.649-.895.966-.372.399-.79.783-1.41.734-.41-.033-.58-.45-.66-.747-.133-.493-.245-1.243-.337-2.25C7.107%208.233%206.48%207.967%205.61%208.2c-1.305.35-1.57-.58-1.607-1.465-.089-2.18%201.905-2.411%202.136-2.373.331.055%201.304.208%201.548.332.827.42%201.673-.159%201.606-.465-.066-.306-2.12-.747-2.849-.795-.728-.047-.796.19-.995-.011-.162-.163-.013-.422.1-.56.804-.974%202.145-1.21%203.278-1.718.018-.007.044-.064.075-.146a6.734%206.734%200%20012.46%201.44%206.14%206.14%200%20011.435%201.958c.076.165.144.332.203.501-.241.131.24-.045-1.024.225-.843.18-1.686.36-2.53.536z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
 }
 
-.license-widget-inner {
+.license-widget-content {
 	display: flex;
-	height: 100%;
-}
-
-.license-widget-item--main .license-widget-inner,
-.license-widget-item--wide .license-widget-inner {
 	align-items: center;
+	height: 100%;
 }
 
 .license-widget-banner {
@@ -528,9 +696,7 @@ a.license-widget-item-info-text:hover {
 	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.77.004l-.036.018-5.54%202.193c-.14.065-.19.206-.194.373v7.06c.002.159.084.309.193.351l5.487%202.17a.36.36%200%2000.23.006l5.537-2.187c.11-.045.19-.198.19-.356V2.634c.003-.216-.051-.342-.194-.408L5.873.022c-.037-.02-.067-.028-.102-.018zm.034.752l4.599%201.826-4.6%201.814-4.602-1.82L5.804.756z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
 }
 
-.license-widget-item--disabled {
-	opacity: .75;
-}
+.license-widget-item--disabled { opacity: .75; }
 
 .license-widget-item--disabled .license-widget-item-icon--demo {
 	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2215%22%20height%3D%2216%22%3E%3Cg%20opacity%3D%22.6%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M14.727.386a.806.806%200%20010%201.14L13.54%202.71v7.877a.63.63%200%2001-.528.633l-.092.007H7.914v.863l2.158%202.227a.657.657%200%20010%20.923.618.618%200%2001-.82.066l-.075-.066-1.907-1.966-1.907%201.966a.61.61%200%2001-.895%200A.655.655%200%20014.4%2014.4l.068-.082%202.16-2.25v-.84l-1.603-.001-2.977%202.978a.806.806%200%2001-1.14-1.14L13.587.385a.806.806%200%20011.14%200zM9.879%202L7.624%204.255h-3.9c-.277%200-.485.206-.485.432%200%20.248.23.432.485.432H6.76L4.935%206.943H3.724c-.247%200-.438.162-.477.357l-.008.075c0%20.22.183.39.401.425l.084.007.348-.001-3.025%203.025a.654.654%200%2001-.04-.148l-.006-.095L1%202.64a.63.63%200%2001.528-.632L1.62%202h8.259zM8.446%207.806h1.5a.464.464%200%2000.452-.357l.008-.074c0-.22-.182-.39-.4-.425l-.084-.007h-.613l-.863.863z%22%20opacity%3D%22.5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
@@ -538,12 +704,16 @@ a.license-widget-item-info-text:hover {
 }
 
 .license-widget-item--expired,
-.license-widget-item--expired:hover {
+.license-widget-item--expired:hover,
+.license-widget-item--expired.license-widget-item-angle-top-left:before,
+.license-widget-item--expired.license-widget-item-angle-top-right:before {
 	background: #fa726e;
 }
 
-.license-widget-item--expired .license-widget-item-name,
-.license-widget-item--expired .license-widget-item-text {
+.license-widget-item--expired .license-widget-inner .license-widget-item-name,
+.license-widget-item--expired .license-widget-inner .license-widget-item-text,
+.license-widget-item--expired .license-widget-inner-addon .license-widget-item-name,
+.license-widget-item--expired .license-widget-inner-addon .license-widget-item-text {
 	color: #fff;
 	font-family: "OpenSans-Semibold", Arial, Helvetica, sans-serif;
 }
@@ -570,26 +740,21 @@ a.license-widget-item-info-text:hover {
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .15);
 }
 
-.license-widget-item--expired.license-widget-item--main .license-widget-item-btn {
-	line-height: 26px;
-}
+.license-widget-item--expired.license-widget-item--main .license-widget-inner .license-widget-item-btn,
+.license-widget-item--expired.license-widget-item--split .license-widget-inner .license-widget-item-btn { line-height: 26px; }
 
 .license-widget-item--expired:hover .license-widget-item-btn,
-.license-widget-item--expired:hover .license-widget-item-btn:hover {
-	background: #fff;
-}
+.license-widget-item--expired:hover .license-widget-item-btn:hover { background: #fff; }
 
-.license-widget-item--expired:hover .license-widget-item-btn:hover {
-	opacity: .9;
-	color: #333;
-}
+.license-widget-item--expired:hover .license-widget-item-btn:hover { opacity: .9; }
 
 .license-widget-item--expired .license-widget-item-icon {
 	background-color: rgba(255, 255, 255, .2);
 	background-size: 18px 10px;
 }
 
-.license-widget-item--expired.license-widget-item--main .license-widget-item-icon {
+.license-widget-item--expired.license-widget-item--main .license-widget-item-icon,
+.license-widget-item--expired.license-widget-item--split .license-widget-item-icon {
 	background-size: auto;
 }
 
@@ -606,12 +771,41 @@ a.license-widget-item-info-text:hover {
 	font-family: "OpenSans-Semibold", Arial, Helvetica, sans-serif;
 }
 
-.license-widget-item--expired .license-widget-item-info {
-	margin-top: 0;
+.license-widget-item--expired .license-widget-item-info { margin-top: 0; }
+
+.license-widget-item--expired .license-widget-item-info-text:before { content: none; }
+
+.license-widget-item-angle-top-left:after,
+.license-widget-item-angle-top-right:after,
+.license-widget-item-angle-top-left:before,
+.license-widget-item-angle-top-right:before {
+	content: '';
+	width: 10px;
+	height: 10px;
+	position: absolute;
+	top: -6px;
+	transform: rotate(45deg);
+	transform-origin: bottom;
+	z-index: 200;
+	box-sizing: border-box;
 }
 
-.license-widget-item--expired .license-widget-item-info-text:before {
-	content: none;
+.license-widget-item-angle-top-left:after,
+.license-widget-item-angle-top-right:after {
+	top: -10px;
+	transform: rotate(45deg) translate(1px, 1px);
+	z-index: 100;
+	box-sizing: content-box;
+}
+
+.license-widget-item-angle-top-left:after,
+.license-widget-item-angle-top-left:before {
+	left: 50px;
+}
+
+.license-widget-item-angle-top-right:after,
+.license-widget-item-angle-top-right:before {
+	right: 50px;
 }
 
 .license-widget-label {

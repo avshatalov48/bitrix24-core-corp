@@ -1332,7 +1332,10 @@ class Connector
 		}
 		else
 		{
-			if (!self::isEnableSendSystemMessage($connectorId) && $messageFields['SYSTEM'] == 'Y')
+			if (
+				$messageFields['SYSTEM'] === 'Y'
+				&& !self::isEnableSendSystemMessage($connectorId)
+			)
 			{
 				return false;
 			}
@@ -2238,21 +2241,14 @@ class Connector
 	/**
 	 * @param $connectorId
 	 * @return bool
-	 * @throws Main\LoaderException
 	 */
-	public static function isEnableSendSystemMessage($connectorId)
+	public static function isEnableSendSystemMessage($connectorId): bool
 	{
-		if (in_array($connectorId, array(self::TYPE_LIVECHAT, self::TYPE_NETWORK)))
-		{
-			$result = true;
-		}
-		else if (Loader::includeModule('imconnector'))
+		$result = true;
+
+		if (Loader::includeModule('imconnector'))
 		{
 			$result = ImConnector\Connector::isNeedSystemMessages($connectorId);
-		}
-		else
-		{
-			$result = true;
 		}
 
 		return $result;

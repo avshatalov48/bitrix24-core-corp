@@ -839,6 +839,8 @@ BX.CTimeManWindow = function(parent, bindOptions)
 	this.TASKWND = {};
 	this.EVENTWND = {};
 
+	this.isPwtAlertDisplayed = false;
+
 	BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(this.onTimeManChangeState, this));
 	BX.addCustomEvent(this.PARENT, 'onTimeManNeedRebuild', BX.delegate(this.onTimeManNeedRebuild, this));
 	BX.addCustomEvent('onTopPanelCollapse', BX.proxy(this.Align, this));
@@ -1002,7 +1004,11 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 
 	BX.onCustomEvent(this, 'onTimeManWindowBuild', [this, this.LAYOUT, DATA])
 
-	this.addPwt();
+	if (!this.isPwtAlertDisplayed)
+	{
+		this.addPwt();
+		this.isPwtAlertDisplayed = true;
+	}
 
 	this.Align();
 }
@@ -1349,6 +1355,15 @@ BX.CTimeManWindow.prototype.addPwt = function()
 				})
 			);
 
+			BX.PULL.subscribe({
+				type: BX.PullClient.SubscriptionType.Server,
+				moduleId: 'im',
+				command: 'desktopOnline',
+				callback: function (params, extra, command) {
+					this.setPwtStateReadyToEnable();
+				}.bind(this)
+			});
+
 			return;
 		}
 
@@ -1381,34 +1396,49 @@ BX.CTimeManWindow.prototype.addPwt = function()
 				return;
 			}
 
-			BX('timeman-pwt-container').appendChild(
-				BX.create('button', {
-					props: {
-						className: 'ui-btn ui-btn-success ui-btn-icon-start',
-						id: 'timeman-pwt-enable'
-					},
-					text: BX.message("JS_CORE_TM_MONITOR_ENABLE_BUTTON"),
-					style: {
-						marginBottom: '8px',
-						width: '100%',
-					},
-					events: {
-						click : function() {
-							this.enableMonitorForCurrentUser().then(function(result) {
-								if (!result)
-								{
-									return;
-								}
+			this.setPwtStateReadyToEnable();
 
-								BX.remove(BX('timeman-pwt-enable'));
-
-								this.addPwtAlert();
-							}.bind(this));
-						}.bind(this)
-					}
-				}));
 		}.bind(this)
 	)}.bind(this));
+}
+
+BX.CTimeManWindow.prototype.setPwtStateReadyToEnable = function()
+{
+	var pwtContainer = BX('timeman-pwt-container');
+	if (!pwtContainer)
+	{
+		return;
+	}
+
+	pwtContainer.innerHTML = '';
+
+	pwtContainer.appendChild(
+		BX.create('button', {
+			props: {
+				className: 'ui-btn ui-btn-success ui-btn-icon-start',
+				id: 'timeman-pwt-enable'
+			},
+			text: BX.message("JS_CORE_TM_MONITOR_ENABLE_BUTTON"),
+			style: {
+				marginBottom: '8px',
+				width: '100%',
+			},
+			events: {
+				click : function() {
+					this.enableMonitorForCurrentUser().then(function(result) {
+						if (!result)
+						{
+							return;
+						}
+
+						BX.remove(BX('timeman-pwt-enable'));
+
+						this.addPwtAlert();
+					}.bind(this));
+				}.bind(this)
+			}
+		})
+	);
 }
 
 BX.CTimeManWindow.prototype.addPwtAlert = function()

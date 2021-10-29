@@ -9546,7 +9546,7 @@
 	  }, {
 	    key: "isFile",
 	    value: function isFile(value) {
-	      return Type.isBlob(value) && Type.isNumber(value.lastModified) && Type.isString(value.name);
+	      return Type.isBlob(value) && Type.isString(value.name) && (Type.isNumber(value.lastModified) || Type.isObjectLike(value.lastModifiedDate));
 	    }
 	    /**
 	     * Checks that value is FormData
@@ -15346,6 +15346,30 @@
 	      }));
 	    }
 	    /**
+	     * Get local Vue component
+	     * @see https://vuejs.org/v2/guide/components.html
+	     *
+	     * @param {string} name
+	     *
+	     * @returns {Object}
+	     */
+
+	  }, {
+	    key: "getLocalComponent",
+	    value: function getLocalComponent(name) {
+	      if (!this.isComponent(name)) {
+	        BitrixVue.showNotice('Component "' + name + '" is not registered yet.');
+	        return null;
+	      }
+
+	      if (!this.isLocal(name)) {
+	        BitrixVue.showNotice('You cannot get the component "' + name + '" because it is marked as global.');
+	        return null;
+	      }
+
+	      return this._getFinalComponentParams(name);
+	    }
+	    /**
 	     * Modify Vue component
 	     *
 	     * @param {String} id
@@ -15372,8 +15396,8 @@
 
 	      this._mutations[id].push(mutations);
 
-	      if (typeof this._components[id] !== 'undefined') {
-	        this.component(id, this._components[id]);
+	      if (typeof this._components[id] !== 'undefined' && !this.isLocal(id)) {
+	        this.component(id, this._components[id], this._components[id].bitrixOptions);
 	      }
 
 	      return function () {
@@ -15394,6 +15418,17 @@
 	  }, {
 	    key: "cloneComponent",
 	    value: function cloneComponent(id, sourceId, mutations) {
+	      if (this.isLocal(sourceId)) {
+	        var definition = this.getLocalComponent(sourceId);
+	        definition.name = id;
+	        this.component(id, definition, {
+	          immutable: false,
+	          local: true
+	        });
+	        this.mutateComponent(id, mutations);
+	        return true;
+	      }
+
 	      if (typeof this._clones[sourceId] === 'undefined') {
 	        this._clones[sourceId] = {};
 	      }
@@ -50381,7 +50416,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    setPasswordFocus: 'IM.Conference:setPasswordFocus',
 	    hideSmiles: 'IM.Conference:hideSmiles',
 	    requestPermissions: 'IM.Conference:requestPermissions',
-	    waitForStart: 'IM.Conference:waitForStart'
+	    waitForStart: 'IM.Conference:waitForStart',
+	    userRenameFocus: 'IM.Conference:userRenameFocus',
+	    userRenameBlur: 'IM.Conference:userRenameBlur'
 	  },
 	  notification: {
 	    updateState: 'IM.Notifications:restoreConnection'
@@ -50541,7 +50578,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	};
 	var MessageStatus = {
 	  received: 'received',
-	  delivered: 'delivered'
+	  delivered: 'delivered',
+	  error: 'error'
 	};
 
 	var NotificationTypesCodes = Object.freeze({
@@ -51973,12 +52011,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      text = text.replace(/\[CHAT=(imol\|)?([0-9]{1,})](.*?)[\/CHAT]/ig, function (whole, imol, chatId, text) {
 	        return text;
 	      });
-	      text = text.replace(/\[SEND(?:=(.+?))?](.+?)?\[\/SEND]/ig, function (whole, command, text) {
-	        return text ? text : command;
-	      });
-	      text = text.replace(/\[PUT(?:=(.+?))?](.+?)?\[\/PUT]/ig, function (whole, command, text) {
-	        return text ? text : command;
-	      });
 	      text = text.replace(/\[CALL(?:=(.+?))?](.+?)?\[\/CALL]/ig, function (whole, command, text) {
 	        return text ? text : command;
 	      });
@@ -52043,8 +52075,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      text = text.replace(/<br><br \/>/ig, '<br />');
 	      text = text.replace(/<br \/><br>/ig, '<br />');
+	      var codeReplacement = [];
+	      text = text.replace(/\[CODE\]\n?([\0-\uFFFF]*?)\[\/CODE\]/ig, function (whole, text) {
+	        var id = codeReplacement.length;
+	        codeReplacement.push(text);
+	        return '####REPLACEMENT_CODE_' + id + '####';
+	      });
+	      text = text.replace(/\[PUT(?:=(?:.+?))?\](?:.+?)?\[\/PUT]/ig, function (match) {
+	        return match.replace(/\[PUT(?:=(.+))?\](.+?)?\[\/PUT]/ig, function (whole, command, text) {
+	          return text ? text : command;
+	        });
+	      });
+	      text = text.replace(/\[SEND(?:=(?:.+?))?\](?:.+?)?\[\/SEND]/ig, function (match) {
+	        return match.replace(/\[SEND(?:=(.+))?\](.+?)?\[\/SEND]/ig, function (whole, command, text) {
+	          return text ? text : command;
+	        });
+	      });
 	      text = text.replace(/\[[buis]](.*?)\[\/[buis]]/ig, '$1');
-	      text = text.replace(/\[CODE]\n?([\0-\uFFFF]*?)\[\/CODE]/ig, '$1');
 	      text = text.replace(/\[url](.*?)\[\/url]/ig, '$1');
 	      text = text.replace(/\[RATING=([1-5]{1})]/ig, function () {
 	        return '[' + localize['IM_UTILS_TEXT_RATING'] + '] ';
@@ -52054,8 +52101,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	      text = text.replace(/\[USER=([0-9]{1,})](.*?)\[\/USER]/ig, '$2');
 	      text = text.replace(/\[CHAT=([0-9]{1,})](.*?)\[\/CHAT]/ig, '$2');
-	      text = text.replace(/\[SEND=([0-9]{1,})](.*?)\[\/SEND]/ig, '$2');
-	      text = text.replace(/\[PUT=([0-9]{1,})](.*?)\[\/PUT]/ig, '$2');
+	      text = text.replace(/\[SEND(?:=(?:.+?))?\](.+?)?\[\/SEND]/ig, '$1');
+	      text = text.replace(/\[PUT(?:=(?:.+?))?\](.+?)?\[\/PUT]/ig, '$1');
 	      text = text.replace(/\[CALL=([0-9]{1,})](.*?)\[\/CALL]/ig, '$2');
 	      text = text.replace(/\[PCH=([0-9]{1,})](.*?)\[\/PCH]/ig, '$2');
 	      text = text.replace(/<img.*?data-code="([^"]*)".*?>/ig, '$1');
@@ -52093,31 +52140,39 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	        return title;
 	      });
+	      codeReplacement.forEach(function (element, index) {
+	        text = text.replace('####REPLACEMENT_CODE_' + index + '####', element);
+	      });
 	      text = text.replace(/\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D([\s\S]*?)\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D/gmi, "[" + localize["IM_UTILS_TEXT_QUOTE"] + "] ");
-	      text = text.replace(/^(>>(.*)\n)/gi, "[" + localize["IM_UTILS_TEXT_QUOTE"] + "] ");
+	      text = text.replace(/^(>>(.*)(\n)?)/gmi, "[" + localize["IM_UTILS_TEXT_QUOTE"] + "] ");
 	      text = text.replace(/<\/?[^>]+>/gi, '');
 
 	      if (params && params.FILE_ID && params.FILE_ID.length > 0) {
 	        var filesText = [];
-	        params.FILE_ID.forEach(function (fileId) {
-	          if (files[fileId].type === 'image') {
-	            filesText.push(localize['IM_UTILS_TEXT_IMAGE']);
-	          } else if (files[fileId].type === 'audio') {
-	            filesText.push(localize['IM_UTILS_TEXT_AUDIO']);
-	          } else if (files[fileId].type === 'video') {
-	            filesText.push(localize['IM_UTILS_TEXT_VIDEO']);
-	          } else {
-	            filesText.push(files[fileId].name);
-	          }
-	        });
+
+	        if (babelHelpers.typeof(files) === 'object') {
+	          params.FILE_ID.forEach(function (fileId) {
+	            if (typeof files[fileId] === 'undefined') ; else if (files[fileId].type === 'image') {
+	              filesText.push(localize['IM_UTILS_TEXT_IMAGE']);
+	            } else if (files[fileId].type === 'audio') {
+	              filesText.push(localize['IM_UTILS_TEXT_AUDIO']);
+	            } else if (files[fileId].type === 'video') {
+	              filesText.push(localize['IM_UTILS_TEXT_VIDEO']);
+	            } else {
+	              filesText.push(files[fileId].name);
+	            }
+	          });
+	        }
 
 	        if (filesText.length <= 0) {
 	          filesText.push(localize['IM_UTILS_TEXT_FILE']);
 	        }
 
 	        text = filesText.join(' ') + text;
-	      } else if (params && params.ATTACH && params.ATTACH.length > 0) {
+	      } else if (params && (params.WITH_ATTACH || params.ATTACH && params.ATTACH.length > 0)) {
 	        text = '[' + localize['IM_UTILS_TEXT_ATTACH'] + '] ' + text;
+	      } else if (params && params.WITH_FILE) {
+	        text = '[' + localize['IM_UTILS_TEXT_FILE'] + '] ' + text;
 	      }
 
 	      if (text.length <= 0) {
@@ -54512,11 +54567,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          textOnly = _params$textOnly === void 0 ? false : _params$textOnly,
 	          _params$enableBigSmil2 = params.enableBigSmile,
 	          enableBigSmile = _params$enableBigSmil2 === void 0 ? true : _params$enableBigSmil2;
+	      var putReplacement = [];
+	      text = text.replace(/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/ig, function (whole) {
+	        var id = putReplacement.length;
+	        putReplacement.push(whole);
+	        return '####REPLACEMENT_PUT_' + id + '####';
+	      });
+	      var sendReplacement = [];
+	      text = text.replace(/\[SEND(?:=(.+?))?\](.+?)?\[\/SEND\]/ig, function (whole) {
+	        var id = sendReplacement.length;
+	        sendReplacement.push(whole);
+	        return '####REPLACEMENT_SEND_' + id + '####';
+	      });
 	      var codeReplacement = [];
 	      text = text.replace(/\[CODE\]\n?([\s\S]*?)\[\/CODE\]/ig, function (whole, text) {
 	        var id = codeReplacement.length;
 	        codeReplacement.push(text);
-	        return '####REPLACEMENT_MARK_' + id + '####';
+	        return '####REPLACEMENT_CODE_' + id + '####';
 	      });
 	      text = text.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/ig, function (whole, link, text) {
 	        var tag = document.createElement('a');
@@ -54565,37 +54632,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return text;
 	      }); // TODO tag PCH
 
-	      text = text.replace(/\[SEND(?:=(.+?))?\](.+?)?\[\/SEND\]/ig, function (whole, command, text) {
-	        var html = '';
-	        text = text ? text : command;
-	        command = (command ? command : text).replace('<br />', '\n');
-
-	        if (!textOnly && text) {
-	          text = text.replace(/<([\w]+)[^>]*>(.*?)<\\1>/i, "$2", text);
-	          text = text.replace(/\[([\w]+)[^\]]*\](.*?)\[\/\1\]/i, "$2", text);
-	          html = '<span class="bx-im-message-command-wrap">' + '<span class="bx-im-message-command" data-entity="send">' + text + '</span>' + '<span class="bx-im-message-command-data">' + command + '</span>' + '</span>';
-	        } else {
-	          html = text;
-	        }
-
-	        return html;
-	      });
-	      text = text.replace(/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/ig, function (whole, command, text) {
-	        var html = '';
-	        text = text ? text : command;
-	        command = (command ? command : text).replace('<br />', '\n');
-
-	        if (!textOnly && text) {
-	          text = text.replace(/<([\w]+)[^>]*>(.*?)<\/\1>/i, "$2", text);
-	          text = text.replace(/\[([\w]+)[^\]]*\](.*?)\[\/\1\]/i, "$2", text);
-	          html = '<span class="bx-im-message-command" data-entity="put">' + text + '</span>';
-	          html += '<span class="bx-im-message-command-data">' + command + '</span>';
-	        } else {
-	          html = text;
-	        }
-
-	        return html;
-	      });
 	      var textElementSize = 0;
 
 	      if (enableBigSmile) {
@@ -54684,9 +54720,69 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	        return '<img class="bx-smile bx-icon" ' + attributes + '>';
 	      });
-	      codeReplacement.forEach(function (code, index) {
-	        text = text.replace('####REPLACEMENT_MARK_' + index + '####', !textOnly ? '<div class="bx-im-message-content-code">' + code + '</div>' : code);
+	      sendReplacement.forEach(function (value, index) {
+	        text = text.replace('####REPLACEMENT_SEND_' + index + '####', value);
 	      });
+	      text = text.replace(/\[SEND(?:=(?:.+?))?\](?:.+?)?\[\/SEND]/ig, function (match) {
+	        return match.replace(/\[SEND(?:=(.+))?\](.+?)?\[\/SEND]/ig, function (whole, command, text) {
+	          var html = '';
+	          text = text ? text : command;
+	          command = (command ? command : text).replace('<br />', '\n');
+
+	          if (!textOnly && text) {
+	            text = text.replace(/<([\w]+)[^>]*>(.*?)<\\1>/i, "$2", text);
+	            text = text.replace(/\[([\w]+)[^\]]*\](.*?)\[\/\1\]/i, "$2", text);
+	            command = command.split('####REPLACEMENT_PUT_').join('####REPLACEMENT_SP_');
+	            html = '<!--IM_COMMAND_START-->' + '<span class="bx-im-message-command-wrap">' + '<span class="bx-im-message-command" data-entity="send">' + text + '</span>' + '<span class="bx-im-message-command-data">' + command + '</span>' + '</span>' + '<!--IM_COMMAND_END-->';
+	          } else {
+	            html = text;
+	          }
+
+	          return html;
+	        });
+	      });
+	      putReplacement.forEach(function (value, index) {
+	        text = text.replace('####REPLACEMENT_PUT_' + index + '####', value);
+	      });
+	      text = text.replace(/\[PUT(?:=(?:.+?))?\](?:.+?)?\[\/PUT]/ig, function (match) {
+	        return match.replace(/\[PUT(?:=(.+))?\](.+?)?\[\/PUT]/ig, function (whole, command, text) {
+	          var html = '';
+	          text = text ? text : command;
+	          command = (command ? command : text).replace('<br />', '\n');
+
+	          if (!textOnly && text) {
+	            text = text.replace(/<([\w]+)[^>]*>(.*?)<\/\1>/i, "$2", text);
+	            text = text.replace(/\[([\w]+)[^\]]*\](.*?)\[\/\1\]/i, "$2", text);
+	            html = '<!--IM_COMMAND_START-->' + '<span class="bx-im-message-command-wrap">' + '<span class="bx-im-message-command" data-entity="put">' + text + '</span>' + '<span class="bx-im-message-command-data">' + command + '</span>' + '</span>' + '<!--IM_COMMAND_END-->';
+	          } else {
+	            html = text;
+	          }
+
+	          return html;
+	        });
+	      });
+	      codeReplacement.forEach(function (code, index) {
+	        text = text.replace('####REPLACEMENT_CODE_' + index + '####', !textOnly ? '<div class="bx-im-message-content-code">' + code + '</div>' : code);
+	      });
+
+	      if (sendReplacement.length > 0) {
+	        do {
+	          sendReplacement.forEach(function (value, index) {
+	            text = text.replace('####REPLACEMENT_SEND_' + index + '####', value);
+	          });
+	        } while (text.includes('####REPLACEMENT_SEND_'));
+	      }
+
+	      text = text.split('####REPLACEMENT_SP_').join('####REPLACEMENT_PUT_');
+
+	      if (putReplacement.length > 0) {
+	        do {
+	          putReplacement.forEach(function (value, index) {
+	            text = text.replace('####REPLACEMENT_PUT_' + index + '####', value);
+	          });
+	        } while (text.includes('####REPLACEMENT_PUT_'));
+	      }
+
 	      return text;
 	    }
 	  }, {
@@ -57088,6 +57184,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            return false;
 	          }
 
+	          payload.fields = _this2.validate(Object.assign({}, payload.fields));
 	          store.commit('update', {
 	            index: existingItem.index,
 	            fields: payload.fields
@@ -57230,7 +57327,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 
 	        if (main_core.Type.isString(fields.message.text)) {
-	          message.text = fields.message.text;
+	          var _options = {};
+
+	          if (fields.message.withAttach) {
+	            _options.WITH_ATTACH = true;
+	          } else if (fields.message.withFile) {
+	            _options.WITH_FILE = true;
+	          }
+
+	          message.text = im_lib_utils.Utils.text.purify(fields.message.text, _options);
 	        }
 
 	        if (main_core.Type.isDate(fields.message.date) || main_core.Type.isString(fields.message.date)) {
@@ -60579,11 +60684,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 
 	      var message = this.message.textConverted;
+	      var replacement = [];
+	      message = message.replace(/<!--IM_COMMAND_START-->([\0-\uFFFF]+?)<!--IM_COMMAND_END-->/ig, function (whole, text) {
+	        var id = replacement.length;
+	        replacement.push(text);
+	        return '####REPLACEMENT_' + id + '####';
+	      });
 	      message = message.replace(/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/ig, function (whole, userId, userName) {
-	        var user = _this2.$store.getters['users/get'](userId);
+	        if (!userName) {
+	          var user = _this2.$store.getters['users/get'](userId);
 
-	        userName = user ? im_lib_utils.Utils.text.htmlspecialchars(user.name) : userName;
+	          userName = user ? im_lib_utils.Utils.text.htmlspecialchars(user.name) : 'User ' + userId;
+	        }
+
 	        return '<span class="bx-im-mention" data-type="USER" data-value="' + userId + '">' + userName + '</span>';
+	      });
+	      replacement.forEach(function (value, index) {
+	        message = message.replace('####REPLACEMENT_' + index + '####', value);
 	      });
 	      return message;
 	    },
@@ -66463,7 +66580,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
-(function (exports,ui_vue_vuex,im_lib_logger,main_core_events,im_const,pull_client) {
+(function (exports,ui_vue_vuex,im_lib_logger,main_core_events,im_const,im_lib_utils,pull_client) {
 	'use strict';
 
 	/**
@@ -66614,9 +66731,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	              },
 	              message: {
 	                id: params.message.id,
-	                text: params.message.text,
+	                text: params.message.textOriginal,
 	                date: params.message.date,
-	                senderId: params.message.senderId
+	                senderId: params.message.senderId,
+	                withFile: typeof params.message.params['FILE_ID'] !== 'undefined',
+	                withAttach: typeof params.message.params['ATTACH'] !== 'undefined'
 	              },
 	              counter: params.counter
 	            }
@@ -67131,9 +67250,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        userId: userId,
 	        message: {
 	          id: params.message.id,
-	          text: params.message.text,
+	          text: params.message.textOriginal,
 	          date: params.message.date,
-	          senderId: params.message.senderId
+	          senderId: params.message.senderId,
+	          withFile: typeof params.message.params['FILE_ID'] !== 'undefined',
+	          withAttach: typeof params.message.params['ATTACH'] !== 'undefined'
 	        }
 	      };
 	    }
@@ -67261,18 +67382,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      var rightPanelMode = this.store.state.conference.common.rightPanelMode;
 
 	      if (params.chatId === this.application.getChatId() && rightPanelMode !== im_const.ConferenceRightPanelMode.chat && rightPanelMode !== im_const.ConferenceRightPanelMode.split && params.message.senderId !== this.controller.getUserId() && !this.store.state.conference.common.error) {
-	        var text = '';
+	        var text = im_lib_utils.Utils.text.purify(params.message.textOriginal, params.message.params, params.files);
 
-	        if (params.message.senderId === 0 || params.message.system === 'Y') {
-	          text = params.message.text;
-	        } else {
+	        if (params.message.senderId !== 0 && params.message.system !== 'Y') {
 	          var userName = params.users[params.message.senderId].name;
-
-	          if (params.message.text === '' && Object.keys(params.files).length > 0) {
-	            text = "".concat(userName, ": ").concat(this.controller.localize['BX_IM_COMPONENT_CALL_FILE']);
-	          } else if (params.message.text !== '') {
-	            text = "".concat(userName, ": ").concat(params.message.text);
-	          }
+	          text = "".concat(userName, ": ").concat(text);
 	        }
 
 	        this.application.sendNewMessageNotify(text);
@@ -67559,7 +67673,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	exports.ImCallPullHandler = ImCallPullHandler;
 	exports.ImNotificationsPullHandler = ImNotificationsPullHandler;
 
-}((this.BX.Messenger.Provider.Pull = this.BX.Messenger.Provider.Pull || {}),BX,BX.Messenger.Lib,BX.Event,BX.Messenger.Const,BX));
+}((this.BX.Messenger.Provider.Pull = this.BX.Messenger.Provider.Pull || {}),BX,BX.Messenger.Lib,BX.Event,BX.Messenger.Const,BX.Messenger.Lib,BX));
  
 
 

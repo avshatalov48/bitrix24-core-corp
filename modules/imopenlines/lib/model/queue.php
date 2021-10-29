@@ -9,6 +9,7 @@ use Bitrix\Main\Entity\Validator\Length;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\EventResult;
+use Bitrix\ImOpenLines\Queue\Cache;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\IntegerField;
@@ -119,24 +120,116 @@ class QueueTable extends DataManager
 
 	/**
 	 * @param Event $event
-	 * @return EventResult|void
+	 * @return EventResult
 	 */
-	public static function onDelete(Event $event)
+	public static function OnAdd(Event $event): EventResult
+	{
+		$result = new EventResult;
+
+		$fields = $event->getParameters()['fields'];
+
+		if(!empty($fields['USER_ID']))
+		{
+			$cache = new Cache();
+			$cache->setUserId($fields['USER_ID']);
+
+			if(!empty($fields['CONFIG_ID']))
+			{
+				$cache->setLineId($fields['CONFIG_ID']);
+			}
+
+			$cache->delete();
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param Event $event
+	 * @return EventResult
+	 */
+	public static function OnUpdate(Event $event): EventResult
+	{
+		$result = new EventResult;
+		$userQueueId = $event->getParameters()['primary']['ID'];
+		$fields = $event->getParameters()['fields'];
+
+		if(
+			isset($fields['CONFIG_ID'])
+			|| isset($fields['USER_ID'])
+			|| isset($fields['DEPARTMENT_ID'])
+			|| isset($fields['USER_NAME'])
+			|| isset($fields['USER_WORK_POSITION'])
+			|| isset($fields['USER_AVATAR'])
+			|| isset($fields['USER_AVATAR_ID'])
+		)
+		{
+			$data = self::getList([
+				'select' => [
+					'CONFIG_ID',
+					'USER_ID'
+				],
+				'filter' => [
+					'=ID' => $userQueueId
+				]
+			])->fetch();
+
+			if(!empty($data['USER_ID']))
+			{
+				$cache = new Cache();
+				$cache->setUserId($data['USER_ID']);
+
+				if(!empty($data['CONFIG_ID']))
+				{
+					$cache->setLineId($data['CONFIG_ID']);
+				}
+
+				$cache->delete();
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param Event $event
+	 * @return EventResult
+	 */
+	public static function onDelete(Event $event): EventResult
 	{
 		$result = new EventResult;
 		$userQueueId = $event->getParameters()['primary']['ID'];
 
-		$userAvatarId = self::getList([
-			'select' => ['USER_AVATAR_ID'],
-			'filter' => ['=ID' => $userQueueId]
-		])->fetch()['USER_AVATAR_ID'];
+		$data = self::getList([
+			'select' => [
+				'CONFIG_ID',
+				'USER_ID',
+				'USER_AVATAR_ID'
+			],
+			'filter' => [
+				'=ID' => $userQueueId
+			]
+		])->fetch();
 
 		if(
-			!empty($userAvatarId) &&
-			$userAvatarId > 0
+			!empty($data['USER_AVATAR_ID'])
+			&& $data['USER_AVATAR_ID'] > 0
 		)
 		{
-			\CFile::Delete($userAvatarId);
+			\CFile::Delete($data['USER_AVATAR_ID']);
+		}
+
+		if(!empty($data['USER_ID']))
+		{
+			$cache = new Cache();
+			$cache->setUserId($data['USER_ID']);
+
+			if(!empty($data['CONFIG_ID']))
+			{
+				$cache->setLineId($data['CONFIG_ID']);
+			}
+
+			$cache->delete();
 		}
 
 		return $result;

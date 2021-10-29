@@ -36,6 +36,7 @@ final class UpdateMicrosoftBotFramework extends Stepper
 		return '';
 	}
 
+
 	public static function deleteConnectorStep2(): string
 	{
 		$connectionsCount = StatusConnectorsTable::getList([
@@ -60,7 +61,7 @@ final class UpdateMicrosoftBotFramework extends Stepper
 		return '';
 	}
 
-	public function execute(array &$result): bool
+	/*public function execute(array &$result): bool
 	{
 		$return = false;
 
@@ -93,6 +94,63 @@ final class UpdateMicrosoftBotFramework extends Stepper
 					{
 						Status::delete(self::CONNECTOR_ID, $row['LINE']);
 					}
+
+					$status['lastId'] = $row['ID'];
+					$status['number']++;
+					$found = true;
+				}
+
+				if ($found)
+				{
+					Option::set(static::$moduleId, self::OPTION_NAME, serialize($status));
+					$return = true;
+				}
+
+				$result['steps'] = $status['number'];
+
+				if ($found === false)
+				{
+					self::deactivateConnector();
+					Option::delete(static::$moduleId, ['name' => self::OPTION_NAME]);
+				}
+			}
+			else
+			{
+				self::deactivateConnector();
+			}
+		}
+
+		return $return;
+	}*/
+
+	public function execute(array &$result): bool
+	{
+		$return = false;
+
+		if (Loader::includeModule(static::$moduleId))
+		{
+			$status = $this->loadCurrentStatus();
+
+			if ($status['count'] > 0)
+			{
+				$result['steps'] = '';
+				$result['count'] = $status['count'];
+
+				$cursor = StatusConnectorsTable::getList([
+					'select' => ['ID', 'LINE'],
+					'filter' => [
+						'=CONNECTOR' => self::CONNECTOR_ID,
+						'=ACTIVE' => 'Y',
+					],
+					'offset' => 0,
+					'limit' => self::PORTION,
+					'order' => ['ID' => 'ASC'],
+				]);
+
+				$found = false;
+				while ($row = $cursor->fetch())
+				{
+					Status::delete(self::CONNECTOR_ID, $row['LINE']);
 
 					$status['lastId'] = $row['ID'];
 					$status['number']++;

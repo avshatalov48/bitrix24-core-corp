@@ -72,7 +72,10 @@ const Formatter = {
 
 		if (!hasPlus && value.substr(0, 1) === '8')
 		{
-			value = '7' + value.substr(1);
+			if (window.navigator && (window.navigator.language || '').substring(0, 2) === 'ru')
+			{
+				value = '7' + value.substr(1);
+			}
 		}
 
 		if (!phoneDb.list)

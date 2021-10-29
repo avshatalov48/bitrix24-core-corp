@@ -37,6 +37,7 @@ export class MonitorModel extends VuexBuilderModel
 				lastSuccessfulSendDate: null,
 				lastRemindDate: null,
 				grantingPermissionDate: null,
+				deferredGrantingPermissionShowDate: null,
 			},
 			reportState: {
 				dateLog: this.getDateLog(),
@@ -134,6 +135,16 @@ export class MonitorModel extends VuexBuilderModel
 			grantPermission: (store) =>
 			{
 				store.commit('setGrantingPermissionDate', new Date());
+			},
+
+			showGrantingPermissionLater: (store) =>
+			{
+				let date = new Date();
+				date.setDate(date.getDate() + 1);
+
+				let formattedDate = MonitorModel.prototype.formatDateLog(date);
+
+				store.commit('setDeferredGrantingPermissionShowDate', formattedDate);
 			},
 
 			setLastSuccessfulSendDate: (store, date) =>
@@ -471,6 +482,13 @@ export class MonitorModel extends VuexBuilderModel
 			setGrantingPermissionDate: (state, date) =>
 			{
 				state.config.grantingPermissionDate = date;
+
+				super.saveState(state);
+			},
+
+			setDeferredGrantingPermissionShowDate: (state, date) =>
+			{
+				state.config.deferredGrantingPermissionShowDate = date;
 
 				super.saveState(state);
 			},
@@ -1065,10 +1083,26 @@ export class MonitorModel extends VuexBuilderModel
 
 				//collecting real intervals
 				history.forEach(entry => {
-					const type = state.personal.includes(entry.privateCode)
-						? EntityGroup.personal.value
-						: EntityGroup.working.value
-					;
+					let type;
+					if (state.personal.includes(entry.privateCode))
+					{
+						type = EntityGroup.personal.value;
+					}
+					else if (entry.type === EntityType.custom)
+					{
+						type = EntityGroup.workingCustom.value;
+					}
+					else if (entry.type === EntityType.absence)
+					{
+						const entity = state.entity.find(entity => entity.privateCode === entry.privateCode);
+						const comment = MonitorModel.prototype.getCommentByEntity(state, entity);
+
+						type = comment ? EntityGroup.workingCustom.value : EntityGroup.working.value;
+					}
+					else
+					{
+						type = EntityGroup.working.value;
+					}
 
 					entry.time.forEach(interval => {
 						const start = new Date(interval.start);
@@ -1175,8 +1209,8 @@ export class MonitorModel extends VuexBuilderModel
 								finish: segment.finish,
 								type: segment.type,
 								clickable: (
-										segment.type === EntityGroup.inactive.value
-										&& segment.start < new Date()
+									segment.type === EntityGroup.inactive.value
+									&& segment.start < new Date()
 								),
 								clickableHint: segment.type === EntityGroup.inactive.value
 									? Loc.getMessage('TIMEMAN_PWT_REPORT_INTERVAL_CLICKABLE_HINT')
@@ -1192,8 +1226,7 @@ export class MonitorModel extends VuexBuilderModel
 
 				return chartData;
 			},
-			getOverChartData: state => selectedPrivateCode =>
-			{
+			getOverChartData: state => selectedPrivateCode => {
 				let selectedCodes = [];
 
 				let workingEntities = [];
@@ -1600,7 +1633,11 @@ export class MonitorModel extends VuexBuilderModel
 
 	getDateLog()
 	{
-		const date = new Date();
+		return this.formatDateLog(new Date());
+	}
+
+	formatDateLog(date)
+	{
 		const addZero = num => (num >= 0 && num <= 9) ? '0' + num : num;
 
 		const year = date.getFullYear();

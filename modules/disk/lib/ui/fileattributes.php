@@ -84,15 +84,18 @@ final class FileAttributes extends ItemAttributes
 					$this->setTypeClass(self::JS_TYPE_CLASS_ONLYOFFICE);
 					$this->setAsSeparateItem();
 				}
+
+				$this->setExtension('disk.viewer.onlyoffice-item');
+
+				Extension::load('disk.viewer.onlyoffice-item');
 			}
 			else
 			{
 				$this->setTypeClass(self::JS_TYPE_CLASS_CLOUD_DOCUMENT);
+				$this->setExtension('disk.viewer.document-item');
+
+				Extension::load('disk.viewer.document-item');
 			}
-
-			$this->setExtension('disk.viewer.onlyoffice-item');
-
-			Extension::load('disk.viewer.onlyoffice-item');
 		}
 	}
 

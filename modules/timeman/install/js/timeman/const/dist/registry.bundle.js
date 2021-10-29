@@ -12,6 +12,10 @@ this.BX.Timeman = this.BX.Timeman || {};
 	    secondaryColor: '#bbf5cc',
 	    lightColor: '#f3fdf5'
 	  },
+	  workingCustom: {
+	    value: 'working-custom',
+	    hint: main_core.Loc.getMessage('TIMEMAN_CONST_ENTITY_GROUP_PERSONAL_HINT')
+	  },
 	  personal: {
 	    value: 'personal',
 	    title: main_core.Loc.getMessage('TIMEMAN_CONST_ENTITY_GROUP_PERSONAL'),

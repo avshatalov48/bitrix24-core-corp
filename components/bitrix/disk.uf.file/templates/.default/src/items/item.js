@@ -275,6 +275,10 @@ export default class Item extends EventEmitter
 	//region HTMLEditor functions
 	getHTMLForHTMLEditor(tagId: String)
 	{
+		if (this.getData('TYPE_FILE') === 'player')
+		{
+			return `<img contenteditable="false" class="bxhtmled-player-surrogate" data-bx-file-id="${this.data.ID}" id="${tagId}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" />`;
+		}
 		return `<span contenteditable="false" data-bx-file-id="${this.data.ID}" id="${tagId}" style="color: #2067B0; border-bottom: 1px dashed #2067B0; margin:0 2px;">${Text.encode(this.data.NAME)}</span>`;
 	}
 	//endregion

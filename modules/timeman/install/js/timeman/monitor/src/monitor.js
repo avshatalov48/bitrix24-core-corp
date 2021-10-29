@@ -156,6 +156,12 @@ class Monitor
 			Logger.log('History access not provided. Monitor is not started.');
 			Debug.log('History access not provided. Monitor is not started.');
 
+			if (this.shouldShowGrantingPermissionWindow())
+			{
+				this.openReport();
+				BXDesktopWindow.ExecuteCommand('show.active');
+			}
+
 			return;
 		}
 
@@ -346,6 +352,33 @@ class Monitor
 		{
 			throw Error('Pause must be set as a date in the future');
 		}
+	}
+
+	shouldShowGrantingPermissionWindow()
+	{
+		let config = this.getStorage().state.monitor.config;
+		if (!config)
+		{
+			return false;
+		}
+
+		if (config.grantingPermissionDate !== null)
+		{
+			return false;
+		}
+
+		let deferredGrantingPermissionShowDate = config.deferredGrantingPermissionShowDate;
+		if (deferredGrantingPermissionShowDate === null)
+		{
+			return true;
+		}
+
+		return new Date(MonitorModel.prototype.getDateLog()) >= new Date(deferredGrantingPermissionShowDate);
+	}
+
+	showGrantingPermissionLater()
+	{
+		return this.getStorage().dispatch('monitor/showGrantingPermissionLater');
 	}
 
 	play()

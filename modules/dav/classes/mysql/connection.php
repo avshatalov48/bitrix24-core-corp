@@ -1,4 +1,8 @@
 <?
+
+use Bitrix\Calendar\Sync\Google;
+use Bitrix\Main\DI\ServiceLocator;
+
 include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/classes/general/connection.php");
 
 class CDavConnection
@@ -28,9 +32,12 @@ class CDavConnection
 		$id = (int)$DB->LastID();
 		if (($id > 0) && \Bitrix\Main\Loader::includeModule('calendar'))
 		{
-			$connectionType = \Bitrix\Calendar\Util::isGoogleConnection($arFields['ACCOUNT_TYPE'])
+			/** @var Google\Helper $googleHelper */
+			$googleHelper = ServiceLocator::getInstance()->get('calendar.service.google.helper');
+			$caldavHelper = ServiceLocator::getInstance()->get('calendar.service.caldav.helper');
+			$connectionType = $googleHelper->isGoogleConnection($arFields['ACCOUNT_TYPE'])
 				? 'google'
-				: (CCalendarSync::isYandex($arFields['SERVER_HOST'])
+				: ($caldavHelper->isYandex($arFields['SERVER_HOST'])
 					? 'yandex'
 					: 'caldav')
 			;

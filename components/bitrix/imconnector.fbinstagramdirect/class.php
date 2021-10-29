@@ -223,7 +223,7 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 							{
 								$errorsAuthorizationPage[] =
 									Loc::getMessage(
-										'IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_IG_ACCOUNT_IS_NOT_ELIGIBLE_API_2',
+										'IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_IG_ACCOUNT_IS_NOT_ELIGIBLE_API_3',
 										[
 											'#A#' => '<a href="javascript:void(0)" onclick=\'top.BX.Helper.show("redirect=detail&code='
 												. self::HELP_DESK_ERROR_IG_ACCOUNT_IS_NOT_ELIGIBLE_API

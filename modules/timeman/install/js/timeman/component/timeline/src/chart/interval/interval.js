@@ -8,6 +8,7 @@ export const Interval = BitrixVue.localComponent('bx-timeman-component-timeline-
 		type: String,
 		start: Date,
 		finish: Date,
+		finishAlias: String,
 		size: Number,
 		fixedSize: Boolean,
 		showStartMarker: Boolean,
@@ -112,7 +113,7 @@ export const Interval = BitrixVue.localComponent('bx-timeman-component-timeline-
 				>
 					<div class="bx-timeman-component-timeline-chart-interval-marker-line"/>
 					<div class="bx-timeman-component-timeline-chart-interval-marker-title">
-						{{ toShortTime(finish) }}
+						{{ finishAlias ? finishAlias : toShortTime(finish) }}
 					</div>
 				</div>
 			</div>

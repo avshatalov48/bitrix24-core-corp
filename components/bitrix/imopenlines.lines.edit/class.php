@@ -311,6 +311,15 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 				{
 					foreach ($post['AUTOMATIC_MESSAGE']['TASK'] as $cell=>$task)
 					{
+						if(!isset($task['ACTIVE']))
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['ACTIVE'] = 'N';
+						}
+						else
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['ACTIVE'] = 'Y';
+						}
+
 						if(!in_array($task['TIME_TASK'], self::AVAILABLE_OPTION_TIME_TASK, false))
 						{
 							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['TIME_TASK'] = current(self::AVAILABLE_OPTION_TIME_TASK);
@@ -663,6 +672,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			foreach ($configAutomaticMessage as $config)
 			{
 				$result['TASK'][$config['ID']] = [
+					'ACTIVE' => $config['ACTIVE'],
 					'TIME_TASK' => $config['TIME_TASK'],
 					'MESSAGE' => $config['MESSAGE'],
 					'TEXT_BUTTON_CLOSE' => $config['TEXT_BUTTON_CLOSE'],

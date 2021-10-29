@@ -42,6 +42,10 @@
     background-color: #f5f5f5;
 }
 
+.bx-timeman-component-timeline-chart-interval-item-working-custom {
+	background-color: #77c18d;
+}
+
 .bx-timeman-component-timeline-chart-interval-item-working.bx-timeman-component-timeline-chart-interval-item-selected {
     background-color: #2FBE54;
 }

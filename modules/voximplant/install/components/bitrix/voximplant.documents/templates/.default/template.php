@@ -110,7 +110,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 						<tr>
 							<td colspan="5" class="tel-phones-list-td-footer">
 								<?if($verification['COUNTRY_CODE']==='RU'):?>
-									<a id="vi_docs_upload_btn_<?=$verification['COUNTRY_CODE']?>" href="#docs" class="ui-btn ui-btn-primary">
+									<a id="vi_docs_upload_btn_<?= htmlspecialcharsbx($verification['COUNTRY_CODE'])?>" href="#docs" class="ui-btn ui-btn-primary">
 										<?=($verification['STATUS'] === 'REQUIRED'? GetMessage('VI_DOCS_UPLOAD_BTN'): GetMessage('VI_DOCS_UPDATE_BTN'))?>
 									</a>
 								<?endif?>
@@ -141,7 +141,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
             </div>
             <div class="tel-set-divider"></div>
 			<?if(isset($verification['UPLOAD_IFRAME_URL'])):?>
-				<div id="vi_docs_upload_form_<?=$verification['COUNTRY_CODE']?>" class="tel-set-block-wrap tel-set-block-wrap-2" <?=($verification['SHOW_UPLOAD_IFRAME'] ? '' : 'style="display: none;"')?>>
+				<div id="vi_docs_upload_form_<?= htmlspecialcharsbx($verification['COUNTRY_CODE'])?>" class="tel-set-block-wrap tel-set-block-wrap-2" <?=($verification['SHOW_UPLOAD_IFRAME'] ? '' : 'style="display: none;"')?>>
 					<div class="tel-set-block tel-set-block-active">
 						<div style="display: block;" class="tel-set-block-inner-wrap" id="tel-set-first">
 							<div class="tel-set-inner">
@@ -155,51 +155,19 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 				</div>
 				<?if($verification['SHOW_UPLOAD_IFRAME']):?>
 					<script>
-						BX.scrollToNode("vi_docs_upload_form_<?=$verification['COUNTRY_CODE']?>");
+						BX.scrollToNode("vi_docs_upload_form_<?= CUtil::JSEscape($verification['COUNTRY_CODE'])?>");
 					</script>
 				<?endif?>
 			<?endif?>
             <script type="text/javascript">
-                BX.bind(BX('vi_docs_upload_btn_<?=$verification['COUNTRY_CODE']?>'), 'click', function(e)
-                {
-                    if (BX('vi_docs_upload_form_<?=$verification['COUNTRY_CODE']?>').style.display == 'none')
-                    {
-                        BX.removeClass(BX('vi_docs_upload_btn_<?=$verification['COUNTRY_CODE']?>'), 'ui-btn-primary');
-                        BX.addClass(BX('vi_docs_upload_btn_<?=$verification['COUNTRY_CODE']?>'), 'ui-btn-light-border');
-                        BX.addClass(BX('vi_docs_upload_form_<?=$verification['COUNTRY_CODE']?>'), 'tel-connect-pbx-animate');
-                        BX('vi_docs_upload_form_<?=$verification['COUNTRY_CODE']?>').style.display = 'block';
-                    }
-                    else
-                    {
-                        BX.removeClass(BX('vi_docs_upload_btn_<?=$verification['COUNTRY_CODE']?>'), 'ui-btn-light-border');
-                        BX.addClass(BX('vi_docs_upload_btn_<?=$verification['COUNTRY_CODE']?>'), 'ui-btn-primary');
-                        BX.removeClass(BX('vi_docs_upload_form_<?=$verification['COUNTRY_CODE']?>'), 'tel-connect-pbx-animate');
-                        BX('vi_docs_upload_form_<?=$verification['COUNTRY_CODE']?>').style.display = 'none';
-                    }
-
-                    BX.PreventDefault(e);
-                });
-                document.querySelectorAll('[data-role="upload-additional"]').forEach(function(element)
-				{
-					element.addEventListener('click', function ()
-					{
-						var verificationId = element.dataset.verificationId;
-						BX.ajax.runAction("voximplant.urlmanager.getAdditionalDocumentsUploadUrl", {
-							data: {verificationId: verificationId}
-						}).then(function (response)
-						{
-							var data = response.data;
-							console.log(data.url)
-							window.open(data.url);
-						}).catch(function (response)
-						{
-							console.error(response.errors);
-						})
-					})
-				})
+				BX.Voximplant.Documents.initUploader('<?=CUtil::JSEscape($verification['COUNTRY_CODE'])?>');
             </script>
 			<? $previousCountry = $verification['COUNTRY_CODE'] ?>
         <?endforeach;?>
     </div>
+
+	<script type="text/javascript">
+		BX.Voximplant.Documents.initAdditionalDocumentsUploader();
+	</script>
 </div>
 

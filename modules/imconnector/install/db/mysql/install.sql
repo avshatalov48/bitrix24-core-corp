@@ -11,16 +11,6 @@ CREATE TABLE IF NOT EXISTS b_imconnectors_status (
   INDEX CONNECTOR_LINE (CONNECTOR(30), LINE)
 );
 
-CREATE TABLE IF NOT EXISTS b_imconnectors_botframework (
-  ID int(11) NOT NULL AUTO_INCREMENT,
-  VIRTUAL_CONNECTOR varchar(255) NOT NULL,
-  ID_CHAT varchar(255) NOT NULL,
-  ID_MESSAGE varchar(255) DEFAULT NULL,
-  DATA text,
-  PRIMARY KEY (ID),
-  INDEX IDCHAT_VIRTUALCONNECTOR (ID_CHAT(166),VIRTUAL_CONNECTOR(166))
-);
-
 CREATE TABLE IF NOT EXISTS b_imconnectors_custom_connectors (
 	ID int auto_increment
 		primary key,

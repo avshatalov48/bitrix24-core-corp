@@ -10,6 +10,7 @@ $MESS["IMOL_CONFIG_EDIT_ACTIONS"] = "Aktionseinstellungen";
 $MESS["IMOL_CONFIG_EDIT_ADDITIONAL"] = "Mehr";
 $MESS["IMOL_CONFIG_EDIT_AGREEMENT_MESSAGE"] = "Warnung darüber senden, dass persönliche Daten gesammelt werden";
 $MESS["IMOL_CONFIG_EDIT_APPLY"] = "Anwenden";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_ACTIVE"] = "Automatische Antworten aktivieren";
 $MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_AUTOMATIC_TEXT_TITLE"] = "Text der automatischen Nachricht, wenn Aktion ausgewählt wird";
 $MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_BUTTON_NAME"] = "Text der Schaltfläche";
 $MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CLOSE_TITLE"] = "Konversation beenden";

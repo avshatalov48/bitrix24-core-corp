@@ -24,6 +24,7 @@ type ItemSavedType = {
 	SIZE: string,
 	SIZE_BYTES: string,
 	STORAGE: string,
+	TYPE_FILE: ?string,
 };
 
 type ItemUploadedType = {
@@ -38,6 +39,7 @@ type ItemUploadedType = {
 	size: string,
 	sizeInt: string,
 	storage: string,
+	fileType: string,
 };
 
 type ItemSelectedType = {

@@ -1,5 +1,6 @@
 import {Vue} from 'ui.vue';
 import {Popup} from "main.popup";
+import 'sidepanel';
 
 export const ContentComponent = {
 	props: [
@@ -138,276 +139,324 @@ export const ContentComponent = {
 		showMarketDemoPopup(e)
 		{
 			BX.loadExt('marketplace').then(() => {
-				BX.rest.Marketplace.openDemoSubscription(() => {
-					window.location.href = '/settings/license.php?subscription_trial=Y&analyticsLabel[headerPopup]=Y'
-				});
+				if (!!this.market.landingBuyCode && this.market.landingBuyCode !== '')
+				{
+					BX.UI.InfoHelper.show(this.market.landingBuyCode);
+				}
+				else
+				{
+					BX.rest.Marketplace.openDemoSubscription(() => {
+						window.location.href = '/settings/license.php?subscription_trial=Y&analyticsLabel[headerPopup]=Y'
+					});
+				}
 			});
+		},
+		showLicenseScanner(event)
+		{
+			BX.SidePanel.Instance.open(
+				'/bitrix/components/bitrix/bitrix24.license.scan/index.php',
+				{
+					width: 1195,
+					cacheable: false,
+				}
+			);
 		},
 	},
 	template: `
 		<div class="license-widget">
-			<div 
-				class="license-widget-item license-widget-item--main"
+			<!-- region license -->
+			<div
+				class="license-widget-item license-widget-item--main license-widget-item-margin-bottom-1x"
 				:class="{ 'license-widget-item--expired' : license.isExpired || license.isAlmostExpired }"
 			>
 				<div class="license-widget-inner">
-					<div 
-						class="license-widget-item-icon"
-						:class="getTariffIconCLass"
-					></div>
-					<div class="license-widget-item-content">
-						<div class="license-widget-item-name">
-							<span>{{ license.name }}</span>
-							<!--<span data-hint="Hint"></span>-->
-						</div>
-						<div class="license-widget-item-link">
-							<span 
-								v-if="license.isFreeTariff"
-								key="licenseDesc"
-								class="license-widget-item-link-text"
-								@click="showInfoHelper('whyPay')"
-							> 
-								{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_WHY }} 
-							</span>
-							<a 
-								v-else-if="license.isDemo"
-								key="licenseDesc"
-								:href="license.demoPath"
-								class="license-widget-item-link-text"
-								target="_blank"
-							> 
-								{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_TARIFF }} 
-							</a>
-							<a 
-								v-else
-								key="licenseDesc"
-								class="license-widget-item-link-text"
-								target="_blank"
-								@click="showInfoHelper('licenseDesc')"
-							> 
-								{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_TARIFF }} 
-							</a>
-						</div>
-						<div 
-							v-if="license.isExpired || license.isAlmostExpired" 
-							class="license-widget-item-info license-widget-item-info--exp"
-						>
-							<span class="license-widget-item-info-text">
-								{{ license.daysLeftMessage }}
-							</span>
-						</div>
-						<div v-if="!license.isExpired && !license.isAlmostExpired 
-									&& !license.isFreeTariff && !license.isUnlimitedDateTariff" 
-							class="license-widget-item-info"
-						>
-							<span class="license-widget-item-info-text">{{ license.tillMessage }}</span>
-						</div>
-					</div>
-				</div>
-				<span 
-					v-if="license.isAutoPay" 
-					key="licenseButton"
-					class="license-widget-item-btn license-widget-item-btn--disabled"
-				> 
-					{{
-						license.isFreeTariff || license.isDemo
-						? localize.INTRANET_LICENSE_WIDGET_BUY
-						: localize.INTRANET_LICENSE_WIDGET_PROLONG
-					}} 
-				</span>
-				<a 
-					v-else
-					key="licenseButton"
-					:href="license.allPath" 
-					target="_blank" 
-					class="license-widget-item-btn"
-				> 
-					{{
-						license.isFreeTariff || license.isDemo
-						? localize.INTRANET_LICENSE_WIDGET_BUY
-						: localize.INTRANET_LICENSE_WIDGET_PROLONG
-					}} 
-				</a>
-			</div>
-			
-			<div class="license-widget-block">
-				<div 
-					class="license-widget-item"
-					:class="{ 'license-widget-item--active' : telephony.isConnected }"	
-				>
-					<div class="license-widget-inner">
-						<div class="license-widget-item-icon license-widget-item-icon--tel"></div>
+					<div class="license-widget-content">
+						<div class="license-widget-item-icon" :class="getTariffIconCLass" ></div>
 						<div class="license-widget-item-content">
 							<div class="license-widget-item-name">
-								<span>{{ localize.INTRANET_LICENSE_WIDGET_TELEPHONY }}</span>
+								<span>{{ license.name }}</span>
 								<!--<span data-hint="Hint"></span>-->
 							</div>
-							<div v-if="telephony.isConnected" class="license-widget-item-info">
-								<a 
-									:href="telephony.buyPath" 
-									class="license-widget-item-info-text"
-								> 
-									{{ localize.INTRANET_LICENSE_WIDGET_TELEPHONY_CONNECTED }}
-								</a>
-							</div>
-							<div 
-								v-if="telephony.isConnected" 
-								class="license-widget-item-text"
-								v-html="telephony.balanceFormatted"
-							>
-							</div>
-							<!--<div class="license-widget-item-text"Low balance</div>
-							<div class="license-widget-item-text">99 Ð</div>-->
-							
-							<a 
-								v-if="!telephony.isConnected" 
-								:href="telephony.buyPath" 
-								class="license-widget-item-btn"
-								target="_blank"
-							> 
-								{{ localize.INTRANET_LICENSE_WIDGET_CONNECT }} 
-							</a>
-	
-						</div>
-					</div>
-				</div>
-	
-				<div class="license-widget-item" :class="{ 'license-widget-item--active' : license.isDemo }">
-					<div class="license-widget-inner">
-						<div 
-							class="license-widget-item-icon"
-							:class="[
-								license.isDemo && license.isDemoExpired 
-								? 'license-widget-item-icon--expdemo' 
-								: 'license-widget-item-icon--demo'
-							]"
-						></div>
-						<div class="license-widget-item-content">
-							<div class="license-widget-item-name">
-								<span>{{ localize.INTRANET_LICENSE_WIDGET_DEMO }}</span>
-								<!--<span data-hint="Hint"></span>-->
-							</div>
-							<div v-if="license.isDemo" class="license-widget-item-link">
-								<a 
-									class="license-widget-item-link-text" 
+							<div class="license-widget-item-link">
+								<span
+									v-if="license.isFreeTariff"
+									key="licenseDesc"
+									class="license-widget-item-link-text"
+									@click="showInfoHelper('whyPay')"
+								>
+									{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_WHY }}
+								</span>
+								<a
+									v-else-if="license.isDemo"
+									key="licenseDesc"
 									:href="license.demoPath"
+									class="license-widget-item-link-text"
 									target="_blank"
 								>
-									{{ localize.INTRANET_LICENSE_WIDGET_OPPORTUNITIES }}
+									{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_TARIFF }}
+								</a>
+								<a
+									v-else
+									key="licenseDesc"
+									class="license-widget-item-link-text"
+									target="_blank"
+									@click="showInfoHelper('licenseDesc')"
+								>
+									{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_TARIFF }}
 								</a>
 							</div>
-							<div v-if="license.isDemo && !license.isDemoExpired" class="license-widget-item-info">
-								<span class="license-widget-item-info-text">
-									{{ license.tillMessage }}
-								</span>
-							</div>
-							<div 
-								v-if="license.isDemo && license.isDemoExpired" 
+							<div
+								v-if="license.isExpired || license.isAlmostExpired"
 								class="license-widget-item-info license-widget-item-info--exp"
 							>
-								<span class="license-widget-item-info-text">
-									{{ license.daysLeftMessage }}
+								<span class="license-widget-item-info-text">{{ license.daysLeftMessage }}</span>
+							</div>
+							<div v-if="!license.isExpired && !license.isAlmostExpired
+										&& !license.isFreeTariff && !license.isUnlimitedDateTariff"
+								class="license-widget-item-info"
+							>
+								<span class="license-widget-item-info-text">{{ license.tillMessage }}</span>
+							</div>
+						</div>
+					</div>
+					<span v-if="license.isAutoPay" key="licenseButton" class="license-widget-item-btn license-widget-item-btn--disabled">
+						{{
+							license.isFreeTariff || license.isDemo
+							? localize.INTRANET_LICENSE_WIDGET_BUY
+							: localize.INTRANET_LICENSE_WIDGET_PROLONG
+						}}
+					</span>
+					<a v-else key="licenseButton" :href="license.allPath" target="_blank" class="license-widget-item-btn">
+						{{
+							license.isFreeTariff || license.isDemo
+							? localize.INTRANET_LICENSE_WIDGET_BUY
+							: localize.INTRANET_LICENSE_WIDGET_PROLONG
+						}}
+					</a>
+				</div>
+			</div>
+			<div
+				v-if="license.showScanner"
+				class="license-widget-item license-widget-item--main license-widget-item-margin-bottom-1x"
+				:class="{ 'license-widget-item--expired' : license.isAlmostLocked }"
+			>
+				<div class="license-widget-inner">
+					<div class="license-widget-content">
+						<div class="license-widget-item-icon license-widget-item-icon--sc"></div>
+						<div class="license-widget-item-content">
+							<div class="license-widget-item-desc">
+								<span>
+								{{
+									license.scannerLockTillMessage
+									? license.scannerLockTillMessage
+									: localize.INTRANET_LICENSE_WIDGET_SCANNER
+								}}
 								</span>
 							</div>
-							<div 
-								v-if="!license.isDemo && !license.isDemoAvailable" 
-								class="license-widget-item-text"
-							>
-									{{ localize.INTRANET_LICENSE_WIDGET_USED }}
+						</div>
+					</div>
+					<a @click="showLicenseScanner($event)" class="license-widget-item-btn-secondary">
+					{{
+						license.scannerLockTillMessage
+						? localize.INTRANET_LICENSE_WIDGET_SCANNER_DETAILS
+						: localize.INTRANET_LICENSE_WIDGET_SCANNER_START
+					}}
+					</a>
+				</div>
+			</div>
+
+			<!-- endregion -->
+
+			<!-- region vox & demo -->
+			<div class="license-widget-block license-widget-item-margin-bottom-1x">
+				<div
+					class="license-widget-item"
+					:class="{ 'license-widget-item--active' : telephony.isConnected }"
+				>
+					<div class="license-widget-inner">
+						<div class="license-widget-content">
+							<div class="license-widget-item-icon license-widget-item-icon--tel"></div>
+							<div class="license-widget-item-content">
+								<div class="license-widget-item-name">
+									<span>{{ localize.INTRANET_LICENSE_WIDGET_TELEPHONY }}</span>
+									<!--<span data-hint="Hint"></span>-->
+								</div>
+								<div v-if="telephony.isConnected" class="license-widget-item-info">
+									<a
+										:href="telephony.buyPath"
+										class="license-widget-item-info-text"
+									>
+										{{ localize.INTRANET_LICENSE_WIDGET_TELEPHONY_CONNECTED }}
+									</a>
+								</div>
+								<div
+									v-if="telephony.isConnected"
+									class="license-widget-item-text"
+									v-html="telephony.balanceFormatted"
+								>
+								</div>
+								<!--<div class="license-widget-item-text"Low balance</div>
+								<div class="license-widget-item-text">99 ï¿½</div>-->
+
+								<a
+									v-if="!telephony.isConnected"
+									:href="telephony.buyPath"
+									class="license-widget-item-btn"
+									target="_blank"
+								>
+									{{ localize.INTRANET_LICENSE_WIDGET_CONNECT }}
+								</a>
+
 							</div>
-							<a 
-								v-if="license.isDemoAvailable && !license.isDemo"
-								:href="license.demoPath"
-								class="license-widget-item-btn"
-								target="_blank"
-							> 
-								{{ localize.INTRANET_LICENSE_WIDGET_TURN_ON }} 
-							</a>
+						</div>
+					</div>
+				</div>
+
+				<div class="license-widget-item" :class="{ 'license-widget-item--active' : license.isDemo }">
+					<div class="license-widget-inner">
+						<div class="license-widget-content">
+							<div
+								class="license-widget-item-icon"
+								:class="[
+									license.isDemo && license.isDemoExpired
+									? 'license-widget-item-icon--expdemo'
+									: 'license-widget-item-icon--demo'
+								]"
+							></div>
+							<div class="license-widget-item-content">
+								<div class="license-widget-item-name">
+									<span>{{ localize.INTRANET_LICENSE_WIDGET_DEMO }}</span>
+									<!--<span data-hint="Hint"></span>-->
+								</div>
+								<div v-if="license.isDemo" class="license-widget-item-link">
+									<a
+										class="license-widget-item-link-text"
+										:href="license.demoPath"
+										target="_blank"
+									>
+										{{ localize.INTRANET_LICENSE_WIDGET_OPPORTUNITIES }}
+									</a>
+								</div>
+								<div v-if="license.isDemo && !license.isDemoExpired" class="license-widget-item-info">
+									<span class="license-widget-item-info-text">
+										{{ license.tillMessage }}
+									</span>
+								</div>
+								<div
+									v-if="license.isDemo && license.isDemoExpired"
+									class="license-widget-item-info license-widget-item-info--exp"
+								>
+									<span class="license-widget-item-info-text">
+										{{ license.daysLeftMessage }}
+									</span>
+								</div>
+								<div
+									v-if="!license.isDemo && !license.isDemoAvailable"
+									class="license-widget-item-text"
+								>
+										{{ localize.INTRANET_LICENSE_WIDGET_USED }}
+								</div>
+								<a
+									v-if="license.isDemoAvailable && !license.isDemo"
+									:href="license.demoPath"
+									class="license-widget-item-btn"
+									target="_blank"
+								>
+									{{ localize.INTRANET_LICENSE_WIDGET_TURN_ON }}
+								</a>
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div 
+			<!-- endregion -->
+
+			<!-- region market -->
+			<div
 				v-if="market.isMarketAvailable"
-				class="license-widget-item license-widget-item--wide"
+				class="license-widget-item license-widget-item--wide license-widget-item-margin-y-2x"
 				:class="getMarketClass"
 			>
 				<div class="license-widget-inner">
-					<div 
-						class="license-widget-item-icon"
-						:class="getMarketIconClass"
-					></div>
-					<div class="license-widget-item-content">
-						<div class="license-widget-item-name">
-							<span>{{ localize.INTRANET_LICENSE_WIDGET_MARKET }}</span>
-							<!--<span data-hint="Hint"></span>-->
-						</div>
-						<div class="license-widget-item-link">
-							<span class="license-widget-item-link-text" @click="showInfoHelper('market')">
-								{{ localize.INTRANET_LICENSE_WIDGET_MARKET_DESCRIPTION }}
-							</span>
-						</div>
-						
-						<div 
-							v-if="market.isExpired || market.isAlmostExpired" 
-							key="marketTill"
-							class="license-widget-item-info"
-						>
-							<span class="license-widget-item-info-text">
-								{{ market.daysLeftMessage }}
-							</span>
-						</div>
-						<div 
-							v-else-if="market.isPaid || market.isDemo" 
-							key="marketTill"
-							class="license-widget-item-info"
-						>
-							<span class="license-widget-item-info-text">
-								{{ market.tillMessage }}
-							</span>
+					<div class="license-widget-content">
+						<div
+							class="license-widget-item-icon"
+							:class="getMarketIconClass"
+						></div>
+						<div class="license-widget-item-content">
+							<div class="license-widget-item-name">
+								<span>{{ localize.INTRANET_LICENSE_WIDGET_MARKET }}</span>
+								<!--<span data-hint="Hint"></span>-->
+							</div>
+							<div class="license-widget-item-link">
+								<span class="license-widget-item-link-text" @click="showInfoHelper('market')">
+									{{ localize.INTRANET_LICENSE_WIDGET_MARKET_DESCRIPTION }}
+								</span>
+							</div>
+
+							<div
+								v-if="market.isExpired || market.isAlmostExpired"
+								key="marketTill"
+								class="license-widget-item-info"
+							>
+								<span class="license-widget-item-info-text">
+									{{ market.daysLeftMessage }}
+								</span>
+							</div>
+							<div
+								v-else-if="market.isPaid || market.isDemo"
+								key="marketTill"
+								class="license-widget-item-info"
+							>
+								<span class="license-widget-item-info-text">
+									{{ market.tillMessage }}
+								</span>
+							</div>
 						</div>
 					</div>
+					<a
+						v-if="!market.isPaid && !market.isDemo && !market.isDemoUsed && this.isAdmin"
+						key="marketButton"
+						class="license-widget-item-btn"
+						target="_blank"
+						@click="showMarketDemoPopup($event)"
+					>
+						{{ localize.INTRANET_LICENSE_WIDGET_TRY }}
+					</a>
+
+					<a
+						v-else-if="market.canBuy && this.isAdmin"
+						key="marketButton"
+						:href="market.buyPath"
+						class="license-widget-item-btn"
+						target="_blank"
+					>
+						{{
+							market.isPaid
+							? localize.INTRANET_LICENSE_WIDGET_PROLONG
+							: localize.INTRANET_LICENSE_WIDGET_BUY
+						}}
+					</a>
 				</div>
-				<a 
-					v-if="!market.isPaid && !market.isDemo && !market.isDemoUsed && this.isAdmin"
-					key="marketButton"
-					class="license-widget-item-btn"
-					target="_blank"
-					@click="showMarketDemoPopup($event)"
-				> 
-					{{ localize.INTRANET_LICENSE_WIDGET_TRY }} 
-				</a>
-				
-				<a 
-					v-else="market.isPaid || market.isDemo"
-					key="marketButton"
-					:href="market.buyPath"
-					class="license-widget-item-btn"
-					target="_blank"
-				> 
-					{{
-						market.isPaid
-						? localize.INTRANET_LICENSE_WIDGET_PROLONG
-						: localize.INTRANET_LICENSE_WIDGET_BUY
-					}} 
-				</a>
-			</div>		
-			
+			</div>
+			<!-- endregion -->
+
+			<!-- region lists -->
 			<div class="license-widget-option-list">
-				<a 
-					class="license-widget-option" 
+				<a
+					class="license-widget-option"
 					@click="showPartner"
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="#525C69" opacity=".5">
 						<path fill-rule="evenodd" d="M8.033 14.294a5.26 5.26 0 002.283.008l3.072 3.07a9.214 9.214 0 01-8.42-.013zm5.481-2.942l3.716 3.715a10.027 10.027 0 01-2.162 2.163l-3.716-3.716a4.824 4.824 0 001.256-.907c.377-.378.68-.802.906-1.255zm-8.637.015c.226.447.526.867.9 1.24.373.374.793.674 1.24.9L3.303 17.22a10.022 10.022 0 01-2.14-2.14l3.714-3.713zm-3.866-6.37l3.07 3.069a5.26 5.26 0 00.008 2.285l-3.064 3.064a9.214 9.214 0 01-.014-8.419zm16.348-.028a9.214 9.214 0 01.014 8.418l-3.07-3.07a5.26 5.26 0 00-.007-2.285zM3.316 1.154l3.716 3.715a4.826 4.826 0 00-1.256.907c-.378.378-.68.803-.906 1.256L1.154 3.316a10.032 10.032 0 012.162-2.162zm11.765.01a10.038 10.038 0 012.14 2.139l-3.715 3.714a4.826 4.826 0 00-.898-1.241 4.828 4.828 0 00-1.241-.899l3.714-3.714zm-1.666-.14l-3.062 3.063a5.26 5.26 0 00-2.288-.008L4.996 1.011a9.214 9.214 0 018.42.014z"/>
 					</svg>
 					<div class="license-widget-option-text">
-						{{	
-							partner.isPartnerOrder 
+						{{
+							partner.isPartnerOrder
 							? localize.INTRANET_LICENSE_WIDGET_PARTNER_ORDER
 							: localize.INTRANET_LICENSE_WIDGET_PARTNER_CONNECT
-						}} 
+						}}
 					</div>
 				</a>
 				<a class="license-widget-option" @click="showHelper">
@@ -423,6 +472,8 @@ export const ContentComponent = {
 					<div class="license-widget-option-text">{{ localize.INTRANET_LICENSE_WIDGET_ORDERS }}</div>
 				</a>
 			</div>
+			<!-- endregion -->
+
 		</div>
 	`,
 };

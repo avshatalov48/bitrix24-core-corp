@@ -352,7 +352,7 @@ quickAnswersManager.prototype.renderResults = function(items)
 							'data-bx-item-text': BX.Text.encode(items[i].text),
 							className: 'imopenlines-iframe-quick-result-item'
 						},
-						html: BX.Text.encode(items[i].text),
+						html: BX.Text.encode(items[i].name),
 						events: {
 							click: function()
 							{

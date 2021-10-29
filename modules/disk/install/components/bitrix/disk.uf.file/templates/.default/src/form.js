@@ -73,18 +73,27 @@ export default class Form extends DefaultController {
 				this.hide();
 			}
 		};
-
+		//region compatibility
 		EventEmitter.subscribe(this.getEventObject(), 'onCollectControllers', (event) => {
 			event.data[this.fieldName] = {
+				storage: 'disk',
 				tag: this.getFileController().isPluggedIn() ? this.getFileController().getParser().tag : null,
-				values: []
+				values: [],
+				handler: {
+					selectFile: (tab, path, selected) => {
+						this.fileSelector.selectFile(tab, path, selected);
+					}
+				}
 			};
-			this.getContainer()
-				.querySelectorAll(`input[type="hidden"][name="${this.fieldName}"]`)
+			Array.from(
+				this.getContainer()
+					.querySelectorAll(`input[type="hidden"][name="${this.fieldName}"]`)
+			)
 				.forEach((nodeItem) => {
 					event.data[this.fieldName].values.push(nodeItem.value);
 				});
 		});
+		//endregion
 		EventEmitter.subscribe(this.getEventObject(), 'onShowControllers', switcher);
 		EventEmitter.subscribe(this.getEventObject(), 'DiskLoadFormController', switcher);
 

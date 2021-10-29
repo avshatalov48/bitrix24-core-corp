@@ -169,6 +169,18 @@ class Network extends Base
 				$extraFields['EXTRA_USER_LEVEL'] = $message['USER']['USER_LEVEL'];
 			}
 			if (
+				isset($message['USER']['BOT_VERSION'])
+				&& !empty($message['USER']['BOT_VERSION'])
+			)
+			{
+				$description .=
+					'[B]'
+					. Loc::getMessage('IMCONNECTOR_CONNECTOR_NETWORK_BOT_VERSION')
+					. '[/B]: '
+					. $message['USER']['BOT_VERSION']
+					. '[BR]';
+			}
+			if (
 				isset($message['USER']['PORTAL_TYPE'])
 				&& in_array($message['USER']['PORTAL_TYPE'], ['PRODUCTION', 'STAGE', 'ETALON'])
 			)

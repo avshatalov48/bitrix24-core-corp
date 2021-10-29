@@ -597,7 +597,7 @@ abstract class Base extends BaseReport
 	public function prepareEntityListFilter($requestParameters): Query
 	{
 		$query = StatisticTable::query();
-		$fields = StatisticTable::getEntity()->getScalarFields();
+		$fields = StatisticTable::getEntity()->getFields();
 
 		foreach ($fields as $field)
 		{

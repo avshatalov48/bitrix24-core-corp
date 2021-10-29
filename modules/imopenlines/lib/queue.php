@@ -1,32 +1,32 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Web\Uri,
-	\Bitrix\Main\Application,
-	\Bitrix\Main\ModuleManager,
-	\Bitrix\Main\Type\DateTime,
-	\Bitrix\Main\ORM\Query\Query,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\Entity\ReferenceField,
-	\Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Application;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 
-use \Bitrix\Pull;
+use Bitrix\Pull;
 
-use \Bitrix\Im,
-	\Bitrix\Im\Model\RecentTable;
+use Bitrix\Im;
+use Bitrix\Im\Model\RecentTable;
 
-use \Bitrix\Intranet\UserAbsence;
+use Bitrix\Intranet\UserAbsence;
 
-use \Bitrix\ImOpenLines\Model\QueueTable,
-	\Bitrix\ImOpenLines\Model\SessionTable,
-	\Bitrix\ImOpenLines\Model\SessionCheckTable;
+use Bitrix\ImOpenLines\Queue\Cache;
+use Bitrix\ImOpenLines\Model\QueueTable;
+use Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\ImOpenLines\Model\SessionCheckTable;
 
 Loc::loadMessages(__FILE__);
 
 class Queue
 {
-	public const USER_DATA_CACHE_TIME = 86400;
 	public const UNDISTRIBUTED_QUEUE_TIME = 3600;
 	public const MAX_CHAT = 1000;
 
@@ -221,10 +221,6 @@ class Queue
 	/**
 	 * @param $params
 	 * @return \Bitrix\Main\ORM\Query\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getList($params)
 	{
@@ -287,7 +283,7 @@ class Queue
 	}
 
 	/**
-	 * Return array of user data for current line
+	 * Return array of user data for current line.
 	 *
 	 * @param $userId
 	 * @param $lineId
@@ -295,13 +291,11 @@ class Queue
 	 */
 	public static function getQueueOperatorData($userId, $lineId)
 	{
-		$lineId = intval($lineId);
-		$userId = intval($userId);
+		$lineId = (int)$lineId;
+		$userId = (int)$userId;
 		$queue = false;
-		$cacheId = md5(serialize(array($lineId, $userId)));
-		$cacheDir = '/imopenlines/queue/';
-		$cache = \Bitrix\Main\Application::getInstance()->getCache();
-		$taggedCache = \Bitrix\Main\Application::getInstance()->getTaggedCache();
+
+		$cache = new Cache();
 
 		if ($lineId > 0 && $userId > 0)
 		{
@@ -317,33 +311,29 @@ class Queue
 				],
 			];
 
-			if ($cache->initCache(self::USER_DATA_CACHE_TIME, $cacheId, $cacheDir))
+			$cache->setLineId($lineId);
+			$cache->setUserId($userId);
+
+			if ($cache->initCacheQueueOperatorData())
 			{
-				$queue = $cache->getVars();
+				$queue = $cache->getVarsQueueOperatorData();
 			}
 			else
 			{
-				$cache->startDataCache();
-				$taggedCache->startTagCache($cacheDir);
-				$taggedCache->registerTag(self::getUserCacheTag($userId, $lineId));
+				$cache->startCacheQueueOperatorData();
 
 				$queue = self::getList($params)->fetch();
 
 				if (empty($queue['USER_AVATAR']))
 				{
-					$queue['USER_AVATAR'] = \Bitrix\Im\User::getInstance($userId)->getAvatar();
+					$queue['USER_AVATAR'] = Im\User::getInstance($userId)->getAvatar();
 				}
-				$taggedCache->endTagCache();
-				$cache->endDataCache($queue);
+
+				$cache->endCacheQueueOperatorData($queue);
 			}
 		}
 
 		return $queue;
-	}
-
-	public static function getUserCacheTag($userId, $lineId)
-	{
-		return 'QUEUE_USER_DATA_'.$userId.'_'.$lineId;
 	}
 
 	/**
@@ -448,7 +438,7 @@ class Queue
 
 		if ($userId > 0)
 		{
-			$user = \Bitrix\Im\User::getInstance($userId);
+			$user = Im\User::getInstance($userId);
 
 			if($user->isExists())
 			{
@@ -492,8 +482,8 @@ class Queue
 						else
 						{
 							$result['ID'] = (int)$customData['ID'];
-							$result['NAME'] = (string)\Bitrix\Im\User::formatFullNameFromDatabase($customData);
-							$result['FIRST_NAME'] = (string)\Bitrix\Im\User::formatNameFromDatabase($customData);
+							$result['NAME'] = (string)Im\User::formatFullNameFromDatabase($customData);
+							$result['FIRST_NAME'] = (string)Im\User::formatNameFromDatabase($customData);
 							$result['LAST_NAME'] = (string)$customData['LAST_NAME'];
 							$result['WORK_POSITION'] = (string)$customData['WORK_POSITION'];
 							$result['AVATAR'] = (string)$customData['AVATAR'];

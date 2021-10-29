@@ -13,8 +13,9 @@ export default class DocumentController extends DefaultController
 		});
 		if (this.getContainer())
 		{
-			this.getContainer()
-				.querySelectorAll('[data-bx-handler]')
+			Array.from(
+				this.getContainer().querySelectorAll('[data-bx-handler]')
+			)
 				.forEach((item) => {
 					item.addEventListener('click', () => {
 						this.createDocument(item.getAttribute('data-bx-handler'));

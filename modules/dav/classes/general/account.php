@@ -11,7 +11,7 @@ class CDavAccount
 	{
 		if ($name == '')
 			throw new Exception("name");
-		
+
 		$arResult = null;
 
 		if (!strncasecmp("group-", $name, 6) && CModule::IncludeModule("socialnetwork"))
@@ -57,7 +57,7 @@ class CDavAccount
 			"TYPE" => "group",
 			"CODE" => "group-".$arGroup["ID"],
 			"SITE_ID" => $arGroup["SITE_ID"],
-			"NAME" => $arGroup["NAME"],
+			"NAME" => \Bitrix\Main\Text\Emoji::decode($arGroup["NAME"]),
 			"EMAIL" => $arGroup["OWNER_EMAIL"],
 		);
 	}

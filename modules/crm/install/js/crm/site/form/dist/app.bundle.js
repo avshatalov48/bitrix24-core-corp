@@ -1994,12 +1994,6 @@ var Vue = exports.Vue;
       }
     };
 
-    var _namespace = new WeakMap();
-
-    var _subscribers = new WeakMap();
-
-    var _emittedOnce = new WeakMap();
-
     var Event = /*#__PURE__*/function () {
       function Event() {
         babelHelpers.classCallCheck(this, Event);
@@ -2095,6 +2089,12 @@ var Vue = exports.Vue;
       }]);
       return Event;
     }();
+
+    var _namespace = new WeakMap();
+
+    var _subscribers = new WeakMap();
+
+    var _emittedOnce = new WeakMap();
 
     var Item = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Item, _Event);
@@ -3446,7 +3446,9 @@ var Vue = exports.Vue;
         value = value.replace(/[^\d]/g, '');
 
         if (!hasPlus && value.substr(0, 1) === '8') {
-          value = '7' + value.substr(1);
+          if (window.navigator && (window.navigator.language || '').substring(0, 2) === 'ru') {
+            value = '7' + value.substr(1);
+          }
         }
 
         if (!phoneDb.list) {
@@ -5695,12 +5697,6 @@ var Vue = exports.Vue;
     };
     var OppositeActionTypes = (_OppositeActionTypes = {}, babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.hide, ActionTypes.show), babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.show, ActionTypes.hide), _OppositeActionTypes);
 
-    var _form = new WeakMap();
-
-    var _list = new WeakMap();
-
-    var _groups = new WeakMap();
-
     var Manager = /*#__PURE__*/function () {
       function Manager(form) {
         babelHelpers.classCallCheck(this, Manager);
@@ -5963,6 +5959,12 @@ var Vue = exports.Vue;
       return Manager;
     }();
 
+    var _form = new WeakMap();
+
+    var _list = new WeakMap();
+
+    var _groups = new WeakMap();
+
     var ConditionOperations = [];
 
     for (var operationName in Operations) {
@@ -5972,12 +5974,6 @@ var Vue = exports.Vue;
     for (var _operationName in OperationAliases) {
       ConditionOperations.push(Operations[_operationName]);
     }
-
-    var _form$1 = new WeakMap();
-
-    var _isStartSent = new WeakMap();
-
-    var _filledFields = new WeakMap();
 
     var Analytics$1 = /*#__PURE__*/function () {
       function Analytics$$1(form) {
@@ -6080,17 +6076,11 @@ var Vue = exports.Vue;
       return Analytics$$1;
     }();
 
-    var _key = new WeakMap();
+    var _form$1 = new WeakMap();
 
-    var _use = new WeakMap();
+    var _isStartSent = new WeakMap();
 
-    var _widgetId = new WeakMap();
-
-    var _response = new WeakMap();
-
-    var _target = new WeakMap();
-
-    var _callback = new WeakMap();
+    var _filledFields = new WeakMap();
 
     var ReCaptcha$1 = /*#__PURE__*/function () {
       function ReCaptcha$$1() {
@@ -6215,9 +6205,17 @@ var Vue = exports.Vue;
       return ReCaptcha$$1;
     }();
 
-    var _currency = new WeakMap();
+    var _key = new WeakMap();
 
-    var _fields = new WeakMap();
+    var _use = new WeakMap();
+
+    var _widgetId = new WeakMap();
+
+    var _response = new WeakMap();
+
+    var _target = new WeakMap();
+
+    var _callback = new WeakMap();
 
     var Basket = /*#__PURE__*/function () {
       function Basket(fields, currency) {
@@ -6303,6 +6301,10 @@ var Vue = exports.Vue;
       }]);
       return Basket;
     }();
+
+    var _currency = new WeakMap();
+
+    var _fields = new WeakMap();
 
     var Scrollable = {
       props: ['show', 'enabled', 'zIndex', 'text', 'topIntersected', 'bottomIntersected'],
@@ -6920,18 +6922,6 @@ var Vue = exports.Vue;
       view: 'inline'
     };
 
-    var _id = new WeakMap();
-
-    var _fields$1 = new WeakMap();
-
-    var _dependence = new WeakMap();
-
-    var _properties = new WeakMap();
-
-    var _personalisation = new WeakMap();
-
-    var _vue = new WeakMap();
-
     var Controller$o = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller$$1, _Event);
 
@@ -7509,6 +7499,18 @@ var Vue = exports.Vue;
       return Controller$$1;
     }(Event);
 
+    var _id = new WeakMap();
+
+    var _fields$1 = new WeakMap();
+
+    var _dependence = new WeakMap();
+
+    var _properties = new WeakMap();
+
+    var _personalisation = new WeakMap();
+
+    var _vue = new WeakMap();
+
     function performEventOfWidgetFormInit(b24options, options) {
       var compatibleData = createEventData(b24options, options);
       BX.SiteButton.onWidgetFormInit(compatibleData);
@@ -7619,10 +7621,6 @@ var Vue = exports.Vue;
         performEventOfWidgetFormInit: performEventOfWidgetFormInit,
         applyOldenLoaderData: applyOldenLoaderData
     });
-
-    var _forms = new WeakMap();
-
-    var _userProviderPromise = new WeakMap();
 
     var Application = /*#__PURE__*/function () {
       function Application() {
@@ -7910,6 +7908,10 @@ var Vue = exports.Vue;
       }]);
       return Application;
     }();
+
+    var _forms = new WeakMap();
+
+    var _userProviderPromise = new WeakMap();
 
     var App = new Application();
 

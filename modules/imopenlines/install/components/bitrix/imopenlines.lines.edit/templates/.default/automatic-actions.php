@@ -48,6 +48,16 @@ use \Bitrix\Main\Localization\Loc; ?>
 		</div>
 		<div<? if ($arResult['AUTOMATIC_MESSAGE']['ENABLE'] !== 'Y') { ?> class="invisible"<? } ?> id="imol_action_automatic_message">
 			<?foreach ($arResult['AUTOMATIC_MESSAGE']['TASK'] as $idConfigTask => $configTask):?>
+				<div class="imopenlines-control-checkbox-container">
+					<label class="imopenlines-control-checkbox-label">
+						<input type="checkbox"
+							   name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][ACTIVE]"
+							   value="Y"
+							   class="imopenlines-control-checkbox"
+							   <? if ($configTask['ACTIVE']  === 'Y') { ?>checked<? } ?>>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_ACTIVE')?>
+					</label>
+				</div>
 				<div class="imopenlines-control-container imopenlines-control-select">
 					<div class="imopenlines-control-subtitle">
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME')?>

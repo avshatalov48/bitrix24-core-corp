@@ -69,7 +69,7 @@ class ImopenlinesIframeQuickAjaxController
 		foreach($answers as $answer)
 		{
 			$this->responseData['result'][] = array(
-				//'name' => $answer->getName(),
+				'name' => $answer->getName(),
 				'text' => $answer->getText(),
 				'id' => $answer->getId(),
 				'section' => $answer->getCategory(),

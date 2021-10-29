@@ -9,7 +9,7 @@ use \Bitrix\Main\Entity\TextField,
 	\Bitrix\Main\Entity\Validator\Length;
 
 /**
- * Class BotFrameworkTable
+ * Class CustomConnectorsTable
  *
  * Fields:
  * <ul>

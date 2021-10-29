@@ -4,8 +4,12 @@ namespace Bitrix\ImOpenLines;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Text\Emoji;
+use Bitrix\ImOpenLines\Queue;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Entity\ExpressionField;
 
 use Bitrix\Bitrix24\Feature;
 
@@ -83,7 +87,7 @@ class Config
 		{
 			$configCount = Model\ConfigTable::getList(array(
 				'select' => array('CNT'),
-				'runtime' => array(new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)'))
+				'runtime' => array(new ExpressionField('CNT', 'COUNT(*)'))
 			))->fetch();
 			if ($configCount['CNT'] == 0)
 			{
@@ -1510,9 +1514,6 @@ class Config
 	 *
 	 * @param $idConfig
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function getAutomaticMessage($idConfig): array
 	{
@@ -1571,6 +1572,7 @@ class Config
 			if(empty($config['ID']))
 			{
 				$addConfigTasks[] = [
+					'ACTIVE' => $config['ACTIVE'],
 					'CONFIG_ID' => $idConfig,
 					'TIME_TASK' => $config['TIME_TASK'],
 					'MESSAGE' => $config['MESSAGE'],
@@ -1591,6 +1593,7 @@ class Config
 				{
 					$updateConfigTasks[$config['ID']] = [
 						'ID' => $config['ID'],
+						'ACTIVE' => $config['ACTIVE'],
 						'TIME_TASK' => $config['TIME_TASK'],
 						'MESSAGE' => $config['MESSAGE'],
 						'TEXT_BUTTON_CLOSE' => $config['TEXT_BUTTON_CLOSE'],
@@ -1855,61 +1858,85 @@ class Config
 		return $list;
 	}
 
-	public static function getQueueList($userId = 0, $emptyIsNotOperator = true)
+	/**
+	 * Determines whether the user is an operator in at least one open line.
+	 *
+	 * @param int $userId
+	 * @return bool
+	 */
+	public static function isOperator(int $userId): bool
 	{
-		// TODO add self cache
+		$result = false;
 
-		$select = ['ID', 'NAME' => 'LINE_NAME', 'PRIORITY' => 'SESSION_PRIORITY', 'QUEUE_TYPE'];
-		$runtime = [];
-		$order = [];
+		$cache = new Queue\Cache();
 
-		$userId = (int)$userId;
-		if ($userId > 0)
+		$cache->setUserId($userId);
+
+		if ($cache->initCacheCountLinesOperator())
 		{
-			$select['USER_ID'] = 'QUEUE.USER_ID';
-			$order = ['QUEUE.USER_ID' => 'DESC', 'ID' => 'ASC'];
-			$runtime[] = new \Bitrix\Main\Entity\ReferenceField(
-				'QUEUE',
-				'\Bitrix\ImOpenlines\Model\QueueTable',
-				[
-					'=ref.CONFIG_ID' => 'this.ID',
-					'=ref.USER_ID' => new \Bitrix\Main\DB\SqlExpression('?', $userId)
+			$count = $cache->getVarsCountLinesOperator();
+		}
+		else
+		{
+			$cache->startCacheCountLinesOperator();
+
+			$raw = Model\QueueTable::getList([
+				'select' => [new ExpressionField('CNT', 'COUNT(*)')],
+				'filter' => ['USER_ID' => $userId],
+			])->fetch();
+
+			$count = $raw['CNT'];
+
+			$cache->endCacheCountLinesOperator($count);
+		}
+
+		if($count > 0)
+		{
+			$result = true;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param int $userId
+	 * @param bool $emptyIsNotOperator
+	 * @return array
+	 */
+	public static function getQueueList(int $userId = 0, bool $emptyIsNotOperator = true): array
+	{
+		$result = [];
+		$isOperator = 0;
+
+		if($userId > 0)
+		{
+			$isOperator = self::isOperator($userId);
+		}
+
+		if(
+			$isOperator === true
+			|| $emptyIsNotOperator === false
+		)
+		{
+			$rawConfigs = Model\ConfigTable::getList([
+				'select' => [
+					'ID',
+					'NAME' => 'LINE_NAME',
+					'PRIORITY' => 'SESSION_PRIORITY',
+					'QUEUE_TYPE'
 				],
-				['join_type'=>'LEFT']
-			);
-		}
-
-		$list = [];
-		$needSkip = true;
-		$orm = Model\ConfigTable::getList([
-			'select' => $select,
-			'filter' => ['=ACTIVE' => 'Y'],
-			'order' => $order,
-			'runtime' => $runtime,
-			'cache' => ['ttl' => 86400]
-		]);
-		while ($config = $orm->fetch())
-		{
-			if ($config['USER_ID'] > 0)
+				'filter' => ['=ACTIVE' => 'Y'],
+				'order' => ['ID' => 'ASC'],
+				'cache' => ['ttl' => 86400]
+			]);
+			while ($rowConfigs = $rawConfigs->fetch())
 			{
-				$needSkip = false;
+				$rowConfigs['TRANSFER_COUNT'] = \CUserCounter::GetValue($userId, 'imopenlines_transfer_count_' . $rowConfigs['ID']);
+				$result[] = $rowConfigs;
 			}
-			unset($config['USER_ID']);
-
-			$list[] = $config;
 		}
 
-		if ($emptyIsNotOperator && $needSkip)
-		{
-			$list = [];
-		}
-
-		foreach ($list as $key => $value)
-		{
-			$list[$key]['TRANSFER_COUNT'] = \CUserCounter::GetValue($userId, 'imopenlines_transfer_count_'.$value['ID']);
-		}
-
-		return $list;
+		return $result;
 	}
 
 	public static function sendUpdateForQueueList($data)
@@ -1932,7 +1959,7 @@ class Config
 				'CHANNEL_ID' =>	'CHANNEL.CHANNEL_ID'
 			 ],
 			'runtime' => [
-				new \Bitrix\Main\Entity\ReferenceField(
+				new ReferenceField(
 					'CHANNEL',
 					'\Bitrix\Pull\Model\ChannelTable',
 					[
@@ -2050,7 +2077,7 @@ class Config
 		$orm = \Bitrix\ImOpenLines\Model\ConfigTable::getList(Array(
 			'select' => Array('CNT'),
 			'runtime' => array(
-				new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
+				new ExpressionField('CNT', 'COUNT(*)')
 			),
 		));
 		$row = $orm->fetch();

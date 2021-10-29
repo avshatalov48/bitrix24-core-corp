@@ -34,7 +34,6 @@
 	display: flex;
 	align-items: flex-start;
 	padding: 0 5px;
-	height: 140px;
 	transition: opacity .3s;
 }
 
@@ -145,13 +144,12 @@
 	align-items: center;
 	grid-template-columns: minmax(80px, 136px) minmax(80px, 136px) 17px minmax(80px, 136px) minmax(80px, 136px) minmax(64px, 136px);
 	margin-bottom: 15px;
-	height: auto;
 	max-height: 140px;
 }
 
 @media (max-width: 1240px) {
 	.feed-add-post .disk-file-control-panel-file-wrap {
-		grid-template-columns: minmax(55px, 136px) minmax(55px, 136px) 6px minmax(55px, 136px) minmax(55px, 136px) minmax(50px, 136px);
+		grid-template-columns: minmax(55px, 136px) minmax(55px, 136px) minmax(6px, 12px) minmax(55px, 136px) minmax(55px, 136px) minmax(50px, 136px);
 	}
 
 	.feed-add-post .disk-file-control-panel-card-box {

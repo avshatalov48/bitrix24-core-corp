@@ -32,7 +32,7 @@ class Connector
 
 	/**
 	 * @param string $idConnector
-	 * @return Connectors\Base|Connectors\BotFramework|Connectors\Facebook|Connectors\|Connectors\FacebookComments|Connectors\FbInstagram|Connectors\IMessage|Connectors\Olx|Connectors\Viber|Connectors\Yandex|Connectors\Network
+	 * @return Connectors\Facebook|Connectors\|Connectors\FacebookComments|Connectors\FbInstagram|Connectors\IMessage|Connectors\Olx|Connectors\Viber|Connectors\Yandex|Connectors\Network
 	 */
 	public static function initConnectorHandler($idConnector = '')
 	{
@@ -189,25 +189,17 @@ class Connector
 	 * @param bool $virtual
 	 * @return array
 	 */
-	protected static function getListVirtualConnectorBase($virtual = false): array
+	protected static function getListVirtualConnectorBase(bool $virtual = false): array
 	{
 		if($virtual === true)
 		{
-			$connectors['botframework.skype'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_SKYPE');
-			$connectors['botframework.slack'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_SLACK');
-			$connectors['botframework.kik'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_KIK');
-			$connectors['botframework.groupme'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_GROUPME');
-			$connectors['botframework.twilio'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_TWILIO');
-			$connectors['botframework.msteams'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_MSTEAMS');
-			$connectors['botframework.webchat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_WEBCHAT');
-			$connectors['botframework.emailoffice365'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_EMAILOFFICE365');
-			$connectors['botframework.telegram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_TELEGRAM');
-			$connectors['botframework.facebookmessenger'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_FACEBOOKMESSENGER');
-			$connectors['botframework.directline'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_DIRECTLINE');
+			$connectors = [];
+			/*$connectors['botframework.skype'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_SKYPE');*/
 		}
 		else
 		{
-			$connectors['botframework'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK');
+			$connectors = [];
+			/*$connectors['botframework'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK');*/
 		}
 
 		return $connectors;
@@ -466,16 +458,18 @@ class Connector
 	 * @param string $id ID connector
 	 * @return bool
 	 */
-	public static function isNeedSystemMessages($id)
+	public static function isNeedSystemMessages($id): bool
 	{
 		$listNotNeedSystemMessages = Library::$listNotNeedSystemMessages;
 
 		$customNotNeedSystemMessages = CustomConnectors::getListNotNeedSystemMessages();
 
 		if(!empty($customNotNeedSystemMessages))
+		{
 			$listNotNeedSystemMessages = array_unique(array_merge($customNotNeedSystemMessages, $listNotNeedSystemMessages));
+		}
 
-		return !in_array($id, $listNotNeedSystemMessages);
+		return !in_array($id, $listNotNeedSystemMessages, true);
 	}
 
 	/**

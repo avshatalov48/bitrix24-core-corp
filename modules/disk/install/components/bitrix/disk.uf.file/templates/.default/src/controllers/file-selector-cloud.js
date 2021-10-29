@@ -24,13 +24,17 @@ export default class FileSelectorCloud extends DefaultController
 			return;
 		}
 
-		container
-			.querySelectorAll('[data-bx-role="file-external-controller"]')
+		Array.from(
+			container
+				.querySelectorAll('[data-bx-role="file-external-controller"]')
+		)
 			.forEach((item) => {
 				this.services.push(item)
 			});
-		container
-			.querySelectorAll('.diskuf-selector-link-cloud')
+		Array.from(
+			container
+				.querySelectorAll('.diskuf-selector-link-cloud')
+		)
 			.forEach((item) => {
 				this.services.push(item)
 			});

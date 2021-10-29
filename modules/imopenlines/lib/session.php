@@ -39,6 +39,7 @@ class Session
 	public $joinUserList = [];
 	private $isCreated = false;
 	protected $isCloseVote = false;
+	protected $isDisabledSendSystemMessage = false;
 
 	const RULE_TEXT = 'text';
 	const RULE_FORM = 'form';
@@ -2219,11 +2220,13 @@ class Session
 		}
 
 		if (
-			$this->session['CLOSED'] != 'Y' &&
-			$this->session['STATUS'] < self::STATUS_WAIT_CLIENT &&
-			!empty($configTask) &&
-			Loader::includeModule('imconnector') &&
-			$this->isEnableSendSystemMessage()
+			$this->session['CLOSED'] !== 'Y'
+			&& $this->session['PAUSE'] !== 'Y'
+			&& $this->session['STATUS'] < self::STATUS_WAIT_CLIENT
+			&& !empty($configTask)
+			&& !empty($configTask['ACTIVE'] === 'Y')
+			&& Loader::includeModule('imconnector')
+			&& $this->isEnableSendSystemMessage()
 		)
 		{
 			$operatorKeyboard = new \Bitrix\Im\Bot\Keyboard();
@@ -2977,22 +2980,22 @@ class Session
 	{
 		$result = false;
 
-		if(!empty($this->connectorId))
+		if(
+			$this->isDisabledSendSystemMessage === false
+			&& !empty($this->connectorId)
+			&& !ReplyBlock::isBlocked($this)
+		)
 		{
 			$result = Connector::isEnableSendSystemMessage($this->connectorId);
-		}
 
-		if($result)
-		{
-			if($this->action == self::ACTION_CLOSED && $this->config['ACTIVE'] == 'N')
+			if(
+				$result === true
+				&& $this->action === self::ACTION_CLOSED
+				&& $this->config['ACTIVE'] === 'N'
+			)
 			{
 				$result = false;
 			}
-		}
-
-		if (ReplyBlock::isBlocked($this))
-		{
-			$result = false;
 		}
 
 		return $result;
@@ -3001,6 +3004,16 @@ class Session
 	public function isCloseVote()
 	{
 		return $this->isCloseVote;
+	}
+
+	/**
+	 * Forcibly disabling system messages.
+	 *
+	 * @param bool $value
+	 */
+	public function setDisabledSendSystemMessage(bool $value): void
+	{
+		$this->isDisabledSendSystemMessage = $value;
 	}
 
 	//Event

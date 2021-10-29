@@ -26,9 +26,6 @@ class Messages
 
 	/**
 	 * @return bool
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function isActualMessagesForSend(): bool
 	{
@@ -50,11 +47,6 @@ class Messages
 	/**
 	 * @param int $limitTime
 	 * @param int $limit
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function sendMessages($limitTime = 60, $limit = 0): void
 	{
@@ -161,9 +153,6 @@ class Messages
 	/**
 	 * @param $sessionId
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function deleteAllTaskThisSession($sessionId): Result
 	{
@@ -196,10 +185,6 @@ class Messages
 	 * @param $sessionId
 	 * @param $configId
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function addTaskThisSession($sessionId, $configId): Result
 	{
@@ -252,9 +237,6 @@ class Messages
 
 	/**
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function setStatusResponseOperator(): Result
 	{
@@ -284,9 +266,6 @@ class Messages
 
 	/**
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function setStatusNotResponseOperator(): Result
 	{

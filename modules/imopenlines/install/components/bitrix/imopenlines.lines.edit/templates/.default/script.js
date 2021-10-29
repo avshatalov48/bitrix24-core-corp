@@ -337,11 +337,11 @@
 			{
 				if(BX('imol_worktime_checkbox').checked)
 				{
-					BX('imol_worktime_block').classList.remove("invisible");
+					BX('imol_worktime_block').classList.remove('invisible');
 				}
 				else
 				{
-					BX('imol_worktime_block').classList.add("invisible");
+					BX('imol_worktime_block').classList.add('invisible');
 				}
 			}
 
@@ -350,11 +350,11 @@
 				BX('imol_worktime_checkbox').checked
 			)
 			{
-				BX('imol_worktime_answer_block').classList.remove("invisible");
+				BX('imol_worktime_answer_block').classList.remove('invisible');
 			}
 			else
 			{
-				BX('imol_worktime_answer_block').classList.add("invisible");
+				BX('imol_worktime_answer_block').classList.add('invisible');
 			}
 		},
 		toggleBotBlock: function()

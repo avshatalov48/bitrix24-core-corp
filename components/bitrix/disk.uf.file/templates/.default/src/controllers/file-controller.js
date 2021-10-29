@@ -47,14 +47,19 @@ export default class FileController extends DefaultController {
 					{
 						try {
 							const items = [];
+							const duplicateControlItems = {};
 							if (Type.isArray(uf['VALUE']))
 							{
 								uf['VALUE'].forEach((id) => {
 									let node = document.querySelector(['#', this.prefixHTMLNode, id].join(''));
-									if (!node) {
+									const stringId = String(id);
+									if (!node || duplicateControlItems[stringId])
+									{
 										return;
 									}
-									const img = node.querySelector('img');
+									duplicateControlItems[stringId] = true;
+
+									const img = node.querySelector('img') || node.querySelector('div[data-bx-preview]');
 									const infoNode = img || node;
 									const name = infoNode.hasAttribute("data-title") ? infoNode.getAttribute("data-title")
 										: (infoNode.hasAttribute("data-bx-title") ? infoNode.getAttribute("data-bx-title") : '');
@@ -85,12 +90,13 @@ export default class FileController extends DefaultController {
 										SIZE: infoNode.getAttribute("data-bx-size"),
 										SIZE_BYTES: infoNode.getAttribute("data-bx-size"),
 										STORAGE: 'disk',
+										TYPE_FILE: infoNode.getAttribute("bx-attach-file-type"),
 										// width: node.getAttribute("data-bx-width"),
 										// height: node.getAttribute("data-bx-height"),
 									};
 									if (img)
 									{
-										itemData['PREVIEW_URL'] = img.hasAttribute('data-bx-preview') && Type.isStringFilled(img.hasAttribute('data-bx-preview'))
+										itemData['PREVIEW_URL'] = img.hasAttribute('data-bx-preview') && Type.isStringFilled(img.getAttribute('data-bx-preview'))
 											? img.getAttribute('data-bx-preview') : (
 												img.hasAttribute('data-thumb-src') && Type.isStringFilled(img.getAttribute('data-thumb-src'))
 													? img.getAttribute('data-thumb-src') :

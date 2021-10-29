@@ -129,6 +129,7 @@ export default class FileUploader
 			SIZE: item.size,
 			SIZE_BYTES: item.sizeInt,
 			STORAGE: item.storage,
+			TYPE_FILE: item.fileType,
 		};
 	}
 	incrementItemsCount()

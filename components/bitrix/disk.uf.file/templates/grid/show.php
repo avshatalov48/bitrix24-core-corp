@@ -199,7 +199,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 										?> bx-attach-xml-id="<?=$file['XML_ID']?>"<?
 									}
 									?> data-bx-src="<?=$file["BASIC"]["src"] ?>"<?
-									?> data-bx-preview="<?=$file["PREVIEW"]["src"] ?>"<?
+									?> data-bx-preview="<?=$file["INLINE"]["src"] ?>"<?
 								?> />
 								<?
 							}
@@ -234,7 +234,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 										?> bx-attach-xml-id="<?=$file['XML_ID']?>"<?
 									}
 									?> data-bx-src="<?=$file["BASIC"]["src"] ?>"<?
-									?> data-bx-preview="<?=$file["PREVIEW"]["src"] ?>"<?
+									?> data-bx-preview="<?=$file["INLINE"]["src"] ?>"<?
 								?>/>
 								<?
 							}
@@ -257,25 +257,27 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					else
 					{
 						?>
-						<img style="display: none"<?
-							?> class="disk-ui-file-thumbnails-grid-img"<?
-							?> id="<?=$id?>"<?
-							?> src="<?=\Bitrix\Disk\Ui\LazyLoad::getBase64Stub()?>"<?
-							?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
-							?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
-							?> border="0"<?
-							?> data-bx-title="<?=htmlspecialcharsbx($file["NAME"])?>"<?
-							?> data-bx-size="<?=$file["SIZE"]?>"<?
-							?> data-bx-width="<?=$file["BASIC"]["width"]?>"<?
-							?> data-bx-height="<?=$file["BASIC"]["height"]?>"<?
-							?> bx-attach-file-id="<?=$file['FILE_ID']?>"<?
-							if ($file['XML_ID'])
-							{
-								?> bx-attach-xml-id="<?=$file['XML_ID']?>"<?
-							}
-							?> data-bx-src="<?=$file["BASIC"]["src"] ?>"<?
-							?> data-bx-preview="<?=$file["PREVIEW"]["src"] ?>"<?
-						?> />
+						<span id="disk-attach-<?=$file['ID']?>">
+							<img style="display: none"<?
+								?> class="disk-ui-file-thumbnails-grid-img"<?
+								?> id="<?=$id?>"<?
+								?> src="<?=\Bitrix\Disk\Ui\LazyLoad::getBase64Stub()?>"<?
+								?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
+								?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
+								?> border="0"<?
+								?> data-bx-title="<?=htmlspecialcharsbx($file["NAME"])?>"<?
+								?> data-bx-size="<?=$file["SIZE"]?>"<?
+								?> data-bx-width="<?=$file["BASIC"]["width"]?>"<?
+								?> data-bx-height="<?=$file["BASIC"]["height"]?>"<?
+								?> bx-attach-file-id="<?=$file['FILE_ID']?>"<?
+								if ($file['XML_ID'])
+								{
+									?> bx-attach-xml-id="<?=$file['XML_ID']?>"<?
+								}
+								?> data-bx-src="<?=$file["BASIC"]["src"] ?>"<?
+								?> data-bx-preview="<?=$file["INLINE"]["src"] ?>"<?
+							?> />
+						</span>
 						<?
 					}
 				}

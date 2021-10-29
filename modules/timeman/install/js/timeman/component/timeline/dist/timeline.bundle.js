@@ -8,6 +8,7 @@ this.BX.Timeman = this.BX.Timeman || {};
         type: String,
         start: Date,
         finish: Date,
+        finishAlias: String,
         size: Number,
         fixedSize: Boolean,
         showStartMarker: Boolean,
@@ -51,7 +52,7 @@ this.BX.Timeman = this.BX.Timeman || {};
         }
       },
       // language=Vue
-      template: "\n\t\t<div \n\t\t\tclass=\"bx-timeman-component-timeline-chart-interval\"\n\t\t\t:style=\"intervalInlineStyle\"\n\t\t>\n\t\t\t<div\n\t\t\t\tv-if=\"clickable && hint\"\n\t\t\t\tv-bx-hint=\"{\n\t\t\t\t\ttext: hint, \n\t\t\t\t\tposition: 'top'\n\t\t\t\t}\"\n\t\t\t\t:class=\"intervalItemClass\"\n\t\t\t\t@click=\"intervalClick\"\n\t\t\t/>\n\t\t\t<div\n\t\t\t\tv-else\n\t\t\t\t:class=\"intervalItemClass\"\n\t\t\t/>\n\t\t\t\n\t\t\t<div\n\t\t\t\tclass=\"bx-timeman-component-timeline-chart-interval-marker-container\"\n\t\t\t>\n\t\t\t\t<div \n\t\t\t\t\tv-if=\"showStartMarker\"\n\t\t\t\t\tclass=\"\n\t\t\t\t\t\tbx-timeman-component-timeline-chart-interval-marker \n\t\t\t\t\t\tbx-timeman-component-timeline-chart-interval-marker-start\n\t\t\t\t\t\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-interval-marker-line\"/>\n\t\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-interval-marker-title\">\n\t\t\t\t\t\t{{ toShortTime(start) }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"showFinishMarker\"\n\t\t\t\t\tclass=\"\n\t\t\t\t\t\tbx-timeman-component-timeline-chart-interval-marker \n\t\t\t\t\t\tbx-timeman-component-timeline-chart-interval-marker-finish\n\t\t\t\t\t\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-interval-marker-line\"/>\n\t\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-interval-marker-title\">\n\t\t\t\t\t\t{{ toShortTime(finish) }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+      template: "\n\t\t<div \n\t\t\tclass=\"bx-timeman-component-timeline-chart-interval\"\n\t\t\t:style=\"intervalInlineStyle\"\n\t\t>\n\t\t\t<div\n\t\t\t\tv-if=\"clickable && hint\"\n\t\t\t\tv-bx-hint=\"{\n\t\t\t\t\ttext: hint, \n\t\t\t\t\tposition: 'top'\n\t\t\t\t}\"\n\t\t\t\t:class=\"intervalItemClass\"\n\t\t\t\t@click=\"intervalClick\"\n\t\t\t/>\n\t\t\t<div\n\t\t\t\tv-else\n\t\t\t\t:class=\"intervalItemClass\"\n\t\t\t/>\n\t\t\t\n\t\t\t<div\n\t\t\t\tclass=\"bx-timeman-component-timeline-chart-interval-marker-container\"\n\t\t\t>\n\t\t\t\t<div \n\t\t\t\t\tv-if=\"showStartMarker\"\n\t\t\t\t\tclass=\"\n\t\t\t\t\t\tbx-timeman-component-timeline-chart-interval-marker \n\t\t\t\t\t\tbx-timeman-component-timeline-chart-interval-marker-start\n\t\t\t\t\t\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-interval-marker-line\"/>\n\t\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-interval-marker-title\">\n\t\t\t\t\t\t{{ toShortTime(start) }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"showFinishMarker\"\n\t\t\t\t\tclass=\"\n\t\t\t\t\t\tbx-timeman-component-timeline-chart-interval-marker \n\t\t\t\t\t\tbx-timeman-component-timeline-chart-interval-marker-finish\n\t\t\t\t\t\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-interval-marker-line\"/>\n\t\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-interval-marker-title\">\n\t\t\t\t\t\t{{ finishAlias ? finishAlias : toShortTime(finish) }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
     });
 
     var Chart = ui_vue.BitrixVue.localComponent('bx-timeman-component-timeline-chart', {
@@ -110,7 +111,12 @@ this.BX.Timeman = this.BX.Timeman || {};
             return interval;
           });
           intervals[0].isFirst = true;
-          intervals[intervals.length - 1].isLast = true; //to avoid collisions with the start marker of the last interval, which is always displayed
+          intervals[intervals.length - 1].isLast = true;
+
+          if (intervals[intervals.length - 1].finish.getHours() === 23 && intervals[intervals.length - 1].finish.getMinutes() === 59) {
+            intervals[intervals.length - 1].finishAlias = '24:00';
+          } //to avoid collisions with the start marker of the last interval, which is always displayed
+
 
           if (intervals.length > 3) {
             intervals[intervals.length - 1].showStartMarker = true;
@@ -140,7 +146,7 @@ this.BX.Timeman = this.BX.Timeman || {};
         }
       },
       // language=Vue
-      template: "\n\t\t<div \n\t\t\t:class=\"{\n\t\t\t\t'bx-timeman-component-timeline-chart': !this.isOverChart,\n\t\t\t\t'bx-timeman-component-timeline-over-chart': this.isOverChart,\n\t\t  \t}\"\n\t\t>\n\t\t\t<div class=\"bx-timeman-component-timeline-chart-outline\">\n\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-outline-background\"/>\n\t\t\t</div>\n\t\t\t\n\t\t\t<transition-group \n\t\t\t\tname=\"bx-timeman-component-timeline-chart\"\n\t\t\t\tclass=\"bx-timeman-component-timeline-chart-container\"\n\t\t\t\ttag=\"div\"\n\t\t\t>\n\n\t\t\t<Interval\n\t\t\t\tv-for=\"interval of processedIntervals\"\n\t\t\t\t:key=\"interval.start.getTime()\"\n\t\t\t\t:type=\"interval.type\"\n\t\t\t\t:start=\"interval.start\"\n\t\t\t\t:finish=\"interval.finish\"\n\t\t\t\t:showStartMarker=\"showMarkers ? interval.showStartMarker: false\"\n\t\t\t\t:showFinishMarker=\"showMarkers ? interval.showFinishMarker: false\"\n\t\t\t\t:clickable=\"!readOnly ? interval.clickable : false\"\n\t\t\t\t:hint=\"!readOnly ? interval.clickableHint : null\"\n\t\t\t\t:fixedSize=\"interval.fixedSize\"\n\t\t\t\t:size=\"interval.size\"\n\t\t\t\t:isFirst=\"interval.isFirst\"\n\t\t\t\t:isLast=\"interval.isLast\"\n\t\t\t\t:display=\"interval.display\"\n\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t/>\n\n\t\t\t</transition-group>\n\t\t</div>\n\t"
+      template: "\n\t\t<div \n\t\t\t:class=\"{\n\t\t\t\t'bx-timeman-component-timeline-chart': !this.isOverChart,\n\t\t\t\t'bx-timeman-component-timeline-over-chart': this.isOverChart,\n\t\t  \t}\"\n\t\t>\n\t\t\t<div class=\"bx-timeman-component-timeline-chart-outline\">\n\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-outline-background\"/>\n\t\t\t</div>\n\t\t\t\n\t\t\t<transition-group \n\t\t\t\tname=\"bx-timeman-component-timeline-chart\"\n\t\t\t\tclass=\"bx-timeman-component-timeline-chart-container\"\n\t\t\t\ttag=\"div\"\n\t\t\t>\n\n\t\t\t<Interval\n\t\t\t\tv-for=\"interval of processedIntervals\"\n\t\t\t\t:key=\"interval.start.getTime()\"\n\t\t\t\t:type=\"interval.type\"\n\t\t\t\t:start=\"interval.start\"\n\t\t\t\t:finish=\"interval.finish\"\n\t\t\t\t:finishAlias=\"interval.finishAlias ? interval.finishAlias : null\"\n\t\t\t\t:showStartMarker=\"showMarkers ? interval.showStartMarker: false\"\n\t\t\t\t:showFinishMarker=\"showMarkers ? interval.showFinishMarker: false\"\n\t\t\t\t:clickable=\"!readOnly ? interval.clickable : false\"\n\t\t\t\t:hint=\"!readOnly ? interval.clickableHint : null\"\n\t\t\t\t:fixedSize=\"interval.fixedSize\"\n\t\t\t\t:size=\"interval.size\"\n\t\t\t\t:isFirst=\"interval.isFirst\"\n\t\t\t\t:isLast=\"interval.isLast\"\n\t\t\t\t:display=\"interval.display\"\n\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t/>\n\n\t\t\t</transition-group>\n\t\t</div>\n\t"
     });
 
     var Item = ui_vue.BitrixVue.localComponent('bx-timeman-component-timeline-legend-item', {

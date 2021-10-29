@@ -4,6 +4,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use \Bitrix\Main\Type\Date;
+use Bitrix\Bitrix24;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
@@ -14,7 +15,7 @@ class CIntranetLicenseWidgetComponent extends CBitrixComponent
 	{
 		$className = '';
 
-		if ($this->arResult['isFreeLicense'])
+		if ($this->arResult['isFreeLicense'] && !$this->arResult['isAlmostLocked'])
 		{
 			$className = "ui-btn-icon-tariff license-btn-orange";
 		}
@@ -27,6 +28,10 @@ class CIntranetLicenseWidgetComponent extends CBitrixComponent
 			else if ($this->arResult['isLicenseExpired'])
 			{
 				$className = "license-btn-alert-border ui-btn-icon-battery";
+			}
+			else if ($this->arResult['isAlmostLocked'])
+			{
+				$className = "license-btn-alert-border ui-btn-icon-low-battery";
 			}
 			else
 			{
@@ -74,6 +79,7 @@ class CIntranetLicenseWidgetComponent extends CBitrixComponent
 			return;
 		}
 
+		$licenseScanner = Bitrix24\LicenseScanner\Manager::getInstance();
 		$this->arResult['licenseType'] = \CBitrix24::getLicenseFamily();
 		$this->arResult['isFreeLicense'] = $this->arResult['licenseType'] === 'project';
 		$this->arResult['isDemoLicense'] = \CBitrix24::IsDemoLicense();
@@ -87,6 +93,7 @@ class CIntranetLicenseWidgetComponent extends CBitrixComponent
 
 		$daysLeft = 0;
 		$licenseTill = Option::get('main', '~controller_group_till');
+		$scannerLockTill = $licenseScanner->getLockTill();
 
 		$date= new Date;
 		$currentDate = $date->getTimestamp();
@@ -96,6 +103,8 @@ class CIntranetLicenseWidgetComponent extends CBitrixComponent
 			$daysLeft = intval(($licenseTill - $currentDate) / 60 / 60 / 24);
 		}
 
+		$this->arResult['isAlmostLocked'] = $scannerLockTill > $currentDate;
+
 		$this->arResult['isLicenseAlmostExpired'] = (
 			!$isLicenseDateUnlimited
 			&& !$this->arResult['isAutoPay']
@@ -103,7 +112,7 @@ class CIntranetLicenseWidgetComponent extends CBitrixComponent
 			&& $daysLeft < 14
 		);
 		$this->arResult['isLicenseExpired'] = (
-			!$isLicenseDateUnlimited 
+			!$isLicenseDateUnlimited
 			&& $this->arResult['isAutoPay'] ? $daysLeft < 0: $daysLeft <= 0
 		);
 

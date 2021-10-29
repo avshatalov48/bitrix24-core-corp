@@ -523,7 +523,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		if (
 			!$this->arResult["IS_BITRIX24"]
-			|| $this->arResult["IS_BITRIX24"] && $_POST["disk_allow_use_extended_fulltext"] == ''
+			|| $this->arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("disk_allow_use_extended_fulltext")
 		)
 		{
 			if ($_POST["disk_allow_use_extended_fulltext"] <> '')

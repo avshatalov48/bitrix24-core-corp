@@ -9,6 +9,10 @@ export const EntityGroup = Object.freeze({
 		secondaryColor: '#bbf5cc',
 		lightColor: '#f3fdf5'
 	},
+	workingCustom: {
+		value: 'working-custom',
+		hint: Loc.getMessage('TIMEMAN_CONST_ENTITY_GROUP_PERSONAL_HINT'),
+	},
 	personal: {
 		value: 'personal',
 		title: Loc.getMessage('TIMEMAN_CONST_ENTITY_GROUP_PERSONAL'),

@@ -124,7 +124,7 @@ class Input
 	 * @param string $message
 	 * @return Result
 	 */
-	protected function sessionClose($chatId, $userId, $message = ''): Result
+	protected function sessionClose($chatId, $userId, string $message = ''): Result
 	{
 		$result = new Result();
 
@@ -153,7 +153,7 @@ class Input
 			$chatDispatcher = ServiceLocator::getInstance()->get('ImOpenLines.Services.ChatDispatcher');
 			$chat = $chatDispatcher->getChat((int)$chatId);
 
-			$resultFinishChat = $chat->finish($userId, true);
+			$resultFinishChat = $chat->finish($userId, true, true);
 
 			if ($resultFinishChat->isSuccess())
 			{

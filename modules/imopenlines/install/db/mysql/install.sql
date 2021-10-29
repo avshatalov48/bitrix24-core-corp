@@ -233,6 +233,7 @@ CREATE TABLE b_imopenlines_config
 CREATE TABLE b_imopenlines_config_automatic_messages
 (
 	ID int(11) NOT NULL auto_increment,
+    ACTIVE char(1) not null default 'Y',
 	CONFIG_ID int NOT NULL,
 	TIME_TASK int NOT NULL,
 	MESSAGE TEXT NULL,

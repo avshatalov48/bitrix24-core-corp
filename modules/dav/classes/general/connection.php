@@ -48,7 +48,13 @@ class CAllDavConnection
 		if (is_set($arFields, "ACCOUNT_TYPE"))
 		{
 			$arFields["ACCOUNT_TYPE"] = mb_strtolower($arFields["ACCOUNT_TYPE"]);
-			if (!in_array($arFields['ACCOUNT_TYPE'], array('caldav', 'ical', 'caldav_google_oauth', 'google_api_oauth')))
+			if (!in_array($arFields['ACCOUNT_TYPE'], [
+				'caldav',
+				'ical',
+				Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV,
+				Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_API
+			], true)
+		)
 			{
 				$arError[] =
 					[
@@ -236,7 +242,7 @@ class CAllDavConnection
 
 		self::Update(
 			$id,
-			array("LAST_RESULT" => $result, "SYNCHRONIZED" => ConvertTimeStamp(time(), "FULL"), "SYNC_TOKEN" => $syncToken),
+			["LAST_RESULT" => $result, "SYNCHRONIZED" => ConvertTimeStamp(time(), "FULL"), "SYNC_TOKEN" => $syncToken],
 			false
 		);
 

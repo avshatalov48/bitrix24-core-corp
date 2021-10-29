@@ -145,28 +145,31 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 				@mouseenter="onIntervalSelected"
 				@mouseleave="onIntervalUnselected"
 			>
-				<template 
+				<template
 					v-if="
-						type !== EntityType.group 
-						&& type !== EntityType.absenceShort 
+						type !== EntityType.group
+						&& type !== EntityType.absenceShort
 						&& type !== EntityType.other
 					"
 				>
 					<div class="bx-monitor-group-item-container">
 						<div class="bx-monitor-group-item-title-container">
 						 	<template v-if="type === EntityType.absence">
-								<div 
+								<div
 									class="bx-monitor-group-item-icon bx-monitor-group-item-icon-away"
-                                    v-bx-hint="{
-										text: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ABSENCE'), 
-										popupOptions: hintOptions,
+									v-bx-hint="{
+										text: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ABSENCE'),
+										popupOptions: {
+											hintOptions,
+											id: 'bx-vue-hint-monitor-absence-hint',
+										},
 									}"
 								/>
 								<div
 									v-if="type === EntityType.absence"
 									:class="{
-									  'bx-monitor-group-item-title': comment, 
-									  'bx-monitor-group-item-title-small': !comment 
+									  'bx-monitor-group-item-title': comment,
+									  'bx-monitor-group-item-title-small': !comment
 									}"
 								>
 									<template v-if="comment">
@@ -179,11 +182,14 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 								</div>
 							</template>
 							<template v-else-if="type === EntityType.custom">
-								<div 
+								<div
 									class="ui-icon ui-icon-common-user bx-monitor-group-item-icon"
 									v-bx-hint="{
-										text: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CUSTOM_HINT'), 
-										popupOptions: hintOptions,
+										text: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CUSTOM_HINT'),
+										popupOptions: {
+											hintOptions,
+											id: 'bx-vue-hint-monitor-custom-hint',
+										},
 									}"
 								>
 									<i/>
@@ -197,9 +203,9 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 									{{ title }}
 								</template>
 								<template v-else>
-									<a 
-										@click="onDetailClick" 
-										href="#" 
+									<a
+										@click="onDetailClick"
+										href="#"
 										class="bx-monitor-group-site-title"
 									>
 										{{ title }}
@@ -207,16 +213,16 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 								</template>
 							</div>
 							<bx-hint v-if="hint" :text="hint" :popupOptions="hintOptions"/>
-							<button 
-								v-if="group === EntityGroup.working.value && !readOnly" 
+							<button
+								v-if="group === EntityGroup.working.value && !readOnly"
 								class="bx-monitor-group-item-button-comment ui-icon ui-icon-xs"
 								:class="{
-								  'ui-icon-service-imessage': comment, 
-								  'ui-icon-service-light-imessage': !comment 
+								  'ui-icon-service-imessage': comment,
+								  'ui-icon-service-light-imessage': !comment
 								}"
 							>
-								<i 
-									@click="onCommentClick" 
+								<i
+									@click="onCommentClick"
 									:style="{
 										backgroundColor: comment ? '#77c18d' : 'transparent'
 									}"
@@ -227,7 +233,10 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 								class="bx-monitor-group-item-icon bx-monitor-group-item-icon-comment"
 								v-bx-hint="{
 									text: comment,
-									popupOptions: hintOptions,
+									popupOptions: {
+										...hintOptions,
+										id: 'bx-vue-hint-monitor-comment',
+									},
 								}"
 							/>
 						</div>
@@ -244,12 +253,12 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 					</button>
 					<button
 						v-if="
-							group === EntityGroup.working.value 
-							&& (type !== EntityType.unknown && type !== EntityType.custom) 
+							group === EntityGroup.working.value
+							&& (type !== EntityType.unknown && type !== EntityType.custom)
 							&& !readOnly
 						"
 						@click="addPersonal(privateCode)"
-						class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-round bx-monitor-group-btn-right" 						
+						class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-round bx-monitor-group-btn-right"
 					>
 						{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_TO_PERSONAL') }}
 					</button>
@@ -259,7 +268,7 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 							&& !readOnly
 						"
 						@click="removeEntityByPrivateCode(privateCode)"
-						class="ui-btn ui-btn-xs ui-btn-danger-light ui-btn-round bx-monitor-group-btn-right" 						
+						class="ui-btn ui-btn-xs ui-btn-danger-light ui-btn-round bx-monitor-group-btn-right"
 					>
 						{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_REMOVE') }}
 					</button>

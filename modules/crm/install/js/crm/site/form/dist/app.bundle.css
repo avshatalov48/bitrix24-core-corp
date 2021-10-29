@@ -578,7 +578,6 @@ div.b24-form-loader {
 /*region b24-form-state*/
 .b24-form-state--sticky .b24-form-success-inner,
 .b24-form-state--stiky .b24-form-error-inner {
-	position: -webkit-sticky;
 	position: sticky;
 }
 

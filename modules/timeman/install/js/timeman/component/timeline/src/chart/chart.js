@@ -1,7 +1,7 @@
 import {BitrixVue} from "ui.vue";
-import "./chart.css";
-
+import {TimeFormatter} from "timeman.timeformatter";
 import {Interval} from "./interval/interval";
+import "./chart.css";
 
 export const Chart = BitrixVue.localComponent('bx-timeman-component-timeline-chart',{
 	components:
@@ -84,6 +84,14 @@ export const Chart = BitrixVue.localComponent('bx-timeman-component-timeline-cha
 			intervals[0].isFirst = true;
 			intervals[intervals.length - 1].isLast = true;
 
+			if (
+				intervals[intervals.length - 1].finish.getHours() === 23
+				&& intervals[intervals.length - 1].finish.getMinutes() === 59
+			)
+			{
+				intervals[intervals.length - 1].finishAlias = '24:00';
+			}
+
 			//to avoid collisions with the start marker of the last interval, which is always displayed
 			if (intervals.length > 3)
 			{
@@ -147,6 +155,7 @@ export const Chart = BitrixVue.localComponent('bx-timeman-component-timeline-cha
 				:type="interval.type"
 				:start="interval.start"
 				:finish="interval.finish"
+				:finishAlias="interval.finishAlias ? interval.finishAlias : null"
 				:showStartMarker="showMarkers ? interval.showStartMarker: false"
 				:showFinishMarker="showMarkers ? interval.showFinishMarker: false"
 				:clickable="!readOnly ? interval.clickable : false"

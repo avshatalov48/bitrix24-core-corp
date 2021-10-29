@@ -10,6 +10,7 @@ $MESS["IMOL_CONFIG_EDIT_ACTIONS"] = "Налаштування дій";
 $MESS["IMOL_CONFIG_EDIT_ADDITIONAL"] = "Додатково";
 $MESS["IMOL_CONFIG_EDIT_AGREEMENT_MESSAGE"] = "Надіслати попередження про збір персональних даних";
 $MESS["IMOL_CONFIG_EDIT_APPLY"] = "Застосувати";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_ACTIVE"] = "Активувати відправку повідомлень";
 $MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_AUTOMATIC_TEXT_TITLE"] = "Текст автоматичної відповіді  в разі вибору дії";
 $MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_BUTTON_NAME"] = "Назва кнопки";
 $MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CLOSE_TITLE"] = "Закрити діалог";

@@ -30,6 +30,7 @@ $frame = $this->createFrame()->begin();
 			licenseType: '<?=$arResult['licenseType']?>',
 			isLicenseAlmostExpired: '<?=$arResult['isLicenseAlmostExpired'] ? 'Y' : 'N'?>',
 			isLicenseExpired: '<?=$arResult['isLicenseExpired'] ? 'Y' : 'N'?>',
+			isAlmostLocked: '<?=$arResult['isAlmostLocked'] ? 'Y' : 'N'?>',
 		});
 	});
 </script>

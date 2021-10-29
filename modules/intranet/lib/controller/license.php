@@ -9,6 +9,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Type\Date;
+use Bitrix\Bitrix24;
 
 class License extends \Bitrix\Main\Engine\Controller
 {
@@ -77,21 +78,27 @@ class License extends \Bitrix\Main\Engine\Controller
 		}
 
 		$isCloud = true;
+		$licenseScanner = Bitrix24\LicenseScanner\Manager::getInstance();
 
 		$licenseType = \CBitrix24::getLicenseType();
 		$licenseFamily = \CBitrix24::getLicenseFamily();
 		$licensePrefix = \CBitrix24::getLicensePrefix();
 		$licenseTill = Option::get('main', '~controller_group_till');
 		$licenseTillMessage = '';
+		$scannerLockTill = $licenseScanner->getLockTill();
+		$scannerIsAlmostLocked = $scannerLockTill > time() && !$licenseScanner->isEditionCompatible($licenseType);
+		$scannerLockTillMessage = '';
 		$daysLeftMessage = '';
 		$daysLeft = 0;
 		$isLicenseDateUnlimited = \CBitrix24::isLicenseDateUnlimited();
-		$isAutoPay = false;
+		$isAutoPay = (\CBitrix24::IsLicensePaid() && \CBitrix24::isAutoPayLicense());
+		$isAdmin = (
+			Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
+			|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
+		)
+			? true : false;
 
-		if (\CBitrix24::IsLicensePaid())
-		{
-			$isAutoPay = Option::get('bitrix24', '~autopay', 'N') === 'Y';
-		}
+		$canBuyLicense = $isAdmin || \CBitrix24::canAllBuyLicense();
 
 		$date= new Date;
 		$currentDate = $date->getTimestamp();
@@ -111,11 +118,12 @@ class License extends \Bitrix\Main\Engine\Controller
 			]);
 		}
 
-		$isAdmin = (
-			Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
-			|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
-		)
-			? true : false;
+		if ($scannerIsAlmostLocked)
+		{
+			$scannerLockTillMessage = Loc::getMessage('INTRANET_LICENSE_SCANNER_DAYS_LEFT', [
+				'#NUM_DAYS#' => FormatDate("ddiff", $currentDate, $scannerLockTill)
+			]);
+		}
 
 		$analyticsLabel = '?analyticsLabel[headerPopup]=Y&analyticsLabel[licenseType]='.$licenseType;
 		$isMarketAvailable = Loader::includeModule('rest') && \Bitrix\Rest\Marketplace\Client::isSubscriptionAccess();
@@ -150,6 +158,10 @@ class License extends \Bitrix\Main\Engine\Controller
 				'daysLeft' => $daysLeft,
 				'daysLeftMessage' => $daysLeftMessage,
 				'isAutoPay' => $isAutoPay,
+				'canBuy' => $canBuyLicense,
+				'isAlmostLocked' => $scannerIsAlmostLocked,
+				'scannerLockTillMessage' => $scannerLockTillMessage,
+				'showScanner' => (Option::get('bitrix24', '~license_scan_visible', 'N') === 'Y')
 			],
 			'market' => [
 				'isMarketAvailable' => $isMarketAvailable,

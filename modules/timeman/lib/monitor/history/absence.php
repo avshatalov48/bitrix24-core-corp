@@ -35,12 +35,12 @@ class Absence
 		$desktopCode = $sqlHelper->forSql($desktopCode);
 
 		$deleteAbsenceQuery = "
-			DELETE FROM b_timeman_monitor_absence WHERE USER_LOG_ID IN (
+			DELETE tma FROM b_timeman_monitor_absence tma WHERE tma.USER_LOG_ID IN (
 				SELECT ID
 				FROM b_timeman_monitor_user_log
-				WHERE DATE_LOG = '{$dateLog}' 
-				  and USER_ID = {$userId} 
-				  and DESKTOP_CODE = '{$desktopCode}'
+				WHERE DATE_LOG = '{$dateLog}'
+					and USER_ID = {$userId}
+					and DESKTOP_CODE = '{$desktopCode}'
 			);
 		";
 

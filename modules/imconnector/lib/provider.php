@@ -23,8 +23,7 @@ class Provider
 				'facebook',
 				'facebookcomments',
 				'fbinstagram',
-				Library::ID_FBINSTAGRAMDIRECT_CONNECTOR,
-				'botframework'
+				Library::ID_FBINSTAGRAMDIRECT_CONNECTOR
 			],
 		'livechat' =>
 			[

@@ -4,6 +4,7 @@ $MESS["TIMEMAN_CONST_ENTITY_GROUP_WORKING_HINT"] = "Будет отправле�
 $MESS["TIMEMAN_CONST_ENTITY_GROUP_PERSONAL"] = "Личное время";
 $MESS["TIMEMAN_CONST_ENTITY_GROUP_INACTIVE"] = "Неактивное время";
 $MESS["TIMEMAN_CONST_ENTITY_GROUP_PERSONAL_HINT"] = "Не будет отправлено руководителю. Будет удалено на следующие сутки после отправки отчёта.";
+$MESS["TIMEMAN_CONST_ENTITY_GROUP_WORKING_CUSTOM_HINT"] = "Добавлено пользователем";
 $MESS["TIMEMAN_CONST_ENTITY_GROUP_ABSENCE"] = "Перерывы";
 $MESS["TIMEMAN_CONST_ENTITY_GROUP_ABSENCE_HINT"] = "\"Перерывы\" - это незначительные отсутствия, суммарной продолжительностью до 30 минут в день.";
 $MESS["TIMEMAN_CONST_ENTITY_GROUP_OTHER"] = "Браузер и Приложения";

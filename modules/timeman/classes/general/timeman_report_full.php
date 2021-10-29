@@ -1117,12 +1117,17 @@ class CUserReportFull
 		}
 		elseif ($currentReportInfo["IS_REPORT_DAY"] == "Y")
 		{
+			if ($force === true)
+			{
+				return false;
+			}
+
 			if ($currentReportInfo["IS_DELAY"] == "Y" && $currentReportInfo["DELAY_TIME"] < time())
 			{
 				$currentReportInfo["IS_DELAY"] = "N";
 			}
 
-			if (($currentReportInfo["IS_DELAY"] == "Y" || $currentReportInfo["SHOW_REPORT_FORM"] == "N") && !$force)
+			if ($currentReportInfo["IS_DELAY"] == "Y" || $currentReportInfo["SHOW_REPORT_FORM"] == "N")
 			{
 				return true;
 			}

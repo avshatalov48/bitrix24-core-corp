@@ -311,7 +311,8 @@ this.BX.Disk = this.BX.Disk || {};
 	        NAME: item.name,
 	        SIZE: item.size,
 	        SIZE_BYTES: item.sizeInt,
-	        STORAGE: item.storage
+	        STORAGE: item.storage,
+	        TYPE_FILE: item.fileType
 	      };
 	    }
 	  }, {
@@ -877,6 +878,10 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "getHTMLForHTMLEditor",
 	    value: function getHTMLForHTMLEditor(tagId) {
+	      if (this.getData('TYPE_FILE') === 'player') {
+	        return "<img contenteditable=\"false\" class=\"bxhtmled-player-surrogate\" data-bx-file-id=\"".concat(this.data.ID, "\" id=\"").concat(tagId, "\" src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" />");
+	      }
+
 	      return "<span contenteditable=\"false\" data-bx-file-id=\"".concat(this.data.ID, "\" id=\"").concat(tagId, "\" style=\"color: #2067B0; border-bottom: 1px dashed #2067B0; margin:0 2px;\">").concat(main_core.Text.encode(this.data.NAME), "</span>");
 	    } //endregion
 
@@ -1163,16 +1168,19 @@ this.BX.Disk = this.BX.Disk || {};
 	            if (uf && uf['USER_TYPE_ID'] === "disk_file" && uf['FIELD_NAME'].replace('[]', '') === _this2.fieldName.replace('[]', '')) {
 	              try {
 	                var items = [];
+	                var duplicateControlItems = {};
 
 	                if (main_core.Type.isArray(uf['VALUE'])) {
 	                  uf['VALUE'].forEach(function (id) {
 	                    var node = document.querySelector(['#', _this2.prefixHTMLNode, id].join(''));
+	                    var stringId = String(id);
 
-	                    if (!node) {
+	                    if (!node || duplicateControlItems[stringId]) {
 	                      return;
 	                    }
 
-	                    var img = node.querySelector('img');
+	                    duplicateControlItems[stringId] = true;
+	                    var img = node.querySelector('img') || node.querySelector('div[data-bx-preview]');
 	                    var infoNode = img || node;
 	                    var name = infoNode.hasAttribute("data-title") ? infoNode.getAttribute("data-title") : infoNode.hasAttribute("data-bx-title") ? infoNode.getAttribute("data-bx-title") : '';
 	                    var itemData = {
@@ -1197,13 +1205,14 @@ this.BX.Disk = this.BX.Disk || {};
 	                      NAME: name,
 	                      SIZE: infoNode.getAttribute("data-bx-size"),
 	                      SIZE_BYTES: infoNode.getAttribute("data-bx-size"),
-	                      STORAGE: 'disk' // width: node.getAttribute("data-bx-width"),
+	                      STORAGE: 'disk',
+	                      TYPE_FILE: infoNode.getAttribute("bx-attach-file-type") // width: node.getAttribute("data-bx-width"),
 	                      // height: node.getAttribute("data-bx-height"),
 
 	                    };
 
 	                    if (img) {
-	                      itemData['PREVIEW_URL'] = img.hasAttribute('data-bx-preview') && main_core.Type.isStringFilled(img.hasAttribute('data-bx-preview')) ? img.getAttribute('data-bx-preview') : img.hasAttribute('data-thumb-src') && main_core.Type.isStringFilled(img.getAttribute('data-thumb-src')) ? img.getAttribute('data-thumb-src') : img.src;
+	                      itemData['PREVIEW_URL'] = img.hasAttribute('data-bx-preview') && main_core.Type.isStringFilled(img.getAttribute('data-bx-preview')) ? img.getAttribute('data-bx-preview') : img.hasAttribute('data-thumb-src') && main_core.Type.isStringFilled(img.getAttribute('data-thumb-src')) ? img.getAttribute('data-thumb-src') : img.src;
 	                      itemData['BIG_PREVIEW_URL'] = img.hasAttribute("data-bx-src") ? img.getAttribute("data-bx-src") : img.getAttribute('data-src');
 	                    }
 
@@ -1539,7 +1548,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    }));
 
 	    if (_this.getContainer()) {
-	      _this.getContainer().querySelectorAll('[data-bx-handler]').forEach(function (item) {
+	      Array.from(_this.getContainer().querySelectorAll('[data-bx-handler]')).forEach(function (item) {
 	        item.addEventListener('click', function () {
 	          _this.createDocument(item.getAttribute('data-bx-handler'));
 	        });
@@ -1827,10 +1836,10 @@ this.BX.Disk = this.BX.Disk || {};
 	      return babelHelpers.possibleConstructorReturn(_this);
 	    }
 
-	    container.querySelectorAll('[data-bx-role="file-external-controller"]').forEach(function (item) {
+	    Array.from(container.querySelectorAll('[data-bx-role="file-external-controller"]')).forEach(function (item) {
 	      _this.services.push(item);
 	    });
-	    container.querySelectorAll('.diskuf-selector-link-cloud').forEach(function (item) {
+	    Array.from(container.querySelectorAll('.diskuf-selector-link-cloud')).forEach(function (item) {
 	      _this.services.push(item);
 	    });
 	    _this.eventObject = eventObject;
@@ -2445,18 +2454,25 @@ this.BX.Disk = this.BX.Disk || {};
 	        } else {
 	          _this2.hide();
 	        }
-	      };
+	      }; //region compatibility
+
 
 	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'onCollectControllers', function (event) {
 	        event.data[_this2.fieldName] = {
+	          storage: 'disk',
 	          tag: _this2.getFileController().isPluggedIn() ? _this2.getFileController().getParser().tag : null,
-	          values: []
+	          values: [],
+	          handler: {
+	            selectFile: function selectFile(tab, path, selected) {
+	              _this2.fileSelector.selectFile(tab, path, selected);
+	            }
+	          }
 	        };
-
-	        _this2.getContainer().querySelectorAll("input[type=\"hidden\"][name=\"".concat(_this2.fieldName, "\"]")).forEach(function (nodeItem) {
+	        Array.from(_this2.getContainer().querySelectorAll("input[type=\"hidden\"][name=\"".concat(_this2.fieldName, "\"]"))).forEach(function (nodeItem) {
 	          event.data[_this2.fieldName].values.push(nodeItem.value);
 	        });
-	      });
+	      }); //endregion
+
 	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'onShowControllers', switcher);
 	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'DiskLoadFormController', switcher); // (new Ears({
 	      // 	container: this.getContainer().querySelector('[data-bx-role="control-panel-main-actions"]'),

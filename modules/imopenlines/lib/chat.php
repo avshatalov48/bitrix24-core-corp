@@ -1204,15 +1204,10 @@ class Chat
 	/**
 	 * @param int $userId
 	 * @param bool $permissionOtherClose
+	 * @param bool $skipSendSystemMessage
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\Db\SqlQueryException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function finish($userId = 0, $permissionOtherClose = true)
+	public function finish($userId = 0, bool $permissionOtherClose = true, bool $skipSendSystemMessage = false): Result
 	{
 		$result = new Result();
 
@@ -1271,6 +1266,11 @@ class Chat
 							}
 						}
 
+						if($skipSendSystemMessage === true)
+						{
+							$session->setDisabledSendSystemMessage(true);
+						}
+
 						$eventData = [
 							'RUNTIME_SESSION' => $session
 						];
@@ -1279,6 +1279,11 @@ class Chat
 						$event->send();
 
 						$session->finish();
+
+						if($skipSendSystemMessage === true)
+						{
+							$session->setDisabledSendSystemMessage(false);
+						}
 
 						$queueManager->stopLock();
 						$result->setResult(true);
@@ -2886,7 +2891,7 @@ class Chat
 		else if ($icon === 'imessage')
 		{
 			$result = [
-				'TITLE' => 'Apple Business Chat extension',
+				'TITLE' => 'Apple Messages for Business extension',
 				'DESCRIPTION' => '',
 				'COPYRIGHT' => ''
 			];

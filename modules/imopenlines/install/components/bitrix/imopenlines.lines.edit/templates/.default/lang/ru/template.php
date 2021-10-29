@@ -200,6 +200,7 @@ $MESS['IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TIP'] = 'Автоматически�
 $MESS['IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TEXT'] = 'Текст автоматического ответа';
 
 $MESS['IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_ENABLE'] = 'Включить автоматическое сообщение при бездействии пользователя';
+$MESS['IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_ACTIVE'] = 'Активировать отправку сообщений';
 $MESS['IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME'] = 'Время до отправки сообщения после ответа ';
 $MESS['IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_3_H'] = '3 часа';
 $MESS['IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_7_H'] = '7 часов';

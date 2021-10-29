@@ -4,10 +4,6 @@
 	margin-bottom: 0;
 }
 
-.license-widget-block {
-	margin-bottom: 24px;
-}
-
 .license-widget-item-info--exp .license-widget-item-info-text:before {
 	content: none;
 }
@@ -151,7 +147,7 @@
 	box-sizing: border-box;
 }
 
-.license-widget-invite-main .license-widget-inner {
+.license-widget-invite-main .license-widget-content {
 	align-items: center;
 }
 
@@ -250,7 +246,7 @@
 	background: #fff;
 }
 
-.license-widget-item--emp .license-widget-inner {
+.license-widget-item--emp .license-widget-content {
 	flex-wrap: wrap;
 }
 
@@ -406,7 +402,7 @@
 	margin-bottom: 3px;
 }
 
-.license-widget-item--own .license-widget-inner {
+.license-widget-item--own .license-widget-content {
 	height: calc(100% - 28px);
 	margin: 5px 0 3px;
 }
@@ -500,7 +496,7 @@
 	text-align: center;
 }
 
-.license-widget-item--access .license-widget-inner {
+.license-widget-item--access .license-widget-content {
 	align-items: center;
 }
 

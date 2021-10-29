@@ -488,11 +488,11 @@ abstract class CDavAddressbookBase
 	 */
 	private function GetVCardContent($entity)
 	{
-		$arVCardContact = array();
-		$map = array(
+		$arVCardContact = [];
+		$map = [
 			"TYPE" => self::V_CARD_CONTENT_TYPE,
 			"VERSION" => self::V_CARD_CONTENT_VERSION,
-		);
+		];
 		$map = array_merge($map, $this->GetVCardDataMap($entity));
 
 		if (!empty($map['IMG']))
@@ -500,13 +500,18 @@ abstract class CDavAddressbookBase
 			if (is_array($map['IMG']))
 			{
 				if (!empty($map['IMG']['src']))
+				{
 					$arTempFile = $map['IMG'];
+				}
 			}
-			else if (intval($map['IMG']) > 0)
+			else if ((int)$map['IMG'] > 0)
 			{
 				$arTempFile = CFile::ResizeImageGet(
 					$map['IMG'],
-					array("width" => \Bitrix\Main\Config\Option::get("dav", "vcard_image_width", 400), "height" => \Bitrix\Main\Config\Option::get("dav", "vcard_image_width", 400)),
+					[
+						"width" => \Bitrix\Main\Config\Option::get("dav", "vcard_image_width", 400),
+						"height" => \Bitrix\Main\Config\Option::get("dav", "vcard_image_width", 400)
+					],
 					BX_RESIZE_IMAGE_PROPORTIONAL,
 					false,
 					false,
@@ -517,34 +522,88 @@ abstract class CDavAddressbookBase
 
 			if (!empty($arTempFile) && file_exists($_SERVER["DOCUMENT_ROOT"] . $arTempFile['src']))
 			{
-				$cnt = file_get_contents($_SERVER["DOCUMENT_ROOT"] . $arTempFile['src']);
-				if (!empty($cnt))
+				if (empty(file_get_contents($this->getDomainLink() . $arTempFile['src'])))
 				{
-					$arImageTypes = array(
+					$arImageTypes = [
 						IMAGETYPE_JPEG => 'JPEG',
 						IMAGETYPE_GIF => 'GIF',
 						IMAGETYPE_PNG => 'PNG'
-					);
+					];
 
 					$imageType = "JPEG";
 					if ($imageInfo = CFile::GetImageSize($_SERVER["DOCUMENT_ROOT"] . $arTempFile['src']) and isset($arImageTypes[$imageInfo[2]]))
+					{
 						$imageType = $arImageTypes[$imageInfo[2]];
+					}
 
-					$map["PHOTO"] = array(
-						"VALUE" => /*chunk_split(*/
-							base64_encode($cnt)/*)*/,
-						"PARAMETERS" => array("ENCODING" => "BASE64", "TYPE" => $imageType)
-					);
+					$map["PHOTO"] = [
+						"VALUE" => base64_encode($_SERVER["DOCUMENT_ROOT"] . $arTempFile['src']),
+						"PARAMETERS" => ["ENCODING" => "BASE64", "TYPE" => $imageType]
+					];
 				}
+				else
+				{
+					$map["PHOTO"] = ["VALUE" => $this->encodeUrn($this->getDomainLink() . $arTempFile['src'])];
+				}
+			}
+			else if (!empty($arTempFile))
+			{
+				$map['PHOTO'] = ['VALUE' => $this->encodeUrn($arTempFile['src'])];
 			}
 		}
 		unset($map['IMG']);
+
 		foreach ($map as $propertyTitle => $property)
 		{
 			$arVCardContact[$propertyTitle] = $property;
 		}
 
 		$cal = new CDavICalendarComponent($arVCardContact);
+
 		return $cal->Render();
+	}
+
+	private function getDomainLink(): string
+	{
+		$context = \Bitrix\Main\Application::getInstance()->getContext();
+		$scheme = $context->getRequest()->isHttps() ? 'https' : 'http';
+		$server = $context->getServer();
+		$domain = $server->getServerName() ?: \COption::getOptionString('main', 'server_name', '');
+
+		if (preg_match('/^(?<domain>.+):(?<port>\d+)$/', $domain, $matches))
+		{
+			$domain = $matches['domain'];
+			$port   = $matches['port'];
+		}
+		else
+		{
+			$port = $server->getServerPort();
+		}
+
+		$port = in_array((int)$port, [80, 443], true) ? '' : ":{$port}";
+
+		return "{$scheme}://{$domain}{$port}";
+	}
+
+	/**
+	 * Encodes uri: explodes uri by / and encodes in UTF-8 and rawurlencodes.
+	 * @param string $uri Uri.
+	 * @return string
+	 */
+	private function encodeUrn($uri): string
+	{
+		global $APPLICATION;
+
+		$result = '';
+		$parts = preg_split("#(://|:\\d+/|/|\\?|=|&)#", $uri, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+		foreach($parts as $i => $part)
+		{
+			$result .= ($i % 2)
+				? $part
+				: rawurlencode(\Bitrix\Main\Text\Encoding::convertEncoding($part, LANG_CHARSET, 'UTF-8'));
+		}
+
+		return $result;
 	}
 }

@@ -16,6 +16,7 @@ class LicenseWidget
 		this.isAutoPay = params.isAutoPay === "Y";
 		this.isLicenseAlmostExpired = params.isLicenseAlmostExpired === "Y";
 		this.isLicenseExpired = params.isLicenseExpired === "Y";
+		this.isAlmostLocked = params.isAlmostLocked === "Y";
 		this.licenseType = params.licenseType;
 		this.node = params.wrapper;
 
@@ -36,6 +37,7 @@ class LicenseWidget
 					isDemoLicense: LicenceWidgetInstance.isDemoLicense,
 					isLicenseAlmostExpired: LicenceWidgetInstance.isLicenseAlmostExpired,
 					isLicenseExpired: LicenceWidgetInstance.isLicenseExpired,
+					isAlmostLocked: LicenceWidgetInstance.isAlmostLocked,
 				};
 			},
 			computed:
@@ -48,7 +50,7 @@ class LicenseWidget
 					{
 						let className = "";
 
-						if (this.isFreeLicense)
+						if (this.isFreeLicense && !this.isAlmostLocked)
 						{
 							className = "ui-btn-icon-tariff license-btn-orange";
 						}
@@ -68,6 +70,10 @@ class LicenseWidget
 								{*/
 									className = "license-btn-alert-border license-btn-animate license-btn-animate-forward";
 								//}
+							}
+							else if (this.isAlmostLocked)
+							{
+								className = "license-btn-alert-border ui-btn-icon-low-battery";
 							}
 							else
 							{
@@ -140,14 +146,14 @@ class LicenseWidget
 				},
 			},
 			template: `
-				<button 
-					class="ui-btn ui-btn-round ui-btn-themes license-btn" 
+				<button
+					class="ui-btn ui-btn-round ui-btn-themes license-btn"
 					:class="buttonClass"
 					@mouseover="onMouseOver"
 					@mouseout="onMouseOut"
 					@click="togglePopup"
 				>
-					<span v-if="isLicenseExpired" class="license-btn-icon-battery">
+					<span v-if="isLicenseExpired || isAlmostLocked" class="license-btn-icon-battery">
 						<span class="license-btn-icon-battery-full">
 							<span class="license-btn-icon-battery-inner">
 								<span></span>
@@ -231,8 +237,8 @@ class LicenseWidget
 				}
 			},
 			template: `
-				<PopupWrapperComponent 
-					:licenseType="licenseType" 
+				<PopupWrapperComponent
+					:licenseType="licenseType"
 				/>`,
 		});
 

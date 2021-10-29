@@ -1008,7 +1008,6 @@ class QueueManager
 				foreach ($deleteUsers as $user)
 				{
 					QueueTable::delete($user['ID']);
-					$taggedCache->clearByTag(Queue::getUserCacheTag($user['USER_ID'], $this->idLine));
 				}
 				$result->setResult(true);
 			}
@@ -1017,7 +1016,6 @@ class QueueManager
 				foreach ($updateUsers as $id => $user)
 				{
 					QueueTable::update($id, $user);
-					$taggedCache->clearByTag(Queue::getUserCacheTag($user['USER_ID'], $this->idLine));
 				}
 				$result->setResult(true);
 			}

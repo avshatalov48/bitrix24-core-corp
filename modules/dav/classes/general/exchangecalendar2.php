@@ -2,6 +2,7 @@
 
 use Bitrix\Calendar\Sync\Util\MsTimezoneConverter;
 use Bitrix\Calendar\Util;
+use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 
@@ -1079,29 +1080,23 @@ if (!class_exists("CDavExchangeCalendar"))
 			}
 
 			$arTimezone = $calendarItem->GetPath("/CalendarItem/TimeZone");
-			$dateTimezones = [];
 			if (count($arTimezone) > 0 && !$arResultItem["SKIP_TIME"])
 			{
 				$parts = explode(" ", $this->Encode($arTimezone[0]->GetContent()), 2);
+				$timezone = null;
 				if (isset($parts[1]))
 				{
 					$timezones = explode(", ", $parts[1]);
 					if (count($timezones))
 					{
-						foreach ($timezones as $timezone)
-						{
-							if ($tz = $this->PrepareTimezone($timezone))
-							{
-								$dateTimezones[] = $tz;
-							}
-						}
-
-						$arResultItem['TIMEZONE'] = count($dateTimezones)
-							? $dateTimezones[0]->getName()
-							: Util::getServerTimezoneName()
-						;
+						$timezone = $this->PrepareTimezone($timezones[0]);
 					}
 				}
+
+				$arResultItem['TIMEZONE'] = $timezone !== null
+					? $timezone->getName()
+					: Util::getServerTimezoneName()
+				;
 			}
 
 			$arStart = $calendarItem->GetPath("/CalendarItem/Start");
@@ -1110,7 +1105,10 @@ if (!class_exists("CDavExchangeCalendar"))
 				$dateFrom = $this->GetDateTimeFromExchangeTime($arStart[0]->GetContent());
 				if (!$arResultItem["SKIP_TIME"])
 				{
-					$dateFrom->setTimeZone(new \DateTimeZone($arResultItem['TIMEZONE']));
+					if (is_string($arResultItem['TIMEZONE']))
+					{
+						$dateFrom->setTimeZone(new \DateTimeZone($arResultItem['TIMEZONE']));
+					}
 					$arResultItem["ACTIVE_FROM"] = $dateFrom->format(Date::convertFormatToPhp(FORMAT_DATETIME));
 				}
 				else
@@ -1126,7 +1124,10 @@ if (!class_exists("CDavExchangeCalendar"))
 				$dateTo = $this->GetDateTimeFromExchangeTime($arEnd[0]->GetContent());
 				if (!$arResultItem["SKIP_TIME"])
 				{
-					$dateTo->setTimeZone(new \DateTimeZone($arResultItem['TIMEZONE']));
+					if (is_string($arResultItem['TIMEZONE']))
+					{
+						$dateTo->setTimeZone(new \DateTimeZone($arResultItem['TIMEZONE']));
+					}
 					$arResultItem["ACTIVE_TO"] = $dateTo->format(Date::convertFormatToPhp(FORMAT_DATETIME));
 				}
 				else
@@ -1881,11 +1882,6 @@ if (!class_exists("CDavExchangeCalendar"))
 					$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $userId, ["UF_BXDAVEX_CALSYNC" => ConvertTimeStamp(time() - 86400, "FULL")]
 					);
 				}
-			}
-
-			if ($bShouldClearCache)
-			{
-				CCalendar::SyncClearCache();
 			}
 
 			if (DAV_EXCH_DEBUG)

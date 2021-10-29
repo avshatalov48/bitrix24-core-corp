@@ -1,7 +1,6 @@
 <?php
 namespace Bitrix\ImConnector;
 
-use Bitrix\ImConnector\Connectors\Notifications;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Context;
 use Bitrix\Main\IO\Path;
@@ -24,8 +23,6 @@ class Library
 	const SERVER_URI = "im.bitrix.info";
 
 	const ID_LIVE_CHAT_CONNECTOR = 'livechat';
-	const ID_REAL_BOT_FRAMEWORK_CONNECTOR = 'botframework';
-	const ID_REAL_BOT_FRAMEWORK_KIK_CONNECTOR = 'botframework.kik';
 	const ID_FBINSTAGRAM_CONNECTOR = 'fbinstagram';
 	const ID_VIBER_CONNECTOR = 'viber';
 	const ID_YANDEX_CONNECTOR = 'yandex';
@@ -198,47 +195,36 @@ class Library
 	];
 
 	/** @var array A list of connectors, which works without servers */
-	public static $noServerConnectors = array(
+	public static $noServerConnectors = [
 		'livechat',
 		'network'
-	);
+	];
 
 	/** @var array A list of connectors, where it is not necessary to send system messages.*/
-	public static $listNotNeedSystemMessages = array(
+	public static $listNotNeedSystemMessages = [
 		'facebookcomments',
-		'botframework.twilio',
-		'botframework.emailoffice365',
 		self::ID_FBINSTAGRAM_CONNECTOR,
 		self::ID_NOTIFICATIONS_CONNECTOR,
-	);
+	];
 
 	/** @var array A list of connectors that support group chat.*/
-	public static $listGroupChats = array(
-		'botframework.slack',
-		'botframework.skype',
-		'botframework.groupme',
-	);
+	public static $listGroupChats = [
+	];
 
 	/** @var array A list of connectors, where it is impossible to send automatic newsletter.*/
-	public static $listNotNewsletterChats = array(
+	public static $listNotNewsletterChats = [
 		'livechat',
 		'network',
 		'facebookcomments',
-		'botframework.slack',
-		'botframework.groupme',
 		self::ID_FBINSTAGRAM_CONNECTOR,
 		self::ID_NOTIFICATIONS_CONNECTOR,
-	);
+	];
 
 	/** @var array */
 	public static $listConnectorEditInternalMessages = [
 		'vkgroup',
 		'facebookcomments',
 		'telegrambot',
-
-		'botframework.skype',
-		'botframework.slack',
-		'botframework.telegram',
 	];
 
 	/** @var array */
@@ -246,8 +232,6 @@ class Library
 		'vkgroup',
 		'facebookcomments',
 		self::ID_FBINSTAGRAM_CONNECTOR,
-
-		'botframework.slack',
 	];
 
 	/** @var array */
@@ -261,16 +245,15 @@ class Library
 		'livechat',
 		'network',
 		'facebookcomments',
-		'botframework.twilio',
 		self::ID_FBINSTAGRAM_CONNECTOR,
 		'viber',
 		'yandex'
 	];
 
 	/** @var array A list of connectors, where we use rich links on operator side.*/
-	public static $listConnectorWithRichLinks = array(
+	public static $listConnectorWithRichLinks = [
 		'imessage'
-	);
+	];
 
 	/** @var array A list of connectors, where we send writing status.*/
 	public static $listConnectorWritingStatus = [
@@ -280,13 +263,13 @@ class Library
 		'ok'
 	];
 
-	public static $listSingleThreadGroupChats = array(
+	public static $listSingleThreadGroupChats = [
 		'facebookcomments',
 		self::ID_FBINSTAGRAM_CONNECTOR,
-	);
+	];
 
 	/** @var array Association mime type of the file and its corresponding expansion */
-	public static $mimeTypeAssociationExtension = array(
+	public static $mimeTypeAssociationExtension = [
 		'application/vnd.hzn-3d-crossword' => '.x3d',
 		'video/3gpp' => '.3gp',
 		'video/3gpp2' => '.3g2',
@@ -977,7 +960,7 @@ class Library
 		'video/*' => '.mp4',
 		'video/mpeg4' => '.mp4',
 		'audio/amr' => '.amr'
-	);
+	];
 
 	/**
 	 * Load language constants library.

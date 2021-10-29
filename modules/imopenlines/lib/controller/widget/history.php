@@ -5,6 +5,7 @@ use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\ImOpenLines\Chat;
 use Bitrix\ImOpenLines\Controller\Widget\Filter;
+use Bitrix\Main\Engine\CurrentUser;
 
 class History extends Controller
 {
@@ -36,9 +37,16 @@ class History extends Controller
 		];
 	}
 
-	public function downloadAction(int $chatId): ?\Bitrix\Main\HttpResponse
+	public function downloadAction(int $chatId, CurrentUser $currentUser): ?\Bitrix\Main\HttpResponse
 	{
 		$liveChat = new Chat($chatId);
+		$chatAuthorId = (int)$liveChat->getData('AUTHOR_ID');
+		$currentUserId = (int)$currentUser->getId();
+		if ($chatAuthorId !== $currentUserId)
+		{
+			return null;
+		}
+
 		$chatFieldSession = $liveChat->getFieldData(Chat::FIELD_LIVECHAT);
 		$sessionId = $chatFieldSession['SESSION_ID'];
 		if ($sessionId <= 0)

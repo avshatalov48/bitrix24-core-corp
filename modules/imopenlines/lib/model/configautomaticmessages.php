@@ -1,11 +1,12 @@
 <?php
 namespace Bitrix\Imopenlines\Model;
 
-use Bitrix\Main\ORM\Data\DataManager,
-	Bitrix\Main\ORM\Fields\TextField,
-	Bitrix\Main\ORM\Fields\StringField,
-	Bitrix\Main\ORM\Fields\IntegerField,
-	Bitrix\Main\ORM\Fields\Validators\LengthValidator;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\TextField;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 
 /**
  * Class ConfigAutomaticMessagesTable
@@ -51,6 +52,10 @@ class ConfigAutomaticMessagesTable extends DataManager
 					'autocomplete' => true,
 				]
 			),
+			new BooleanField('ACTIVE', [
+				'values' => ['N', 'Y'],
+				'default_value' => 'Y',
+			]),
 			new IntegerField(
 				'CONFIG_ID',
 				[

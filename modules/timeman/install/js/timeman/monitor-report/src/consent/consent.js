@@ -44,6 +44,12 @@ export const Consent = BitrixVue.localComponent('bx-timeman-monitor-report-conse
 				top.BX.Helper.show('redirect=detail&code=' + code);
 			}
 		},
+		showGrantingPermissionLater()
+		{
+			this.$store.dispatch('monitor/showGrantingPermissionLater').then(() => {
+				BX.SidePanel.Instance.close();
+			});
+		}
 	},
 	// language=Vue
 	template: `
@@ -53,17 +59,22 @@ export const Consent = BitrixVue.localComponent('bx-timeman-monitor-report-conse
 					{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE') }}
 				</div>
 			</div>
-			<div class="pwt-report-content-container pwt-report-consent-content-container">
-				<div class="pwt-report-content pwt-report-consent-content">
+			<div class="pwt-report-content-container">
+				<div class="pwt-report-content">
 					<div class="bx-timeman-monitor-report-consent-logo-container">
 						<svg class="bx-timeman-monitor-report-consent-logo"/>
 					</div>
-					<div class="bx-timeman-monitor-report-consent-description" v-html="$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION')"/>
-					<div v-if="isMac" class="bx-timeman-monitor-report-consent-mac">
-						{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC') + ' ' }}
-						<span @click="openPermissionHelp" class="bx-timeman-monitor-report-consent-link">
-							{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC_DETAIL') }}
-						</span>
+					<div class="bx-timeman-monitor-report-consent-description">
+						<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_1') }}</p>
+						<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_2') }}</p>
+						<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_3') }}</p>
+						<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_4') }}</p>
+						<p v-if="isMac">
+							{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC') + ' ' }}
+							<span @click="openPermissionHelp" class="bx-timeman-monitor-report-consent-link">
+								{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC_DETAIL') }}
+							</span>
+						</p>
 					</div>
 				</div>
 				<div class="pwt-report-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width" style="z-index: 0">
@@ -83,6 +94,13 @@ export const Consent = BitrixVue.localComponent('bx-timeman-monitor-report-conse
 							style="margin-left: 16px;"
 						>
 							{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}
+						</button>
+						<button
+							@click="showGrantingPermissionLater"
+							class="ui-btn ui-btn-light-border"
+							style="margin-left: 16px;"
+						>
+							{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_LATER') }}
 						</button>
 					</div>
 				</div>

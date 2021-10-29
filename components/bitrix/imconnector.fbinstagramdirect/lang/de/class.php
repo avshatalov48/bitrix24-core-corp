@@ -1,6 +1,6 @@
 <?php
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_DISABLED_ACCESS_INSTAGRAM_DIRECT_MESSAGES"] = "Um IG Direct zu verbinden, sollten Sie den Zugriff auf die Nachrichten in Ihrem Instagram Account gewähren. #A#Mehr dazu#A_END#";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_IG_ACCOUNT_IS_NOT_ELIGIBLE_API_2"] = "Leider können laut den Facebook-Regeln nur die Nutzer mit den Instagram Accounts IG Direct verbinden, die zwischen 1.000 und 100.000 Abonnenten haben. #A#Details#A_END#";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_IG_ACCOUNT_IS_NOT_ELIGIBLE_API_3"] = "Leider entspricht Ihr IG Direct nicht den Anforderungen von Facebook. #A#Details#A_END#";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_REQUEST_INFORMATION_FROM_SERVER"] = "Serverfehler.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INVALID_OAUTH_ACCESS_TOKEN"] = "Öffentliche Seite kann nicht bearbeitet werden, weil die Verbindung verloren gegangen ist. Sie müssen die Verbindung erneut herstellen.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_MODULE_NOT_INSTALLED"] = "Das Modul \"IM Connectors\" ist nicht installiert.";

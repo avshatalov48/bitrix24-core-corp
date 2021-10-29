@@ -625,9 +625,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 
 	public function createReportSliderQuery(): Query
 	{
-		$reportEntity = Entity::getInstanceByQuery($this->externalQuery);
-
-		$sliderQuery = new Query($reportEntity);
+		$sliderQuery = $this->externalQuery;
 		$sliderQuery->addSelect('ID');
 
 		$filterDefinition = $this->getFilterDefinition();

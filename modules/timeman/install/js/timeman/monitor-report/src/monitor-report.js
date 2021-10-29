@@ -30,6 +30,11 @@ class MonitorReport
 {
 	open(store)
 	{
+		if (this.isReportOpen)
+		{
+			return;
+		}
+
 		BX.SidePanel.Instance.open("timeman:pwt-report", {
 			contentCallback: () => this.getAppPlaceholder(),
 			animationDuration: 200,
@@ -44,9 +49,19 @@ class MonitorReport
 						BXIM.desktop.setPreventEsc(true);
 					}
 				},
+				onOpenComplete: () => {
+					this.isReportOpen = true;
+				},
 				onLoad: () => this.createEditor(store),
 				onCloseComplete: () =>
 				{
+					this.isReportOpen = false;
+
+					if (Monitor.shouldShowGrantingPermissionWindow())
+					{
+						Monitor.showGrantingPermissionLater();
+					}
+
 					if (Type.isFunction(BXIM.desktop.setPreventEsc))
 					{
 						BXIM.desktop.setPreventEsc(false);
@@ -63,6 +78,11 @@ class MonitorReport
 
 	openPreview(store)
 	{
+		if (this.isReportPreviewOpen)
+		{
+			return;
+		}
+
 		BX.SidePanel.Instance.open("timeman:pwt-report-preview", {
 			contentCallback: () => this.getAppPlaceholder(),
 			animationDuration: 200,
@@ -73,7 +93,13 @@ class MonitorReport
 				text: Loc.getMessage('TIMEMAN_PWT_REPORT_PREVIEW_SLIDER_LABEL'),
 			},
 			events: {
+				onOpenComplete: () => {
+					this.isReportPreviewOpen = true;
+				},
 				onLoad: () => this.createPreview(store),
+				onCloseComplete: () => {
+					this.isReportPreviewOpen = false;
+				},
 			}
 		});
 	}

@@ -24,6 +24,8 @@ if (Loader::includeModule('bitrix24'))
 	\CBitrix24::initLicenseInfoPopupJS();
 }
 $APPLICATION->SetTitle($arResult['PAGE_TITLE']);
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
+
 ?>
 <script>
 	BX.ready(function(){

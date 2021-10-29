@@ -387,9 +387,8 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 					<?if (
 						$arResult["IS_BITRIX24"]
 						&& Feature::isFeatureEnabled("disk_allow_use_extended_fulltext")
-						&& COption::GetOptionString("disk", "disk_allow_use_extended_fulltext", "N") != "Y"
 					):?>
-					onclick="BX.Bitrix24.Configs.Functions.showDiskExtendedFullTextInfo(event, this);"
+						<?if (COption::GetOptionString("disk", "disk_allow_use_extended_fulltext", "N") === "Y"):?>checked<?endif?>
 					<?endif?>
 				/>
 			</td>
