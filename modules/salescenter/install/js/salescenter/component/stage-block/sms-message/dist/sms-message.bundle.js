@@ -79,6 +79,11 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	          smsTemplate: smsText
 	        },
 	        analyticsLabel: 'salescenterSmsTemplateChange'
+	      }).catch(function (response) {
+	        var errorMessage = response.errors.map(function (err) {
+	          return err.message;
+	        }).join("; ");
+	        alert(errorMessage);
 	      });
 	    },
 	    adjustUpdateMessage: function adjustUpdateMessage(e) {

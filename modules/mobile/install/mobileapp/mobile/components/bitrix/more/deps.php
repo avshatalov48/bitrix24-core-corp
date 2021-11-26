@@ -5,5 +5,7 @@ return [
 	"helpers/component",
 	"task",
 	"menu/spotlight",
-	"stress/more"
+	"stress/more",
+	"qrauth/utils",
+	"intent"
 ];

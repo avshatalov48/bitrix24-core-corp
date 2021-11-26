@@ -43,6 +43,7 @@ $MESS["CRM_COLUMN_NEXT_EXECUTION"] = "Next invoice date";
 $MESS["CRM_COLUMN_OPPORTUNITY"] = "Income";
 $MESS["CRM_COLUMN_ORDER_STAGE"] = "Deal payment status";
 $MESS["CRM_COLUMN_ORIGINATOR_ID"] = "Web store";
+$MESS["CRM_COLUMN_PAYMENT_STAGE"] = "Payment status";
 $MESS["CRM_COLUMN_PROBABILITY"] = "Probability, %";
 $MESS["CRM_COLUMN_PRODUCT"] = "Product";
 $MESS["CRM_COLUMN_PRODUCT_ID"] = "Product";

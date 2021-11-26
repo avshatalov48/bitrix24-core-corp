@@ -1,6 +1,11 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
+
+use Bitrix\Main\Text\Emoji;
 
 class CBPTask2Activity
 	extends CBPActivity
@@ -251,6 +256,8 @@ class CBPTask2Activity
 			}
 		}
 
+		$this->checkPlanDates($arFieldsChecked);
+
 		if ($fields['ALLOW_TIME_TRACKING'] === 'Y')
 		{
 			$arFieldsChecked['TIME_ESTIMATE'] = (int) $this->TimeEstimateHour * 3600 + (int) $this->TimeEstimateMin * 60;
@@ -396,6 +403,19 @@ class CBPTask2Activity
 			return false;
 		}
 		return $dateFieldValue;
+	}
+
+	protected function checkPlanDates(&$fields)
+	{
+		if (!empty($fields['START_DATE_PLAN']) && !empty($fields['END_DATE_PLAN']))
+		{
+			$startDate = MakeTimeStamp($fields['START_DATE_PLAN']);
+			$endDate = MakeTimeStamp($fields['END_DATE_PLAN']);
+			if ($endDate < $startDate)
+			{
+				unset($fields['END_DATE_PLAN']);
+			}
+		}
 	}
 
 	protected function markAsBPTask(int $taskId): void
@@ -699,7 +719,7 @@ class CBPTask2Activity
 			$db = CSocNetGroup::GetList(array("NAME" => "ASC"), array("ACTIVE" => "Y"), false, false, array("ID", "NAME"));
 			while ($ar = $db->GetNext())
 			{
-				$arGroups[$ar["ID"]] = "[".$ar["ID"]."]".$ar["NAME"];
+				$arGroups[$ar["ID"]] = "[" . $ar["ID"] . "]" . Emoji::decode($ar["NAME"]);
 			}
 		}
 
@@ -878,7 +898,7 @@ class CBPTask2Activity
 			$db = CSocNetGroup::GetList(array("NAME" => "ASC"), array("ACTIVE" => "Y"), false, false, array("ID", "NAME"));
 			while ($ar = $db->GetNext())
 			{
-				$arGroups[$ar["ID"]] = "[".$ar["ID"]."]".htmlspecialcharsback($ar["NAME"]);
+				$arGroups[$ar["ID"]] = "[" . $ar["ID"] . "]" . htmlspecialcharsback(Emoji::decode($ar["NAME"]));
 			}
 		}
 
@@ -982,15 +1002,7 @@ class CBPTask2Activity
 				"BaseType" => "bool"
 			),
 			"TASK_CONTROL" => array(
-				"Name" => GetMessage("BPTA1A_CHECK_RESULT"),
-				"Type" => "B",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "bool"
-			),
-			"ADD_IN_REPORT" => array(
-				"Name" => GetMessage("BPTA1A_ADD_TO_REPORT_2"),
+				"Name" => GetMessage("BPTA1A_CHECK_RESULT_V2"),
 				"Type" => "B",
 				"Editable" => true,
 				"Required" => false,

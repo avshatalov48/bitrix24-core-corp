@@ -60,6 +60,10 @@ if($arResult['NEED_FOR_BUILD_DUPLICATE_INDEX']):
 	?><div id="buildCompanyDuplicateIndexWrapper"></div><?
 endif;
 
+if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']):
+	?><div id="rebuildCompanySecurityAttrsWrapper"></div><?
+endif;
+
 if($arResult['NEED_FOR_REBUILD_COMPANY_ATTRS']):
 	?><div id="rebuildCompanyAttrsMsg" class="crm-view-message">
 		<?=GetMessage('CRM_COMPANY_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildCompanyAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
@@ -819,6 +823,7 @@ $APPLICATION->IncludeComponent(
 	array(
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
+		'ENABLE_FIELDS_SEARCH' => 'Y',
 		'SORT' => $arResult['SORT'],
 		'SORT_VARS' => $arResult['SORT_VARS'],
 		'ROWS' => $arResult['GRID_DATA'],
@@ -834,7 +839,13 @@ $APPLICATION->IncludeComponent(
 			'LAZY_LOAD' => array(
 				'GET_LIST' => '/bitrix/components/bitrix/crm.company.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.company.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-			)
+			),
+			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'CONFIG' => [
+				'popupColumnsCount' => 4,
+				'popupWidth' => 800,
+				'showPopupInCenter' => true,
+			],
 		),
 		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
 			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
@@ -1040,6 +1051,26 @@ $APPLICATION->IncludeComponent(
 					}
 				);
 				manager.runAfter(100);
+			}
+		);
+	</script>
+<?endif;?>
+<?if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']):?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				BX.AutorunProcessManager.createIfNotExists(
+					"rebuildCompanySecurityAttrs",
+					{
+						serviceUrl: "<?='/bitrix/components/bitrix/crm.company.list/list.ajax.php?'.bitrix_sessid_get()?>",
+						actionName: "REBUILD_SECURITY_ATTRS",
+						container: "rebuildCompanySecurityAttrsWrapper",
+						title: "<?=GetMessageJS('CRM_COMPANY_REBUILD_SECURITY_ATTRS_DLG_TITLE')?>",
+						stateTemplate: "<?=GetMessageJS('CRM_COMPANY_STEPWISE_STATE_TEMPLATE')?>",
+						enableLayout: true
+					}
+				).runAfter(100);
 			}
 		);
 	</script>

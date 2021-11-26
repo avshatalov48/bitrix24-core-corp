@@ -562,6 +562,7 @@ BX.Intranet.SearchTitle = function(arParams)
 		var crmLead= [];
 		var crmQuote= [];
 		var crmInvoice= [];
+		var crmDynamic = [];
 		var diskItems= [];
 		var taskItems= [];
 		var crmContactMore = false, crmCompanyMore = false, crmDealMore = false, crmLeadMore = false,
@@ -642,6 +643,13 @@ BX.Intranet.SearchTitle = function(arParams)
 				else
 				{
 					crmInvoiceMore = true;
+				}
+			}
+			else if (itemData.module === 'crm' && itemData.type.indexOf('DYNAMIC_') === 0)
+			{
+				if (crmDynamic.length < 10)
+				{
+					crmDynamic.push(item);
 				}
 			}
 			else if (itemData.module === "disk")
@@ -753,6 +761,8 @@ BX.Intranet.SearchTitle = function(arParams)
 			var moreBlock = this.BuildMoreBlock(item);
 			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
 		}
+
+		this.BuildEntityBlock(crmDynamic, "CRM: " + BX.message("SEARCH_CRM_DYNAMIC"), "dynamic");
 
 		this.BuildEntityBlock(diskItems, BX.message("SEARCH_DISK"), "disk", limits.disk);
 		if (diskMore)

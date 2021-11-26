@@ -21,6 +21,7 @@ Loc::loadMessages(__FILE__);
 class VisibilityManager
 {
 	private static $isEnabled;
+	private static $userFieldAccessCodes = [];
 
 	/**
 	 * @return bool
@@ -121,7 +122,11 @@ class VisibilityManager
 			throw new \Bitrix\Main\ArgumentException('Entity type id is not valid');
 		}
 
-		$fields = UserFieldPermissionTable::getUserFieldsAccessCodes($entityTypeID);
+ 		if (!isset(self::$userFieldAccessCodes[$entityTypeID]))
+		{
+			self::$userFieldAccessCodes[$entityTypeID] = UserFieldPermissionTable::getUserFieldsAccessCodes($entityTypeID);
+		}
+		$fields = self::$userFieldAccessCodes[$entityTypeID];
 		$usersInfo = self::getUsersInfo($fields);
 
 		return self::prepareUserFieldsAccessCodes($fields, $usersInfo);

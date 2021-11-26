@@ -83,7 +83,7 @@ if ($action === 'FIX_STATUSES')
 			$error = $entity->Update(
 				$itemID,
 				array(
-					'STATUS_ID' => $entity->GetNextStatusId(),
+					'STATUS_ID' => $entity->getUniqueRandomStatusId(),
 					'SORT' => isset($arRes['SORT']) ? (int)$arRes['SORT'] : 10,
 					'SYSTEM' => isset($arRes['SYSTEM']) ? $arRes['SYSTEM'] : 'N',
 					'NAME' => isset($arRes['NAME']) ? $arRes['NAME'] : ''

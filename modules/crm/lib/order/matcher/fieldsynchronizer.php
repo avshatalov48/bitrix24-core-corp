@@ -13,12 +13,13 @@ use Bitrix\Crm\StatusTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Entity;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Delivery\Services\Manager as DeliveryManager;
 use Bitrix\Sale\Internals\Input\File;
 use Bitrix\Sale\Internals\OrderPropsGroupTable;
+use Bitrix\Sale\Internals\OrderPropsRelationTable;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
-use Bitrix\Sale\TradingPlatform;
 use Bitrix\Sale\Internals\OrderPropsTable;
 
 class FieldSynchronizer
@@ -204,9 +205,28 @@ class FieldSynchronizer
 	{
 		$fields = [];
 
+		$filter = [
+			'=PERSON_TYPE_ID' => $personTypeId,
+			[
+				'LOGIC' => 'OR',
+				'=PROP_RELATION.ENTITY_ID' => null,
+				'!PROP_RELATION.ENTITY_TYPE' => 'L'
+			]
+		];
+
 		$personTypePropertiesIterator = Property::getList([
-			'filter' => ['=PERSON_TYPE_ID' => $personTypeId],
-			'order' => ['SORT' => 'ASC']
+			'filter' => $filter,
+			'order' => ['SORT' => 'ASC'],
+			'runtime' => [
+				new Entity\ReferenceField(
+					'PROP_RELATION',
+					'\Bitrix\Sale\Internals\OrderPropsRelationTable',
+					[
+						'=this.ID' => 'ref.PROPERTY_ID',
+					]
+				)
+			],
+			'group' => ['CODE']
 		]);
 
 		foreach ($personTypePropertiesIterator as $property)
@@ -585,7 +605,20 @@ class FieldSynchronizer
 
 					if (is_array($field['statusType']))
 					{
-						$field['statusType'] = $field['statusType']['ID'];
+						if (isset($field['statusType']['ID']))
+						{
+							$field['statusType'] = $field['statusType']['ID'];
+						}
+						else
+						{
+							$countryId = static::getDefaultCountryId();
+							$countryCode = EntityPreset::getCountryCodeById($countryId);
+							$statusTypeId = "{$fieldId}_{$countryCode}";
+							if (in_array($statusTypeId, $field['statusType'], true))
+							{
+								$field['statusType'] = $statusTypeId;
+							}
+						}
 					}
 
 					if ($field['statusType'] && isset($statusTypes[$field['statusType']]))
@@ -1157,7 +1190,7 @@ class FieldSynchronizer
 		if (empty($groupCache[$personTypeId]))
 		{
 			$orderProps = OrderPropsGroupTable::getRow([
-			 	'select' => ['ID'],
+				'select' => ['ID'],
 				'filter' => ['=PERSON_TYPE_ID' => $personTypeId],
 				'order' => ['SORT' => 'asc']
 			]);
@@ -1258,35 +1291,6 @@ class FieldSynchronizer
 		}
 
 		return static::$relations['P'];
-	}
-
-	public static function getLandingRelations()
-	{
-		if (!isset(static::$relations['L']))
-		{
-			$landings = [];
-
-			$dbRes = TradingPlatform\Manager::getList(
-				[
-					'select' => ['ID', 'NAME'],
-					'filter' => [
-						'=ACTIVE' => 'Y',
-						'%CODE' => TradingPlatform\Landing\Landing::TRADING_PLATFORM_CODE,
-					]
-				]
-			);
-			foreach ($dbRes as $row)
-			{
-				$landings[$row['ID']] = [
-					"ID" => $row['ID'],
-					"VALUE" => "{$row['NAME']} [{$row['ID']}]",
-				];
-			}
-
-			static::$relations['L'] = $landings;
-		}
-
-		return static::$relations['L'];
 	}
 
 	private static function extractRelations(&$itemFields)
@@ -1414,10 +1418,7 @@ class FieldSynchronizer
 
 				if (!empty($relations))
 				{
-					foreach ($relations as $name => $relation)
-					{
-						\CSaleOrderProps::UpdateOrderPropsRelations($propertyId, $relation, $name);
-					}
+					self::saveRelations($propertyId, $relations);
 				}
 
 				if (!empty($matchProperties))
@@ -1478,10 +1479,7 @@ class FieldSynchronizer
 
 				if (!empty($relations))
 				{
-					foreach ($relations as $name => $relation)
-					{
-						\CSaleOrderProps::UpdateOrderPropsRelations($propertyId, $relation, $name);
-					}
+					self::saveRelations($propertyId, $relations);
 				}
 
 				if (!empty($matchProperties) || $itemFields['UTIL'] === 'Y')
@@ -1512,6 +1510,45 @@ class FieldSynchronizer
 		}
 
 		return $result;
+	}
+
+	protected static function saveRelations($propertyId, $relations)
+	{
+		$existedRelation = OrderPropsRelationTable::getList([
+			'select' => ['ENTITY_ID', 'ENTITY_TYPE'],
+			'filter' => [
+				'=PROPERTY_ID' => $propertyId,
+				'@ENTITY_TYPE' => ['P', 'D']
+			]
+		]);
+		foreach ($existedRelation as $item)
+		{
+			$index = array_search($item['ENTITY_ID'], $relations[$item['ENTITY_TYPE']]);
+			if ($index === false)
+			{
+				OrderPropsRelationTable::delete([
+					'PROPERTY_ID' => $propertyId,
+					'ENTITY_ID' => $item['ENTITY_ID'],
+					'ENTITY_TYPE' => $item['ENTITY_TYPE'],
+				]);
+			}
+			else
+			{
+				unset($relations[$item['ENTITY_TYPE']][$index]);
+			}
+		}
+
+		foreach ($relations as $entityType => $relation)
+		{
+			foreach ($relation as $entityId)
+			{
+				OrderPropsRelationTable::add([
+					'PROPERTY_ID' => $propertyId,
+					'ENTITY_ID' => $entityId,
+					'ENTITY_TYPE' => $entityType,
+				]);
+			}
+		}
 	}
 
 	public static function updateDuplicateMode($personTypeId, $duplicateMode)
@@ -1568,7 +1605,7 @@ class FieldSynchronizer
 
 	protected static function getDefaultRelations()
 	{
-		return ['P' => [], 'D' => [], 'L' => []];
+		return ['P' => [], 'D' => []];
 	}
 
 	protected static function parseRelations($relations)
@@ -1578,7 +1615,6 @@ class FieldSynchronizer
 		$existingRelationEntities = [
 			'P' => array_keys(static::getPaySystemRelations()),
 			'D' => array_keys(static::getDeliveryRelations()),
-			'L' => array_keys(static::getLandingRelations()),
 		];
 
 		foreach ($relations as $relation)

@@ -947,9 +947,6 @@ class CTasksReportHelper extends CReportHelper
 			);
 		}
 
-		// hide deleted tasks
-		$filter[] = array('=ZOMBIE' => 'N');
-
 		return $filter;
 	}
 

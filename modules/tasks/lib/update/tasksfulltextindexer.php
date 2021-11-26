@@ -34,7 +34,6 @@ final class TasksFulltextIndexer extends Stepper
 		if (empty($params))
 		{
 			$filter = Query::filter();
-			$filter->where('ZOMBIE', 'N');
 			$filter->whereNull('SEARCH_INDEX');
 
 			$params = array(
@@ -48,7 +47,7 @@ final class TasksFulltextIndexer extends Stepper
 
 		if ($params["count"] > 0)
 		{
-			$res = $DB->Query("SELECT ID FROM b_tasks WHERE ZOMBIE = 'N' AND SEARCH_INDEX IS NULL AND ID > ".(int)$params["lastId"]." LIMIT {$this->countAtHit}");
+			$res = $DB->Query("SELECT ID FROM b_tasks WHERE SEARCH_INDEX IS NULL AND ID > ".(int)$params["lastId"]." LIMIT {$this->countAtHit}");
 			while($t = $res->Fetch())
 			{
 				$taskId = (int)$t['ID'];

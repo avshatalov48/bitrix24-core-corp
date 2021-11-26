@@ -462,7 +462,6 @@ class CTaskPlannerMaintance
 				'select' => ['ID'],
 				'filter' => [
 					'ID' => array_slice($list, 0, self::PLANNER_MAX_TASKS_COUNT),
-					'!ZOMBIE' => 'Y',
 				],
 			]);
 			while ($item = $res->fetch())

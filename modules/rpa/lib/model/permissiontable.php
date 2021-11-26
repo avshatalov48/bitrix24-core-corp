@@ -4,6 +4,22 @@ namespace Bitrix\Rpa\Model;
 
 use Bitrix\Main\ORM;
 
+/**
+ * Class PermissionTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Permission_Query query()
+ * @method static EO_Permission_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Permission_Result getById($id)
+ * @method static EO_Permission_Result getList(array $parameters = array())
+ * @method static EO_Permission_Entity getEntity()
+ * @method static \Bitrix\Rpa\Model\EO_Permission createObject($setDefaultValues = true)
+ * @method static \Bitrix\Rpa\Model\EO_Permission_Collection createCollection()
+ * @method static \Bitrix\Rpa\Model\EO_Permission wakeUpObject($row)
+ * @method static \Bitrix\Rpa\Model\EO_Permission_Collection wakeUpCollection($rows)
+ */
 class PermissionTable extends ORM\Data\DataManager
 {
 	public static function getTableName(): string

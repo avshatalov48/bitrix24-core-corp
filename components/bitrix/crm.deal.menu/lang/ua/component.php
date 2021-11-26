@@ -62,6 +62,7 @@ $MESS["DEAL_REGISTER_CALL"] = "Зафіксувати дзвінок";
 $MESS["DEAL_REGISTER_CALL_TITLE"] = "Зафіксувати новий дзвінок";
 $MESS["DEAL_SHOW"] = "Переглянути угоду";
 $MESS["DEAL_SHOW_TITLE"] = "Переглянути";
+$MESS["DEAL_STEXPORT_OPTION_EXPORT_ALL_CLIENT_FIELDS"] = "Експортувати всі поля контактів і компаній";
 $MESS["DEAL_STEXPORT_OPTION_EXPORT_ALL_FIELDS"] = "Експортувати всі поля угод";
 $MESS["DEAL_STEXPORT_OPTION_EXPORT_PRODUCT_FIELDS"] = "Експортувати з деталізацією за товарними позиціями";
 $MESS["DEAL_STEXPORT_SUMMARY"] = "Буде сформований файл експорту для угод. Виконання цієї операції може зайняти тривалий час при великій кількості даних.";

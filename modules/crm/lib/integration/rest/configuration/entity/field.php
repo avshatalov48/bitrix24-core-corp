@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Integration\Rest\Configuration\Entity;
 
-use Bitrix\Crm\Attribute\Entity\FieldAttributeTable;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Main\ArgumentException;
@@ -222,20 +221,7 @@ class Field
 				$entityTypeId = CCrmOwnerType::ResolveID($entityCode);
 				if($entityTypeId > 0)
 				{
-					$res = FieldAttributeTable::getList(
-						[
-							'filter' => [
-								'=ENTITY_TYPE_ID' => $entityTypeId
-							],
-							'select' => [
-								'ID'
-							]
-						]
-					);
-					while($item = $res->fetch())
-					{
-						FieldAttributeTable::delete($item['ID']);
-					}
+					FieldAttributeManager::deleteByOwnerType($entityTypeId);
 				}
 				global $CACHE_MANAGER;
 				$CACHE_MANAGER->ClearByTag('crm_fields_list_'.$entityTypeList[$step]);

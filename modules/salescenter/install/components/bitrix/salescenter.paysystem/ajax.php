@@ -383,7 +383,6 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 				'EMAIL' => $cashboxSettings['CASHBOX_DATA']['EMAIL'] ?? '',
 				'NUMBER_KKM' => '',
 				'KKM_ID' => $kkmId,
-				'ACTIVE' => 'Y',
 				'USE_OFFLINE' => 'N',
 				'ENABLED' => 'Y',
 				'SORT' => 100,
@@ -401,7 +400,6 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 					{
 						$cashbox = Cashbox\Manager::getList([
 							'filter' => [
-								'=ACTIVE' => 'Y',
 								'=HANDLER' => $cashboxClass,
 								'=KKM_ID' => $kkmId,
 							],
@@ -414,7 +412,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 							{
 								$cashboxObject = Cashbox\Manager::getObjectById($cashboxId);
 								AddEventToStatFile(
-									'sale',
+									'salescenter',
 									'updateCashbox',
 									$cashboxId,
 									$cashboxObject::getCode()
@@ -429,7 +427,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 								$cashboxId = $result->getId();
 								$cashboxObject = Cashbox\Manager::getObjectById($cashboxId);
 								AddEventToStatFile(
-									'sale',
+									'salescenter',
 									'addCashbox',
 									$cashboxId,
 									$cashboxObject::getCode()

@@ -1,8 +1,10 @@
 import {Vue} from 'ui.vue';
+import {BannerComponent} from "./banner";
 import {Popup} from "main.popup";
 import 'sidepanel';
 
 export const ContentComponent = {
+	components: {BannerComponent},
 	props: [
 		"license",
 		"market",
@@ -156,8 +158,7 @@ export const ContentComponent = {
 			BX.SidePanel.Instance.open(
 				'/bitrix/components/bitrix/bitrix24.license.scan/index.php',
 				{
-					width: 1195,
-					cacheable: false,
+					width: 1195
 				}
 			);
 		},
@@ -473,7 +474,7 @@ export const ContentComponent = {
 				</a>
 			</div>
 			<!-- endregion -->
-
+			<BannerComponent></BannerComponent>
 		</div>
 	`,
 };

@@ -1,4 +1,12 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Text\Emoji;
+
 final class CB24SearchTitle
 {
 	final public static function getUsers($searchString = false)
@@ -281,8 +289,17 @@ final class CB24SearchTitle
 			);
 
 			$groupList = $groupIdList = array();
-			while($group = $res->fetch())
+			while ($group = $res->fetch())
 			{
+				if (!empty($group['NAME']))
+				{
+					$group['NAME'] = Emoji::decode($group['NAME']);
+				}
+				if (!empty($group['DESCRIPTION']))
+				{
+					$group['DESCRIPTION'] = Emoji::decode($group['DESCRIPTION']);
+				}
+
 				$groupIdList[] = $group["ID"];
 				$groupList[$group["ID"]] = $group;
 			}

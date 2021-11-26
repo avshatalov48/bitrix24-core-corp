@@ -193,17 +193,19 @@ BX.ready(function(){
 			task_calendar_action: 'LOAD_ENTRIES'
 		};
 
-		if (BX.type.isDate(params.params.startDate))
+		if (BX.type.isDate(params.params.viewRange.start))
 		{
 			data.deadlineFrom = BX.date.format(
 				BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')),
-				params.params.startDate.getTime() / 1000);
+				params.params.viewRange.start.getTime() / 1000
+			);
 		}
-		if (BX.type.isDate(params.params.finishDate))
+		if (BX.type.isDate(params.params.viewRange.end))
 		{
 			data.deadlineTo = BX.date.format(
 				BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')),
-				params.params.finishDate.getTime() / 1000);
+				params.params.viewRange.end.getTime() / 1000
+			);
 		}
 
 		BX.ajax({

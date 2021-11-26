@@ -338,7 +338,8 @@ class CAllCrmInvoice
 					"TYPE" => "integer",
 				),
 				"COMMENTS" => array(
-					"TYPE" => "string"
+					"TYPE" => "string",
+					'VALUE_TYPE' => 'html',
 				),
 				"USER_DESCRIPTION" => array(
 					"TYPE" => "string"
@@ -500,7 +501,12 @@ class CAllCrmInvoice
 			$arResult[] = 'O';
 		}
 
-		$arUserAttr = CCrmPerms::BuildUserEntityAttr($userID);
+		$arUserAttr = Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($userID)
+			->getAttributesProvider()
+			->getEntityAttributes()
+		;
+
 		return array_merge($arResult, $arUserAttr['INTRANET']);
 	}
 	static public function RebuildEntityAccessAttrs($IDs)
@@ -533,7 +539,17 @@ class CAllCrmInvoice
 			}
 
 			$entityAttrs = self::BuildEntityAttr($assignedByID);
-			CCrmPerms::UpdateEntityAttr('INVOICE', $ID, $entityAttrs);
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($entityAttrs)
+				->setEntityFields($fields)
+			;
+			\Bitrix\Crm\Security\Manager::getEntityController(CCrmOwnerType::Invoice)
+				->register(
+					self::$TYPE_NAME,
+					$ID,
+					$securityRegisterOptions
+				)
+			;
 		}
 	}
 	private function PrepareEntityAttrs(&$arEntityAttr, $entityPermType)
@@ -545,20 +561,38 @@ class CAllCrmInvoice
 		}
 	}
 
-	public static function BuildPermSql($sAliasPrefix = 'O', $mPermType = 'READ', $arOptions = array())
+	public static function BuildPermSql($sAliasPrefix = 'O', $mPermType = 'READ', $arOptions = [])
 	{
-		$resultSql = CCrmPerms::BuildSql('INVOICE', $sAliasPrefix, $mPermType, $arOptions);
+		$userId = null;
+		if (isset($arOptions['PERMS']) && is_object($arOptions['PERMS']))
+		{
+			/** @var \CCrmPerms $arOptions['PERMS'] */
+			$userId = $arOptions['PERMS']->GetUserID();
+		}
+		$builderOptions =
+			\Bitrix\Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
+				->setOperations((array)$mPermType)
+				->setAliasPrefix((string)$sAliasPrefix)
+		;
 
-		if ($resultSql === false)
+		$queryBuilder = \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($userId)
+			->createListQueryBuilder(self::$TYPE_NAME, $builderOptions)
+		;
+
+		$result = $queryBuilder->build();
+
+		if (!$result->hasAccess())
 		{
 			return '(1=0)';
 		}
-		else if ($resultSql === '')
+
+		if (!$result->hasRestrictions())
 		{
 			return '(1=1)';
 		}
 
-		return '('.$resultSql.')';
+		return '(' . $result->getSql() . ')';
 	}
 
 	public static function __callbackWhereCondition($arFields = array())
@@ -955,7 +989,7 @@ class CAllCrmInvoice
 		{
 			$arEntityAttr = self::BuildEntityAttr($userId, $arAttr);
 			$userPerms = ($userId == CCrmPerms::GetCurrentUserID()) ? $this->cPerms : CCrmPerms::GetUserPermissions($userId);
-			$sEntityPerm = $userPerms->GetPermType('INVOICE', $sPermission, $arEntityAttr);
+			$sEntityPerm = $userPerms->GetPermType(self::$TYPE_NAME, $sPermission, $arEntityAttr);
 			if ($sEntityPerm == BX_CRM_PERM_NONE)
 			{
 				$this->LAST_ERROR = GetMessage('CRM_PERMISSION_DENIED');
@@ -976,7 +1010,7 @@ class CAllCrmInvoice
 		$responsibleID = intval($arFields['RESPONSIBLE_ID']);
 		$arEntityAttr = self::BuildEntityAttr($responsibleID, $arAttr);
 		$userPerms = ($responsibleID == CCrmPerms::GetCurrentUserID()) ? $this->cPerms : CCrmPerms::GetUserPermissions($responsibleID);
-		$sEntityPerm = $userPerms->GetPermType('INVOICE', $sPermission, $arEntityAttr);
+		$sEntityPerm = $userPerms->GetPermType(self::$TYPE_NAME, $sPermission, $arEntityAttr);
 		$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
 
 		// date fields
@@ -1732,8 +1766,12 @@ class CAllCrmInvoice
 				Compatible\Helper::payOrder($tmpOrderId, true);
 			}
 
-			// update entity permissions
-			CCrmPerms::UpdateEntityAttr('INVOICE', $orderID, $arEntityAttr);
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+			;
+			\Bitrix\Crm\Security\Manager::getEntityController(CCrmOwnerType::Invoice)
+				->register(self::$TYPE_NAME, $orderID, $securityRegisterOptions)
+			;
 
 			$newDealID = isset($arFields['UF_DEAL_ID']) ? (int)$arFields['UF_DEAL_ID'] : 0;
 			$oldDealID = is_array($arPrevOrder) && isset($arPrevOrder['UF_DEAL_ID']) ? (int)$arPrevOrder['UF_DEAL_ID'] : 0;
@@ -1865,6 +1903,11 @@ class CAllCrmInvoice
 			{
 				Bitrix\Crm\Statistics\DealInvoiceStatisticEntry::register($dealID);
 			}
+
+			\Bitrix\Crm\Security\Manager::getEntityController(CCrmOwnerType::Invoice)
+				->unregister(self::$TYPE_NAME, $ID)
+			;
+
 			CCrmSearch::DeleteSearch('INVOICE', $ID);
 
 			\Bitrix\Crm\Requisite\EntityLink::unregister(CCrmOwnerType::Invoice, $ID);
@@ -4570,7 +4613,9 @@ class CAllCrmInvoice
 			)
 		);
 
-		$_arAttr = CCrmPerms::GetEntityAttr($sEntityType, $arInvoice['ID']);
+		$_arAttr = \Bitrix\Crm\Security\Manager::resolveController($sEntityType)
+			->getPermissionAttributes($sEntityType, [$arInvoice['ID']])
+		;
 
 		if (empty($arSite))
 		{
@@ -5122,6 +5167,16 @@ class CAllCrmInvoice
 									$requisiteValues[$fieldName.'|'.$presetCountryId] = $fieldValue ?
 										GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
 								}
+								elseif ($requisite->isRqListField($fieldName))
+								{
+									$requisiteValues[$fieldName.'|'.$presetCountryId] =
+										$requisite->getRqListFieldValueTitle(
+											$fieldName,
+											$presetCountryId,
+											$fieldValue
+										)
+									;
+								}
 								else
 								{
 									$requisiteValues[$fieldName.'|'.$presetCountryId] = $fieldValue;
@@ -5423,6 +5478,16 @@ class CAllCrmInvoice
 								{
 									$mcRequisiteValues[$fieldName.'|'.$mcPresetCountryId] = $fieldValue ?
 										GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+								}
+								elseif ($requisite->isRqListField($fieldName))
+								{
+									$mcRequisiteValues[$fieldName.'|'.$mcPresetCountryId] =
+										$requisite->getRqListFieldValueTitle(
+											$fieldName,
+											$mcPresetCountryId,
+											$fieldValue
+										)
+									;
 								}
 								else
 								{

@@ -1,3 +1,7 @@
+.tasks-pagetitle-view .ui-side-panel-wrap-workarea {
+    display: none;
+}
+
 .tasks-kanban-border {
 	border-top: 1px solid #dce2e6;
 	padding: 15px 0 0 0;

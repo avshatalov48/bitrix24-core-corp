@@ -14,7 +14,7 @@ $tokenValue = $arResult['edit']
 			<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_TOKEN')?>
 		</h2>
 		<label for="" class="ui-ctl-label-text">
-			<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_TOKEN_LABEL')?>
+			<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_TOKEN_LABEL')?> (<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_ACCOUNT_BALANCE_NOTICE')?>)
 		</label>
 		<div class="ui-ctl ui-ctl-textbox ui-ctl-w75" style="margin-bottom: 17px;">
 			<input value="<?=htmlspecialcharsbx($tokenValue)?>" placeholder="<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_TOKEN_PLACEHOLDER')?>" required type="text" name="OAUTH_TOKEN" class="ui-ctl-element" />

@@ -53,15 +53,81 @@ class OrderDataProvider extends Main\Filter\EntityDataProvider
 	{
 		$result =  array(
 			'ID' => $this->createField('ID'),
-			'ACCOUNT_NUMBER' => $this->createField('ACCOUNT_NUMBER'),
-			'ORDER_TOPIC' => $this->createField('ORDER_TOPIC'),
-			'PRICE' => $this->createField('PRICE', array('type' => 'number', 'default' => true)),
-			'DATE_INSERT' => $this->createField('DATE_INSERT', array('type' => 'date', 'default' => true)),
-			'DATE_UPDATE' => $this->createField('DATE_UPDATE', array('type' => 'date')),
+			'ACCOUNT_NUMBER' => $this->createField(
+				'ACCOUNT_NUMBER',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'ORDER_TOPIC' => $this->createField(
+				'ORDER_TOPIC',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'PRICE' => $this->createField(
+				'PRICE',
+				[
+					'type' => 'number',
+					'default' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'DATE_INSERT' => $this->createField(
+				'DATE_INSERT',
+				[
+					'type' => 'date',
+					'default' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'DATE_UPDATE' => $this->createField(
+				'DATE_UPDATE',
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'DEDUCTED' => $this->createField('DEDUCTED', array('type' => 'checkbox')),
 			'PAYED' => $this->createField('PAYED', array('type' => 'checkbox')),
 			'CANCELED' => $this->createField('CANCELED', array('type' => 'checkbox')),
-			'USER' => $this->createField('USER',	array('default' => true)),
+			'USER' => $this->createField(
+				'USER',
+				[
+					'default' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'CREATED_BY' => $this->createField(
 				'CREATED_BY',
 				array('type' => 'custom_entity', 'partial' => true)
@@ -106,15 +172,56 @@ class OrderDataProvider extends Main\Filter\EntityDataProvider
 				'DELIVERY_SERVICE',
 				array('type' => 'list', 'default' => true, 'partial' => true)
 			),
-			'COUPON' => $this->createField('COUPON'),
-			'SHIPMENT_TRACKING_NUMBER' => $this->createField('SHIPMENT_TRACKING_NUMBER'),
-			'SHIPMENT_DELIVERY_DOC_DATE' => $this->createField('SHIPMENT_DELIVERY_DOC_DATE', array('type' => 'date')),
+			'COUPON' => $this->createField(
+				'COUPON',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'SHIPMENT_TRACKING_NUMBER' => $this->createField(
+				'SHIPMENT_TRACKING_NUMBER',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'SHIPMENT_DELIVERY_DOC_DATE' => $this->createField(
+				'SHIPMENT_DELIVERY_DOC_DATE',
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'CHECK_PRINTED' => $this->createField(
 				'CHECK_PRINTED',
 				['type' => 'checkbox']
 			),
 			'HAS_ASSOCIATED_DEAL' => $this->createField('HAS_ASSOCIATED_DEAL', ['type' => 'checkbox']),
-			'XML_ID' => $this->createField('XML_ID'),
+			'XML_ID' => $this->createField(
+				'XML_ID',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 		);
 
 		Tracking\UI\Filter::appendFields($result, $this);

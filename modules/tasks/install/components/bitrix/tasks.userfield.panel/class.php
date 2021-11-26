@@ -137,9 +137,9 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 	{
 		$ufValue = '';
 
-		if (!empty($this->arParams['DATA']) && isset($this->arParams['DATA'][$ufCode]))
+		if (!empty($this->arParams['~DATA']) && isset($this->arParams['~DATA'][$ufCode]))
 		{
-			$ufValue = $this->arParams['DATA'][$ufCode];
+			$ufValue = $this->arParams['~DATA'][$ufCode];
 		}
 		elseif (isset($ufDesc['SETTINGS']['DEFAULT_VALUE']))
 		{

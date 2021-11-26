@@ -149,7 +149,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		static::prepareContactFields($fields);
 		static::prepareStageFields($factory, $fields);
 
-		$compatibleFields = [];
+		$documentFieldValues = [];
 		foreach ($fields as $fieldId => $fieldValue)
 		{
 			if (!array_key_exists($fieldId, $fieldsMap))
@@ -159,7 +159,8 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 
 			$field = $fieldsMap[$fieldId];
 
-			$documentFieldValue = static::convertToDocumentValue(
+			$documentFieldId = static::convertFieldId($fieldId, static::CONVERT_TO_DOCUMENT);
+			$documentFieldValues[$documentFieldId] = static::convertToDocumentValue(
 				$factory,
 				[
 					'fieldId' => $fieldId,
@@ -168,19 +169,9 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 				],
 				$item
 			);
-
-			$documentFieldId = static::convertFieldId($fieldId, static::CONVERT_TO_DOCUMENT);
-			if ($item->hasField($documentFieldId))
-			{
-				$item->set($documentFieldId, $documentFieldValue);
-			}
-			else
-			{
-				$compatibleFields[$documentFieldId] = $documentFieldValue;
-			}
 		}
 
-		$item->setFromCompatibleData($compatibleFields);
+		$item->setFromCompatibleData($documentFieldValues);
 
 		$updateOperation = $factory->getUpdateOperation($item, static::getContext());
 
@@ -219,7 +210,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			return
 				$fieldInfo['Description']['Multiple']
 					? array_map($converter, $fieldInfo['bpValue'])
-					: $converter($fieldInfo['bpValue'])
+					: $converter(array_values($fieldInfo['bpValue'])[0] ?? null)
 			;
 		}
 
@@ -356,8 +347,13 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		return isset($item) ? $item->getTitle() : '';
 	}
 
-	public static function normalizeDocumentId($documentId)
+	public static function normalizeDocumentId($documentId, string $docType = null)
 	{
+		if ($docType && is_numeric($documentId))
+		{
+			$documentId = $docType . '_' . $documentId;
+		}
+
 		$documentInfo = static::GetDocumentInfo($documentId);
 
 		return parent::normalizeDocumentIdInternal(
@@ -381,6 +377,17 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		return static::getEntityFields($entityTypeId);
 	}
 
+	public static function prepareCompatibleData(array $compatibleData): array
+	{
+		$result = [];
+		foreach ($compatibleData as $fieldId => $fieldValue)
+		{
+			$result[static::convertFieldId($fieldId)] = $fieldValue;
+		}
+
+		return $result;
+	}
+
 	public static function getEntityFields($entityTypeId)
 	{
 		$factory = Container::getInstance()->getFactory($entityTypeId);
@@ -392,6 +399,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			{
 				continue;
 			}
+			$fieldId = $factory->getEntityFieldNameByMap($fieldId);
 
 			$editable =
 				!\CCrmFieldInfoAttr::isFieldHasAttribute($field, \CCrmFieldInfoAttr::ReadOnly)

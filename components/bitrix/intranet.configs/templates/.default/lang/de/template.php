@@ -58,6 +58,7 @@ $MESS["CONFIG_DISK_TRANSFORM_FILES_ON_OPEN"] = "Datei konvertieren, wenn sie ge√
 $MESS["CONFIG_DISK_VERSION_LIMIT_PER_FILE"] = "Max. Anzahl der Eintr√§ge in der Dokumentenhistory";
 $MESS["CONFIG_DISK_VIEWER_SERVICE"] = "Dokumente anzeigen via";
 $MESS["CONFIG_EMAIL_FROM"] = "E-Mail des Seitenadministrators<br>(voreingestellte Absenderadresse)";
+$MESS["CONFIG_EXAMPLE"] = "Beispiel";
 $MESS["CONFIG_FEATURES_CRM"] = "CRM";
 $MESS["CONFIG_FEATURES_EXTRANET"] = "Extranet";
 $MESS["CONFIG_FEATURES_LISTS"] = "Listen";

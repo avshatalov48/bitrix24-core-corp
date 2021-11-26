@@ -122,7 +122,14 @@ class LanguageNormalizer implements INormalizer
 				{
 					if (Localization\Translation::allowConvertEncoding())
 					{
-						$result = Localization\SteamConverter::include($langDataPath, $lang);
+						if (class_exists('\Bitrix\Main\Localization\StreamConverter'))
+						{
+							$result = Localization\StreamConverter::include($langDataPath, $lang);
+						}
+						elseif (class_exists('\Bitrix\Main\Localization\SteamConverter'))
+						{
+							$result = Localization\SteamConverter::include($langDataPath, $lang);
+						}
 					}
 					else
 					{

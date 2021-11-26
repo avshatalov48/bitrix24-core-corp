@@ -267,6 +267,10 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				{
 					return BX.Crm.EntityEditorShipmentExtraServices.create(controlId, settings);
 				}
+				else if(type === "pay_system_selector")
+				{
+					return BX.Crm.EntityEditorPaySystemSelector.create(controlId, settings);
+				}
 
 				for(var name in this.methods)
 				{

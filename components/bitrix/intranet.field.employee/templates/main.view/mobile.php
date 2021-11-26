@@ -88,7 +88,8 @@ $nodes = [];
 				'nodes' => $nodes,
 				'restrictedMode' => true,
 				'formId' => $arParams['additionalParameters']['formId'],
-				'gridId' => $arParams['additionalParameters']['gridId']
+				'gridId' => $arParams['additionalParameters']['gridId'],
+				'useOnChangeEvent' => true,
 			])?>
 		);
 	});

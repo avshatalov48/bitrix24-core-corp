@@ -59,7 +59,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          offsetLeft: 10,
 	          offsetTop: 0,
 	          angle: true,
-	          className: "license-right-popup-menu"
+	          className: 'license-right-popup-men',
+	          events: {
+	            onPopupShow: function onPopupShow() {
+	              main_core.Event.EventEmitter.emit('BX.Intranet.InvitationWidget:showPopupMenu');
+	            },
+	            onPopupClose: function onPopupClose() {
+	              main_core.Event.EventEmitter.emit('BX.Intranet.InvitationWidget:closePopupMenu');
+	            }
+	          }
 	        });
 
 	        _this.popupMenu.show();
@@ -251,9 +259,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  template: "\n\t\t<div>\n\t\t\t<LoaderComponent v-if=\"loading\" :size=\"100\" />\n\t\t\t<ContentComponent \n\t\t\t\tv-if=\"!loading && loaded\"\n\t\t\t\t:invitationLink=\"invitationLink\"\n\t\t\t\t:structureLink=\"structureLink\"\n\t\t\t\t:isInvitationAvailable=\"isInvitationAvailable\"\n\t\t\t\t:isExtranetAvailable=\"isExtranetAvailable\"\n\t\t\t\t:users=\"users\"\n\t\t\t\t:isCrurrentUserAdmin=\"isCrurrentUserAdmin\"\n\t\t\t>\n\t\t\t</ContentComponent>\n\t\t</div>\n\t"
 	};
 
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var namespace = main_core.Reflection.namespace('BX.Intranet');
 
 	var _vue = /*#__PURE__*/new WeakMap();
@@ -264,7 +269,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	    babelHelpers.classCallCheck(this, InvitationWidget);
 
-	    _classPrivateFieldInitSpec(this, _vue, {
+	    _vue.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -281,6 +286,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	    main_core.Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:stopPopupMouseOut', function (event) {
 	      _this.stopMouseLeave = true;
+	    });
+	    main_core.Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:showPopupMenu', function () {
+	      _this.popup.setAutoHide(false);
+	    });
+	    main_core.Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:closePopupMenu', function () {
+	      _this.popup.setAutoHide(true);
+
+	      _this.stopMouseLeave = false;
 	    });
 	  }
 
@@ -304,7 +317,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            InvitationWidgetInstance.enterTimeout = setTimeout(function () {
 	              InvitationWidgetInstance.enterTimeout = null;
 	              InvitationWidgetInstance.initPopup(e.target);
-	            }, 500);
+	            }, 750);
 	          },
 	          onMouseOut: function onMouseOut() {
 	            if (InvitationWidgetInstance.enterTimeout !== null) {
@@ -336,6 +349,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "initPopup",
 	    value: function initPopup(bindElement) {
 	      var _this2 = this;
+
+	      if (this.popup) {
+	        this.popup.destroy();
+	      }
 
 	      this.popup = new B24.PopupBlur({
 	        autoHide: true,

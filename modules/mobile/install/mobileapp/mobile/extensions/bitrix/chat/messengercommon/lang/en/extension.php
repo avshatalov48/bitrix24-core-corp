@@ -1,4 +1,5 @@
 <?
+$MESS["IM_M_CODE_BLOCK"] = "Code block";
 $MESS["IM_CHAT_CALL"] = "Phone call";
 $MESS["IM_CHAT_GENERAL"] = "General chat";
 $MESS["IM_CHAT_GROUP_NEW"] = "Private chat";

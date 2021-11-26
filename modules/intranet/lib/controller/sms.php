@@ -21,4 +21,3 @@ class SMS extends \Bitrix\Main\Engine\Controller
 		}
 	}
 }
-

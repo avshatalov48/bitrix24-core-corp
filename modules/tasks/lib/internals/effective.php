@@ -347,7 +347,7 @@ class Effective
 		Option::set("tasks", "needEfficiencyRecount", "Y");
 		EfficiencyRecount::bind();
 	}
-	
+
 	/**
 	 * Repairs violations
 	 *
@@ -823,7 +823,6 @@ class Effective
 					->where('CLOSED_DATE', '>=', $dateFrom)
 					->where('CLOSED_DATE', NULL)
 			)
-			->where('ZOMBIE', 'N')
 			->where('STATUS', '<>', \CTasks::STATE_DEFERRED)
 			->where(($groupId? Query::filter()->where('GROUP_ID', $groupId) : []));
 
@@ -1028,7 +1027,6 @@ class Effective
 					->where('CLOSED_DATE', '>=', $dateFrom)
 					->where('CLOSED_DATE', NULL)
 			)
-			->where('ZOMBIE', 'N')
 			->where('STATUS', '<>', \CTasks::STATE_DEFERRED)
 			->where((!empty($groupIds) ? Query::filter()->whereIn('GROUP_ID', $groupIds) : []));
 

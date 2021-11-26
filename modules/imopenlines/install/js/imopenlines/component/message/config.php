@@ -13,6 +13,8 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
+		'ui.vue',
+		'ui.vue.vuex',
 		'im.view.message',
 		'main.core.events',
 	],

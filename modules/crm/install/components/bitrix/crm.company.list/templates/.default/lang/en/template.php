@@ -74,6 +74,7 @@ $MESS["CRM_COMPANY_REBUILD_DUP_INDEX_DLG_TITLE"] = "Rebuild company duplicate in
 $MESS["CRM_COMPANY_REBUILD_SEARCH_CONTENT"] = "To use Quick Search, you have to <a id=\"#ID#\" href=\"#URL#\">recreate company search index</a>.";
 $MESS["CRM_COMPANY_REBUILD_SEARCH_CONTENT_DLG_SUMMARY"] = "This will rebuild company search index. This operation may take a while.";
 $MESS["CRM_COMPANY_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Recreating Company Search Index";
+$MESS["CRM_COMPANY_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Updating access permissions";
 $MESS["CRM_COMPANY_RQ_TX"] = "It is recommended that you <a id=\"#ID#\" href=\"#URL#\">copy existing company details from invoices</a> to companies to save time. Whenever you create a new invoice, the existing details will be auto filled in after selecting a company for that invoice.";
 $MESS["CRM_COMPANY_RQ_TX_PROC_DLG_DLG_SUMMARY"] = "This will copy company details from invoices to companies. This operation may take some time.";
 $MESS["CRM_COMPANY_RQ_TX_PROC_DLG_TITLE"] = "Copy company details";

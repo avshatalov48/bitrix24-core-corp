@@ -1,9 +1,12 @@
 <?php
 namespace Bitrix\Intranet\Integration;
 
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Intranet\ControlButton;
 
 Loc::loadMessages(__FILE__);
 
@@ -107,5 +110,142 @@ final class Tasks
 
 			return true;
 		};
+	}
+
+	private static function prepareUserList($taskFields): array
+	{
+		$userList = [];
+
+		if (isset($taskFields['CREATED_BY']))
+		{
+			$userList[] =  (int) $taskFields['CREATED_BY'];
+
+			if (
+				isset($taskFields['RESPONSIBLE_ID'])
+				&& $taskFields['RESPONSIBLE_ID'] !== $taskFields['CREATED_BY']
+			)
+			{
+				$userList[] = (int) $taskFields['RESPONSIBLE_ID'];
+			}
+		}
+
+		if (isset($taskFields['AUDITORS']))
+		{
+			foreach ($taskFields['AUDITORS'] as $userId)
+			{
+				$userId = (int)$userId;
+
+				if (!in_array($userId, $userList))
+				{
+					$userList[] = $userId;
+				}
+			}
+		}
+
+		if (isset($taskFields['ACCOMPLICES']))
+		{
+			foreach ($taskFields['ACCOMPLICES'] as $userId)
+			{
+				$userId = (int)$userId;
+
+				if (!in_array($userId, $userList))
+				{
+					$userList[] = $userId;
+				}
+			}
+		}
+
+		return $userList;
+	}
+
+	private static function prepareCurrentUserList($taskFields): array
+	{
+		$userList = [];
+
+		if (
+			!isset($taskFields['CREATED_BY'])
+			|| !isset($taskFields['RESPONSIBLE_ID'])
+			|| !isset($taskFields['AUDITORS'])
+			|| !isset($taskFields['ACCOMPLICES'])
+		)
+		{
+			$query = new Query(\Bitrix\Tasks\Internals\TaskTable::getEntity());
+			$query->setSelect([
+				'ID',
+				'CREATED_BY',
+				'TM_USER_ID' => 'TM.USER_ID',
+			]);
+			$query->setFilter([
+				'=ID' => $taskFields['ID'],
+			]);
+
+			$query->registerRuntimeField('', new ReferenceField(
+				'TM',
+				\Bitrix\Tasks\Internals\Task\MemberTable::getEntity(),
+				['=ref.TASK_ID' => 'this.ID']
+			));
+
+			$res = $query->exec();
+
+			while ($item = $res->fetch())
+			{
+				$userId = $item['TM_USER_ID'];
+
+				if (!in_array($userId, $userList))
+				{
+					$userList[] = $userId;
+				}
+			}
+		}
+		else
+		{
+			$userList = self::prepareUserList($taskFields);
+		}
+
+		return $userList;
+	}
+
+	public static function onTaskUpdate($taskId, &$currentTaskFields, &$previousTaskFields): void
+	{
+		if (!Loader::includeModule('tasks') || !Loader::includeModule('im'))
+		{
+			return;
+		}
+
+		$res = \Bitrix\Im\Model\ChatTable::getList(array(
+			'select' => ['ID'],
+			'filter' => [
+				'=ENTITY_TYPE' => 'TASKS',
+				'=ENTITY_ID' => $taskId,
+			],
+			'limit' => 1
+		));
+
+		if ($chat = $res->fetch())
+		{
+			$chatId = $chat['ID'];
+		}
+		else
+		{
+			return;
+		}
+
+		$userIdNewList = self::prepareCurrentUserList($currentTaskFields);
+		$userIdOldList = self::prepareUserList($previousTaskFields);
+
+		if (empty($userIdNewList) || empty($userIdOldList))
+		{
+			return;
+		}
+
+		$addedUsers = array_diff($userIdNewList, $userIdOldList);
+		$deletedUsers = array_diff($userIdOldList, $userIdNewList);
+
+		if (empty($addedUsers) && empty($deletedUsers))
+		{
+			return;
+		}
+
+		ControlButton::udpateChatUsers($chatId, $addedUsers, $deletedUsers);
 	}
 }

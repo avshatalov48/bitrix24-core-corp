@@ -11,6 +11,7 @@ use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Integration\DiskManager;
 use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Service;
 use Bitrix\Crm\Rest;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm;
@@ -413,6 +414,11 @@ final class CCrmRestService extends IRestService
 		'crm.company.details.configuration.set',
 		'crm.company.details.configuration.reset',
 		'crm.company.details.configuration.forceCommonScopeForAll',
+
+		'crm.item.details.configuration.get',
+		'crm.item.details.configuration.set',
+		'crm.item.details.configuration.reset',
+		'crm.item.details.configuration.forceCommonScopeForAll',
 		//endregion
 	);
 	private static $DESCRIPTION = null;
@@ -454,6 +460,7 @@ final class CCrmRestService extends IRestService
 			CCrmDealRecurringRestProxy::registerEventBindings($bindings);
 			CCrmInvoiceRecurringRestProxy::registerEventBindings($bindings);
 			CCrmTimelineCommentRestProxy::registerEventBindings($bindings);
+			Service\Container::getInstance()->getRestEventManager()->registerEventBindings($bindings);
 
 			Tracking\Rest::register($bindings);
 			WebForm\Embed\Rest::register($bindings);
@@ -565,6 +572,10 @@ final class CCrmRestService extends IRestService
 			elseif($typeName === 'QUOTE')
 			{
 				$proxy = self::$PROXIES[$typeName] = new CCrmQuoteRestProxy();
+			}
+			elseif($typeName === 'ITEM')
+			{
+				$proxy = self::$PROXIES[$typeName] = new CCrmItemRestProxy();
 			}
 			elseif($typeName === 'INVOICE' && $subType === 'STATUS')
 			{
@@ -986,6 +997,10 @@ class CCrmRestHelper
 				{
 					$field['filterLabel'] = $labels['FILTER'];
 				}
+			}
+			if (isset($fieldInfo['SETTINGS']))
+			{
+				$field['settings'] = $fieldInfo['SETTINGS'];
 			}
 
 			$result[$fieldID] = &$field;
@@ -3487,17 +3502,23 @@ class CCrmEnumerationRestProxy extends CCrmRestProxyBase
 		}
 		elseif($name === 'OWNERTYPE')
 		{
-			$descriptions = CCrmOwnerType::GetDescriptions(
-				array(
-					CCrmOwnerType::Lead,
-					CCrmOwnerType::Deal,
-					CCrmOwnerType::Contact,
-					CCrmOwnerType::Company,
-					CCrmOwnerType::Quote,
-					CCrmOwnerType::Invoice,
-					CCrmOwnerType::Requisite,
-				)
-			);
+			$allDescriptions = CCrmOwnerType::GetAllDescriptions();
+			$types = [
+				CCrmOwnerType::Lead => CCrmOwnerType::Lead,
+				CCrmOwnerType::Deal => CCrmOwnerType::Deal,
+				CCrmOwnerType::Contact => CCrmOwnerType::Contact,
+				CCrmOwnerType::Company => CCrmOwnerType::Company,
+				CCrmOwnerType::Quote => CCrmOwnerType::Quote,
+				CCrmOwnerType::Invoice => CCrmOwnerType::Invoice,
+				CCrmOwnerType::Requisite => CCrmOwnerType::Requisite,
+			];
+			foreach ($allDescriptions as $typeId => $description)
+			{
+				if (isset($types[$typeId]) || \CCrmOwnerType::isPossibleDynamicTypeId($typeId))
+				{
+					$descriptions[$typeId] = $description;
+				}
+			}
 		}
 		elseif($name === 'ADDRESSTYPE')
 		{
@@ -6099,6 +6120,14 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 		$bindings[CRestUtil::EVENTS]['onCrmDealAdd'] = self::createEventInfo('crm', 'OnAfterCrmDealAdd', $callback);
 		$bindings[CRestUtil::EVENTS]['onCrmDealUpdate'] = self::createEventInfo('crm', 'OnAfterCrmDealUpdate', $callback);
 		$bindings[CRestUtil::EVENTS]['onCrmDealDelete'] = self::createEventInfo('crm', 'OnAfterCrmDealDelete', $callback);
+		$bindings[CRestUtil::EVENTS]['onCrmDealMoveToCategory'] = self::createEventInfo(
+			'crm',
+			'OnAfterDealMoveToCategory',
+			[
+				'CCrmDealRestProxy',
+				'processMoveToCategoryEvent',
+			]
+		);
 
 		// user field events
 		$bindings[CRestUtil::EVENTS]['onCrmDealUserFieldAdd'] = self::createEventInfo('crm', 'OnAfterCrmRestDealUserFieldAdd', $callback);
@@ -6106,6 +6135,24 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 		$bindings[CRestUtil::EVENTS]['onCrmDealUserFieldDelete'] = self::createEventInfo('crm', 'OnAfterCrmRestDealUserFieldDelete', $callback);
 		$bindings[CRestUtil::EVENTS]['onCrmDealUserFieldSetEnumValues'] = self::createEventInfo('crm', 'OnAfterCrmRestDealUserFieldSetEnumValues', $callback);
 	}
+	public static function processMoveToCategoryEvent(array $arParams, array $arHandler)
+	{
+		if (!isset($arParams[0]) || !($arParams[0] instanceof \Bitrix\Main\Event))
+		{
+			throw new RestException("Wrong event");
+		}
+		/** @var \Bitrix\Main\Event $event */
+		$event = $arParams[0];
+
+		return [
+			'FIELDS' => [
+				'ID' => $event->getParameter('id'),
+				'CATEGORY_ID' => $event->getParameter('categoryId'),
+				'STAGE_ID' => $event->getParameter('stageId'),
+			]
+		];
+	}
+
 	public static function processEvent(array $arParams, array $arHandler)
 	{
 		return parent::processEntityEvent(CCrmOwnerType::Deal, $arParams, $arHandler);
@@ -8611,17 +8658,11 @@ class CCrmStatusInvoiceRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$statusId = intval($ID);
-		if ($statusId === ($statusId & 0xFF) && $statusId >= 65 && $statusId <= 90)
+		if (isset($currentFields['SYSTEM']) && $currentFields['SYSTEM'] === 'Y')
 		{
-			$statusId = chr($statusId);
-			if (isset($currentFields['SYSTEM']) && $currentFields['SYSTEM'] === 'Y')
-			{
-				$errors[] = "Can't delete system status";
-				return false;
-			}
+			$errors[] = "Can't delete system status";
+			return false;
 		}
-		unset($statusId);
 
 		$result = $statusInvoice->Delete($ID);
 		if($result === false)
@@ -11142,6 +11183,27 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 	public static function processEvent(array $arParams, array $arHandler)
 	{
 		return parent::processEntityEvent(CCrmOwnerType::Quote, $arParams, $arHandler);
+	}
+}
+
+class CCrmItemRestProxy extends CCrmRestProxyBase
+{
+	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
+	{
+		$name = mb_strtoupper($name);
+
+		if($name === 'DETAILS')
+		{
+			$entityTypeId = $arParams['entityTypeId'] ?? $arParams['ENTITY_TYPE_ID'] ?? 0;
+
+			$editorRequestDetails = $nameDetails;
+			$editorRequestName = array_shift($editorRequestDetails);
+			$entityEditorProxy = new CCrmEntityEditorRestProxy($entityTypeId);
+
+			return $entityEditorProxy->processMethodRequest($editorRequestName, $editorRequestDetails, $arParams, $nav, $server);
+		}
+
+		throw new RestException("Resource '{$name}' is not supported in current context.");
 	}
 }
 
@@ -15107,10 +15169,7 @@ class CCrmEntityEditorRestProxy implements ICrmRestProxy
 
 	public function setEntityTypeID($entityTypeID)
 	{
-		if(is_int($entityTypeID))
-		{
-			$entityTypeID = (int)$entityTypeID;
-		}
+		$entityTypeID = (int)$entityTypeID;
 
 		if(!CCrmOwnerType::IsDefined($entityTypeID))
 		{
@@ -15183,14 +15242,17 @@ class CCrmEntityEditorRestProxy implements ICrmRestProxy
 
 		if(!empty($extras))
 		{
-			switch($this->entityTypeID)
+			if (\CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeID))
 			{
-				case CCrmOwnerType::Deal:
-					\CCrmRestHelper::renameParam($extras, array('deal', 'category', 'id'), 'DEAL_CATEGORY_ID');
-					break;
-				case CCrmOwnerType::Lead:
-					\CCrmRestHelper::renameParam($extras, array('lead', 'customer', 'type'), 'LEAD_CUSTOMER_TYPE');
-					break;
+				\CCrmRestHelper::renameParam($extras, ['category', 'id'], 'CATEGORY_ID');
+			}
+			elseif ($this->entityTypeID === \CCrmOwnerType::Deal)
+			{
+				\CCrmRestHelper::renameParam($extras, ['deal', 'category', 'id'], 'DEAL_CATEGORY_ID');
+			}
+			elseif ($this->entityTypeID === \CCrmOwnerType::Lead)
+			{
+				\CCrmRestHelper::renameParam($extras, ['lead', 'customer', 'type'], 'LEAD_CUSTOMER_TYPE');
 			}
 		}
 

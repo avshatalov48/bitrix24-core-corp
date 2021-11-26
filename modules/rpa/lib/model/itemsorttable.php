@@ -8,6 +8,22 @@ use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\Result;
 use Bitrix\Rpa\Driver;
 
+/**
+ * Class ItemSortTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ItemSort_Query query()
+ * @method static EO_ItemSort_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ItemSort_Result getById($id)
+ * @method static EO_ItemSort_Result getList(array $parameters = array())
+ * @method static EO_ItemSort_Entity getEntity()
+ * @method static \Bitrix\Rpa\Model\EO_ItemSort createObject($setDefaultValues = true)
+ * @method static \Bitrix\Rpa\Model\EO_ItemSort_Collection createCollection()
+ * @method static \Bitrix\Rpa\Model\EO_ItemSort wakeUpObject($row)
+ * @method static \Bitrix\Rpa\Model\EO_ItemSort_Collection wakeUpCollection($rows)
+ */
 class ItemSortTable extends ORM\Data\DataManager
 {
 	protected const DEFAULT_MAX_SORT = 1000000;

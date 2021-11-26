@@ -41,6 +41,7 @@ return [
 		'ui.notification',
 		'salescenter.tile',
 		'main.core',
+		'salescenter.lib',
 	],
 	'skip_core' => false,
 ];

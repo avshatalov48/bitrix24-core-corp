@@ -1765,6 +1765,21 @@ class ResultEntity
 			{
 				ResultEntityTable::addBatch($this->formId, $this->resultEntityPack);
 			}
+
+			$eventData = [
+				'id' => $this->getFormId(),
+				'fields' => $this->fields,
+				'properties' => $this->placeholders,
+				'result' => [
+					'entities' => $this->getResultEntities(),
+				],
+			];
+			$eventNamePostfix = $this->placeholders['eventNamePostfix'] ?? '';
+			if ($eventNamePostfix && preg_match('/\w+/', $eventNamePostfix))
+			{
+				(new Main\Event('crm', 'onSiteFormFilled' . $eventNamePostfix, $eventData))->send();
+			}
+			(new Main\Event('crm', 'onSiteFormFilled', $eventData))->send();
 		}
 		catch(\Exception $e)
 		{

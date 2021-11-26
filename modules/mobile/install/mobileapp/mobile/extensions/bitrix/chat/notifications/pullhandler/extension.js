@@ -22,24 +22,28 @@
 
 		handleNotifyAdd(params, extra)
 		{
-			console.log('handleNotify', params, extra);
+			console.log('handleNotifyAdd', params, extra);
 
-			if (extra.server_time_ago > 30)
+			if (extra !== undefined && extra.server_time_ago > 30 || params.onlyFlash === true)
 			{
 				return false;
 			}
 
+			const type = Utils.getListItemType(params);
+
 			const newNotification = {
 				key: 'item'+ params.id,
-				commonType: params.type === 1 ? 'confirm' : 'notification',
-				author: params.userName ? Utils.htmlspecialcharsback(params.userName) : '', //todo
-				avatarUrl: params.userAvatar ? (currentDomain + params.userAvatar).replace('https','http') : '', //todo
-				messageId: params.id,
+				type: type,
+				commonType: params.type === 1 ? Const.NotificationTypes.confirm : Const.NotificationTypes.simple,
+				author: params.userName ? Utils.htmlspecialcharsback(params.userName) : '',
+				avatarUrl: Utils.getAvatarUrl(params),
+				avatarColor: params.userColor,
 				text: Utils.htmlspecialcharsback(params.text),
-				time: params.date,
+				time: (new Date(params.date)).getTime(),
+				messageId: params.id,
 				params: params.params,
 				notifyRead: 'N',
-				notifyTag: params.notify_tag,
+				notifyTag: params.originalTag || params.original_tag,
 			};
 			if (params.buttons)
 			{
@@ -48,16 +52,24 @@
 
 			const { collection } = this.application.state;
 
-			if (newNotification.commonType === 'confirm')
+			for (let index = 0; collection.length > index; index++)
+			{
+				if (collection[index].messageId === newNotification.messageId)
+				{
+					return;
+				}
+			}
+
+			if (newNotification.commonType === Const.NotificationTypes.confirm)
 			{
 				collection.unshift(newNotification)
 			}
-			else if (newNotification.commonType === 'notification')
+			else if (newNotification.commonType === Const.NotificationTypes.simple)
 			{
 				let firstNotificationIndex = null;
 				for (let index = 0; collection.length > index; index++)
 				{
-					if (collection[index].commonType !== 'confirm')
+					if (collection[index].commonType !== Const.NotificationTypes.confirm)
 					{
 						firstNotificationIndex = index;
 						break;
@@ -65,7 +77,7 @@
 				}
 
 				//if we didn't find any simple notification and its index, then add new one to the end.
-				if (!firstNotificationIndex)
+				if (firstNotificationIndex === null)
 				{
 					collection.push(newNotification);
 				}
@@ -77,7 +89,9 @@
 
 			this.application.setState({
 				collection: collection,
+				unreadCounter: params.counter,
 			});
+			this.application.storage.set('collection', JSON.stringify(collection));
 
 			this.updateCounter(params.counter);
 		}
@@ -104,8 +118,10 @@
 			if (needToUpdateState)
 			{
 				this.application.setState({
-					collection: filteredCollection
+					collection: filteredCollection,
+					unreadCounter: params.counter,
 				});
+				this.application.storage.set('collection', JSON.stringify(collection));
 			}
 
 			this.updateCounter(params.counter);
@@ -121,15 +137,26 @@
 			}
 
 			const { collection } = this.application.state;
+			let needToUpdateState = false;
 			params.list.forEach((listItem) => {
 				const itemIndex = collection.findIndex( item => item.messageId === listItem );
-				collection[itemIndex].notifyRead = 'Y';
+				if (itemIndex >= 0 && collection[itemIndex].notifyRead !== 'Y')
+				{
+					needToUpdateState = true;
+					collection[itemIndex].notifyRead = 'Y';
+				}
 			});
+
+			if (!needToUpdateState)
+			{
+				return false;
+			}
 
 			this.application.setState({
-				collection: collection
+				collection: collection,
+				unreadCounter: params.counter,
 			});
-
+			this.application.storage.set('collection', JSON.stringify(collection));
 			this.updateCounter(params.counter);
 		}
 
@@ -143,15 +170,26 @@
 			}
 
 			const { collection } = this.application.state;
+			let needToUpdateState = false;
+
 			params.list.forEach((listItem) => {
 				const itemIndex = collection.findIndex( item => item.messageId === listItem );
-				collection[itemIndex].notifyRead = 'N';
+				if (itemIndex >= 0 && collection[itemIndex].notifyRead !== 'N')
+				{
+					needToUpdateState = true;
+					collection[itemIndex].notifyRead = 'N';
+				}
 			});
+			if (!needToUpdateState)
+			{
+				return false;
+			}
 
 			this.application.setState({
-				collection: collection
+				collection: collection,
+				unreadCounter: params.counter,
 			});
-
+			this.application.storage.set('collection', JSON.stringify(collection));
 			this.updateCounter(params.counter);
 		}
 
@@ -164,17 +202,18 @@
 				return false;
 			}
 
-			const idToDelete = +Object.keys(params.id)[0];
+			const idsToDelete = Object.keys(params.id).map(item => +item);
 			const { collection } = this.application.state;
 
-			//notifications
 			let needToUpdateState = false;
-			const filteredNotifications = collection.filter((item) => {
-				if (item.messageId === idToDelete)
+			const filteredNotifications = collection.filter(item => {
+				if (idsToDelete.includes(item.messageId))
 				{
 					needToUpdateState = true;
+					return false;
 				}
-				return item.messageId !== idToDelete;
+
+				return true;
 			});
 
 			if (needToUpdateState)
@@ -183,9 +222,9 @@
 					collection: filteredNotifications,
 					unreadCounter: params.counter,
 				});
+				this.application.storage.set('collection', JSON.stringify(filteredNotifications));
+				this.updateCounter(params.counter);
 			}
-
-			this.updateCounter(params.counter);
 		}
 
 		updateCounter(counter)

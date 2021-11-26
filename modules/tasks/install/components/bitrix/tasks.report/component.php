@@ -1,5 +1,11 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Text\Emoji;
 
 if (!CModule::IncludeModule("tasks"))
 {
@@ -298,6 +304,15 @@ $arResult["GROUPS"] = array();
 $groupIDs = array();
 while($group = $rsGroups->GetNext())
 {
+	if (!empty($group['NAME']))
+	{
+		$group['NAME'] = Emoji::decode($group['NAME']);
+	}
+	if (!empty($group['DESCRIPTION']))
+	{
+		$group['DESCRIPTION'] = Emoji::decode($group['DESCRIPTION']);
+	}
+
 	$arResult["GROUPS"][] = $group;
 	$groupIDs[] = $group["ID"];
 }

@@ -29,4 +29,5 @@ $MESS["IM_CHAT_LINES"] = "Открытая линия";
 $MESS["IM_CHAT_GENERAL"] = "Общий чат";
 $MESS["IM_CHAT_OPEN_NEW"] = "Канал";
 $MESS["IM_CHAT_GROUP_NEW"] = "Групповой чат";
+$MESS["IM_M_CODE_BLOCK"] = "Фрагмент кода";
 ?>

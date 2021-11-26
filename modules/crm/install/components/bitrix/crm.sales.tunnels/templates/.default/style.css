@@ -371,7 +371,6 @@
 	color: #A8ADB4;
 	text-transform: uppercase;
 }
-
 .crm-st-kanban-column-dot {
 	position: absolute;
 	left: 50%;
@@ -400,7 +399,9 @@
 	transition: border 400ms ease;
 	z-index: 2;
 }
-
+.crm-st-categories .crm-st-category:only-child .crm-st-kanban-column-dot {
+	display: none;
+}
 .crm-st-kanban-column-dot-pulse {
 	border: 3px solid #2FC6F6;
 	-webkit-border-radius: 30px;
@@ -662,7 +663,8 @@
 .crm-st-category-stub .crm-st-category-action-drag,
 .crm-st-category-stub .crm-st-category-info-links-link,
 .crm-st-category-stub .crm-st-category-info-links-help,
-.crm-st-category-stub .crm-st-category-info-title {
+.crm-st-category-stub .crm-st-category-info-title,
+.crm-st-category-editing-disabled .crm-st-category-action-drag{
 	display: none;
 }
 

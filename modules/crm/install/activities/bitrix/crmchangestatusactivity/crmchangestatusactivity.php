@@ -80,10 +80,14 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 				break;
 			default:
 				$entityTypeId = CCrmOwnerType::ResolveID($entityTypeName);
+				$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 
-				$fieldKey = 'STAGE_ID';
-				$stages = $this->getItemStages($entityTypeId, $entityId);
-				break;
+				if (isset($factory))
+				{
+					$fieldKey = $factory->getEntityFieldNameByMap(Crm\Item::FIELD_NAME_STAGE_ID);
+					$stages = $this->getItemStages($entityTypeId, $entityId);
+					break;
+				}
 		}
 
 		if ($stages && !in_array($targetStatus, $stages, true))
@@ -211,17 +215,13 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 
 				break;
 			default:
-				$documentTypeId = CCrmOwnerType::ResolveID($documentType);
-				$target = new \Bitrix\Crm\Automation\Target\ItemTarget($documentTypeId);
-				$targetStatusProperty['Options'] = [];
+				$factory = Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::ResolveID($documentType));
+				$targetStatusProperty['Options'] =
+					isset($factory)
+						? static::getTargetStatusOptionsByFactory($factory, $categoryId)
+						: []
+				;
 
-				if ($target->isAvailable())
-				{
-					foreach ($target->getStatusInfos((int)$categoryId) as $statusId => $statusInfo)
-					{
-						$targetStatusProperty['Options'][$statusId] = $statusInfo['NAME'];
-					}
-				}
 				break;
 		}
 
@@ -233,6 +233,41 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 				'Type' => 'user',
 			],
 		];
+	}
+
+	protected static function getTargetStatusOptionsByFactory(Crm\Service\Factory $factory, ?int $categoryId): array
+	{
+		$statuses = [];
+
+		if (!$factory->isCategoriesSupported())
+		{
+			$categories = [null];
+		}
+		elseif (isset($categoryId))
+		{
+			$currentCategory = $factory->getCategory($categoryId);
+			$categories = isset($currentCategory) ? [$currentCategory] : [];
+		}
+		else
+		{
+			$categories = $factory->getCategories();
+		}
+		$shouldSpecifyCategoryName = count($categories) > 1;
+
+		if ($factory->isStagesEnabled())
+		{
+			foreach ($categories as $category)
+			{
+				$categoryId = isset($category) ? $category->getId() : null;
+				$statusPrefix = $shouldSpecifyCategoryName ? $category->getName() . ' / ' : '';
+				foreach ($factory->getStages($categoryId) as $status)
+				{
+					$statuses[$status->getStatusId()] = $statusPrefix . $status->getName();
+				}
+			}
+		}
+
+		return $statuses;
 	}
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
@@ -302,9 +337,19 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 
 	protected function getItemStages(int $entityTypeId, int $entityId): array
 	{
-		$target = new \Bitrix\Crm\Automation\Target\ItemTarget($entityTypeId);
-		$target->setEntityById($entityId);
+		$stages = [];
 
-		return $target->isAvailable() ? $target->getEntityStatuses() : [];
+		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		$item = isset($factory) ? $factory->getItem($entityId) : null;
+
+		if (isset($item))
+		{
+			foreach ($factory->getStages($item->getCategoryId()) as $stage)
+			{
+				$stages[] = $stage->getStatusId();
+			}
+		}
+
+		return $stages;
 	}
 }

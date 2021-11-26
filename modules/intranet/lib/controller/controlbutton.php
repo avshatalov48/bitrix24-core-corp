@@ -2,6 +2,9 @@
 
 namespace Bitrix\Intranet\Controller;
 
+use Bitrix\Disk\File;
+use Bitrix\Disk\Uf\FileUserType;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -9,10 +12,15 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Application;
+use Bitrix\Intranet;
+use Bitrix\Main\Security\Sign\Signer;
+use Bitrix\Main\Web\Json;
 
 class ControlButton extends \Bitrix\Main\Engine\Controller
 {
-	public function getAvailableItemsAction()
+	protected const SIGNATURE_SALT = 'control_button_salt';
+
+	public function getAvailableItemsAction(): array
 	{
 		$items = [];
 
@@ -40,43 +48,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		return $items;
 	}
 
-	private function udpateChatUsers($chatId, $newUserIds)
-	{
-		if (!Loader::includeModule('im'))
-		{
-			return;
-		}
-
-		$userIdsToAdd = [];
-		$currentUsers = \Bitrix\Im\Chat::getUsers($chatId);
-		$currentUserIds = [];
-		$chat = new \CIMChat(0);
-
-		foreach ($currentUsers as $key => $user)
-		{
-			$currentUserIds[] = $user['id'];
-
-			if (!in_array($user['id'], $newUserIds))
-			{
-				$res = $chat->DeleteUser($chatId, $user['id'], false);
-			}
-		}
-
-		foreach ($newUserIds as $userId)
-		{
-			if (!in_array($userId, $currentUserIds))
-			{
-				$userIdsToAdd[] = $userId;
-			}
-		}
-
-		if (!empty($userIdsToAdd))
-		{
-			$chat->AddUser($chatId, $userIdsToAdd);
-		}
-	}
-
-	private function checkUsers(&$userIds)
+	private function checkUsers(&$userIds): void
 	{
 		$newUserIds = [];
 		$externalUserTypes = \Bitrix\Main\UserTable::getExternalUserTypes();
@@ -87,7 +59,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		]);
 		while ($user = $result->fetch())
 		{
-			if (!in_array($user['EXTERNAL_AUTH_ID'], $externalUserTypes))
+			if (!in_array($user['EXTERNAL_AUTH_ID'], $externalUserTypes, true))
 			{
 				$newUserIds[] = $user['ID'];
 			}
@@ -96,13 +68,13 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		$userIds = $newUserIds;
 	}
 
-	private function getTaskData($entityId)
+	private function getTaskData($entityId): array
 	{
 		global $USER;
 
 		if (!Loader::includeModule('tasks'))
 		{
-			return;
+			return [];
 		}
 
 		if (
@@ -113,7 +85,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			)
 		)
 		{
-			return;
+			return [];
 		}
 
 		$query = new Query(\Bitrix\Tasks\Internals\TaskTable::getEntity());
@@ -153,13 +125,13 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			$task['GROUP_ID'] = $item['GROUP_ID'];
 			$task['LINK'] = SITE_DIR . 'company/personal/user/' . $item['CREATED_BY'] . '/tasks/task/view/' . $item['ID'] . '/';
 
-			$userId = $item['TM_USER_ID'];
+			$userId = (int)$item['TM_USER_ID'];
 			$userType = $item['TM_TYPE'];
 
 			unset($item['TM_USER_ID'], $item['TM_TYPE']);
 
 			$task['SE_MEMBER'][$userId] = ['USER_ID' => $userId, 'TYPE' => $userType];
-			if (!in_array($userId, $task['USER_IDS']))
+			if (!in_array($userId, $task['USER_IDS'], true))
 			{
 				$task['USER_IDS'][] = $userId;
 			}
@@ -176,20 +148,22 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		return $task;
 	}
 
-	public function getCalendarData($entityId, $entityData = [])
+	public function getCalendarData($entityId, $entityData = []): array
 	{
 		global $USER;
 
+		$res = [];
+
 		if (!Loader::includeModule('calendar'))
 		{
-			return;
+			return $res;
 		}
 
 		$entry = \CCalendarEvent::getEventForViewInterface($entityId);
 
 		if (!$entry)
 		{
-			return;
+			return $res;
 		}
 
 		$pathToCalendar = \CCalendar::GetPathForCalendarEx($USER->GetID());
@@ -205,11 +179,12 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			'DT_SKIP_TIME' => $entry['DT_SKIP_TIME'],
 			'USER_IDS' => [],
 			'LINK' => $pathToEvent,
+			'URL' => $pathToEvent,
 		];
 
 		foreach($entry['ATTENDEE_LIST'] as $user)
 		{
-			if (intval($user['id']) > 0)
+			if ((int)$user['id'] > 0)
 			{
 				$res['USER_IDS'][] = $user['id'];
 			}
@@ -227,14 +202,15 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 
 	private function getTaskChat($entityId)
 	{
+		$chatId = '';
+
 		global $USER;
 
-		if (!Loader::includeModule('tasks') && !Loader::includeModule('im'))
+		if (!Loader::includeModule('tasks') || !Loader::includeModule('im'))
 		{
-			return;
+			return $chatId;
 		}
 
-		$chatId = '';
 		$userId = $USER->GetID();
 		$taskData = $this->getTaskData($entityId);
 
@@ -250,7 +226,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		if ($chat = $res->fetch())
 		{
 			$chatId = $chat['ID'];
-			$this->udpateChatUsers($chatId, $taskData['USER_IDS']);
+			Intranet\ControlButton::addUserToChat($chatId, $userId);
 		}
 		else
 		{
@@ -263,44 +239,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 				return null;
 			}
 
-			$chat = new \CIMChat(0);
-			$chatFields = [
-				'TITLE' => Loc::getMessage(
-					'INTRANET_CONTROL_BUTTON_TASK_CHAT_TITLE',
-					['#TASK_TITLE#' => $taskData['TITLE']]
-				),
-				'TYPE' => IM_MESSAGE_CHAT,
-				'ENTITY_TYPE' => 'TASKS',
-				'ENTITY_ID' => $taskData['ID'],
-				'SKIP_ADD_MESSAGE' => 'Y',
-				'AUTHOR_ID' => $userId,
-				'USERS' => $taskData['USER_IDS']
-			];
-
-			$chatId = $chat->add($chatFields);
-
-			if ($chatId)
-			{
-				$pathToTask = SITE_DIR . 'company/personal/user/' . $taskData['CREATED_BY'] . '/tasks/task/view/' . $taskData['ID'] . '/';
-				$entryLinkTitle = '[url=' . $pathToTask . ']' . $taskData['TITLE'] . '[/url]';
-				$chatMessageFields = [
-					'FROM_USER_ID' => $userId,
-					'MESSAGE' => Loc::getMessage(
-						'INTRANET_CONTROL_BUTTON_TASK_CHAT_FIRST_MESSAGE',
-						[
-							'#TASK_TITLE#' => $entryLinkTitle,
-						]
-					),
-					'SYSTEM' => 'Y',
-					'INCREMENT_COUNTER' => 'N',
-					'PUSH' => 'Y',
-					'TO_CHAT_ID' => $chatId,
-					'SKIP_USER_CHECK' => 'Y',
-					'SKIP_COMMAND' => 'Y'
-				];
-
-				\CIMChat::addMessage($chatMessageFields);
-			}
+			$chatId = Intranet\ControlButton::createTaskChat($taskData, $userId);
 
 			Application::getConnection()->unlock($lockName);
 		}
@@ -312,18 +251,20 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 	{
 		global $USER;
 
+		$chatId = '';
+
 		if (!Loader::includeModule('calendar') || !Loader::includeModule('im'))
 		{
-			return;
+			return $chatId;
 		}
 
-		$chatId = '';
 		$userId = $USER->GetId();
 		$calendarData = $this->getCalendarData($entityId, $entityData);
 
 		if ($calendarData['MEETING']['CHAT_ID'] > 0)
 		{
 			$chatId = $calendarData['MEETING']['CHAT_ID'];
+			Intranet\ControlButton::addUserToChat($chatId, $userId);
 		}
 		else
 		{
@@ -336,62 +277,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 				return null;
 			}
 
-			$chat = new \CIMChat(0);
-			$chatFields = [
-				'TITLE' => Loc::getMessage(
-					'INTRANET_CONTROL_BUTTON_CALENDAR_CHAT_TITLE',
-					['#EVENT_TITLE#' => $calendarData['TITLE']]
-				),
-				'TYPE' => IM_MESSAGE_CHAT,
-				'ENTITY_TYPE' => \CCalendar::CALENDAR_CHAT_ENTITY_TYPE,
-				'ENTITY_ID' => $calendarData['ID'],
-				'SKIP_ADD_MESSAGE' => 'Y',
-				'AUTHOR_ID' => $userId,
-				'USERS' => $calendarData['USER_IDS']
-			];
-
-			$chatId = $chat->add($chatFields);
-
-			if ($chatId)
-			{
-				$pathToCalendar = \CCalendar::GetPathForCalendarEx($userId);
-				$pathToEvent = \CHTTP::urlAddParams($pathToCalendar, ['EVENT_ID' => $calendarData['ID']]);
-				$entryLinkTitle = '[url=' . $pathToEvent . ']' . $calendarData['TITLE'] . '[/url]';
-				$chatMessageFields = [
-					'FROM_USER_ID' => $userId,
-					'MESSAGE' => Loc::getMessage(
-						'INTRANET_CONTROL_BUTTON_CALENDAR_CHAT_FIRST_MESSAGE',
-						[
-							'#EVENT_TITLE#' => $entryLinkTitle,
-							'#DATETIME_FROM#' => \CCalendar::Date(
-								\CCalendar::Timestamp($calendarData['DATE_FROM']),
-								$calendarData['DT_SKIP_TIME'] === 'N',
-								true, true
-							)
-						]
-					),
-					'SYSTEM' => 'Y',
-					'INCREMENT_COUNTER' => 'N',
-					'PUSH' => 'Y',
-					'TO_CHAT_ID' => $chatId,
-					'SKIP_USER_CHECK' => 'Y',
-					'SKIP_COMMAND' => 'Y'
-				];
-
-				\CIMChat::addMessage($chatMessageFields);
-
-				$calendarData['MEETING']['CHAT_ID'] = $chatId;
-				$response['id'] = \CCalendar::SaveEvent([
-					'arFields' => [
-						'ID' => $calendarData['ID'],
-						'MEETING' => $calendarData['MEETING']
-					],
-					'checkPermission' => false,
-					'userId' => $calendarData['CREATED_BY']
-				]);
-
-				\CCalendar::ClearCache('event_list');
-			}
+			$chatId = Intranet\ControlButton::createCalendarChat($calendarData, $userId);
 
 			Application::getConnection()->unlock($lockName);
 		}
@@ -404,13 +290,13 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		if (!$entityType || !$entityId)
 		{
 			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROL_BUTTON_ENTITY_ERROR')));
-			return;
+			return null;
 		}
 
 		if (!Loader::includeModule('im'))
 		{
 			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROL_BUTTON_IM_ERROR'), 'create_chat_error'));
-			return;
+			return null;
 		}
 
 		$chatId = '';
@@ -432,13 +318,13 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		if (!$entityType || !$entityId)
 		{
 			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROL_BUTTON_ENTITY_ERROR')));
-			return;
+			return null;
 		}
 
 		if (!Loader::includeModule('im'))
 		{
 			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROL_BUTTON_IM_ERROR'), 'create_chat_error'));
-			return;
+			return null;
 		}
 
 		$userCount = 0;
@@ -457,19 +343,19 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		if ($userCount > \Bitrix\Im\Call\Call::getMaxParticipants())
 		{
 			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROL_BUTTON_VIDEOCALL_LIMIT')));
-			return;
+			return null;
 		}
 
 		if ($userCount === 1)
 		{
 			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROL_BUTTON_VIDEOCALL_SELF_ERROR')));
-			return;
+			return null;
 		}
 
-		return self::getChatAction($entityType, $entityId);
+		return $this->getChatAction($entityType, $entityId);
 	}
 
-	public function getTaskLinkAction($entityType, $entityId, $entityData = [])
+	public function getTaskLinkAction($entityType, $entityId, $postEntityType = '', $entityData = []): array
 	{
 		global $USER;
 
@@ -485,18 +371,49 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			return $result;
 		}
 
-		$data = [];
-
-		if ($entityType === 'calendar_event')
+		switch (strtolower($entityType))
 		{
-			$data = $this->getCalendarData($entityId, $entityData);
+			case 'calendar_event':
+				$data = $this->getCalendarData($entityId, $entityData);
+				break;
+			default:
+
+				if (
+					!Loader::includeModule('socialnetwork')
+					|| !Loader::includeModule('tasks')
+				)
+				{
+					return $result;
+				}
+
+				$data = [];
+
+				if ($provider = \Bitrix\Socialnetwork\Livefeed\Provider::init([
+					'ENTITY_TYPE' => $entityType,
+					'ENTITY_ID' => $entityId,
+					'CLONE_DISK_OBJECTS' => true,
+				]))
+				{
+					$data = [
+						'TITLE' => $provider->getSourceTitle(),
+						'DESCRIPTION' => $provider->getSourceDescription(),
+						'SUFFIX' => $provider->getSuffix(),
+						'URL' => $provider->getLiveFeedUrl(),
+						'DISK_FILES' => array_values($provider->getAttachedDiskObjectsCloned()),
+					];
+				}
 		}
 
 		if (!empty($data))
 		{
-			$result['link'] = SITE_DIR . 'company/personal/user/' . $USER->GetID() . '/tasks/task/edit/0/';
+			$result['link'] = str_replace(
+				[ '#USER_ID#', '#ID#' ],
+				$USER->getId(),
+				Option::get('intranet', 'search_user_url', SITE_DIR . 'company/personal/user/#USER_ID#/')
+			) . 'tasks/task/edit/0/';
 			$result['TITLE'] = $data['TITLE'];
 			$result['DESCRIPTION'] = $data['DESCRIPTION'];
+			$result['URL'] = $data['URL'];
 
 			if (isset($data['USER_IDS']) && !empty($data['USER_IDS']))
 			{
@@ -508,16 +425,96 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 				$result['CALENDAR_EVENT_ID'] = $data['ID'];
 				$result['CALENDAR_EVENT_DATA'] = $entityData;
 			}
+			else
+			{
+				$result['SOURCE_POST_ENTITY_TYPE'] = $postEntityType;
+				$result['SOURCE_ENTITY_TYPE'] = $entityType;
+				$result['SOURCE_ENTITY_ID'] = (int)$entityId;
+				$result['SUFFIX'] = $data['SUFFIX'];
+
+				if (!empty($data['DISK_FILES']))
+				{
+					$diskFileUFCode = \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode();
+					$result[$diskFileUFCode] = $data['DISK_FILES'];
+					$signer = new Signer;
+					$result[$diskFileUFCode . '_SIGN'] = $signer->sign(Json::encode($data['DISK_FILES']), static::SIGNATURE_SALT);
+				}
+			}
 		}
 
 		return $result;
 	}
 
-	public function getCalendarLinkAction($entityType, $entityId)
+	public function clearNewTaskFilesAction(string $signedFiles = '')
+	{
+		if ($signedFiles === '')
+		{
+			return;
+		}
+
+		$signer = new Signer;
+
+		try
+		{
+			$unsigned = $signer->unsign($signedFiles, static::SIGNATURE_SALT);
+			$diskFiles = Json::decode($unsigned);
+		}
+		catch (\Exception $e)
+		{
+			$diskFiles = [];
+		}
+
+		if (
+			!is_array($diskFiles)
+			|| empty($diskFiles)
+		)
+		{
+			return;
+		}
+
+		if (!Loader::includeModule('disk'))
+		{
+			$this->addError(new Error(
+					Loc::getMessage('INTRANET_CONTROL_BUTTON_DISK_ERROR'), 'delete_new_task_files_no_module_error')
+			);
+			return null;
+		}
+
+		$fileIdList = array_map(static function($value) {
+			return (
+			preg_match('/^' . FileUserType::NEW_FILE_PREFIX . '(\d+)$/i', $value, $matches)
+				? (int)$matches[1]
+				: 0
+			);
+		}, $diskFiles);
+		$fileIdList = array_filter($fileIdList, static function($value) {
+			return ($value > 0);
+		});
+		$fileIdList = array_unique($fileIdList);
+
+		foreach( File::getModelList([ 'filter' => [ 'ID' => $fileIdList ] ] ) as $file)
+		{
+			if (
+				($storage = $file->getStorage())
+				&& $file->canDelete($storage->getCurrentUserSecurityContext())
+			)
+			{
+				if (!$file->delete($this->getCurrentUser()->getId()))
+				{
+					$this->addError(new Error(
+							Loc::getMessage('INTRANET_CONTROL_BUTTON_DELETE_TASK_FILE_ERROR'), 'delete_new_task_file_error')
+					);
+					return null;
+				}
+			}
+		}
+	}
+
+	public function getCalendarLinkAction($entityType, $entityId): array
 	{
 		if (!$entityType || !$entityId)
 		{
-			return;
+			return [];
 		}
 
 		$res = [];
@@ -538,7 +535,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		return $res;
 	}
 
-	public function getPostLinkAction($entityType, $entityId, $entityData = [])
+	public function getPostLinkAction($entityType, $entityId, $entityData = []): array
 	{
 		global $USER;
 
@@ -554,6 +551,8 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		}
 
 		$result['link'] = SITE_DIR . 'company/personal/user/' . $USER->GetID() . '/blog/edit/post/0/';
+
+		$data = false;
 
 		if ($entityType === 'calendar_event')
 		{
@@ -572,7 +571,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 
 		if (is_array($data))
 		{
-			foreach ($data['USER_IDS'] as $key => $userId)
+			foreach ($data['USER_IDS'] as $userId)
 			{
 				$result['destTo'][] = 'U' . (int)$userId;
 			}

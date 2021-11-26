@@ -139,6 +139,7 @@ $MESS["CRM_ENTITY_ED_PAYMENT_SAVE_CONFIRM"] = "Möchten Sie die Änderungen im B
 $MESS["CRM_ENTITY_ED_PAYMENT_SUM"] = "Bestellbetrag gesamt";
 $MESS["CRM_ENTITY_ED_PAYMENT_WAS_NOT_PAID"] = "Nicht bezahlt";
 $MESS["CRM_ENTITY_ED_PAYMENT_WAS_PAID"] = "Bezahlt";
+$MESS["CRM_ENTITY_ED_PAY_SYSTEM_SELECTOR_NOT_SELECTED"] = "(Zahlungssystem nicht ausgewählt)";
 $MESS["CRM_ENTITY_ED_PRODUCT_NOT_SHOWN"] = "Noch #COUNT#";
 $MESS["CRM_ENTITY_ED_RECURRING_MODE_TITLE"] = "Wiederholung";
 $MESS["CRM_ENTITY_ED_RECURRING_NOT_REPEAT"] = "Nicht wiederholen";

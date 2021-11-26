@@ -1,139 +1,5 @@
 function __MSLOnFeedPreInit(params) // only for the list
 {
-	if (typeof params.arAvailableGroup != 'undefined')
-	{
-		window.arAvailableGroup = params.arAvailableGroup;
-	}
-
-	BX.addCustomEvent("onFrameDataReceivedBefore", function(obCache) {
-		BitrixMobile.LazyLoad.clearImages();
-	});
-	BX.addCustomEvent("BX.LazyLoad:ImageLoaded", function() {
-		var windowSize = BX.GetWindowSize();
-		window.maxScroll = windowSize.scrollHeight - windowSize.innerHeight - 190;
-	});
-
-	BX.addCustomEvent("onFrameDataReceived", function(obCache) {
-		window.isPullDownEnabled = false;
-		window.isPullDownLocked = false;
-		window.isFrameDataReceived = true;
-		app.exec('pullDownLoadingStop');
-		BitrixMobile.LazyLoad.showImages(true);
-	});
-
-	BX.addCustomEvent("onFrameDataProcessed", function(blocks, bFromCache) {
-		if (
-			typeof blocks != 'undefined'
-			&& typeof blocks[0] != 'undefined'
-			&& typeof bFromCache != 'undefined'
-			&& bFromCache
-		)
-		{
-			if (
-				typeof blocks[0]['PROPS'] != 'undefined'
-				&& typeof blocks[0]['PROPS']['TS'] != 'undefined'
-				&& parseInt(blocks[0]['PROPS']['TS']) > 0
-			)
-			{
-				BX.MobileLivefeed.Instance.setOptions({
-					frameCacheTs: parseInt(blocks[0]['PROPS']['TS']),
-				});
-			}
-		}
-
-		BitrixMobile.LazyLoad.showImages(true);
-
-		if (!!bFromCache)
-		{
-			BX.MobileLivefeed.PageInstance.setPreventNextPage(true);
-		}
-	});
-
-	BX.addCustomEvent("onCacheDataRequestStart", function()
-	{
-		setTimeout(function() {
-			if (
-				typeof window.isFrameDataReceived == 'undefined'
-				|| !window.isFrameDataReceived
-			)
-			{
-				window.isPullDownLocked = true;
-				app.exec('pullDownLoadingStart');
-			}
-		}, 1000);
-	});
-
-	BX.addCustomEvent("onFrameDataReceivedError", function() {
-		app.BasicAuth({
-			'success': BX.delegate(function() {
-				BX.frameCache.update(true);
-			}),
-			'failture': BX.delegate(function() {
-				window.isPullDownLocked = false;
-				app.exec('pullDownLoadingStop');
-				BX.MobileLivefeed.PageInstance.requestError('refresh', true);
-			})
-		});
-	});
-
-	BX.addCustomEvent("onFrameDataRequestFail", function(response)
-	{
-		if (
-			typeof response != 'undefined'
-			&& typeof response.reason != 'undefined'
-			&& response.reason == "bad_eval"
-		)
-		{
-			window.isPullDownLocked = false;
-			app.exec('pullDownLoadingStop');
-			BX.MobileLivefeed.PageInstance.requestError('refresh', true);
-		}
-		else
-		{
-			app.BasicAuth({
-				'success': BX.delegate(function() {
-					BX.frameCache.update(true);
-				}),
-				'failture': BX.delegate(function() {
-					window.isPullDownLocked = false;
-					app.exec('pullDownLoadingStop');
-					BX.MobileLivefeed.PageInstance.requestError('refresh', true)
-				})
-			});
-		}
-	});
-
-	BX.addCustomEvent("onCacheInvokeAfter", function(storageBlocks, resultSet) {
-		var items = resultSet.items;
-		if (items.length <= 0)
-		{
-			BX.frameCache.update(true, true);
-		}
-	});
-
-	BXMobileApp.addCustomEvent("onAfterEdit", function(params) {
-		oMSL.afterEdit(params.postResponseData, params.postData.data.log_id);
-	});
-
-	BX.addCustomEvent("onPullDownDisable", function() {
-		BXMobileApp.UI.Page.Refresh.setEnabled(false);
-	});
-
-	BX.addCustomEvent("onPullDownEnable", function() {
-		BXMobileApp.UI.Page.Refresh.setEnabled(true);
-	});
-
-	BXMobileApp.UI.Page.Refresh.setParams({
-		callback: function()
-		{
-			if (!window.isPullDownLocked)
-			{
-				BX.MobileLivefeed.PageInstance.refresh(true);
-			}
-		},
-		backgroundColor: '#E7E9EB'
-	});
-	BXMobileApp.UI.Page.Refresh.setEnabled(true);
 }
 
 function __MSLOnFeedInit(params)
@@ -1312,7 +1178,7 @@ function __MSLPullDownInit(enable, bRefresh)
 	if (enable)
 	{
 		if (
-			!window.isPullDownEnabled
+			!BX.MobileLivefeed.Instance.isPullDownEnabled
 			&& bRefresh
 		)
 		{
@@ -1331,13 +1197,13 @@ function __MSLPullDownInit(enable, bRefresh)
 			});
 			BXMobileApp.UI.Page.Refresh.setEnabled(true);
 		}
-		isPullDownEnabled = true;
+		BX.MobileLivefeed.Instance.isPullDownEnabled = true;
 	}
 	else
 	{
 		BXMobileApp.UI.Page.Refresh.setEnabled(false);
 
-		isPullDownEnabled = false;
+		BX.MobileLivefeed.Instance.isPullDownEnabled = false;
 	}
 }
 
@@ -2718,42 +2584,6 @@ BitrixMSL.prototype.expandText = function(id)
 	}
 };
 
-BitrixMSL.prototype.afterEdit = function(postResponseData, logId) // in livefeed only
-{
-	logId = (typeof logId != 'undefined' ? parseInt(logId) : 0);
-
-	var newPostNode = BX.create('DIV', {
-		html: postResponseData.text
-	});
-	BX('blog-post-first-after').parentNode.insertBefore(newPostNode, BX('blog-post-first-after').nextSibling);
-
-	var
-		detailTextNode = BX.findChild(newPostNode, { className: 'post-item-post-block' }, true),
-		topNode = BX.findChild(newPostNode, { className: 'post-item-top' }, true),
-		filesNode = BX.findChild(newPostNode, { className: 'post-item-attached-file-wrap' }, true);
-
-	if (
-		logId > 0
-		&& detailTextNode
-		&& topNode
-	)
-	{
-		var postData = {
-			detailText: detailTextNode.innerHTML,
-			topText: topNode.innerHTML,
-			logID: logId
-		};
-		if (filesNode)
-		{
-			postData.filesBlockText = filesNode.innerHTML;
-		}
-
-		BXMobileApp.onCustomEvent('onEditedPostInserted', postData, true, true);
-	}
-
-	BitrixMobile.LazyLoad.showImages();
-};
-
 BitrixMSL.prototype.onLogEntryFavorites = function(log_id, page_id)
 {
 	var favoritesBlock = BX('log_entry_favorites_' + log_id);
@@ -3654,11 +3484,11 @@ BitrixMSL.prototype.clearPostFormDestination = function(selectedDestinations, gr
 			}
 		);
 	}
-	else if (window.arAvailableGroup !== false)
+	else if (BX.MobileLivefeed.Instance.availableGroupList !== false)
 	{
-		for (key in window.arAvailableGroup)
+		for (key in BX.MobileLivefeed.Instance.availableGroupList)
 		{
-			if (!window.arAvailableGroup.hasOwnProperty(key))
+			if (!BX.MobileLivefeed.Instance.availableGroupList.hasOwnProperty(key))
 			{
 				continue;
 			}
@@ -3667,8 +3497,8 @@ BitrixMSL.prototype.clearPostFormDestination = function(selectedDestinations, gr
 				selectedDestinations,
 				{
 					type: 'SG',
-					id:  parseInt(window.arAvailableGroup[key]['entityId']),
-					name: window.arAvailableGroup[key]['name']
+					id:  parseInt(BX.MobileLivefeed.Instance.availableGroupList[key]['entityId']),
+					name: BX.MobileLivefeed.Instance.availableGroupList[key]['name']
 				}
 			);
 		}

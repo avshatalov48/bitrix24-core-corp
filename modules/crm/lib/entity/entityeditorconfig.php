@@ -23,7 +23,7 @@ class EntityEditorConfig
 			throw new Main\NotSupportedException('ui module is required');
 		}
 
-		$this->entityTypeID = $entityTypeID;
+		$this->entityTypeID = (int)$entityTypeID;
 		$this->setUserID($userID > 0 ? $userID : \CCrmSecurityHelper::GetCurrentUserID());
 		$this->setScope($scope);
 		$this->extras = $extras;
@@ -121,7 +121,9 @@ class EntityEditorConfig
 		return $entityTypeID === \CCrmOwnerType::Lead
 			|| $entityTypeID === \CCrmOwnerType::Deal
 			|| $entityTypeID === \CCrmOwnerType::Contact
-			|| $entityTypeID === \CCrmOwnerType::Company;
+			|| $entityTypeID === \CCrmOwnerType::Company
+			|| $entityTypeID === \CCrmOwnerType::Quote
+			|| \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID);
 	}
 
 	protected function getConfigId(): string
@@ -171,10 +173,41 @@ class EntityEditorConfig
 					$optionName = 'company_details';
 					break;
 				}
+			case \CCrmOwnerType::Quote:
+			{
+				$optionName = 'quote_details';
+				break;
+			}
 			default:
+			{
+				$optionName = '';
+			}
+		}
+
+		if (empty($optionName) && \CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeID))
+		{
+			$componentName = Crm\Service\Container::getInstance()->getRouter()->getItemDetailComponentName($this->entityTypeID);
+			if ($componentName)
+			{
+				$componentClassName = \CBitrixComponent::includeComponentClass($componentName);
+				if ($componentClassName)
 				{
-					$optionName = '';
+					/** @var Crm\Component\EntityDetails\FactoryBased $component */
+					$component = new $componentClassName;
+					$component->initComponent($componentName);
+					$params = [
+						'ENTITY_TYPE_ID' => $this->entityTypeID,
+					];
+					$categoryId = $this->extras['CATEGORY_ID'] ?? null;
+					if ($categoryId > 0)
+					{
+						$params['categoryId'] = $categoryId;
+					}
+					$component->arParams = $params;
+					$component->init();
+					$optionName = $component->getEditorConfigId();
 				}
+			}
 		}
 
 		return $optionName;

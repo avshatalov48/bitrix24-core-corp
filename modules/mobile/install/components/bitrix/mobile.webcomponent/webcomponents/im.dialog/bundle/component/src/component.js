@@ -918,14 +918,65 @@ ChatDialog.disk.processItems = function()
 
 };
 
+ChatDialog.disk.getType = function(type)
+{
+	type = type.toString().toLowerCase().split('.').splice(-1)[0];
+
+	switch(type)
+	{
+		case 'png':
+		case 'jpe':
+		case 'jpg':
+		case 'jpeg':
+		case 'gif':
+		case 'heic':
+		case 'bmp':
+		case 'webp':
+			return 'image';
+
+		case 'mp4':
+		case 'mkv':
+		case 'webm':
+		case 'mpeg':
+		case 'hevc':
+		case 'avi':
+		case '3gp':
+		case 'flv':
+		case 'm4v':
+		case 'ogg':
+		case 'wmv':
+		case 'mov':
+			return 'video';
+
+		case 'mp3':
+			return 'audio';
+	}
+
+	return 'file';
+}
+
 ChatDialog.disk.uploadFile = function (item)
 {
 	item.taskId = this.getTmpId()+(item.index? item.index: '');
-	item.resize = {
-		"quality":80,
-		"width":1920,
-		"height":1080,
-	};
+	var fileType = this.getType(item.name);
+	var needConvert = fileType === 'image' && item.type !== 'image/gif' || fileType === 'video';
+
+	console.warn(item);
+	if (needConvert)
+	{
+		item.resize = {
+			"quality":80,
+			"width":1920,
+			"height":1080,
+		};
+	}
+	else
+	{
+		item.preview = '';
+		item.previewUrl = '';
+		item.previewHeight = '';
+		item.previewWidth = '';
+	}
 
 	delete item.index;
 

@@ -286,7 +286,12 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      (_this$slider2 = this.slider) === null || _this$slider2 === void 0 ? void 0 : _this$slider2.showLoader();
 	      return BX.ajax.runAction('crm.ads.conversion.logout', {
-	        data: {}
+	        data: {},
+	        analyticsLabel: {
+	          connect: "FBE",
+	          action: "disconnect",
+	          type: "disconnect"
+	        }
 	      }).then(function () {
 	        var _this4$slider;
 

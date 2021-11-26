@@ -81,8 +81,8 @@ class ProductRowTable extends DataManager
 				->configureRequired()
 				->configureDefaultValue(0),
 			(new StringField('PRODUCT_NAME'))
-				// todo is 256 valid size? see install.sql b_crm_product_row.PRODUCT_NAME
-				->configureSize(256),
+				->configureSize(256)
+				->configureDefaultValue(''),
 			(new Reference(
 				'IBLOCK_ELEMENT',
 				IBlockElementProxyTable::class,
@@ -111,9 +111,11 @@ class ProductRowTable extends DataManager
 				->configureScale(2)
 				->configureDefaultValue(0.00),
 			(new FloatField('PRICE_NETTO'))
-				->configureScale(2),
+				->configureScale(2)
+				->configureDefaultValue(0.00),
 			(new FloatField('PRICE_BRUTTO'))
-				->configureScale(2),
+				->configureScale(2)
+				->configureDefaultValue(0.00),
 			(new FloatField('QUANTITY'))
 				->configureRequired()
 				->configureScale(4)
@@ -124,11 +126,14 @@ class ProductRowTable extends DataManager
 				['PRICE_ACCOUNT', 'QUANTITY']
 			))
 				->configureValueType(FloatField::class),
-			(new IntegerField('DISCOUNT_TYPE_ID')),
+			(new IntegerField('DISCOUNT_TYPE_ID'))
+				->configureDefaultValue(Discount::UNDEFINED),
 			(new FloatField('DISCOUNT_RATE'))
-				->configureScale(2),
+				->configureScale(2)
+				->configureDefaultValue(0.00),
 			(new FloatField('DISCOUNT_SUM'))
-				->configureScale(2),
+				->configureScale(2)
+				->configureDefaultValue(0.00),
 			(new FloatField('TAX_RATE'))
 				->configureScale(2)
 				->configureDefaultValue(0.0),
@@ -136,11 +141,15 @@ class ProductRowTable extends DataManager
 				->configureStorageValues('N', 'Y')
 				->configureDefaultValue(false),
 			(new BooleanField('CUSTOMIZED'))
-				->configureStorageValues('N', 'Y'),
-			(new IntegerField('MEASURE_CODE')),
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue(true),
+			(new IntegerField('MEASURE_CODE'))
+				->configureDefaultValue(0),
 			(new StringField('MEASURE_NAME'))
-				->configureSize(50),
+				->configureSize(50)
+				->configureDefaultValue(''),
 			(new IntegerField('SORT'))
+				->configureDefaultValue(0),
 		];
 	}
 
@@ -183,7 +192,7 @@ class ProductRowTable extends DataManager
 	 */
 	public static function handleOwnerUpdate(EntityObject $item, EventResult $result): void
 	{
-		if (!$item->has(Item::FIELD_NAME_PRODUCTS))
+		if (!$item->entity->hasField(Item::FIELD_NAME_PRODUCTS))
 		{
 			return;
 		}
@@ -197,7 +206,6 @@ class ProductRowTable extends DataManager
 
 		/** @var ProductRow|EntityObject $changedObject */
 		/** @var int $changeType */
-
 		foreach ($products->sysGetChanges() as [$changedObject, $changeType])
 		{
 			if ($changeType === Collection::OBJECT_REMOVED)

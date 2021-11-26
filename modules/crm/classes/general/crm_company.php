@@ -82,7 +82,8 @@ class CAllCrmCompany
 					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue]
 				),
 				'LOGO' => array(
-					'TYPE' => 'file'
+					'TYPE' => 'file',
+					'VALUE_TYPE' => 'image',
 				),
 				'ADDRESS' => array(
 					'TYPE' => 'string'
@@ -164,7 +165,8 @@ class CAllCrmCompany
 					'TYPE' => 'char'
 				),
 				'COMMENTS' => array(
-					'TYPE' => 'string'
+					'TYPE' => 'string',
+					'VALUE_TYPE' => 'html',
 				),
 				'HAS_PHONE' => array(
 					'TYPE' => 'char',
@@ -230,132 +232,145 @@ class CAllCrmCompany
 	}
 	public static function GetFields($arOptions = null)
 	{
-		$assignedByJoin = 'LEFT JOIN b_user U ON L.ASSIGNED_BY_ID = U.ID';
-		$createdByJoin = 'LEFT JOIN b_user U2 ON L.CREATED_BY_ID = U2.ID';
-		$modifyByJoin = 'LEFT JOIN b_user U3 ON L.MODIFY_BY_ID = U3.ID';
+		$tableAliasName =
+			(isset($arOptions['TABLE_ALIAS']) && is_string($arOptions['TABLE_ALIAS']) && $arOptions['TABLE_ALIAS'] !== '')
+				? $arOptions['TABLE_ALIAS']
+				: 'L';
 
-		$result = array(
-			'ID' => array('FIELD' => 'L.ID', 'TYPE' => 'int'),
-			'COMPANY_TYPE' => array('FIELD' => 'L.COMPANY_TYPE', 'TYPE' => 'string'),
-			'TITLE' => array('FIELD' => 'L.TITLE', 'TYPE' => 'string'),
-			'LOGO' => array('FIELD' => 'L.LOGO', 'TYPE' => 'string'),
-			'LEAD_ID' => array('FIELD' => 'L.LEAD_ID', 'TYPE' => 'int'),
+		$assignedByJoin = 'LEFT JOIN b_user U ON ' . $tableAliasName . '.ASSIGNED_BY_ID = U.ID';
+		$createdByJoin = 'LEFT JOIN b_user U2 ON ' . $tableAliasName . '.CREATED_BY_ID = U2.ID';
+		$modifyByJoin = 'LEFT JOIN b_user U3 ON ' . $tableAliasName . '.MODIFY_BY_ID = U3.ID';
 
-			'HAS_PHONE' => array('FIELD' => 'L.HAS_PHONE', 'TYPE' => 'char'),
-			'HAS_EMAIL' => array('FIELD' => 'L.HAS_EMAIL', 'TYPE' => 'char'),
-			'HAS_IMOL' => array('FIELD' => 'L.HAS_IMOL', 'TYPE' => 'char'),
+		$result = [
+			'ID' => ['FIELD' => $tableAliasName . '.ID', 'TYPE' => 'int'],
+			'COMPANY_TYPE' => ['FIELD' => $tableAliasName . '.COMPANY_TYPE', 'TYPE' => 'string'],
+			'TITLE' => ['FIELD' => $tableAliasName . '.TITLE', 'TYPE' => 'string'],
+			'LOGO' => ['FIELD' => $tableAliasName . '.LOGO', 'TYPE' => 'string'],
+			'LEAD_ID' => ['FIELD' => $tableAliasName . '.LEAD_ID', 'TYPE' => 'int'],
 
-			'ASSIGNED_BY_ID' => array('FIELD' => 'L.ASSIGNED_BY_ID', 'TYPE' => 'int'),
-			'ASSIGNED_BY_LOGIN' => array('FIELD' => 'U.LOGIN', 'TYPE' => 'string', 'FROM' => $assignedByJoin),
-			'ASSIGNED_BY_NAME' => array('FIELD' => 'U.NAME', 'TYPE' => 'string', 'FROM' => $assignedByJoin),
-			'ASSIGNED_BY_LAST_NAME' => array('FIELD' => 'U.LAST_NAME', 'TYPE' => 'string', 'FROM' => $assignedByJoin),
-			'ASSIGNED_BY_SECOND_NAME' => array('FIELD' => 'U.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $assignedByJoin),
-			'ASSIGNED_BY_WORK_POSITION' => array('FIELD' => 'U.WORK_POSITION', 'TYPE' => 'string', 'FROM' => $assignedByJoin),
-			'ASSIGNED_BY_PERSONAL_PHOTO' => array('FIELD' => 'U.PERSONAL_PHOTO', 'TYPE' => 'string', 'FROM' => $assignedByJoin),
+			'HAS_PHONE' => ['FIELD' => $tableAliasName . '.HAS_PHONE', 'TYPE' => 'char'],
+			'HAS_EMAIL' => ['FIELD' => $tableAliasName . '.HAS_EMAIL', 'TYPE' => 'char'],
+			'HAS_IMOL' => ['FIELD' => $tableAliasName . '.HAS_IMOL', 'TYPE' => 'char'],
 
-			'CREATED_BY_ID' => array('FIELD' => 'L.CREATED_BY_ID', 'TYPE' => 'int'),
-			'CREATED_BY_LOGIN' => array('FIELD' => 'U2.LOGIN', 'TYPE' => 'string', 'FROM' => $createdByJoin),
-			'CREATED_BY_NAME' => array('FIELD' => 'U2.NAME', 'TYPE' => 'string', 'FROM' => $createdByJoin),
-			'CREATED_BY_LAST_NAME' => array('FIELD' => 'U2.LAST_NAME', 'TYPE' => 'string', 'FROM' => $createdByJoin),
-			'CREATED_BY_SECOND_NAME' => array('FIELD' => 'U2.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $createdByJoin),
+			'ASSIGNED_BY_ID' => ['FIELD' => $tableAliasName . '.ASSIGNED_BY_ID', 'TYPE' => 'int'],
+			'ASSIGNED_BY_LOGIN' => ['FIELD' => 'U.LOGIN', 'TYPE' => 'string', 'FROM' => $assignedByJoin],
+			'ASSIGNED_BY_NAME' => ['FIELD' => 'U.NAME', 'TYPE' => 'string', 'FROM' => $assignedByJoin],
+			'ASSIGNED_BY_LAST_NAME' => ['FIELD' => 'U.LAST_NAME', 'TYPE' => 'string', 'FROM' => $assignedByJoin],
+			'ASSIGNED_BY_SECOND_NAME' => ['FIELD' => 'U.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $assignedByJoin],
+			'ASSIGNED_BY_WORK_POSITION' => ['FIELD' => 'U.WORK_POSITION', 'TYPE' => 'string', 'FROM' => $assignedByJoin],
+			'ASSIGNED_BY_PERSONAL_PHOTO' => ['FIELD' => 'U.PERSONAL_PHOTO', 'TYPE' => 'string', 'FROM' => $assignedByJoin],
 
-			'MODIFY_BY_ID' => array('FIELD' => 'L.MODIFY_BY_ID', 'TYPE' => 'int'),
-			'MODIFY_BY_LOGIN' => array('FIELD' => 'U3.LOGIN', 'TYPE' => 'string', 'FROM' => $modifyByJoin),
-			'MODIFY_BY_NAME' => array('FIELD' => 'U3.NAME', 'TYPE' => 'string', 'FROM' => $modifyByJoin),
-			'MODIFY_BY_LAST_NAME' => array('FIELD' => 'U3.LAST_NAME', 'TYPE' => 'string', 'FROM' => $modifyByJoin),
-			'MODIFY_BY_SECOND_NAME' => array('FIELD' => 'U3.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $modifyByJoin),
+			'CREATED_BY_ID' => ['FIELD' => $tableAliasName . '.CREATED_BY_ID', 'TYPE' => 'int'],
+			'CREATED_BY_LOGIN' => ['FIELD' => 'U2.LOGIN', 'TYPE' => 'string', 'FROM' => $createdByJoin],
+			'CREATED_BY_NAME' => ['FIELD' => 'U2.NAME', 'TYPE' => 'string', 'FROM' => $createdByJoin],
+			'CREATED_BY_LAST_NAME' => ['FIELD' => 'U2.LAST_NAME', 'TYPE' => 'string', 'FROM' => $createdByJoin],
+			'CREATED_BY_SECOND_NAME' => ['FIELD' => 'U2.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $createdByJoin],
 
-			'BANKING_DETAILS' => array('FIELD' => 'L.BANKING_DETAILS', 'TYPE' => 'string'),
+			'MODIFY_BY_ID' => ['FIELD' => $tableAliasName . '.MODIFY_BY_ID', 'TYPE' => 'int'],
+			'MODIFY_BY_LOGIN' => ['FIELD' => 'U3.LOGIN', 'TYPE' => 'string', 'FROM' => $modifyByJoin],
+			'MODIFY_BY_NAME' => ['FIELD' => 'U3.NAME', 'TYPE' => 'string', 'FROM' => $modifyByJoin],
+			'MODIFY_BY_LAST_NAME' => ['FIELD' => 'U3.LAST_NAME', 'TYPE' => 'string', 'FROM' => $modifyByJoin],
+			'MODIFY_BY_SECOND_NAME' => ['FIELD' => 'U3.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $modifyByJoin],
 
-			'INDUSTRY' => array('FIELD' => 'L.INDUSTRY', 'TYPE' => 'string'),
-			'REVENUE' => array('FIELD' => 'L.REVENUE', 'TYPE' => 'string'),
-			'CURRENCY_ID' => array('FIELD' => 'L.CURRENCY_ID', 'TYPE' => 'string'),
-			'EMPLOYEES' => array('FIELD' => 'L.EMPLOYEES', 'TYPE' => 'string'),
-			'COMMENTS' => array('FIELD' => 'L.COMMENTS', 'TYPE' => 'string'),
+			'BANKING_DETAILS' => ['FIELD' => $tableAliasName . '.BANKING_DETAILS', 'TYPE' => 'string'],
 
-			'DATE_CREATE' => array('FIELD' => 'L.DATE_CREATE', 'TYPE' => 'datetime'),
-			'DATE_MODIFY' => array('FIELD' => 'L.DATE_MODIFY', 'TYPE' => 'datetime'),
+			'INDUSTRY' => ['FIELD' => $tableAliasName . '.INDUSTRY', 'TYPE' => 'string'],
+			'REVENUE' => ['FIELD' => $tableAliasName . '.REVENUE', 'TYPE' => 'string'],
+			'CURRENCY_ID' => ['FIELD' => $tableAliasName . '.CURRENCY_ID', 'TYPE' => 'string'],
+			'EMPLOYEES' => ['FIELD' => $tableAliasName . '.EMPLOYEES', 'TYPE' => 'string'],
+			'COMMENTS' => ['FIELD' => $tableAliasName . '.COMMENTS', 'TYPE' => 'string'],
 
-			'OPENED' => array('FIELD' => 'L.OPENED', 'TYPE' => 'char'),
-			'IS_MY_COMPANY' => array('FIELD' => 'L.IS_MY_COMPANY', 'TYPE' => 'char'),
-			'WEBFORM_ID' => array('FIELD' => 'L.WEBFORM_ID', 'TYPE' => 'int'),
-			'ORIGINATOR_ID' => array('FIELD' => 'L.ORIGINATOR_ID', 'TYPE' => 'string'), //EXTERNAL SYSTEM THAT OWNS THIS ITEM
-			'ORIGIN_ID' => array('FIELD' => 'L.ORIGIN_ID', 'TYPE' => 'string'), //ITEM ID IN EXTERNAL SYSTEM
-			'ORIGIN_VERSION' => array('FIELD' => 'L.ORIGIN_VERSION', 'TYPE' => 'string') //ITEM VERSION IN EXTERNAL SYSTEM
-		);
+			'DATE_CREATE' => ['FIELD' => $tableAliasName . '.DATE_CREATE', 'TYPE' => 'datetime'],
+			'DATE_MODIFY' => ['FIELD' => $tableAliasName . '.DATE_MODIFY', 'TYPE' => 'datetime'],
 
-		if(!(is_array($arOptions) && isset($arOptions['DISABLE_ADDRESS']) && $arOptions['DISABLE_ADDRESS']))
+			'OPENED' => ['FIELD' => $tableAliasName . '.OPENED', 'TYPE' => 'char'],
+			'IS_MY_COMPANY' => ['FIELD' => $tableAliasName . '.IS_MY_COMPANY', 'TYPE' => 'char'],
+			'WEBFORM_ID' => ['FIELD' => $tableAliasName . '.WEBFORM_ID', 'TYPE' => 'int'],
+			'ORIGINATOR_ID' => ['FIELD' => $tableAliasName . '.ORIGINATOR_ID', 'TYPE' => 'string'], //EXTERNAL SYSTEM THAT OWNS THIS ITEM
+			'ORIGIN_ID' => ['FIELD' => $tableAliasName . '.ORIGIN_ID', 'TYPE' => 'string'], //ITEM ID IN EXTERNAL SYSTEM
+			'ORIGIN_VERSION' => ['FIELD' => $tableAliasName . '.ORIGIN_VERSION', 'TYPE' => 'string'] //ITEM VERSION IN EXTERNAL SYSTEM
+		];
+
+		if (!(is_array($arOptions) && isset($arOptions['DISABLE_ADDRESS']) && $arOptions['DISABLE_ADDRESS']))
 		{
 			if (COption::GetOptionString('crm', '~CRM_CONVERT_COMPANY_ADDRESSES', 'N') === 'Y')
 			{
-				$addrJoin = 'LEFT JOIN b_crm_addr ADDR ON L.ID = ADDR.ENTITY_ID AND ADDR.TYPE_ID = '
-					.EntityAddressType::Primary.' AND ADDR.ENTITY_TYPE_ID = '.CCrmOwnerType::Company;
-				$regAddrJoin = 'LEFT JOIN b_crm_addr R_ADDR ON L.ID = R_ADDR.ENTITY_ID AND R_ADDR.TYPE_ID = '
-					.EntityAddressType::Registered.' AND R_ADDR.ENTITY_TYPE_ID = '.CCrmOwnerType::Company;
+				$addrJoin = 'LEFT JOIN b_crm_addr ADDR ON ' . $tableAliasName . '.ID = ADDR.ENTITY_ID AND ADDR.TYPE_ID = '
+					. EntityAddressType::Primary . ' AND ADDR.ENTITY_TYPE_ID = ' . CCrmOwnerType::Company;
+				$regAddrJoin = 'LEFT JOIN b_crm_addr R_ADDR ON ' . $tableAliasName . '.ID = R_ADDR.ENTITY_ID AND R_ADDR.TYPE_ID = '
+					. EntityAddressType::Registered . ' AND R_ADDR.ENTITY_TYPE_ID = ' . CCrmOwnerType::Company;
 			}
 			else
 			{
-				$addrJoin = 'LEFT JOIN b_crm_addr ADDR ON L.ID = ADDR.ANCHOR_ID AND ADDR.TYPE_ID = '
-					.EntityAddressType::Primary.' AND ADDR.ANCHOR_TYPE_ID = '.CCrmOwnerType::Company.
+				$addrJoin = 'LEFT JOIN b_crm_addr ADDR ON ' . $tableAliasName . '.ID = ADDR.ANCHOR_ID AND ADDR.TYPE_ID = '
+					. EntityAddressType::Primary . ' AND ADDR.ANCHOR_TYPE_ID = ' . CCrmOwnerType::Company .
 					' AND ADDR.IS_DEF = 1';
-				$regAddrJoin = 'LEFT JOIN b_crm_addr R_ADDR ON L.ID = R_ADDR.ANCHOR_ID AND R_ADDR.TYPE_ID = '
-					.EntityAddressType::Registered.' AND R_ADDR.ANCHOR_TYPE_ID = '.CCrmOwnerType::Company.
+				$regAddrJoin = 'LEFT JOIN b_crm_addr R_ADDR ON ' . $tableAliasName . '.ID = R_ADDR.ANCHOR_ID AND R_ADDR.TYPE_ID = '
+					. EntityAddressType::Registered . ' AND R_ADDR.ANCHOR_TYPE_ID = ' . CCrmOwnerType::Company .
 					' AND R_ADDR.IS_DEF = 1';
 			}
 
-			$result['ADDRESS'] = array('FIELD' => 'ADDR.ADDRESS_1', 'TYPE' => 'string', 'FROM' => $addrJoin);
-			$result['ADDRESS_2'] = array('FIELD' => 'ADDR.ADDRESS_2', 'TYPE' => 'string', 'FROM' => $addrJoin);
-			$result['ADDRESS_CITY'] = array('FIELD' => 'ADDR.CITY', 'TYPE' => 'string', 'FROM' => $addrJoin);
-			$result['ADDRESS_POSTAL_CODE'] = array('FIELD' => 'ADDR.POSTAL_CODE', 'TYPE' => 'string', 'FROM' => $addrJoin);
-			$result['ADDRESS_REGION'] = array('FIELD' => 'ADDR.REGION', 'TYPE' => 'string', 'FROM' => $addrJoin);
-			$result['ADDRESS_PROVINCE'] = array('FIELD' => 'ADDR.PROVINCE', 'TYPE' => 'string', 'FROM' => $addrJoin);
-			$result['ADDRESS_COUNTRY'] = array('FIELD' => 'ADDR.COUNTRY', 'TYPE' => 'string', 'FROM' => $addrJoin);
-			$result['ADDRESS_COUNTRY_CODE'] = array('FIELD' => 'ADDR.COUNTRY_CODE', 'TYPE' => 'string', 'FROM' => $addrJoin);
-			$result['ADDRESS_LOC_ADDR_ID'] = array('FIELD' => 'ADDR.LOC_ADDR_ID', 'TYPE' => 'integer', 'FROM' => $addrJoin);
+			$result['ADDRESS'] = ['FIELD' => 'ADDR.ADDRESS_1', 'TYPE' => 'string', 'FROM' => $addrJoin];
+			$result['ADDRESS_2'] = ['FIELD' => 'ADDR.ADDRESS_2', 'TYPE' => 'string', 'FROM' => $addrJoin];
+			$result['ADDRESS_CITY'] = ['FIELD' => 'ADDR.CITY', 'TYPE' => 'string', 'FROM' => $addrJoin];
+			$result['ADDRESS_POSTAL_CODE'] = ['FIELD' => 'ADDR.POSTAL_CODE', 'TYPE' => 'string', 'FROM' => $addrJoin];
+			$result['ADDRESS_REGION'] = ['FIELD' => 'ADDR.REGION', 'TYPE' => 'string', 'FROM' => $addrJoin];
+			$result['ADDRESS_PROVINCE'] = ['FIELD' => 'ADDR.PROVINCE', 'TYPE' => 'string', 'FROM' => $addrJoin];
+			$result['ADDRESS_COUNTRY'] = ['FIELD' => 'ADDR.COUNTRY', 'TYPE' => 'string', 'FROM' => $addrJoin];
+			$result['ADDRESS_COUNTRY_CODE'] = ['FIELD' => 'ADDR.COUNTRY_CODE', 'TYPE' => 'string', 'FROM' => $addrJoin];
+			$result['ADDRESS_LOC_ADDR_ID'] = ['FIELD' => 'ADDR.LOC_ADDR_ID', 'TYPE' => 'integer', 'FROM' => $addrJoin];
 
-			$result['ADDRESS_LEGAL'] = array('FIELD' => 'R_ADDR.ADDRESS_1', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
-			$result['REG_ADDRESS'] = array('FIELD' => 'R_ADDR.ADDRESS_1', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
-			$result['REG_ADDRESS_2'] = array('FIELD' => 'R_ADDR.ADDRESS_2', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
-			$result['REG_ADDRESS_CITY'] = array('FIELD' => 'R_ADDR.CITY', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
-			$result['REG_ADDRESS_POSTAL_CODE'] = array('FIELD' => 'R_ADDR.POSTAL_CODE', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
-			$result['REG_ADDRESS_REGION'] = array('FIELD' => 'R_ADDR.REGION', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
-			$result['REG_ADDRESS_PROVINCE'] = array('FIELD' => 'R_ADDR.PROVINCE', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
-			$result['REG_ADDRESS_COUNTRY'] = array('FIELD' => 'R_ADDR.COUNTRY', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
-			$result['REG_ADDRESS_COUNTRY_CODE'] = array('FIELD' => 'R_ADDR.COUNTRY_CODE', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
-			$result['REG_ADDRESS_LOC_ADDR_ID'] = array('FIELD' => 'R_ADDR.LOC_ADDR_ID', 'TYPE' => 'integer', 'FROM' => $regAddrJoin);
+			$result['ADDRESS_LEGAL'] = ['FIELD' => 'R_ADDR.ADDRESS_1', 'TYPE' => 'string', 'FROM' => $regAddrJoin];
+			$result['REG_ADDRESS'] = ['FIELD' => 'R_ADDR.ADDRESS_1', 'TYPE' => 'string', 'FROM' => $regAddrJoin];
+			$result['REG_ADDRESS_2'] = ['FIELD' => 'R_ADDR.ADDRESS_2', 'TYPE' => 'string', 'FROM' => $regAddrJoin];
+			$result['REG_ADDRESS_CITY'] = ['FIELD' => 'R_ADDR.CITY', 'TYPE' => 'string', 'FROM' => $regAddrJoin];
+			$result['REG_ADDRESS_POSTAL_CODE'] = ['FIELD' => 'R_ADDR.POSTAL_CODE', 'TYPE' => 'string', 'FROM' => $regAddrJoin];
+			$result['REG_ADDRESS_REGION'] = ['FIELD' => 'R_ADDR.REGION', 'TYPE' => 'string', 'FROM' => $regAddrJoin];
+			$result['REG_ADDRESS_PROVINCE'] = ['FIELD' => 'R_ADDR.PROVINCE', 'TYPE' => 'string', 'FROM' => $regAddrJoin];
+			$result['REG_ADDRESS_COUNTRY'] = ['FIELD' => 'R_ADDR.COUNTRY', 'TYPE' => 'string', 'FROM' => $regAddrJoin];
+			$result['REG_ADDRESS_COUNTRY_CODE'] = ['FIELD' => 'R_ADDR.COUNTRY_CODE', 'TYPE' => 'string', 'FROM' => $regAddrJoin];
+			$result['REG_ADDRESS_LOC_ADDR_ID'] = ['FIELD' => 'R_ADDR.LOC_ADDR_ID', 'TYPE' => 'integer', 'FROM' => $regAddrJoin];
 		}
 
-		// Creation of field aliases
-		$result['ASSIGNED_BY'] = $result['ASSIGNED_BY_ID'];
-		$result['CREATED_BY'] = $result['CREATED_BY_ID'];
-		$result['MODIFY_BY'] = $result['MODIFY_BY_ID'];
+		$needAddFieldAliases = (
+			!isset($arOptions['ADD_FIELD_ALIASES'])
+			|| $arOptions['ADD_FIELD_ALIASES']
+		);
+
+		if ($needAddFieldAliases)
+		{
+			// Creation of field aliases
+			$result['ASSIGNED_BY'] = $result['ASSIGNED_BY_ID'];
+			$result['CREATED_BY'] = $result['CREATED_BY_ID'];
+			$result['MODIFY_BY'] = $result['MODIFY_BY_ID'];
+		}
 
 		$additionalFields = is_array($arOptions) && isset($arOptions['ADDITIONAL_FIELDS'])
 			? $arOptions['ADDITIONAL_FIELDS'] : null;
 
-		if(is_array($additionalFields))
+		if (is_array($additionalFields))
 		{
-			if(in_array('ACTIVITY', $additionalFields, true))
+			if (in_array('ACTIVITY', $additionalFields, true))
 			{
-				$commonActivityJoin = CCrmActivity::PrepareJoin(0, CCrmOwnerType::Company, 'L', 'AC', 'UAC', 'ACUSR');
+				$commonActivityJoin = CCrmActivity::PrepareJoin(0, CCrmOwnerType::Company, $tableAliasName, 'AC', 'UAC', 'ACUSR');
 
-				$result['C_ACTIVITY_ID'] = array('FIELD' => 'UAC.ACTIVITY_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_TIME'] = array('FIELD' => 'UAC.ACTIVITY_TIME', 'TYPE' => 'datetime', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_SUBJECT'] = array('FIELD' => 'AC.SUBJECT', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_RESP_ID'] = array('FIELD' => 'AC.RESPONSIBLE_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_RESP_LOGIN'] = array('FIELD' => 'ACUSR.LOGIN', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_RESP_NAME'] = array('FIELD' => 'ACUSR.NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_RESP_LAST_NAME'] = array('FIELD' => 'ACUSR.LAST_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_RESP_SECOND_NAME'] = array('FIELD' => 'ACUSR.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
+				$result['C_ACTIVITY_ID'] = ['FIELD' => 'UAC.ACTIVITY_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_TIME'] = ['FIELD' => 'UAC.ACTIVITY_TIME', 'TYPE' => 'datetime', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_SUBJECT'] = ['FIELD' => 'AC.SUBJECT', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_RESP_ID'] = ['FIELD' => 'AC.RESPONSIBLE_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_RESP_LOGIN'] = ['FIELD' => 'ACUSR.LOGIN', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_RESP_NAME'] = ['FIELD' => 'ACUSR.NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_RESP_LAST_NAME'] = ['FIELD' => 'ACUSR.LAST_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_RESP_SECOND_NAME'] = ['FIELD' => 'ACUSR.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
 
 				$userID = CCrmPerms::GetCurrentUserID();
-				if($userID > 0)
+				if ($userID > 0)
 				{
-					$activityJoin = CCrmActivity::PrepareJoin($userID, CCrmOwnerType::Company, 'L', 'A', 'UA', '');
+					$activityJoin = CCrmActivity::PrepareJoin($userID, CCrmOwnerType::Company, $tableAliasName, 'A', 'UA', '');
 
-					$result['ACTIVITY_ID'] = array('FIELD' => 'UA.ACTIVITY_ID', 'TYPE' => 'int', 'FROM' => $activityJoin);
-					$result['ACTIVITY_TIME'] = array('FIELD' => 'UA.ACTIVITY_TIME', 'TYPE' => 'datetime', 'FROM' => $activityJoin);
-					$result['ACTIVITY_SUBJECT'] = array('FIELD' => 'A.SUBJECT', 'TYPE' => 'string', 'FROM' => $activityJoin);
+					$result['ACTIVITY_ID'] = ['FIELD' => 'UA.ACTIVITY_ID', 'TYPE' => 'int', 'FROM' => $activityJoin];
+					$result['ACTIVITY_TIME'] = ['FIELD' => 'UA.ACTIVITY_TIME', 'TYPE' => 'datetime', 'FROM' => $activityJoin];
+					$result['ACTIVITY_SUBJECT'] = ['FIELD' => 'A.SUBJECT', 'TYPE' => 'string', 'FROM' => $activityJoin];
 				}
 			}
 		}
@@ -883,14 +898,27 @@ class CAllCrmCompany
 		return $dbRes->Fetch();
 	}
 
-	public static function BuildPermSql($sAliasPrefix = 'L', $mPermType = 'READ', $arOptions = array())
+	public static function BuildPermSql($sAliasPrefix = 'L', $mPermType = 'READ', $arOptions = [])
 	{
-		return CCrmPerms::BuildSql(
-			'COMPANY',
-			$sAliasPrefix,
-			$mPermType,
-			array_merge($arOptions, array('READ_ALL' => true))
-		);
+		$userId = null;
+		if (isset($arOptions['PERMS']) && is_object($arOptions['PERMS']))
+		{
+			/** @var \CCrmPerms $arOptions['PERMS'] */
+			$userId = $arOptions['PERMS']->GetUserID();
+		}
+		$builderOptions =
+			Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
+				->setOperations((array)$mPermType)
+				->setAliasPrefix((string)$sAliasPrefix)
+				->setReadAllAllowed(true)
+		;
+
+		$queryBuilder = Crm\Service\Container::getInstance()
+			->getUserPermissions($userId)
+			->createListQueryBuilder(self::$TYPE_NAME, $builderOptions)
+		;
+
+		return $queryBuilder->buildCompatible();
 	}
 
 	public static function __AfterPrepareSql($sender, $arOrder, $arFilter, $arGroupBy, $arSelectFields)
@@ -1068,7 +1096,7 @@ class CAllCrmCompany
 			{
 				$arEntityAttr = self::BuildEntityAttr($userID, $arAttr);
 				$userPerms =  $userID == CCrmPerms::GetCurrentUserID() ? $this->cPerms : CCrmPerms::GetUserPermissions($userID);
-				$sEntityPerm = $userPerms->GetPermType('COMPANY', $sPermission, $arEntityAttr);
+				$sEntityPerm = $userPerms->GetPermType(self::$TYPE_NAME, $sPermission, $arEntityAttr);
 				if ($sEntityPerm == BX_CRM_PERM_NONE)
 				{
 					$this->LAST_ERROR = GetMessage('CRM_PERMISSION_DENIED');
@@ -1090,7 +1118,7 @@ class CAllCrmCompany
 			$assignedByID = intval($arFields['ASSIGNED_BY_ID']);
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
 			$userPerms =  $assignedByID == CCrmPerms::GetCurrentUserID() ? $this->cPerms : CCrmPerms::GetUserPermissions($assignedByID);
-			$sEntityPerm = $userPerms->GetPermType('COMPANY', $sPermission, $arEntityAttr);
+			$sEntityPerm = $userPerms->GetPermType(self::$TYPE_NAME, $sPermission, $arEntityAttr);
 			$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
 
 			//Statistics & History -->
@@ -1171,7 +1199,12 @@ class CAllCrmCompany
 				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_company');
 			}
 
-			CCrmPerms::UpdateEntityAttr('COMPANY', $ID, $arEntityAttr);
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Company)
+				->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
+			;
 
 			//Statistics & History -->
 			Bitrix\Crm\Statistics\CompanyGrowthStatisticEntry::register($ID, $arFields);
@@ -1383,7 +1416,12 @@ class CAllCrmCompany
 			$arResult[] = CCrmPerms::ATTR_READ_ALL;
 		}
 
-		$arUserAttr = CCrmPerms::BuildUserEntityAttr($userID);
+		$arUserAttr = Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($userID)
+			->getAttributesProvider()
+			->getEntityAttributes()
+		;
+
 		return array_merge($arResult, $arUserAttr['INTRANET']);
 	}
 	private function PrepareEntityAttrs(&$arEntityAttr, $entityPermType)
@@ -1516,7 +1554,7 @@ class CAllCrmCompany
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
 			if($this->bCheckPermission)
 			{
-				$sEntityPerm = $this->cPerms->GetPermType('COMPANY', 'WRITE', $arEntityAttr);
+				$sEntityPerm = $this->cPerms->GetPermType(self::$TYPE_NAME, 'WRITE', $arEntityAttr);
 				//HACK: Ensure that entity accessible for user restricted by BX_CRM_PERM_OPEN
 				$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
 				//HACK: Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
@@ -1682,7 +1720,17 @@ class CAllCrmCompany
 				}
 			}
 
-			CCrmPerms::UpdateEntityAttr('COMPANY', $ID, $arEntityAttr);
+			CCrmEntityHelper::NormalizeUserFields($arFields, self::$sUFEntityID, $GLOBALS['USER_FIELD_MANAGER'], array('IS_NEW' => false));
+			$GLOBALS['USER_FIELD_MANAGER']->Update(self::$sUFEntityID, $ID, $arFields);
+
+			//region Permissions
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Company)
+				->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
+			;
+			//endregion
 
 			if(isset($arFields['ADDRESS'])
 				|| isset($arFields['ADDRESS_2'])
@@ -1722,7 +1770,7 @@ class CAllCrmCompany
 						'updateLocationAddress' => !(
 							(isset($arFields['ADDRESS_LOC_ADDR_ID']) && $arFields['ADDRESS_LOC_ADDR_ID'] > 0) ||
 							(isset($arFields['ADDRESS_LOC_ADDR']) && is_object($arFields['ADDRESS_LOC_ADDR']))
-						)
+					)
 					]
 				);
 			}
@@ -1765,7 +1813,7 @@ class CAllCrmCompany
 						'updateLocationAddress' => !(
 							(isset($arFields['REG_ADDRESS_LOC_ADDR_ID']) && $arFields['REG_ADDRESS_LOC_ADDR_ID'] > 0) ||
 							(isset($arFields['REG_ADDRESS_LOC_ADDR']) && is_object($arFields['REG_ADDRESS_LOC_ADDR']))
-						)
+					)
 					]
 				);
 			}
@@ -2057,7 +2105,7 @@ class CAllCrmCompany
 				continue;
 			}
 
-			$attrs = array();
+			$attrs = [];
 			if(isset($fields['OPENED']))
 			{
 				$attrs['OPENED'] = $fields['OPENED'];
@@ -2069,7 +2117,17 @@ class CAllCrmCompany
 			}
 
 			$entityAttrs = self::BuildEntityAttr($assignedByID, $attrs);
-			CCrmPerms::UpdateEntityAttr('COMPANY', $ID, $entityAttrs);
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($entityAttrs)
+				->setEntityFields($fields)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Company)
+				->register(
+					self::$TYPE_NAME,
+					$ID,
+					$securityRegisterOptions
+				)
+			;
 		}
 	}
 
@@ -2107,8 +2165,8 @@ class CAllCrmCompany
 		$sWherePerm = '';
 		if ($this->bCheckPermission)
 		{
-			$arEntityAttr = $this->cPerms->GetEntityAttr('COMPANY', $ID);
-			$sEntityPerm = $this->cPerms->GetPermType('COMPANY', 'DELETE', $arEntityAttr[$ID]);
+			$arEntityAttr = $this->cPerms->GetEntityAttr(self::$TYPE_NAME, $ID);
+			$sEntityPerm = $this->cPerms->GetPermType(self::$TYPE_NAME, 'DELETE', $arEntityAttr[$ID]);
 			if ($sEntityPerm == BX_CRM_PERM_NONE)
 				return false;
 			else if ($sEntityPerm == BX_CRM_PERM_SELF)
@@ -2167,7 +2225,10 @@ class CAllCrmCompany
 				CCrmOwnerType::Company
 			)->removeShortIndex($ID);
 
-			$DB->Query("DELETE FROM b_crm_entity_perms WHERE ENTITY='COMPANY' AND ENTITY_ID = $ID", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Company)
+				->unregister(self::$TYPE_NAME, $ID)
+			;
+
 			$GLOBALS['USER_FIELD_MANAGER']->Delete(self::$sUFEntityID, $ID);
 
 			\Bitrix\Crm\Binding\ContactCompanyTable::unbindAllContacts($ID);
@@ -2586,7 +2647,10 @@ class CAllCrmCompany
 
 	public static function GetPermissionAttributes(array $IDs)
 	{
-		return CCrmPerms::GetEntityAttr(self::$TYPE_NAME, $IDs);
+		return
+			\Bitrix\Crm\Security\Manager::resolveController(self::$TYPE_NAME)
+				->getPermissionAttributes(self::$TYPE_NAME, $IDs)
+		;
 	}
 
 	public static function IsAccessEnabled(CCrmPerms $userPermissions = null)

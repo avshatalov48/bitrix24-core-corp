@@ -28,11 +28,23 @@ class ProjectProcessor
 {
 	use CommandTrait;
 
+	private static $instance;
+
+	private $userGroups = [];
+
+	public static function getInstance()
+	{
+		if (!self::$instance)
+		{
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
 	/**
-	 * ProjectProcessor constructor.
-	 * @param int $userId
+	 *
 	 */
-	public function __construct()
+	private function __construct()
 	{
 	}
 
@@ -217,6 +229,11 @@ class ProjectProcessor
 	 */
 	private function getUserGroups(int $userId): array
 	{
+		if (array_key_exists($userId, $this->userGroups))
+		{
+			return $this->userGroups[$userId];
+		}
+
 		$query = WorkgroupTable::query();
 		$query->setSelect(['ID']);
 		$query->registerRuntimeField(
@@ -242,7 +259,9 @@ class ProjectProcessor
 			$groupIds[] = (int)$row['ID'];
 		}
 
-		return $groupIds;
+		$this->userGroups[$userId] = $groupIds;
+
+		return $this->userGroups[$userId];
 	}
 
 	/**

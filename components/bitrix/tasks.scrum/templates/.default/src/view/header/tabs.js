@@ -1,8 +1,11 @@
-import {Tag, Text} from 'main.core';
+import {Event, Tag, Text} from 'main.core';
+
+import {SidePanel} from '../../service/side.panel';
 
 import type {Views} from '../view';
 
 type Params = {
+	sidePanel: SidePanel,
 	views: Views
 }
 
@@ -10,7 +13,10 @@ export class Tabs
 {
 	constructor(params: Params)
 	{
+		this.sidePanel = params.sidePanel;
 		this.views = params.views;
+
+		this.node = null;
 	}
 
 	render(): HTMLElement
@@ -31,7 +37,7 @@ export class Tabs
 			: ''
 		);
 
-		return Tag.render`
+		this.node = Tag.render`
 			<div class="tasks-view-switcher">
 				<a
 					href="${this.views['plan'].url}"
@@ -47,5 +53,17 @@ export class Tabs
 				>${Text.encode(this.views['completedSprint'].name)}</a>
 			</div>
 		`;
+
+		this.node.querySelectorAll('a').forEach((tab: HTMLElement) => {
+			Event.bind(tab, 'click', () => {
+				const topSidePanel = this.sidePanel.getTopSidePanel()
+				if (topSidePanel !== null)
+				{
+					topSidePanel.showLoader();
+				}
+			});
+		});
+
+		return this.node;
 	}
 }

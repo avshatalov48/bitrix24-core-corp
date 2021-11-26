@@ -52,10 +52,13 @@ export class ActiveSprint extends View
 	{
 		super.renderSprintStatsTo(container);
 
-		this.statsHeader = StatsHeaderBuilder.build(this.sprint);
-		this.statsHeader.setKanbanStyle();
+		if (this.sprint)
+		{
+			this.statsHeader = StatsHeaderBuilder.build(this.sprint);
+			this.statsHeader.setKanbanStyle();
 
-		Dom.append(this.statsHeader.render(), container);
+			Dom.append(this.statsHeader.render(), container);
+		}
 	}
 
 	renderButtonsTo(container: HTMLElement)

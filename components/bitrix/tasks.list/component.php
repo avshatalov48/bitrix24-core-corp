@@ -6,6 +6,7 @@ global $APPLICATION;
 
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Config\Option;
+use Bitrix\Main\Text\Emoji;
 
 if (!CBXFeatures::IsFeatureEnabled('Tasks'))
 {
@@ -1448,6 +1449,15 @@ if ( ! empty($arGroupsIDs) )
 	$rsGroups = CSocNetGroup::GetList(array("ID" => "ASC"), array("ID" => $arGroupsIDs));
 	while($arGroup = $rsGroups->GetNext())
 	{
+		if (!empty($arGroup['NAME']))
+		{
+			$arGroup['NAME'] = Emoji::decode($arGroup['NAME']);
+		}
+		if (!empty($arGroup['DESCRIPTION']))
+		{
+			$arGroup['DESCRIPTION'] = Emoji::decode($arGroup['DESCRIPTION']);
+		}
+
 		$arGroup["EXPANDED"] = array_key_exists($arGroup["ID"], $arOpenedProjects) && $arOpenedProjects[$arGroup["ID"]] == "false" ? false : true;
 		$arGroup["CAN_CREATE_TASKS"] = \CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, $arGroup["ID"], "tasks", "create_tasks");
 		$arGroup["CAN_EDIT_TASKS"] = \CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, $arGroup["ID"], "tasks", "edit_tasks");

@@ -48,7 +48,7 @@ ChatDataConverter.getElementFormat = function(element)
 		item.sectionCode = element.pinned? 'pinned': 'general';
 		item.subtitle = element.message.text;
 
-		if (item.subtitle)
+		if (item.subtitle && element.message.id > 0)
 		{
 			if (element.invited && !element.user.last_activity_date)
 			{
@@ -66,6 +66,10 @@ ChatDataConverter.getElementFormat = function(element)
 			{
 				item.subtitle = element.user.work_position;
 			}
+			else if (element.user.extranet)
+			{
+				item.subtitle = BX.message("IM_LIST_EXTRANET");
+			}
 			else
 			{
 				item.subtitle = BX.message("IM_LIST_EMPLOYEE");
@@ -77,7 +81,7 @@ ChatDataConverter.getElementFormat = function(element)
 		item.title = BX.message("NOTIFICATION_TITLE");
 		item.imageUrl = this.imagePath + '/avatar_notify_x3.png';
 		item.sectionCode = element.pinned? 'pinned': 'general';
-		let messageText = ChatMessengerCommon.purifyText(element.message.text);
+		let messageText = ChatMessengerCommon.purifyText(element.message.text, element.message.params);
 		item.subtitle = element.user.first_name && element.user.last_name ?
 			element.user.first_name + ' ' + element.user.last_name.charAt(0) + ': ' + messageText :
 			messageText;
@@ -1039,7 +1043,6 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 		{
 			item.subtitle = element.user.extranet? BX.message("IM_LIST_EXTRANET"): BX.message("IM_LIST_EMPLOYEE");
 		}
-
 	}
 	else if (type == 'notification')
 	{
@@ -1088,6 +1091,7 @@ ChatDataConverter.getListElement = function(element)
 	if (typeof element.message != 'undefined')
 	{
 		element.message.date = new Date(element.message.date);
+		element.message.text = ChatMessengerCommon.purifyText(element.message.text, element.message.params);
 	}
 
 	if (typeof element.chat != 'undefined')
@@ -1113,13 +1117,17 @@ ChatDataConverter.getListElementByUser = function(element)
 	item.sectionCode = 'user';
 	item.title = item.source.name+(item.source.id == this.userId? ' ('+BX.message("IM_YOU")+')': '');
 	item.imageUrl = ChatUtils.getAvatar(item.source.avatar);
-	if (!item.imageUrl && !item.last_activity_date)
+	if (!item.imageUrl && !item.source.last_activity_date)
 	{
 		item.imageUrl = this.imagePath + '/avatar_wait_x3.png';
 	}
 	item.color = item.source.color;
 	item.shortTitle = item.source.first_name? item.source.first_name: item.source.name;
-	item.subtitle = item.source.work_position? item.source.work_position: BX.message("IM_LIST_EMPLOYEE");
+	item.subtitle = item.source.work_position? item.source.work_position: '';
+	if (!item.subtitle)
+	{
+		item.subtitle = item.source.extranet? BX.message("IM_LIST_EXTRANET"): BX.message("IM_LIST_EMPLOYEE");
+	}
 
 	item.styles = {};
 	item.styles.title = this.getTitleFormat('user', item.source);
@@ -1372,34 +1380,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		89: "height",
 	};
 
-	let changeKeysRecursive = function(object)
-	{
-		if (!object || typeof object !== 'object')
-		{
-			return object;
-		}
-
-		if (object instanceof Array)
-		{
-			return object.map(element => changeKeysRecursive(element));
-		}
-
-		let result = {};
-		for (let index in object)
-		{
-			if (!object.hasOwnProperty(index))
-			{
-				continue;
-			}
-
-			let key = indexToNameMap[index]? indexToNameMap[index]: index;
-			result[key] = changeKeysRecursive(object[index]);
-		}
-
-		return result;
-	};
-
-	let result = changeKeysRecursive(element);
+	let result = ChatDataConverter.changeKeysRecursive(element, indexToNameMap);
 
 	if (
 		result.chat
@@ -1544,4 +1525,75 @@ ChatDataConverter.preparePushFormat = function(element)
 	result.userInChat = {};
 
 	return result;
+};
+
+ChatDataConverter.changeKeysRecursive = function(object, indexToNameMap)
+{
+	if (!object || typeof object !== 'object')
+	{
+		return object;
+	}
+
+	if (object instanceof Array)
+	{
+		return object.map(element => ChatDataConverter.changeKeysRecursive(element, indexToNameMap));
+	}
+
+	let result = {};
+	for (let index in object)
+	{
+		if (!object.hasOwnProperty(index))
+		{
+			continue;
+		}
+
+		let key = indexToNameMap[index]? indexToNameMap[index]: index;
+		result[key] = ChatDataConverter.changeKeysRecursive(object[index], indexToNameMap);
+	}
+
+	return result;
+};
+
+ChatDataConverter.prepareNotificationPushFormat = function(element)
+{
+	const indexToNameMap = {
+		1: "id",
+		2: "type",
+		3: "date",
+		4: "text",
+		6: "tag",
+		7: "onlyFlash",
+		8: "originalTag",
+		9: "settingName",
+		10: "counter",
+		11: "userId",
+		12: "userName",
+		13: "userColor",
+		14: "userAvatar",
+		15: "userLink",
+		16: "params",
+		17: "buttons",
+	};
+
+	let convertedParams = ChatDataConverter.changeKeysRecursive(element, indexToNameMap);
+
+	return {
+		id: convertedParams['id'],
+		counter: convertedParams['counter'],
+		date: convertedParams['date'],
+		type: convertedParams['type'],
+		text: convertedParams['text'],
+		text_converted: convertedParams['text'],
+		tag: convertedParams['tag'],
+		onlyFlash: convertedParams['onlyFlash'],
+		originalTag: convertedParams['originalTag'],
+		settingName: convertedParams['settingName'],
+		userId: convertedParams['userId'],
+		userName: convertedParams['userName'],
+		userColor: convertedParams['userColor'],
+		userAvatar: convertedParams['userAvatar'],
+		userLink: convertedParams['userLink'],
+		params: convertedParams['params'],
+		buttons: convertedParams['buttons'],
+	}
 };

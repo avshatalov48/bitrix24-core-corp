@@ -309,6 +309,9 @@ if ($USER->IsAdmin()
 	$allowTellAbout = true;
 }
 
+// forced disabling
+$allowTellAbout = false;
+
 // done!
 
 $arResult = array(

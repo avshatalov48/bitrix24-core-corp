@@ -86,7 +86,7 @@
 		if (command == "user_counter" && params[BX.message("SITE_ID")])
 		{
 			var counters = BX.clone(params[BX.message('SITE_ID')]);
-			B24.updateCounters(counters);
+			B24.updateCounters(counters, false);
 		}
 	});
 
@@ -104,7 +104,7 @@
 		if (!counters)
 			return;
 
-		B24.updateCounters(BX.clone(counters));
+		B24.updateCounters(BX.clone(counters), false);
 	});
 
 	BX.addCustomEvent("onCounterDecrement", function(iDecrement) {
@@ -117,7 +117,7 @@
 
 	BX.addCustomEvent("onImUpdateCounterMessage", function(counter) {
 		B24.updateInformer(BX("im-informer-messages", true), counter);
-		B24.updateCounters({'im-message': counter});
+		B24.updateCounters({'im-message': counter}, false);
 	});
 
 	BX.addCustomEvent("onImUpdateCounterNetwork", function(counter) {
@@ -1203,7 +1203,7 @@ B24.PopupBlur.prototype = {
 		{
 			container.classList.add('popup-window-blur');
 		}
-		
+
 		var style = BX.create('style', {
 			attrs: {
 				type: 'text/css'

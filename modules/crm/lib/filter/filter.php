@@ -85,4 +85,23 @@ class Filter extends \Bitrix\Main\Filter\Filter
 			}
 		}
 	}
+
+	/**
+	 * In order to use a join with smart process entities in the filter,
+	 * need to execute this code, which will create a smart process entity class
+	 * @param \Bitrix\Main\Event $event
+	 */
+	public static function onFiredUserProviderQuery(\Bitrix\Main\Event $event): void
+	{
+		$module = $event->getParameter('module');
+		$entityTypeId = $event->getParameter('entityTypeId');
+		if ($module === 'crm' && \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+			if ($factory)
+			{
+				$factory->getDataClass();
+			}
+		}
+	}
 }

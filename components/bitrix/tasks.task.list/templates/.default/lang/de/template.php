@@ -80,6 +80,7 @@ $MESS["TASKS_LIST_GROUP_ACTION_SET_DEADLINE"] = "Frist setzen";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_GROUP"] = "Gruppe (Projekt) definieren";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL"] = "Wenn abgeschlossen, Aufgabenergebnis akzeptieren";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_NO"] = "Nein";
+$MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_V2"] = "Kontrolle nach Erledigung deaktivieren";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_YES"] = "Ja";
 $MESS["TASKS_LIST_GROUP_ACTION_SPRINT"] = "Einen Sprint erstellen";
 $MESS["TASKS_LIST_GROUP_ACTION_SPRINT_TITLE"] = "Sprint endet am";

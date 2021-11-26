@@ -43,8 +43,10 @@ class RequisiteAddressFormatter extends EntityAddressFormatter
 				$format = EntityAddressFormatter::RUS2;
 				break;
 			case 46:               // de
+			case 110:              // pl
 				$format = EntityAddressFormatter::EU;
 				break;
+			case 77:               // co
 			case 122:              // us
 				$format = EntityAddressFormatter::USA;
 				break;

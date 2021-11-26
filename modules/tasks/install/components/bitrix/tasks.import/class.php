@@ -96,7 +96,7 @@ class TasksImportComponent extends TasksBaseComponent
 			['id' => 'END_DATE_PLAN', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_END_DATE_PLAN_V2')],
 			['id' => 'ALLOW_CHANGE_DEADLINE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ALLOW_CHANGE_DEADLINE')],
 			['id' => 'MATCH_WORK_TIME', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_MATCH_WORK_TIME')],
-			['id' => 'TASK_CONTROL', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TASK_CONTROL')],
+			['id' => 'TASK_CONTROL', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TASK_CONTROL_V2')],
 			['id' => 'PARAM_1', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PARAM_1')],
 			['id' => 'PARAM_2', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PARAM_2')],
 			['id' => 'PROJECT', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PROJECT')],

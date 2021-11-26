@@ -425,9 +425,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        if (_this5.myCounters[type]) {
 	          _this5.myCounters[type].updateCount(value);
 
-	          if (value === 0) {
-	            _this5.myCounters[type].unActive();
-	          } else if (Counters.counterTypes.comment.includes(type)) {
+	          if (Counters.counterTypes.comment.includes(type)) {
 	            newCommentsCount += value;
 	          }
 	        } else if (_this5.additionalCounters[type] && Counters.counterTypes.comment.includes(type)) {
@@ -558,7 +556,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        if (Counters.counterTypes.comment.includes(type)) {
 	          counter.updateCount(0);
-	          counter.unActive();
 	        }
 	      });
 	      main_core.ajax.runAction('tasks.task.comment.readProject', {

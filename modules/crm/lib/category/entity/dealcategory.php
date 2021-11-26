@@ -131,9 +131,12 @@ class DealCategory extends Category
 
 	public function getData(): array
 	{
-		return array_merge(parent::getData(), [
-			'ORIGIN_ID' => $this->getOriginId(),
-			'ORIGINATOR_ID' => $this->getOriginatorId(),
-		]);
+		return array_merge(
+			parent::getData(),
+			[
+				'ORIGIN_ID' => $this->getOriginId(),
+				'ORIGINATOR_ID' => $this->getOriginatorId(),
+			],
+		);
 	}
 }

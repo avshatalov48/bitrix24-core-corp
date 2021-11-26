@@ -73,6 +73,10 @@ if($arResult['NEED_FOR_REBUILD_LEAD_SEMANTICS'])
 {
 	?><div id="rebuildLeadSemanticsWrapper"></div><?
 }
+if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'])
+{
+	?><div id="rebuildLeadSecurityAttrsWrapper"></div><?
+}
 if($arResult['NEED_FOR_REBUILD_LEAD_ATTRS']):
 	?><div id="rebuildLeadAttrsMsg" class="crm-view-message">
 	<?=GetMessage('CRM_LEAD_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildLeadAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
@@ -996,6 +1000,7 @@ $APPLICATION->IncludeComponent(
 	array(
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
+		'ENABLE_FIELDS_SEARCH' => 'Y',
 		'SORT' => $arResult['SORT'],
 		'SORT_VARS' => $arResult['SORT_VARS'],
 		'ROWS' => $arResult['GRID_DATA'],
@@ -1013,7 +1018,13 @@ $APPLICATION->IncludeComponent(
 					'getList' => 'crm.api.filter.lead.getlist',
 					'getField' => 'crm.api.filter.lead.getfield'
 				]
-			]
+			],
+			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'CONFIG' => [
+				'popupColumnsCount' => 4,
+				'popupWidth' => 800,
+				'showPopupInCenter' => true,
+			],
 		],
 		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
 			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
@@ -1353,6 +1364,26 @@ $APPLICATION->IncludeComponent(
 					}
 				);
 				manager.runAfter(100);
+			}
+		);
+	</script>
+<?endif;?>
+<?if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']):?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				BX.AutorunProcessManager.createIfNotExists(
+					"rebuildLeadSecurityAttrs",
+					{
+						serviceUrl: "<?='/bitrix/components/bitrix/crm.lead.list/list.ajax.php?'.bitrix_sessid_get()?>",
+						actionName: "REBUILD_SECURITY_ATTRS",
+						container: "rebuildLeadSecurityAttrsWrapper",
+						title: "<?=GetMessageJS('CRM_LEAD_REBUILD_SECURITY_ATTRS_DLG_TITLE')?>",
+						stateTemplate: "<?=GetMessageJS('CRM_LEAD_STEPWISE_STATE_TEMPLATE')?>",
+						enableLayout: true
+					}
+				).runAfter(100);
 			}
 		);
 	</script>

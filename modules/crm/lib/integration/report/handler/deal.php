@@ -845,6 +845,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				case 'checkbox':
 				case 'custom_entity':
 				case 'dest_selector':
+				case 'entity_selector':
 					$query->addFilter($key, $value['value']);
 					break;
 			}

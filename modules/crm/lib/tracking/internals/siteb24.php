@@ -2,7 +2,7 @@
 namespace Bitrix\Crm\Tracking\Internals;
 
 use Bitrix\Main\ORM\Data\DataManager;
-use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -57,5 +57,20 @@ class SiteB24Table extends DataManager
 			],
 
 		];
+	}
+
+	/**
+	 * Delete by field IS_SHOP.
+	 *
+	 * @param string $value Value.
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 */
+	public static function deleteByShopField(string $value)
+	{
+		$helper = Application::getConnection()->getSqlHelper();
+		$tableName = $helper->forSql(static::getTableName());
+		$value = $helper->forSql($value);
+		$sql = "delete from {$tableName} where IS_SHOP = '$value'";
+		Application::getConnection()->query($sql);
 	}
 }

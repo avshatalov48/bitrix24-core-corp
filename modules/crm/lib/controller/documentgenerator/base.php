@@ -15,8 +15,6 @@ abstract class Base extends Controller
 	const FILE_PARAM_NAME = 'file';
 	const CONTROLLER_PATH = 'crm.documentgenerator';
 
-	protected $documentGeneratorControllerInstance;
-
 	/**
 	 * @return array|\Bitrix\Main\Engine\AutoWire\Parameter[]
 	 */
@@ -63,6 +61,11 @@ abstract class Base extends Controller
 			return new EventResult(EventResult::SUCCESS);
 		};
 		$preFilters[] = new CheckModule();
+		if (DocumentGeneratorManager::getInstance()->isEnabled())
+		{
+			$defaultPostFilters = $this->getDocumentGeneratorController()->getDefaultPreFilters();
+			$preFilters = array_merge($preFilters, $defaultPostFilters);
+		}
 
 		return $preFilters;
 	}

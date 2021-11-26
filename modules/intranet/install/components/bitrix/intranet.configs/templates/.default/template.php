@@ -98,11 +98,29 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		<tr data-field-id="congig_date">
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_DATE_FORMAT')?></td>
 			<td class="content-edit-form-field-input">
-				<select name="date_format">
-					<?foreach($arResult["DATE_FORMATS"] as $format):?>
-					<option value="<?=$format?>" <?if ($format == $arResult["CUR_DATE_FORMAT"]) echo "selected"?>><?=$format?></option>
+				<select name="cultureId" data-role="culture-selector">
+					<?foreach($arResult['CULTURES'] as $culture):?>
+					<option
+						value="<?=$culture['ID']?>"
+						<?if ($culture['ID'] === $arResult['CURRENT_CULTURE_ID']) echo 'selected'?>
+					>
+						<?=$culture['NAME']?>
+					</option>
 					<?endforeach?>
 				</select>
+				<div class="config_notify_message">
+					<?=Loc::getMessage('CONFIG_EXAMPLE')?>:
+					<div>
+						<span data-role="culture-short-date-format">
+							<?=$arResult['CULTURES'][$arResult['CURRENT_CULTURE_ID']]['SHORT_DATE_FORMAT']?>
+						</span>
+					</div>
+					<div>
+						<span data-role="culture-long-date-format">
+							<?=$arResult['CULTURES'][$arResult['CURRENT_CULTURE_ID']]['LONG_DATE_FORMAT']?>
+						</span>
+					</div>
+				</div>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
@@ -110,10 +128,10 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		<tr data-field-id="config_time">
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_TIME_FORMAT')?></td>
 			<td class="content-edit-form-field-input">
-				<input type="radio" id="12_format" name="time_format" value="H:MI:SS T" <?if ($arResult["CUR_TIME_FORMAT"] == "H:MI:SS TT" || $arResult["CUR_TIME_FORMAT"] == "H:MI TT" || $arResult["CUR_TIME_FORMAT"] == "H:MI:SS T" || $arResult["CUR_TIME_FORMAT"] == "H:MI T") echo "checked"?>>
+				<input type="radio" id="12_format" name="time_format" value="12" <?if ($arResult["TIME_FORMAT_TYPE"] === 12) echo "checked"?>>
 				<label for="12_format"><?=GetMessage("CONFIG_TIME_FORMAT_12")?></label>
 				<br/>
-				<input type="radio" id="24_format" name="time_format" value="HH:MI:SS" <?if ($arResult["CUR_TIME_FORMAT"] == "HH:MI:SS") echo "checked"?>>
+				<input type="radio" id="24_format" name="time_format" value="24" <?if ($arResult["TIME_FORMAT_TYPE"] === 24) echo "checked"?>>
 				<label for="24_format"><?=GetMessage("CONFIG_TIME_FORMAT_24")?></label>
 			</td>
 			<td class="content-edit-form-field-error"></td>
@@ -510,7 +528,9 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="mp_allow_user_install"><?=GetMessage('CONFIG_MP_ALLOW_USER_INSTALL1')?></label></td>
 			<td class="content-edit-form-field-input">
-				<input type="hidden" id="mp_allow_user_install_changed" name="mp_allow_user_install_changed" value="N" /><input type="hidden" name="mp_allow_user_install" value="N" /><input type="checkbox" name="mp_allow_user_install" id="mp_allow_user_install" value="Y" <?=$mpUserAllowInstall ? ' checked="checked"' : ''?> class="content-edit-form-field-input-selector" onclick="BX('mp_allow_user_install_changed').value = 'Y'" />
+				<input type="hidden" id="mp_allow_user_install_changed" name="mp_allow_user_install_changed" value="N" />
+				<input type="hidden" name="mp_allow_user_install" value="N" />
+				<input type="checkbox" name="mp_allow_user_install" id="mp_allow_user_install" value="Y" <?=$mpUserAllowInstall ? ' checked="checked"' : ''?> class="content-edit-form-field-input-selector" onclick="BX('mp_allow_user_install_changed').value = 'Y'" />
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
@@ -567,41 +587,6 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				<td class="content-edit-form-field-input"><input type="checkbox" name="allow_new_user_lf" value="Y" id="configs_allow_new_user_lf" <?if ($arResult["ALLOW_NEW_USER_LF"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
-			<?
-			if (in_array($arResult["LICENSE_PREFIX"], array("ru", "ua", "kz", "by")))
-			{
-			?>
-			<tr>
-				<td class="content-edit-form-field-name content-edit-form-field-name-left">
-					<label for="network_avaiable"><?=GetMessage('CONFIG_NETWORK_AVAILABLE')?></label>
-					<?
-					$disabled = $arResult['ALLOW_NETWORK_CHANGE'] !== 'Y';
-					if ($arResult["IS_BITRIX24"] && !$arResult['CREATOR_CONFIRMED']):
-						?>
-					<img src="<?=$this->GetFolder();?>/images/lock.png"
-						style="position: relative;bottom: -1px; margin-left: 5px;"
-						onmouseover="BX.hint(this, '<?=htmlspecialcharsbx(CUtil::JSEscape(GetMessage('CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED')))?>')"/>
-					<?
-					elseif ($arResult['ALLOW_NETWORK_CHANGE'] === 'N'):
-					?>
-					<img src="<?=$this->GetFolder();?>/images/lock.png" onclick="BX.UI.InfoHelper.show('limit_office_network');"
-						style="position: relative;bottom: -1px; margin-left: 5px;"/>
-					<?
-					endif; ?>
-				</td>
-				<td class="content-edit-form-field-input">
-					<input type="checkbox"
-						<?if ($disabled) echo "disabled"; ?>
-						name="network_avaiable" value="Y" id="network_avaiable"
-						<?if ($arResult["NETWORK_AVAILABLE"] == "Y"): ?>checked<?endif?>
-						class="content-edit-form-field-input-selector"
-					/>
-				</td>
-				<td class="content-edit-form-field-error"></td>
-			</tr>
-			<?
-			}
-			?>
 			<tr>
 				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="show_year_for_female"><?=GetMessage('CONFIG_SHOW_YEAR')?></label></td>
 				<td class="content-edit-form-field-input"><input type="checkbox" name="show_year_for_female" value="N" id="show_year_for_female" <?if ($arResult["SHOW_YEAR_FOR_FEMALE"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
@@ -648,7 +633,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			</td>
 			<td class="content-edit-form-field-input">
 				<input type="checkbox" name="collect_geo_data" id="collect_geo_data" value="Y"
-					onclick="BX.Bitrix24.Configs.Functions.geoDataSwitch(this); "
+					onclick="BX.Intranet.Configs.Functions.geoDataSwitch(this); "
 					<? if (\Bitrix\Main\Config\Option::get('main', 'collect_geo_data', 'N') == 'Y'): ?> checked<? endif ?>
 					class="content-edit-form-field-input-selector">
 			</td>
@@ -719,7 +704,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				</tr>
 			<?endif;*/?>
 		<?endif;?>
-		
+
 	<!-- GDPR for Europe-->
 		<?
 		if (
@@ -743,7 +728,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 					<input
 						type="checkbox"
 						name="gdpr_data_processing"
-						onchange="BX.Bitrix24.Configs.Functions.onGdprChange(this);"
+						onchange="BX.Intranet.Configs.Functions.onGdprChange(this);"
 						<?if (COption::GetOptionString("bitrix24", "gdpr_data_processing", "") == "Y"):?>
 							checked
 						<?endif?>
@@ -834,9 +819,9 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 					type="checkbox"
 					class="content-edit-form-field-input-selector"
 					<?if (!$arResult["SECURITY_IS_USER_OTP_ACTIVE"] && !$arResult["SECURITY_OTP"]):?>
-						onclick="BX.Bitrix24.Configs.Functions.adminOtpIsRequiredInfo(this);return false;"
+						onclick="BX.Intranet.Configs.Functions.adminOtpIsRequiredInfo(this);return false;"
 					<?endif?>
-					onchange="BX.Bitrix24.Configs.Functions.otpSwitchOffInfo(this);"
+					onchange="BX.Intranet.Configs.Functions.otpSwitchOffInfo(this);"
 					<?if ($arResult["SECURITY_OTP"]):?>checked<?endif?>
 				/>
 			</td>
@@ -950,7 +935,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 							</div>
 						<?endforeach?>
 						<div>
-							<input name="ip_access_rights_<?=$right?>[]" size="30" onclick="B24ConfigsIpObj.addInputForIp(this)"/>
+							<input name="ip_access_rights_<?=$right?>[]" size="30" onclick="BX.Intranet.Configs.IpSettingsClass.addInputForIp(this)"/>
 							<a href="javascript:void(0);" data-role="ip-right-delete" class="access-delete" title="<?=GetMessage("CONFIG_TOALL_DEL")?>"></a>
 						</div>
 					</td>
@@ -1107,7 +1092,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 <table class="content-edit-form" cellspacing="0" cellpadding="0">
 	<tr>
 		<td class="content-edit-form-buttons" style="border-top: 1px #eaeae1 solid; text-align:center">
-			<span onclick="BX.Bitrix24.Configs.Functions.submitForm(this)" class="webform-button webform-button-create">
+			<span onclick="BX.Intranet.Configs.Functions.submitForm(this)" class="webform-button webform-button-create">
 				<?=GetMessage("CONFIG_SAVE")?>
 			</span>
 		</td>
@@ -1271,23 +1256,26 @@ if (isset($_GET["otp"]))
 		CONFIG_COLLECT_GEO_DATA_OK: '<?=\CUtil::jsEscape(Loc::getMessage('CONFIG_COLLECT_GEO_DATA_OK')) ?>'
 	});
 
-	var B24ConfigsLogo = new BX.Bitrix24.Configs.LogoClass("<?=CUtil::JSEscape(POST_FORM_ACTION_URI)?>");
-
 	BX.ready(function(){
-		BX.Bitrix24.Configs.Functions.init();
+		var initData = {
+			ajaxPath: "<?=CUtil::JSEscape(POST_FORM_ACTION_URI)?>",
+			cultureList: <?=CUtil::PhpToJSObject($arResult['CULTURES'])?>
+		};
 
 		<?if($arResult['SHOW_ADDRESS_FORMAT']):?>
-			BX.Bitrix24.Configs.Functions.addressFormatList = <?=CUtil::PhpToJSObject($arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION_LIST'])?>;
+			initData["addressFormatList"] = <?=CUtil::PhpToJSObject($arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION_LIST'])?>;
 		<?endif;?>
 
+		BX.Intranet.Configs.Functions = new BX.Intranet.Configs.Functions(initData);
+
 		<?if ($arResult["IS_BITRIX24"]):?>
-			var B24ConfigsIpObj = new BX.Bitrix24.Configs.IpSettingsClass(<?=CUtil::PhpToJSObject(array_keys($arCurIpRights))?>);
+			BX.Intranet.Configs.IpSettingsClass = new BX.Intranet.Configs.IpSettingsClass(<?=CUtil::PhpToJSObject(array_keys($arCurIpRights))?>);
 			var ipAddButton = document.querySelector("[data-role='ip-add-button']");
 			if (BX.type.isDomNode(ipAddButton))
 			{
 				BX.bind(ipAddButton, "click", function(){
 					<?if (Feature::isFeatureEnabled("ip_access_rights")):?>
-						B24ConfigsIpObj.ShowIpAccessPopup(B24ConfigsIpObj.arCurIpRights);
+						BX.Intranet.Configs.IpSettingsClass.ShowIpAccessPopup(BX.Intranet.Configs.IpSettingsClass.arCurIpRights);
 					<?else:?>
 						BX.UI.InfoHelper.show('limit_admin_ip');
 				<?endif?>

@@ -161,6 +161,79 @@ class TaskCheckListFacade extends CheckListFacade
 			static::postChangesComment($taskId, $userId);
 			SearchIndex::setTaskSearchIndex($taskId);
 		}
+
+		$members = $checkList->getFields()['MEMBERS'];
+		if (is_array($members) && !empty($members))
+		{
+			$task = new CTaskItem($taskId, $userId);
+			static::addMembersToTask($task, $members);
+		}
+	}
+
+	private static function addMembersToTask(CTaskItem $task, array $members): void
+	{
+		static::addAccomplicesToTask($task, $members);
+		static::addAuditorsToTask($task, $members);
+	}
+
+	private static function addAccomplicesToTask(CTaskItem $task, array $members): void
+	{
+		try
+		{
+			$taskData = $task->getData(false);
+		}
+		catch (\TasksException $e)
+		{
+			return;
+		}
+
+		$accomplicesIds = [];
+		foreach ($members as $id => $member)
+		{
+			$type = (is_array($member) ? $member['TYPE'] : $member);
+			if ($type === \Bitrix\Tasks\Internals\Task\MemberTable::MEMBER_TYPE_ACCOMPLICE)
+			{
+				$accomplicesIds[] = $id;
+			}
+		}
+
+		if (empty($accomplicesIds))
+		{
+			return;
+		}
+
+		$accomplices = array_unique(array_merge($taskData['ACCOMPLICES'], $accomplicesIds));
+		$task->update(['ACCOMPLICES' => $accomplices]);
+	}
+
+	private static function addAuditorsToTask(CTaskItem $task, array $members): void
+	{
+		try
+		{
+			$taskData = $task->getData(false);
+		}
+		catch (\TasksException $e)
+		{
+			return;
+		}
+
+		$auditorsIds = [];
+		foreach ($members as $id => $member)
+		{
+			$type = (is_array($member) ? $member['TYPE'] : $member);
+			if ($type === \Bitrix\Tasks\Internals\Task\MemberTable::MEMBER_TYPE_AUDITOR)
+			{
+				$auditorsIds[] = $id;
+			}
+		}
+
+		if (empty($auditorsIds))
+		{
+			return;
+		}
+
+		$auditors = array_unique(array_merge($taskData['AUDITORS'], $auditorsIds));
+		$task->update(['AUDITORS' => $auditors]);
 	}
 
 	/**
@@ -189,6 +262,13 @@ class TaskCheckListFacade extends CheckListFacade
 			$checkListLog->logUpdatingChanges();
 			static::postChangesComment($taskId, $userId);
 			SearchIndex::setTaskSearchIndex($taskId);
+		}
+
+		$members = $newCheckList->getFields()['MEMBERS'];
+		if (is_array($members) && !empty($members))
+		{
+			$task = new CTaskItem($taskId, $userId);
+			static::addMembersToTask($task, $members);
 		}
 	}
 

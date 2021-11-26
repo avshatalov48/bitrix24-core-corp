@@ -196,6 +196,8 @@ if (typeof BX.BizProcMobile === 'undefined')
 				var itemContent = workflowId === itemWorkflowId ? newLogContent : null;
 				BX.BizProcMobile.renderLogMessage(items[i], itemContent, updateId);
 			}
+
+			BX.onCustomEvent('MobileBizProc:onRenderLogMessages', []);
 		}
 	};
 

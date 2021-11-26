@@ -209,8 +209,7 @@ class UserConsent
 		}
 
 		// get requisites
-		$req = new EntityRequisite;
-		$res = $req->getList(array(
+		$res = EntityRequisite::getSingleInstance()->getList(array(
 			'filter' => array(
 				'=ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
 				'=ENTITY_ID' => $myCompanyId
@@ -266,7 +265,7 @@ class UserConsent
 
 		if ($address && is_array($address))
 		{
-		    $address = Format\AddressFormatter::getSingleInstance()->formatTextComma($address);
+			$address = Format\AddressFormatter::getSingleInstance()->formatTextComma($address);
 		}
 		else
 		{
@@ -285,9 +284,9 @@ class UserConsent
 				$addressTypeId =  EntityAddressType::Primary;
 			}
 
-            $address = Format\AddressFormatter::getSingleInstance()->formatTextComma(
-                CompanyAddress::mapEntityFields($address, ['TYPE_ID' => $addressTypeId])
-            );
+			$address = Format\AddressFormatter::getSingleInstance()->formatTextComma(
+				CompanyAddress::mapEntityFields($address, ['TYPE_ID' => $addressTypeId])
+			);
 		}
 
 		$result['COMPANY_ADDRESS'] = $address;

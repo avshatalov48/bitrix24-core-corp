@@ -1,4 +1,11 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Text\Emoji;
 
 class CTasksDepartmentsOverviewComponent extends CBitrixComponent
 {
@@ -28,7 +35,7 @@ class CTasksDepartmentsOverviewComponent extends CBitrixComponent
 		if ( ! $isAccessible )
 		{
 			ShowError(GetMessage('TASKS_PROJECTS_ACCESS_DENIED'));
-			return 0;			
+			return 0;
 		}
 
 		// Get groups where user is member
@@ -95,8 +102,8 @@ class CTasksDepartmentsOverviewComponent extends CBitrixComponent
 
 				$this->arResult['PROJECTS'][$groupId] = array(
 					'ID'                => $groupId,
-					'TITLE'             => $arGroup['NAME'],
-					'~TITLE'            => $arGroup['~NAME'],
+					'TITLE'             => Emoji::decode($arGroup['NAME']),
+					'~TITLE'            => Emoji::decode($arGroup['~NAME']),
 					'IMAGE_ID'          => $arGroup['IMAGE_ID'],
 					'COUNTERS'          => $arGroupCounters,
 					'NUMBER_OF_MEMBERS' => $arGroup['NUMBER_OF_MEMBERS'],
@@ -117,8 +124,8 @@ class CTasksDepartmentsOverviewComponent extends CBitrixComponent
 				false,
 				false,
 				array(
-					'GROUP_ID', 'USER_ID', 'ROLE', 'GROUP_OWNER_ID', 
-					'USER_LAST_NAME', 'USER_NAME', 'USER_SECOND_NAME', 
+					'GROUP_ID', 'USER_ID', 'ROLE', 'GROUP_OWNER_ID',
+					'USER_LAST_NAME', 'USER_NAME', 'USER_SECOND_NAME',
 					'USER_PERSONAL_PHOTO', 'USER_LOGIN', 'USER_PERSONAL_PHOTO',
 					'USER_WORK_POSITION'
 				)
@@ -222,7 +229,7 @@ class CTasksDepartmentsOverviewComponent extends CBitrixComponent
 		else
 		{
 			$formattedName = CUser::FormatName(
-				$this->arResult['NAME_TEMPLATE'], 
+				$this->arResult['NAME_TEMPLATE'],
 				array(
 					'NAME'        => $name,
 					'LAST_NAME'   => $lastName,

@@ -8,6 +8,7 @@ use Bitrix\Main\Localization\Loc;
 \Bitrix\Main\UI\Extension::load(
 	[
 		'ui.dialogs.messagebox',
+		'crm_common'
 	]
 );
 
@@ -27,6 +28,7 @@ if($this->getComponent()->getErrors())
 
 	return;
 }
+echo CCrmViewHelper::RenderItemStatusSettings($arParams['entityTypeId'], $arParams['categoryId']);
 /** @see \Bitrix\Crm\Component\Base::addTopPanel() */
 $this->getComponent()->addTopPanel($this);
 

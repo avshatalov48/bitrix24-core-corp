@@ -8,6 +8,8 @@ use Bitrix\Sale;
 use Bitrix\Main;
 use Bitrix\Sale\TradingPlatform\Landing\Landing;
 use Bitrix\Crm\Activity;
+use Bitrix\Crm\Workflow\PaymentWorkflow;
+use Bitrix\Crm\Workflow\PaymentStage;
 
 if (!Main\Loader::includeModule('sale'))
 {
@@ -30,7 +32,7 @@ class Payment extends Sale\Payment
 		if ($isNew)
 		{
 			$this->addTimelineEntryOnCreate();
-			$this->setPaymentStageOnCreate();
+			$this->savePaymentStageOnCreate();
 		}
 		elseif ($this->fields->isChanged('SUM') || $this->fields->isChanged('CURRENCY') )
 		{
@@ -63,7 +65,7 @@ class Payment extends Sale\Payment
 				];
 
 				Crm\Timeline\OrderPaymentController::getInstance()->onPaid($this->getId(), $timelineParams);
-				$this->updatePaymentStage();
+				$this->savePaymentStageOnUpdate();
 			}
 
 			if ($this->isPaid())
@@ -164,7 +166,7 @@ class Payment extends Sale\Payment
 		if ($deleteResult->isSuccess() && (int)$this->getId() > 0)
 		{
 			Crm\Timeline\TimelineEntry::deleteByOwner(\CCrmOwnerType::OrderPayment, $this->getId());
-			Crm\Binding\OrderPaymentStageTable::delete($this->getId());
+			PaymentWorkflow::createFrom($this)->resetStage();
 		}
 
 		return $deleteResult;
@@ -237,29 +239,28 @@ class Payment extends Sale\Payment
 		}
 	}
 
-	private function setPaymentStageOnCreate()
+	private function savePaymentStageOnCreate()
 	{
-		$paymentId = (int)$this->getId();
-		$stage = $this->isPaid() ? PaymentStage::PAID : PaymentStage::NOT_PAID;
-		Crm\Binding\OrderPaymentStageTable::setStage($paymentId, $stage);
+		$initialStage = $this->isPaid() ? PaymentStage::PAID : PaymentStage::NOT_PAID;
+
+		PaymentWorkflow::createFrom($this)->setStage($initialStage);
 	}
 
-	private function updatePaymentStage()
-	{
-		$paymentId = (int)$this->getId();
+	private function savePaymentStageOnUpdate()
+	{	
 		if ($this->isPaid())
 		{
-			$stage = PaymentStage::PAID;
+			$nextStage = PaymentStage::PAID;
 		}
 		elseif ($this->isReturn())
 		{
-			$stage = PaymentStage::REFUND;
+			$nextStage = PaymentStage::REFUND;
 		}
 		else
 		{
-			$stage = PaymentStage::CANCEL;
+			$nextStage = PaymentStage::CANCEL;
 		}
 
-		Crm\Binding\OrderPaymentStageTable::setStage($paymentId, $stage);
+		PaymentWorkflow::createFrom($this)->setStage($nextStage);
 	}
 }

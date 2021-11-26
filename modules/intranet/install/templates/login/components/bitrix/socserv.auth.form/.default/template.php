@@ -23,7 +23,7 @@ define("BX_SOCSERV_POPUP", true);
 		<?
 		if($arParams["~FOR_SPLIT"] == 'Y' && is_array($arParams["~AUTH_SERVICES"]) && count($arParams["~AUTH_SERVICES"]))
 		{
-			$servicesNum = 5;
+			$servicesNum = 10;
 
 			?>
 			<div class="bx-auth-serv-icons" style="display:inline-block">

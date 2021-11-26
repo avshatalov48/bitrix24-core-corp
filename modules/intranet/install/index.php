@@ -92,7 +92,7 @@ Class intranet extends CModule
 		// cache
 		RegisterModuleDependences("main", "onUserDelete", "intranet", "CIntranetEventHandlers", "ClearAllUsersCache");
 		RegisterModuleDependences("main", "onAfterUserAdd", "intranet", "CIntranetEventHandlers", "ClearAllUsersCache");
-		RegisterModuleDependences("main", "onBeforeUserUpdate", "intranet", "CIntranetEventHandlers", "ClearSingleUserCache");
+		RegisterModuleDependences("main", "OnAfterUserUpdate", "intranet", "CIntranetEventHandlers", "ClearSingleUserCache");
 		RegisterModuleDependences("iblock", "OnAfterIBlockSectionUpdate", "intranet", "CIntranetEventHandlers", "ClearDepartmentCache");
 
 		RegisterModuleDependences("socialnetwork", "OnFillSocNetAllowedSubscribeEntityTypes", "intranet", "CIntranetEventHandlers", "OnFillSocNetAllowedSubscribeEntityTypes");
@@ -190,6 +190,10 @@ Class intranet extends CModule
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'getEntityList');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationExport', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'onExport');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationImport', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'onImport');
+
+		//for control button
+		$eventManager->registerEventHandler('tasks', 'onTaskUpdate', 'intranet', '\Bitrix\Intranet\Integration\Tasks', 'onTaskUpdate');
+		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEntryUpdate', 'intranet', '\Bitrix\Intranet\Integration\Calendar', 'onCalendarEventUpdate');
 
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recountHourlyCompanyActivity();', "intranet", "N", 60);
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recount();', "intranet", "N", 3600);

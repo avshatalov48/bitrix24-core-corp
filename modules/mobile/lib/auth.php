@@ -23,19 +23,24 @@ class Auth
 		];
 	}
 
-	public static function getOneTimeAuthHash() {
-		global $USER;
+	public static function getOneTimeAuthHash(int $userId = null)
+	{
 		$path = "/mobile/";
-		$userId = $USER->getId();
-		$hash = \CUser::GetHitAuthHash($path, $userId);
 
+		if (!$userId)
+		{
+			global $USER;
+			$userId = $USER->getId();
+		}
+
+		$hash = \CUser::GetHitAuthHash($path, $userId);
 		if ($hash)
 		{
 			return $hash;
 		}
 		else
 		{
-			return \CUser::AddHitAuthHash($path, $USER->getId(), SITE_ID);
+			return \CUser::AddHitAuthHash($path, $userId, SITE_ID);
 		}
 	}
 

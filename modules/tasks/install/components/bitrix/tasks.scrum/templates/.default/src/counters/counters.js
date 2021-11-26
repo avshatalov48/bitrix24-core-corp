@@ -5,9 +5,14 @@ import {PULL as Pull} from 'pull.client';
 
 import {Filter} from '../service/filter';
 
+import {RequestSender} from '../utility/request.sender';
+import {EntityStorage} from '../utility/entity.storage';
+
 import {PullCounters} from './pull.counters';
 
 type Params = {
+	requestSender: RequestSender,
+	entityStorage: EntityStorage,
 	filter: Filter,
 	isOwnerCurrentUser: boolean,
 	userId: number,
@@ -18,6 +23,8 @@ export class Counters
 {
 	constructor(params: Params)
 	{
+		this.requestSender = params.requestSender;
+		this.entityStorage = params.entityStorage;
 		this.filterService = params.filter;
 
 		this.isOwnerCurrentUser = params.isOwnerCurrentUser;
@@ -41,6 +48,8 @@ export class Counters
 	subscribeToPull()
 	{
 		Pull.subscribe(new PullCounters({
+			requestSender: this.requestSender,
+			entityStorage: this.entityStorage,
 			filterService: this.filterService,
 			userId: this.userId,
 			groupId: this.groupId

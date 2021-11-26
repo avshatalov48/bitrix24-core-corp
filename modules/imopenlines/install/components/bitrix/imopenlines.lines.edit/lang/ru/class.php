@@ -1,6 +1,7 @@
 <?
 $MESS['OL_COMPONENT_MODULE_NOT_INSTALLED'] = 'Модуль открытых линий не установлен';
 $MESS['OL_COMPONENT_MODULE_IM_NOT_INSTALLED'] = 'Модуль веб-мессенджера не установлен';
+$MESS['OL_COMPONENT_MODULE_CRM_NOT_INSTALLED'] = 'Модуль CRM не установлен';
 $MESS['OL_COMPONENT_MODULE_SOCIALNETWORK_NOT_INSTALLED'] = 'Модуль социальной сети не установлен';
 $MESS['OL_COMPONENT_LE_CRM_SOURCE_CREATE'] = 'Источник открытой линии';
 $MESS['OL_COMPONENT_LE_BOT_LIST'] = 'чат-бот не выбран';
@@ -23,6 +24,7 @@ $MESS['OL_COMPONENT_LE_MENU_AUTOMATIC_ACTIONS'] = 'Автоматические 
 $MESS['OL_COMPONENT_LE_MENU_QUALITY_MARK'] = 'Оценка качества';
 $MESS['OL_COMPONENT_LE_MENU_BOTS'] = 'Чат-боты';
 $MESS['OL_COMPONENT_LE_MENU_KPI'] = 'KPI';
+$MESS['OL_COMPONENT_LE_MENU_FORMS'] = 'CRM-формы';
 $MESS['OL_COMPONENT_LE_MENU_OTHERS'] = 'Прочее';
 $MESS['OL_COMPONENT_LE_ERROR_PERMISSION'] = 'Нет доступа к данному действию с открытой линией';
 $MESS['OL_COMPONENT_ERROR_SAVE_CONFIG'] = 'Ошибка сохранения конфигурации открытой линии.';
@@ -49,4 +51,6 @@ $MESS['OL_COMPONENT_DISABLES_POPUP_HEAD_DEPARTMENT_EXCLUDED_QUEUE_TITLE'] = 'Б�
 $MESS['OL_COMPONENT_ERROR_EMPTY_DATA_UPDATE'] = 'Нет данных для сохранения';
 $MESS['OL_COMPONENT_ERROR_UPDATE_SESSION_EXPIRED'] = 'Время для сохранения истекло. Попробуйте еще раз';
 $MESS['OL_COMPONENT_ERROR_NO_PERMISSION_FOR_UPDATE'] = 'Нет прав для сохранения настроек';
+
+$MESS['OL_COMPONENT_FORMS_ADD_NEW'] = 'Добавить новую форму';
 ?>

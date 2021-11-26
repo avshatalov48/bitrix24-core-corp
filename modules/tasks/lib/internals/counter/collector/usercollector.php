@@ -16,7 +16,19 @@ class UserCollector
 
 	private $mutedTasks = [];
 
-	public function __construct(int $userId)
+	private static $instances = [];
+
+	public static function getInstance(int $userId)
+	{
+		if (!array_key_exists($userId, self::$instances))
+		{
+			self::$instances[$userId] = new self($userId);
+		}
+
+		return self::$instances[$userId];
+	}
+
+	private function __construct(int $userId)
 	{
 		$this->userId = $userId;
 	}
@@ -38,6 +50,9 @@ class UserCollector
 		{
 			return [];
 		}
+
+		$taskIds = array_unique($taskIds);
+		sort($taskIds);
 
 		$taskFilter = $this->getTasksFilter($taskIds);
 		if (!$taskFilter)
@@ -151,7 +166,9 @@ class UserCollector
 		$filter[] = "(
 			(
 				FM.AUTHOR_ID <> {$this->userId}
-				AND (BUF.UF_TASK_COMMENT_TYPE IS NULL OR BUF.UF_TASK_COMMENT_TYPE <> " . Comment::TYPE_EXPIRED . ")
+				AND (
+					BUF.UF_TASK_COMMENT_TYPE IS NULL OR BUF.UF_TASK_COMMENT_TYPE <> " . Comment::TYPE_EXPIRED . "
+				)
 			)
 			OR
 			(
@@ -242,7 +259,7 @@ class UserCollector
 	/**
 	 * @return string
 	 */
-	private function getMutedTasks(array $taskIds = []): array
+	private function getMutedTasks(array $taskIds): array
 	{
 		$key = md5(json_encode($taskIds));
 
@@ -254,12 +271,8 @@ class UserCollector
 		$query = UserOptionTable::query()
 			->addSelect('TASK_ID')
 			->where('USER_ID', $this->userId)
-			->where('OPTION_CODE', UserOption\Option::MUTED);
-
-		if (!empty($taskIds))
-		{
-			$query->whereIn('TASK_ID', $taskIds);
-		}
+			->where('OPTION_CODE', UserOption\Option::MUTED)
+			->whereIn('TASK_ID', $taskIds);
 
 		$res = $query->exec();
 

@@ -120,8 +120,14 @@ function getCrmShowPath(entityType, entityId)
 
 function decodeHtml(input)
 {
-	intput = input.toString();
-    return input.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
+	input = input.toString()
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&amp;/g, '&')
+		.replace(/&nbsp;/g, ' ')
+		.replaceAll(/&#(\d+);/g, (_, code) => String.fromCharCode(code))
+    return input;
 }
 
 function getUuidv4()

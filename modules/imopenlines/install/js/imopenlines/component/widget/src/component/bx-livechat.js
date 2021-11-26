@@ -54,6 +54,7 @@ BitrixVue.component('bx-livechat',
 			textareaMinimumHeight: 100,
 			textareaMaximumHeight: Utils.device.isMobile()? 200: 300,
 			zIndexStackInstance: null,
+			welcomeFormFilled: false
 		}
 	},
 	created()
@@ -70,6 +71,10 @@ BitrixVue.component('bx-livechat',
 	},
 	mounted()
 	{
+		if (this.widget.user.id > 0)
+		{
+			this.welcomeFormFilled = true;
+		}
 		this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
 		if (this.zIndexStackInstance && !!this.$refs.widgetWrapper)
 		{
@@ -98,7 +103,37 @@ BitrixVue.component('bx-livechat',
 		DeviceType: () => DeviceType,
 		EventType: () => EventType,
 
-		textareaHeightStyle(state)
+		showTextarea()
+		{
+			const crmFormsSettings = this.widget.common.crmFormsSettings;
+
+			// show if we dont use welcome form
+			if (!crmFormsSettings.useWelcomeForm || !crmFormsSettings.welcomeFormId)
+			{
+				return true;
+			}
+			else
+			{
+				// show if we use welcome form with delay
+				if (crmFormsSettings.welcomeFormDelay)
+				{
+					return true;
+				}
+				else
+				{
+					return this.welcomeFormFilled;
+				}
+			}
+		},
+		showWelcomeForm()
+		{
+			//we are using welcome form, it has delay and it was not already filled
+			return this.widget.common.crmFormsSettings.useWelcomeForm
+				&& !this.widget.common.crmFormsSettings.welcomeFormDelay
+				&& this.widget.common.crmFormsSettings.welcomeFormId
+				&& !this.welcomeFormFilled
+		},
+		textareaHeightStyle()
 		{
 			return {flex: '0 0 '+this.textareaHeight+'px'};
 		},
@@ -381,25 +416,6 @@ BitrixVue.component('bx-livechat',
 			}
 			this.$store.commit('widget/common', {showForm: FormType.like});
 		},
-		showWelcomeForm()
-		{
-			clearTimeout(this.showFormTimeout);
-			this.$store.commit('widget/common', {showForm: FormType.welcome});
-		},
-		showOfflineForm()
-		{
-			clearTimeout(this.showFormTimeout);
-
-			if (this.widget.dialog.showForm !== FormType.welcome)
-			{
-				this.$store.commit('widget/common', {showForm: FormType.offline});
-			}
-		},
-		showHistoryForm()
-		{
-			clearTimeout(this.showFormTimeout);
-			this.$store.commit('widget/common', {showForm: FormType.history});
-		},
 		onOpenMenu(event)
 		{
 			this.getApplication().getHtmlHistory();
@@ -571,33 +587,7 @@ BitrixVue.component('bx-livechat',
 		onRequestShowForm({data: event})
 		{
 			clearTimeout(this.showFormTimeout);
-			if (event.type === FormType.welcome)
-			{
-				if (event.delayed)
-				{
-					this.showFormTimeout = setTimeout(() => {
-						this.showWelcomeForm();
-					}, 5000);
-				}
-				else
-				{
-					this.showWelcomeForm();
-				}
-			}
-			else if (event.type === FormType.offline)
-			{
-				if (event.delayed)
-				{
-					this.showFormTimeout = setTimeout(() => {
-						this.showOfflineForm();
-					}, 3000);
-				}
-				else
-				{
-					this.showOfflineForm();
-				}
-			}
-			else if (event.type === FormType.like)
+			if (event.type === FormType.like)
 			{
 				if (event.delayed)
 				{
@@ -997,6 +987,15 @@ BitrixVue.component('bx-livechat',
 				EventEmitter.emit(EventType.textarea.setBlur, true);
 			}, 50);
 		},
+		onWelcomeFormSendSuccess()
+		{
+			this.welcomeFormFilled = true;
+		},
+		onWelcomeFormSendError(error)
+		{
+			console.error('onWelcomeFormSendError', error);
+			this.welcomeFormFilled = true;
+		}
 	},
 	// language=Vue
 	template: `
@@ -1015,25 +1014,30 @@ BitrixVue.component('bx-livechat',
 						<div class="bx-livechat-body" key="loading-body">
 							<bx-livechat-body-loading/>
 						</div>
-					</template>			
+					</template>
 					<template v-else>
-						<template v-if="!widget.common.dialogStart">
-							<div class="bx-livechat-body" key="welcome-body">
+						<div v-show="!widget.common.dialogStart" class="bx-livechat-body" :class="{'bx-livechat-body-with-scroll': showWelcomeForm}" key="welcome-body">
+							<bx-imopenlines-form
+							  v-show="showWelcomeForm"
+							  @formSendSuccess="onWelcomeFormSendSuccess"
+							  @formSendError="onWelcomeFormSendError"
+							/>
+							<template v-if="!showWelcomeForm">
 								<bx-livechat-body-operators/>
 								<keep-alive include="bx-livechat-smiles">
 									<template v-if="widget.common.showForm === FormType.smile">
-										<bx-livechat-smiles @selectSmile="onSmilesSelectSmile" @selectSet="onSmilesSelectSet"/>	
+										<bx-livechat-smiles @selectSmile="onSmilesSelectSmile" @selectSet="onSmilesSelectSet"/>
 									</template>
 								</keep-alive>
-							</div>
-						</template>
-						<template v-else-if="widget.common.dialogStart">
+							</template>
+						</div>
+						<template v-if="widget.common.dialogStart">
 							<bx-pull-component-status :canReconnect="true" @reconnect="onPullRequestConfig"/>
 							<div :class="['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]" key="with-message">
 								<template v-if="showMessageDialog">
 									<div class="bx-livechat-dialog">
 										<bx-im-component-dialog
-											:userId="application.common.userId" 
+											:userId="application.common.userId"
 											:dialogId="application.dialog.dialogId"
 											:messageLimit="application.dialog.messageLimit"
 											:enableReactions="true"
@@ -1047,32 +1051,32 @@ BitrixVue.component('bx-livechat',
 											:showLoadingState="false"
 											:showEmptyState="false"
 										 />
-									</div>	 
+									</div>
 								</template>
 								<template v-else>
 									<bx-livechat-body-loading/>
 								</template>
-																  
+
 								<keep-alive include="bx-livechat-smiles">
 									<template v-if="widget.common.showForm === FormType.like && widget.common.vote.enable">
 										<bx-livechat-form-vote/>
 									</template>
 									<template v-else-if="widget.common.showForm === FormType.welcome">
-										<bx-livechat-form-welcome/>	
+										<bx-livechat-form-welcome/>
 									</template>
 									<template v-else-if="widget.common.showForm === FormType.offline">
-										<bx-livechat-form-offline/>	
+										<bx-livechat-form-offline/>
 									</template>
 									<template v-else-if="widget.common.showForm === FormType.history">
-										<bx-livechat-form-history/>	
+										<bx-livechat-form-history/>
 									</template>
 									<template v-else-if="widget.common.showForm === FormType.smile">
-										<bx-livechat-smiles @selectSmile="onSmilesSelectSmile" @selectSet="onSmilesSelectSet"/>	
+										<bx-livechat-smiles @selectSmile="onSmilesSelectSmile" @selectSet="onSmilesSelectSet"/>
 									</template>
 								</keep-alive>
 							</div>
-						</template>	
-						<div class="bx-livechat-textarea" :style="[textareaHeightStyle, textareaBottomMargin]" ref="textarea">
+						</template>
+						<div v-if="showTextarea" class="bx-livechat-textarea" :style="[textareaHeightStyle, textareaBottomMargin]" ref="textarea">
 							<div class="bx-livechat-textarea-resize-handle" @mousedown="onTextareaStartDrag" @touchstart="onTextareaStartDrag"></div>
 							<bx-im-component-textarea
 								:siteId="application.common.siteId"
@@ -1092,7 +1096,7 @@ BitrixVue.component('bx-livechat',
 						</div>
 						<bx-livechat-form-consent @agree="agreeConsentWidow" @disagree="disagreeConsentWidow"/>
 						<template v-if="widget.common.copyright">
-							<div class="bx-livechat-copyright">	
+							<div class="bx-livechat-copyright">
 								<template v-if="widget.common.copyrightUrl">
 									<a class="bx-livechat-copyright-link" :href="widget.common.copyrightUrl" target="_blank">
 										<span class="bx-livechat-logo-name">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>

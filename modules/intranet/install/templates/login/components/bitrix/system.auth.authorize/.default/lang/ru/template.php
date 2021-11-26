@@ -14,4 +14,8 @@ $MESS["AUTH_NONSECURE_NOTE"]="Пароль будет отправлен в от
 $MESS["AUTH_SOCSERV"]="Вход через социальные сервисы:";
 $MESS["AUTH_1_SOCSERV"] = "Войти через";
 $MESS["AUTH_2_FORM"] = "или через форму —";
+$MESS["AUTH_AUTHORIZE_BY_QR"] = "ВХОД ПО QR";
+$MESS["AUTH_AUTHORIZE_BY_QR_INFO_1"] = "Отсканируйте QR-код";
+$MESS["AUTH_AUTHORIZE_BY_QR_INFO_2"] = "в приложении Битрикс24 или камерой смартфона";
+$MESS["AUTH_BACK"] = "Назад";
 ?>

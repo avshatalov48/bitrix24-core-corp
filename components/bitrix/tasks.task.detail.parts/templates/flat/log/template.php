@@ -214,7 +214,7 @@ $trackedFields = CTaskLog::getTrackedFields();
 			case "CHECKLIST_ITEM_RENAME":
 			case "CHECKLIST_ITEM_MAKE_IMPORTANT":
 			case "CHECKLIST_ITEM_MAKE_UNIMPORTANT":
-
+			case "STAGE":
 				if(\Bitrix\Tasks\UI\Task\CheckList::checkIsSeparatorValue($record["FROM_VALUE"]))
 				{
 					$from = Loc::getMessage('TASKS_TTDP_TEMPLATE_LOG_SEPARATOR');

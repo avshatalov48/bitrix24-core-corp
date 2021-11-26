@@ -142,6 +142,7 @@ class TimelineEntry
 		$connection = Main\Application::getConnection();
 
 		//region Delete by entity bindings
+		// collect IDs of all events that are bound to the target item
 		$ownerMap = array();
 		$dbResult = $connection->query(
 			"SELECT OWNER_ID FROM b_crm_timeline_bind WHERE ENTITY_TYPE_ID = {$entityTypeID} AND ENTITY_ID = {$entityID}"
@@ -151,6 +152,7 @@ class TimelineEntry
 			$ownerMap[$fields['OWNER_ID']] = true;
 		}
 
+		// delete all bind records that mention the target item
 		$connection->queryExecute(
 			"DELETE FROM b_crm_timeline_bind WHERE ENTITY_TYPE_ID = {$entityTypeID} AND ENTITY_ID = {$entityID}"
 		);
@@ -168,6 +170,8 @@ class TimelineEntry
 			$dbResult = $connection->query("SELECT OWNER_ID FROM b_crm_timeline_bind WHERE OWNER_ID IN ({$conditionSql})");
 			while($fields = $dbResult->fetch())
 			{
+				// if after deletion of bind records there are some bind records remaining, it means that this event
+				// is bound to more that one owner (our target item) and therefore should not be deleted
 				unset($ownerMap[$fields['OWNER_ID']]);
 			}
 		}

@@ -14,6 +14,8 @@ return [
 		'ui.buttons',
 		'main.core.events',
 		'main.core',
+		'ui.layout-form',
+		'ui.forms',
 	],
 	'skip_core' => false,
 ];

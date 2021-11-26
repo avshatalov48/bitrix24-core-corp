@@ -15,6 +15,7 @@ use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Crm\Service\Container;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -27,6 +28,8 @@ if (!CModule::IncludeModule('crm'))
  */
 global $DB, $APPLICATION, $USER_FIELD_MANAGER;
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+Container::getInstance()->getLocalization()->loadMessages();
+
 if(!function_exists('__CrmDealDetailsEndJsonResonse'))
 {
 	function __CrmDealDetailsEndJsonResonse($result)
@@ -93,7 +96,7 @@ elseif($action === 'MOVE_TO_CATEGORY')
 
 	if(!\CCrmDeal::CheckUpdatePermission($ID, $currentUserPermissions))
 	{
-		__CrmDealDetailsEndJsonResonse(array('ERROR'=>'PERMISSION DENIED!'));
+		__CrmDealDetailsEndJsonResonse(['ERROR' => \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
 	}
 
 	$newCategoryID =  isset($_POST['CATEGORY_ID']) ? max((int)$_POST['CATEGORY_ID'], 0) : 0;
@@ -104,7 +107,7 @@ elseif($action === 'MOVE_TO_CATEGORY')
 
 	if(!\CCrmDeal::CheckCreatePermission($currentUserPermissions, $newCategoryID))
 	{
-		__CrmDealDetailsEndJsonResonse(array('ERROR'=>'PERMISSION DENIED!'));
+		__CrmDealDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
 	}
 
 	$DB->StartTransaction();
@@ -168,7 +171,7 @@ elseif($action === 'SAVE')
 		|| ($ID === 0 && !\CCrmDeal::CheckCreatePermission($currentUserPermissions, $categoryID))
 	)
 	{
-		__CrmDealDetailsEndJsonResonse(array('ERROR'=>'PERMISSION DENIED!'));
+		__CrmDealDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
 	}
 
 	$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
@@ -1104,7 +1107,7 @@ elseif($action === 'LOAD')
 	}
 	if(!\CCrmDeal::CheckReadPermission($ID, $currentUserPermissions))
 	{
-		__CrmDealDetailsEndJsonResonse(['ERROR'=>'PERMISSION DENIED!']);
+		__CrmDealDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
 	}
 
 	CBitrixComponent::includeComponentClass('bitrix:crm.deal.details');
@@ -1131,7 +1134,7 @@ elseif($action === 'CONVERT')
 
 	if(!\CCrmDeal::CheckReadPermission($entityID, $currentUserPermissions))
 	{
-		__CrmDealDetailsEndJsonResonse(array('ERROR' => array('MESSAGE' => GetMessage('CRM_DEAL_CONVERSION_ACCESS_DENIED'))));
+		__CrmDealDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
 	}
 
 	$configParams = isset($_POST['CONFIG']) && is_array($_POST['CONFIG']) ? $_POST['CONFIG'] : null;
@@ -1284,7 +1287,7 @@ elseif($action === 'DELETE')
 		array('ENTITY_ATTRS' => $permissionAttrs))
 	)
 	{
-		__CrmDealDetailsEndJsonResonse(array('ERROR' => GetMessage('CRM_DEAL_CONVERSION_ACCESS_DENIED')));
+		__CrmDealDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
 	}
 
 	$bizProc = new CCrmBizProc('DEAL');

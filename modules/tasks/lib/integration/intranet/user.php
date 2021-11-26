@@ -119,7 +119,11 @@ final class User extends \Bitrix\Tasks\Integration\Intranet
 		return ($arEmployees);
 	}
 
-	public static function getByDepartments(array $departmentsIds, array $fields = array('ID', 'UF_DEPARTMENT'), $withFired = false)
+	public static function getByDepartments(
+		array $departmentsIds,
+		array $fields = ['ID', 'UF_DEPARTMENT'],
+		$withFired = false
+	): array
 	{
 		$departmentsIds = array_unique(array_filter($departmentsIds));
 
@@ -128,24 +132,17 @@ final class User extends \Bitrix\Tasks\Integration\Intranet
 			return [];
 		}
 
-		$fields = array_unique(array_merge($fields, ['ID', 'UF_DEPARTMENT']));
-
-		$filter = [
-			'UF_DEPARTMENT' => $departmentsIds
-		];
+		$select = array_unique(array_merge($fields, ['ID', 'UF_DEPARTMENT']));
+		$filter = ['UF_DEPARTMENT' => $departmentsIds];
 		if (!$withFired)
 		{
-			$filter['ACTIVE'] = 'Y';
+			$filter['=ACTIVE'] = 'Y';
 		}
 
-		$res = Util\User::getList(
-			[
-				'filter' => $filter,
-				'select' => $fields
-			]
-		);
-
-		return $res->fetchAll();
+		return Util\User::getList([
+			'select' => $select,
+			'filter' => $filter,
+		])->fetchAll();
 	}
 
 	private static function searchImmediateEmployeesInSubDepartments($departmentId)

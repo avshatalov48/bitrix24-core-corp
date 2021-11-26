@@ -3091,6 +3091,20 @@ class CCrmOwnerType
 				break;
 			}
 		}
+
+		if (static::isPossibleDynamicTypeId($typeID))
+		{
+			$caption = static::GetCaption($typeID, $ID);
+			if (!empty($caption))
+			{
+				$info = [
+					'CAPTION' => $caption,
+					'IMAGE_ID' => 0,
+				];
+				return true;
+			}
+		}
+
 		return false;
 	}
 

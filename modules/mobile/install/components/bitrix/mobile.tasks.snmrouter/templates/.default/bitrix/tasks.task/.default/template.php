@@ -212,7 +212,7 @@ $APPLICATION->IncludeComponent(
 							"ALLOW_CHANGE_DEADLINE" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_ALLOW_CHANGE_DEADLINE"),
 							"MATCH_WORK_TIME" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_MATCH_WORK_TIME"),
 						]
-						+ ($taskLimitExceeded ? [] : ["TASK_CONTROL" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_TASK_CONTROL")])
+						+ ($taskLimitExceeded ? [] : ["TASK_CONTROL" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_TASK_CONTROL_V2")])
 						+ ($task["ID"] > 0 ? [] : ["ADD_TO_TIMEMAN" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_ADD_INTO_DAY_PLAN")])
 						+ (
 							$task["ID"] <= 0 && ($can["FAVORITE.ADD"] || $can["FAVORITE.DELETE"])

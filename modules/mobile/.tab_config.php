@@ -7,7 +7,7 @@ $config = [
 		['code' => 'chat', 'class' => "\\Bitrix\\Mobile\\AppTabs\\Chat"],
 		['code' => 'ol', 'class' => "\\Bitrix\\Mobile\\AppTabs\\OpenLines"],
 		['code' => 'menu', 'class' => "\\Bitrix\\Mobile\\AppTabs\\Menu"],
-//		["code" => "notify", "class" => "\\Bitrix\\Mobile\\AppTabs\\Notify"],
+		//["code" => "notify", "class" => "\\Bitrix\\Mobile\\AppTabs\\Notify"],
 		['code' => 'stream', 'class' => "\\Bitrix\\Mobile\\AppTabs\\Stream"],
 		['code' => 'task', 'class' => "\\Bitrix\\Mobile\\AppTabs\\Task"],
 		['code' => 'calltracker', 'class' => "\\Bitrix\\Mobile\\AppTabs\\CallTracker"],
@@ -27,7 +27,7 @@ $config = [
 		'default' => [
 			'chat' => 100,
 			'stream' => 300,
-//			"notify" => 300,
+			"notify" => 300,
 			'task' => 200,
 			'menu' => 1000,
 		],

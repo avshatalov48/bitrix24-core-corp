@@ -1,9 +1,8 @@
 <?php
 
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
-use Bitrix\Main\Engine\UrlManager;
+use Bitrix\Crm\UserField\Display;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -13,10 +12,11 @@ class CCrmUserType
 	public $sEntityID = '';
 	private $arFields = null;
 	/** @var array|null  */
-	private static $enumerationItems = null;
+	private static $enumerationItems = [];
 	protected $options;
+	protected $fieldNamePrefix;
 
-	protected function GetAbstractFields(?array $params = [])
+	public function GetAbstractFields(?array $params = [])
 	{
 		if($this->arFields === null)
 		{
@@ -31,6 +31,8 @@ class CCrmUserType
 					Container::getInstance()->getContext()->getUserId()
 				);
 			}
+
+			$this->arFields = $this->appendNamePrefix($this->arFields);
 		}
 
 		return $this->arFields;
@@ -1231,45 +1233,74 @@ class CCrmUserType
 		return $data;
 	}
 
-	public function ListAddEnumFieldsValue($arParams, &$arValue, &$arReplaceValue, $delimiter = '<br />', $textonly = false, $arOptions = array())
+	public function ListAddEnumFieldsValue(
+		$arParams,
+		&$rawValues,
+		&$preparedValues,
+		$delimiter = '<br />',
+		$textonly = false,
+		$options = []
+	)
 	{
-		$arUserFields = $this->GetAbstractFields();
-		$bSecondLoop = false;
-		$arValuePrepare = array();
-
-		if(!is_array($arOptions))
+		$options = is_array($options) ? $options : [];
+		if (isset($arParams['GRID_ID']))
 		{
-			$arOptions = array();
+			$options['GRID_ID'] = $arParams['GRID_ID'];
+		}
+		if (!is_array($preparedValues))
+		{
+			$preparedValues = [];
+		}
+		if (!is_array($rawValues))
+		{
+			$rawValues = [];
 		}
 
-		// The first loop to collect all the data fields
+		$rawValues = $this->normalizeBooleanValues($rawValues);
+
+		$entityTypeId = CCrmOwnerType::ResolveIDByUFEntityID($this->sEntityID);
+		$display = Display::createByEntityTypeId($entityTypeId);
+		$displayOptions =
+			\Bitrix\Crm\Service\Display\Options::createFromArray($options)
+				->setReturnMultipleFieldsAsSingle(true)
+				->setMultipleFieldsDelimiter((string)$delimiter)
+				->setUseTextMode((bool)$textonly)
+		;
+		$strategy = new \Bitrix\Crm\UserField\DisplayStrategy\BulkStrategy($entityTypeId);
+		$strategy->setDisplayOptions($displayOptions);
+
+		$display->setStrategy($strategy);
+
+		foreach($rawValues as $itemId => $itemFields)
+		{
+			$display->addValues((int)$itemId, (array)$itemFields);
+		}
+		$result = $display->getAllValues();
+
+		foreach ($result as $id => $values)
+		{
+			$preparedValues[$id] = array_merge_recursive(
+				(is_array($preparedValues[$id]) ? $preparedValues[$id] : []),
+				$values
+			);
+		}
+	}
+
+	public function normalizeBooleanValues(array $values): array
+	{
+		$arUserFields = $this->GetAbstractFields();
 		foreach($arUserFields as $FIELD_NAME => &$arUserField)
 		{
 			$isMultiple = $arUserField['MULTIPLE'] == 'Y';
-			foreach ($arValue as $ID => $data)
+			foreach ($values as $ID => $data)
 			{
-				if(!$isMultiple)
-				{
-					$isEmpty = !isset($arValue[$ID][$FIELD_NAME]) && $arUserField['USER_TYPE']['USER_TYPE_ID'] != 'boolean';
-				}
-				else
-				{
-					$isEmpty = !isset($arValue[$ID][$FIELD_NAME]) || $arValue[$ID][$FIELD_NAME] === false;
-				}
-
-				if($isEmpty)
-				{
-					continue;
-				}
-
 				if ($arUserField['USER_TYPE']['USER_TYPE_ID'] == 'boolean')
 				{
-					if (isset($arValue[$ID][$FIELD_NAME]))
-						$arValue[$ID][$FIELD_NAME] == ($arValue[$ID][$FIELD_NAME] == 1 || $arValue[$ID][$FIELD_NAME] == 'Y' ? 'Y' : 'N');
-
-					$arVal = $arValue[$ID][$FIELD_NAME];
+					$arVal = $values[$ID][$FIELD_NAME];
 					if (!is_array($arVal))
-						$arVal = array($arVal);
+					{
+						$arVal = [$arVal];
+					}
 
 					foreach ($arVal as $val)
 					{
@@ -1281,487 +1312,20 @@ class CCrmUserType
 							$val = 'N';
 						}
 
-						$arReplaceValue[$ID][$FIELD_NAME] .= (!empty($arReplaceValue[$ID][$FIELD_NAME]) ? $delimiter : '').($val == 1 ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'));
 						if ($isMultiple)
 						{
-							$arValue[$ID][$FIELD_NAME][] = ($val == 1 || $val == 'Y') ? 'Y' : 'N';
+							$values[$ID][$FIELD_NAME][] = ($val == 1 || $val == 'Y') ? 'Y' : 'N';
 						}
 						else
 						{
-							$arValue[$ID][$FIELD_NAME] = ($val == 1 || $val == 'Y') ? 'Y' : 'N';
-						}
-					}
-				}
-				elseif ($arUserField['USER_TYPE']['USER_TYPE_ID'] == 'crm_status')
-				{
-					$ar = CCrmStatus::GetStatusList($arUserField['SETTINGS']['ENTITY_TYPE']);
-
-					$arVal = ($arValue[$ID][$FIELD_NAME] ?? '');
-					if (!is_array($arVal))
-					{
-						$arVal = array($arVal);
-					}
-
-					$values = [];
-					foreach ($arVal as $value)
-					{
-						if (isset($ar[$value]))
-						{
-							$values[] = \Bitrix\Main\Text\HtmlFilter::encode($ar[$value]);
-						}
-					}
-
-					$arReplaceValue[$ID][$FIELD_NAME] = implode('; ', $values);
-				}
-				elseif ($arUserField['USER_TYPE']['USER_TYPE_ID'] == 'crm')
-				{
-					$entityTypes = array_flip(ElementType::getEntityTypeNames());
-					$arParams['CRM_ENTITY_TYPE'] = [];
-					foreach ($arUserField['SETTINGS'] as $key => $value)
-					{
-						if (
-							$value === 'Y'
-							&& (
-								array_key_exists($key, $entityTypes)
-								|| \CCrmOwnerType::isPossibleDynamicTypeId(\CCrmOwnerType::ResolveID($key))
-							)
-						)
-						{
-							$arParams['CRM_ENTITY_TYPE'][] = $key;
-						}
-					}
-
-					$arParams['CRM_PREFIX'] = false;
-					if (count($arParams['CRM_ENTITY_TYPE']) > 1)
-						$arParams['CRM_PREFIX'] = true;
-
-					$bSecondLoop = true;
-					$arVal = $arValue[$ID][$FIELD_NAME];
-					if (!is_array($arVal))
-						$arVal = array($arVal);
-
-					foreach ($arVal as $value)
-					{
-						if($arParams['CRM_PREFIX'])
-						{
-							$ar = explode('_', $value);
-							$userTypeId = $arUserField['USER_TYPE']['USER_TYPE_ID'];
-							$entityType = CUserTypeCrm::GetLongEntityType($ar[0]);
-							$elementId = (int)$ar[1];
-							$arValuePrepare[$userTypeId][$entityType][] = $elementId;
-							$arValuePrepare[$userTypeId]['FIELD'][$ID][$FIELD_NAME][$entityType][$elementId] = $elementId;
-						}
-						else
-						{
-							if (is_numeric($value))
-							{
-								$arValuePrepare[$arUserField['USER_TYPE']['USER_TYPE_ID']][$arParams['CRM_ENTITY_TYPE'][0]][] = $value;
-								$arValuePrepare[$arUserField['USER_TYPE']['USER_TYPE_ID']]['FIELD'][$ID][$FIELD_NAME][$arParams['CRM_ENTITY_TYPE'][0]][$value] = $value;
-							}
-							else
-							{
-								$ar = explode('_', $value);
-								$arValuePrepare[$arUserField['USER_TYPE']['USER_TYPE_ID']][CUserTypeCrm::GetLongEntityType($ar[0])][] = intval($ar[1]);
-								$arValuePrepare[$arUserField['USER_TYPE']['USER_TYPE_ID']]['FIELD'][$ID][$FIELD_NAME][CUserTypeCrm::GetLongEntityType($ar[0])][intval($ar[1])] = intval($ar[1]);
-							}
-						}
-					}
-					$arReplaceValue[$ID][$FIELD_NAME] = '';
-				}
-				elseif ($arUserField['USER_TYPE']['USER_TYPE_ID'] == 'file'
-					|| $arUserField['USER_TYPE']['USER_TYPE_ID'] == 'employee'
-					|| $arUserField['USER_TYPE']['USER_TYPE_ID'] == 'iblock_element'
-					|| $arUserField['USER_TYPE']['USER_TYPE_ID'] == 'enumeration'
-					|| $arUserField['USER_TYPE']['USER_TYPE_ID'] == 'iblock_section')
-				{
-					$bSecondLoop = true;
-					$arVal = $arValue[$ID][$FIELD_NAME];
-					$arReplaceValue[$ID][$FIELD_NAME] = '';
-
-					if (!is_array($arVal))
-						$arVal = array($arVal);
-
-					foreach ($arVal as $value)
-					{
-						if($value === '' || $value <= 0)
-						{
-							continue;
-						}
-						$arValuePrepare[$arUserField['USER_TYPE']['USER_TYPE_ID']]['FIELD'][$ID][$FIELD_NAME][$value] = $value;
-						$arValuePrepare[$arUserField['USER_TYPE']['USER_TYPE_ID']]['ID'][] = $value;
-					}
-				}
-				elseif($arUserField['USER_TYPE']['USER_TYPE_ID'] === 'resourcebooking' && $textonly && \Bitrix\Crm\Integration\Calendar::isResourceBookingEnabled())
-				{
-					$value = array();
-					if(is_array($arValue[$ID][$FIELD_NAME]))
-					{
-						$valueCount = count($arValue[$ID][$FIELD_NAME]);
-						for($i = 0; $i < $valueCount; $i++)
-						{
-							$value[] = htmlspecialcharsback($arValue[$ID][$FIELD_NAME][$i]);
-						}
-					}
-
-					$arReplaceValue[$ID][$FIELD_NAME] =  \Bitrix\Calendar\UserField\ResourceBooking::getPublicText(array_merge(
-						$arUserField,
-						array('ENTITY_VALUE_ID' => $ID, 'VALUE' => $value)
-					));
-				}
-				elseif(!$textonly
-					&& ($arUserField['USER_TYPE']['USER_TYPE_ID'] === 'address'
-						|| $arUserField['USER_TYPE']['USER_TYPE_ID'] === 'money'
-						|| $arUserField['USER_TYPE']['USER_TYPE_ID'] === 'url'
-						|| $arUserField['USER_TYPE']['USER_TYPE_ID'] === 'resourcebooking'
-					))
-				{
-					if($isMultiple)
-					{
-						$value = array();
-						if(is_array($arValue[$ID][$FIELD_NAME]))
-						{
-							$valueCount = count($arValue[$ID][$FIELD_NAME]);
-							for($i = 0; $i < $valueCount; $i++)
-							{
-								$value[] = htmlspecialcharsback($arValue[$ID][$FIELD_NAME][$i]);
-							}
-						}
-					}
-					else
-					{
-						$value = htmlspecialcharsback($arValue[$ID][$FIELD_NAME]);
-					}
-
-					$arReplaceValue[$ID][$FIELD_NAME] = $this->cUFM->GetPublicView(
-						array_merge(
-							$arUserField,
-							array('ENTITY_VALUE_ID' => $ID, 'VALUE' => $value)
-						),
-						array(
-							'CONTEXT' => 'CRM_GRID'
-						)
-					);
-				}
-				else if ($isMultiple && is_array($arValue[$ID][$FIELD_NAME]))
-				{
-					$value = [];
-
-					$valueCount = count($arValue[$ID][$FIELD_NAME]);
-					for($i = 0; $i < $valueCount; $i++)
-					{
-						$value[] = htmlspecialcharsback($arValue[$ID][$FIELD_NAME][$i]);
-					}
-
-					if ($textonly)
-					{
-						$arReplaceValue[$ID][$FIELD_NAME] = (new \Bitrix\Main\UserField\Renderer(
-							array_merge(
-								$arUserField,
-								['ENTITY_VALUE_ID' => $ID, 'VALUE' => $value]
-							),
-							[
-								'CONTEXT' => 'CRM_GRID',
-								'mode' => 'main.public_text'
-							])
-						)->render();
-					}
-					else
-					{
-						$arReplaceValue[$ID][$FIELD_NAME] = $this->cUFM->getPublicView(
-							array_merge(
-								$arUserField,
-								['ENTITY_VALUE_ID' => $ID, 'VALUE' => $value]
-							),
-							[
-								'CONTEXT' => 'CRM_GRID'
-							]
-						);
-					}
-				}
-			}
-		}
-		unset($arUserField);
-
-		// The second loop for special field
-		if($bSecondLoop)
-		{
-			$arValueReplace = Array();
-			$arList = Array();
-			foreach($arValuePrepare as $KEY => $VALUE)
-			{
-				// collect multi data
-				if ($KEY == 'iblock_section')
-				{
-					$dbRes = CIBlockSection::GetList(array('left_margin' => 'asc'), array('ID' => $VALUE['ID']), false);
-					while ($arRes = $dbRes->Fetch())
-						$arList[$KEY][$arRes['ID']] = $arRes;
-				}
-				elseif ($KEY == 'file')
-				{
-					$dbRes = CFile::GetList(Array(), array('@ID' => implode(',', $VALUE['ID'])));
-					while ($arRes = $dbRes->Fetch())
-						$arList[$KEY][$arRes['ID']] = $arRes;
-				}
-				elseif ($KEY == 'iblock_element')
-				{
-					$dbRes = CIBlockElement::GetList(array('SORT' => 'DESC', 'NAME' => 'ASC'), array('ID' => $VALUE['ID']), false);
-					while ($arRes = $dbRes->Fetch())
-						$arList[$KEY][$arRes['ID']] = $arRes;
-				}
-				elseif ($KEY == 'employee')
-				{
-					$dbRes = CUser::GetList('last_name', 'asc', array('ID' => implode('|', $VALUE['ID'])));
-					while ($arRes = $dbRes->Fetch())
-						$arList[$KEY][$arRes['ID']] = $arRes;
-				}
-				elseif ($KEY == 'enumeration')
-				{
-					foreach ($VALUE['ID'] as $___value)
-					{
-						$rsEnum = CUserFieldEnum::GetList(array(), array('ID' => $___value));
-						while ($arRes = $rsEnum->Fetch())
-							$arList[$KEY][$arRes['ID']] = $arRes;
-					}
-				}
-				elseif ($KEY == 'crm')
-				{
-					if (isset($VALUE['LEAD']) && !empty($VALUE['LEAD']))
-					{
-						$dbRes = CCrmLead::GetListEx(array('TITLE' => 'ASC', 'LAST_NAME' => 'ASC', 'NAME' => 'ASC'), array('ID' => $VALUE['LEAD']));
-						while ($arRes = $dbRes->Fetch())
-							$arList[$KEY]['LEAD'][$arRes['ID']] = $arRes;
-					}
-					if (isset($VALUE['CONTACT']) && !empty($VALUE['CONTACT']))
-					{
-						$dbRes = CCrmContact::GetListEx(array('LAST_NAME' => 'ASC', 'NAME' => 'ASC'), array('=ID' => $VALUE['CONTACT']));
-						while ($arRes = $dbRes->Fetch())
-							$arList[$KEY]['CONTACT'][$arRes['ID']] = $arRes;
-					}
-					if (isset($VALUE['COMPANY']) && !empty($VALUE['COMPANY']))
-					{
-						$dbRes = CCrmCompany::GetListEx(array('TITLE' => 'ASC'), array('ID' => $VALUE['COMPANY']));
-						while ($arRes = $dbRes->Fetch())
-							$arList[$KEY]['COMPANY'][$arRes['ID']] = $arRes;
-					}
-					if (isset($VALUE['DEAL']) && !empty($VALUE['DEAL']))
-					{
-						$dbRes = CCrmDeal::GetListEx(array('TITLE' => 'ASC'), array('ID' => $VALUE['DEAL']));
-						while ($arRes = $dbRes->Fetch())
-							$arList[$KEY]['DEAL'][$arRes['ID']] = $arRes;
-					}
-					foreach ($VALUE as $entityTypeName => $entityIds)
-					{
-						$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
-						if (
-							$entityTypeId
-							&& \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
-							&& !empty($entityIds)
-						)
-						{
-							$factory = Container::getInstance()->getFactory($entityTypeId);
-							if ($factory)
-							{
-								$list = $factory->getItemsFilteredByPermissions([
-									'select' => ['ID', 'TITLE'],
-									'filter' => ['@ID' => $entityIds]
-								]);
-								foreach ($list as $item)
-								{
-									$arList[$KEY][$entityTypeName][$item->getId()] = $item->getCompatibleData();
-								}
-							}
-						}
-					}
-				}
-
-				// assemble multi data
-				foreach ($VALUE['FIELD'] as $ID => $arFIELD_NAME)
-				{
-					foreach ($arFIELD_NAME as $FIELD_NAME => $FIELD_VALUE)
-					{
-						foreach ($FIELD_VALUE as $FIELD_VALUE_NAME => $FIELD_VALUE_ID)
-						{
-							if ($KEY == 'iblock_section')
-							{
-								$sname = htmlspecialcharsbx($arList[$KEY][$FIELD_VALUE_ID]['NAME']);
-								$arReplaceValue[$ID][$FIELD_NAME] .= (!empty($arReplaceValue[$ID][$FIELD_NAME]) ? $delimiter : '').$sname;
-							}
-							if ($KEY == 'iblock_element')
-							{
-								$sname = htmlspecialcharsbx($arList[$KEY][$FIELD_VALUE_ID]['NAME']);
-								if(!$textonly)
-								{
-									$surl = GetIBlockElementLinkById($arList[$KEY][$FIELD_VALUE_ID]['ID']);
-									if ($surl && $surl <> '')
-									{
-										$sname = '<a href="'.$surl.'">'.$sname.'</a>';
-									}
-								}
-								$arReplaceValue[$ID][$FIELD_NAME] .= (!empty($arReplaceValue[$ID][$FIELD_NAME]) ? $delimiter : '').$sname;
-							}
-							else if ($KEY == 'employee')
-							{
-								$sname = '';
-								if(is_array($arList[$KEY][$FIELD_VALUE_ID]))
-								{
-									$sname = CUser::FormatName(CSite::GetNameFormat(false), $arList[$KEY][$FIELD_VALUE_ID], false, true);
-									if(!$textonly)
-									{
-										$ar['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_user_profile'), array('user_id' => $arList[$KEY][$FIELD_VALUE_ID]['ID']));
-										$sname = 	'<a href="'.$ar['PATH_TO_USER_PROFILE'].'" id="balloon_'.$arParams['GRID_ID'].'_'.$arList[$KEY][$FIELD_VALUE_ID]['ID'].'" bx-tooltip-user-id="'.$arList[$KEY][$FIELD_VALUE_ID]['ID'].'">'.$sname.'</a>';
-									}
-								}
-								$arReplaceValue[$ID][$FIELD_NAME] .= (!empty($arReplaceValue[$ID][$FIELD_NAME]) ? $delimiter : '').$sname;
-							}
-							else if ($KEY == 'enumeration')
-							{
-								$arReplaceValue[$ID][$FIELD_NAME] .= (!empty($arReplaceValue[$ID][$FIELD_NAME]) ? $delimiter : '').htmlspecialcharsbx($arList[$KEY][$FIELD_VALUE_ID]['VALUE']);
-							}
-							else if ($KEY == 'file')
-							{
-								$fileInfo = $arList[$KEY][$FIELD_VALUE_ID];
-								if($textonly)
-								{
-									$fileUrl = CFile::GetFileSRC($fileInfo);
-								}
-								else
-								{
-									$fileUrlTemplate = isset($arOptions['FILE_URL_TEMPLATE'])
-										? $arOptions['FILE_URL_TEMPLATE'] : '';
-
-									$fileUrl = $fileUrlTemplate === ''
-										? CFile::GetFileSRC($fileInfo)
-										: CComponentEngine::MakePathFromTemplate(
-											$fileUrlTemplate,
-											array('owner_id' => $ID, 'field_name' => $FIELD_NAME, 'file_id' => $fileInfo['ID'])
-										);
-								}
-
-								$sname = $textonly ? $fileUrl : '<a href="'.htmlspecialcharsbx($fileUrl).'" target="_blank">'.htmlspecialcharsbx($arList[$KEY][$FIELD_VALUE_ID]['FILE_NAME']).'</a>';
-								$arReplaceValue[$ID][$FIELD_NAME] .= (!empty($arReplaceValue[$ID][$FIELD_NAME]) ? $delimiter : '').$sname;
-							}
-							else if ($KEY == 'crm')
-							{
-								foreach($FIELD_VALUE_ID as $CID)
-								{
-									$link = '';
-									$title = '';
-									$prefix = '';
-									$tooltipLoader = null;
-									$className = null;
-									if ($FIELD_VALUE_NAME == 'LEAD')
-									{
-										$link = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_lead_show'), array('lead_id' => $CID));
-										$title = $arList[$KEY]['LEAD'][$CID]['TITLE'];
-										$prefix = 'L';
-										$className = 'crm_balloon_no_photo';
-									}
-									elseif ($FIELD_VALUE_NAME == 'CONTACT')
-									{
-										$link = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_contact_show'), array('contact_id' => $CID));
-										if(isset($arList[$KEY]['CONTACT'][$CID]))
-										{
-											$title = CCrmContact::PrepareFormattedName($arList[$KEY]['CONTACT'][$CID]);
-										}
-										$prefix = 'C';
-									}
-									elseif ($FIELD_VALUE_NAME == 'COMPANY')
-									{
-										$link = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_company_show'), array('company_id' => $CID));
-										$title = $arList[$KEY]['COMPANY'][$CID]['TITLE'];
-										$prefix = 'CO';
-									}
-									elseif ($FIELD_VALUE_NAME == 'DEAL')
-									{
-										$link = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_deal_show'), array('deal_id' => $CID));
-										$title = $arList[$KEY]['DEAL'][$CID]['TITLE'];
-										$prefix = 'D';
-										$className = 'crm_balloon_no_photo';
-									}
-									elseif ($FIELD_VALUE_NAME == 'ORDER')
-									{
-										$link = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_order_details'), array('order_id' => $CID));
-										$title = $arList[$KEY]['ORDER'][$CID]['TITLE'];
-										$prefix = 'O';
-									}
-									elseif ($FIELD_VALUE_NAME === 'QUOTE')
-									{
-										$className = 'crm_balloon_no_photo';
-									}
-									elseif (
-										\CCrmOwnerType::isPossibleDynamicTypeId(
-											\CCrmOwnerType::ResolveID($FIELD_VALUE_NAME)
-										)
-									)
-									{
-										$entityTypeId = \CCrmOwnerType::ResolveID($FIELD_VALUE_NAME);
-										$link = Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $CID);
-										$title = $arList[$KEY][$FIELD_VALUE_NAME][$CID]['TITLE'];
-										$prefix = 'T';
-										$tooltipLoader = UrlManager::getInstance()->create(
-											'bitrix:crm.controller.tooltip.card',
-											[
-												'sessid' => bitrix_sessid(),
-											]
-										);
-										$className = 'crm_balloon_no_photo';
-										$CID = $entityTypeId . '-' . $CID;
-									}
-
-									$sname = htmlspecialcharsbx($title);
-									if(!$textonly)
-									{
-										Bitrix\Main\UI\Extension::load("ui.tooltip");
-										$tooltipLoader = (
-											$tooltipLoader
-											?? htmlspecialcharsbx(
-												'/bitrix/components/bitrix/crm.'
-												. mb_strtolower($FIELD_VALUE_NAME)
-												. '.show/card.ajax.php'
-											)
-										);
-										$className = ($className ?? 'crm_balloon_' . mb_strtolower($FIELD_VALUE_NAME));
-
-										$sname = $this->getHtmlLink($link, $CID, $tooltipLoader, $className, $sname);
-									}
-									else
-									{
-										$sname = "[$prefix]$sname";
-									}
-									$arReplaceValue[$ID][$FIELD_NAME] .= (!empty($arReplaceValue[$ID][$FIELD_NAME]) ? $delimiter : '').$sname;
-								}
-							}
+							$values[$ID][$FIELD_NAME] = ($val == 1 || $val == 'Y') ? 'Y' : 'N';
 						}
 					}
 				}
 			}
 		}
-	}
 
-	/**
-	 * @param string $link
-	 * @param string $id
-	 * @param string $tooltipLoader
-	 * @param string $className
-	 * @param string $content
-	 * @return string
-	 */
-	protected function getHtmlLink(
-		string $link,
-		string $id,
-		string $tooltipLoader,
-		string $className,
-		string $content
-	) : string
-	{
-		$result = '<a target="_blank"';
-		$result .= ' href="' . $link . '"';
-		$result .= ' bx-tooltip-user-id="' . $id . '"';
-		$result .= ' bx-tooltip-loader="' . $tooltipLoader . '"';
-		$result .= ' bx-tooltip-classname="' . $className .'"';
-		$result .= ' >' . $content . '</a>';
-
-		return $result;
+		return $values;
 	}
 
 	public function ListAddHeaders(&$arHeaders, $bImport = false)
@@ -1870,11 +1434,11 @@ class CCrmUserType
 	{
 		$arUserFields = $this->GetAbstractFields();
 
-		$enumFields = array();
+		$enumFields = [];
 		foreach($arUserFields as $FIELD_NAME => $arUserField)
 		{
 			$userTypeID = $arUserField['USER_TYPE_ID'];
-			$settings = isset($arUserField['SETTINGS']) ? $arUserField['SETTINGS'] : array();
+			$settings = isset($arUserField['SETTINGS']) ? $arUserField['SETTINGS'] : [];
 			$userType = ($arUserField['USER_TYPE'] ?? []);
 
 			$title = $arUserField['EDIT_FORM_LABEL']
@@ -1882,18 +1446,18 @@ class CCrmUserType
 				?? $arUserField['LIST_FILTER_LABEL']
 				?? $FIELD_NAME;
 
-			$info = array(
+			$info = [
 				'TITLE' => $title,
 				'TYPE' => $userTypeID,
-				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Dynamic),
+				'ATTRIBUTES' => [CCrmFieldInfoAttr::Dynamic],
 				'SETTINGS' => $settings,
 				'USER_TYPE' => $userType,
-				'LABELS' => array(
+				'LABELS' => [
 					'LIST' => isset($arUserField['LIST_COLUMN_LABEL']) ? $arUserField['LIST_COLUMN_LABEL'] : '',
 					'FORM' => isset($arUserField['EDIT_FORM_LABEL']) ? $arUserField['EDIT_FORM_LABEL'] : '',
 					'FILTER' => isset($arUserField['LIST_FILTER_LABEL']) ? $arUserField['LIST_FILTER_LABEL'] : ''
-				)
-			);
+				],
+			];
 
 			$isMultiple = isset($arUserField['MULTIPLE']) && $arUserField['MULTIPLE'] === 'Y';
 			$isRequired = isset($arUserField['MANDATORY']) && $arUserField['MANDATORY'] === 'Y';
@@ -1918,14 +1482,9 @@ class CCrmUserType
 			{
 				$info['SETTINGS'] = $arUserField['SETTINGS'];
 
-				if(self::$enumerationItems == null)
+				if(isset(self::$enumerationItems[$this->sEntityID][$FIELD_NAME]))
 				{
-					self::$enumerationItems = array();
-				}
-
-				if(isset(self::$enumerationItems[$FIELD_NAME]))
-				{
-					$info['ITEMS'] = self::$enumerationItems[$FIELD_NAME];
+					$info['ITEMS'] = self::$enumerationItems[$this->sEntityID][$FIELD_NAME];
 				}
 				else
 				{
@@ -1933,7 +1492,7 @@ class CCrmUserType
 					if(isset($arUserField['USER_TYPE']) && isset($arUserField['USER_TYPE']['CLASS_NAME']))
 					{
 						$enumFields[$arUserField['USER_TYPE']['CLASS_NAME']][$fieldID] =
-							array('ID' => $fieldID, 'NAME' => $FIELD_NAME);
+							['ID' => $fieldID, 'NAME' => $FIELD_NAME];
 					}
 				}
 			}
@@ -1949,11 +1508,11 @@ class CCrmUserType
 		foreach($enumFields as $fieldClassName => $fields)
 		{
 			$enumResult = call_user_func_array(
-				array($fieldClassName, 'GetListMultiple'),
-				array(array_values($fields))
+				[$fieldClassName, 'GetListMultiple'],
+				[array_values($fields)]
 			);
 
-			$items = array();
+			$items = [];
 			while($enum = $enumResult->GetNext())
 			{
 				$fieldID = $enum['~USER_FIELD_ID'];
@@ -1966,27 +1525,24 @@ class CCrmUserType
 
 				if(!isset($fieldsInfo[$fieldName]['ITEMS']))
 				{
-					$fieldsInfo[$fieldName]['ITEMS'] = array();
+					$fieldsInfo[$fieldName]['ITEMS'] = [];
 				}
 
 				if(!isset($items[$fieldName]))
 				{
-					$items[$fieldName] = array();
+					$items[$fieldName] = [];
 				}
 
 				$fieldsInfo[$fieldName]['ITEMS'][] =
 				$items[$fieldName][] =
-					array('ID' => $enum['~ID'], 'VALUE' => $enum['~VALUE']);
+					['ID' => $enum['~ID'], 'VALUE' => $enum['~VALUE']];
 			}
 
-			if(self::$enumerationItems == null)
+			if (!isset(self::$enumerationItems[$this->sEntityID]))
 			{
-				self::$enumerationItems = $items;
+				self::$enumerationItems[$this->sEntityID] = [];
 			}
-			else
-			{
-				self::$enumerationItems = array_merge(self::$enumerationItems, $items);
-			}
+			self::$enumerationItems[$this->sEntityID] = array_merge(self::$enumerationItems[$this->sEntityID], $items);
 		}
 	}
 
@@ -2374,7 +1930,7 @@ class CCrmUserType
 		$bNorm = false;
 		foreach($arFields as $k => $FIELD_NAME)
 		{
-			if (mb_strpos($FIELD_NAME, 'UF_') === 0)
+			if (mb_strpos($FIELD_NAME,  $this->fieldNamePrefix . 'UF_') === 0)
 			{
 				if (!isset($arUserFields[$FIELD_NAME]))
 				{
@@ -2613,6 +2169,28 @@ class CCrmUserType
 
 		return VisibilityManager::getVisibleUserFields($userFields, $userId);
 	}
-}
 
-?>
+	public function setFieldNamePrefix(string $prefix): void
+	{
+		$this->fieldNamePrefix = $prefix;
+	}
+
+	protected function appendNamePrefix(array $fields): array
+	{
+		if(!$this->fieldNamePrefix)
+		{
+			return $fields;
+		}
+
+		$result = [];
+		foreach ($fields as $field)
+		{
+			$fieldName = $this->fieldNamePrefix . $field['FIELD_NAME'];
+			$field['FIELD_NAME'] = $fieldName;
+
+			$result[$fieldName] = $field;
+		}
+
+		return $result;
+	}
+}

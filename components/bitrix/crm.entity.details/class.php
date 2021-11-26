@@ -1,6 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 CModule::IncludeModule("crm");
+
 use Bitrix\Main;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
@@ -105,7 +106,7 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			$this->arResult['REST_USE'] = true;
 			\CJSCore::Init(array('applayout'));
 
-			$placement = 'CRM_'.\CCrmOwnerType::ResolveName($this->entityTypeID).'_DETAIL_TAB';
+			$placement = \Bitrix\Crm\Integration\Rest\AppPlacement::getDetailTabPlacementCode($this->entityTypeID);
 			$placementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList($placement);
 
 			if(count($placementHandlerList) > 0)

@@ -726,71 +726,34 @@ $_SESSION['CRM_GRID_DATA'][$arResult['GRID_ID']] = array('FILTER' => $arFilter);
 
 if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 {
-	if (isset($arEntityList['LEAD']) && !empty($arEntityList['LEAD']))
+	$router = \Bitrix\Crm\Service\Container::getInstance()->getRouter();
+	foreach ($arEntityList as $typeName => $ids)
 	{
-		$dbRes = CCrmLead::GetListEx(
-			array('TITLE'=>'ASC', 'LAST_NAME'=>'ASC', 'NAME' => 'ASC'),
-			array('ID' => $arEntityList['LEAD'])
-		);
-		while ($arRes = $dbRes->Fetch())
+		if (empty($ids))
 		{
-			$arEntityList['LEAD'][$arRes['ID']] = Array(
-				'ENTITY_TITLE' => $arRes['TITLE'],
-				'ENTITY_LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'], array('lead_id' => $arRes['ID']))
-			);
+			continue;
 		}
-	}
-	if (isset($arEntityList['CONTACT']) && !empty($arEntityList['CONTACT']))
-	{
-		$dbRes = CCrmContact::GetListEx(
-			array('LAST_NAME'=>'ASC', 'NAME' => 'ASC'),
-			array('ID' => $arEntityList['CONTACT'])
-		);
-		while ($arRes = $dbRes->Fetch())
+		$entityTypeId = \CCrmOwnerType::ResolveID($typeName);
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
 		{
-			$arEntityList['CONTACT'][$arRes['ID']] = Array(
-				'ENTITY_TITLE' => $arRes['LAST_NAME'].' '.$arRes['NAME'],
-				'ENTITY_LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'], array('contact_id' => $arRes['ID']))
-			);
+			continue;
 		}
-	}
-	if (isset($arEntityList['COMPANY']) && !empty($arEntityList['COMPANY']))
-	{
-		$dbRes = CCrmCompany::GetListEx(
-			array('TITLE'=>'ASC'),
-			array('ID' => $arEntityList['COMPANY'])
-		);
-		while ($arRes = $dbRes->Fetch())
+		$isCategoriesSupported = $factory->isCategoriesSupported();
+		$items = $factory->getItemsFilteredByPermissions(['filter' => [
+			'@ID' => $ids,
+		]]);
+		foreach ($items as $item)
 		{
-			$arEntityList['COMPANY'][$arRes['ID']] = Array(
-				'ENTITY_TITLE' => $arRes['TITLE'],
-				'ENTITY_LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'], array('company_id' => $arRes['ID']))
-			);
-		}
-	}
-	if (isset($arEntityList['DEAL']) && !empty($arEntityList['DEAL']))
-	{
-		$dbRes = CCrmDeal::GetListEx(
-			array('TITLE'=>'ASC'),
-			array('ID' => $arEntityList['DEAL'])
-		);
-		while ($arRes = $dbRes->Fetch())
-		{
-			$arEntityList['DEAL'][$arRes['ID']] = Array(
-				'ENTITY_TITLE' => $arRes['TITLE'],
-				'ENTITY_LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'], array('deal_id' => $arRes['ID']))
-			);
-		}
-	}
-	if (isset($arEntityList['QUOTE']) && !empty($arEntityList['QUOTE']))
-	{
-		$dbRes = CCrmQuote::GetList(Array('TITLE'=>'ASC'), array('ID' => $arEntityList['QUOTE']));
-		while ($arRes = $dbRes->Fetch())
-		{
-			$arEntityList['QUOTE'][$arRes['ID']] = Array(
-				'ENTITY_TITLE' => empty($arRes['TITLE']) ? $arRes['QUOTE_NUMBER'] : $arRes['QUOTE_NUMBER'].' - '.$arRes['TITLE'],
-				'ENTITY_LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_SHOW'], array('quote_id' => $arRes['ID']))
-			);
+			$itemId = $item->getId();
+			$arEntityList[$typeName][$itemId] = [
+				'ENTITY_TITLE' => $item->getTitle(),
+				'ENTITY_LINK' => $router->getItemDetailUrl(
+					$entityTypeId,
+					$itemId,
+					$isCategoriesSupported ? $item->getCategoryId() : null
+				)
+			];
 		}
 	}
 	foreach($arResult['EVENT'] as $key => $ar)

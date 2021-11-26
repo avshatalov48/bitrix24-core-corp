@@ -122,7 +122,7 @@ class PullManager
 		$itemEventName = static::getItemEventName(static::EVENT_ITEM_UPDATED, (string)$params['TYPE'], (int)$item['id']);
 		if ($itemEventName)
 		{
-			return $this->sendEvent($itemEventName, $eventParams);
+			return $this->sendUserEvent($itemEventName, $eventParams);
 		}
 
 		return $isKanbanEventSent;
@@ -168,7 +168,8 @@ class PullManager
 	{
 		$tag = $this->getKanbanTag($params['TYPE'], $params);
 		$eventParams = $this->prepareStageEventParams($item, self::EVENT_STAGE_UPDATED);
-		return $this->sendEvent($tag, $eventParams);
+
+		return $this->sendUserEvent($tag, $eventParams);
 	}
 
 	/**
@@ -228,7 +229,7 @@ class PullManager
 		}
 		unset($params['skipCurrentUser']);
 
-		return $this->sendEvent($eventId, $params, $userIds);
+		return $this->sendUserEvent($eventId, $params, $userIds);
 	}
 
 	/**
@@ -341,6 +342,23 @@ class PullManager
 		return null;
 	}
 
+	public function sendCrmInitiatedEvent(): bool
+	{
+		if(!$this->isEnabled())
+		{
+			return false;
+		}
+		$sharedChannel = \CPullChannel::GetChannelShared();
+
+		return $this->sendChannelEvent(
+			$sharedChannel['CHANNEL_ID'],
+			'was_inited',
+			[
+				'expiry' => 180,
+			]
+		);
+	}
+
 	protected function subscribeOnEvent(string $tag, bool $immediate = true): ?string
 	{
 		if($this->isEnabled && !empty($tag))
@@ -355,7 +373,7 @@ class PullManager
 		return null;
 	}
 
-	protected function sendEvent(string $tag, array $params = [], array $userIds = null): bool
+	protected function sendUserEvent(string $tag, array $params = [], array $userIds = null): bool
 	{
 		if(!$this->isEnabled())
 		{
@@ -383,6 +401,20 @@ class PullManager
 		}
 
 		return false;
+	}
+
+	protected function sendChannelEvent(string $channelId, string $tag, array $params = []): bool
+	{
+		if(!$this->isEnabled())
+		{
+			return false;
+		}
+
+		return \CPullStack::AddByChannel($channelId, [
+			'module_id' => static::MODULE_ID,
+			'command' => $tag,
+			'expiry' => $params['expiry'] ?? 86400,
+		]);
 	}
 
 	public static function onGetDependentModule(): array

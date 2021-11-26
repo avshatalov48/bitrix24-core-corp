@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_ADD_PROJECT"] = "Create project";
 $MESS["TASKS_CANCEL"] = "Cancel";
 $MESS["TASKS_SELECT"] = "Select";
@@ -52,6 +52,8 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_HINT_ADD_TO_FAVORITE"] = "Favorites is your
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_HINT_ADD_TO_TIMEMAN"] = "The Daily plan can be found at the page top, beside the clock. Add the task to the plan for faster access from within any Bitrix24 page.";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_HINT_ALLOW_CHANGE_DEADLINE"] = "Responsible person can change the task's planned dates and deadline. As a task author, you will be notified of all the changes.";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_HINT_ALLOW_TASK_CONTROL"] = "After the task has been completed by a designated employee, it will be sent to the task's author for review. Should the author accept the task, it will be closed. Otherwise, you can resubmit the task for revision.";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_HINT_ALLOW_TASK_CONTROL_V2"] = "As soon as the responsible person marks the task as completed, it will be sent over to you for review. You can accept the task or return it for revision. The task will not be closed until you have accepted it.";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_HINT_DEADLINE_EXPIRED"] = "The task will be overdue immediately after it is created because the deadline is earlier than now.";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_HINT_MATCH_WORK_TIME"] = "If the task's planned dates encounter weekends or holidays, task duration will be extended thus allowing for more precise terms.";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_LOADING"] = "Loading";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_MAKE_REPLICABLE"] = "Activate";
@@ -78,6 +80,7 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_SAVE_AS_TEMPLATE"] = "Save as template";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_SAVE_TASK"] = "Save changes";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_START_FROM"] = "Start task on";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_TASK_CONTROL"] = "Approve task when completed";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_TASK_CONTROL_V2"] = "Check task upon completion";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_TEMPLATE_CREATED"] = "Recurring execution templates has been created for the task";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_TEMPLATE_WILL_BE_CREATED"] = "Attention! A new template will be derived from the task with the specified runtime parameters.";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_TEMPLATE_WILL_BE_DELETED"] = "Attention! Template will be deleted if recurring execution parameters are disabled";
@@ -88,4 +91,3 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST_HINT"] = "Select text in the t
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_TO_LIST"] = "Back to list";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_VIEW_TASK"] = "View";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_WHAT_TO_BE_DONE"] = "Things to do";
-?>

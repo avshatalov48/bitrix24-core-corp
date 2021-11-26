@@ -66,6 +66,7 @@ var CrmFormEditor = function(params)
 		this.dependencies = new CrmFormEditorDependencies({
 			caller: this,
 			relations: params.relations,
+			allRelations: params.allRelations,
 			relationEntities: params.relationEntities
 		});
 
@@ -353,6 +354,10 @@ var CrmFormEditor = function(params)
 	{
 		BX.onCustomEvent(this, 'change-field-list', [this.fields]);
 	};
+	this.fireFieldAddedEvent = function (field)
+	{
+		BX.onCustomEvent(this, 'field-added', [field]);
+	};
 
 	this.fireFieldChangeItemsEvent = function (field)
 	{
@@ -489,6 +494,7 @@ var CrmFormEditor = function(params)
 		this.addFieldItems(field);
 		this.addFieldSettingsItems(field);
 		this.initFieldSettings(field);
+		this.fireFieldAddedEvent(field);
 
 		if(!doNotSort)
 		{
@@ -823,7 +829,7 @@ var CrmFormEditor = function(params)
 		var multipleCheckboxNode = field.node.querySelector('[data-bx-order-form-btn-multiple]');
 		var multipleNode = field.node.querySelector('[data-bx-order-form-btn-multiple-cont]');
 		var multipleAddNode = field.node.querySelector('[data-bx-order-form-btn-add]');
-		
+
 		if(multipleNode && multipleValueNode && multipleCheckboxNode)
 		{
 			if(!field.dict.multiple)
@@ -2449,6 +2455,26 @@ CrmFormEditorDependencies.prototype =
 				this.actualizeFieldListOperational(dep.doFieldNodeCtrl, [valueDo]);
 			}
 		},
+		onFieldAdded: function(field)
+		{
+			var foundDeps = this.deps.filter(function (dep) {
+				return (dep && dep.ID === field.name);
+			});
+
+			var relations = this.allRelations.filter(function (rel) {
+				return rel.DO_FIELD_CODE === field.name;
+			});
+
+			if (foundDeps.length === 0 && relations.length > 0)
+			{
+				this.helper.appendNodeByTemplate(
+					this.container,
+					this.caller.templates.dependency,
+					relations[0]
+				);
+				this.bind(relations[0]);
+			}
+		},
 		onChangeFormFields: function()
 		{
 			this.deps.forEach(this.actualize, this);
@@ -2465,8 +2491,10 @@ CrmFormEditorDependencies.prototype =
 
 			// init existed deps
 			params.relations.forEach(this.bind, this);
+			this.allRelations = params.allRelations || [];
 
 			// listen events of changing form fields
+			BX.addCustomEvent(this.caller, 'field-added', BX.proxy(this.onFieldAdded, this));
 			BX.addCustomEvent(this.caller, 'change-field-list', BX.proxy(this.onChangeFormFields, this));
 			BX.addCustomEvent(this.caller, 'change-field-items', BX.proxy(this.onChangeFormFields, this));
 		}
@@ -3490,7 +3518,7 @@ if (typeof(BX.CrmProductSearchDialogWindow) === "undefined")
 					attrs: {
 						className: "crm-catalog",
 						style: "display: block; background-color: #f3f6f7; height: " + this._settings.height +
-						"px; overflow: hidden; width: " + this._settings.width + "px;"
+							"px; overflow: hidden; width: " + this._settings.width + "px;"
 					}
 				}
 			);

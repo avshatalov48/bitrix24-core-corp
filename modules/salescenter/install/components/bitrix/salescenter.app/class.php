@@ -573,7 +573,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 						'%s %s (%s, %s %s)',
 						Loc::getMessage('SALESCENTER_SHIPMENT_CREATED_AT'),
 						ConvertTimeStamp($dateInsert->getTimestamp(),'SHORT'),
-						$this->shipment->getDelivery()->getNameWithParent(),
+						$this->shipment->getDelivery() ? $this->shipment->getDelivery()->getNameWithParent() : '',
 						Loc::getMessage('SALESCENTER_AMOUNT_TO_PAY'),
 						SaleFormatCurrency(
 							$this->shipment->getPrice(),
@@ -1814,7 +1814,35 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	public function configureActions()
 	{
-		return [];
+		$actionCrmWriteFilterClass = new class extends Main\Engine\ActionFilter\Base
+		{
+			public function onBeforeAction(Main\Event $event)
+			{
+				Main\Loader::includeModule('salescenter');
+				Main\Loader::includeModule('crm');
+
+				global $USER;
+				$crmPerms = new \CCrmPerms($USER->GetID());
+				if (!$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+				{
+					$this->addError(new Main\Error(
+						Loc::getMessage('SALESCENTER_CRM_PERMISSION_DENIED'),
+					));
+
+					return new Main\EventResult(Main\EventResult::ERROR, null, null, $this);
+				}
+
+				return null;
+			}
+		};
+
+		return [
+			'saveSmsTemplate' => [
+				'+prefilters' => [
+					new $actionCrmWriteFilterClass,
+				]
+			],
+		];
 	}
 
 	/**

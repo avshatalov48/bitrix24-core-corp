@@ -2,48 +2,31 @@
 
 	this.Utils =
 	{
-		decodeBbCode(params = {})
+		decodeCustomBbCode(text)
 		{
-			let { text } = params;
-
-			text = text.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/ig, function(whole, link, text)
-			{
-				link = Utils.htmlspecialcharsback(link);
-				text = Utils.htmlspecialcharsback(text);
-				let allowList = [
-					"http:",
-					"https:",
-					"ftp:",
-					"file:",
-					"tel:",
-					"callto:",
-					"mailto:",
-					"skype:",
-					"viber:",
-				];
-
-				let allowed = false;
-				allowList.forEach((protocol) => {
-					if (link.startsWith(protocol))
-					{
-						allowed = true;
-					}
-				})
-
-				return allowed ? `<a href="${link}">${text}</a>` : whole;
+			text = text.replace(/\[LIKE\]/ig, () => {
+				return `[IMG width="15" height="15"]${currentDomain}/bitrix/js/im/images/hires/like.png[/IMG]`;
 			});
-
-			text = text.replace(/\[LIKE\]/ig, BX.message('MOBILE_EXT_NOTIFICATION_BB_CODE_LIKE'));
-			text = text.replace(/\[DISLIKE\]/ig, BX.message('MOBILE_EXT_NOTIFICATION_BB_CODE_DISLIKE'));
-
-			text = text.replace(/\[BR\]/ig, '<br/>');
-			text = text.replace(/\[([buis])\](.*?)\[(\/[buis])\]/ig, (whole, open, inner, close) => {
-				return '<' + open + '>' + inner + '<' + close + '>';
+			text = text.replace(/\[DISLIKE\]/ig, () => {
+				return `[IMG width="15" height="15"]${currentDomain}/bitrix/js/im/images/hires/dislike.png[/IMG]`;
 			});
-
 			text = text.replace(/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/ig, (whole, openlines, chatId, inner) => inner);
 			text = text.replace(/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/ig, (whole, userId, text) => text);
 			text = text.replace(/\[PCH=([0-9]{1,})\](.*?)\[\/PCH\]/ig, (whole, historyId, text) => text);
+			text = text.replace(/\[RATING\=([1-5]{1})\]/ig, (whole, rating) => {
+				const ratingUrl = `${currentDomain}/bitrix/js/im/images/hires/stars${rating}.png`;
+
+				return `[IMG width="105" height="15"]${ratingUrl}[/IMG]`;
+			});
+
+			// links style (bold, fontSize 14, color)
+			text = text.replace(/\[url=([^\]]+)](.*?)\[\/url]/ig, (whole, src, text) => {
+				return `[B][COLOR=#1d54a2][URL=${src}]${text}[/URL][/COLOR][/B]`;
+			});
+
+			// not supported #br# or [br] code.
+			text = text.replace(/( *#BR# *)/ig, '\n');
+			text = text.replace(/\[BR]/ig, '\n');
 
 			return text;
 		},
@@ -241,9 +224,9 @@
 			{
 				if (params[1] === 'CRM' && params[3] !== undefined)
 				{
-					let { entityTypeName, entityId } = params[3].split("_");
-					entityTypeName = entityTypeName.toLowerCase();
-					entityId = +entityId;
+					const entity = params[3].split("_");
+					const entityTypeName = entity[0].toLowerCase();
+					const entityId = parseInt(entity[1]);
 
 					if (entityTypeName === 'lead' || entityTypeName === 'deal')
 					{
@@ -273,12 +256,120 @@
 			}
 
 			return text.replace(/\&quot;/g, '"')
-				.replace(/&#39;/g, "'")
+				.replace(/&#039;/g, "'")
 				.replace(/\&lt;/g, '<')
 				.replace(/\&gt;/g, '>')
 				.replace(/\&amp;/g, '&')
 				.replace(/\&nbsp;/g, ' ');
 		},
+
+		getFormattedDateTime(timestamp)
+		{
+			const nowDate = new Date();
+			const nowYear = nowDate.getFullYear();
+			const nowMonth = nowDate.getMonth();
+			const nowDay = nowDate.getDate();
+
+			const timestampShort = timestamp / 1000;
+
+			const todayStart = new Date(Date.UTC(nowYear, nowMonth, nowDay, 0, 0, 0, 0));
+			const todayEnd = new Date(Date.UTC(nowYear, nowMonth, nowDay+1, 0, 0, 0, 0));
+
+			const yesterdayStart = new Date(Date.UTC(nowYear, nowMonth, nowDay-1, 0, 0, 0, 0));
+			const yesterdayEnd = new Date(Date.UTC(nowYear, nowMonth, nowDay, 0, 0, 0, 0));
+
+			const targetDate = new Date(timestamp);
+			if (targetDate >= todayStart && targetDate < todayEnd)
+			{
+				return BX.message('MOBILE_EXT_NOTIFICATION_TODAY_DATETIME').replace(
+					'#datetime#',
+					dateFormatter.get(timestampShort, dateFormatter.formats.shortTime)
+				);
+			}
+			else if (targetDate >= yesterdayStart && targetDate < yesterdayEnd)
+			{
+				return BX.message('MOBILE_EXT_NOTIFICATION_YESTERDAY_DATETIME').replace(
+					'#datetime#',
+					dateFormatter.get(timestampShort, dateFormatter.formats.shortTime)
+				);
+			}
+			else if (targetDate.getFullYear() === nowYear)
+			{
+				return BX.message('MOBILE_EXT_NOTIFICATION_FULL_DATETIME').replace(
+					'#time#',
+					dateFormatter.get(timestampShort, dateFormatter.formats.shortTime)
+				).replace(
+					'#date#',
+					dateFormatter.get(timestampShort, dateFormatter.formats.dayMonth)
+				);
+			}
+
+			return BX.message('MOBILE_EXT_NOTIFICATION_FULL_DATETIME').replace(
+				'#time#',
+				dateFormatter.get(timestampShort, dateFormatter.formats.shortTime)
+			).replace(
+				'#date#',
+				dateFormatter.get(timestampShort, dateFormatter.formats.longDate)
+			);
+		},
+
+		getListItemTypeSuffix(attach)
+		{
+			if (attach.USER) return "u"
+			if (attach.LINK) return "l"
+			if (attach.MESSAGE) return "m"
+			if (attach.HTML) return "h"
+			if (attach.FILE) return "f"
+			if (attach.DELIMITER) return "d"
+			if (attach.IMAGE) return "i"
+			if (attach.GRID) return "g"
+			return ""
+		},
+
+		getListItemType(item)
+		{
+			return !!item.params && !!item.params.ATTACH ? Array.from(item.params.ATTACH).reduce(
+				(acc, attachBlock, index, arr) => (
+					acc + Array.from(attachBlock.BLOCKS).reduce(
+						(acc, attach, index, arr) => (acc + this.getListItemTypeSuffix(attach)),
+						""
+					)
+				),
+				"attach"
+			) : (item.notify_type === 1 ? 'confirm' : 'notification');
+		},
+
+		openUrl(url)
+		{
+			const rewritedUrl = UrlRewriter.get(url);
+			PageManager.openPage({url: rewritedUrl});
+		},
+
+		sortByType(a, b)
+		{
+			if (a.commonType === Const.NotificationTypes.confirm && b.commonType !== Const.NotificationTypes.confirm)
+			{
+				return -1;
+			}
+			else if (a.commonType !== Const.NotificationTypes.confirm && b.commonType === Const.NotificationTypes.confirm)
+			{
+				return 1;
+			}
+			else
+			{
+				return b.id - a.id;
+			}
+		},
+
+		getAvatarUrl(params)
+		{
+			if (params.userAvatar && params.userAvatar !== '/bitrix/js/im/images/blank.gif')
+			{
+				return currentDomain + params.userAvatar;
+			}
+
+			return '';
+		}
 	}
 
 })();

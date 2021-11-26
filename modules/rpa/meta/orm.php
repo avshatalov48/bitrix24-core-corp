@@ -152,18 +152,6 @@ namespace Bitrix\Rpa\Model {
 }
 namespace Bitrix\Rpa\Model {
 	/**
-	 * @method static EO_Field_Query query()
-	 * @method static EO_Field_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Field_Result getById($id)
-	 * @method static EO_Field_Result getList(array $parameters = array())
-	 * @method static EO_Field_Entity getEntity()
-	 * @method static \Bitrix\Rpa\Model\EO_Field createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Rpa\Model\EO_Field_Collection createCollection()
-	 * @method static \Bitrix\Rpa\Model\EO_Field wakeUpObject($row)
-	 * @method static \Bitrix\Rpa\Model\EO_Field_Collection wakeUpCollection($rows)
-	 */
-	class FieldTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -402,18 +390,6 @@ namespace Bitrix\Rpa\Model {
 }
 namespace Bitrix\Rpa\Model {
 	/**
-	 * @method static EO_ItemHistory_Query query()
-	 * @method static EO_ItemHistory_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ItemHistory_Result getById($id)
-	 * @method static EO_ItemHistory_Result getList(array $parameters = array())
-	 * @method static EO_ItemHistory_Entity getEntity()
-	 * @method static \Bitrix\Rpa\Model\ItemHistory createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Rpa\Model\EO_ItemHistory_Collection createCollection()
-	 * @method static \Bitrix\Rpa\Model\ItemHistory wakeUpObject($row)
-	 * @method static \Bitrix\Rpa\Model\EO_ItemHistory_Collection wakeUpCollection($rows)
-	 */
-	class ItemHistoryTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -566,18 +542,6 @@ namespace Bitrix\Rpa\Model {
 	}
 }
 namespace Bitrix\Rpa\Model {
-	/**
-	 * @method static EO_ItemHistoryField_Query query()
-	 * @method static EO_ItemHistoryField_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ItemHistoryField_Result getById($id)
-	 * @method static EO_ItemHistoryField_Result getList(array $parameters = array())
-	 * @method static EO_ItemHistoryField_Entity getEntity()
-	 * @method static \Bitrix\Rpa\Model\EO_ItemHistoryField createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Rpa\Model\EO_ItemHistoryField_Collection createCollection()
-	 * @method static \Bitrix\Rpa\Model\EO_ItemHistoryField wakeUpObject($row)
-	 * @method static \Bitrix\Rpa\Model\EO_ItemHistoryField_Collection wakeUpCollection($rows)
-	 */
-	class ItemHistoryFieldTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -742,18 +706,6 @@ namespace Bitrix\Rpa\Model {
 	}
 }
 namespace Bitrix\Rpa\Model {
-	/**
-	 * @method static EO_ItemSort_Query query()
-	 * @method static EO_ItemSort_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ItemSort_Result getById($id)
-	 * @method static EO_ItemSort_Result getList(array $parameters = array())
-	 * @method static EO_ItemSort_Entity getEntity()
-	 * @method static \Bitrix\Rpa\Model\EO_ItemSort createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Rpa\Model\EO_ItemSort_Collection createCollection()
-	 * @method static \Bitrix\Rpa\Model\EO_ItemSort wakeUpObject($row)
-	 * @method static \Bitrix\Rpa\Model\EO_ItemSort_Collection wakeUpCollection($rows)
-	 */
-	class ItemSortTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -931,18 +883,6 @@ namespace Bitrix\Rpa\Model {
 }
 namespace Bitrix\Rpa\Model {
 	/**
-	 * @method static EO_Permission_Query query()
-	 * @method static EO_Permission_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Permission_Result getById($id)
-	 * @method static EO_Permission_Result getList(array $parameters = array())
-	 * @method static EO_Permission_Entity getEntity()
-	 * @method static \Bitrix\Rpa\Model\EO_Permission createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Rpa\Model\EO_Permission_Collection createCollection()
-	 * @method static \Bitrix\Rpa\Model\EO_Permission wakeUpObject($row)
-	 * @method static \Bitrix\Rpa\Model\EO_Permission_Collection wakeUpCollection($rows)
-	 */
-	class PermissionTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1108,18 +1048,6 @@ namespace Bitrix\Rpa\Model {
 	}
 }
 namespace Bitrix\Rpa\Model {
-	/**
-	 * @method static EO_StageToStage_Query query()
-	 * @method static EO_StageToStage_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_StageToStage_Result getById($id)
-	 * @method static EO_StageToStage_Result getList(array $parameters = array())
-	 * @method static EO_StageToStage_Entity getEntity()
-	 * @method static \Bitrix\Rpa\Model\EO_StageToStage createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Rpa\Model\EO_StageToStage_Collection createCollection()
-	 * @method static \Bitrix\Rpa\Model\EO_StageToStage wakeUpObject($row)
-	 * @method static \Bitrix\Rpa\Model\EO_StageToStage_Collection wakeUpCollection($rows)
-	 */
-	class StageToStageTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1344,18 +1272,6 @@ namespace Bitrix\Rpa\Model {
 	}
 }
 namespace Bitrix\Rpa\Model {
-	/**
-	 * @method static EO_Timeline_Query query()
-	 * @method static EO_Timeline_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Timeline_Result getById($id)
-	 * @method static EO_Timeline_Result getList(array $parameters = array())
-	 * @method static EO_Timeline_Entity getEntity()
-	 * @method static \Bitrix\Rpa\Model\Timeline createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Rpa\Model\EO_Timeline_Collection createCollection()
-	 * @method static \Bitrix\Rpa\Model\Timeline wakeUpObject($row)
-	 * @method static \Bitrix\Rpa\Model\EO_Timeline_Collection wakeUpCollection($rows)
-	 */
-	class TimelineTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

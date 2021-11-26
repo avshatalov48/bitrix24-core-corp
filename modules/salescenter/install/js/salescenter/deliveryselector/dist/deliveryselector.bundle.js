@@ -377,14 +377,13 @@ this.BX = this.BX || {};
 	      var data = event.getData();
 	      _this4.editMode = true;
 	      var address = data.address;
-	      var value = address.toJson();
 
 	      if (!_this4.isValueValid(address)) {
 	        _this4.changeValue(null);
 	      } else {
 	        _this4.enteredAddresses.push(address);
 
-	        _this4.changeValue(value);
+	        _this4.changeValue(address.toJson());
 
 	        _this4.showMap();
 	      }
@@ -950,6 +949,7 @@ this.BX = this.BX || {};
 	      } else {
 	        this.selectedDeliveryService = deliveryService;
 	        this.emitChange();
+	        this.emitServiceChanged();
 	      }
 	    },
 	    isNoDeliveryService: function isNoDeliveryService(service) {
@@ -964,6 +964,10 @@ this.BX = this.BX || {};
 	    onPropValueChanged: function onPropValueChanged(event, relatedProp) {
 	      ui_vue.Vue.set(this.relatedPropsValues, relatedProp.id, event);
 	      this.emitChange();
+
+	      if (relatedProp.isAddressFrom) {
+	        this.emitAddressFromChanged();
+	      }
 	    },
 	    onServiceValueChanged: function onServiceValueChanged(event, relatedService) {
 	      ui_vue.Vue.set(this.relatedServicesValues, relatedService.id, event);
@@ -974,6 +978,12 @@ this.BX = this.BX || {};
 	    },
 	    emitChange: function emitChange() {
 	      this.$emit('change', this.state);
+	    },
+	    emitAddressFromChanged: function emitAddressFromChanged() {
+	      this.$emit('address-from-changed');
+	    },
+	    emitServiceChanged: function emitServiceChanged() {
+	      this.$emit('delivery-service-changed');
 	    },
 	    formatMoney: function formatMoney(value) {
 	      return BX.Currency.currencyFormat(value, this.currency, false);

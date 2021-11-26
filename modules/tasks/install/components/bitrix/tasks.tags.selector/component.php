@@ -53,4 +53,6 @@ else
 	$arResult['PATH_TO_TASKS'] = '/company/personal/user/'.$USER->GetID().'/tasks/';
 }
 
+$arResult['CAN_EDIT'] = ($arParams['CAN_EDIT'] ?? false);
+
 $this->IncludeComponentTemplate();

@@ -63,6 +63,36 @@ class User extends \IRestService
             $filter = array_filter($params['filter'], $filterCallback , ARRAY_FILTER_USE_KEY);
         }
 
+		if (Loader::includeModule('extranet') )
+		{
+			$filteredUserIDs = \CExtranet::getMyGroupsUsersSimple(\CExtranet::getExtranetSiteID());
+			$filteredUserIDs[] = $USER->getID();
+
+			if (\CExtranet::isIntranetUser())
+			{
+				if (
+					!isset($filter["ID"])
+					|| !Loader::includeModule('socialnetwork')
+					|| !\CSocNetUser::IsCurrentUserModuleAdmin(\CSite::getDefSite(), false)
+				)
+				{
+					$filter[] = [
+						'LOGIC' => 'OR',
+						'!UF_DEPARTMENT' => false,
+						'ID' => $filteredUserIDs
+					];
+				}
+			}
+			else
+			{
+				$filter['ID'] = (isset($filter['ID'])
+					? array_intersect((is_array($filter['ID'])
+						? $filter['ID']
+						: [$filter['ID']]), $filteredUserIDs)
+					: $filteredUserIDs);
+			}
+		}
+
 		$dbUsers = UserTable::getList([
 			'filter' => $filter,
 			'select' => self::allowedFields(),

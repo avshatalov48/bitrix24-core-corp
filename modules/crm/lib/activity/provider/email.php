@@ -12,6 +12,9 @@ use Bitrix\Crm\Activity\CommunicationStatistics;
 class Email extends Activity\Provider\Base
 {
 
+	public const ERROR_TYPE_PARTIAL = "partial";
+	public const ERROR_TYPE_FULL = "full";
+
 	protected const TYPE_EMAIL = 'EMAIL';
 	protected const TYPE_EMAIL_COMPRESSED = 'EMAIL_COMPRESSED';
 
@@ -203,22 +206,33 @@ class Email extends Activity\Provider\Base
 			return null;
 		}
 
-		$result = [];
+
 		if (isset($settings['READ_CONFIRMED']) && $settings['READ_CONFIRMED'] > 0)
 		{
-			$result['STATUS_TEXT'] = Loc::getMessage('CRM_ACTIVITY_PROVIDER_EMAIL_STATUS_READ');
+			return [
+				"STATUS_ERROR" => false,
+				"STATUS_TEXT" => Loc::getMessage('CRM_ACTIVITY_PROVIDER_EMAIL_STATUS_READ')
+			];
 		}
-		else
+
+		switch ($settings["SENT_ERROR"])
 		{
-			if (Config\Option::get('main', 'track_outgoing_emails_read', 'Y') != 'Y')
-			{
-				return null;
-			}
-
-			$result['STATUS_TEXT'] = Loc::getMessage('CRM_ACTIVITY_PROVIDER_EMAIL_STATUS_SENT');
+			case self::ERROR_TYPE_FULL:
+				return array(
+					"STATUS_ERROR" => true,
+					"STATUS_TEXT" => Loc::getMessage('CRM_ACTIVITY_PROVIDER_EMAIL_STATUS_ERROR')
+				);
+			case self::ERROR_TYPE_PARTIAL:
+				return array(
+					"STATUS_ERROR" => false,
+					"STATUS_TEXT" => Loc::getMessage('CRM_ACTIVITY_PROVIDER_EMAIL_STATUS_SENT_WITH_ERROR')
+				);
+			default:
+				return Config\Option::get('main', 'track_outgoing_emails_read', 'Y') != 'Y'? null : array(
+					"STATUS_ERROR" => false,
+					"STATUS_TEXT" => Loc::getMessage('CRM_ACTIVITY_PROVIDER_EMAIL_STATUS_SENT')
+				);
 		}
-
-		return $result;
 	}
 
 	public static function getParentByEmail(&$msgFields)

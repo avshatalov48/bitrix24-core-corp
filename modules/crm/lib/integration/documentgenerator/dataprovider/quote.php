@@ -3,10 +3,10 @@
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\Binding\QuoteContactTable;
+use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\QuoteTable;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
-use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Value\DateTime;
 
 class Quote extends ProductsDataProvider
@@ -25,7 +25,11 @@ class Quote extends ProductsDataProvider
 			parent::getFields();
 			$this->fields['ID'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_ID_TITLE'),];
 			$this->fields['TITLE'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_TITLE_TITLE'),];
-			$this->fields['OPPORTUNITY'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_OPPORTUNITY_TITLE'),];
+			$this->fields['OPPORTUNITY'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_OPPORTUNITY_TITLE'),
+				'TYPE' => Money::class,
+				'FORMAT' => ['CURRENCY_ID' => $this->getCurrencyId()],
+			];
 			$this->fields['CURRENCY_ID'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CURRENCY_ID_TITLE'),];
 			$this->fields['LOCATION_ID'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_LOCATION_ID_TITLE'),];
 			$this->fields['COMMENTS'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_COMMENTS_TITLE'), 'TYPE' => static::FIELD_TYPE_TEXT];

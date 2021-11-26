@@ -395,6 +395,30 @@
 				BX('imol_worktime_dayoff_rule_text')
 			);
 		},
+		toggleWelcomeFormBlock: function()
+		{
+			if (BX('imol_form_welcome').checked)
+			{
+				BX('imol_form_welcome_block').classList.remove("invisible");
+			}
+			else
+			{
+				BX('imol_form_welcome_block').classList.add("invisible");
+			}
+		},
+		toggleWelcomeFormDelayHint: function()
+		{
+			if (BX('imol_form_welcome_delay').value === 'Y')
+			{
+				BX('imol_form_no_delay_description').classList.add("invisible");
+				BX('imol_form_delay_description').classList.remove("invisible");
+			}
+			else
+			{
+				BX('imol_form_no_delay_description').classList.remove("invisible");
+				BX('imol_form_delay_description').classList.add("invisible");
+			}
+		},
 		deleteOpenLine: function()
 		{
 			var configId = BX('imol_config_id').value;
@@ -413,6 +437,22 @@
 				BX('imol-alert-popup-text').innerHTML = BX.message('IMOL_CONFIG_EDIT_DELETE_FAIL');
 			});
 
+		},
+		addNewForm: function(event) {
+			event.preventDefault();
+			BX.SidePanel.Instance.open('/crm/webform/edit/0/?ACTIVE=Y',
+				{events:
+					{
+						onClose: function(e){
+							// BX.SidePanel.Instance.postMessage(
+							// 	e.getSlider(), 'ContactCenter:reloadItem', {moduleId:'crm',itemCode:'form'}
+							// )
+							// e.denyAction();
+							// e.getSlider().close();
+						}
+					}
+				}
+			);
 		},
 		showPopupDeleteConfirm: function()
 		{
@@ -682,6 +722,21 @@
 				BX('imol_delete_openline'),
 				'click',
 				BX.proxy(this.showPopupDeleteConfirm, this)
+			);
+			BX.bind(
+				BX('imol_form_welcome_new_form'),
+				'click',
+				BX.proxy(this.addNewForm, this)
+			);
+			BX.bind(
+				BX('imol_form_welcome'),
+				'change',
+				BX.OpenLinesConfigEdit.toggleWelcomeFormBlock
+			);
+			BX.bind(
+				BX('imol_form_welcome_delay'),
+				'change',
+				BX.OpenLinesConfigEdit.toggleWelcomeFormDelayHint
 			);
 			BX.bindDelegate(
 				document.body,

@@ -72,19 +72,19 @@ class EntityAddressType
 		);
 	}
 
-    public static function getAvailableIds()
-    {
-    	// List of all types used in the zone map.
-	    // Could be obtained from the map, but it is not effective.
-    	return [
-		    self::Delivery,
-		    self::Primary,
-		    self::Registered,
-		    self::Home,
-            self::Post,
-		    self::Beneficiary
-	    ];
-    }
+	public static function getAvailableIds()
+	{
+		// List of all types used in the zone map.
+		// Could be obtained from the map, but it is not effective.
+		return [
+			self::Delivery,
+			self::Primary,
+			self::Registered,
+			self::Home,
+			self::Post,
+			self::Beneficiary
+		];
+	}
 
 	public static function resolveID($name)
 	{
@@ -287,7 +287,7 @@ class EntityAddressType
 				'en' => [
 					'types' => [
 						self::Delivery, self::Primary, self::Registered,
-                        self::Home, self::Beneficiary
+						self::Home, self::Beneficiary
 					],
 					'default' => self::Delivery
 				],
@@ -335,8 +335,8 @@ class EntityAddressType
 				],
 				'pl' => [
 					'types' => [
-                        self::Primary, self::Delivery, self::Home,
-                        self::Post, self::Registered, self::Beneficiary
+						self::Primary, self::Delivery, self::Home,
+						self::Post, self::Registered, self::Beneficiary
 					],
 					'default' => self::Primary
 				],

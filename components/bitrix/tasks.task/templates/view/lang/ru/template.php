@@ -102,6 +102,7 @@ $MESS["TASKS_LOG_FILES"] = "Файлы";
 $MESS["TASKS_LOG_TAGS"] = "Теги";
 $MESS["TASKS_LOG_PRIORITY"] = "Важность";
 $MESS["TASKS_LOG_GROUP_ID"] = "Группа";
+$MESS["TASKS_LOG_STAGE"] = "Стадия";
 $MESS["TASKS_LOG_PARENT_ID"] = "Базовая задача";
 $MESS["TASKS_LOG_DEPENDS_ON"] = "Предыдущие задачи";
 $MESS["TASKS_LOG_STATUS"] = "Статус";

@@ -25,10 +25,19 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.task.list");
 
 class TasksTaskGanttComponent extends TasksTaskListComponent
 {
+	protected function loadGrid()
+	{
+		$userId = (int) $this->arParams["USER_ID"];
+		$groupId = (int) $this->arParams["GROUP_ID"];
+		$gridId = $this->getGridId($groupId);
+
+		$this->grid = Grid::getInstance($userId, $groupId, $gridId);
+		$this->filter = Filter::getInstance($userId, $groupId, $gridId);
+	}
+
 	protected function doPreAction()
 	{
-		$this->grid = Grid::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
-		$this->filter = Filter::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
+		$this->loadGrid();
 
 		static::tryParseStringParameter(
 			$this->arParams['NEED_GROUP_BY_GROUPS'],
@@ -78,6 +87,15 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 				$this->arResult['TASKS_LINKS'][$item['TASK_ID']][] = $item;
 			}
 		}
+	}
+
+	/**
+	 * @param int $groupId
+	 * @return string
+	 */
+	private function getGridId(int $groupId): string
+	{
+		return \Bitrix\Tasks\Helper\FilterRegistry::getId(\Bitrix\Tasks\Helper\FilterRegistry::FILTER_GANTT, $groupId);
 	}
 
 	/**

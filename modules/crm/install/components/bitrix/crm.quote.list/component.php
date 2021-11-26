@@ -190,9 +190,9 @@ $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmQuote::$sUFEntityID);
 $arResult['GRID_ID'] = 'CRM_QUOTE_LIST_V12'.($bInternal && !empty($arParams['GRID_ID_SUFFIX']) ? '_'.$arParams['GRID_ID_SUFFIX'] : '');
 $arResult['STATUS_LIST'] = CCrmStatus::GetStatusListEx('QUOTE_STATUS');
 $arResult['CLOSED_LIST'] = array('Y' => GetMessage('MAIN_YES'), 'N' => GetMessage('MAIN_NO'));
-$arResult['WEBFORM_LIST'] = WebFormManager::getListNames();
+$arResult['WEBFORM_LIST'] = WebFormManager::getListNamesEncoded();
 $arResult['FILTER'] = array();
-$arResult['FILTER2LOGIC'] = array();
+$arResult['FILTER2LOGIC'] = [];
 $arResult['FILTER_PRESETS'] = array();
 $arResult['PERMS']['ADD']    = !$CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'ADD');
 $arResult['PERMS']['WRITE']  = !$CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'WRITE');
@@ -250,8 +250,7 @@ $arNavParams['bShowAll'] = false;
 //region Filter initialization
 if (!$bInternal)
 {
-	$arResult['FILTER2LOGIC'] = array('TITLE', 'COMMENTS');
-
+	$arResult['FILTER2LOGIC'] = ['TITLE', 'COMMENTS'];
 	$entityFilter = Crm\Filter\Factory::createEntityFilter(
 		new Crm\Filter\QuoteSettings(
 			array('ID' => $arResult['GRID_ID'])
@@ -627,7 +626,7 @@ foreach ($arFilter as $k => $v)
 		}
 		\Bitrix\Crm\UI\Filter\Range::prepareTo($arFilter, $arMatch[1], $v);
 	}
-	elseif (in_array($k, $arResult['FILTER2LOGIC']))
+	elseif (in_array($k, $arResult['FILTER2LOGIC']) && $v !== false)
 	{
 		// Bugfix #26956 - skip empty values in logical filter
 		$v = trim($v);
@@ -637,7 +636,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter[$k]);
 	}
-	elseif (mb_strpos($k, 'UF_') !== 0 && $k != 'LOGIC')
+	elseif (mb_strpos($k, 'UF_') !== 0 && $k != 'LOGIC' && $v !== false)
 	{
 		$arFilter['%'.$k] = $v;
 		unset($arFilter[$k]);

@@ -165,7 +165,8 @@ class CAllCrmLead
 					'TYPE' => 'char'
 				),
 				'COMMENTS' => array(
-					'TYPE' => 'string'
+					'TYPE' => 'string',
+					'VALUE_TYPE' => 'html',
 				),
 				'HAS_PHONE' => array(
 					'TYPE' => 'char',
@@ -1188,9 +1189,26 @@ class CAllCrmLead
 		return $dbRes->Fetch();
 	}
 
-	static public function BuildPermSql($sAliasPrefix = 'L', $mPermType = 'READ', $arOptions = array())
+	static public function BuildPermSql($sAliasPrefix = 'L', $mPermType = 'READ', $arOptions = [])
 	{
-		return CCrmPerms::BuildSql('LEAD', $sAliasPrefix, $mPermType, $arOptions);
+		$userId = null;
+		if (isset($arOptions['PERMS']) && is_object($arOptions['PERMS']))
+		{
+			/** @var \CCrmPerms $arOptions['PERMS'] */
+			$userId = $arOptions['PERMS']->GetUserID();
+		}
+		$builderOptions =
+			Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
+				->setOperations((array)$mPermType)
+				->setAliasPrefix((string)$sAliasPrefix)
+		;
+
+		$queryBuilder = Crm\Service\Container::getInstance()
+			->getUserPermissions($userId)
+			->createListQueryBuilder(self::$TYPE_NAME, $builderOptions)
+		;
+
+		return $queryBuilder->buildCompatible();
 	}
 	public function Add(array &$arFields, $bUpdateSearch = true, $options = array())
 	{
@@ -1355,7 +1373,7 @@ class CAllCrmLead
 		$assignedByID = (int)$arFields['ASSIGNED_BY_ID'];
 		$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
 		$userPerms =  $assignedByID == CCrmPerms::GetCurrentUserID() ? $this->cPerms : CCrmPerms::GetUserPermissions($assignedByID);
-		$sEntityPerm = $userPerms->GetPermType('LEAD', $sPermission, $arEntityAttr);
+		$sEntityPerm = $userPerms->GetPermType(self::$TYPE_NAME, $sPermission, $arEntityAttr);
 		$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
 
 		//Prepare currency & exchange rate
@@ -1503,7 +1521,12 @@ class CAllCrmLead
 		$arFields['ID'] = $ID;
 		$arFields['DATE_CREATE'] = $arFields['DATE_MODIFY'] = ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL');
 
-		CCrmPerms::UpdateEntityAttr('LEAD', $ID, $arEntityAttr);
+		$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+			->setEntityAttributes($arEntityAttr)
+		;
+		Crm\Security\Manager::getEntityController(CCrmOwnerType::Lead)
+			->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
+		;
 
 		//region Save Observers
 		if(!empty($observerIDs))
@@ -1780,7 +1803,12 @@ class CAllCrmLead
 			}
 		}
 
-		$arUserAttr = CCrmPerms::BuildUserEntityAttr($userID);
+		$arUserAttr = Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($userID)
+			->getAttributesProvider()
+			->getEntityAttributes()
+		;
+
 		return array_merge($arResult, $arUserAttr['INTRANET']);
 	}
 
@@ -1813,7 +1841,7 @@ class CAllCrmLead
 				continue;
 			}
 
-			$attrs = array();
+			$attrs = [];
 			if(isset($fields['OPENED']))
 			{
 				$attrs['OPENED'] = $fields['OPENED'];
@@ -1825,7 +1853,17 @@ class CAllCrmLead
 			}
 
 			$entityAttrs = self::BuildEntityAttr($assignedByID, $attrs);
-			CCrmPerms::UpdateEntityAttr('LEAD', $ID, $entityAttrs);
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($entityAttrs)
+				->setEntityFields($fields)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Lead)
+				->register(
+					self::$TYPE_NAME,
+					$ID,
+					$securityRegisterOptions
+				)
+			;
 		}
 	}
 
@@ -1993,7 +2031,7 @@ class CAllCrmLead
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
 			if($this->bCheckPermission)
 			{
-				$sEntityPerm = $this->cPerms->GetPermType('LEAD', 'WRITE', $arEntityAttr);
+				$sEntityPerm = $this->cPerms->GetPermType(self::$TYPE_NAME, 'WRITE', $arEntityAttr);
 				//HACK: Ensure that entity accessible for user restricted by BX_CRM_PERM_OPEN
 				$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
 				//HACK: Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
@@ -2332,9 +2370,28 @@ class CAllCrmLead
 			$GLOBALS['USER_FIELD_MANAGER']->Update(self::$sUFEntityID, $ID, $arFields);
 			//endregion
 
-			//region Permissions
-			CCrmPerms::UpdateEntityAttr('LEAD', $ID, $arEntityAttr);
+			//region Ensure entity has not been deleted yet by concurrent process
+			$currentDbResult = \CCrmLead::GetListEx(
+				array(),
+				array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
+				false,
+				false,
+				array('*', 'UF_*')
+			);
+
+			$currentFields = $currentDbResult->Fetch();
+			if(!is_array($currentFields))
+			{
+				return false;
+			}
 			//endregion
+
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Lead)
+				->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
+			;
 
 			//region Save contacts
 			if(!empty($removedContactBindings))
@@ -2455,22 +2512,6 @@ class CAllCrmLead
 					{
 					}
 				}
-			}
-			//endregion
-
-			//region Ensure entity has not been deleted yet by concurrent process
-			$currentDbResult = \CCrmLead::GetListEx(
-				array(),
-				array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
-				false,
-				false,
-				array('*', 'UF_*')
-			);
-
-			$currentFields = $currentDbResult->Fetch();
-			if(!is_array($currentFields))
-			{
-				return false;
 			}
 			//endregion
 
@@ -2906,8 +2947,8 @@ class CAllCrmLead
 		$sWherePerm = '';
 		if ($this->bCheckPermission)
 		{
-			$arEntityAttr = $this->cPerms->GetEntityAttr('LEAD', $ID);
-			$sEntityPerm = $this->cPerms->GetPermType('LEAD', 'DELETE', $arEntityAttr[$ID]);
+			$arEntityAttr = $this->cPerms->GetEntityAttr(self::$TYPE_NAME, $ID);
+			$sEntityPerm = $this->cPerms->GetPermType(self::$TYPE_NAME, 'DELETE', $arEntityAttr[$ID]);
 			if ($sEntityPerm == BX_CRM_PERM_NONE)
 				return false;
 			else if ($sEntityPerm == BX_CRM_PERM_SELF)
@@ -2968,7 +3009,10 @@ class CAllCrmLead
 
 			Bitrix\Crm\Kanban\SortTable::clearEntity($ID, \CCrmOwnerType::LeadName);
 
-			$DB->Query("DELETE FROM b_crm_entity_perms WHERE ENTITY='LEAD' AND ENTITY_ID = $ID", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Lead)
+				->unregister(self::$TYPE_NAME, $ID)
+			;
+
 			$GLOBALS['USER_FIELD_MANAGER']->Delete(self::$sUFEntityID, $ID);
 
 			LeadContactTable::unbindAllContacts($ID);
@@ -3772,7 +3816,10 @@ class CAllCrmLead
 
 	public static function GetPermissionAttributes(array $IDs)
 	{
-		return CCrmPerms::GetEntityAttr(self::$TYPE_NAME, $IDs);
+		return
+			\Bitrix\Crm\Security\Manager::resolveController(self::$TYPE_NAME)
+				->getPermissionAttributes(self::$TYPE_NAME, $IDs)
+		;
 	}
 
 	public static function IsAccessEnabled(CCrmPerms $userPermissions = null)

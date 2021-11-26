@@ -7,9 +7,6 @@ use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Converter;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\InvalidOperationException;
-use Bitrix\Main\Loader;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 
 class Item extends Converter
 {
@@ -26,7 +23,9 @@ class Item extends Converter
 			throw new InvalidOperationException('factory for ' . $model->getEntityTypeId() . 'is not found');
 		}
 
-		$data = $this->prepareData($model->getData());
+		$data = $model->getData();
+
+		$data = $factory->getFieldsCollection()->removeHiddenValues($data);
 
 		if (Container::getInstance()->getContext()->getScope() === Context::SCOPE_REST)
 		{
@@ -41,54 +40,9 @@ class Item extends Converter
 			}
 		}
 
+		$data = $this->prepareData($data);
+
 		return $this->convertKeysToCamelCase($data);
-	}
-
-	protected function prepareData(array $data): array
-	{
-		$result = [];
-
-		foreach ($data as $name => $value)
-		{
-			if (is_array($value))
-			{
-				$result[$name] = $this->prepareData($value);
-			}
-			elseif ($value instanceof Date)
-			{
-				$result[$name] = $this->processDate($value);
-			}
-			elseif (is_bool($value))
-			{
-				$result[$name] = $value ? 'Y' : 'N';
-			}
-			else
-			{
-				$result[$name] = $value;
-			}
-		}
-
-		return $result;
-	}
-
-	protected function processDate(Date $date): string
-	{
-		if (
-			Container::getInstance()->getContext()->getScope() === Context::SCOPE_REST
-			&& Loader::includeModule('rest')
-		)
-		{
-			if ($date instanceof DateTime)
-			{
-				return \CRestUtil::ConvertDateTime($date);
-			}
-			if ($date instanceof Date)
-			{
-				return \CRestUtil::ConvertDate($date);
-			}
-		}
-
-		return $date->toString();
 	}
 
 	protected function processFile(\Bitrix\Crm\Item $item, string $fieldName): array

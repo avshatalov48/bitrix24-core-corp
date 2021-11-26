@@ -90,6 +90,7 @@ $MESS["CRM_CONTACT_BATCH_DELETION_COUNT_SUCCEEDED"] = "Успешно удале
 $MESS["CRM_CONTACT_BATCH_DELETION_COUNT_FAILED"] = "Не удалось удалить: #number#.";
 $MESS["CRM_CONTACT_LIST_DEL_PROC_DLG_TITLE"] = "Удаление контактов";
 $MESS["CRM_CONTACT_LIST_DEL_PROC_DLG_SUMMARY"] = "Будет произведено удаление выбранных контактов. Выполнение этой операции может занять продолжительное время.";
+$MESS["CRM_CONTACT_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Идет обновление системы прав доступа";
 $MESS["CRM_CONTACT_STEPWISE_STATE_TEMPLATE"] = "#processed# из #total#";
 $MESS["CRM_CONTACT_ACTION_MERGE"] = "Объединить";
 $MESS["CRM_CONTACT_CONVERT_ADDRESSES_DLG_TITLE"] = "Перенос старых адресов контактов в реквизиты";

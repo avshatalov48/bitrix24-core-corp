@@ -265,6 +265,11 @@ class Order extends Sale\Order
 			$this->addTimelineEntryOnBindingDealChanged();
 		}
 
+		if($this->fields->isChanged('RESPONSIBLE_ID'))
+		{
+			Permissions\Order::updatePermission($this->getId(), $this->getField('RESPONSIBLE_ID'));
+		}
+
 		if ($this->isNew())
 		{
 			$this->runAutomationOnAdd();
@@ -305,17 +310,12 @@ class Order extends Sale\Order
 
 		if ($this->fields->isChanged('RESPONSIBLE_ID') || $this->fields->isChanged('STATUS_ID'))
 		{
-			if($this->fields->isChanged('RESPONSIBLE_ID'))
+			if($this->fields->isChanged('RESPONSIBLE_ID') && Crm\Automation\Factory::canUseAutomation())
 			{
-				Permissions\Order::updatePermission($this->getId(), $this->getField('RESPONSIBLE_ID'));
-
-				if (Crm\Automation\Factory::canUseAutomation())
-				{
-					Crm\Automation\Trigger\ResponsibleChangedTrigger::execute(
-						[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getId()]],
-						['ORDER' => $this]
-					);
-				}
+				Crm\Automation\Trigger\ResponsibleChangedTrigger::execute(
+					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getId()]],
+					['ORDER' => $this]
+				);
 			}
 
 			static::resetCounters($this->getField('RESPONSIBLE_ID'));

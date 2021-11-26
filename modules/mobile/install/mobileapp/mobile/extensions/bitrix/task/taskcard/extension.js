@@ -196,6 +196,7 @@ include('InAppNotifier');
 			BX.addCustomEvent('onMobileGridFormDataChange', eventData => this.onMobileGridFormDataChange(eventData));
 			BX.addCustomEvent('onTaskDetailOptionsButtonClick', eventData => this.onTaskDetailOptionsButtonClick(eventData));
 			BX.addCustomEvent('task.view.onCommentsRead', eventData => this.onCommentsRead(eventData));
+			BX.addCustomEvent('task.view.onCommentAction', eventData => this.onCommentAction(eventData));
 			BX.addCustomEvent('onItemAction', eventData => this.onItemAction(eventData.action));
 			BX.addCustomEvent('onItemChecked', eventData => this.onItemChecked(eventData.item.checked));
 
@@ -306,6 +307,40 @@ include('InAppNotifier');
 			if (this.task.id === eventData.taskId)
 			{
 				this.updateTask({newCommentsCount: 0});
+			}
+		}
+
+		onCommentAction(eventData)
+		{
+			console.log('onCommentAction', eventData);
+
+			const {taskId, userId, action, deadline} = eventData;
+
+			if (taskId !== this.task.id || userId !== this.userId)
+			{
+				return;
+			}
+
+			switch (action)
+			{
+				case 'deadlineChange':
+					this.onChangeDeadlineAction();
+					break;
+
+				case 'taskApprove':
+					this.onApproveAction();
+					break;
+
+				case 'taskDisapprove':
+					this.onDisapproveAction();
+					break;
+
+				case 'taskComplete':
+					this.complete();
+					break;
+
+				default:
+					break;
 			}
 		}
 

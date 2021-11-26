@@ -386,11 +386,11 @@ class CAllCrmProductRow
 				),
 				'OWNER_ID' => array(
 					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required, CCrmFieldInfoAttr::Immutable)
 				),
 				'OWNER_TYPE' => array(
 					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required, CCrmFieldInfoAttr::Immutable)
 				),
 				'PRODUCT_ID' => array(
 					'TYPE' => 'integer',
@@ -877,17 +877,6 @@ class CAllCrmProductRow
 			$arRow['MEASURE_NAME'] = isset($arRow['MEASURE_NAME']) ? $arRow['MEASURE_NAME'] : '';
 			$arRow['CUSTOMIZED'] = isset($arRow['CUSTOMIZED']) && mb_strtoupper($arRow['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
 			$arRow['SORT'] = isset($arRow['SORT']) ? (int)$arRow['SORT'] : 0;
-
-			if($productID > 0 && $productName !== '' && isset($products[$productID]))
-			{
-				//Skip save product name if it equal to original
-				$product = $products[$productID];
-				$originalProductName = isset($product['NAME']) ? trim($product['NAME']) : '';
-				if($productName === $originalProductName)
-				{
-					$productName = '';
-				}
-			}
 
 			$prices = static::preparePrices($arRow, $currencyID, $exchRate);
 			if (false === $prices)

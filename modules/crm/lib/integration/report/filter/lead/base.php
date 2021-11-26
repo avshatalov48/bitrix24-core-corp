@@ -50,6 +50,10 @@ class Base extends BaseFilter
 			'TRACKING_SOURCE_ID',
 			'TRACKING_CHANNEL_CODE',
 			'PRODUCT_ROW_PRODUCT_ID',
+			'STATUS_ID_FROM_HISTORY',
+			'STATUS_ID_FROM_SUPPOSED_HISTORY',
+			'STATUS_SEMANTIC_ID_FROM_HISTORY',
+			'COMMENTS',
 		];
 		foreach ($fields as $field)
 		{

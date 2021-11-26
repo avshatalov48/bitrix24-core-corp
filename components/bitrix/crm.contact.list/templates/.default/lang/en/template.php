@@ -74,6 +74,7 @@ $MESS["CRM_CONTACT_REBUILD_DUP_INDEX_DLG_TITLE"] = "Rebuild contact duplicate in
 $MESS["CRM_CONTACT_REBUILD_SEARCH_CONTENT"] = "To use Quick Search, you have to <a id=\"#ID#\" href=\"#URL#\">recreate contact search index</a>.";
 $MESS["CRM_CONTACT_REBUILD_SEARCH_CONTENT_DLG_SUMMARY"] = "This will rebuild contact search index. This operation may take a while.";
 $MESS["CRM_CONTACT_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Recreating Contact Search Index";
+$MESS["CRM_CONTACT_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Updating access permissions";
 $MESS["CRM_CONTACT_RQ_TX"] = "It is recommended that you <a id=\"#ID#\" href=\"#URL#\">copy existing contact details from invoices</a> to contacts to save time. Whenever you create a new invoice, the existing details will be auto filled in after selecting a contact for that invoice.";
 $MESS["CRM_CONTACT_RQ_TX_PROC_DLG_DLG_SUMMARY"] = "This will copy contact details from invoices to contacts. This operation may take some time.";
 $MESS["CRM_CONTACT_RQ_TX_PROC_DLG_TITLE"] = "Copy contact details";

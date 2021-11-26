@@ -2515,9 +2515,47 @@ class CCrmLiveFeed
 			&& Loader::includeModule('socialnetwork')
 		)
 		{
-			\Bitrix\Socialnetwork\LogCommentTable::update((int)$commentId, [
-				'RATING_TYPE_ID' => $livefeedCommentProvider->getContentTypeId()
-			]);
+			$process = true;
+
+			if ((int)$fields['LOG_ID'] > 0)
+			{
+				$res = \Bitrix\Socialnetwork\LogTable::getList([
+					'filter' => [
+						'ID' => (int)$fields['LOG_ID']
+					],
+					'select' => [ 'ENTITY_TYPE', 'ENTITY_ID' ],
+				]);
+
+				if (
+					($logFields = $res->fetch())
+					&& ($logFields['ENTITY_TYPE'] === 'CRMACTIVITY')
+					&& ((int)$logFields['ENTITY_ID'] > 0)
+				)
+				{
+					$res = \CCrmActivity::getList(
+						[],
+						[
+							'ID' => (int)$logFields['ENTITY_ID'],
+							'TYPE_ID' => \CCrmActivityType::Task,
+							'CHECK_PERMISSIONS' => 'N'
+						],
+						false,
+						false,
+						[ 'ID' ]
+					);
+					if ($res->fetch())
+					{
+						$process = false;
+					}
+				}
+			}
+
+			if ($process)
+			{
+				\Bitrix\Socialnetwork\LogCommentTable::update((int)$commentId, [
+					'RATING_TYPE_ID' => $livefeedCommentProvider->getContentTypeId()
+				]);
+			}
 		}
 	}
 

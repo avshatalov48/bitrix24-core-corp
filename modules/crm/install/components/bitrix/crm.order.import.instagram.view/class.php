@@ -12,6 +12,7 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 
 class CrmOrderConnectorInstagramView extends CBitrixComponent
@@ -327,9 +328,9 @@ class CrmOrderConnectorInstagramView extends CBitrixComponent
 
 			$priceRegexp = \CAllCurrencyLang::applyTemplate(
 				'(\d+(\.|\,|\s){1})*\d+',
-				preg_quote(ToLower($currencyFormat['FORMAT_STRING']))
+				ToLower($currencyFormat['FORMAT_STRING'])
 			);
-			$priceRegexp = '/'.$priceRegexp.'/';
+			$priceRegexp = '/' . str_replace('/', '\/', $priceRegexp) . '/';
 		}
 
 		return $priceRegexp;
@@ -354,6 +355,20 @@ class CrmOrderConnectorInstagramView extends CBitrixComponent
 		return $price;
 	}
 
+	protected function checkJsonEncoding(string $string): bool
+	{
+		try
+		{
+			Json::encode($string);
+		}
+		catch (\Exception $exception)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	protected function getGridTileRow($media, $row)
 	{
 		$mediaCaption = $media['CAPTION'];
@@ -364,13 +379,18 @@ class CrmOrderConnectorInstagramView extends CBitrixComponent
 		$name = trim((string)preg_replace(static::getPriceRegexp(), '', $name));
 		$name = mb_strlen($name) > 150 ? mb_substr($name, 0, 150).'...' : $name;
 
-		if ($name === '' || !preg_match("/\p{L}+/i", $name))
+		if ($name === '' || !$this->checkJsonEncoding($name))
 		{
 			$name = Loc::getMessage('CRM_OIIV_DEFAULT_PRODUCT_NAME');
 		}
 
 		$caption = isset($lines[1]) ? join("\n", array_slice($lines, 1)) : $mediaCaption;
 		$caption = trim($caption);
+
+		if ($caption && !$this->checkJsonEncoding($caption))
+		{
+			$caption = '';
+		}
 
 		$price = static::tryToParsePrice($mediaCaption);
 
@@ -403,7 +423,7 @@ class CrmOrderConnectorInstagramView extends CBitrixComponent
 			'HEADERS' => $this->getGridHeaders(),
 		];
 
-		list($grid['SORT'], $grid['SORT_VARS']) = $this->getGridOptionsSorting();
+		[$grid['SORT'], $grid['SORT_VARS']] = $this->getGridOptionsSorting();
 
 		$currency = \CCrmCurrency::GetBaseCurrencyID();
 

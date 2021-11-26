@@ -49,11 +49,7 @@ abstract class Common
 	 */
 	private static function getDefaultId(int $groupId): string
 	{
-		$roleId = 4096;
-		$typeFilter = 'ADVANCED';
-		$presetSelected = 'N';
-
-		return 'TASKS_GRID_ROLE_ID_'.$roleId.'_'.$groupId.'_'.$typeFilter.'_'.$presetSelected;
+		return \Bitrix\Tasks\Helper\FilterRegistry::getId(\Bitrix\Tasks\Helper\FilterRegistry::FILTER_GRID, $groupId);
 	}
 
 	/**

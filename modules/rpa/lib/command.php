@@ -390,7 +390,22 @@ abstract class Command
 			//skip checking fields if moving back
 			return $result;
 		}
-		$stage = $this->item->getType()->getStage($this->item->remindActualStageId());
+		$currentStageId = $this->item->remindActualStageId() ?? $this->item->getStageId();
+		if (!$currentStageId && $this->item->getId() <= 0)
+		{
+			$firstStage = $this->item->getType()->getFirstStage();
+			if ($firstStage)
+			{
+				$currentStageId = $firstStage->getId();
+			}
+		}
+
+		if (!$currentStageId)
+		{
+			return $result->addError(new Error('Stage is not found'));
+		}
+
+		$stage = $this->item->getType()->getStage($currentStageId);
 		/** @noinspection NullPointerExceptionInspection */
 		$userFields = $stage->getUserFieldCollection();
 		$this->resetNotEditableFields($userFields);

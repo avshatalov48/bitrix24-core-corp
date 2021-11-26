@@ -18,6 +18,7 @@ class FeatureDictionary
 	public const TASKS_GANTT = 'gant';
 	public const TASKS_USER_FIELD = 'task_user_field';
 	public const TASKS_NETWORK = 'bitrix24_network';
+	public const TASKS_RECYCLEBIN = 'recyclebin';
 
 	public const VARIABLE_RECURRING_LIMIT = 'tasks_recurrent_disabling_limit';
 	public const VARIABLE_TASKS_LIMIT = 'tasks_functional_disabling_limit';

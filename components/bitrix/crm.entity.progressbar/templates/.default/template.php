@@ -33,7 +33,7 @@ if($currentColor === '')
 
 if($entityTypeID === CCrmOwnerType::Deal)
 {
-	echo \CCrmViewHelper::RenderDealStageSettings();
+	echo \CCrmViewHelper::RenderDealStageSettings($arParams['EXTRAS']['CATEGORY_ID']);
 }
 elseif($entityTypeID === CCrmOwnerType::Quote)
 {

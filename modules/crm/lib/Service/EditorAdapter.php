@@ -67,6 +67,7 @@ class EditorAdapter
 	protected $dependantFieldsMap;
 	protected $additionalFields = [];
 
+	protected $myCompanyRequisites;
 	protected $entityFields;
 	protected $entityUserFields;
 	protected $entityData;
@@ -115,6 +116,8 @@ class EditorAdapter
 		);
 
 		$this->stages = $stages;
+
+		$this->myCompanyRequisites = $this->loadMyCompanyRequisitesEntityData($item->getEntityTypeId(), $item->getId());
 
 		$this->entityData = $item->getData();
 		$this->entityFields = $this->prepareEntityFields($componentParameters);
@@ -207,15 +210,7 @@ class EditorAdapter
 			$this->entityData = array_merge($this->entityData, $this->getOpportunityEntityData($item));
 		}
 
-		if ($this->fieldsCollection->hasField(Item::FIELD_NAME_MYCOMPANY_ID))
-		{
-			$this->entityData = array_merge(
-				$this->entityData,
-				$this->getMyCompanyRequisitesEntityData($item->getEntityTypeId(), $item->getId())
-			);
-
-			$this->entityData[static::FIELD_REQUISITE_BINDING] = $this->prepareRequisiteBindings($item);
-		}
+		$this->entityData[static::FIELD_REQUISITE_BINDING] = $this->prepareRequisiteBindings($item);
 
 		$this->processedEntityFields = array_merge($this->processedEntityFields, array_values($this->additionalFields));
 
@@ -308,21 +303,7 @@ class EditorAdapter
 		{
 			$parentEntityTypeId = $customParentRelation->getParentEntityTypeId();
 
-			if (\CCrmOwnerType::isPossibleDynamicTypeId($parentEntityTypeId))
-			{
-				$parentType = Container::getInstance()->getFactory($parentEntityTypeId);
-				if(!$parentType)
-				{
-					throw new InvalidOperationException(
-						'Entity type with id:' . $parentEntityTypeId . ' not found'
-					);
-				}
-				$entityDescription = $parentType->getEntityDescription();
-			}
-			else
-			{
-				$entityDescription = \CCrmOwnerType::GetDescription($parentEntityTypeId);
-			}
+			$entityDescription = \CCrmOwnerType::GetDescription($parentEntityTypeId);
 
 			$this->addEntityField(
 				static::getParentField(
@@ -974,6 +955,27 @@ class EditorAdapter
 				unset($statusEntityId);
 			}
 
+			if ($userField['USER_TYPE_ID'] === 'crm_status')
+			{
+				if (
+					is_array($userField['SETTINGS'])
+					&& isset($userField['SETTINGS']['ENTITY_TYPE'])
+					&& is_string($userField['SETTINGS']['ENTITY_TYPE'])
+					&& $userField['SETTINGS']['ENTITY_TYPE'] !== ''
+				)
+				{
+					$entityUserFields[$fieldName]['data']['innerConfig'] =
+						\CCrmInstantEditorHelper::prepareInnerConfig(
+							$userField['USER_TYPE_ID'],
+							'crm.status.setItems',
+							$userField['SETTINGS']['ENTITY_TYPE'],
+							['']
+						)
+					;
+				}
+				unset($statusEntityId);
+			}
+
 			if(isset($visibilityConfig[$fieldName]))
 			{
 				$entityUserFields[$fieldName]['data']['visibilityConfigs'] = $visibilityConfig[$fieldName];
@@ -1252,7 +1254,7 @@ class EditorAdapter
 				&& is_array($data['advancedInfo']['requisiteData'])
 			)
 			{
-				$entityRequisiteData = $this->getMyCompanyRequisitesEntityData($entityTypeId, $entityId);
+				$entityRequisiteData = $this->getMyCompanyRequisitesEntityData();
 				if ($entityRequisiteData[static::FIELD_MY_COMPANY_REQUISITE_ID] <= 0)
 				{
 					return $data;
@@ -1509,7 +1511,12 @@ class EditorAdapter
 		return ob_get_clean();
 	}
 
-	protected function getMyCompanyRequisitesEntityData(int $entityTypeId, int $id): array
+	protected function getMyCompanyRequisitesEntityData(): array
+	{
+		return $this->myCompanyRequisites ?? [];
+	}
+
+	protected function loadMyCompanyRequisitesEntityData(int $entityTypeId, int $id): array
 	{
 		if($id > 0)
 		{
@@ -1521,8 +1528,8 @@ class EditorAdapter
 		}
 
 		return [
-			static::FIELD_MY_COMPANY_REQUISITE_ID => (int) $currentData[static::FIELD_MY_COMPANY_REQUISITE_ID],
-			static::FIELD_MY_COMPANY_BANK_DETAIL_ID => (int) $currentData[static::FIELD_MY_COMPANY_BANK_DETAIL_ID],
+			static::FIELD_MY_COMPANY_REQUISITE_ID => (int)($currentData[static::FIELD_MY_COMPANY_REQUISITE_ID] ?? null),
+			static::FIELD_MY_COMPANY_BANK_DETAIL_ID => (int)($currentData[static::FIELD_MY_COMPANY_BANK_DETAIL_ID] ?? null),
 		];
 	}
 
@@ -1676,78 +1683,16 @@ class EditorAdapter
 
 	public function saveRelations(Item $item, array $data): void
 	{
-		$child = ItemIdentifier::createByItem($item);
-		$relationManager = Container::getInstance()->getRelationManager();
-
-		$oldParentElements = $this->prepareParentElements($relationManager->getParentElements($child));
-		$newParentElements = $this->prepareParentElements($this->getParentElements($data));
+		$additionalParents = [];
 
 		$parentTypeId = (int)$data['PARENT_TYPE_ID'];
 		$parentId = (int)$data['PARENT_ID'];
 		if ($parentTypeId > 0 && $parentId > 0 && !isset($newParentElements[$parentTypeId]))
 		{
-			$newParentElements[$parentTypeId] = new ItemIdentifier($parentTypeId, $parentId);
+			$additionalParents[$parentTypeId] = new ItemIdentifier($parentTypeId, $parentId);
 		}
 
-		$parentPrefix = self::FIELD_PARENT_PREFIX;
-
-		// delete removed relations
-		foreach ($data as $name => $value)
-		{
-			if (empty($value) && mb_strpos($name, $parentPrefix) === 0)
-			{
-				/** @var string $entityTypeId */
-				$entityTypeId = str_replace($parentPrefix, '', $name);
-				if (isset($oldParentElements[$entityTypeId]))
-				{
-					$relationManager->unbindItems($oldParentElements[$entityTypeId], $child);
-				}
-			}
-		}
-
-		// bind new items and change existing (not deleted) relations
-		foreach (array_diff($newParentElements, $oldParentElements) as $bindItem)
-		{
-			$oldParent = ($oldParentElements[$bindItem->getEntityTypeId()] ?? null);
-			if ($oldParent && $bindItem->getEntityId() !== $oldParent->getEntityId())
-			{
-				$relationManager->unbindItems($oldParentElements[$bindItem->getEntityTypeId()], $child);
-			}
-			$relationManager->bindItems($bindItem, $child);
-		}
-	}
-
-	/**
-	 * @param ItemIdentifier[] $parentElements
-	 * @return ItemIdentifier[]
-	 */
-	protected function prepareParentElements(array $parentElements): array
-	{
-		$results = [];
-		foreach ($parentElements as $element)
-		{
-			$results[$element->getEntityTypeId()] = $element;
-		}
-
-		return $results;
-	}
-
-	protected function getParentElements(array $data): array
-	{
-		$newParentElements = [];
-		foreach($data as $name => $value)
-		{
-			if (($value > 0) && (mb_strpos($name, self::FIELD_PARENT_PREFIX) === 0))
-			{
-				$parentEntityTypeId = str_replace(self::FIELD_PARENT_PREFIX, '', $name);
-				$newParentElements[] = new ItemIdentifier(
-					$parentEntityTypeId,
-					(int)$value
-				);
-			}
-		}
-
-		return $newParentElements;
+		Container::getInstance()->getParentFieldManager()->saveItemRelations($item, $data, $additionalParents);
 	}
 
 	protected function findDeletedEntries(array $existingEntries, array $sentEntries, $arrayKey): array
@@ -1831,6 +1776,6 @@ class EditorAdapter
 
 	public static function getParentFieldName(int $parentEntityTypeId): string
 	{
-		return static::FIELD_PARENT_PREFIX . $parentEntityTypeId;
+		return ParentFieldManager::getParentFieldName($parentEntityTypeId);
 	}
 }

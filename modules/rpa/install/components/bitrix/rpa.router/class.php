@@ -7,6 +7,11 @@ if(!\Bitrix\Main\Loader::includeModule('rpa'))
 	ShowError(\Bitrix\Main\Localization\Loc::getMessage('RPA_MODULE_ERROR'));
 	return;
 }
+if (!\Bitrix\Main\Loader::includeModule('bizproc'))
+{
+	ShowError(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_MODULE_ERROR'));
+	return;
+}
 
 class RpaRouterComponent extends Bitrix\Rpa\Components\Base
 {

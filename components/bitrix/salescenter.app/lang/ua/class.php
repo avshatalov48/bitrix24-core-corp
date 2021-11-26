@@ -34,3 +34,4 @@ $MESS["SALESCENTER_TIMELINE_SENT_CONTENT"] = "Замовлення відпра�
 $MESS["SALESCENTER_TIMELINE_SENT_CONTENT_PAYMENT"] = "Оплата відправлена ??#DATE_CREATED# по SMS";
 $MESS["SALESCENTER_TIMELINE_WATCH_CONTENT"] = "Клієнт переглянув замовлення #DATE_CREATED#";
 $MESS["SALESCENTER_TIMELINE_WATCH_CONTENT_DEFAULT"] = "Клієнт ще не перейшов за посиланням";
+$MESS["SALESCENTER_CRM_PERMISSION_DENIED"] = "Доступ заборонено";

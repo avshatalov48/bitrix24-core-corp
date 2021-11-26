@@ -154,8 +154,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return RequestSender;
 	}();
 
-	function _templateObject() {
+	function _templateObject2() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t<select class=\"ui-ctl-element tasks-scrum-dod-types\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content tasks-scrum-dod-checklist\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject2 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
 
 	  _templateObject = function _templateObject() {
 	    return data;
@@ -169,6 +179,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.groupId = parseInt(params.groupId, 10);
 	    this.sidePanel = new SidePanel();
 	    this.requestSender = new RequestSender();
+	    this.emptyDod = true;
 	    this.skipNotifications = false;
 	  }
 
@@ -184,13 +195,24 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (response) {
 	        var settings = response.data;
 	        var types = settings.types;
+	        _this.emptyDod = types.length === 0;
 	        var activeTypeId = settings.activeTypeId;
+
+	        if (_this.isEmptyDod()) {
+	          if (!_this.skipNotifications) {
+	            return Promise.resolve();
+	          }
+	        }
 
 	        _this.setActiveTypeData(activeTypeId, types);
 
 	        var popup = _this.createPopup(types);
 
 	        popup.subscribe('onAfterShow', function (baseEvent) {
+	          if (_this.isEmptyDod()) {
+	            return;
+	          }
+
 	          var contentContainer = popup.getContentContainer();
 	          var typesNode = contentContainer.querySelector('.tasks-scrum-dod-types');
 	          var listNode = contentContainer.querySelector('.tasks-scrum-dod-checklist');
@@ -199,10 +221,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	            _this.setActiveTypeData(typeId, types);
 
-	            _this.renderListTo(listNode, typeId);
+	            _this.renderListTo(listNode, typeId).then(function () {
+	              popup.adjustPosition();
+	            });
 	          });
 
-	          _this.renderListTo(listNode, typesNode.value);
+	          _this.renderListTo(listNode, typesNode.value).then(function () {
+	            popup.adjustPosition();
+	          });
 	        });
 	        popup.subscribe('onClose', function () {
 	          return _this.onClose();
@@ -223,6 +249,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onClose",
 	    value: function onClose() {
 	      var _this2 = this;
+
+	      if (this.isEmptyDod()) {
+	        return;
+	      }
 
 	      var activeTypeData = this.getActiveTypeData();
 	      this.requestSender.saveList({
@@ -308,6 +338,30 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "createPopup",
 	    value: function createPopup(types) {
+	      var buttons = [];
+
+	      if (this.isEmptyDod()) {
+	        buttons.push(new ui_buttons.Button({
+	          text: main_core.Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_CLOSE_BUTTON_TEXT'),
+	          color: ui_buttons.Button.Color.LINK,
+	          events: {
+	            click: function click() {
+	              return popup.close();
+	            }
+	          }
+	        }));
+	      } else {
+	        buttons.push(new ui_buttons.Button({
+	          text: this.getPopupButtonText(),
+	          color: ui_buttons.Button.Color.SUCCESS,
+	          events: {
+	            click: function click() {
+	              return popup.close();
+	            }
+	          }
+	        }));
+	      }
+
 	      var popup = new main_popup.Popup(main_core.Text.getRandom(), null, {
 	        titleBar: main_core.Loc.getMessage('TASKS_SCRUM_DOD_HEADER'),
 	        content: this.renderContent(types),
@@ -316,25 +370,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        autoHide: true,
 	        closeByEsc: true,
 	        closeIcon: true,
-	        offsetTop: -340,
-	        minWidth: document.body.offsetWidth / 1.5,
-	        width: document.body.offsetWidth / 1.5,
 	        overlay: true,
-	        buttons: [new ui_buttons.Button({
-	          text: this.getPopupButtonText(),
-	          color: ui_buttons.Button.Color.SUCCESS,
-	          events: {
-	            click: function click() {
-	              return popup.close();
-	            }
-	          }
-	        })]
+	        buttons: buttons
 	      });
 	      return popup;
 	    }
 	  }, {
 	    key: "renderContent",
 	    value: function renderContent(types) {
+	      if (this.isEmptyDod()) {
+	        return main_core.Tag.render(_templateObject(), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_EMPTY'));
+	      }
+
 	      var activeTypeData = this.getActiveTypeData();
 
 	      var renderOption = function renderOption(typeData) {
@@ -342,7 +389,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return "<option value=\"".concat(parseInt(typeData.id, 10), "\" ").concat(selected, ">").concat(main_core.Text.encode(typeData.name), "</option>");
 	      };
 
-	      return main_core.Tag.render(_templateObject(), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_TYPES'), types.map(function (typeData) {
+	      return main_core.Tag.render(_templateObject2(), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_TYPES'), types.map(function (typeData) {
 	        return renderOption(typeData);
 	      }).join(''));
 	    }
@@ -351,13 +398,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function renderListTo(container, typeId) {
 	      main_core.Dom.clean(container);
 	      var loader = this.showLoader(container);
-	      this.requestSender.getList({
+	      return this.requestSender.getList({
 	        groupId: this.groupId,
 	        taskId: this.taskId,
 	        typeId: typeId
 	      }).then(function (response) {
 	        loader.hide();
-	        main_core.Runtime.html(container, response.data.html);
+	        return main_core.Runtime.html(container, response.data.html);
 	      });
 	    }
 	  }, {
@@ -377,6 +424,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getActiveTypeData",
 	    value: function getActiveTypeData() {
 	      return this.activeTypeData;
+	    }
+	  }, {
+	    key: "isEmptyDod",
+	    value: function isEmptyDod() {
+	      return this.emptyDod;
 	    }
 	  }, {
 	    key: "isListRequired",

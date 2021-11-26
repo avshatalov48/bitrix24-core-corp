@@ -1006,6 +1006,41 @@ if(typeof(BX.CrmInvoiceStatusManager) === "undefined")
 	};
 }
 
+if(typeof(BX.CrmItemStatusManager) === "undefined")
+{
+	BX.CrmItemStatusManager = function() {};
+
+	BX.CrmItemStatusManager.prototype =
+		{
+			getInfos: function(typeId)
+			{
+				if (BX.CrmItemStatusManager.infos === [])
+				{
+					console.log('Error: CrmItemStatusManager has not default stages');
+				}
+				return (BX.type.isArray(BX.CrmItemStatusManager.infos[typeId]) ? BX.CrmItemStatusManager.infos[typeId] : []);
+			},
+			isMultiType: function()
+			{
+				return false;
+			},
+			getMessage: function(name)
+			{
+				var messages = BX.CrmItemStatusManager.messages;
+				return BX.type.isNotEmptyString(messages[name]) ? messages[name] : "";
+			},
+			prepareDialogControls: function(dialog)
+			{
+				return null;
+			}
+		};
+
+	BX.CrmItemStatusManager.current = new BX.CrmItemStatusManager();
+
+	BX.CrmItemStatusManager.messages = {};
+	BX.CrmQuoteStatusManager.infos = [];
+}
+
 if(typeof(BX.CrmProgressManager) === "undefined")
 {
 	BX.CrmProgressManager = function() {};
@@ -1147,6 +1182,10 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			else if(this._entityType === 'INVOICE')
 			{
 				this._manager = BX.CrmInvoiceStatusManager.current;
+			}
+			else if(BX.CrmEntityType.isDynamicTypeByName(this._entityType))
+			{
+				this._manager = BX.CrmItemStatusManager.current;
 			}
 
 			var stepInfos = this._stepInfos = this._manager.getInfos(this._infoTypeId);
@@ -1680,27 +1719,73 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			{
 				return;
 			}
-
-			var data =
+			if (BX.CrmEntityType.isDynamicTypeByName(type))
 			{
-				"ACTION" : "SAVE_PROGRESS",
-				"VALUE": value,
-				"TYPE": type,
-				"ID": id
-			};
+				BX.ajax.runAction(serviceUrl, {
+						data: {
+							entityTypeId: BX.CrmEntityType.resolveId(type),
+							id: id,
+							fields: {
+								stageId: this.getCurrentStepId(),
+							},
+						}
+					})
+					.then(function(response) {
+						this._onSaveRequestSuccess(response.data);
+					}.bind(this))
+					.catch(function(response) {
+						var CheckErrors = {};
+						var errorMessage = '';
+						for (var i in response.errors)
+						{
+							if (response.errors[i].code === 'CRM_FIELD_ERROR_REQUIRED')
+							{
+								CheckErrors[response.errors[i].customData.fieldName] = response.errors[i].message;
+								if (errorMessage === '')
+								{
+									errorMessage = response.errors[i].message;
+								}
+								else
+								{
+									errorMessage = errorMessage + ', ' + response.errors[i].message;
+								}
+							}
+						}
 
-			BX.onCustomEvent(this, 'CrmProgressControlBeforeSave', [ this, data ]);
+						var errors =
+							{
+								'CHECK_ERRORS': CheckErrors,
+								'ERROR': errorMessage,
+								'ID': this.getEntityId(),
+								'TYPE': this.getEntityType(),
+								'VALUE': this.getCurrentStepId(),
+							};
 
-			BX.ajax(
-				{
-					"url": serviceUrl,
-					"method": "POST",
-					"dataType": 'json',
-					"data": data,
-					"onsuccess": BX.delegate(this._onSaveRequestSuccess, this),
-					"onfailure": BX.delegate(this._onSaveRequestFailure, this)
-				}
-			);
+						this._onSaveRequestSuccess(errors);
+					}.bind(this));
+			}
+			else
+			{
+				var data =
+					{
+						"ACTION" : "SAVE_PROGRESS",
+						"VALUE": value,
+						"TYPE": type,
+						"ID": id
+					};
+				BX.onCustomEvent(this, 'CrmProgressControlBeforeSave', [ this, data ]);
+
+				BX.ajax(
+					{
+						"url": serviceUrl,
+						"method": "POST",
+						"dataType": 'json',
+						"data": data,
+						"onsuccess": BX.delegate(this._onSaveRequestSuccess, this),
+						"onfailure": BX.delegate(this._onSaveRequestFailure, this)
+					}
+				);
+			}
 		},
 		_onSaveRequestSuccess: function(data)
 		{
@@ -1710,11 +1795,12 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				this._openEntityEditorDialog(
 					{
 						title: this._manager.getMessage("checkErrorTitle"),
-						helpData: { text: this._manager.getMessage("checkErrorHelp"), code: this._manager.getMessage("checkErrorHelpArticleCode") },
+						helpData: { text: this._manager.getMessage("checkErrorHelp"),
+						code: this._manager.getMessage("checkErrorHelpArticleCode") },
 						fieldNames: Object.keys(checkErrors),
 						initData: BX.prop.getObject(data, "EDITOR_INIT_DATA", null),
 						context: BX.prop.getObject(data, "CONTEXT", null),
-						isController: this._entityType === 'QUOTE',
+						isController: this._entityType === 'QUOTE' || BX.CrmEntityType.isDynamicTypeByName(this.getEntityType()),
 						stageId: BX.prop.getString(data, 'VALUE', null)
 					}
 				);

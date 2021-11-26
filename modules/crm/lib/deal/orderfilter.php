@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Deal;
 
 use Bitrix\Crm\Binding;
 use Bitrix\Crm\Order\DeliveryStage;
+use Bitrix\Crm\Workflow\EntityStageTable;
+use Bitrix\Crm\Workflow\PaymentWorkflow;
 use Bitrix\Main;
 use Bitrix\Sale\Internals;
 use Bitrix\Sale\TradingPlatform;
@@ -52,10 +54,11 @@ final class OrderFilter
 		return [
 			"TYPE" => "WHERE",
 			"SQL" => "EXISTS (
-				SELECT bcops.PAYMENT_ID FROM ".Binding\OrderPaymentStageTable::getTableName()." bcops
-				INNER JOIN ".Internals\PaymentTable::getTableName()." bsop ON bsop.ID = bcops.PAYMENT_ID
-				INNER JOIN ".Binding\OrderDealTable::getTableName()." bcod ON bcod.ORDER_ID = bsop.ORDER_ID
-				WHERE bcops.STAGE IN ({$sql}) AND bcod.DEAL_ID = ".\CCrmDeal::TABLE_ALIAS.".ID 
+				SELECT stage.ENTITY_ID FROM ".EntityStageTable::getTableName()." stage
+				INNER JOIN ".Internals\PaymentTable::getTableName()." payment ON payment.ID = stage.ENTITY_ID
+				INNER JOIN ".Binding\OrderDealTable::getTableName()." orderdeal ON orderdeal.ORDER_ID = payment.ORDER_ID
+				WHERE stage.WORKFLOW_CODE = '" . PaymentWorkflow::getWorkflowCode() . "' 
+				AND stage.STAGE IN ({$sql}) AND orderdeal.DEAL_ID = ".\CCrmDeal::TABLE_ALIAS.".ID 
 			)"
 		];
 	}

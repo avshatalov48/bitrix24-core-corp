@@ -57,6 +57,7 @@ class OrderBuilderCrm extends OrderBuilder
 			->buildBasket()
 			->buildShipments()
 			->buildPayments()
+			->setRelatedProperties()
 			->setDiscounts() //?
 			->finalActions();
 	}
@@ -181,6 +182,11 @@ class OrderBuilderCrm extends OrderBuilder
 			}
 		}
 
+		if (isset($fields['DATE_RESPONSIBLE_ID']))
+		{
+			unset($fields['DATE_RESPONSIBLE_ID']);
+		}
+
 		return $fields;
 	}
 
@@ -188,7 +194,7 @@ class OrderBuilderCrm extends OrderBuilder
 	{
 		$dateTypeFields = [
 			'DATE_PAID', 'DATE_PAY_BEFORE', 'DATE_BILL',
-			'PAY_RETURN_DATE', 'PAY_VOUCHER_DATE', 'DATE_RESPONSIBLE_ID'
+			'PAY_RETURN_DATE', 'PAY_VOUCHER_DATE'
 		];
 
 		if (is_array($this->formData["PAYMENT"]))

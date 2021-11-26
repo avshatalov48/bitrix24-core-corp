@@ -92,12 +92,14 @@ class Chat implements Tabable
 						"WIDGET_BACKDROP_MENU_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('backdrop.menu'),
 						"COMPONENT_CHAT_DIALOG_VERSION" => WebComponentManager::getWebComponentVersion('im.dialog'),
 						"COMPONENT_CHAT_DIALOG_VUE_VERSION" => WebComponentManager::getWebComponentVersion('im.dialog.vue'),
+						"COMPONENT_NOTIFY_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.notify'),
 
 						"MESSAGES" => [
 							"COMPONENT_TITLE" => GetMessage("MD_COMPONENT_IM_RECENT"),
 							"IMOL_CHAT_ANSWER_M" => \Bitrix\Im\Integration\Imopenlines\Localize::get(\Bitrix\Im\Integration\Imopenlines\Localize::FILE_LIB_CHAT, "IMOL_CHAT_ANSWER_M"),
 							"IMOL_CHAT_ANSWER_F" => \Bitrix\Im\Integration\Imopenlines\Localize::get(\Bitrix\Im\Integration\Imopenlines\Localize::FILE_LIB_CHAT, "IMOL_CHAT_ANSWER_F")
-						]
+						],
+						"NEXT_NOTIFICATIONS" => \Bitrix\Main\Config\Option::get("mobile", "NEXT_NOTIFICATIONS", "N")
 					],
 					"settings" => ["useSearch" => true, "preload" => false, "useLargeTitleMode" => true],
 				],

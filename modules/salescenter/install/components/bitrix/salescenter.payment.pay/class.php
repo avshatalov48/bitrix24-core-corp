@@ -11,6 +11,8 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem;
 use Bitrix\Crm;
 use Bitrix\Crm\Order\DealBinding;
+use Bitrix\Crm\Workflow\PaymentWorkflow;
+use Bitrix\Crm\Workflow\PaymentStage;
 use Bitrix\ImOpenLines\Model\SessionTable;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -110,6 +112,11 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			$params['RETURN_URL'] = (new PaySystem\Context())->getUrl();
 		}
 
+		if (empty($params['ACCESS_CODE']))
+		{
+			$params['ACCESS_CODE'] = Main\Context::getCurrent()->getRequest()->get('access');
+		}
+
 		if ((int)($params['PAYMENT_ID']) > 0 || $params['PAYMENT_ACCOUNT_NUMBER'] != '')
 		{
 			$this->initPaymentDataByPaymentId($params);
@@ -195,17 +202,11 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 						if (Main\Loader::includeModule('crm'))
 						{
 							$needEmitOrderViewedEvent = false;
+							$paymentWorkflow = PaymentWorkflow::createFrom($this->payment);
 
-							if ($this->payment && !$this->payment->isPaid())
+							if ($paymentWorkflow->setStage(PaymentStage::VIEWED_NO_PAID))
 							{
-								$result = Crm\Binding\OrderPaymentStageTable::setStage(
-									$this->payment->getId(),
-									Crm\Order\PaymentStage::VIEWED_NO_PAID
-								);
-								if ($result !== null)
-								{
-									$needEmitOrderViewedEvent = true;
-								}
+								$needEmitOrderViewedEvent = true;
 							}
 
 							if ($this->needAddTimelineEntityOnOpen($this->payment))
@@ -267,7 +268,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 		if ($paysystemId > 0)
 		{
 			$order = $this->loadOrder();
-			if ($order)
+			if ($order && $this->checkAuthorized($order, $params['ACCESS_CODE']))
 			{
 				$paymentCollection = $order->getPaymentCollection();
 				/** @var Sale\Payment $payment */
@@ -694,6 +695,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			'PAYMENT_ACCOUNT_NUMBER',
 			'PAYMENT_ID',
 			'ORDER_ID',
+			'ACCESS_CODE',
 		];
 	}
 
@@ -728,16 +730,13 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	 *
 	 * @return bool
 	 */
-	private function checkAuthorized($order)
+	private function checkAuthorized($order, $accessCode = null)
 	{
-		$access = $this->arParams['ACCESS_CODE'];
-		if($access == '')
+		if ($accessCode === null)
 		{
-			$request = Main\Context::getCurrent()->getRequest();
-			$access = $request->get('access');
+			$accessCode = $this->arParams['ACCESS_CODE'];
 		}
-
-		if ($access !== $order->getHash())
+		if ($accessCode !== $order->getHash())
 		{
 			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPOD_ACCESS_DENIED')));
 			return false;

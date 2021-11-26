@@ -5,6 +5,7 @@
 			height: 40,
 			maxWidth: 120,
 			marginRight: 12,
+			marginBottom: 1,
 			paddingLeft: 10,
 			paddingRight: 10,
 			borderRadius: 3,
@@ -20,8 +21,6 @@
 		constructor(props)
 		{
 			super(props);
-
-			this.currentDomain = currentDomain.replace('https', 'http');
 
 			this.state = {
 				isRequestSent: false,
@@ -43,13 +42,15 @@
 			if (this.state.isRequestSent)
 			{
 				return [
-					Image({
+					Loader({
 						style: {
 							width: 26,
 							height: 26,
 							alignSelf: 'center'
 						},
-						uri: this.currentDomain + '/bitrix/mobileapp/mobile/extensions/bitrix/chat/notifications/confirmitembuttons/loader.gif' //todo: change icon
+						tintColor: '#666666',
+						animating: true,
+						size: 'small'
 					})
 				];
 			}
@@ -75,7 +76,11 @@
 							this.setState({
 								isRequestSent: false
 							});
-							Utils.showError('Error', 'Please try again later', "#affb0000"); //todo: change text
+							Utils.showError(
+								BX.message['MOBILE_EXT_CONFIRM_ITEM_BUTTONS_ERROR_TITLE'],
+								BX.message['MOBILE_EXT_CONFIRM_ITEM_BUTTONS_ERROR_TEXT'],
+								'#affb0000'
+							);
 							console.log(error);
 						});
 				}})
@@ -144,7 +149,7 @@
 			else if (button.hasOwnProperty('VALUE'))
 			{
 				return {
-					'NOTIFY_ID': button.id,
+					'NOTIFY_ID': this.props.messageId,
 					'NOTIFY_VALUE': button.VALUE,
 				};
 			}

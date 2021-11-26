@@ -3168,19 +3168,7 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 					BX.create('div', {props: {className: 'crm-entity-widget-content-block-inner crm-entity-widget-content-block-colums-input'}, children:[
 						BX.create('div', {props: {className: 'crm-entity-widget-content-block-input-wrapper'}, children:[
 							this._priceDeliveryInputs[index],
-							this._currency[index],
-							BX.create('div', {
-								props: {
-									className: 'ui-btn ui-btn-light-border',
-								},
-								style: {marginLeft: '10px', marginBottom: '3px'},
-								events: {
-									click: function () {
-										_this.getOrderController().onDataChanged();
-									}
-								},
-								html: this.getMessage('refresh')
-							})
+							this._currency[index]
 						]})
 					]}),
 					BX.create('div', {
@@ -3208,6 +3196,23 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 										},this)}
 									})
 								]
+							})
+						]
+					}),
+					BX.create('div', {
+						props: {className: 'crm-entity-widget-content-block-title'},
+						children:[
+							BX.create('div', {
+								props: {
+									className: 'ui-btn ui-btn-light-border',
+								},
+								style: {marginTop: '10px'},
+								events: {
+									click: function () {
+										_this.getOrderController().onDataChanged();
+									}
+								},
+								html: this.getMessage('refresh')
 							})
 						]
 					})
@@ -5110,6 +5115,15 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 			var property = eventData.property;
 
 			var itemId = 'PROPERTY_' + propertyId;
+
+			for(var i = 0; i < this._editor._activeControls.length; i++)
+			{
+				if(this._editor._activeControls[i].getId() === itemId)
+				{
+					this._editor._activeControls.splice(i, 1);
+				}
+			}
+
 			this.addActiveField(itemId, property);
 		}
 		else if (event.getEventId() === 'OrderForm::onSave')
@@ -5130,6 +5144,12 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 		if (field)
 		{
 			field._schemeElement._isRequired = (data.REQUIRED === 'Y');
+
+			if (data.TYPE === 'STRING')
+			{
+				field._schemeElement._data.lineCount = data.MULTILINE === 'Y' ? data.ROWS : '1';
+			}
+
 			field._schemeElement.setTitle(BX.util.htmlspecialchars(data.NAME));
 			if (
 				field instanceof BX.UI.EntityEditorList
@@ -5424,7 +5444,13 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 		if (urlTemplate)
 		{
 			var url = urlTemplate.replace('#property_id#', propertyId).replace('#person_type_id#', this._personTypeId);
-			BX.SidePanel.Instance.open(url, {loader: "crm-webform-view-loader"});
+			BX.SidePanel.Instance.open(
+				url,
+				{
+					loader: "crm-webform-view-loader",
+					cacheable: false
+				}
+			);
 		}
 	};
 	BX.Crm.EntityEditorOrderPropertyWrapper.prototype.showManagerSlider = function(e)
@@ -8389,4 +8415,164 @@ if(typeof BX.Crm.EntityEditorOrderLoaderController === "undefined")
 	{
 		return new BX.Crm.EntityEditorOrderLoaderController();
 	}
+}
+
+if(typeof BX.Crm.EntityEditorPaySystemSelector === "undefined")
+{
+	BX.Crm.EntityEditorPaySystemSelector = function()
+	{
+		BX.Crm.EntityEditorPaySystemSelector.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.Crm.EntityEditorPaySystemSelector, BX.UI.EntityEditorList);
+	BX.Crm.EntityEditorPaySystemSelector.prototype.layout = function(options)
+	{
+		if(this._hasLayout)
+		{
+			return;
+		}
+
+		this.ensureWrapperCreated({ classNames: [ "ui-entity-editor-field-select" ] });
+		this.adjustWrapper();
+
+		if(!this.isNeedToDisplay())
+		{
+			this.registerLayout(options);
+			this._hasLayout = true;
+			return;
+		}
+
+		var name = this.getName();
+		var title = this.getTitle();
+
+		var value = this.getValue();
+		var item = this.getItemByValue(value);
+		var isHtmlOption = this.getDataBooleanParam('isHtml', false);
+		var containerProps = {};
+
+		if(!item)
+		{
+			value = this.getMessage("notSelected");
+		}
+		this._selectedValue = value;
+
+		this._select = null;
+		this._selectIcon = null;
+		this._innerWrapper = null;
+
+		if(this.isDragEnabled())
+		{
+			this._wrapper.appendChild(this.createDragButton());
+		}
+
+		if(this._mode === BX.UI.EntityEditorMode.edit)
+		{
+			this._wrapper.appendChild(this.createTitleNode(title));
+
+			this._input = BX.create("input", { attrs: { name: name, type: "hidden", value: value } });
+			this._wrapper.appendChild(this._input);
+
+			containerProps = { props: { className: "ui-ctl-element" }};
+			if (isHtmlOption)
+			{
+				containerProps.html = (item ? item["NAME"] : value);
+			}
+			else
+			{
+				containerProps.text = (item ? item["NAME"] : value);
+			}
+
+			this._select = BX.create("div", containerProps);
+			BX.bind(this._select, "click", this._selectorClickHandler);
+
+			this._selectIcon = BX.create("div",
+				{
+					attrs: { className: "ui-ctl-after ui-ctl-icon-angle" }
+				}
+			);
+
+			this._selectContainer = BX.create("div",
+				{
+					props: {className: "ui-ctl crm-ctl-paysystem-field ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100"},
+					children :[
+						this._select,
+						this._selectIcon
+					]
+				}
+			);
+
+			this._innerWrapper = BX.create("div",
+				{
+					props: { className: "ui-entity-editor-content-block" },
+					children: [ this._selectContainer ]
+				}
+			);
+		}
+		else// if(this._mode === BX.UI.EntityEditorMode.view)
+		{
+			this._wrapper.appendChild(this.createTitleNode(title));
+
+			var text = "";
+			if(!this.hasContentToDisplay())
+			{
+				text = BX.message("UI_ENTITY_EDITOR_FIELD_EMPTY");
+			}
+			else if(item)
+			{
+				text = item["NAME"];
+			}
+			else
+			{
+				text = value;
+			}
+
+			containerProps = {props: { className: "ui-entity-editor-content-block-text" }};
+
+			if (isHtmlOption)
+			{
+				containerProps.html = text;
+			}
+			else
+			{
+				containerProps.text = text;
+			}
+
+			this._innerWrapper = BX.create("div",
+				{
+					props: { className: "ui-entity-editor-content-block crm-ctl-paysystem-field" },
+					children:
+						[
+							BX.create("div", containerProps)
+						]
+				}
+			);
+		}
+		this._wrapper.appendChild(this._innerWrapper);
+
+		if(this.isContextMenuEnabled())
+		{
+			this._wrapper.appendChild(this.createContextMenuButton());
+		}
+
+		if(this.isDragEnabled())
+		{
+			this.initializeDragDropAbilities();
+		}
+
+		this.registerLayout(options);
+		this._hasLayout = true;
+	};
+	BX.Crm.EntityEditorPaySystemSelector.create = function(id, settings)
+	{
+		var self = new BX.Crm.EntityEditorPaySystemSelector();
+		self.initialize(id, settings);
+		return self;
+	}
+	BX.Crm.EntityEditorPaySystemSelector.prototype.getMessage = function(name)
+	{
+		var m = BX.Crm.EntityEditorPaySystemSelector.messages;
+		return (m.hasOwnProperty(name)
+				? m[name]
+				: BX.Crm.EntityEditorPaySystemSelector.superclass.getMessage.apply(this, arguments)
+		);
+	};
 }

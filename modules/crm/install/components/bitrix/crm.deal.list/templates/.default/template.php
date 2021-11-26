@@ -61,6 +61,10 @@ if($arResult['NEED_FOR_REBUILD_DEAL_SEMANTICS'])
 {
 	?><div id="rebuildDealSemanticsWrapper"></div><?
 }
+if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'])
+{
+	?><div id="rebuildDealSecurityAttrsWrapper"></div><?
+}
 if($arResult['NEED_FOR_REBUILD_DEAL_ATTRS'])
 {
 	?><div id="rebuildDealAttrsMsg" class="crm-view-message">
@@ -107,7 +111,7 @@ $gridManagerCfg = array(
 	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 	'filterFields' => array()
 );
-echo CCrmViewHelper::RenderDealStageSettings();
+echo CCrmViewHelper::RenderDealStageSettings($arParams['CATEGORY_ID']);
 $prefix = $arResult['GRID_ID'];
 $prefixLC = mb_strtolower($arResult['GRID_ID']);
 
@@ -398,7 +402,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 			'PRODUCT_ID' => isset($arDeal['PRODUCT_ROWS']) ? htmlspecialcharsbx(CCrmProductRow::RowsToString($arDeal['PRODUCT_ROWS'])) : '',
 			'STATE_ID' => isset($arResult['STATE_LIST'][$arDeal['STATE_ID']]) ? $arResult['STATE_LIST'][$arDeal['STATE_ID']] : $arDeal['STATE_ID'],
 			'WEBFORM_ID' => isset($arResult['WEBFORM_LIST'][$arDeal['WEBFORM_ID']]) ? $arResult['WEBFORM_LIST'][$arDeal['WEBFORM_ID']] : $arDeal['WEBFORM_ID'],
-			'ORDER_STAGE' => CCrmViewHelper::RenderDealOrderStageControl($arDeal['ORDER_STAGE']),
+			'PAYMENT_STAGE' => isset($arDeal['PAYMENT_STAGE']) ? CCrmViewHelper::RenderDealPaymentStageControl($arDeal['PAYMENT_STAGE']) : '',
 			'DELIVERY_STAGE' => CCrmViewHelper::RenderDealDeliveryStageControl($arDeal['DELIVERY_STAGE']),
 			'STAGE_ID' => CCrmViewHelper::RenderDealStageControl(
 				array(
@@ -432,8 +436,75 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 						'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_MODIFIER']
 					)
 				) : '',
-		) + $arResult['DEAL_UF'][$sKey]
+		) + (is_array($arResult['DEAL_UF'][$sKey]) ? $arResult['DEAL_UF'][$sKey] : [])
 	);
+
+	if (isset($arDeal['COMPANY_REVENUE']))
+	{
+		$resultItem['columns']['COMPANY_REVENUE'] =
+			'<nobr>'
+			. number_format($arDeal['COMPANY_REVENUE'], 2, ',', ' ')
+			. '</nobr>'
+		;
+	}
+
+	$extraUserIdFields = [
+		'CONTACT_CREATED_BY_ID',
+		'CONTACT_MODIFY_BY_ID',
+		'CONTACT_ASSIGNED_BY_ID',
+		'COMPANY_CREATED_BY_ID',
+		'COMPANY_MODIFY_BY_ID',
+		'COMPANY_ASSIGNED_BY_ID',
+	];
+	foreach ($extraUserIdFields as $extraUserIdField)
+	{
+		if (isset($arDeal[$extraUserIdField]) && $arDeal[$extraUserIdField] > 0)
+		{
+			$resultItem['columns'][$extraUserIdField] =
+				CCrmViewHelper::PrepareUserBaloonHtml(
+					[
+						'PREFIX' => "DEAL_{$arDeal['~ID']}_".$extraUserIdField,
+						'USER_ID' => $arDeal[$extraUserIdField],
+						'USER_NAME' => $arDeal[$extraUserIdField . '_FORMATTED_NAME'],
+						'USER_PROFILE_URL' => $arDeal[$extraUserIdField . '_SHOW_URL'],
+					]
+				)
+			;
+		}
+	}
+
+	$extraWebformFields = [
+		'CONTACT_WEBFORM_ID',
+		'COMPANY_WEBFORM_ID',
+	];
+	foreach ($extraWebformFields as $extraWebformField)
+	{
+		if (
+			isset($arDeal[$extraWebformField])
+			&& $arDeal[$extraWebformField] != ''
+			&& isset($arResult['WEBFORM_LIST'][$arDeal[$extraWebformField]])
+		)
+		{
+			$resultItem['columns'][$extraWebformField] = $arResult['WEBFORM_LIST'][$arDeal[$extraWebformField]];
+		}
+	}
+
+	if (isset($arDeal['CONTACT_SOURCE_DESCRIPTION']))
+	{
+		$resultItem['columns']['CONTACT_SOURCE_DESCRIPTION'] = nl2br($arDeal['CONTACT_SOURCE_DESCRIPTION']);
+	}
+	if (isset($arDeal['CONTACT_COMMENTS']))
+	{
+		$resultItem['columns']['CONTACT_COMMENTS'] = htmlspecialcharsback($arDeal['CONTACT_COMMENTS']);
+	}
+	if (isset($arDeal['COMPANY_BANKING_DETAILS']))
+	{
+		$resultItem['columns']['COMPANY_BANKING_DETAILS'] = nl2br($arDeal['COMPANY_BANKING_DETAILS']);
+	}
+	if (isset($arDeal['COMPANY_COMMENTS']))
+	{
+		$resultItem['columns']['COMPANY_COMMENTS'] = htmlspecialcharsback($arDeal['COMPANY_COMMENTS']);
+	}
 
 	Tracking\UI\Grid::appendRows(
 		\CCrmOwnerType::Deal,
@@ -1020,6 +1091,8 @@ $APPLICATION->IncludeComponent(
 	array(
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
+		'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
+		'ENABLE_FIELDS_SEARCH' => 'Y',
 		'SORT' => $arResult['SORT'],
 		'SORT_VARS' => $arResult['SORT_VARS'],
 		'ROWS' => $arResult['GRID_DATA'],
@@ -1032,12 +1105,19 @@ $APPLICATION->IncludeComponent(
 		'HIDE_FILTER' => isset($arParams['HIDE_FILTER']) ? $arParams['HIDE_FILTER'] : null,
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-		'FILTER_PARAMS' => array(
-			'LAZY_LOAD' => array(
+		'FILTER_PARAMS' => [
+			'LAZY_LOAD' => [
 				'GET_LIST' => '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-			)
-		),
+			],
+			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
+			'CONFIG' => [
+				'popupColumnsCount' => 4,
+				'popupWidth' => 800,
+				'showPopupInCenter' => true,
+			],
+		],
 		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
 			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
 		'ENABLE_LIVE_SEARCH' => true,
@@ -1256,6 +1336,20 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
+<?if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):
+	Bitrix\Main\UI\Extension::load(['crm.restriction.client-fields']);
+?>
+		<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				new BX.Crm.Restriction.ClientFieldsRestriction(
+					<?=CUtil::PhpToJSObject($arResult['CLIENT_FIELDS_RESTRICTIONS'])?>
+				);
+			}
+		);
+		</script>
+<?endif;?>
 <?if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
 	<script type="text/javascript">
 		BX.ready(
@@ -1308,6 +1402,26 @@ if(!$isInternal):
 					}
 				);
 				manager.runAfter(100);
+			}
+		);
+	</script>
+<?endif;?>
+<?if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']):?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				BX.AutorunProcessManager.createIfNotExists(
+					"rebuildDealSecurityAttrs",
+					{
+						serviceUrl: "<?='/bitrix/components/bitrix/crm.deal.list/list.ajax.php?'.bitrix_sessid_get()?>",
+						actionName: "REBUILD_SECURITY_ATTRS",
+						container: "rebuildDealSecurityAttrsWrapper",
+						title: "<?=GetMessageJS('CRM_DEAL_REBUILD_SECURITY_ATTRS_DLG_TITLE')?>",
+						stateTemplate: "<?=GetMessageJS('CRM_DEAL_STEPWISE_STATE_TEMPLATE')?>",
+						enableLayout: true
+					}
+				).runAfter(100);
 			}
 		);
 	</script>

@@ -21,8 +21,7 @@ class CCRMLeadRest
 
 		if ($arData['AUTH'] <> '')
 		{
-			$_REQUEST['bx_hit_hash'] = $arData['AUTH'];
-			return $USER->LoginHitByHash();
+			return $USER->LoginHitByHash($arData['AUTH']);
 		}
 
 		return false;

@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,tasks_scrum_dod,ui_entitySelector,ui_confetti,ui_draganddrop_draggable,main_loader,pull_client,ui_label,ui_dialogs_messagebox,main_popup,main_core,main_core_events) {
+(function (exports,ui_entitySelector,tasks_scrum_dod,ui_confetti,ui_draganddrop_draggable,main_loader,pull_client,ui_label,ui_dialogs_messagebox,main_popup,main_core,main_core_events) {
 	'use strict';
 
 	var RequestSender = /*#__PURE__*/function () {
@@ -482,273 +482,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Filter;
 	}(main_core_events.EventEmitter);
 
-	var PullCounters = /*#__PURE__*/function () {
-	  function PullCounters(params) {
-	    babelHelpers.classCallCheck(this, PullCounters);
-	    this.filterService = params.filterService;
-	    this.userId = params.userId;
-	    this.groupId = params.groupId;
-	  }
-
-	  babelHelpers.createClass(PullCounters, [{
-	    key: "getModuleId",
-	    value: function getModuleId() {
-	      return 'tasks';
-	    }
-	  }, {
-	    key: "getMap",
-	    value: function getMap() {
-	      return {
-	        comment_read_all: this.onCommentsReadAll.bind(this)
-	      };
-	    }
-	  }, {
-	    key: "onCommentsReadAll",
-	    value: function onCommentsReadAll(data) {
-	      var groupId = data.GROUP_ID;
-	      console.log(data);
-	      console.log(groupId && groupId === this.groupId);
-
-	      if (groupId && groupId === this.groupId) {
-	        this.filterService.applyFilter();
-	      }
-	    }
-	  }]);
-	  return PullCounters;
-	}();
-
-	var Counters = /*#__PURE__*/function () {
-	  function Counters(params) {
-	    babelHelpers.classCallCheck(this, Counters);
-	    this.filterService = params.filter;
-	    this.isOwnerCurrentUser = params.isOwnerCurrentUser;
-	    this.userId = parseInt(params.userId, 10);
-	    this.groupId = parseInt(params.groupId, 10);
-	    this.filter = this.filterService.getFilterManager();
-	    this.updateFields();
-	    this.bindEvents();
-	    this.subscribeToPull();
-	  }
-
-	  babelHelpers.createClass(Counters, [{
-	    key: "bindEvents",
-	    value: function bindEvents() {
-	      main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', this.onFilterApply.bind(this));
-	      main_core_events.EventEmitter.subscribe('Tasks.Toolbar:onItem', this.onCounterClick.bind(this));
-	    }
-	  }, {
-	    key: "subscribeToPull",
-	    value: function subscribeToPull() {
-	      pull_client.PULL.subscribe(new PullCounters({
-	        filterService: this.filterService,
-	        userId: this.userId,
-	        groupId: this.groupId
-	      }));
-	    }
-	  }, {
-	    key: "onFilterApply",
-	    value: function onFilterApply() {
-	      this.updateFields();
-	    }
-	  }, {
-	    key: "updateFields",
-	    value: function updateFields() {
-	      this.fields = this.filter.getFilterFieldsValues();
-	    }
-	  }, {
-	    key: "onCounterClick",
-	    value: function onCounterClick(baseEvent) {
-	      var data = baseEvent.getData();
-
-	      if (data.counter && data.counter.filter) {
-	        this.toggleByField(babelHelpers.defineProperty({}, data.counter.filterField, data.counter.filterValue));
-	      }
-	    }
-	  }, {
-	    key: "isFilteredByField",
-	    value: function isFilteredByField(field) {
-	      if (!Object.keys(this.fields).includes(field)) {
-	        return false;
-	      }
-
-	      if (main_core.Type.isArray(this.fields[field])) {
-	        return this.fields[field].length > 0;
-	      }
-
-	      return this.fields[field] !== '';
-	    }
-	  }, {
-	    key: "isFilteredByFieldValue",
-	    value: function isFilteredByFieldValue(field, value) {
-	      return this.isFilteredByField(field) && this.fields[field] === value;
-	    }
-	  }, {
-	    key: "toggleByField",
-	    value: function toggleByField(field) {
-	      var _this = this;
-
-	      var name = Object.keys(field)[0];
-	      var value = field[name];
-
-	      if (!this.isFilteredByFieldValue(name, value)) {
-	        this.filter.getApi().extendFilter(babelHelpers.defineProperty({}, name, value));
-	        return;
-	      }
-
-	      this.filter.getFilterFields().forEach(function (field) {
-	        if (field.getAttribute('data-name') === name) {
-	          _this.filter.getFields().deleteField(field);
-	        }
-	      });
-	      this.filter.getSearch().apply();
-	    }
-	  }]);
-	  return Counters;
-	}();
-
 	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-view-switcher\">\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-view-switcher--item ", "\"\n\t\t\t\t>", "</a>\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-view-switcher--item ", "\"\n\t\t\t\t>", "</a>\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-view-switcher--item ", "\"\n\t\t\t\t>", "</a>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-	var Tabs = /*#__PURE__*/function () {
-	  function Tabs(params) {
-	    babelHelpers.classCallCheck(this, Tabs);
-	    this.views = params.views;
-	  }
-
-	  babelHelpers.createClass(Tabs, [{
-	    key: "render",
-	    value: function render() {
-	      var planTabActiveClass = this.views['plan'].active ? 'tasks-view-switcher--item --active' : '';
-	      var activeTabActiveClass = this.views['activeSprint'].active ? 'tasks-view-switcher--item --active' : '';
-	      var completedTabActiveClass = this.views['completedSprint'].active ? 'tasks-view-switcher--item --active' : '';
-	      return main_core.Tag.render(_templateObject(), this.views['plan'].url, planTabActiveClass, main_core.Text.encode(this.views['plan'].name), this.views['activeSprint'].url, activeTabActiveClass, main_core.Text.encode(this.views['activeSprint'].name), this.views['completedSprint'].url, completedTabActiveClass, main_core.Text.encode(this.views['completedSprint'].name));
-	    }
-	  }]);
-	  return Tabs;
-	}();
-
-	var View = /*#__PURE__*/function (_EventEmitter) {
-	  babelHelpers.inherits(View, _EventEmitter);
-
-	  function View(params) {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, View);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(View).call(this, params));
-
-	    _this.setEventNamespace('BX.Tasks.Scrum.View');
-
-	    _this.isOwnerCurrentUser = params.isOwnerCurrentUser === 'Y';
-	    _this.requestSender = new RequestSender({
-	      signedParameters: params.signedParameters,
-	      debugMode: params.debugMode
-	    });
-	    _this.filter = new Filter({
-	      filterId: params.filterId,
-	      scrumManager: babelHelpers.assertThisInitialized(_this),
-	      requestSender: _this.requestSender
-	    });
-	    _this.userId = parseInt(params.userId, 10);
-	    _this.groupId = parseInt(params.groupId, 10);
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(View, [{
-	    key: "renderTo",
-	    value: function renderTo(container) {
-	      if (!main_core.Type.isDomNode(container)) {
-	        throw new Error('Scrum: HTMLElement for scrum not found');
-	      }
-	    }
-	  }, {
-	    key: "renderTabsTo",
-	    value: function renderTabsTo(container) {
-	      if (!main_core.Type.isDomNode(container)) {
-	        throw new Error('Scrum: HTMLElement for tabs not found');
-	      }
-
-	      var tabs = new Tabs({
-	        views: this.views
-	      });
-	      main_core.Dom.append(tabs.render(), container);
-	    }
-	  }, {
-	    key: "renderSprintStatsTo",
-	    value: function renderSprintStatsTo(container) {
-	      if (!main_core.Type.isDomNode(container)) {
-	        throw new Error('Scrum: HTMLElement for Sprint stats not found');
-	      }
-	    }
-	  }, {
-	    key: "renderButtonsTo",
-	    value: function renderButtonsTo(container) {
-	      if (!main_core.Type.isDomNode(container)) {
-	        throw new Error('Scrum: HTMLElement for buttons not found');
-	      }
-	    }
-	  }, {
-	    key: "getCurrentUserId",
-	    value: function getCurrentUserId() {
-	      return this.userId;
-	    }
-	  }, {
-	    key: "getCurrentGroupId",
-	    value: function getCurrentGroupId() {
-	      return this.groupId;
-	    }
-	  }]);
-	  return View;
-	}(main_core_events.EventEmitter);
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-btn ui-btn-light-border ui-btn-themes ui-btn-round ui-btn-xs\">\n\t\t\t\t", "\n\t\t\t</button>\n\t\t"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-	var TeamSpeedButton = /*#__PURE__*/function (_EventEmitter) {
-	  babelHelpers.inherits(TeamSpeedButton, _EventEmitter);
-
-	  function TeamSpeedButton() {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, TeamSpeedButton);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(TeamSpeedButton).call(this));
-
-	    _this.setEventNamespace('BX.Tasks.Scrum.TeamSpeedButton');
-
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(TeamSpeedButton, [{
-	    key: "render",
-	    value: function render() {
-	      var node = main_core.Tag.render(_templateObject$1(), main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_BUTTON'));
-	      main_core.Event.bind(node, 'click', this.onClick.bind(this));
-	      return node;
-	    }
-	  }, {
-	    key: "onClick",
-	    value: function onClick() {
-	      this.emit('click');
-	    }
-	  }]);
-	  return TeamSpeedButton;
-	}(main_core_events.EventEmitter);
-
-	function _templateObject$2() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"files_chooser\">\n\t\t\t<div id=\"diskuf-selectdialog-", "\" class=\"diskuf-files-entity diskuf-selectdialog bx-disk\">\n\t\t\t\t<div class=\"diskuf-files-block\">\n\t\t\t\t\t<div class=\"diskuf-placeholder\">\n\t\t\t\t\t\t<table class=\"files-list\">\n\t\t\t\t\t\t\t<tbody class=\"diskuf-placeholder-tbody\"></tbody>\n\t\t\t\t\t\t</table>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"diskuf-extended\" style=\"display: block\">\n\t\t\t\t\t<input type=\"hidden\" name=\"[", "][]\" value=\"\"/>\n\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t<label for=\"file_loader_", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</label>\n\t\t\t\t\t\t<input class=\"diskuf-fileUploader\" id=\"file_loader_", "\" type=\n\t\t\t\t\t\t\t\"file\" multiple=\"multiple\" size=\"1\" style=\"display: none\"/>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t<span class=\"diskuf-selector-link\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t<span class=\"diskuf-selector-link-cloud\" data-bx-doc-handler=\"gdrive\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$2 = function _templateObject() {
+	  _templateObject = function _templateObject() {
 	    return data;
 	  };
 
@@ -807,7 +544,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getAttachmentsLoaderContent",
 	    value: function getAttachmentsLoaderContent(controlId) {
-	      var filesChooser = main_core.Tag.render(_templateObject$2(), controlId, controlId, controlId, main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_COMPUTER'), controlId, main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_B24'), main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_CLOUD'));
+	      var filesChooser = main_core.Tag.render(_templateObject(), controlId, controlId, controlId, main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_COMPUTER'), controlId, main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_B24'), main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_CLOUD'));
 	      BX.addCustomEvent(filesChooser, 'OnFileUploadSuccess', this.onFileUploadSuccess.bind(this)); //todo show loader
 
 	      return filesChooser;
@@ -925,10 +662,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return data;
 	}
 
-	function _templateObject$3() {
+	function _templateObject$1() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div id=\"", "\" class=\n\t\t\t\t\t\"tasks-scrum-actions-panel-btn tasks-scrum-actions-panel-btn-task\">\n\t\t\t\t\t<span class=\"tasks-scrum-actions-panel-icon\"></span>\n\t\t\t\t\t<span class=\"tasks-scrum-actions-panel-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-actions-panel-separator\"></div>\n\t\t\t"]);
 
-	  _templateObject$3 = function _templateObject() {
+	  _templateObject$1 = function _templateObject() {
 	    return data;
 	  };
 
@@ -1033,7 +770,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      if (this.itemList.task.activity) {
 	        this.showTaskActionButtonNodeId = 'tasks-scrum-actions-panel-btn-task';
-	        task = main_core.Tag.render(_templateObject$3(), this.showTaskActionButtonNodeId, main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TASK'));
+	        task = main_core.Tag.render(_templateObject$1(), this.showTaskActionButtonNodeId, main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TASK'));
 	      }
 
 	      if (this.itemList.attachment.activity) {
@@ -1166,10 +903,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return ActionsPanel;
 	}();
 
-	function _templateObject$4() {
+	function _templateObject$2() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span id=\"", "\" class=\"task-title-indicators\">\n\t\t\t\t<div class=\"task-attachment-counter ui-label ui-label-sm ui-label-light\">\n\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div class='task-checklist-counter ui-label ui-label-sm ui-label-light'>\n\t\t\t\t\t<span class='ui-label-inner'>", "/", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div class='task-comments-counter'>\n\t\t\t\t\t<div class='ui-counter ", "'>\n\t\t\t\t\t\t<div class='ui-counter-inner'>", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</span>\n\t\t"]);
 
-	  _templateObject$4 = function _templateObject() {
+	  _templateObject$2 = function _templateObject() {
 	    return data;
 	  };
 
@@ -1241,7 +978,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderIndicators",
 	    value: function renderIndicators() {
 	      this.indicatorsNodeId = 'tasks-scrum-item-indicators-' + this.itemId;
-	      return main_core.Tag.render(_templateObject$4(), this.indicatorsNodeId, this.attachedFilesCount, this.checkListComplete, this.checkListAll, this.taskCounter.color, this.taskCounter.value);
+	      return main_core.Tag.render(_templateObject$2(), this.indicatorsNodeId, this.attachedFilesCount, this.checkListComplete, this.checkListAll, this.taskCounter.color, this.taskCounter.value);
 	    }
 	  }, {
 	    key: "onAfterAppend",
@@ -1477,10 +1214,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return data;
 	}
 
-	function _templateObject$5() {
+	function _templateObject$3() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div data-item-id=\"", "\" data-sort=\n\t\t\t\t\"", "\" class=\"", "\">\n\t\t\t\t<div class=\"tasks-scrum-item-inner\">\n\t\t\t\t\t<div class=\"tasks-scrum-item-group-mode-container\">\n\t\t\t\t\t\t<input type=\"checkbox\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-item-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-item-params\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$5 = function _templateObject() {
+	  _templateObject$3 = function _templateObject() {
 	    return data;
 	  };
 
@@ -1561,7 +1298,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "setName",
 	    value: function setName(name) {
-	      this.name = main_core.Type.isString(name) ? name : 'Name';
+	      this.name = main_core.Type.isString(name) && name ? name : '';
+
+	      if (!this.name) {
+	        throw new Error(main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_NAME_ERROR'));
+	      }
 
 	      if (this.isNodeCreated()) {
 	        var nameNode = this.getItemNode().querySelector('.tasks-scrum-item-name-field');
@@ -2183,7 +1924,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        itemClassName += ' tasks-scrum-subtask-item';
 	      }
 
-	      this.itemNode = main_core.Tag.render(_templateObject$5(), main_core.Text.encode(this.itemId), main_core.Text.encode(this.sort), itemClassName, this.renderName(), this.taskCounts && this.itemType === 'task' ? this.taskCounts.renderIndicators() : '', this.renderSubTasksCounter(), this.renderResponsible(), this.renderStoryPoints(), this.renderSubTasksTick(), this.renderTags());
+	      this.itemNode = main_core.Tag.render(_templateObject$3(), main_core.Text.encode(this.itemId), main_core.Text.encode(this.sort), itemClassName, this.renderName(), this.taskCounts && this.itemType === 'task' ? this.taskCounts.renderIndicators() : '', this.renderSubTasksCounter(), this.renderResponsible(), this.renderStoryPoints(), this.renderSubTasksTick(), this.renderTags());
 
 	      if (this.isNodeCreated() && this.getBorderColor()) {
 	        main_core.Dom.style(this.itemNode, 'border', '2px solid ' + this.getBorderColor());
@@ -2823,10 +2564,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Item;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject$6() {
+	function _templateObject$4() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"ui-link ui-link-dashed ui-link-secondary tasks-scrum-group-actions\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"]);
 
-	  _templateObject$6 = function _templateObject() {
+	  _templateObject$4 = function _templateObject() {
 	    return data;
 	  };
 
@@ -2850,7 +2591,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(GroupActionsButton, [{
 	    key: "render",
 	    value: function render() {
-	      this.element = main_core.Tag.render(_templateObject$6(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_LIST_ACTIONS_GROUP'));
+	      this.element = main_core.Tag.render(_templateObject$4(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_LIST_ACTIONS_GROUP'));
 	      main_core.Event.bind(this.element, 'click', this.onClick.bind(this, this.element));
 	      return this.element;
 	    }
@@ -2889,10 +2630,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return GroupActionsButton;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject$7() {
+	function _templateObject$5() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-items-list\" data-entity-id=\"", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$7 = function _templateObject() {
+	  _templateObject$5 = function _templateObject() {
 	    return data;
 	  };
 
@@ -2910,7 +2651,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function render() {
 	      var _this = this;
 
-	      this.node = main_core.Tag.render(_templateObject$7(), this.entity.getId(), this.entity.isCompleted() ? '' : this.entity.getInput().render(), babelHelpers.toConsumableArray(this.entity.getItems().values()).map(function (item) {
+	      this.node = main_core.Tag.render(_templateObject$5(), this.entity.getId(), this.entity.isCompleted() ? '' : this.entity.getInput().render(), babelHelpers.toConsumableArray(this.entity.getItems().values()).map(function (item) {
 	        item.setEntityType(_this.entity.getEntityType());
 	        return item.render();
 	      }));
@@ -2940,10 +2681,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return data;
 	}
 
-	function _templateObject$8() {
+	function _templateObject$6() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span onclick=\"", "\" class=\"ui-selector-footer-link ui-selector-footer-link-add\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t"]);
 
-	  _templateObject$8 = function _templateObject() {
+	  _templateObject$6 = function _templateObject() {
 	    return data;
 	  };
 
@@ -3123,7 +2864,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            }
 	          }
 	        },
-	        footer: [main_core.Tag.render(_templateObject$8(), createTag, main_core.Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')), main_core.Tag.render(_templateObject2$2())]
+	        footer: [main_core.Tag.render(_templateObject$6(), createTag, main_core.Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')), main_core.Tag.render(_templateObject2$2())]
 	      });
 	      actionsPanel.setBlockBlurNode(this.tagDialog.getContainer());
 	      this.tagDialog.subscribe('onHide', function () {
@@ -3319,10 +3060,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	babelHelpers.defineProperty(TagSearcher, "tagRegExp", '#[^#@](?:[^#@]*[^\s#@])?');
 	babelHelpers.defineProperty(TagSearcher, "epicRegExp", '@[^#@](?:[^#@]*[^\s#@])?');
 
-	function _templateObject$9() {
+	function _templateObject$7() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"tasks-scrum-input\">\n\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox\">\n\t\t\t\t\t<input type=\"text\" class=\"ui-ctl-element\" placeholder=\n\t\t\t\t\t\t\"", "\" autocomplete=\"off\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$9 = function _templateObject() {
+	  _templateObject$7 = function _templateObject() {
 	    return data;
 	  };
 
@@ -3348,7 +3089,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(Input, [{
 	    key: "render",
 	    value: function render() {
-	      return main_core.Tag.render(_templateObject$9(), main_core.Text.encode(this.nodeId), main_core.Text.encode(this.placeholder));
+	      return main_core.Tag.render(_templateObject$7(), main_core.Text.encode(this.nodeId), main_core.Text.encode(this.placeholder));
 	    }
 	  }, {
 	    key: "disable",
@@ -3993,10 +3734,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Entity;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject$a() {
+	function _templateObject$8() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-backlog-title\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-epics-title ui-btn ui-btn-xs ui-btn-secondary\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div title=\"Definition of Done\" class=\"tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-dod\">\n\t\t\t\t<span class=\"tasks-scrum-entity-dod-icon\"></span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-title-spacer\"></div>\n\t\t\t<div class=\"tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-task\">\n\t\t\t\t<span class=\"tasks-scrum-entity-tasks-icon\"></span>\n\t\t\t\t<span class=\"tasks-scrum-entity-tasks-title\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-story-point-title\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-story-point\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$a = function _templateObject() {
+	  _templateObject$8 = function _templateObject() {
 	    return data;
 	  };
 
@@ -4023,7 +3764,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function render() {
 	      var _this2 = this;
 
-	      this.element = main_core.Tag.render(_templateObject$a(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_EPICS_TITLE'), this.entity.getNumberTasks(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE_STORY_POINTS'), main_core.Text.encode(this.entity.getStoryPoints().getPoints()));
+	      this.element = main_core.Tag.render(_templateObject$8(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_EPICS_TITLE'), this.entity.getNumberTasks(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE_STORY_POINTS'), main_core.Text.encode(this.entity.getStoryPoints().getPoints()));
 	      main_core.Event.bind(this.getElementByClassName(this.element, 'tasks-scrum-backlog-epics-title'), 'click', function () {
 	        _this2.emit('openListEpicGrid');
 	      });
@@ -4058,10 +3799,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Header;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject$b() {
+	function _templateObject$9() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"ui-link ui-link-dashed ui-link-secondary tasks-scrum-action-epic\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"]);
 
-	  _templateObject$b = function _templateObject() {
+	  _templateObject$9 = function _templateObject() {
 	    return data;
 	  };
 
@@ -4084,7 +3825,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(EpicCreationButton, [{
 	    key: "render",
 	    value: function render() {
-	      var element = main_core.Tag.render(_templateObject$b(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_LIST_ACTIONS_EPIC_ADD'));
+	      var element = main_core.Tag.render(_templateObject$9(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_LIST_ACTIONS_EPIC_ADD'));
 	      main_core.Event.bind(element, 'click', this.onClick.bind(this));
 	      return element;
 	    }
@@ -4097,10 +3838,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return EpicCreationButton;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject$c() {
+	function _templateObject$a() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-backlog\">\n\t\t\t\t<div class=\"tasks-scrum-backlog-header\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-backlog-actions\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-backlog-items\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-entity-items-loader\"></div>\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$c = function _templateObject() {
+	  _templateObject$a = function _templateObject() {
 	    return data;
 	  };
 
@@ -4171,7 +3912,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$c(), this.header ? this.header.render() : '', this.epicCreationButton ? this.epicCreationButton.render() : '', this.groupActionsButton ? this.groupActionsButton.render() : '', this.listItems ? this.listItems.render() : '');
+	      this.node = main_core.Tag.render(_templateObject$a(), this.header ? this.header.render() : '', this.epicCreationButton ? this.epicCreationButton.render() : '', this.groupActionsButton ? this.groupActionsButton.render() : '', this.listItems ? this.listItems.render() : '');
 	      this.itemsLoaderNode = this.node.querySelector('.tasks-scrum-entity-items-loader');
 	      this.bindItemsLoader(this.itemsLoaderNode);
 	      return this.node;
@@ -4220,10 +3961,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Backlog;
 	}(Entity);
 
-	function _templateObject$d() {
+	function _templateObject$b() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"tasks-scrum-sprint-date\">\n\t\t\t\t<div class=\"tasks-scrum-sprint-date-start\">", "</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-date-separator\">-</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-date-end\">", "</div>\n\t\t\t\t<input type=\"hidden\" name=\"dateStart\">\n\t\t\t\t<input type=\"hidden\" name=\"dateEnd\">\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$d = function _templateObject() {
+	  _templateObject$b = function _templateObject() {
 	    return data;
 	  };
 
@@ -4258,7 +3999,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderNode",
 	    value: function renderNode(nodeId, dateStart, dateEnd) {
-	      return main_core.Tag.render(_templateObject$d(), nodeId, dateStart, dateEnd);
+	      return main_core.Tag.render(_templateObject$b(), nodeId, dateStart, dateEnd);
 	    }
 	  }, {
 	    key: "updateDateStartNode",
@@ -4535,10 +4276,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return StatsHeader;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject$e() {
+	function _templateObject$c() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\" title=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$e = function _templateObject() {
+	  _templateObject$c = function _templateObject() {
 	    return data;
 	  };
 
@@ -4559,7 +4300,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var completedDate = this.getCompletedDate(this.getEndDate());
 	      var label = main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_COMPLETED_LABEL').replace('#percent#', percentage).replace('#date#', completedDate);
 	      var title = this.getSprintDate().getFormattedTitleDatePeriod();
-	      this.headerNode = main_core.Tag.render(_templateObject$e(), this.headerClass, title, label);
+	      this.headerNode = main_core.Tag.render(_templateObject$c(), this.headerClass, title, label);
 	      return this.headerNode;
 	    }
 	  }, {
@@ -4571,10 +4312,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return CompletedStatsHeader;
 	}(StatsHeader);
 
-	function _templateObject$f() {
+	function _templateObject$d() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\" title=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$f = function _templateObject() {
+	  _templateObject$d = function _templateObject() {
 	    return data;
 	  };
 
@@ -4595,7 +4336,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var expiredDay = this.getExpiredDay(this.getEndDate());
 	      var label = main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_EXPIRED_LABEL').replace('#percent#', percentage).replace('#date#', expiredDay);
 	      var title = this.getSprintDate().getFormattedTitleDatePeriod();
-	      this.headerNode = main_core.Tag.render(_templateObject$f(), this.headerClass, title, label);
+	      this.headerNode = main_core.Tag.render(_templateObject$d(), this.headerClass, title, label);
 	      return this.headerNode;
 	    }
 	  }, {
@@ -4607,10 +4348,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return ExpiredStatsHeader;
 	}(StatsHeader);
 
-	function _templateObject$g() {
+	function _templateObject$e() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\" title=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$g = function _templateObject() {
+	  _templateObject$e = function _templateObject() {
 	    return data;
 	  };
 
@@ -4638,7 +4379,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      var title = this.getSprintDate().getFormattedTitleDatePeriod();
-	      this.headerNode = main_core.Tag.render(_templateObject$g(), this.headerClass, title, label);
+	      this.headerNode = main_core.Tag.render(_templateObject$e(), this.headerClass, title, label);
 	      return this.headerNode;
 	    }
 	  }, {
@@ -4735,10 +4476,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return data;
 	}
 
-	function _templateObject$h() {
+	function _templateObject$f() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprint-header ", "\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-scrum-sprint-header-name-container\">\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-header-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-header-edit\"></div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$h = function _templateObject() {
+	  _templateObject$f = function _templateObject() {
 	    return data;
 	  };
 
@@ -4816,7 +4557,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$h(), this.headerClass, this.renderDragnDrop(), main_core.Text.encode(this.sprint.getName()), this.renderRemove(), this.renderParams());
+	      this.node = main_core.Tag.render(_templateObject$f(), this.headerClass, this.renderDragnDrop(), main_core.Text.encode(this.sprint.getName()), this.renderRemove(), this.renderParams());
 	      return this.node;
 	    }
 	  }, {
@@ -4971,10 +4712,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return SprintHeader;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject$i() {
+	function _templateObject$g() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"ui-link\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"]);
 
-	  _templateObject$i = function _templateObject() {
+	  _templateObject$g = function _templateObject() {
 	    return data;
 	  };
 
@@ -4989,7 +4730,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(EventsHeader, [{
 	    key: "render",
 	    value: function render() {
-	      this.element = main_core.Tag.render(_templateObject$i(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_EVENT'));
+	      this.element = main_core.Tag.render(_templateObject$g(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_EVENT'));
 	      return this.element;
 	    }
 	  }]);
@@ -5036,10 +4777,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return data;
 	}
 
-	function _templateObject$j() {
+	function _templateObject$h() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprint-story-point-title\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-sprint-story-point\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$j = function _templateObject() {
+	  _templateObject$h = function _templateObject() {
 	    return data;
 	  };
 
@@ -5066,7 +4807,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function render() {
 	      var _this2 = this;
 
-	      this.storyPointsNode = main_core.Tag.render(_templateObject$j(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_STORY_POINTS'), this.sprint.getStoryPoints().getPoints());
+	      this.storyPointsNode = main_core.Tag.render(_templateObject$h(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_STORY_POINTS'), this.sprint.getStoryPoints().getPoints());
 	      this.inWorkStoryPointsNode = this.sprint.isActive() ? main_core.Tag.render(_templateObject2$4(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_STORY_POINTS_IN_WORK'), this.sprint.getUncompletedStoryPoints().getPoints()) : '';
 	      this.doneStoryPointsNode = this.sprint.isPlanned() ? '' : main_core.Tag.render(_templateObject3$3(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_STORY_POINTS_DONE'), this.sprint.getCompletedStoryPoints().getPoints());
 	      this.element = main_core.Tag.render(_templateObject4$3(), this.renderBurnDownChartIcon(), this.sprint.getNumberTasks(), this.storyPointsNode, this.inWorkStoryPointsNode, this.doneStoryPointsNode);
@@ -5162,10 +4903,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return data;
 	}
 
-	function _templateObject$k() {
+	function _templateObject$i() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprint\" data-sprint-sort=\"", "\" data-sprint-id=\"", "\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-scrum-sprint-content\">\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-sub-header\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-sprint-header-event\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-actions\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-items\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-entity-items-loader\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject$k = function _templateObject() {
+	  _templateObject$i = function _templateObject() {
 	    return data;
 	  };
 
@@ -5541,7 +5282,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$k(), this.sort, this.getId(), this.sprintHeader ? this.sprintHeader.render() : '', this.eventsHeader ? '' : ''
+	      this.node = main_core.Tag.render(_templateObject$i(), this.sort, this.getId(), this.sprintHeader ? this.sprintHeader.render() : '', this.eventsHeader ? '' : ''
 	      /*todo*/
 	      , this.isCompleted() ? this.renderLinkToCompletedSprint() : '', this.renderParams(), this.groupActionsButton && !this.isDisabled() ? this.groupActionsButton.render() : '', this.listItems ? this.listItems.render() : '');
 	      this.itemsLoaderNode = this.node.querySelector('.tasks-scrum-entity-items-loader');
@@ -5810,6 +5551,300 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Sprint;
 	}(Entity);
 
+	var EntityStorage = /*#__PURE__*/function () {
+	  function EntityStorage() {
+	    babelHelpers.classCallCheck(this, EntityStorage);
+	    this.backlog = null;
+	    this.sprints = new Map();
+	  }
+
+	  babelHelpers.createClass(EntityStorage, [{
+	    key: "addBacklog",
+	    value: function addBacklog(backlog) {
+	      if (!(backlog instanceof Backlog)) {
+	        throw new Error('EntityStorage: Backlog is in wrong format');
+	      }
+
+	      this.backlog = backlog;
+	    }
+	  }, {
+	    key: "addSprint",
+	    value: function addSprint(sprint) {
+	      this.sprints.set(sprint.getId(), sprint);
+	    }
+	  }, {
+	    key: "removeSprint",
+	    value: function removeSprint(sprintId) {
+	      this.sprints.delete(sprintId);
+	    }
+	  }, {
+	    key: "getBacklog",
+	    value: function getBacklog() {
+	      if (this.backlog === null) {
+	        throw new Error('EntityStorage: Backlog not found');
+	      }
+
+	      return this.backlog;
+	    }
+	  }, {
+	    key: "getSprints",
+	    value: function getSprints() {
+	      return this.sprints;
+	    }
+	  }, {
+	    key: "getSprintsAvailableForFilling",
+	    value: function getSprintsAvailableForFilling(entityFrom) {
+	      var sprints = new Set();
+	      this.sprints.forEach(function (sprint) {
+	        if (!sprint.isCompleted() && entityFrom.getId() !== sprint.getId()) {
+	          sprints.add(sprint);
+	        }
+	      });
+	      return sprints;
+	    }
+	  }, {
+	    key: "getAllEntities",
+	    value: function getAllEntities() {
+	      var entities = new Map();
+	      entities.set(this.backlog.getId(), this.backlog);
+	      babelHelpers.toConsumableArray(this.sprints.values()).map(function (sprint) {
+	        return entities.set(sprint.getId(), sprint);
+	      });
+	      return entities;
+	    }
+	  }, {
+	    key: "getAllItems",
+	    value: function getAllItems() {
+	      var items = new Map(this.backlog.getItems());
+	      babelHelpers.toConsumableArray(this.sprints.values()).map(function (sprint) {
+	        return items = new Map([].concat(babelHelpers.toConsumableArray(items), babelHelpers.toConsumableArray(sprint.getItems())));
+	      });
+	      return items;
+	    }
+	  }, {
+	    key: "recalculateItemsSort",
+	    value: function recalculateItemsSort() {
+	      this.backlog.recalculateItemsSort();
+	      this.sprints.forEach(function (sprint) {
+	        return sprint.recalculateItemsSort();
+	      });
+	    }
+	  }, {
+	    key: "findEntityByEntityId",
+	    value: function findEntityByEntityId(entityId) {
+	      entityId = parseInt(entityId, 10);
+
+	      if (this.backlog.getId() === entityId) {
+	        return this.backlog;
+	      }
+
+	      return babelHelpers.toConsumableArray(this.sprints.values()).find(function (sprint) {
+	        return sprint.getId() === entityId;
+	      });
+	    }
+	  }, {
+	    key: "findItemByItemId",
+	    value: function findItemByItemId(itemId) {
+	      itemId = parseInt(itemId, 10);
+	      var backlogItems = this.backlog.getItems();
+
+	      if (backlogItems.has(itemId)) {
+	        return backlogItems.get(itemId);
+	      }
+
+	      var sprint = babelHelpers.toConsumableArray(this.sprints.values()).find(function (sprint) {
+	        return sprint.getItems().has(itemId);
+	      });
+
+	      if (sprint) {
+	        return sprint.getItems().get(itemId);
+	      }
+
+	      return null;
+	    }
+	  }, {
+	    key: "findItemBySourceId",
+	    value: function findItemBySourceId(sourceId) {
+	      sourceId = parseInt(sourceId, 10);
+	      var items = new Map(this.backlog.getItems());
+	      babelHelpers.toConsumableArray(this.sprints.values()).map(function (sprint) {
+	        return items = new Map([].concat(babelHelpers.toConsumableArray(items), babelHelpers.toConsumableArray(sprint.getItems())));
+	      });
+	      return babelHelpers.toConsumableArray(items.values()).find(function (item) {
+	        return item.getSourceId() === sourceId;
+	      });
+	    }
+	  }, {
+	    key: "findEntityByItemId",
+	    value: function findEntityByItemId(itemId) {
+	      itemId = parseInt(itemId, 10);
+	      var backlogItems = this.backlog.getItems();
+
+	      if (backlogItems.has(itemId)) {
+	        return this.backlog;
+	      }
+
+	      return babelHelpers.toConsumableArray(this.sprints.values()).find(function (sprint) {
+	        return sprint.getItems().has(itemId);
+	      });
+	    }
+	  }]);
+	  return EntityStorage;
+	}();
+
+	var PullCounters = /*#__PURE__*/function () {
+	  function PullCounters(params) {
+	    babelHelpers.classCallCheck(this, PullCounters);
+	    this.requestSender = params.requestSender;
+	    this.entityStorage = params.entityStorage;
+	    this.filterService = params.filterService;
+	    this.userId = params.userId;
+	    this.groupId = params.groupId;
+	  }
+
+	  babelHelpers.createClass(PullCounters, [{
+	    key: "getModuleId",
+	    value: function getModuleId() {
+	      return 'tasks';
+	    }
+	  }, {
+	    key: "getMap",
+	    value: function getMap() {
+	      return {
+	        task_view: this.onTaskView.bind(this),
+	        project_read_all: this.onCommentsReadAll.bind(this)
+	      };
+	    }
+	  }, {
+	    key: "onTaskView",
+	    value: function onTaskView(data) {
+	      var _this = this;
+
+	      var inputTaskId = parseInt(data.TASK_ID, 10);
+	      var inputUserId = parseInt(data.USER_ID, 10);
+
+	      if (inputUserId !== this.userId) {
+	        return;
+	      }
+
+	      var item = this.entityStorage.findItemBySourceId(inputTaskId);
+
+	      if (item) {
+	        this.requestSender.getCurrentState({
+	          taskId: item.getSourceId()
+	        }).then(function (response) {
+	          item.updateYourself(new Item(response.data.itemData));
+	        }).catch(function (response) {
+	          _this.requestSender.showErrorAlert(response);
+	        });
+	      }
+	    }
+	  }, {
+	    key: "onCommentsReadAll",
+	    value: function onCommentsReadAll(data) {
+	      var groupId = data.GROUP_ID;
+
+	      if (groupId && groupId === this.groupId) {
+	        this.filterService.applyFilter();
+	      }
+	    }
+	  }]);
+	  return PullCounters;
+	}();
+
+	var Counters = /*#__PURE__*/function () {
+	  function Counters(params) {
+	    babelHelpers.classCallCheck(this, Counters);
+	    this.requestSender = params.requestSender;
+	    this.entityStorage = params.entityStorage;
+	    this.filterService = params.filter;
+	    this.isOwnerCurrentUser = params.isOwnerCurrentUser;
+	    this.userId = parseInt(params.userId, 10);
+	    this.groupId = parseInt(params.groupId, 10);
+	    this.filter = this.filterService.getFilterManager();
+	    this.updateFields();
+	    this.bindEvents();
+	    this.subscribeToPull();
+	  }
+
+	  babelHelpers.createClass(Counters, [{
+	    key: "bindEvents",
+	    value: function bindEvents() {
+	      main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', this.onFilterApply.bind(this));
+	      main_core_events.EventEmitter.subscribe('Tasks.Toolbar:onItem', this.onCounterClick.bind(this));
+	    }
+	  }, {
+	    key: "subscribeToPull",
+	    value: function subscribeToPull() {
+	      pull_client.PULL.subscribe(new PullCounters({
+	        requestSender: this.requestSender,
+	        entityStorage: this.entityStorage,
+	        filterService: this.filterService,
+	        userId: this.userId,
+	        groupId: this.groupId
+	      }));
+	    }
+	  }, {
+	    key: "onFilterApply",
+	    value: function onFilterApply() {
+	      this.updateFields();
+	    }
+	  }, {
+	    key: "updateFields",
+	    value: function updateFields() {
+	      this.fields = this.filter.getFilterFieldsValues();
+	    }
+	  }, {
+	    key: "onCounterClick",
+	    value: function onCounterClick(baseEvent) {
+	      var data = baseEvent.getData();
+
+	      if (data.counter && data.counter.filter) {
+	        this.toggleByField(babelHelpers.defineProperty({}, data.counter.filterField, data.counter.filterValue));
+	      }
+	    }
+	  }, {
+	    key: "isFilteredByField",
+	    value: function isFilteredByField(field) {
+	      if (!Object.keys(this.fields).includes(field)) {
+	        return false;
+	      }
+
+	      if (main_core.Type.isArray(this.fields[field])) {
+	        return this.fields[field].length > 0;
+	      }
+
+	      return this.fields[field] !== '';
+	    }
+	  }, {
+	    key: "isFilteredByFieldValue",
+	    value: function isFilteredByFieldValue(field, value) {
+	      return this.isFilteredByField(field) && this.fields[field] === value;
+	    }
+	  }, {
+	    key: "toggleByField",
+	    value: function toggleByField(field) {
+	      var _this = this;
+
+	      var name = Object.keys(field)[0];
+	      var value = field[name];
+
+	      if (!this.isFilteredByFieldValue(name, value)) {
+	        this.filter.getApi().extendFilter(babelHelpers.defineProperty({}, name, value));
+	        return;
+	      }
+
+	      this.filter.getFilterFields().forEach(function (field) {
+	        if (field.getAttribute('data-name') === name) {
+	          _this.filter.getFields().deleteField(field);
+	        }
+	      });
+	      this.filter.getSearch().apply();
+	    }
+	  }]);
+	  return Counters;
+	}();
+
 	var SidePanel = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SidePanel, _EventEmitter);
 
@@ -5881,6 +5916,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function isPreviousSidePanelExist(currentSidePanel) {
 	      var manager = this.contentSidePanels.has(currentSidePanel.getUrl()) ? this.contentSidePanelManager : this.sidePanelManager;
 	      return Boolean(manager.getPreviousSlider(currentSidePanel));
+	    }
+	  }, {
+	    key: "getTopSidePanel",
+	    value: function getTopSidePanel() {
+	      var topSidePanel = this.sidePanelManager.getTopSlider();
+	      return topSidePanel ? topSidePanel : null;
 	    }
 	  }, {
 	    key: "reloadTopSidePanel",
@@ -5963,6 +6004,161 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }]);
 	  return SidePanel;
+	}(main_core_events.EventEmitter);
+
+	function _templateObject$j() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-view-switcher\">\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-view-switcher--item ", "\"\n\t\t\t\t>", "</a>\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-view-switcher--item ", "\"\n\t\t\t\t>", "</a>\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-view-switcher--item ", "\"\n\t\t\t\t>", "</a>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject$j = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
+	var Tabs = /*#__PURE__*/function () {
+	  function Tabs(params) {
+	    babelHelpers.classCallCheck(this, Tabs);
+	    this.sidePanel = params.sidePanel;
+	    this.views = params.views;
+	    this.node = null;
+	  }
+
+	  babelHelpers.createClass(Tabs, [{
+	    key: "render",
+	    value: function render() {
+	      var _this = this;
+
+	      var planTabActiveClass = this.views['plan'].active ? 'tasks-view-switcher--item --active' : '';
+	      var activeTabActiveClass = this.views['activeSprint'].active ? 'tasks-view-switcher--item --active' : '';
+	      var completedTabActiveClass = this.views['completedSprint'].active ? 'tasks-view-switcher--item --active' : '';
+	      this.node = main_core.Tag.render(_templateObject$j(), this.views['plan'].url, planTabActiveClass, main_core.Text.encode(this.views['plan'].name), this.views['activeSprint'].url, activeTabActiveClass, main_core.Text.encode(this.views['activeSprint'].name), this.views['completedSprint'].url, completedTabActiveClass, main_core.Text.encode(this.views['completedSprint'].name));
+	      this.node.querySelectorAll('a').forEach(function (tab) {
+	        main_core.Event.bind(tab, 'click', function () {
+	          var topSidePanel = _this.sidePanel.getTopSidePanel();
+
+	          if (topSidePanel !== null) {
+	            topSidePanel.showLoader();
+	          }
+	        });
+	      });
+	      return this.node;
+	    }
+	  }]);
+	  return Tabs;
+	}();
+
+	var View = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(View, _EventEmitter);
+
+	  function View(params) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, View);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(View).call(this, params));
+
+	    _this.setEventNamespace('BX.Tasks.Scrum.View');
+
+	    _this.isOwnerCurrentUser = params.isOwnerCurrentUser === 'Y';
+	    _this.sidePanel = new SidePanel();
+	    _this.requestSender = new RequestSender({
+	      signedParameters: params.signedParameters,
+	      debugMode: params.debugMode
+	    });
+	    _this.filter = new Filter({
+	      filterId: params.filterId,
+	      scrumManager: babelHelpers.assertThisInitialized(_this),
+	      requestSender: _this.requestSender
+	    });
+	    _this.userId = parseInt(params.userId, 10);
+	    _this.groupId = parseInt(params.groupId, 10);
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(View, [{
+	    key: "renderTo",
+	    value: function renderTo(container) {
+	      if (!main_core.Type.isDomNode(container)) {
+	        throw new Error('Scrum: HTMLElement for scrum not found');
+	      }
+	    }
+	  }, {
+	    key: "renderTabsTo",
+	    value: function renderTabsTo(container) {
+	      if (!main_core.Type.isDomNode(container)) {
+	        throw new Error('Scrum: HTMLElement for tabs not found');
+	      }
+
+	      var tabs = new Tabs({
+	        sidePanel: this.sidePanel,
+	        views: this.views
+	      });
+	      main_core.Dom.append(tabs.render(), container);
+	    }
+	  }, {
+	    key: "renderSprintStatsTo",
+	    value: function renderSprintStatsTo(container) {
+	      if (!main_core.Type.isDomNode(container)) {
+	        throw new Error('Scrum: HTMLElement for Sprint stats not found');
+	      }
+	    }
+	  }, {
+	    key: "renderButtonsTo",
+	    value: function renderButtonsTo(container) {
+	      if (!main_core.Type.isDomNode(container)) {
+	        throw new Error('Scrum: HTMLElement for buttons not found');
+	      }
+	    }
+	  }, {
+	    key: "getCurrentUserId",
+	    value: function getCurrentUserId() {
+	      return this.userId;
+	    }
+	  }, {
+	    key: "getCurrentGroupId",
+	    value: function getCurrentGroupId() {
+	      return this.groupId;
+	    }
+	  }]);
+	  return View;
+	}(main_core_events.EventEmitter);
+
+	function _templateObject$k() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-btn ui-btn-light-border ui-btn-themes ui-btn-round ui-btn-xs\">\n\t\t\t\t", "\n\t\t\t</button>\n\t\t"]);
+
+	  _templateObject$k = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
+	var TeamSpeedButton = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(TeamSpeedButton, _EventEmitter);
+
+	  function TeamSpeedButton() {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, TeamSpeedButton);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(TeamSpeedButton).call(this));
+
+	    _this.setEventNamespace('BX.Tasks.Scrum.TeamSpeedButton');
+
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(TeamSpeedButton, [{
+	    key: "render",
+	    value: function render() {
+	      var node = main_core.Tag.render(_templateObject$k(), main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_BUTTON'));
+	      main_core.Event.bind(node, 'click', this.onClick.bind(this));
+	      return node;
+	    }
+	  }, {
+	    key: "onClick",
+	    value: function onClick() {
+	      this.emit('click');
+	    }
+	  }]);
+	  return TeamSpeedButton;
 	}(main_core_events.EventEmitter);
 
 	//todo import amchart4 like es6
@@ -6556,147 +6752,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }]);
 	  return SprintSidePanel;
-	}();
-
-	var EntityStorage = /*#__PURE__*/function () {
-	  function EntityStorage() {
-	    babelHelpers.classCallCheck(this, EntityStorage);
-	    this.backlog = null;
-	    this.sprints = new Map();
-	  }
-
-	  babelHelpers.createClass(EntityStorage, [{
-	    key: "addBacklog",
-	    value: function addBacklog(backlog) {
-	      if (!(backlog instanceof Backlog)) {
-	        throw new Error('EntityStorage: Backlog is in wrong format');
-	      }
-
-	      this.backlog = backlog;
-	    }
-	  }, {
-	    key: "addSprint",
-	    value: function addSprint(sprint) {
-	      this.sprints.set(sprint.getId(), sprint);
-	    }
-	  }, {
-	    key: "removeSprint",
-	    value: function removeSprint(sprintId) {
-	      this.sprints.delete(sprintId);
-	    }
-	  }, {
-	    key: "getBacklog",
-	    value: function getBacklog() {
-	      if (this.backlog === null) {
-	        throw new Error('EntityStorage: Backlog not found');
-	      }
-
-	      return this.backlog;
-	    }
-	  }, {
-	    key: "getSprints",
-	    value: function getSprints() {
-	      return this.sprints;
-	    }
-	  }, {
-	    key: "getSprintsAvailableForFilling",
-	    value: function getSprintsAvailableForFilling(entityFrom) {
-	      var sprints = new Set();
-	      this.sprints.forEach(function (sprint) {
-	        if (!sprint.isCompleted() && entityFrom.getId() !== sprint.getId()) {
-	          sprints.add(sprint);
-	        }
-	      });
-	      return sprints;
-	    }
-	  }, {
-	    key: "getAllEntities",
-	    value: function getAllEntities() {
-	      var entities = new Map();
-	      entities.set(this.backlog.getId(), this.backlog);
-	      babelHelpers.toConsumableArray(this.sprints.values()).map(function (sprint) {
-	        return entities.set(sprint.getId(), sprint);
-	      });
-	      return entities;
-	    }
-	  }, {
-	    key: "getAllItems",
-	    value: function getAllItems() {
-	      var items = new Map(this.backlog.getItems());
-	      babelHelpers.toConsumableArray(this.sprints.values()).map(function (sprint) {
-	        return items = new Map([].concat(babelHelpers.toConsumableArray(items), babelHelpers.toConsumableArray(sprint.getItems())));
-	      });
-	      return items;
-	    }
-	  }, {
-	    key: "recalculateItemsSort",
-	    value: function recalculateItemsSort() {
-	      this.backlog.recalculateItemsSort();
-	      this.sprints.forEach(function (sprint) {
-	        return sprint.recalculateItemsSort();
-	      });
-	    }
-	  }, {
-	    key: "findEntityByEntityId",
-	    value: function findEntityByEntityId(entityId) {
-	      entityId = parseInt(entityId, 10);
-
-	      if (this.backlog.getId() === entityId) {
-	        return this.backlog;
-	      }
-
-	      return babelHelpers.toConsumableArray(this.sprints.values()).find(function (sprint) {
-	        return sprint.getId() === entityId;
-	      });
-	    }
-	  }, {
-	    key: "findItemByItemId",
-	    value: function findItemByItemId(itemId) {
-	      itemId = parseInt(itemId, 10);
-	      var backlogItems = this.backlog.getItems();
-
-	      if (backlogItems.has(itemId)) {
-	        return backlogItems.get(itemId);
-	      }
-
-	      var sprint = babelHelpers.toConsumableArray(this.sprints.values()).find(function (sprint) {
-	        return sprint.getItems().has(itemId);
-	      });
-
-	      if (sprint) {
-	        return sprint.getItems().get(itemId);
-	      }
-
-	      return null;
-	    }
-	  }, {
-	    key: "findItemBySourceId",
-	    value: function findItemBySourceId(sourceId) {
-	      sourceId = parseInt(sourceId, 10);
-	      var items = new Map(this.backlog.getItems());
-	      babelHelpers.toConsumableArray(this.sprints.values()).map(function (sprint) {
-	        return items = new Map([].concat(babelHelpers.toConsumableArray(items), babelHelpers.toConsumableArray(sprint.getItems())));
-	      });
-	      return babelHelpers.toConsumableArray(items.values()).find(function (item) {
-	        return item.getSourceId() === sourceId;
-	      });
-	    }
-	  }, {
-	    key: "findEntityByItemId",
-	    value: function findEntityByItemId(itemId) {
-	      itemId = parseInt(itemId, 10);
-	      var backlogItems = this.backlog.getItems();
-
-	      if (backlogItems.has(itemId)) {
-	        return this.backlog;
-	      }
-
-	      return babelHelpers.toConsumableArray(this.sprints.values()).find(function (sprint) {
-	        return sprint.getItems().has(itemId);
-	      });
-	    }
-	  }]);
-	  return EntityStorage;
 	}();
 
 	var ItemStyleDesigner = /*#__PURE__*/function () {
@@ -8186,6 +8241,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      var type = inputType ? inputType : this.tabs.getActiveType();
+
+	      if (!(type instanceof ItemType)) {
+	        return Promise.resolve();
+	      }
+
 	      return this.requestSender.saveDodSettings({
 	        entityId: type.getId(),
 	        requiredOption: this.getRequiredOptionValue(),
@@ -10597,8 +10657,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      requestSender: _this.requestSender,
 	      entityStorage: _this.entityStorage
 	    });
-	    _this.sidePanel = new SidePanel();
 	    _this.counters = new Counters({
+	      requestSender: _this.requestSender,
+	      entityStorage: _this.entityStorage,
 	      filter: _this.filter,
 	      userId: params.userId,
 	      groupId: params.groupId,
@@ -10790,6 +10851,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      sprint.subscribe('loadItems', this.onLoadItems.bind(this));
 	    }
 	  }, {
+	    key: "showErrorAlert",
+	    value: function showErrorAlert(message) {
+	      ui_dialogs_messagebox.MessageBox.alert(message, main_core.Loc.getMessage('TASKS_SCRUM_ERROR_TITLE_POPUP'));
+	    }
+	  }, {
 	    key: "onCreateTaskItem",
 	    value: function onCreateTaskItem(baseEvent) {
 	      var _this3 = this;
@@ -10798,7 +10864,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var entity = baseEvent.getTarget();
 	      var inputObject = data.inputObject;
 	      var inputValue = data.value;
-	      var newItem = this.createItem('task', inputValue);
+	      var newItem = null;
+
+	      try {
+	        newItem = this.createItem('task', inputValue);
+	      } catch (error) {
+	        this.showErrorAlert(error.message);
+	        return;
+	      }
+
 	      this.pullItem.addTmpIdsToSkipAdding(newItem.getItemId());
 	      this.fillItemBeforeCreation(entity, newItem, inputValue);
 	      this.domBuilder.appendItemAfterItem(newItem.render(), inputObject.getNode());
@@ -11243,8 +11317,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var inputValue = innerBaseEvent.getData();
 	        var decomposedItems = decomposition.getDecomposedItems();
 	        var lastDecomposedItem = Array.from(decomposedItems).pop();
+	        var newItem = null;
 
-	        var newItem = _this14.createItem(parentItem.getItemType(), inputValue);
+	        try {
+	          newItem = _this14.createItem(parentItem.getItemType(), inputValue);
+	        } catch (error) {
+	          _this14.showErrorAlert(error.message);
+
+	          return;
+	        }
 
 	        _this14.pullItem.addTmpIdsToSkipAdding(newItem.getItemId());
 
@@ -11745,9 +11826,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderSprintStatsTo",
 	    value: function renderSprintStatsTo(container) {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(ActiveSprint.prototype), "renderSprintStatsTo", this).call(this, container);
-	      this.statsHeader = StatsHeaderBuilder.build(this.sprint);
-	      this.statsHeader.setKanbanStyle();
-	      main_core.Dom.append(this.statsHeader.render(), container);
+
+	      if (this.sprint) {
+	        this.statsHeader = StatsHeaderBuilder.build(this.sprint);
+	        this.statsHeader.setKanbanStyle();
+	        main_core.Dom.append(this.statsHeader.render(), container);
+	      }
 	    }
 	  }, {
 	    key: "renderButtonsTo",
@@ -12254,5 +12338,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Entry = Entry;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.Tasks.Scrum,BX.UI.EntitySelector,BX.UI,BX.UI.DragAndDrop,BX,BX,BX.UI,BX.UI.Dialogs,BX.Main,BX,BX.Event));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.EntitySelector,BX.Tasks.Scrum,BX.UI,BX.UI.DragAndDrop,BX,BX,BX.UI,BX.UI.Dialogs,BX.Main,BX,BX.Event));
 //# sourceMappingURL=script.js.map

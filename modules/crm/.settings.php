@@ -73,6 +73,12 @@ return array(
 			'crm.service.converter.type' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Converter\\Type',
 			],
+			'crm.service.converter.productRow' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Converter\\ProductRow',
+			],
+			'crm.service.converter.category' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Converter\\Category',
+			],
 			'crm.service.broker.user' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Broker\\User',
 			],
@@ -135,6 +141,9 @@ return array(
 			],
 			'crm.integration.pullmanager' => [
 				'className' => '\\Bitrix\\Crm\\Integration\\PullManager',
+			],
+			'crm.integration.rest.eventManager' => [
+				'className' => '\\Bitrix\\Crm\\Integration\\Rest\\EventManager',
 			],
 			'crm.recycling.dynamicRelationManager' => [
 				'className' => '\\Bitrix\\Crm\\Recycling\\DynamicRelationManager',
@@ -231,6 +240,16 @@ return array(
 	'intranet.customSection' => [
 		'value' => [
 			'provider' => '\\Bitrix\\Crm\\Integration\\Intranet\\CustomSectionProvider',
+		],
+	],
+	'documentgenerator.intranet.binding' => [
+		'value' => [
+			'menuCodeResolver' => static function (string $provider): string {
+				$entityTypeId =
+					\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getEntityTypeIdByProvider($provider);
+
+				return \Bitrix\Crm\Integration\Intranet\BindingMenu\CodeBuilder::getMenuCode($entityTypeId);
+			}
 		],
 	],
 );

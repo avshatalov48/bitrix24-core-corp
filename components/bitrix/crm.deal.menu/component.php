@@ -538,6 +538,12 @@ if($arParams['TYPE'] === 'list')
 					'title' => Loc::getMessage('DEAL_STEXPORT_OPTION_EXPORT_ALL_FIELDS'),
 					'value' => 'N'
 				),
+				'EXPORT_ALL_CLIENT_FIELDS' => array(
+					'name' => 'EXPORT_ALL_CLIENT_FIELDS',
+					'type' => 'checkbox',
+					'title' => Loc::getMessage('DEAL_STEXPORT_OPTION_EXPORT_ALL_CLIENT_FIELDS'),
+					'value' => 'N'
+				),
 				'EXPORT_PRODUCT_FIELDS' => array(
 					'name' => 'EXPORT_PRODUCT_FIELDS',
 					'type' => 'checkbox',

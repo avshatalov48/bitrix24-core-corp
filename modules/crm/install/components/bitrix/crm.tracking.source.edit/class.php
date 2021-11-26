@@ -9,6 +9,7 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Bitrix24\Feature;
 
 use Bitrix\Seo;
 use Bitrix\Intranet;
@@ -231,7 +232,16 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 			}
 		}
 
-		if ($this->request->isPost() && check_bitrix_sessid() && $this->arResult['ROW']['CONFIGURABLE'])
+		$this->arResult['FEATURE_CODE'] = (
+			!$hasCode
+			&& Loader::includeModule('bitrix24')
+			&& !Feature::isFeatureEnabled("crm_tracking_sources_own")
+		)
+			? "crm_tracking_sources_own"
+			: null
+		;
+
+		if ($this->request->isPost() && check_bitrix_sessid() && $this->arResult['ROW']['CONFIGURABLE'] && !$this->arResult['FEATURE_CODE'])
 		{
 			$this->preparePost();
 		}

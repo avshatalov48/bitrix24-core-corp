@@ -26,7 +26,14 @@ body
 	-webkit-overflow-scrolling: touch;
 	-webkit-font-smoothing: antialiased;
 	overflow: hidden;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
 }
+
+.bx-mobile-ios-keyboard .bx-mobilechat-wrapper {
+	padding-bottom: 55px;
+}
+
 /* DEBUG CASE */
 /*
 .bx-mobilechat-wrapper {

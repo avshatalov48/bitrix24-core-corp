@@ -97,4 +97,41 @@ class Delete extends Operation
 	{
 		return $this->getItemBeforeSave()->getCompatibleData();
 	}
+
+	protected function processActions(string $placementCode): Result
+	{
+		if ($placementCode === static::ACTION_BEFORE_SAVE)
+		{
+			return parent::processActions($placementCode);
+		}
+
+		// item after save does not have 'ID'. We need it.
+		if (!empty($this->actions[$placementCode]))
+		{
+			foreach($this->actions[$placementCode] as $action)
+			{
+				/** @var Action $action */
+				$actionResult = $action->process($this->itemBeforeSave);
+				if (!$actionResult->isSuccess())
+				{
+					return $actionResult;
+				}
+			}
+		}
+
+		return new Result();
+	}
+
+	protected function updatePermissions(): void
+	{
+		$item = $this->getItemBeforeSave();
+		$permissionEntityType = \Bitrix\Crm\Service\UserPermissions::getItemPermissionEntityType($item);
+
+		\Bitrix\Crm\Security\Manager::resolveController($permissionEntityType)
+			->unregister(
+				$permissionEntityType,
+				$item->getId()
+			)
+		;
+	}
 }

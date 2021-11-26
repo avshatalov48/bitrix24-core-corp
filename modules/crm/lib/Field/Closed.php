@@ -23,6 +23,6 @@ class Closed extends Field
 			}
 		}
 
-		return parent::processLogic($item, $context);
+		return new Result();
 	}
 }

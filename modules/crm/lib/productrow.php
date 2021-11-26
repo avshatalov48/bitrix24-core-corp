@@ -9,7 +9,7 @@ use Bitrix\Main\ORM\Objectify\EntityObject;
 use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
 
-class ProductRow extends EO_ProductRow
+class ProductRow extends EO_ProductRow implements \JsonSerializable
 {
 	protected const REFERENCE_FIELD_NAME = 'IBLOCK_ELEMENT';
 
@@ -31,17 +31,7 @@ class ProductRow extends EO_ProductRow
 		$filteredValues = array_filter(
 			$productRow,
 			static function (string $fieldName): bool {
-
-				$entity = ProductRowTable::getEntity();
-				if ($entity->hasField($fieldName))
-				{
-					$field = $entity->getField($fieldName);
-
-					// to avoid exception when trying to set value for an expression field
-					return ($field->getTypeMask() === FieldTypeMask::SCALAR);
-				}
-
-				return false;
+				return in_array($fieldName, static::getScalarFieldNames(), true);
 			},
 			ARRAY_FILTER_USE_KEY
 		);
@@ -54,6 +44,19 @@ class ProductRow extends EO_ProductRow
 		}
 
 		return new static($filteredValues);
+	}
+
+	protected static function getScalarFieldNames(): array
+	{
+		$entity = ProductRowTable::getEntity();
+
+		$result = [];
+		foreach ($entity->getScalarFields() as $scalarField)
+		{
+			$result[] = $scalarField->getName();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -72,13 +75,37 @@ class ProductRow extends EO_ProductRow
 				$value = $value ? 'Y' : 'N';
 			}
 		}
+		unset($value);
+
+		// product name is a special field and its correct value can't be collected with collectValues
+		$result['PRODUCT_NAME'] = $this->getProductName();
 
 		return $result;
+	}
+
+	public function jsonSerialize()
+	{
+		return Container::getInstance()->getProductRowConverter()->toJson($this);
 	}
 
 	public function isNew(): bool
 	{
 		return (!($this->getId() > 0));
+	}
+
+	/**
+	 * Reset all scalar fields of this object
+	 *
+	 * @return $this
+	 */
+	public function resetAll(): self
+	{
+		foreach (static::getScalarFieldNames() as $fieldName)
+		{
+			$this->reset($fieldName);
+		}
+
+		return $this;
 	}
 
 	/**
@@ -92,7 +119,6 @@ class ProductRow extends EO_ProductRow
 	{
 		$normalizationResult = new Result();
 
-		$this->normalizeProductName();
 		$this->normalizeMeasure($normalizationResult);
 		$this->normalizePriceExclusive();
 		$this->normalizeDiscount($normalizationResult);
@@ -136,7 +162,7 @@ class ProductRow extends EO_ProductRow
 
 	protected function isCurrentMeasureValid(): bool
 	{
-		if (!$this->getMeasureCode() || !$this->getMeasureName())
+		if (empty($this->getMeasureCode()) || empty($this->getMeasureName()))
 		{
 			return false;
 		}
@@ -161,14 +187,12 @@ class ProductRow extends EO_ProductRow
 
 	protected function normalizePriceExclusive(): void
 	{
-		if (empty($this->getPriceExclusive()) && !empty($this->getPrice()))
-		{
-			$exclusivePrice = Container::getInstance()->getAccounting()->calculatePriceWithoutTax(
-				(float)$this->getPrice(),
-				(float)$this->getTaxRate()
-			);
-			$this->setPriceExclusive($exclusivePrice);
-		}
+		$exclusivePrice = Container::getInstance()->getAccounting()->calculatePriceWithoutTax(
+			(float)$this->getPrice(),
+			(float)$this->getTaxRate()
+		);
+
+		$this->setPriceExclusive($exclusivePrice);
 	}
 
 	protected function normalizeDiscount(Result $result): void
@@ -200,11 +224,9 @@ class ProductRow extends EO_ProductRow
 			return;
 		}
 
-		if (is_null($this->getDiscountSum()))
-		{
-			$discountSum = Discount::calculateDiscountSum($this->getPriceExclusive(), $this->getDiscountRate());
-			$this->setDiscountSum($discountSum);
-		}
+		$discountSum = Discount::calculateDiscountSum($this->getPriceExclusive(), $this->getDiscountRate());
+
+		$this->setDiscountSum($discountSum);
 	}
 
 	protected function normalizeDiscountForMonetary(Result $result): void
@@ -218,32 +240,25 @@ class ProductRow extends EO_ProductRow
 			return;
 		}
 
-		if (is_null($this->getDiscountRate()))
-		{
-			$priceBeforeDiscount = $this->getPriceExclusive() + $this->getDiscountSum();
-			$discountRate = Discount::calculateDiscountRate($priceBeforeDiscount, $this->getPriceExclusive());
-			$this->setDiscountRate($discountRate);
-		}
+		$priceBeforeDiscount = $this->getPriceExclusive() + $this->getDiscountSum();
+		$discountRate = Discount::calculateDiscountRate($priceBeforeDiscount, $this->getPriceExclusive());
+
+		$this->setDiscountRate($discountRate);
 	}
 
 	protected function normalizePriceNetto(): void
 	{
-		if (is_null($this->getPriceNetto()))
-		{
-			$this->setPriceNetto($this->getPriceExclusive() + $this->getDiscountSum());
-		}
+		$this->setPriceNetto($this->getPriceExclusive() + $this->getDiscountSum());
 	}
 
 	protected function normalizePriceBrutto(): void
 	{
-		if (is_null($this->getPriceBrutto()))
-		{
-			$priceBrutto = Container::getInstance()->getAccounting()->calculatePriceWithTax(
-				(float)$this->getPriceNetto(),
-				(float)$this->getTaxRate()
-			);
-			$this->setPriceBrutto($priceBrutto);
-		}
+		$priceBrutto = Container::getInstance()->getAccounting()->calculatePriceWithTax(
+			(float)$this->getPriceNetto(),
+			(float)$this->getTaxRate()
+		);
+
+		$this->setPriceBrutto($priceBrutto);
 	}
 
 	/**
@@ -252,16 +267,8 @@ class ProductRow extends EO_ProductRow
 	protected function normalizePriceAccount(string $currencyId): void
 	{
 		$priceAccount = Currency\Conversion::toAccountCurrency($this->getPrice(), $currencyId);
-		$this->setPriceAccount($priceAccount);
-	}
 
-	protected function normalizeProductName(): void
-	{
-		$referenceProductName = $this->getProductNameFromReference();
-		if (!empty($referenceProductName) && ($this->getProductName() === $referenceProductName))
-		{
-			$this->setProductName('');
-		}
+		$this->setPriceAccount($priceAccount);
 	}
 
 	public function remindActualProductName(): ?string
@@ -276,12 +283,17 @@ class ProductRow extends EO_ProductRow
 
 	protected function resolveProductName(?string $productName): ?string
 	{
-		if (!empty($productName))
+		if (empty($productName) && $this->hasReference())
 		{
-			return $productName;
+			return $this->getProductNameFromReference();
 		}
 
-		return $this->getCpProductName() ?? $this->getProductNameFromReference();
+		return $productName;
+	}
+
+	protected function hasReference(): bool
+	{
+		return !is_null($this->getReference());
 	}
 
 	protected function getProductNameFromReference(): ?string

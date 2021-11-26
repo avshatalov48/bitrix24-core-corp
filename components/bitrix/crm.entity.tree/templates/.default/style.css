@@ -540,6 +540,10 @@
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2014%22%3E%3Cpath%20d%3D%22M12.83%2C11.7a.51.51%2C0%2C0%2C1-.53.5H2.39a.51.51%2C0%2C0%2C1-.53-.5V2.3a.51.51%2C0%2C0%2C1%2C.53-.5H9.22L11.11%2C0H1.76A1.73%2C1.73%2C0%2C0%2C0%2C0%2C1.67V12.33A1.73%2C1.73%2C0%2C0%2C0%2C1.76%2C14H13a1.73%2C1.73%2C0%2C0%2C0%2C1.76-1.67V8.21L12.87%2C10v1.7Zm3-9.41L15%2C1.48a.56.56%2C0%2C0%2C0-.8%2C0l-6%2C5.66L5.47%2C4.59a.56.56%2C0%2C0%2C0-.8%2C0l-.86.82a.5.5%2C0%2C0%2C0%2C0%2C.76l4%2C3.78a.63.63%2C0%2C0%2C0%2C.53.16.69.69%2C0%2C0%2C0%2C.3-.16l7.26-6.89a.56.56%2C0%2C0%2C0-.07-.76Z%22%20fill%3D%22%2380868e%22/%3E%3C/svg%3E');
 }
 
+.crm-doc-droplist-item-document:before{
+	content: none;
+}
+
 .crm-doc-drop-open .crm-doc-droplist-item {
 	opacity: 1;
 }

@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Internals;
 
 use Bitrix\Main;
+use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 /**
@@ -32,7 +33,18 @@ class TaskObject extends EO_Task
 		{
 			if (array_key_exists($field, $fields))
 			{
-				$wakeUpData[$field] = $value;
+
+				if (
+					$fields[$field] instanceof DateTimeField
+					&& is_numeric($value)
+				)
+				{
+					$wakeUpData[$field] = DateTime::createFromTimestampGmt($value);
+				}
+				else
+				{
+					$wakeUpData[$field] = $value;
+				}
 			}
 			else
 			{
@@ -75,5 +87,35 @@ class TaskObject extends EO_Task
 		}
 
 		return (DateTime::createFrom($this->getDeadline()))->checkLT(new DateTime());
+	}
+
+	/**
+	 * @return array
+	 */
+	public function toArray(): array
+	{
+		$fields = TaskTable::getEntity()->getFields();
+
+		$data = [];
+		foreach ($fields as $fieldName => $field)
+		{
+			if (
+				$field instanceof Main\ORM\Fields\Relations\Reference
+				|| $field instanceof Main\ORM\Fields\Relations\OneToMany
+				|| $field instanceof Main\ORM\Fields\Relations\ManyToMany
+				|| $field instanceof Main\ORM\Fields\ExpressionField
+			)
+			{
+				continue;
+			}
+
+			$data[$fieldName] = $this->get($fieldName);
+
+			if ($data[$fieldName] instanceof DateTime)
+			{
+				$data[$fieldName] = $data[$fieldName]->getTimestamp();
+			}
+		}
+		return $data;
 	}
 }

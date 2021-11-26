@@ -74,6 +74,7 @@ $MESS["CRM_CONTACT_REBUILD_DUP_INDEX_DLG_TITLE"] = "Kontaktdubletten neu indexie
 $MESS["CRM_CONTACT_REBUILD_SEARCH_CONTENT"] = "Um die Schnellsuche zu nutzen, müssen Sie <a id=\"#ID#\" href=\"#URL#\">Index der Kontaktsuche neu erstellen</a>.";
 $MESS["CRM_CONTACT_REBUILD_SEARCH_CONTENT_DLG_SUMMARY"] = "Damit wird der Index der Kontaktsuche neu erstellt. Dieser Vorgang kann einige Zeit in Anspruch nehmen.";
 $MESS["CRM_CONTACT_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Index der Kontaktsuche wird neu erstellt";
+$MESS["CRM_CONTACT_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Zugriffsrechte werden aktualisiert";
 $MESS["CRM_CONTACT_RQ_TX"] = "Es wird empfohlen, <a id=\"#ID#\" href=\"#URL#\">vorhandene Informationen zum Kontakt aus Rechnungen zu kopieren</a> und in Kontakte zu übertragen. So sparen Sie sich Zeit, denn jedes Mal, wenn Sie eine neue Rechnung erstellen, werden die vorhandenen Informationen automatisch eingetragen, nachdem Sie einen Kontakt für diese Rechnung auswählen.";
 $MESS["CRM_CONTACT_RQ_TX_PROC_DLG_DLG_SUMMARY"] = "Die Informationen zum Kontakt werden jetzt kopiert und aus Rechnungen in Kontakte übertragen. Dieser Vorgang kann etwas dauern.";
 $MESS["CRM_CONTACT_RQ_TX_PROC_DLG_TITLE"] = "Informationen zum Kontakt kopieren und übertragen";

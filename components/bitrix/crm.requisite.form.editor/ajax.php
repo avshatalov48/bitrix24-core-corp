@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\EntityRequisite;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
@@ -46,7 +47,7 @@ class CrmRequisiteFormEditorController
 		$this->errors = array();
 		$this->action = '';
 		$this->requisiteId = 0;
-		$this->requisite = new \Bitrix\Crm\EntityRequisite();
+		$this->requisite = new EntityRequisite();
 	}
 
 	public function exec()
@@ -167,11 +168,11 @@ class CrmRequisiteFormEditorController
 
 					$this->requisiteId = $requisiteId;
 					unset($requisiteId);
-					$requisiteInfo = null;
+					$entityInfo = null;
 					if (!$this->errors)
 					{
-						$requisiteInfo = $this->requisite->getById($this->requisiteId);
-						if (!is_array($requisiteInfo))
+						$entityInfo = EntityRequisite::getOwnerEntityById($this->requisiteId);
+						if (!is_array($entityInfo))
 						{
 							$this->errors[] = array(
 								'code' => self::ERR_REQUISITE_NOT_FOUND,
@@ -184,8 +185,8 @@ class CrmRequisiteFormEditorController
 					}
 					if (!$this->errors)
 					{
-						$entityTypeId = isset($requisiteInfo['ENTITY_TYPE_ID']) ? (int)$requisiteInfo['ENTITY_TYPE_ID'] : 0;
-						$entityId = isset($requisiteInfo['ENTITY_ID']) ? (int)$requisiteInfo['ENTITY_ID'] : 0;
+						$entityTypeId = $entityInfo['ENTITY_TYPE_ID'];
+						$entityId = $entityInfo['ENTITY_ID'];
 						if (!$this->requisite->validateEntityUpdatePermission($entityTypeId, $entityId))
 						{
 							$this->sendJsonAccessDeniedResponse();

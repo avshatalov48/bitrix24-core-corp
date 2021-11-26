@@ -1,0 +1,36 @@
+<?php
+
+use Bitrix\Main\Localization\Loc;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+if (\Bitrix\Main\ModuleManager::isModuleInstalled('tasks'))
+{
+	Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/tasks/lib/comments/task/commentposter.php');
+}
+
+$userPage = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR . 'company/personal/');
+
+return [
+	'js' => 'dist/comment-renderer.bundle.js',
+	'lang_additional' => [
+		'SONET_RENDERPARTS_TASK_PATH' => "{$userPage}user/#user_id#/tasks/task/view/#task_id#/",
+		'SONET_RENDERPARTS_EFFICIENCY_PATH' => "{$userPage}user/#user_id#/tasks/effective",
+
+		'COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2' => Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2'),
+		'COMMENT_POSTER_COMMENT_TASK_EXPIRED_NO_MEMBERS_V2' => Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_EXPIRED_NO_MEMBERS_V2'),
+		'COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2' => Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2'),
+		'COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_NO_MEMBERS_V2' => Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_NO_MEMBERS_V2'),
+		'COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_4_V2' => Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_4_V2'),
+		'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_DEADLINE_V2' => Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_DEADLINE_V2'),
+		'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_DEADLINE_V2' => Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_DEADLINE_V2'),
+	],
+	'rel' => [
+		'main.core',
+		'socialnetwork.commentaux',
+	],
+	'skip_core' => false,
+];

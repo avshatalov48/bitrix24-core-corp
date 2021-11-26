@@ -6,6 +6,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\RequisiteAddress;
+use Bitrix\Crm\StatusTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -124,17 +125,28 @@ class RequisiteDataProvider extends Main\Filter\DataProvider
 				{
 					if($fieldName !== EntityRequisite::ADDRESS)
 					{
+						$isPartial = false;
 						$fieldId = $fieldName.'|'.$countryId;
-						$result[$fieldId] = $this->createField(
-							$fieldId,
-							array(
-								'type' => isset($fieldTypes[$fieldName])
-									? $fieldTypes[$fieldName] : 'text',
-								'name' => $fieldNamePrefix.
-									($hideCountry ? '' : ' ('.$countries[$countryId].')').': '.
-									$fieldTitles[$fieldName][$countryId],
-							)
-						);
+						if ($requisite->isRqListField($fieldName))
+						{
+							$fieldType = 'list';
+							$isPartial = true;
+						}
+						else
+						{
+							$fieldType = $fieldTypes[$fieldName] ?? 'text';
+						}
+						$fieldParams = [
+							'type' => $fieldType,
+							'name' => $fieldNamePrefix.
+								($hideCountry ? '' : ' ('.$countries[$countryId].')').': '.
+								$fieldTitles[$fieldName][$countryId],
+						];
+						if ($isPartial)
+						{
+							$fieldParams['partial'] = true;
+						}
+						$result[$fieldId] = $this->createField($fieldId, $fieldParams);
 					}
 					else
 					{
@@ -153,12 +165,12 @@ class RequisiteDataProvider extends Main\Filter\DataProvider
 							$fieldId = $fieldName.'|'.$countryId.'|'.$addressTypeId.'|'.$fieldKey;
 							$result[$fieldId] = $this->createField(
 								$fieldId,
-								array(
+								[
 									'type' => 'text',
 									'name' => $fieldNamePrefix.
 										($hideCountry ? '' : ' ('.$countries[$countryId].')').': '.
-										$addressTypeName.' - '.ToLower($addressLabels[$fieldKey])
-								)
+										$addressTypeName.' - '.ToLower($addressLabels[$fieldKey]),
+								]
 							);
 						}
 					}
@@ -175,7 +187,27 @@ class RequisiteDataProvider extends Main\Filter\DataProvider
 	 */
 	public function prepareFieldData($fieldID)
 	{
-		return null;
+		$result = null;
+
+		$matches = [];
+		if (preg_match('/^(RQ_[A-Z0-9_]+)\|(\d{1,3})$/', $fieldID, $matches))
+		{
+			$fieldName = $matches[1];
+			$countryId = (int)$matches[2];
+			$requisite = EntityRequisite::getSingleInstance();
+			if ($requisite->isRqListField($fieldName) && $requisite->checkRqFieldCountryId($fieldName, $countryId))
+			{
+				$countryCode = EntityPreset::getCountryCodeById($countryId);
+				$statusEntityId = "{$fieldName}_{$countryCode}";
+				$result = [
+					'params' => array('multiple' => 'Y'),
+					'items' => StatusTable::getStatusesList($statusEntityId)
+				];
+
+			}
+		}
+
+		return $result;
 	}
 
 	/**

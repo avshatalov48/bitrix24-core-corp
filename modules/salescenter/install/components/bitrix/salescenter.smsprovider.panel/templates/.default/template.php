@@ -18,6 +18,7 @@ Extension::load([
 	'popup',
 	'salescenter.manager',
 	'salescenter.app',
+	'salescenter.lib',
 ]);
 ?>
 <div class="salescenter-smsprovider-title">

@@ -247,6 +247,7 @@ class CCrmEntityListBuilder
 			// Sanitizing of filter data
 			unset($arFilter['CHECK_PERMISSIONS'], $arFilter['__JOINS'], $arFilter['__CONDITIONS']);
 		}
+		$needReturnSql = (bool)($arOptions['NEED_RETURN_SQL'] ?? false);
 
 		// Processing of special fields
 		if ($this->fmEntityID !== '' && isset($arFilter['FM']))
@@ -379,6 +380,10 @@ class CCrmEntityListBuilder
 
 				if(is_bool($permissionSql) && !$permissionSql)
 				{
+					if ($needReturnSql)
+					{
+						return null;
+					}
 					//Get count only
 					if(is_array($arGroupBy) && count($arGroupBy) == 0)
 					{
@@ -432,6 +437,21 @@ class CCrmEntityListBuilder
 				if(isset($arUserSql['WHERE']))
 				{
 					$this->Add2SqlData($arUserSql['WHERE'], 'WHERE');
+				}
+
+				if(isset($arUserSql['ORDERBY']))
+				{
+					if (is_array($arUserSql['ORDERBY']))
+					{
+						if (isset($arUserSql['ORDERBY']['SQL'], $arUserSql['ORDERBY']['POSITION']))
+						{
+							$this->Insert2SqlOrder($arUserSql['ORDERBY']['SQL'], $arUserSql['ORDERBY']['POSITION']);
+						}
+					}
+					else
+					{
+						$this->Add2SqlData($arUserSql['ORDERBY'], 'ORDERBY');
+					}
 				}
 			}
 		}
@@ -487,8 +507,19 @@ class CCrmEntityListBuilder
 		//Get count only
 		if (is_array($arGroupBy) && count($arGroupBy) == 0)
 		{
-			return $this->GetRowCount($enableRowCountThreshold
-				? RestrictionManager::getSqlRestriction()->getRowCountThreshold() : 0
+			if ($needReturnSql)
+			{
+				return $this->GetRowCountSql(
+					$enableRowCountThreshold
+						? RestrictionManager::getSqlRestriction()->getRowCountThreshold()
+						: 0
+				);
+			}
+
+			return $this->GetRowCount(
+				$enableRowCountThreshold
+					? RestrictionManager::getSqlRestriction()->getRowCountThreshold()
+					: 0
 			);
 		}
 
@@ -518,6 +549,11 @@ class CCrmEntityListBuilder
 		$top = $enableNavigation && isset($arNavStartParams['nTopCount']) ? intval($arNavStartParams['nTopCount']) : 0;
 		if ($enableNavigation && $top <= 0)
 		{
+			if ($needReturnSql)
+			{
+				return $sql;
+			}
+
 			$dbRes = new CDBResult();
 			if($this->ufEntityID !== '')
 			{
@@ -563,6 +599,11 @@ class CCrmEntityListBuilder
 				$sql = Main\Application::getConnection()->getSqlHelper()->getTopSql($sql, $limit, $offset);
 			}
 
+			if ($needReturnSql)
+			{
+				return $sql;
+			}
+
 			//Trace('CCrmEntityListBuilder::Prepare, SQL', $sql, 1);
 			$dbRes = $DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
 			if($this->ufEntityID !== '')
@@ -577,9 +618,8 @@ class CCrmEntityListBuilder
 		return $dbRes;
 	}
 
-	public function GetRowCount($threshold)
+	private function GetRowCountSql($threshold)
 	{
-		global $DB;
 		$fieldsKeys = array_keys($this->fields);
 		$primaryKey = $fieldsKeys[0];
 
@@ -652,6 +692,15 @@ class CCrmEntityListBuilder
 				$sql .= ' GROUP BY '.$this->sqlData['GROUPBY'];
 			}
 		}
+
+		return $sql;
+	}
+
+	public function GetRowCount($threshold)
+	{
+		global $DB;
+
+		$sql = $this->GetRowCountSql($threshold);
 
 		$dbResult = $DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
 		$result = 0;

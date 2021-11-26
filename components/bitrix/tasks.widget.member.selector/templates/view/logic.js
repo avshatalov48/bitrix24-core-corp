@@ -30,7 +30,8 @@ BX.namespace('Tasks.Component');
 				var roleMap = {
 					'AUDITORS': 'auditor',
 					'ACCOMPLICES': 'accomplice',
-					'RESPONSIBLE': 'responsible'
+					'RESPONSIBLE': 'responsible',
+					'RESPONSIBLES': 'responsible'
 				};
 
 				var self = this;
@@ -265,7 +266,8 @@ BX.namespace('Tasks.Component');
 							var events = {
 								ACCOMPLICES: 'accomplice',
 								AUDITORS: 'auditor',
-								RESPONSIBLE: 'responsible'
+								RESPONSIBLE: 'responsible',
+								RESPONSIBLES: 'responsible'
 							}
 
 							BX.Event.EventEmitter.emit('BX.Tasks.MemberSelector:'+ events[this.option('role')] +'Selected', userData);
@@ -278,7 +280,8 @@ BX.namespace('Tasks.Component');
 							var events = {
 								ACCOMPLICES: 'accomplice',
 								AUDITORS: 'auditor',
-								RESPONSIBLE: 'responsible'
+								RESPONSIBLE: 'responsible',
+								RESPONSIBLES: 'responsible'
 							}
 
 							BX.Event.EventEmitter.emit('BX.Tasks.MemberSelector:'+ events[this.option('role')] +'Deselected', userData);

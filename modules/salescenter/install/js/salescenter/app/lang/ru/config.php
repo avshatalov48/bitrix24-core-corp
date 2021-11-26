@@ -15,6 +15,7 @@ $MESS["SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS"] = "Указать конта�
 $MESS["SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS_SHORTER_VERSION"] = "Указать контакты";
 $MESS["SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS_V3"] = "Указать ваши контакты";
 $MESS["SALESCENTER_LEFT_PAYMENT_HOW_WORKS"] = "Как это работает";
+$MESS["SALESCENTER_LEFT_PAYMENT_FREE_MESSAGES"] = "Бесплатные WhatsApp и SMS-сообщения";
 $MESS["SALESCENTER_LEFT_PAYMENT_INTEGRATION"] = "Заказать подключение";
 $MESS["SALESCENTER_LEFT_ORDERS"] = "Список заказов";
 $MESS["SALESCENTER_LEFT_PAYMENTS"] = "Список оплат";

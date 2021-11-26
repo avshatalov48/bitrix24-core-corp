@@ -50,7 +50,7 @@ $lastStageCode = end($stages);
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-report-chart-wrapper">
 
 <table class="crm-report-chart-table <?=(!$arParams['IS_COSTABLE'] ? 'crm-report-chart-temporary-active' : '')?>">
-    <tr class="crm-report-chart-tr crm-report-chart-widget">
+	<tr class="crm-report-chart-tr crm-report-chart-widget">
 		<td colspan="<?=count($arResult['DATA']['stages'])?>">
 			<div class="crm-report-chart-through-funnel-widget-conversion crm-report-chart-funnel-through-funnel-widget-conversion-inline">
 
@@ -99,7 +99,7 @@ $lastStageCode = end($stages);
 			</div>
 		</td>
 	</tr>
-    <tr data-role="graph" class="crm-report-chart-tr crm-report-chart-widget">
+	<tr data-role="graph" class="crm-report-chart-tr crm-report-chart-widget">
 		<?foreach ($arResult['DATA']['stages'] as $stage):?>
 			<td class="crm-report-chart-td">
 				<?if ($stage['code'] === $firstStageCode):?>
@@ -157,16 +157,16 @@ $lastStageCode = end($stages);
 						</div>
 					<?endif;?>
 				<?endif;?>
-                <div class="crm-report-chart-flex-box">
-                    <div class="crm-report-chart-through-funnel-widget crm-report-chart-through-funnel-widget-1">
-                        <?foreach ($arResult['DATA']['sources'] as $source):
+				<div class="crm-report-chart-flex-box">
+					<div class="crm-report-chart-through-funnel-widget crm-report-chart-through-funnel-widget-1">
+						<?foreach ($arResult['DATA']['sources'] as $source):
 							?>
-                            <div data-role="items/<?=htmlspecialcharsbx($source['code'])?>/<?=htmlspecialcharsbx($stage['code'])?>"
-                                 class="crm-report-chart-through-funnel-widget-item"
-                                 style="background: <?=htmlspecialcharsbx($source['color'])?>;"
-                            ></div>
-                        <?endforeach;?>
-                    </div>
+							<div data-role="items/<?=htmlspecialcharsbx($source['code'])?>/<?=htmlspecialcharsbx($stage['code'])?>"
+								class="crm-report-chart-through-funnel-widget-item"
+								style="background: <?=htmlspecialcharsbx($source['color'])?>;"
+							></div>
+						<?endforeach;?>
+					</div>
 
 					<?if ($stage['code'] !== $lastStageCode):?>
 						<div class="crm-report-chart-through-funnel-widget crm-report-chart-through-funnel-widget-1 crm-report-chart-through-funnel-widget-mirror">
@@ -203,15 +203,15 @@ $lastStageCode = end($stages);
 				</div>
 			</td>
 		<?endforeach;?>
-    </tr>
-    <tr class="crm-report-chart-tr">
+	</tr>
+	<tr class="crm-report-chart-tr">
 		<?foreach ($arResult['DATA']['stages'] as $stage):?>
 			<th class="crm-report-chart-th crm-report-chart-card-title">
 				<?=htmlspecialcharsbx($stage['caption'])?>
 			</th>
 		<?endforeach;?>
-    </tr>
-    <tr class="crm-report-chart-tr">
+	</tr>
+	<tr class="crm-report-chart-tr">
 		<?foreach ($arResult['DATA']['stages'] as $stage):?>
 			<th class="crm-report-chart-th crm-report-chart-card-subtitle">
 				<?if ($arParams['IS_COSTABLE']):?>
@@ -221,8 +221,8 @@ $lastStageCode = end($stages);
 				<?endif;?>
 			</th>
 		<?endforeach;?>
-    </tr>
-    <tr class="crm-report-chart-tr">
+	</tr>
+	<tr class="crm-report-chart-tr">
 		<?foreach ($arResult['DATA']['stages'] as $stage):?>
 			<td class="crm-report-chart-td">
 				<div class="crm-report-chart-card-info">
@@ -258,7 +258,7 @@ $lastStageCode = end($stages);
 				</div>
 			</td>
 		<?endforeach;?>
-    </tr>
+	</tr>
 </table>
 
 	<div style="display: none;">

@@ -1,8 +1,9 @@
-import {Loc, ajax as Ajax} from 'main.core';
-import {Block} from 'salescenter.component.stage-block';
-import {StageMixin} from './stage-mixin';
-import {Error, SenderList, UserAvatar, MessageEdit, MessageView, MessageEditor, MessageControl} from 'salescenter.component.stage-block.sms-message';
-import {Manager} from "salescenter.manager";
+import { Loc, ajax as Ajax } from 'main.core';
+import { Block } from 'salescenter.component.stage-block';
+import { StageMixin } from './stage-mixin';
+import { Error, SenderList, UserAvatar, MessageEdit, MessageView, MessageEditor, MessageControl } from 'salescenter.component.stage-block.sms-message';
+import { Manager } from "salescenter.manager";
+import { SenderConfig } from "salescenter.lib";
 
 const SmsMessage = {
 	props: {
@@ -110,18 +111,18 @@ const SmsMessage = {
 			{
 				for (let sender of this.senders)
 				{
-					if (!sender.isAvailable || sender.isConnected)
+					if (!SenderConfig.needConfigure(sender))
 					{
 						continue;
 					}
 
 					result.push({
 						text: this.getConnectionErrorText(sender),
-						fixer: this.getFixer(sender.connectUrl),
+						fixer: SenderConfig.openSliderFreeMessages(sender.connectUrl),
 						fixText: this.getConnectionErrorFixText(sender),
 					});
 
-					if (sender.code === 'bitrix24')
+					if (sender.code === SenderConfig.BITRIX24)
 					{
 						bitrix24ConnectUrlError = sender.connectUrl;
 					}
@@ -149,7 +150,7 @@ const SmsMessage = {
 							fixText: this.getConnectionErrorFixText(this.currentSender),
 						});
 
-						if (this.currentSender.code === 'bitrix24')
+						if (this.currentSender.code === SenderConfig.BITRIX24)
 						{
 							bitrix24ConnectUrlError = this.currentSender.connectUrl;
 						}

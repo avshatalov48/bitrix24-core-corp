@@ -203,6 +203,7 @@ class Deal extends ProductsDataProvider implements Filterable
 			'ORIGINATOR_ID',
 			'ORIGINATOR_BY',
 			'STAGE_SEMANTIC_ID',
+			'BINDING_CONTACT',
 		]);
 	}
 

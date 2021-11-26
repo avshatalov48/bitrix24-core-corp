@@ -56,6 +56,19 @@
 			},
 			{
 				condition: [
+					new RegExp("/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/\\?commentAction=([a-zA-Z]+)&deadline=([0-9]+)", "i"),
+					new RegExp("/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/\\?commentAction=([a-zA-Z]+)", "i"),
+				],
+				handler: function(event, link) {
+					if (BX.Tasks.CommentActionController)
+					{
+						BX.Tasks.CommentActionController.processLink(link);
+					}
+					event.preventDefault();
+				}
+			},
+			{
+				condition: [
 					'/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/',
 					'/company/personal/user/(\\d+)/tasks/templates/template/view/(\\d+)/',
 					// '/company/personal/user/(\\d+)/tasks/report/view/(\\d+)/',
@@ -109,21 +122,25 @@
 			},
 			{
 				condition: [
-					new RegExp("/marketplace\/hook/"),
-				],
-				options: {
-					customLeftBoundary: 0,
-					loader: "rest:marketplace"
-				}
-			},
-			{
-				condition: [
 					new RegExp("/marketplace\/view\/quick\/"),
 				],
 				options: {
 					width: 500,
 					allowChangeHistory: false,
 					cacheable: false
+				}
+			},
+			{
+				condition: [
+					new RegExp("/marketplace\/configuration\/import_zip/"),
+				],
+				options: {
+					width: 940,
+					allowChangeHistory: false,
+					cacheable: false,
+					data: {
+						rightBoundary: 0,
+					},
 				}
 			},
 			{
@@ -159,7 +176,7 @@
 			},
 			{
 				condition: [
-					new RegExp("^\\/marketplace\\/.*?((\\?|\\&)(tag|placement))"),
+					new RegExp("\\/marketplace\\/.*?((\\?|\\&)(tag|placement))"),
 				],
 				options: {
 					cacheable: false,
@@ -616,6 +633,13 @@
 					cacheable: false
 				}
 			},
+			{
+				condition: [ new RegExp("/telephony/edit.php\\?ID=[0-9]+") ],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false
+				}
+			}
 		]
 	});
 

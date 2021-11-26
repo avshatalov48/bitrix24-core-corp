@@ -28,7 +28,7 @@ if ($component->isDefaultMode())
 	$supportedTypes = DataModifiers\Element::getSupportedTypes($settings); // all entity
 	$arParams['ENTITY_TYPE'] = DataModifiers\Element::getEntityTypes($supportedTypes);  // only entity types are allowed for current user
 
-	$arResult['PERMISSION_DENIED'] = (empty($arParams['ENTITY_TYPE']) ? true : false);
+	$arResult['PERMISSION_DENIED'] = empty($arParams['ENTITY_TYPE']);
 
 	$arResult['PREFIX'] = (count($supportedTypes) > 1 ? 'Y' : 'N');
 
@@ -108,17 +108,13 @@ if ($component->isDefaultMode())
 				if(!empty($entityType))
 				{
 					$entityTypeId = \CCrmOwnerType::ResolveId($entityType);
+					$value = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId) . '_' . $value;
+					$code = (
+						\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
+						? $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $entityTypeId
+						: $arResult['SELECTOR_ENTITY_TYPES'][$entityType]
+					);
 
-					if(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
-					{
-						$value = $arResult['LIST_PREFIXES'][\CCrmOwnerType::CommonDynamicName] . '-' . $entityTypeId . '_' . $value;
-						$code = $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $entityTypeId;
-					}
-					else
-					{
-						$value = $arResult['LIST_PREFIXES'][$entityType] . '_' . $value;
-						$code = $arResult['SELECTOR_ENTITY_TYPES'][$entityType];
-					}
 					break;
 				}
 			}

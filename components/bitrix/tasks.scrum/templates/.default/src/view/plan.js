@@ -1,6 +1,8 @@
-import {Type, Dom} from 'main.core';
+import {Type, Dom, Loc} from 'main.core';
 import {BaseEvent} from 'main.core.events';
 import {Loader} from 'main.loader';
+
+import {MessageBox} from 'ui.dialogs.messagebox';
 
 import {ScrumDod} from 'tasks.scrum.dod';
 
@@ -37,7 +39,7 @@ import type {BacklogParams} from '../entity/backlog/backlog';
 import type {SprintParams} from '../entity/sprint/sprint';
 import type {EpicType, ItemParams} from '../item/item';
 import type {Views} from './view';
-import {Counters} from "../counters/counters";
+import {Counters} from '../counters/counters';
 
 type Responsible = {
 	name: string,
@@ -87,9 +89,9 @@ export class Plan extends View
 			entityStorage: this.entityStorage
 		});
 
-		this.sidePanel = new SidePanel();
-
 		this.counters = new Counters({
+			requestSender: this.requestSender,
+			entityStorage: this.entityStorage,
 			filter: this.filter,
 			userId: params.userId,
 			groupId: params.groupId,
@@ -286,6 +288,11 @@ export class Plan extends View
 		sprint.subscribe('loadItems', this.onLoadItems.bind(this));
 	}
 
+	showErrorAlert(message: string)
+	{
+		MessageBox.alert(message, Loc.getMessage('TASKS_SCRUM_ERROR_TITLE_POPUP'));
+	}
+
 	onCreateTaskItem(baseEvent: BaseEvent)
 	{
 		const data = baseEvent.getData();
@@ -293,7 +300,18 @@ export class Plan extends View
 		const inputObject = data.inputObject;
 		const inputValue = data.value;
 
-		const newItem = this.createItem('task', inputValue);
+		let newItem = null;
+
+		try
+		{
+			newItem = this.createItem('task', inputValue);
+		}
+		catch (error)
+		{
+			this.showErrorAlert(error.message);
+
+			return;
+		}
 
 		this.pullItem.addTmpIdsToSkipAdding(newItem.getItemId());
 
@@ -737,7 +755,18 @@ export class Plan extends View
 			const decomposedItems = decomposition.getDecomposedItems();
 			const lastDecomposedItem = Array.from(decomposedItems).pop();
 
-			const newItem = this.createItem(parentItem.getItemType(), inputValue);
+			let newItem = null;
+
+			try
+			{
+				newItem = this.createItem(parentItem.getItemType(), inputValue);
+			}
+			catch (error)
+			{
+				this.showErrorAlert(error.message);
+
+				return;
+			}
 
 			this.pullItem.addTmpIdsToSkipAdding(newItem.getItemId());
 			this.pullItem.addIdToSkipUpdating(parentItem.getItemId());

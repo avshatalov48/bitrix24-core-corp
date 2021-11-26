@@ -119,7 +119,7 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 
 		$violationFilter = [
 			'USER_ID' => $this->arParams['USER_ID'],
-			'IS_VIOLATION' => 'Y',
+			'=IS_VIOLATION' => 'Y',
 			'>TASK.RESPONSIBLE_ID' => 0,
 			[
 				'LOGIC' => 'OR',
@@ -147,24 +147,42 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 		$nav = new PageNavigation("nav-effective");
 		$nav->allowAllRecords(true)->setPageSize($navPageSize)->initFromUri();
 
+		$select =  [
+			'TASK_ID',
+			'DATE' => 'DATETIME',
+			'DATE_REPAIR' => 'DATETIME_REPAIR',
+			'TASK_TITLE',
+			'DEADLINE' => 'TASK_DEADLINE',
+			'USER_TYPE',
+			'TASK_ORIGINATOR_ID' => 'TASK.CREATOR.ID',
+			'GROUP_ID',
+			'GROUP_NAME' => 'GROUP.NAME',
+		];
+
+		if (\Bitrix\Main\Loader::includeModule('recyclebin'))
+		{
+			$violationFilter[] = [
+				'LOGIC' => 'OR',
+				['>TASK.RESPONSIBLE_ID' => 0],
+				[
+					'=TASK.RESPONSIBLE_ID' => null,
+					'>RECYCLE.ID' => 0
+				],
+			];
+			$select['TASK_ZOMBIE'] = 'RECYCLE.ID';
+		}
+		else
+		{
+			$violationFilter['>TASK.RESPONSIBLE_ID'] = 0;
+		}
+
 		$violations = EffectiveTable::getList([
 			'count_total' => true,
 			'filter' => $violationFilter,
 			'offset' => $nav->getOffset(),
 			'limit' => $nav->getLimit(),
 			'order' => ['DATETIME' => 'DESC', 'TASK_TITLE' => 'ASC'],
-			'select' => [
-				'TASK_ID',
-				'DATE' => 'DATETIME',
-				'DATE_REPAIR' => 'DATETIME_REPAIR',
-				'TASK_TITLE',
-				'DEADLINE' => 'TASK_DEADLINE',
-				'USER_TYPE',
-				'TASK_ORIGINATOR_ID' => 'TASK.CREATOR.ID',
-				'TASK_ZOMBIE' => 'TASK.ZOMBIE',
-				'GROUP_ID',
-				'GROUP_NAME' => 'GROUP.NAME',
-			],
+			'select' => $select,
 			'group' => ['DATE'],
 		]);
 

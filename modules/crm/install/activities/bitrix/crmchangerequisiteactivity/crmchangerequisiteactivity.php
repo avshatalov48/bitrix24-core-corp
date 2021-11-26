@@ -1,5 +1,8 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 use \Bitrix\Crm\EntityPreset;
 use \Bitrix\Crm\EntityRequisite;
@@ -121,6 +124,14 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 		$addressFields = EntityRequisite::ADDRESS;
 		$addressTypeId = $this->AddressTypeId;
 
+		foreach ($fieldsValues as $requisiteSectionName => $requisiteSectionFields)
+		{
+			foreach ($requisiteSectionFields as $fieldId => $value)
+			{
+				$fieldsValues[$requisiteSectionName][$fieldId] = $this->parseValue($value);
+			}
+		}
+
 		$fieldsValues['RequisiteFields'] = $this->prepareUserFieldValues($fieldsValues['RequisiteFields']);
 
 		if(array_key_exists(EntityRequisite::ADDRESS, $fieldsValues['RequisiteFields']))
@@ -169,11 +180,19 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 	public static function GetPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = '', $popupWindow = null, $siteId = '')
 	{
 		$dialog = parent::GetPropertiesDialog(...func_get_args());
+		$dialog->setMap(array_merge($dialog->getMap(), self::getPropertiesDialogMap()));
+
+		$currentPresetId = (int)$dialog->getCurrentValue('requisite_preset');
+		$presetCountryId = 0;
+		if ($currentPresetId !== 0)
+		{
+			$presetCountryId = EntityRequisite::getSingleInstance()->getCountryIdByPresetId($currentPresetId);
+		}
 
 		$runtimeData = [
 			'PathToParentClassDir' => pathinfo(realpath($dialog->getActivityFile()), PATHINFO_DIRNAME),
 			'RequisiteFieldsMap' => array_merge(
-				self::getRequisiteFieldsMap(),
+				self::getRequisiteFieldsMap($presetCountryId),
 				self::getUserFieldsMap()
 			),
 			'BankDetailFieldsMap' => self::getBankDetailMap(),
@@ -181,12 +200,11 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 			'PresetRequisiteFieldNames' => self::getPresetsFieldNames()
 		];
 
-		$dialog->setRuntimeData(array_merge($dialog->getRuntimeData(), $runtimeData));
-		$dialog->setMap(array_merge($dialog->getMap(), self::getPropertiesDialogMap()));
-
-		$dialog->setActivityFile(__FILE__);
-
-		$dialog->setCurrentValues(self::mergeAddressValuesWithRqValues($dialog->getCurrentValues()));
+		$dialog
+			->setRuntimeData(array_merge($dialog->getRuntimeData(), $runtimeData))
+			->setActivityFile(__FILE__)
+			->setCurrentValues(self::mergeAddressValuesWithRqValues($dialog->getCurrentValues()))
+		;
 
 		return $dialog;
 	}
@@ -196,10 +214,12 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 		$fieldsValues = $currentValues['FieldsValues'];
 		$addressFields = EntityRequisite::ADDRESS;
 
-		if(isset($fieldsValues)
+		if (
+			isset($fieldsValues)
 			&& array_key_exists($addressFields, $fieldsValues)
 			&& reset($fieldsValues[$addressFields])
-			&& !CBPHelper::isEmptyValue(current($fieldsValues[$addressFields])))
+			&& !CBPHelper::isEmptyValue(current($fieldsValues[$addressFields]))
+		)
 		{
 			$fieldsValues = array_merge($fieldsValues, current($fieldsValues[$addressFields]));
 		}
@@ -264,9 +284,9 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 		return $isCorrect;
 	}
 
-	protected static function getRequisiteFieldsMap(): array
+	protected static function getRequisiteFieldsMap(int $countryId = 0): array
 	{
-		$requisiteFieldsMap = parent::getRequisiteFieldsMap();
+		$requisiteFieldsMap = parent::getRequisiteFieldsMap($countryId);
 		// the RQ_NAME field is formed from other fields. it's immutable
 		unset($requisiteFieldsMap['RQ_NAME']);
 		return $requisiteFieldsMap;

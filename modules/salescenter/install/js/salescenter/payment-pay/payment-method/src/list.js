@@ -76,7 +76,7 @@ Vue.component('salescenter-payment_pay-payment_method-list', {
 	// language=Vue
 	template: `
 		<div class="checkout-basket-section">
-			<h2 class="checkout-basket-title">{{localize.PAYMENT_PAY_PAYMENT_METHOD_1}}</h2>
+			<h2 class="landing-block-node-title h2 text-left g-mb-15 g-font-weight-500 g-font-size-20">{{localize.PAYMENT_PAY_PAYMENT_METHOD_1}}</h2>
 			<div class="checkout-basket-pay-method-list">
 				<div class="checkout-basket-pay-method-item-container" v-for="(item, index) in items">
 					<div class="checkout-basket-pay-method-item-logo-block">

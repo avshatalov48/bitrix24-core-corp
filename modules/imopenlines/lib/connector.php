@@ -1194,7 +1194,7 @@ class Connector
 			}
 
 			$params = [];
-			$allowedFields = ['CLASS', 'TYPE', 'COMPONENT_ID', 'CRM_FORM_ID', 'url', 'fromSalescenterApplication', 'richUrlPreview'];
+			$allowedFields = ['CLASS', 'TYPE', 'COMPONENT_ID', 'CRM_FORM_ID', 'CRM_FORM_SEC', 'CRM_FORM_FILLED', 'url', 'fromSalescenterApplication', 'richUrlPreview'];
 
 			foreach ($messageFields['PARAMS'] as $key => $value)
 			{

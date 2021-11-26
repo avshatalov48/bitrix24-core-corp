@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\Binding\LeadContactTable;
+use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\LeadTable;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
@@ -107,6 +108,9 @@ class Lead extends ProductsDataProvider
 					'VALUE' => [$this, 'getContacts'],
 				];
 			}
+
+			$this->fields['OPPORTUNITY']['TYPE'] = Money::class;
+			$this->fields['OPPORTUNITY']['FORMAT'] = ['CURRENCY_ID' => $this->getCurrencyId()];
 		}
 
 		return $this->fields;
@@ -237,6 +241,7 @@ class Lead extends ProductsDataProvider
 			'PRODUCT_ROW',
 			'COMPANY_ID',
 			'CONTACT_ID',
+			'BINDING_CONTACT',
 		]);
 	}
 

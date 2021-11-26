@@ -84,43 +84,68 @@ export default class Prompt extends EventEmitter
 
 		if(Array.isArray(locationsList))
 		{
-			let isSeparatorSet = false;
-
 			this.#locationList = locationsList.slice();
 
-			locationsList.forEach((location, index) => {
-				if(address && address.getFieldValue(AddressType.LOCALITY))
-				{
-					if (
-						!isSeparatorSet
-						&& location
-						&& location.address
-						&& location.address.getFieldValue(AddressType.LOCALITY)
-					)
-					{
-						if (
-							!this.#getAddressPossibleLocalities(location.address).includes(
-								address.getFieldValue(AddressType.LOCALITY)
-							)
-						)
+			const showFlatList = (
+				!address
+				|| !address.getFieldValue(AddressType.LOCALITY)
+				|| !Prompt.#hasLocationWithLocality(this.#locationList)
+			);
+
+			if (showFlatList)
+			{
+				locationsList.forEach((location, index) => {
+					this.getMenu().addMenuItem(
+						this.#createMenuItem(index, location, searchPhrase)
+					);
+				});
+			}
+			else
+			{
+				locationsList.forEach((location, index) => {
+					if (this.#isAddressOfSameLocation(address, location)) {
+						this.getMenu().addMenuItem(
+							this.#createMenuItem(index, location, searchPhrase)
+						);
+					}
+				});
+
+				let isSeparatorSet = false;
+				locationsList.forEach((location, index) => {
+					if (!this.#isAddressOfSameLocation(address, location)) {
+						if (!isSeparatorSet)
 						{
-							isSeparatorSet = true;
 							this.getMenu().addMenuItem({
 								html: Loc.getMessage('LOCATION_WIDGET_PROMPT_IN_OTHER_CITY'),
 								delimiter: true
 							});
 						}
-					}
-				}
 
-				this.getMenu().addMenuItem(
-					this.#createMenuItem(index, location, searchPhrase)
-				);
-			});
+						this.getMenu().addMenuItem(
+							this.#createMenuItem(index, location, searchPhrase)
+						);
+						isSeparatorSet = true;
+					}
+				});
+			}
 		}
 	}
 
-	#getAddressPossibleLocalities(address: Address)
+	#isAddressOfSameLocation(address, location)
+	{
+		return (
+			address
+			&& address.getFieldValue(AddressType.LOCALITY)
+			&& location
+			&& location.address
+			&& location.address.getFieldValue(AddressType.LOCALITY)
+			&& Prompt.#getAddressPossibleLocalities(location.address).includes(
+				address.getFieldValue(AddressType.LOCALITY)
+			)
+		);
+	}
+
+	static #getAddressPossibleLocalities(address: Address)
 	{
 		const result = [];
 
@@ -139,6 +164,23 @@ export default class Prompt extends EventEmitter
 		}
 
 		return result;
+	}
+
+	/**
+	 * @param {array<Location>} locationsList
+	 * @returns boolean
+	 */
+	static #hasLocationWithLocality(locationsList: Array<Location>): boolean
+	{
+		for (let location of locationsList)
+		{
+			if (location.address && location.address.getFieldValue(AddressType.LOCALITY))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

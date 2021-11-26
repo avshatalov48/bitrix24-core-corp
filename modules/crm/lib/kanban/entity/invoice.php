@@ -30,6 +30,12 @@ class Invoice extends Entity
 		return 'KANBAN_V11_INVOICE';
 	}
 
+	public function getBaseFields(): array
+	{
+		// @todo move to \Bitrix\Crm\Service\Factory\Invoice::getFieldsInfo() when it will appear
+		return \CCrmInvoice::GetFieldsInfo();
+	}
+
 	public function getFilterPresets(): array
 	{
 		$user = $this->getCurrentUserInfo();

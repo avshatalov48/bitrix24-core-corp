@@ -258,7 +258,7 @@ class Rest
 			self::printErrors(["Parameter `security_sign` is not valid."]);
 		}
 
-		return User::getData($hash->getEntities());
+		return User::getData($hash->getEntities()) + ['properties' => $hash->getProperties()];
 	}
 
 	/**

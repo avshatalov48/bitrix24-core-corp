@@ -819,10 +819,6 @@ class TasksKanbanComponent extends \CBitrixComponent
 		{
 			$filter['CHECK_PERMISSIONS'] = 'Y';
 		}
-		if (!array_key_exists('ZOMBIE', $filter))
-		{
-			$filter['ZOMBIE'] = 'N';
-		}
 		if ($params['PERSONAL'] != 'Y' || $params['GROUP_ID'] > 0)
 		{
 			$filter['GROUP_ID'] = $params['GROUP_ID'];
@@ -1130,7 +1126,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 					'TASK_ID' => $id
 				);
 			}
-			$item['data']['date_view'] = $item['data']['date_view']->getTimestamp();
+			$item['data']['date_view'] = $item['data']['date_view'] ? $item['data']['date_view']->getTimestamp() : 0;
 		}
 		unset($item);
 		$res = Task\LogTable::getList(array(
@@ -2263,6 +2259,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 	private function canProceedExpiredTour(): bool
 	{
+		return false;
+
 		if ($this->arParams['GROUP_ID'] > 0)
 		{
 			return false;

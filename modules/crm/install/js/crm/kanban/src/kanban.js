@@ -1,5 +1,7 @@
-import PullManager from './pullmanager'
+import PullManager from './pullmanager';
+import FieldsSelector from './fieldsselector';
 
 export {
 	PullManager,
+	FieldsSelector,
 }

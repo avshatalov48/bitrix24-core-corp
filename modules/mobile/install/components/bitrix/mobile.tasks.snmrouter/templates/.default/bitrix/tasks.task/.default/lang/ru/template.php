@@ -23,6 +23,7 @@ $MESS["MB_TASKS_TASK_SETTINGS_ADDITIONAL"] = "ещё";
 $MESS["MB_TASKS_TASK_SETTINGS_ADDITIONAL_ALLOW_CHANGE_DEADLINE"] = "Разрешить ответственному менять сроки задачи";
 $MESS["MB_TASKS_TASK_SETTINGS_ADDITIONAL_MATCH_WORK_TIME"] = "Пропустить выходные и праздничные дни";
 $MESS["MB_TASKS_TASK_SETTINGS_ADDITIONAL_TASK_CONTROL"] = "Принять задачу после завершения";
+$MESS["MB_TASKS_TASK_SETTINGS_ADDITIONAL_TASK_CONTROL_V2"] = "Проконтролировать задачу после завершения";
 $MESS["MB_TASKS_TASK_SETTINGS_ADDITIONAL_ADD_IN_REPORT"] = "Включить в задачу отчёт по эффективности";
 $MESS["MB_TASKS_TASK_SETTINGS_ADDITIONAL_ADD_INTO_DAY_PLAN"] = "Добавить в план рабочего дня";
 $MESS["MB_TASKS_TASK_SETTINGS_ADDITIONAL_CONSEQUENCE"] = "Последовательная задача";

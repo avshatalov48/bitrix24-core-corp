@@ -34,3 +34,4 @@ $MESS["SALESCENTER_TIMELINE_CHECK_CONTENT_DEFAULT"] = "Чек не отправ�
 $MESS["SALESCENTER_PAYMENT_CREATED_AT"] = "Оплата от ";
 $MESS["SALESCENTER_SHIPMENT_CREATED_AT"] = "Доставка от";
 $MESS["SALESCENTER_AMOUNT_TO_PAY"] = "к оплате";
+$MESS["SALESCENTER_CRM_PERMISSION_DENIED"] = "Доступ запрещен";

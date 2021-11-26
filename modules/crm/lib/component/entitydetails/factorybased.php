@@ -9,6 +9,7 @@ use Bitrix\Crm\Controller\Entity;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Format\Money;
+use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
@@ -124,15 +125,6 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			$this->item = $this->factory->createItem();
 
 			$this->fillParentFields();
-
-			if ($this->factory->isMyCompanyEnabled())
-			{
-				$defaultMyCompanyId = EntityLink::getDefaultMyCompanyId();
-				if ($defaultMyCompanyId > 0)
-				{
-					$this->item->setMycompanyId($defaultMyCompanyId);
-				}
-			}
 		}
 		else
 		{
@@ -688,7 +680,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 					'INIT_EDITABLE' => $this->arResult['READ_ONLY'] ? 'N' : 'Y',
 					'ENABLE_MODE_CHANGE' => 'N',
 					'USE_ASYNC_ADD_PRODUCT' => 'Y',
-					 */
+					*/
 				],
 				false,
 				[
@@ -715,7 +707,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 					'LOCATION_ID' => $locationId,
 					'ALLOW_LD_TAX' => Container::getInstance()->getAccounting()->isTaxMode() ? 'Y' : 'N',
 					'CLIENT_SELECTOR_ID' => '',
-					'PRODUCT_ROWS' =>  null,
+					'PRODUCT_ROWS' => $this->getProductsData(),
 					'HIDE_MODE_BUTTON' => $this->isReadOnly() ? 'Y' : 'N',
 					'TOTAL_SUM' => $this->item->getOpportunity(),
 					'TOTAL_TAX' => $this->item->getTaxValue(),
@@ -786,35 +778,47 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		if(!$this->item->isNew())
 		{
-			$buttons[ButtonLocation::AFTER_TITLE][] = new Buttons\SettingsButton([
-				'menu' => [
-					'items' => [
-						[
-							'text' => Loc::getMessage('CRM_TYPE_ITEM_DELETE'),
-							'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
-						],
-					],
-				],
-			]);
+			if (Buttons\IntranetBindingMenu::isAvailable())
+			{
+				$buttons[ButtonLocation::AFTER_TITLE][] = Buttons\IntranetBindingMenu::createByComponentParameters(
+					$this->getIntranetBindingMenuParameters()
+				);
+			}
+
+			$buttons[ButtonLocation::AFTER_TITLE][] = $this->getSettingsToolbarButton();
 
 			if($this->isDocumentButtonAvailable())
 			{
 				$buttons[ButtonLocation::AFTER_TITLE][] = $this->getDocumentToolbarButton();
 			}
-		}
 
-		if (
-			\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->item->getEntityTypeId())
-			&& $this->getBizprocStarterConfig()
-		)
-		{
-			$buttons[ButtonLocation::AFTER_TITLE][] = $this->getBizprocToolbarButton();
+			if (
+				\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->item->getEntityTypeId())
+				&& $this->getBizprocStarterConfig()
+			)
+			{
+				$buttons[ButtonLocation::AFTER_TITLE][] = $this->getBizprocToolbarButton();
+			}
 		}
 
 		return array_merge(parent::getToolbarParameters(), [
 			'buttons' => $buttons,
 			'communications' => $this->getCommunicationToolbarParameters(),
 			'hideBorder' => true,
+		]);
+	}
+
+	protected function getSettingsToolbarButton(): Buttons\SettingsButton
+	{
+		return new Buttons\SettingsButton([
+			'menu' => [
+				'items' => [
+					[
+						'text' => Loc::getMessage('CRM_TYPE_ITEM_DELETE'),
+						'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
+					],
+				],
+			],
 		]);
 	}
 
@@ -944,7 +948,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		];
 	}
 
-	protected function getEditorConfigId(): string
+	public function getEditorConfigId(): string
 	{
 		return $this->getGuid();
 	}
@@ -1172,7 +1176,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 					&& !empty($error->getCustomData()['fieldName'])
 				)
 				{
-					 $checkErrors[$error->getCustomData()['fieldName']] = $error->getMessage();
+					$checkErrors[$error->getCustomData()['fieldName']] = $error->getMessage();
 				}
 			}
 			if (!empty($checkErrors))
@@ -1188,12 +1192,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		if(
 			$this->factory->isClientEnabled()
-			&& (
-				array_key_exists(EditorAdapter::FIELD_REQUISITE_ID, $data)
-				|| array_key_exists(EditorAdapter::FIELD_BANK_DETAIL_ID, $data)
-				|| array_key_exists(EditorAdapter::FIELD_MY_COMPANY_REQUISITE_ID, $data)
-				|| array_key_exists(EditorAdapter::FIELD_MY_COMPANY_BANK_DETAIL_ID, $data)
-			)
+			|| $this->factory->isMyCompanyEnabled()
 		)
 		{
 			$this->saveRequisites($beforeSaveData, $data);
@@ -1452,11 +1451,11 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	protected function getIntranetBindingMenuParameters(): ?array
 	{
 		return [
-			'SECTION_CODE' => 'crm_detail',
-			'MENU_CODE' => mb_strtolower(\CCrmOwnerType::ResolveName($this->getEntityTypeID())),
+			'SECTION_CODE' => Integration\Intranet\BindingMenu\SectionCode::DETAIL,
+			'MENU_CODE' => Integration\Intranet\BindingMenu\CodeBuilder::getMenuCode($this->factory->getEntityTypeId()),
 			'CONTEXT' => [
 				'ENTITY_ID' => $this->getEntityID(),
-			]
+			],
 		];
 	}
 

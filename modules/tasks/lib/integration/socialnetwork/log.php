@@ -1,4 +1,5 @@
-<?
+<?php
+
 /**
  * @access private
  */
@@ -7,7 +8,6 @@ namespace Bitrix\Tasks\Integration\SocialNetwork;
 
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Socialnetwork\LogRightTable;
 use Bitrix\SocialNetwork\LogTable;
 use Bitrix\Tasks\Integration\SocialNetwork;
@@ -25,11 +25,11 @@ class Log extends SocialNetwork
 	 * @param void
 	 * @return array
 	 */
-	public static function getEventIdList()
+	public static function getEventIdList(): array
 	{
-		return array(
-			self::EVENT_ID_TASK
-		);
+		return [
+			self::EVENT_ID_TASK,
+		];
 	}
 
 	/**
@@ -38,11 +38,11 @@ class Log extends SocialNetwork
 	 * @param Event $event Event from LogIndex::setIndex().
 	 * @return EventResult
 	 */
-	public static function onIndexGetContent(Event $event)
+	public static function onIndexGetContent(Event $event): EventResult
 	{
 		$result = new EventResult(
 			EventResult::UNDEFINED,
-			array(),
+			[],
 			'tasks'
 		);
 
@@ -54,7 +54,7 @@ class Log extends SocialNetwork
 			return $result;
 		}
 
-		$content = "";
+		$content = '';
 		$task = false;
 
 		if (intval($sourceId) > 0)
@@ -78,15 +78,13 @@ class Log extends SocialNetwork
 			$controller->enable();
 		}
 
-		$result = new EventResult(
+		return new EventResult(
 			EventResult::SUCCESS,
 			array(
 				'content' => $content,
 			),
 			'tasks'
 		);
-
-		return $result;
 	}
 
 	/**
@@ -291,19 +289,19 @@ class Log extends SocialNetwork
 
 	private static function getTask(int $taskId)
 	{
-		$res = TaskTable::query()
+		return TaskTable::query()
 			->addSelect('ID')
 			->addSelect('GROUP_ID')
 			->where('ID', $taskId)
 			->exec()
 			->fetch();
-
-		return $res;
 	}
 
-	private static function getTaskMembers(int $taskId)
+	private static function getTaskMembers(int $taskId): array
 	{
-		$res = \Bitrix\Tasks\Internals\Task\MemberTable::query()
+		$members = [];
+
+		$res = MemberTable::query()
 			->addSelect('USER_ID')
 			->addSelect('TYPE')
 			->where('TASK_ID', $taskId)

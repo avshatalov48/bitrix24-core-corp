@@ -11,9 +11,9 @@ use Bitrix\Location\Service\FormatService;
 
 class AddressFormatter
 {
-    private static $singleInstance = null;
+	private static $singleInstance = null;
 
-    protected function getLocationAddressByFields(array $fields) : ?Address
+	protected function getLocationAddressByFields(array $fields) : ?Address
 	{
 		$result = null;
 
@@ -76,58 +76,58 @@ class AddressFormatter
 	}
 
 	public static function getSingleInstance() : AddressFormatter
-    {
-        if (self::$singleInstance === null)
-            self::$singleInstance = new AddressFormatter();
+	{
+		if (self::$singleInstance === null)
+			self::$singleInstance = new AddressFormatter();
 
-        return self::$singleInstance;
-    }
+		return self::$singleInstance;
+	}
 
-    public function isLocationModuleIncluded(): bool
-    {
-        return (bool)EntityAddress::isLocationModuleIncluded();
-    }
+	public function isLocationModuleIncluded(): bool
+	{
+		return (bool)EntityAddress::isLocationModuleIncluded();
+	}
 
-    public function formatTextComma(
-        array $fields,
-        $formatId = EntityAddressFormatter::Undefined
-    ) : string
-    {
-        $result = '';
+	public function formatTextComma(
+		array $fields,
+		$formatId = EntityAddressFormatter::Undefined
+	) : string
+	{
+		$result = '';
 
-        if ($this->isLocationModuleIncluded())
-        {
-        	// TODO: ... [CRM_ADDR_FMT_LOC_1] - modify the formatting in the location module
+		if ($this->isLocationModuleIncluded())
+		{
+			// TODO: ... [CRM_ADDR_FMT_LOC_1] - modify the formatting in the location module
 			$result = $this->formatViaLocation(
 				$fields,
 				$formatId,
 				StringConverter::STRATEGY_TYPE_TEMPLATE_COMMA,
 				StringConverter::CONTENT_TYPE_TEXT
 			);
-        }
-        else
-        {
-            $result = EntityAddressFormatter::format(
-                $fields,
-                [
-                    'FORMAT' => $formatId,
-                    'SEPARATOR' => AddressSeparator::Comma,
-                    'NL2BR' => true,
-                    'HTML_ENCODE' => false
-                ]
-            );
-        }
+		}
+		else
+		{
+			$result = EntityAddressFormatter::format(
+				$fields,
+				[
+					'FORMAT' => $formatId,
+					'SEPARATOR' => AddressSeparator::Comma,
+					'NL2BR' => true,
+					'HTML_ENCODE' => false
+				]
+			);
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    public function formatTextMultiline(
-        array $fields,
-        $formatId = EntityAddressFormatter::Undefined
-    ) : string
-    {
-        if ($this->isLocationModuleIncluded())
-        {
+	public function formatTextMultiline(
+		array $fields,
+		$formatId = EntityAddressFormatter::Undefined
+	) : string
+	{
+		if ($this->isLocationModuleIncluded())
+		{
 			// TODO: ... [CRM_ADDR_FMT_LOC_2] - modify the formatting in the location module
 			$result = $this->formatViaLocation(
 				$fields,
@@ -135,30 +135,30 @@ class AddressFormatter
 				StringConverter::STRATEGY_TYPE_TEMPLATE,
 				StringConverter::CONTENT_TYPE_TEXT
 			);
-        }
-        else
-        {
-            $result = EntityAddressFormatter::format(
-                $fields,
-                [
-                    'FORMAT' => $formatId,
-                    'SEPARATOR' => AddressSeparator::NewLine,
-                    'NL2BR' => true,
-                    'HTML_ENCODE' => false
-                ]
-            );
-        }
+		}
+		else
+		{
+			$result = EntityAddressFormatter::format(
+				$fields,
+				[
+					'FORMAT' => $formatId,
+					'SEPARATOR' => AddressSeparator::NewLine,
+					'NL2BR' => true,
+					'HTML_ENCODE' => false
+				]
+			);
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    public function formatTextMultilineSpecialchar(
-        array $fields,
-        $formatId = EntityAddressFormatter::Undefined
-    ) : string
-    {
-        if ($this->isLocationModuleIncluded())
-        {
+	public function formatTextMultilineSpecialchar(
+		array $fields,
+		$formatId = EntityAddressFormatter::Undefined
+	) : string
+	{
+		if ($this->isLocationModuleIncluded())
+		{
 			// TODO: ... [CRM_ADDR_FMT_LOC_3] - modify the formatting in the location module
 			$result = $this->formatViaLocation(
 				$fields,
@@ -166,30 +166,30 @@ class AddressFormatter
 				StringConverter::STRATEGY_TYPE_TEMPLATE_NL,
 				StringConverter::CONTENT_TYPE_HTML
 			);
-        }
-        else
-        {
-            $result = EntityAddressFormatter::format(
-                $fields,
-                [
-                    'FORMAT' => $formatId,
-                    'SEPARATOR' => AddressSeparator::NewLine,
-                    'NL2BR' => true,
-                    'HTML_ENCODE' => true
-                ]
-            );
-        }
+		}
+		else
+		{
+			$result = EntityAddressFormatter::format(
+				$fields,
+				[
+					'FORMAT' => $formatId,
+					'SEPARATOR' => AddressSeparator::NewLine,
+					'NL2BR' => true,
+					'HTML_ENCODE' => true
+				]
+			);
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    public function formatHtmlMultiline(
-        array $fields,
-        int $formatId = EntityAddressFormatter::Undefined
-    ) : string
-    {
-        if ($this->isLocationModuleIncluded())
-        {
+	public function formatHtmlMultiline(
+		array $fields,
+		int $formatId = EntityAddressFormatter::Undefined
+	) : string
+	{
+		if ($this->isLocationModuleIncluded())
+		{
 			// TODO: ... [CRM_ADDR_FMT_LOC_4] - modify the formatting in the location module
 			$result = $this->formatViaLocation(
 				$fields,
@@ -197,30 +197,30 @@ class AddressFormatter
 				StringConverter::STRATEGY_TYPE_TEMPLATE_BR,
 				StringConverter::CONTENT_TYPE_TEXT
 			);
-        }
-        else
-        {
-            $result = EntityAddressFormatter::format(
-                $fields,
-                [
-                    'FORMAT' => $formatId,
-                    'SEPARATOR' => AddressSeparator::HtmlLineBreak,
-                    'NL2BR' => true,
-                    'HTML_ENCODE' => false
-                ]
-            );
-        }
+		}
+		else
+		{
+			$result = EntityAddressFormatter::format(
+				$fields,
+				[
+					'FORMAT' => $formatId,
+					'SEPARATOR' => AddressSeparator::HtmlLineBreak,
+					'NL2BR' => true,
+					'HTML_ENCODE' => false
+				]
+			);
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    public function formatHtmlMultilineSpecialchar(
-        array $fields,
-        $formatId = EntityAddressFormatter::Undefined
-    ) : string
-    {
-        if ($this->isLocationModuleIncluded())
-        {
+	public function formatHtmlMultilineSpecialchar(
+		array $fields,
+		$formatId = EntityAddressFormatter::Undefined
+	) : string
+	{
+		if ($this->isLocationModuleIncluded())
+		{
 			// TODO: ... [CRM_ADDR_FMT_LOC_5] - modify the formatting in the location module
 			$result = $this->formatViaLocation(
 				$fields,
@@ -228,20 +228,20 @@ class AddressFormatter
 				StringConverter::STRATEGY_TYPE_TEMPLATE_BR,
 				StringConverter::CONTENT_TYPE_HTML
 			);
-        }
-        else
-        {
-            $result = EntityAddressFormatter::format(
-                $fields,
-                [
-                    'FORMAT' => $formatId,
-                    'SEPARATOR' => AddressSeparator::HtmlLineBreak,
-                    'NL2BR' => true,
-                    'HTML_ENCODE' => true
-                ]
-            );
-        }
+		}
+		else
+		{
+			$result = EntityAddressFormatter::format(
+				$fields,
+				[
+					'FORMAT' => $formatId,
+					'SEPARATOR' => AddressSeparator::HtmlLineBreak,
+					'NL2BR' => true,
+					'HTML_ENCODE' => true
+				]
+			);
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 }

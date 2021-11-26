@@ -7,6 +7,7 @@
  */
 namespace Bitrix\Crm\WebForm\Internals;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
@@ -74,7 +75,9 @@ class ResultTable extends Entity\DataManager
 		$data = $event->getParameters();
 
 		// delete result entities
-		ResultEntityTable::delete(array('RESULT_ID' => $data['primary']['ID']));
+		$tableName = ResultEntityTable::getTableName();
+		$sql = "delete from {$tableName} where RESULT_ID = " . intval($data['primary']['ID']);
+		Application::getConnection()->query($sql);
 
 		return $result;
 	}

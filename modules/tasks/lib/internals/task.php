@@ -8,13 +8,16 @@
 
 namespace Bitrix\Tasks\Internals;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\EnumField;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Util\Entity\DateTimeField;
+use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\UserField;
 
 Loc::loadMessages(__FILE__);
@@ -40,6 +43,18 @@ class TaskTable extends Entity\DataManager
 	public static function getObjectClass()
 	{
 		return TaskObject::class;
+	}
+
+	public static function deleteList(array $filter)
+	{
+		$entity = static::getEntity();
+		$connection = $entity->getConnection();
+
+		return $connection->query(sprintf(
+			'DELETE FROM %s WHERE %s',
+			$connection->getSqlHelper()->quote($entity->getDbTableName()),
+			Query::buildFilterSql($entity, $filter)
+		));
 	}
 
 	/**
@@ -333,5 +348,66 @@ class TaskTable extends Entity\DataManager
 		return array(
 			new Entity\Validator\Length(null, 2),
 		);
+	}
+
+	/**
+	 * @param array $data
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function insert(array $data)
+	{
+		$fields = self::getEntity()->getFields();
+
+		$id = 0;
+		$insertData = [];
+		foreach ($data as $field => $value)
+		{
+			if (!array_key_exists($field, $fields))
+			{
+				continue;
+			}
+
+			if ($field === 'ID')
+			{
+				$id = (int)$value;
+				continue;
+			}
+
+			if (
+				$fields[$field] instanceof DateTimeField
+				&& is_numeric($value)
+			)
+			{
+				$insertData[$field] = DateTime::createFromTimestampGmt($value);
+			}
+			else
+			{
+				$insertData[$field] = $value;
+			}
+		}
+
+		if (!$id)
+		{
+			return;
+		}
+
+		$sql = 'INSERT IGNORE INTO ' . self::getTableName() . ' (ID) VALUES (' . $id . ')';
+		$connection = Application::getConnection();
+		$connection->queryExecute($sql);
+
+		$taskObject = self::getByPrimary($id)->fetchObject();
+		if (!$taskObject)
+		{
+			return;
+		}
+
+		foreach ($insertData as $field => $value)
+		{
+			$taskObject->set($field, $value);
+		}
+		$taskObject->save();
+
 	}
 }

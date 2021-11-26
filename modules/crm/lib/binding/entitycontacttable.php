@@ -83,4 +83,23 @@ class EntityContactTable extends DataManager
 			],
 		])->fetchCollection()->getContactIdList();
 	}
+
+	/**
+	 * @param int $entityTypeId
+	 * @param int $contactId
+	 * @return array
+	 */
+	public static function getEntityIds(int $entityTypeId, int $contactId): array
+	{
+		return static::getList([
+			'select' => ['ENTITY_ID'],
+			'order' => [
+				'SORT' => 'ASC',
+			],
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=CONTACT_ID' => $contactId,
+			],
+		])->fetchCollection()->getEntityIdList();
+	}
 }

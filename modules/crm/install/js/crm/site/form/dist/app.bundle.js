@@ -7096,9 +7096,16 @@ var Vue = exports.Vue;
             return false;
           }
 
-          this.emit(EventTypes.submit);
+          this.loading = true;
+          var promise = Promise.resolve();
+          var eventData = {
+            promise: promise
+          };
+          this.emit(EventTypes.submit, eventData);
+          promise = eventData.promise || promise;
 
           if (!this.provider.submit) {
+            this.loading = false;
             return true;
           }
 
@@ -7106,26 +7113,29 @@ var Vue = exports.Vue;
             acc[field.name] = field.value();
             return acc;
           }, {});
-          this.loading = true;
           var formData = new FormData();
           formData.set('values', JSON.stringify(this.values()));
           formData.set('properties', JSON.stringify(babelHelpers.classPrivateFieldGet(this, _properties)));
           formData.set('consents', JSON.stringify(consents));
           formData.set('recaptcha', this.recaptcha.getResponse());
-          var promise;
 
           if (typeof this.provider.submit === 'string') {
-            promise = window.fetch(this.provider.submit, {
-              method: 'POST',
-              mode: 'cors',
-              cache: 'no-cache',
-              headers: {
-                'Origin': window.location.origin
-              },
-              body: formData
+            promise = promise.then(function () {
+              return window.fetch(_this2.provider.submit, {
+                method: 'POST',
+                mode: 'cors',
+                cache: 'no-cache',
+                headers: {
+                  'Origin': window.location.origin
+                },
+                body: formData
+              });
             });
           } else if (typeof this.provider.submit === 'function') {
-            promise = this.provider.submit(this, formData);
+            promise = promise.then(function () {
+              formData.set('properties', JSON.stringify(babelHelpers.classPrivateFieldGet(_this2, _properties)));
+              return _this2.provider.submit(_this2, formData);
+            });
           }
 
           promise.then(function (data) {
@@ -7449,6 +7459,10 @@ var Vue = exports.Vue;
             return;
           }
 
+          if (value && value.toString) {
+            value = value.toString();
+          }
+
           if (typeof value !== 'string') {
             value = '';
           }
@@ -7747,14 +7761,20 @@ var Vue = exports.Vue;
       }, {
         key: "getUserProvider24",
         value: function getUserProvider24(b24options) {
+          var _this2 = this;
+
           var signTtl = 3600 * 24;
-          var sign = b24form.util.url.parameter.get('b24form_user');
+          var sign = b24form.util.url.parameter.get('b24form_data');
 
-          if (sign) {
-            b24options.sign = sign;
+          if (!sign) {
+            sign = b24form.util.url.parameter.get('b24form_user');
 
-            if (b24form.util.ls.getItem('b24-form-sign', sign, signTtl)) {
-              sign = null;
+            if (sign) {
+              b24options.sign = sign;
+
+              if (b24form.util.ls.getItem('b24-form-sign', signTtl)) {
+                sign = null;
+              }
             }
           }
 
@@ -7783,11 +7803,12 @@ var Vue = exports.Vue;
             return null;
           }
 
+          b24options.sign = sign;
           b24form.util.ls.setItem('b24-form-sign', sign, signTtl);
           var formData = new FormData();
-          formData.set('security_sign', sign);
           formData.set('id', b24options.id);
           formData.set('sec', b24options.sec);
+          formData.set('security_sign', b24options.sign);
           babelHelpers.classPrivateFieldSet(this, _userProviderPromise, this.post(b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.user.get', formData).then(function (response) {
             return response.json();
           }).then(function (data) {
@@ -7795,28 +7816,46 @@ var Vue = exports.Vue;
               throw new Error(data.error_description || data.error);
             }
 
-            var user = data.result;
-            user = user && babelHelpers.typeof(user) === 'object' ? user : {};
-            user.fields = user && babelHelpers.typeof(user.fields) === 'object' ? user.fields : {};
-            b24form.util.ls.setItem('b24-form-user', user, ttl);
-            return user.fields;
+            data = data.result;
+            data = data && babelHelpers.typeof(data) === 'object' ? data : {};
+            data.fields = data && babelHelpers.typeof(data.fields) === 'object' ? data.fields : {};
+            var properties = data.properties || {};
+            delete data.properties;
+
+            _this2.list().filter(function (form) {
+              return form.identification.id === b24options.id;
+            }).forEach(function (form) {
+              Object.keys(properties).forEach(function (key) {
+                return form.setProperty(key, properties[key]);
+              });
+            });
+
+            b24form.util.ls.setItem('b24-form-user', data, ttl);
+            return data.fields;
           }));
           return babelHelpers.classPrivateFieldGet(this, _userProviderPromise);
         }
       }, {
         key: "getSubmitProvider24",
         value: function getSubmitProvider24(b24options) {
-          var _this2 = this;
+          var _this3 = this;
 
           return function (form, formData) {
             var trace = b24options.usedBySiteButton && BX.SiteButton ? BX.SiteButton.getTrace() : window.b24Tracker && b24Tracker.guest ? b24Tracker.guest.getTrace() : null;
+            var eventData = {
+              id: b24options.id,
+              sec: b24options.sec,
+              language: b24options.language,
+              sign: b24options.sign
+            };
+            form.emit('submit:post:before', eventData);
             formData.set('id', b24options.id);
             formData.set('sec', b24options.sec);
             formData.set('lang', form.language);
             formData.set('trace', trace);
             formData.set('entities', JSON.stringify(b24options.entities || []));
-            formData.set('security_sign', b24options.sign);
-            return _this2.post(b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.form.fill', formData).then(function (response) {
+            formData.set('security_sign', eventData.sign || b24options.sign);
+            return _this3.post(b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.form.fill', formData).then(function (response) {
               return response.json();
             }).then(function (data) {
               if (data.error) {
@@ -7838,7 +7877,7 @@ var Vue = exports.Vue;
       }, {
         key: "initFormScript24",
         value: function initFormScript24(b24options) {
-          var _this3 = this;
+          var _this4 = this;
 
           if (b24options.usedBySiteButton) {
             this.createWidgetForm24(b24options, Conv.cloneDeep(b24options.data));
@@ -7869,7 +7908,7 @@ var Vue = exports.Vue;
             switch (attributes[0]) {
               case 'auto':
                 setTimeout(function () {
-                  _this3.createForm24(b24options, Object.assign(options, {
+                  _this4.createForm24(b24options, Object.assign(options, {
                     view: b24options.views.auto
                   })).show();
                 }, (b24options.views.auto.delay || 1) * 1000);
@@ -7882,7 +7921,7 @@ var Vue = exports.Vue;
                   var form;
                   clickElement.addEventListener('click', function () {
                     if (!form) {
-                      form = _this3.createForm24(b24options, Object.assign(options, {
+                      form = _this4.createForm24(b24options, Object.assign(options, {
                         view: b24options.views.click
                       }));
                     }
@@ -7897,7 +7936,7 @@ var Vue = exports.Vue;
                 var target = document.createElement('div');
                 node.parentElement.insertBefore(target, node);
 
-                _this3.createForm24(b24options, Object.assign(options, {
+                _this4.createForm24(b24options, Object.assign(options, {
                   node: target
                 }));
 

@@ -13,10 +13,8 @@ require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
-if($request->get('senderId') == 'smsastby'
-	|| $request->get('senderId') == 'smsru'
-	|| $request->get('senderId') == 'twilio'
-)
+$senders = ['smsastby', 'smsru', 'twilio', 'smsednaru'];
+if(in_array($request->get('senderId'), $senders))
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',

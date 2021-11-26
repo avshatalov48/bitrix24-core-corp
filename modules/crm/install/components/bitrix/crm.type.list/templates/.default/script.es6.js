@@ -104,9 +104,9 @@ class TypeListComponent
 	// region EventHandlers
 	handleTypeDelete(event: BaseEvent): void
 	{
-		const entityTypeId = Text.toInteger(event.data.entityTypeId);
+		const id = Text.toInteger(event.data.id);
 
-		if (!entityTypeId)
+		if (!id)
 		{
 			this.showErrors([Loc.getMessage('CRM_TYPE_TYPE_NOT_FOUND')]);
 			return;
@@ -123,7 +123,7 @@ class TypeListComponent
 						analyticsLabel: 'crmTypeListDeleteType',
 						data:
 							{
-								entityTypeId,
+								id,
 							}
 				}).then((response: {data: {}}) => {
 					const isUrlChanged = Type.isObject(response.data) && (response.data.isUrlChanged === true);

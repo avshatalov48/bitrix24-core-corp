@@ -14,6 +14,7 @@ $MESS["CRM_COLUMN_COMPANY_TITLE"] = "Компания";
 $MESS["CRM_COLUMN_CONTACT_ID"] = "Контакт";
 $MESS["CRM_COLUMN_ORDER_STAGE"] = "Статус оплаты сделки";
 $MESS["CRM_COLUMN_DELIVERY_STAGE"] = "Статус доставки";
+$MESS["CRM_COLUMN_PAYMENT_STAGE"] = "Статус оплаты";
 $MESS["CRM_COLUMN_STAGE_ID"] = "Стадия сделки";
 $MESS["CRM_COLUMN_STATE_ID"] = "Состояние";
 $MESS["CRM_COLUMN_CURRENCY_ID"] = "Валюта";
@@ -84,4 +85,3 @@ $MESS["CRM_COLUMN_SOURCE_DESCRIPTION"] = "Дополнительно об ист
 $MESS["CRM_COLUMN_IS_REPEATED_APPROACH"] = "Повторное обращение";
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TITLE"] = "Не удалось перенести сделки.";
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TEXT"] = "Некоторые сделки не удалось перенести в выбранную стадию. Заполните обязательные поля и перенесите сделки снова.";
-?>

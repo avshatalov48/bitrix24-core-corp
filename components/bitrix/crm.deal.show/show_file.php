@@ -29,10 +29,34 @@ if(CModule::IncludeModule('crm'))
 	{
 		$options['owner_token'] = $_REQUEST['owner_token'];
 	}
+
+	$entityTypeId = CCrmOwnerType::Deal;
+	$ownerId = isset($_REQUEST['ownerId']) ? intval($_REQUEST['ownerId']) : 0;
+	$fieldName = isset($_REQUEST['fieldName']) ? $_REQUEST['fieldName'] : '';
+
+	if ($ownerId > 0)
+	{
+		foreach (['CONTACT', 'COMPANY'] as $clientEntityTypeName)
+		{
+			if (mb_strpos($fieldName, $clientEntityTypeName . '_') === 0) // if starts from CONTACT_ or COMPANY_
+			{
+				$deal = \Bitrix\Crm\DealTable::getList([
+					'filter' => ['=ID' => $ownerId],
+					'select' => [$clientEntityTypeName . '_ID'],
+				])->fetch();
+				$ownerId = (int)($deal[$clientEntityTypeName . '_ID'] ?? 0);
+				$entityTypeId = CCrmOwnerType::ResolveID($clientEntityTypeName);
+				$fieldName = mb_substr($fieldName, mb_strlen($clientEntityTypeName . '_'));
+
+				break;
+			}
+		}
+	}
+
 	CCrmFileProxy::WriteFileToResponse(
-		CCrmOwnerType::Deal,
-		isset($_REQUEST['ownerId']) ? intval($_REQUEST['ownerId']) : 0,
-		isset($_REQUEST['fieldName']) ? $_REQUEST['fieldName'] : '',
+		$entityTypeId,
+		$ownerId,
+		$fieldName,
 		isset($_REQUEST['fileId']) ? intval($_REQUEST['fileId']) : 0,
 		$errors,
 		$options

@@ -97,10 +97,10 @@ abstract class Base
 	const ERROR_DELETION_FAILED = 'CRM_DELETION_FAILED';
 
 	// limit maximum number selected entity
-	const MAX_ENTITY_PER_INTERACTION = 1000;
+	public const MAX_ENTITY_PER_INTERACTION = 1000;
 
 	// limit maximum number selected files
-	const MAX_FILE_PER_INTERACTION = 1000;
+	public const MAX_FILE_PER_INTERACTION = 1000;
 
 	/** @var array */
 	protected static $filterFieldAlias = array();

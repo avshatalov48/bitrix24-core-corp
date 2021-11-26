@@ -1,5 +1,6 @@
-<?
+<?php
 $MESS["CRM_COMPANY_CREATION_CANCELED"] = "Company has not been created because the operation was canceled by event handler: \"#NAME#\"";
+$MESS["CRM_COMPANY_DEFAULT_TITLE_TEMPLATE"] = "Company #%NUMBER%";
 $MESS["CRM_COMPANY_EVENT_ADD"] = "Company added";
 $MESS["CRM_COMPANY_EVENT_UPDATE_ASSIGNED_BY"] = "Responsible person changed";
 $MESS["CRM_COMPANY_EVENT_UPDATE_TITLE"] = "Name updated";
@@ -16,9 +17,10 @@ $MESS["CRM_COMPANY_FIELD_ADDRESS_REGION"] = "Region";
 $MESS["CRM_COMPANY_FIELD_ASSIGNED_BY_ID"] = "Responsible person";
 $MESS["CRM_COMPANY_FIELD_BANKING_DETAILS"] = "Payment details";
 $MESS["CRM_COMPANY_FIELD_COMMENTS"] = "Comment";
+$MESS["CRM_COMPANY_FIELD_COMMUNICATION_TYPE"] = "Means of communication";
 $MESS["CRM_COMPANY_FIELD_COMPANY_TYPE"] = "Company type";
-$MESS["CRM_COMPANY_FIELD_CONTACT_ID"] = "Contact";
 $MESS["CRM_COMPANY_FIELD_CONTACT"] = "Contact";
+$MESS["CRM_COMPANY_FIELD_CONTACT_ID"] = "Contact";
 $MESS["CRM_COMPANY_FIELD_CREATED_BY_ID"] = "Created by";
 $MESS["CRM_COMPANY_FIELD_CURRENCY_ID"] = "Currency";
 $MESS["CRM_COMPANY_FIELD_DATE_CREATE"] = "Created on";
@@ -89,5 +91,3 @@ $MESS["CRM_PERMISSION_USER_NOT_DEFINED"] = "Cannot verify permissions because no
 $MESS["CRM_PS_COMPANY_FIELD_EMAIL"] = "Email";
 $MESS["CRM_PS_COMPANY_FIELD_PHONE"] = "Phone";
 $MESS["CRM_PS_COMPANY_FIELD_TITLE"] = "Company name";
-$MESS["CRM_COMPANY_DEFAULT_TITLE_TEMPLATE"] = "Company #%NUMBER%";
-?>

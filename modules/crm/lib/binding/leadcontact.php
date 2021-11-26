@@ -7,8 +7,12 @@
  */
 namespace Bitrix\Crm\Binding;
 
+use Bitrix\Crm\LeadTable;
+use Bitrix\Crm\QuoteTable;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
 
 /**
  * Class LeadContactTable
@@ -47,7 +51,8 @@ class LeadContactTable extends Entity\DataManager
 			'CONTACT_ID' => array('primary' => true, 'data_type' => 'integer'),
 			'SORT' => array('data_type' => 'integer', 'default_value' => 0),
 			'ROLE_ID' => array('data_type' => 'integer', 'default_value' => 0),
-			'IS_PRIMARY' => array('data_type' => 'boolean', 'values' => array('N', 'Y'), 'default_value' => 'N')
+			'IS_PRIMARY' => array('data_type' => 'boolean', 'values' => array('N', 'Y'), 'default_value' => 'N'),
+			(new Reference('LEAD', LeadTable::class, Join::on('this.LEAD_ID', 'ref.ID'))),
 		);
 	}
 	/**

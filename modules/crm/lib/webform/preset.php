@@ -18,7 +18,7 @@ Loc::loadMessages(__FILE__);
 class Preset
 {
 	protected $errors = [];
-	protected static $version = 2;
+	protected static $version = 3;
 	protected static $versionOptionName = 'webform_preset_version';
 
 	protected static function getVersion(): int
@@ -56,13 +56,23 @@ class Preset
 		return count($this->errors) > 0;
 	}
 
-	public function isInstalled($xmlId): ?bool
+	public function getInstalledId($xmlId)
 	{
-		$formDb = Internals\FormTable::getList([
+		$this->install();
+		return $this->getInstalled($xmlId)['ID'] ?? null;
+	}
+
+	protected function getInstalled($xmlId)
+	{
+		return Internals\FormTable::getRow([
 			'select' => ['ID'],
 			'filter' => ['=IS_SYSTEM' => 'Y', '=XML_ID' => $xmlId],
 		]);
-		return $formDb->fetch() ? true : false;
+	}
+
+	public function isInstalled($xmlId): ?bool
+	{
+		return $this->getInstalled($xmlId) ? true : false;
 	}
 
 	public function install(): bool
@@ -130,12 +140,15 @@ class Preset
 		$formData['ASSIGNED_BY_ID'] = self::getCurrentUserId();
 		$formData['ACTIVE'] = 'Y';
 
-		$agreementId = UserConsent::getDefaultAgreementId();
-		$formData['USE_LICENCE'] = $agreementId ? 'Y': 'N';
-		if ($agreementId)
+		if (($formData['USE_LICENCE'] ?? 'Y') === 'Y')
 		{
-			$formData['LICENCE_BUTTON_IS_CHECKED'] = 'Y';
-			$formData['AGREEMENT_ID'] = $agreementId;
+			$agreementId = UserConsent::getDefaultAgreementId();
+			$formData['USE_LICENCE'] = $agreementId ? 'Y': 'N';
+			if ($agreementId)
+			{
+				$formData['LICENCE_BUTTON_IS_CHECKED'] = 'Y';
+				$formData['AGREEMENT_ID'] = $agreementId;
+			}
 		}
 
 		$form = new Form;
@@ -306,6 +319,52 @@ class Preset
 			]
 		];
 
+		$list[] = [
+			'XML_ID' => 'imol_reg',
+			'NAME' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_IMOL_REG_NAME'),
+			'CAPTION' => '',
+			'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_IMOL_REG_DESCRIPTION'),
+			'USE_LICENCE' => 'N',
+			'FIELDS' => [
+				[
+					'TYPE' => 'string',
+					'CODE' => self::isLeadEnabled() ? 'LEAD_NAME' : 'CONTACT_NAME',
+					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_NAME'),
+					'SORT' => 100,
+					'REQUIRED' => 'N',
+					'MULTIPLE' => 'N',
+					'PLACEHOLDER' => '',
+				],
+				[
+					'TYPE' => 'string',
+					'CODE' => self::isLeadEnabled() ? 'LEAD_LAST_NAME' : 'CONTACT_LAST_NAME',
+					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_LAST_NAME'),
+					'SORT' => 200,
+					'REQUIRED' => 'N',
+					'MULTIPLE' => 'N',
+					'PLACEHOLDER' => '',
+				],
+				[
+					'TYPE' => 'phone',
+					'CODE' => self::isLeadEnabled() ? 'LEAD_PHONE' : 'CONTACT_PHONE',
+					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_PHONE'),
+					'SORT' => 300,
+					'REQUIRED' => 'Y',
+					'MULTIPLE' => 'N',
+					'PLACEHOLDER' => '',
+				],
+				[
+					'TYPE' => 'email',
+					'CODE' => self::isLeadEnabled() ? 'LEAD_EMAIL' : 'CONTACT_EMAIL',
+					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_EMAIL'),
+					'SORT' => 400,
+					'REQUIRED' => 'N',
+					'MULTIPLE' => 'N',
+					'PLACEHOLDER' => '',
+				]
+			]
+		] + $list[0];
+
 		if (Loader::includeModule('voximplant'))
 		{
 			$callbackNumbers = Callback::getPhoneNumbers();
@@ -330,7 +389,7 @@ class Preset
 			}
 		}
 
-		$callback = [
+		return [
 			'XML_ID' => 'crm_preset_cb_' . $phoneCode, //cb - CallBack
 			'NAME' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_NAME', ['#call_from#' => $phoneCaption]),
 			'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_CAPTION'),
@@ -361,8 +420,6 @@ class Preset
 				]
 			]
 		];
-
-		return $callback;
 	}
 
 	public static function installVersion2()

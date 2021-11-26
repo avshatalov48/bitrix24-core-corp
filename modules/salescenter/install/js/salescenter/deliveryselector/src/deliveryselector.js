@@ -327,6 +327,7 @@ export default {
 			{
 				this.selectedDeliveryService = deliveryService;
 				this.emitChange();
+				this.emitServiceChanged();
 			}
 		},
 		isNoDeliveryService(service)
@@ -348,7 +349,12 @@ export default {
 		onPropValueChanged(event, relatedProp)
 		{
 			Vue.set(this.relatedPropsValues, relatedProp.id, event);
+
 			this.emitChange();
+			if (relatedProp.isAddressFrom)
+			{
+				this.emitAddressFromChanged();
+			}
 		},
 		onServiceValueChanged(event, relatedService)
 		{
@@ -362,6 +368,14 @@ export default {
 		emitChange()
 		{
 			this.$emit('change', this.state);
+		},
+		emitAddressFromChanged()
+		{
+			this.$emit('address-from-changed');
+		},
+		emitServiceChanged()
+		{
+			this.$emit('delivery-service-changed');
 		},
 		formatMoney(value)
 		{

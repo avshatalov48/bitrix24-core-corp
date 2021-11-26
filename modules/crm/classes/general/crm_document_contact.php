@@ -1,17 +1,15 @@
-<?
+<?php
 
-use Bitrix\Crm\Format\AddressFormatter;
-use Bitrix\Crm\LeadAddress;
+use Bitrix\Crm;
 
 if (!CModule::IncludeModule('bizproc'))
 	return;
 
 IncludeModuleLangFile(dirname(__FILE__)."/crm_document.php");
 
-class CCrmDocumentContact extends CCrmDocument
-	implements IBPWorkflowDocument
+class CCrmDocumentContact extends CCrmDocument implements IBPWorkflowDocument
 {
-	static public function GetDocumentFields($documentType)
+	public static function GetDocumentFields($documentType)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentType.'_0');
 		if (empty($arDocumentID))
@@ -20,6 +18,16 @@ class CCrmDocumentContact extends CCrmDocument
 		$arResult = self::getEntityFields($arDocumentID['TYPE']);
 
 		return $arResult;
+	}
+
+	public static function GetDocument($documentId)
+	{
+		$documentInfo = static::GetDocumentInfo($documentId);
+
+		return new Crm\Integration\BizProc\Document\ValueCollection\Contact(
+			CCrmOwnerType::Contact,
+			$documentInfo['ID']
+		);
 	}
 
 	public static function getEntityFields($entityType)
@@ -201,101 +209,109 @@ class CCrmDocumentContact extends CCrmDocument
 
 		$arResult += parent::getAssignedByFields();
 		$arResult += array(
-			'CREATED_BY_ID' => array(
+			'CREATED_BY_ID' => [
 				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CREATED_BY_ID_CONTACT'),
 				'Type' => 'user',
-			),
-			'MODIFY_BY_ID' => array(
+			],
+			'MODIFY_BY_ID' => [
 				'Name' => GetMessage('CRM_DOCUMENT_FIELD_MODIFY_BY_ID'),
 				'Type' => 'user',
-			),
-			'SOURCE_ID' => array(
+			],
+			'SOURCE_ID' => [
 				'Name' => GetMessage('CRM_FIELD_SOURCE_ID'),
 				'Type' => 'select',
 				'Options' => CCrmStatus::GetStatusListEx('SOURCE'),
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'SOURCE_DESCRIPTION' => array(
+			],
+			'SOURCE_DESCRIPTION' => [
 				'Name' => GetMessage('CRM_FIELD_SOURCE_DESCRIPTION'),
 				'Type' => 'text',
 				'Filterable' => false,
 				'Editable' => true,
 				'Required' => false,
-			),
-			"OPENED" => array(
+			],
+			"OPENED" => [
 				"Name" => GetMessage("CRM_FIELD_OPENED"),
 				"Type" => "bool",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
-			),
-			"EXPORT" => array(
+			],
+			"EXPORT" => [
 				"Name" => GetMessage("CRM_FIELD_EXPORT"),
 				"Type" => "bool",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
-			),
-			"COMPANY_ID" => array(
+			],
+			"COMPANY_ID" => [
 				"Name" => GetMessage("CRM_FIELD_COMPANY_ID"),
 				"Type" => "string",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
-			),
-			"COMPANY_IDS" => array(
+			],
+			"COMPANY_IDS" => [
 				"Name" => GetMessage("CRM_FIELD_COMPANY_IDS"),
 				"Type" => "string",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
 				"Multiple" => true
-			),
-			"LEAD_ID" => array(
+			],
+			"LEAD_ID" => [
 				"Name" => GetMessage("CRM_FIELD_LEAD_ID"),
 				"Type" => "int",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
-			),
-			"ORIGINATOR_ID" => array(
+			],
+			"ORIGINATOR_ID" => [
 				"Name" => GetMessage("CRM_FIELD_ORIGINATOR_ID"),
 				"Type" => "string",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
-			),
-			"ORIGIN_ID" => array(
+			],
+			"ORIGIN_ID" => [
 				"Name" => GetMessage("CRM_FIELD_ORIGIN_ID"),
 				"Type" => "string",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
-			),
-			"DATE_CREATE" => array(
+			],
+			"DATE_CREATE" => [
 				"Name" => GetMessage("CRM_CONTACT_EDIT_FIELD_DATE_CREATE"),
 				"Type" => "datetime",
 				"Filterable" => true,
 				"Editable" => false,
 				"Required" => false,
-			),
-			"DATE_MODIFY" => array(
+			],
+			"DATE_MODIFY" => [
 				"Name" => GetMessage("CRM_CONTACT_EDIT_FIELD_DATE_MODIFY"),
 				"Type" => "datetime",
 				"Filterable" => true,
 				"Editable" => false,
 				"Required" => false,
-			),
-			'WEBFORM_ID' => array(
+			],
+			'WEBFORM_ID' => [
 				'Name' => GetMessage('CRM_DOCUMENT_WEBFORM_ID'),
 				'Type' => 'select',
 				'Options' => static::getWebFormSelectOptions(),
 				'Filterable' => false,
 				'Editable' => false,
 				'Required' => false,
-			),
+			],
+			'TRACKING_SOURCE_ID' => [
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_TRACKING_SOURCE_ID'),
+				'Type' => 'select',
+				'Options' => array_column(Crm\Tracking\Provider::getActualSources(), 'NAME','ID'),
+				'Filterable' => true,
+				'Editable' => true,
+				'Required' => false,
+			],
 		);
 
 		$arResult += static::getCommunicationFields();
@@ -343,15 +359,15 @@ class CCrmDocumentContact extends CCrmDocument
 		return $arResult;
 	}
 
-	static public function PrepareDocument(array &$arFields)
+	/**
+	 * @deprecated
+	 * @see Crm\Integration\BizProc\Document\ValueCollection\Deal
+	 */
+	public static function PrepareDocument(array &$arFields)
 	{
-		$arFields['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatTextComma(
-			LeadAddress::mapEntityFields($arFields)
-		);
-		$arFields['COMPANY_IDS'] = \Bitrix\Crm\Binding\ContactCompanyTable::getContactCompanyIDs($arFields['ID']);
 	}
 
-	static public function CreateDocument($parentDocumentId, $arFields)
+	public static function CreateDocument($parentDocumentId, $arFields)
 	{
 		if(!is_array($arFields))
 		{
@@ -671,6 +687,15 @@ class CCrmDocumentContact extends CCrmDocument
 				}
 				throw new Exception($CCrmBizProc->LAST_ERROR);
 			}
+		}
+
+		if (isset($arFields['TRACKING_SOURCE_ID']))
+		{
+			Crm\Tracking\UI\Details::saveEntityData(
+				\CCrmOwnerType::Contact,
+				$arDocumentID['ID'],
+				$arFields
+			);
 		}
 
 		if ($res && $useTransaction)

@@ -34,3 +34,4 @@ $MESS["SALESCENTER_TIMELINE_SENT_CONTENT"] = "Bestellung via SMS gesendet am #DA
 $MESS["SALESCENTER_TIMELINE_SENT_CONTENT_PAYMENT"] = "Zahlung gesendet per SMS am #DATE_CREATED#";
 $MESS["SALESCENTER_TIMELINE_WATCH_CONTENT"] = "Kunden hat die Bestellung angezeigt am #DATE_CREATED#";
 $MESS["SALESCENTER_TIMELINE_WATCH_CONTENT_DEFAULT"] = "Kunde muss noch auf den Link klicken";
+$MESS["SALESCENTER_CRM_PERMISSION_DENIED"] = "Zugriff verweigert";

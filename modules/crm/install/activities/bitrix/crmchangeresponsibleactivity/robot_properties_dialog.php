@@ -1,22 +1,44 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
-/** @var array $arResult */
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 
-$map = $dialog->getMap();
+$canUseAbsence = $dialog->getRuntimeData()['CanUseAbsence'];
 
-foreach (['Responsible', 'ModifiedBy'] as $propertyKey):
-
-	if (!isset($map[$propertyKey]))
-	{
-		continue;
-	}
-	?>
-	<div class="bizproc-automation-popup-settings">
+foreach ($dialog->getMap() as $key => $property): ?>
+	<div class="bizproc-automation-popup-settings <?= ((!$canUseAbsence) && ($key === 'SkipAbsent')) ? 'bizproc-automation-robot-btn-set-locked' : '' ?>">
 		<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">
-			<?=htmlspecialcharsbx($map[$propertyKey]['Name'])?>:
+			<?= htmlspecialcharsbx($property['Name']) ?>:
 		</span>
-		<?=$dialog->renderFieldControl($map[$propertyKey])?>
+		<?= $dialog->renderFieldControl($property) ?>
 	</div>
-<?endforeach;?>
+<?php
+endforeach;
+?>
+
+<script>
+
+	BX.ready(function ()
+	{
+		<?php
+		if (!$canUseAbsence):?>
+			var select = document.getElementById('id_skip_absent');
+			select.setAttribute('disabled', 'disabled');
+			var externalDiv = select.parentElement;
+			externalDiv.addEventListener('click', callLimitInfoHelper)
+		<?php endif ?>
+
+		function callLimitInfoHelper()
+		{
+			if (top.BX.UI && top.BX.UI.InfoHelper)
+			{
+				top.BX.UI.InfoHelper.show('limit_crm_robot_change_responsible');
+			}
+		}
+	});
+
+</script>

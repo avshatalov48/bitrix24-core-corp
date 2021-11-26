@@ -170,29 +170,51 @@ class Comment extends Base
 	protected function processFiles(array $fields): array
 	{
 		$files = is_array($fields['files']) ? $fields['files'] : [];
-		if($this->getScope() !== self::SCOPE_REST)
-		{
-			return $files;
-		}
-
 		$uiComment = static::getUiComment();
 		$userField = $uiComment->getFileUserFields();
-		if(!$userField)
+		if (!$userField)
 		{
-			return $files;
+			return [];
 		}
-
-		foreach($files as &$file)
+		$userId = Driver::getInstance()->getUserId();
+		$storage = \Bitrix\Disk\Driver::getInstance()->addUserStorage($userId);
+		if (!$storage)
 		{
-			if(isset($file['id']) && $file['id'] > 0)
+			return [];
+		}
+		$securityContext = $storage->getSecurityContext($userId);
+		foreach ($files as &$file)
+		{
+			if ($this->getScope() === self::SCOPE_REST)
 			{
-				$file = $file['id'];
-				continue;
+				if (
+					isset($file['id'])
+					&& $file['id'] > 0
+					&& $securityContext->canRead((int)$file['id'])
+				)
+				{
+					$file = (int)$file['id'];
+				}
+				else
+				{
+					$file = $this->uploadFile($file);
+					if($file > 0)
+					{
+						$file = 'n' . $file;
+					}
+				}
 			}
-			$file = $this->uploadFile($file);
-			if($file > 0)
+			else
 			{
-				$file = 'n' . $file;
+				$fileId = $file;
+				if (mb_substr($fileId, 0, 1) === 'n')
+				{
+					$fileId = (int)mb_substr($fileId, 1);
+				}
+				if (!$securityContext->canRead($fileId))
+				{
+					$file = null;
+				}
 			}
 		}
 
@@ -247,7 +269,7 @@ class Comment extends Base
 
 		$item = $timeline->getItem();
 		$userPermissions = Driver::getInstance()->getUserPermissions();
-		if($item && !$userPermissions->canViewItem($item))
+		if($item && !$userPermissions->canViewComment($item, $timeline))
 		{
 			$this->addError(new Error(Loc::getMessage('RPA_MODIFY_COMMENT_ACCESS_DENIED')));
 			return null;
@@ -267,7 +289,7 @@ class Comment extends Base
 
 		$item = $timeline->getItem();
 		$userPermissions = Driver::getInstance()->getUserPermissions();
-		if($item && !$userPermissions->canViewItem($item))
+		if(!$userPermissions->canViewComment($item, $timeline))
 		{
 			$this->addError(new Error(Loc::getMessage('RPA_MODIFY_COMMENT_ACCESS_DENIED')));
 			return null;

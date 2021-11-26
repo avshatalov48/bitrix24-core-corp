@@ -6,6 +6,22 @@ use Bitrix\Main\ORM;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class TimelineTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Timeline_Query query()
+ * @method static EO_Timeline_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Timeline_Result getById($id)
+ * @method static EO_Timeline_Result getList(array $parameters = array())
+ * @method static EO_Timeline_Entity getEntity()
+ * @method static \Bitrix\Rpa\Model\Timeline createObject($setDefaultValues = true)
+ * @method static \Bitrix\Rpa\Model\EO_Timeline_Collection createCollection()
+ * @method static \Bitrix\Rpa\Model\Timeline wakeUpObject($row)
+ * @method static \Bitrix\Rpa\Model\EO_Timeline_Collection wakeUpCollection($rows)
+ */
 class TimelineTable extends ORM\Data\DataManager
 {
 	public static function getTableName(): string

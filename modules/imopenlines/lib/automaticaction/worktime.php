@@ -215,7 +215,7 @@ class WorkTime
 					'CLASS'=> 'bx-messenger-content-item-ol-output',
 					'IMOL_FORM' => 'offline',
 					'TYPE' => 'lines',
-					'COMPONENT_ID' => 'bx-imopenlines-message',
+					'COMPONENT_ID' => 'bx-imopenlines-message'
 				]
 			]);
 

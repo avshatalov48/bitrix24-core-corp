@@ -137,7 +137,10 @@
 			},
 			TextField({
 				ref: ref => {
-					this.votePanelRef.setQuestionElement(questionIndex, ref);
+					setTimeout(() => {
+						this.votePanelRef.setQuestionElement(questionIndex, ref);
+					}, 100);
+
 				},
 				value: question.value,
 				multiline: false,

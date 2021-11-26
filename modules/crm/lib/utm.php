@@ -154,18 +154,27 @@ class UtmTable extends Entity\DataManager
 
 	public static function deleteEntityUtm($entityTypeId, $entityId, $code = null)
 	{
-		$primary = [
-			'ENTITY_TYPE_ID' => $entityTypeId,
-			'ENTITY_ID' => $entityId
+		$filter = [
+			'=ENTITY_TYPE_ID' => $entityTypeId,
+			'=ENTITY_ID' => $entityId
 		];
 
 		if ($code)
 		{
-			$primary['CODE'] = $code;
+			$filter['=CODE'] = $code;
 		}
 
-		$resultDb = static::delete($primary);
-		return $resultDb->isSuccess();
+		$list = static::getList([
+			'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID', 'CODE'],
+			'filter' => $filter
+		]);
+		$isSuccess = true;
+		foreach ($list as $item)
+		{
+			$isSuccess = static::delete($item)->isSuccess();
+		}
+
+		return $isSuccess;
 	}
 	public static function rebind($oldEntityTypeID, $oldEntityID, $newEntityTypeID, $newEntityID)
 	{

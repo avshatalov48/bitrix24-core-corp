@@ -39,7 +39,7 @@ function sortMenu($item, $anotherItem)
 }
 
 $isExtranetUser = (\CModule::includeModule("extranet") && !\CExtranet::isIntranetUser());
-
+$apiVersion = Bitrix\MobileApp\Mobile::getApiVersion();
 $canInviteUsers = (
 	Loader::includeModule('intranet')
 	&& Invitation::canCurrentUserInvite()
@@ -66,7 +66,6 @@ $registerSharingMessage = (
 );
 
 $rootStructureSectionId = Invitation::getRootStructureSectionId();
-
 $userId = $USER->getId();
 $arResult = [];
 $ttl = (defined("BX_COMP_MANAGED_CACHE") ? 2592000 : 600);
@@ -76,14 +75,17 @@ $menuFile = new \Bitrix\Main\IO\File($this->path . ".mobile_menu.php");
 $version = $this->getVersion();
 $menuModificationTime = $menuFile->getModificationTime();
 $cacheIsActual = ($menuModificationTime == $menuSavedModificationTime);
-if (!$cacheIsActual)
+$clearOptionName = "clear_more_$userId";
+$force = \Bitrix\Main\Config\Option::get("mobile", $clearOptionName, false);
+if (!$cacheIsActual || $force)
 {
 	$CACHE_MANAGER->ClearByTag('mobile_custom_menu' . $userId);
 	$CACHE_MANAGER->ClearByTag('mobile_custom_menu');
 	\Bitrix\Main\Config\Option::set("mobile", "jscomponent.menu.date.modified.user_" . $userId, $menuModificationTime);
+	\Bitrix\Main\Config\Option::set("mobile", $clearOptionName, false);
 }
 
-$cache_id = 'user_mobile_menu_' . $userId . '_' . $extEnabled . '_' . LANGUAGE_ID . '_' . CSite::GetNameFormat(false) . "ver" . $version . "_" . $apiVersion;
+$cache_id = 'more_menu_' . $userId . '_' . $extEnabled . '_' . LANGUAGE_ID . '_' . CSite::GetNameFormat(false) . "ver" . $version . "_" . $apiVersion;
 $cache_dir = '/bx/mobile_component/more/user_' . $userId;
 $obCache = new CPHPCache;
 
@@ -114,6 +116,7 @@ else
 	}
 
 	$CACHE_MANAGER->RegisterTag('sonet_group');
+	$CACHE_MANAGER->RegisterTag('crm_initiated');
 	$CACHE_MANAGER->RegisterTag('USER_CARD_' . intval($userId / TAGGED_user_card_size));
 	$CACHE_MANAGER->RegisterTag('sonet_user2group_U' . $userId);
 	$CACHE_MANAGER->RegisterTag('mobile_custom_menu' . $userId);
@@ -161,7 +164,6 @@ if (is_array($crmCallTrackerSpotlight))
 $editProfilePath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("user.profile");
 $workPosition = \CUtil::addslashes($arResult["user"]["WORK_POSITION"]);
 $canEditProfile = $USER->CanDoOperation('edit_own_profile');
-$apiVersion = Bitrix\MobileApp\Mobile::getApiVersion();
 $arResult["menu"][] = [
 	"title" => "",
 	"sort" => 0,
@@ -213,8 +215,8 @@ $arResult["menu"][] = [
 										useLetterImage:true,
 										color:"#2e455a"
 							};
-							
-							PageManager.openComponent("JSStackComponent", 
+
+							PageManager.openComponent("JSStackComponent",
 							{
 								scriptPath:"$editProfilePath",
 								componentCode: "profile.view",
@@ -236,12 +238,12 @@ $arResult["menu"][] = [
 										objectName:"form",
 										items:[
 											{
-												"id":"PERSONAL_PHOTO", 
-												useLetterImage:true, 
-												color:"#2e455a", 
-												imageUrl: this.imageUrl, 
-												type:"userpic", 
-												title:this.title, 
+												"id":"PERSONAL_PHOTO",
+												useLetterImage:true,
+												color:"#2e455a",
+												imageUrl: this.imageUrl,
+												type:"userpic",
+												title:this.title,
 												sectionCode:"0"},
 											{ type:"loading", sectionCode:"1", title:""}
 										],
@@ -255,7 +257,7 @@ $arResult["menu"][] = [
 								}
 							});
 						}
-						
+
 JS
 
 			]
@@ -328,7 +330,7 @@ if(Loader::includeModule('socialnetwork') && $showStressItemCondition)
 			{
 				reload();
 			}
-			else 
+			else
 			{
 				let initResult = $initStressResult;
 				if(initResult["value"])
@@ -337,7 +339,7 @@ if(Loader::includeModule('socialnetwork') && $showStressItemCondition)
 					}
 				else
 					initResult = null;
-				
+
 				openStressWidget(initResult, false);
 			}
 JS;
@@ -352,7 +354,7 @@ JS;
 			{
 				reload();
 			}
-			else 
+			else
 			{
 				openStressWidget(null, false);
 			}

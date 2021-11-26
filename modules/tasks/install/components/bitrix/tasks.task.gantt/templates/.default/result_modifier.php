@@ -48,6 +48,14 @@ if ($groupByProject)
 		$rsGroups = CSocNetGroup::GetList(array("ID" => "ASC"), array("ID" => array_unique($arGroupsIDs)));
 		while ($arGroup = $rsGroups->GetNext())
 		{
+			if (!empty($arGroup['NAME']))
+			{
+				$arGroup['NAME'] = \Bitrix\Main\Text\Emoji::decode($arGroup['NAME']);
+			}
+			if (!empty($arGroup['DESCRIPTION']))
+			{
+				$arGroup['DESCRIPTION'] = \Bitrix\Main\Text\Emoji::decode($arGroup['DESCRIPTION']);
+			}
 			$arGroup["EXPANDED"] = array_key_exists($arGroup["ID"], $arOpenedProjects) && $arOpenedProjects[$arGroup["ID"]] == "false" ? false : true;
 			$arGroup["CAN_CREATE_TASKS"] = \CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, $arGroup["ID"], "tasks", "create_tasks");
 			$arGroup["CAN_EDIT_TASKS"] = \CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, $arGroup["ID"], "tasks", "edit_tasks");

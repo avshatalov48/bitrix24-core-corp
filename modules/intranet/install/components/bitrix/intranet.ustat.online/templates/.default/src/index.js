@@ -677,13 +677,10 @@ class UstatOnline
 		{
 			this.circle = new Circle(
 				circleNode,
-				42,
+				68,
 				progressPercent,
-				{
-					fixCounter: currentUserOnlineCount,
-					color1:'rgba(49,205,255,.41)',
-					color2: 'rgba(85, 208, 224,.32)'
-				}
+				currentUserOnlineCount,
+				true,
 			);
 			this.circle.show();
 		}

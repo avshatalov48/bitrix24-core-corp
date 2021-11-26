@@ -29,7 +29,7 @@ if($arResult['PERMISSION_DENIED'])
 	?>
 	<div id="crm-<?= $fieldUID ?>-box">
 		<div class="crm-element-button-open">
-			<?= Loc::getMessage('CRM_SFE_PERMISSION_DENIED') ?>
+			<?= Loc::getMessage('CRM_SFE_ENTITY_NOT_SELECTED') ?>
 		</div>
 		<?php
 		foreach($arResult['value'] as $value)

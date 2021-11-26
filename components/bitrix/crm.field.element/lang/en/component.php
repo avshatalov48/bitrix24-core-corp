@@ -1,6 +1,6 @@
 <?php
 $MESS["CRM_ELEMENT_BUTTON_SELECT"] = "Select";
-$MESS["CRM_SFE_PERMISSION_DENIED"] = "Access Denied";
+$MESS["CRM_SFE_ENTITY_NOT_SELECTED"] = "No entity type selected in the field parameters";
 
 $MESS["CRM_ELEMENT_ORDER"] = "Orders";
 $MESS["CRM_ELEMENT_LEAD"] = "Leads";

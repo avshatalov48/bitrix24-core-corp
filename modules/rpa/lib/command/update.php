@@ -10,6 +10,7 @@ use Bitrix\Rpa\Command;
 use Bitrix\Rpa\Driver;
 use Bitrix\Rpa\Integration\Bizproc;
 use Bitrix\Rpa\Model\ItemHistory;
+use Bitrix\Rpa\Model\PrototypeItem;
 
 class Update extends Command
 {
@@ -92,6 +93,14 @@ class Update extends Command
 		{
 			$this->item->setMovedTime(new DateTime());
 		}
+
+		if (!$this->isCheckFieldsEnabled())
+		{
+			/** @var PrototypeItem $dataClass */
+			$dataClass = $this->item->sysGetEntity()->getDataClass();
+			$dataClass::disableUserFieldsCheck();
+		}
+
 		return $this->item->save();
 	}
 

@@ -8,6 +8,8 @@ if (!\Bitrix\Crm\Settings\LeadSettings::isEnabled())
 	?><script><?=\Bitrix\Crm\Settings\LeadSettings::showCrmTypePopup();?></script><?
 }
 
+\Bitrix\Crm\Settings\Crm::markAsInitiated();
+
 $isSlider = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
 if (!$isSlider)
 {

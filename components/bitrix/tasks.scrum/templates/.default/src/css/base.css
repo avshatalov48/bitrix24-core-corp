@@ -1,3 +1,10 @@
+/*todo remove later*/
+#workarea-content {
+	display: block;
+}
+
+
+
 .tasks-scrum-wrapper .workarea-content-paddings { padding-right: 15px !important; }
 
 .tasks-scrum-wrapper .pagetitle-below { margin-right: 15px; }

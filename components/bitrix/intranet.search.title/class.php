@@ -1,5 +1,9 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Crm\Settings\LeadSettings;
@@ -10,6 +14,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\PhoneNumber;
+use Bitrix\Main\Text\Emoji;
 use Bitrix\Socialnetwork\UserToGroupTable;
 
 class CIntranetSearchTitleComponent extends CBitrixComponent
@@ -294,8 +299,16 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 			);
 
 			$groupList = $groupIdList = array();
-			while($group = $res->fetch())
+			while ($group = $res->fetch())
 			{
+				if (!empty($group['NAME']))
+				{
+					$group['NAME'] = Emoji::decode($group['NAME']);
+				}
+				if (!empty($group['DESCRIPTION']))
+				{
+					$group['DESCRIPTION'] = Emoji::decode($group['DESCRIPTION']);
+				}
 				$groupIdList[] = $group["ID"];
 				$groupList[$group["ID"]] = $group;
 			}
@@ -982,7 +995,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 	public function executeComponent()
 	{
 		global $APPLICATION;
-		
+
 		$this->arResult["CATEGORIES"] = array();
 
 		$query = ltrim($_POST["q"]);

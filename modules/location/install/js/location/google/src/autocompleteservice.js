@@ -37,32 +37,18 @@ export default class AutocompleteService extends AutocompleteServiceBase
 	#getLocalStoredResults(query: string, params: AutocompleteServiceParams): object
 	{
 		let result = null;
-			let storedResults = localStorage.getItem(this.#localStorageKey);
 
-		if(storedResults)
+		let storedResults = this.#getStoredResults();
+
+		for(const [index, item] of storedResults.entries())
 		{
-			try {
-				storedResults = JSON.parse(storedResults);
-			}
-			catch (e) {
-				return null;
-			}
-
-			if(Array.isArray(storedResults))
+			if(item && typeof item.query !== 'undefined' && item.query === query)
 			{
-				for(const [index, item] of storedResults.entries())
-				{
-					if(item && typeof item.query !== 'undefined' && item.query === query)
-					{
-						result = {...item};
-						storedResults.splice(index, 1);
-						storedResults.push(result);
-						localStorage.setItem(this.#localStorageKey, JSON.stringify(storedResults));
-						break;
-					}
-				}
+				result = {...item};
+				break;
 			}
 		}
+
 		return result;
 	}
 
@@ -84,24 +70,25 @@ export default class AutocompleteService extends AutocompleteServiceBase
 		return result;
 	}
 
+	#getStoredResults()
+	{
+		let storedResults = BX.localStorage.get(this.#localStorageKey);
+
+		if (
+			storedResults
+			&& storedResults.results
+			&& Array.isArray(storedResults.results)
+		)
+		{
+			return storedResults.results;
+		}
+
+		return [];
+	}
+
 	#setPredictionResult(query, params, answer, status): void
 	{
-		let storedResults = localStorage.getItem(this.#localStorageKey);
-
-		if(storedResults)
-		{
-			try {
-				storedResults = JSON.parse(storedResults);
-			}
-			catch (e) {
-				return;
-			}
-		}
-
-		if(!Array.isArray(storedResults))
-		{
-			storedResults = [];
-		}
+		let storedResults = this.#getStoredResults();
 
 		storedResults.push({
 			status: status,
@@ -114,7 +101,7 @@ export default class AutocompleteService extends AutocompleteServiceBase
 			storedResults.shift();
 		}
 
-		localStorage.setItem(this.#localStorageKey, JSON.stringify(storedResults));
+		BX.localStorage.set(this.#localStorageKey, {'results': storedResults}, 86400);
 	}
 
 	#getPredictionPromise(query: string, params: AutocompleteServiceParams)
@@ -127,11 +114,11 @@ export default class AutocompleteService extends AutocompleteServiceBase
 				input: query,
 			};
 
-			if(params.locationForBias)
+			if(params.biasPoint)
 			{
 				queryPredictionsParams.location = new google.maps.LatLng(
-					params.locationForBias.latitude,
-					params.locationForBias.longitude
+					params.biasPoint.latitude,
+					params.biasPoint.longitude
 				);
 				queryPredictionsParams.radius = this.#biasBoundRadius;
 			}

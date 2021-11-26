@@ -21,7 +21,7 @@ elseif ($currentRegion === 'by')
 }
 else
 {
-	$signUpLink = 'https://logistics.yandex.com/business/self-registration?ya_source=businessdelivery&ya_medium=module&ya_campaign=bitrix24#form';
+	$signUpLink = 'https://dostavka.yandex.ru/express-delivery?ya_source=businessdelivery&ya_medium=module&ya_campaign=bitrix24#form';
 }
 ?>
 

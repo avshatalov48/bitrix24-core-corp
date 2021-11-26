@@ -310,26 +310,21 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 		<? if (!$arParams["PUBLIC_MODE"] && ($can["EDIT"] || $arParams["TEMPLATE_DATA"]["TAGS"] !== "")):?>
 			<div class="task-detail-sidebar-info-title"><?=Loc::getMessage("TASKS_TASK_TAGS")?></div>
 			<div class="task-detail-sidebar-info">
-				<div class="task-detail-sidebar-info-tag"><?
-					if ($can["EDIT"])
-					{
-						$APPLICATION->IncludeComponent(
-							"bitrix:tasks.tags.selector",
-							".default",
-							array(
-								"NAME" => "TAGS",
-								"VALUE" => $arParams["TEMPLATE_DATA"]["TAGS"],
-								"PATH_TO_TASKS" => $arParams["PATH_TO_TASKS"]
-							),
-							null,
-							array("HIDE_ICONS" => "Y")
-						);
-					}
-					else
-					{
-						echo htmlspecialcharsbx($arParams["TEMPLATE_DATA"]["TAGS"]);
-					}
-				?>
+				<div class="task-detail-sidebar-info-tag">
+					<?php
+					$APPLICATION->IncludeComponent(
+						'bitrix:tasks.tags.selector',
+						'.default',
+						[
+							'NAME' => 'TAGS',
+							'VALUE' => $arParams['TEMPLATE_DATA']['TAGS'],
+							'PATH_TO_TASKS' => $arParams['PATH_TO_TASKS'],
+							'CAN_EDIT' => $can['EDIT'],
+						],
+						null,
+						['HIDE_ICONS' => 'Y']
+					);
+					?>
 				</div>
 			</div>
 		<? endif ?>

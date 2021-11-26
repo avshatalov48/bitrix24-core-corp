@@ -13,6 +13,7 @@ $MESS["IM_EMPTY_TEXT_INVITE"] = "Click the button below to invite your colleague
 $MESS["IM_LIST_ACTION_ERROR"] = "We could not connect to your Bitrix24, probably due to poor Internet connection. Please try again later.";
 $MESS["IM_LIST_EMPTY"] = "No current conversations";
 $MESS["IM_LIST_LOADING"] = "Loading...";
+$MESS["IM_LIST_NOTIFICATIONS"] = "Notifications";
 $MESS["IM_M_MESSAGE_SEND"] = "Send";
 $MESS["IM_M_TEXTAREA"] = "Compose message...";
 $MESS["IM_PROMO_VIDEO_01042020_MOBILE"] = "Video calls have been improved dramatically!#BR##BR#Try it now!#BR##BR# Use voice and video calls to save time.";

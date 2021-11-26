@@ -1,13 +1,12 @@
 // @flow
 
-import {Location} from 'location.core';
+import {Location, Point} from 'location.core';
 
 /**
  * Autocomplete search parameters
  */
 export type AutocompleteServiceParams = {
-	locationForBias: ?Location,
-	filter: ?AutocompleteServiceFilter
+	biasPoint: ?Point
 };
 
 /**

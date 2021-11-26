@@ -76,6 +76,7 @@ $crm_default_option = array(
 	'path_to_perm_list' => '/crm/configs/perms/',
 	'path_to_config_checker' => '/crm/configs/checker/',
 	'path_to_user_field_edit' => '/crm/configs/fields/#entity_id#/edit/#field_id#/',
+	'path_to_lead_status_list' => '/crm/type/1/categories/',
 
 	'email_from' => '',
 	'email_template' => '',

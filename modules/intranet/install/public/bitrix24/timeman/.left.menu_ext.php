@@ -31,6 +31,17 @@ $aMenuLinks = [
 ];
 
 $workTimeUrl = 'https://helpdesk.bitrix24.ru/open/1429531/';
+$workReportUrl = 'https://helpdesk.bitrix24.ru/open/5391955/';
+$workSchedulesUrl = 'https://helpdesk.bitrix24.ru/open/9631501/';
+
+if (CModule::IncludeModule('ui'))
+{
+	\Bitrix\Main\UI\Extension::load('ui.info-helper');
+
+	$workTimeUrl = 'javascript:BX.UI.InfoHelper.show("limit_office_worktime");';
+	$workReportUrl = 'javascript:BX.UI.InfoHelper.show("limit_office_reports");';
+	$workSchedulesUrl = 'javascript:BX.UI.InfoHelper.show("limit_office_shift_scheduling");';
+}
 
 if ($hasTimemanFeature)
 {
@@ -71,9 +82,6 @@ if (
 		'',
 	];
 }
-
-$workReportUrl = 'https://helpdesk.bitrix24.ru/open/5391955/';
-$workSchedulesUrl = 'https://helpdesk.bitrix24.ru/open/9631501/';
 
 $permissionsMenu = [];
 

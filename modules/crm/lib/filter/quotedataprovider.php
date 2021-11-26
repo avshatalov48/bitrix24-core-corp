@@ -68,16 +68,61 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 	{
 		$result =  array(
 			'ID' => $this->createField('ID'),
-			'QUOTE_NUMBER' => $this->createField('QUOTE_NUMBER'),
-			'TITLE' => $this->createField('TITLE'),
+			'QUOTE_NUMBER' => $this->createField(
+				'QUOTE_NUMBER',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'TITLE' => $this->createField(
+				'TITLE',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'ASSIGNED_BY_ID' => $this->createField(
 				'ASSIGNED_BY_ID',
-				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'default' => true,
+					'partial' => true,
+				]
 			),
-
+			'CREATED_BY_ID' => $this->createField(
+				'CREATED_BY_ID',
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
+			),
+			'MODIFY_BY_ID' => $this->createField(
+				'MODIFY_BY_ID',
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
+			),
 			'OPPORTUNITY' => $this->createField(
 				'OPPORTUNITY',
-				array('type' => 'number')
+				[
+					'type' => 'number',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'CURRENCY_ID' => $this->createField(
 				'CURRENCY_ID',
@@ -89,11 +134,28 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 			),
 			'BEGINDATE' => $this->createField(
 				'BEGINDATE',
-				array('type' => 'date')
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'CLOSEDATE' => $this->createField(
 				'CLOSEDATE',
-				array('type' => 'date', 'default' => true)
+				[
+					'type' => 'date',
+					'default' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'CLOSED' => $this->createField(
 				'CLOSED',
@@ -111,33 +173,81 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 				'CONTACT_ID',
 				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
-			'CONTACT_FULL_NAME' => $this->createField('CONTACT_FULL_NAME'),
+			'CONTACT_FULL_NAME' => $this->createField(
+				'CONTACT_FULL_NAME',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
 				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
-			'COMPANY_TITLE' => $this->createField('COMPANY_TITLE'),
+			'COMPANY_TITLE' => $this->createField(
+				'COMPANY_TITLE',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'MYCOMPANY_ID' => $this->createField(
 				'MYCOMPANY_ID',
 				array('type' => 'dest_selector', 'partial' => true)
 			),
-			'MYCOMPANY_TITLE' => $this->createField('MYCOMPANY_TITLE'),
-			'COMMENTS' => $this->createField('COMMENTS'),
+			'MYCOMPANY_TITLE' => $this->createField(
+				'MYCOMPANY_TITLE',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'COMMENTS' => $this->createField(
+				'COMMENTS',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'DATE_CREATE' => $this->createField(
 				'DATE_CREATE',
-				array('type' => 'date')
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'DATE_MODIFY' => $this->createField(
 				'DATE_MODIFY',
-				array('type' => 'date')
-			),
-			'CREATED_BY_ID' => $this->createField(
-				'CREATED_BY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
-			),
-			'MODIFY_BY_ID' => $this->createField(
-				'MODIFY_BY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'PRODUCT_ROW_PRODUCT_ID' => $this->createField(
 				'PRODUCT_ROW_PRODUCT_ID',
@@ -161,7 +271,18 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 		//region UTM
 		foreach (Crm\UtmTable::getCodeNames() as $code => $name)
 		{
-			$result[$code] = $this->createField($code, array('name' => $name));
+			$result[$code] = $this->createField(
+				$code,
+				[
+					'name' => $name,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			);
 		}
 		//endregion
 
@@ -190,21 +311,17 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 				'items' => \CCrmStatus::GetStatusList('QUOTE_STATUS')
 			);
 		}
-		elseif($fieldID === 'ASSIGNED_BY_ID')
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID'], true))
 		{
-			return array(
-				'params' => array(
-					'context' => 'CRM_QUOTE_FILTER_ASSIGNED_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
-				)
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+			$referenceClass = ($factory ? $factory->getDataClass() : null);
+
+			return $this->getUserEntitySelectorParams(
+				strtolower('crm_quote_filter_' . $fieldID),
+				[
+					'fieldName' => $fieldID,
+					'referenceClass' => $referenceClass,
+				]
 			);
 		}
 		elseif($fieldID === 'LEAD_ID')
@@ -338,40 +455,6 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 					'addTabCrmDeals' => 'Y',
 					'addTabCrmLeads' => 'Y',
 					'convertJson' => 'Y'
-				)
-			);
-		}
-		elseif($fieldID === 'CREATED_BY_ID')
-		{
-			return array(
-				'params' => array(
-					'context' => 'CRM_QUOTE_FILTER_CREATED_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
-				)
-			);
-		}
-		elseif($fieldID === 'MODIFY_BY_ID')
-		{
-			return array(
-				'params' => array(
-					'context' => 'CRM_QUOTE_FILTER_MODIFY_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
 				)
 			);
 		}

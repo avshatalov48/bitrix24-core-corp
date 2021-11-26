@@ -11,7 +11,10 @@ use Bitrix\Crm\Model\Dynamic\PrototypeItemIndex;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\ItemCategoryTable;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
+use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Service\Operation\Action;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main\DI\ServiceLocator;
 
@@ -437,5 +440,65 @@ class Dynamic extends Service\Factory
 		}
 
 		return $objects;
+	}
+
+	public function getAddOperation(Item $item, Context $context = null): Operation\Add
+	{
+		$operation = parent::getAddOperation($item, $context);
+
+		$eventManager = Service\Container::getInstance()->getRestEventManager();
+
+		return $operation
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Action\SendEvent($eventManager::EVENT_DYNAMIC_ITEM_ADD)
+			)->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Action\SendEvent($eventManager->getItemEventNameWithEntityTypeId(
+					$eventManager::EVENT_DYNAMIC_ITEM_ADD,
+					$this->getEntityTypeId()
+				))
+			)
+		;
+	}
+
+	public function getUpdateOperation(Item $item, Context $context = null): Operation\Update
+	{
+		$operation = parent::getUpdateOperation($item, $context);
+
+		$eventManager = Service\Container::getInstance()->getRestEventManager();
+
+		return $operation
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Action\SendEvent($eventManager::EVENT_DYNAMIC_ITEM_UPDATE)
+			)->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Action\SendEvent($eventManager->getItemEventNameWithEntityTypeId(
+					$eventManager::EVENT_DYNAMIC_ITEM_UPDATE,
+					$this->getEntityTypeId()
+				))
+			)
+		;
+	}
+
+	public function getDeleteOperation(Item $item, Context $context = null): Operation\Delete
+	{
+		$operation = parent::getDeleteOperation($item, $context);
+
+		$eventManager = Service\Container::getInstance()->getRestEventManager();
+
+		return $operation
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Action\SendEvent($eventManager::EVENT_DYNAMIC_ITEM_DELETE)
+			)->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Action\SendEvent($eventManager->getItemEventNameWithEntityTypeId(
+					$eventManager::EVENT_DYNAMIC_ITEM_DELETE,
+					$this->getEntityTypeId()
+				))
+			)
+		;
 	}
 }

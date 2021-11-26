@@ -9,10 +9,14 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\History\Entity\LeadStatusHistoryTable;
 use Bitrix\Crm\History\Entity\LeadStatusHistoryWithSupposedTable;
+use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Main;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ORM\Fields\FloatField;
+use Bitrix\Main\ORM\Event;
+use Bitrix\Main\ORM\EventResult;
+use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
+use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 
 Loc::loadMessages(__FILE__);
 
@@ -37,6 +41,7 @@ class LeadTable extends Main\ORM\Data\DataManager
 	private static $STATUS_INIT = false;
 	private static $WORK_STATUSES = array();
 	private static $REJECT_STATUSES = array();
+	protected static $isCheckUserFields = true;
 
 	public static function getTableName()
 	{
@@ -153,7 +158,10 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'CONTACT_ID' => array(
 				'data_type' => 'integer'
 			),
-
+			'OPENED' => array(
+				'data_type' => 'boolean',
+				'values' => array('N', 'Y')
+			),
 			'IS_RETURN_CUSTOMER' => array(
 				'data_type' => 'string'
 			),
@@ -498,7 +506,14 @@ class LeadTable extends Main\ORM\Data\DataManager
 				Binding\LeadContactTable::class,
 				Main\ORM\Query\Join::on('this.ID', 'ref.LEAD_ID')
 			),
-			new Main\Entity\IntegerField('WEBFORM_ID')
+			new Main\Entity\IntegerField('WEBFORM_ID'),
+			(new OneToMany('CONTACT_BINDINGS', Binding\LeadContactTable::class, 'LEAD'))
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
+			(new OneToMany('PRODUCT_ROWS', ProductRowTable::class, 'LEAD_OWNER'))
+				// products will be deleted in onAfterDelete, if it's needed
+				->configureCascadeDeletePolicy(CascadePolicy::NO_ACTION),
+			(new OneToMany('OBSERVERS', ObserverTable::class, 'LEAD'))
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
 		);
 
 		$codeList = UtmTable::getCodeList();
@@ -567,5 +582,35 @@ class LeadTable extends Main\ORM\Data\DataManager
 		self::ensureStatusesLoaded();
 		$options['WORK_STATUS_IDS'] = '('.(!empty(self::$WORK_STATUSES) ? implode(',', self::$WORK_STATUSES) : "'$stub'").')';
 		$options['REJECT_STATUS_IDS'] = '('.(!empty(self::$REJECT_STATUSES) ? implode(',', self::$REJECT_STATUSES) : "'$stub'").')';
+	}
+
+	public static function disableUserFieldsCheck(): void
+	{
+		static::$isCheckUserFields = false;
+	}
+
+	protected static function checkUfFields($object, $ufdata, $result)
+	{
+		if (!static::$isCheckUserFields)
+		{
+			static::$isCheckUserFields = true;
+			return;
+		}
+
+		parent::checkUfFields($object, $ufdata, $result);
+	}
+
+	public static function onAfterUpdate(Event $event): EventResult
+	{
+		$item = $event->getParameter('object');
+		if (!$item)
+		{
+			return new EventResult();
+		}
+
+		$result = new EventResult();
+		ProductRowTable::handleOwnerUpdate($item, $result);
+
+		return $result;
 	}
 }

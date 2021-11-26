@@ -254,6 +254,11 @@ export class Settings
 
 		const type = inputType? inputType : this.tabs.getActiveType();
 
+		if (!(type instanceof ItemType))
+		{
+			return Promise.resolve();
+		}
+
 		return this.requestSender.saveDodSettings({
 			entityId: type.getId(),
 			requiredOption: this.getRequiredOptionValue(),

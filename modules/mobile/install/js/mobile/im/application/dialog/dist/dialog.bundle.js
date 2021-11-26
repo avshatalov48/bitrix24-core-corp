@@ -223,11 +223,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    localize: function localize() {
 	      return ui_vue.BitrixVue.getFilteredPhrases(['MOBILE_CHAT_', 'IM_UTILS_'], this.$root.$bitrixMessages);
 	    },
-	    widgetClassName: function widgetClassName(state) {
-	      var className = ['bx-mobilechat-wrapper'];
+	    widgetClassName: function widgetClassName() {
+	      var className = [];
+	      className.push('bx-mobile');
 
-	      if (this.showMessageDialog) {
-	        className.push('bx-mobilechat-chat-start');
+	      if (im_lib_utils.Utils.platform.isIos()) {
+	        className.push('bx-mobile-ios');
+
+	        if (Application.getApiVersion() >= 39) {
+	          className.push('bx-mobile-ios-keyboard');
+	        }
+	      } else {
+	        className.push('bx-mobile-android');
 	      }
 
 	      return className.join(' ');
@@ -491,7 +498,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div>\n\t\t\t<bx-im-component-dialog\n\t\t\t\t:userId=\"application.common.userId\" \n\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t:enableReadMessages=\"application.dialog.enableReadMessages\"\n\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t:enableGestureQuote=\"application.options.quoteEnable\"\n\t\t\t\t:enableGestureQuoteFromRight=\"application.options.quoteFromRight\"\n\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t:showMessageUserName=\"isDialog\"\n\t\t\t\t:showMessageAvatar=\"isDialog\"\n\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t />\n\t\t\t<template v-if=\"application.options.showSmiles\">\n\t\t\t\t<MobileSmiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\" @hideSmiles=\"onHideSmiles\" />\t\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div :class=\"widgetClassName\">\n\t\t\t<bx-im-component-dialog\n\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t:enableReadMessages=\"application.dialog.enableReadMessages\"\n\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t:enableGestureQuote=\"application.options.quoteEnable\"\n\t\t\t\t:enableGestureQuoteFromRight=\"application.options.quoteFromRight\"\n\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t:showMessageUserName=\"isDialog\"\n\t\t\t\t:showMessageAvatar=\"isDialog\"\n\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t />\n\t\t\t<template v-if=\"application.options.showSmiles\">\n\t\t\t\t<MobileSmiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\" @hideSmiles=\"onHideSmiles\" />\n\t\t\t</template>\n\t\t</div>\n\t"
 	}, {
 	  immutable: true
 	});
@@ -602,7 +609,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          autoplayVideo: ChatPerformance.isAutoPlayVideoSupported(),
 	          backgroundType: 'LIGHT_GRAY'
 	        }).then(function (options) {
-	          _this4.controller.getStore().commit('application/set', {
+	          _this4.controller.getStore().dispatch('application/set', {
 	            dialog: {
 	              dialogId: data.DIALOG_ID
 	            },
@@ -612,9 +619,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              autoplayVideo: options.autoplayVideo,
 	              darkBackground: ChatDialogBackground && ChatDialogBackground[options.backgroundType] && ChatDialogBackground[options.backgroundType].dark
 	            }
+	          }).then(function () {
+	            return resolve();
 	          });
-
-	          resolve();
 	        });
 	      });
 	    }

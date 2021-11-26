@@ -2,6 +2,10 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Main\Loader;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
+
 abstract class Converter
 {
 	protected $converter;
@@ -59,5 +63,52 @@ abstract class Converter
 		}
 
 		return $newData;
+	}
+
+	protected function prepareData(array $data): array
+	{
+		$result = [];
+
+		foreach ($data as $name => $value)
+		{
+			if (is_array($value))
+			{
+				$result[$name] = $this->prepareData($value);
+			}
+			elseif ($value instanceof Date)
+			{
+				$result[$name] = $this->processDate($value);
+			}
+			elseif (is_bool($value) && Container::getInstance()->getContext()->getScope() === Context::SCOPE_REST)
+			{
+				$result[$name] = $value ? 'Y' : 'N';
+			}
+			else
+			{
+				$result[$name] = $value;
+			}
+		}
+
+		return $result;
+	}
+
+	protected function processDate(Date $date): string
+	{
+		if (
+			Container::getInstance()->getContext()->getScope() === Context::SCOPE_REST
+			&& Loader::includeModule('rest')
+		)
+		{
+			if ($date instanceof DateTime)
+			{
+				return \CRestUtil::ConvertDateTime($date);
+			}
+			if ($date instanceof Date)
+			{
+				return \CRestUtil::ConvertDate($date);
+			}
+		}
+
+		return $date->toString();
 	}
 }

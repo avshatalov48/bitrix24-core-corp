@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
+use Bitrix\Crm\Automation\Helper;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Item;
@@ -185,8 +186,14 @@ class Update extends Operation
 			$starter = $result->getData()['starter'];
 
 			return $starter->runOnUpdate(
-				$this->itemBeforeSave->getCompatibleData(Values::CURRENT),
-				$this->itemBeforeSave->getCompatibleData(Values::ACTUAL)
+				Helper::prepareCompatibleData(
+					$this->itemBeforeSave->getEntityTypeId(),
+					$this->itemBeforeSave->getCompatibleData(Values::CURRENT)
+				),
+				Helper::prepareCompatibleData(
+					$this->itemBeforeSave->getEntityTypeId(),
+					$this->itemBeforeSave->getCompatibleData(Values::ACTUAL)
+				)
 			);
 		}
 

@@ -1,12 +1,10 @@
-import {Loc} from 'main.core';
-
-let
+const
 	BX = window.BX,
 	BXMobileApp = window.BXMobileApp;
 
-let nodeSelectUser = (function ()
+const nodeSelectUser = (function ()
 {
-	let nodeSelectUser = function (select, eventNode)
+	const nodeSelectUser = function (select, eventNode, useOnChangeEvent)
 	{
 		this.click = BX.delegate(this.click, this);
 		this.callback = BX.delegate(this.callback, this);
@@ -14,6 +12,7 @@ let nodeSelectUser = (function ()
 		this.select = BX(select);
 		this.container = this.select.nextElementSibling;
 		this.eventNode = BX(eventNode);
+		this.useOnChangeEvent = useOnChangeEvent || false;
 		BX.bind(this.eventNode, "click", this.click);
 		this.multiple = select.hasAttribute("multiple");
 		this.showDrop = (!(
@@ -26,14 +25,6 @@ let nodeSelectUser = (function ()
 			"profile": BX.message("interface_form_user_url")
 		};
 		this.actualizeNodes();
-		// this.expand = BX("expand_" + this.select.getAttribute("id"));
-		// this.visCount = BX("count_" + this.select.getAttribute("id"));
-
-		// if (!this.container.parentNode.hasAttribute("bx-fastclick-bound"))
-		// {
-		// 	this.container.parentNode.setAttribute("bx-fastclick-bound", "Y");
-		// 	FastClick.attach(this.container.parentNode.parentNode);
-		// }
 	};
 	nodeSelectUser.prototype = {
 		click: function (e)
@@ -61,7 +52,7 @@ let nodeSelectUser = (function ()
 		},
 		drop: function ()
 		{
-			let node = BX.proxy_context,
+			const node = BX.proxy_context,
 				id = node.id.replace(this.select.id + '_del_', '');
 
 			for (let ii = 0; ii < this.select.options.length; ii++)
@@ -80,22 +71,14 @@ let nodeSelectUser = (function ()
 			{
 				this.eventNode.innerHTML = BX.message('interface_form_select');
 			}
-			// if (this.expand)
-			// 	this.expand.value = this.select.options.length;
-			// if (this.visCount)
-			// 	this.visCount.innerHTML = this.select.options.length - 3;
-			BX.onCustomEvent(this, "onChange", [this, this.select]);
+
+			if (this.useOnChangeEvent)
+			{
+				BX.onCustomEvent(this, "onChange", [this, this.select]);
+			}
 		},
 		actualizeNodes: function ()
 		{
-			// if (this.expand)
-			// {
-			// 	this.expand.value = this.select.options.length;
-			// }
-			// if (this.visCount)
-			// {
-			// 	this.visCount.innerHTML = this.select.options.length - 3;
-			// }
 			for (let ii = 0; ii < this.select.options.length; ii++)
 			{
 				if (BX(this.select.id + '_del_' + this.select.options[ii].value))
@@ -134,14 +117,7 @@ let nodeSelectUser = (function ()
 				].join('').replace(' style="background-image:url(\'\')"', ''));
 				c++;
 			}
-			// if (this.expand)
-			// {
-			// 	this.expand.value = c;
-			// }
-			// if (this.visCount)
-			// {
-			// 	this.visCount.innerHTML = c - 3;
-			// }
+
 			if (html !== '')
 			{
 				this.select.innerHTML = (this.multiple ? this.select.innerHTML : '') + options;
@@ -151,7 +127,10 @@ let nodeSelectUser = (function ()
 					this.eventNode.innerHTML = BX.message('interface_form_change');
 				}
 
-				BX.onCustomEvent(this, "onChange", [this, this.select]);
+				if (this.useOnChangeEvent)
+				{
+					BX.onCustomEvent(this, "onChange", [this, this.select]);
+				}
 
 				let ij = 0,
 					f = BX.proxy(function ()
@@ -186,6 +165,7 @@ window.app.exec('enableCaptureKeyboard', true);
 
 BX.Mobile.Field.SelectUser = function (params)
 {
+	this.useOnChangeEvent = params['useOnChangeEvent'] || false;
 	this.init(params);
 };
 
@@ -196,7 +176,7 @@ BX.Mobile.Field.SelectUser.prototype = {
 		let result = null;
 		if (BX(node))
 		{
-			result = new nodeSelectUser(node, BX(`${node.id}_select`));
+			result = new nodeSelectUser(node, BX(`${node.id}_select`), this.useOnChangeEvent);
 		}
 		return result;
 	}

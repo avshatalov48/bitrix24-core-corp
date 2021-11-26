@@ -65,7 +65,7 @@ BX.CRM.Kanban.DropZone.prototype = {
 		this.captureItem(draggableItem);
 		this.getDropZoneArea().unsetActive();
 
-		if(checkedElements.length > 1)
+		if(checkedElements.length > 1 && this.droppedItem)
 		{
 			this.droppedItems = checkedElements;
 
@@ -241,7 +241,25 @@ BX.CRM.Kanban.DropZone.prototype = {
 		container.onbxdestdragfinish = BX.delegate(this.onDragDrop, this);
 
 		jsDD.registerDest(container, 4);
-	}
+	},
+
+	/**
+	 * @param {Element} itemNode
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	onDragEnter: function(itemNode, x, y)
+	{
+		var item = this.getGrid().getItemByElement(itemNode);
+
+		if (item.isItemMoveDisabled())
+		{
+			return;
+		}
+
+		this.setActive();
+		this.getDropZoneArea().setActive();
+	},
 };
 
 })();

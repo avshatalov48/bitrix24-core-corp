@@ -149,8 +149,10 @@ class SaleManager
 				'BUYER_FAX' => array('TYPE' => '', 'VALUE' => ''),
 				'BUYER_PAYER_NAME' => array('TYPE' => '', 'VALUE' => '')
 			);
-			foreach (\CCrmPaySystem::getDefaultBuyerParams('CRM_CONTACT', 'quote', $rqCountryId)
-			            as $paramName => $paramValue)
+			foreach (
+				\CCrmPaySystem::getDefaultBuyerParams('CRM_CONTACT', 'quote', $rqCountryId)
+				as $paramName => $paramValue
+			)
 			{
 				$psParams[$paramName] = $paramValue;
 			}

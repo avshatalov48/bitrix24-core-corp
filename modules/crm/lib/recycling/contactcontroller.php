@@ -151,6 +151,13 @@ class ContactController extends BaseController
 			$slots['INVOICE_IDS'] = $invoiceIDs;
 		}
 
+		$slots = array_merge(
+			$slots,
+			DynamicBinderManager::getInstance()
+				->configure($entityID, \CCrmOwnerType::Contact)
+				->getData()
+		);
+
 		$requisiteLinks = Crm\EntityRequisite::getLinksByOwner(\CCrmOwnerType::Contact, $entityID);
 		if(!empty($requisiteLinks))
 		{
@@ -250,6 +257,10 @@ class ContactController extends BaseController
 		{
 			InvoiceBinder::getInstance()->unbindEntities(\CCrmOwnerType::Contact, $entityID, $slots['INVOICE_IDS']);
 		}
+
+		DynamicBinderManager::getInstance()
+			->configure($entityID, \CCrmOwnerType::Contact)
+			->unbindEntities($slots);
 
 		$this->suspendActivities($entityData, $entityID, $recyclingEntityID);
 		$this->suspendMultiFields($entityID, $recyclingEntityID);

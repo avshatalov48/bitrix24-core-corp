@@ -318,6 +318,15 @@ abstract class Base extends BaseReport
 						unset($mutatedFilterParameters[$fieldId . '_label']);
 					}
 					break;
+				case 'entity_selector':
+					if (isset($mutatedFilterParameters[$fieldId]))
+					{
+						$mutatedFilterParameters[$fieldId] = [
+							'type' => 'entity_selector',
+							'value' => $mutatedFilterParameters[$fieldId],
+						];
+					}
+					break;
 			}
 		}
 

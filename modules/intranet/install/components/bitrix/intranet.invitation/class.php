@@ -201,10 +201,11 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		}
 
 		$this->arResult['FIRST_INVITATION_BLOCK'] = $this->arResult["IS_CLOUD"] ? 'self' : 'invite';
+
 		if (
-			isset($_REQUEST['firstInvitationBlock'])
-			&& !empty($_REQUEST['firstInvitationBlock'])
-			&& in_array($_REQUEST['firstInvitationBlock'], [
+			isset($_GET['firstInvitationBlock'])
+			&& !empty($_GET['firstInvitationBlock'])
+			&& in_array($_GET['firstInvitationBlock'], [
 				'self',
 				'invite',
 				'mass-invite',

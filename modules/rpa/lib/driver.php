@@ -255,5 +255,14 @@ final class Driver
 			]
 		]);
 	}
+
+	public static function onRestServiceBuildDescription(): array
+	{
+		return [
+			static::MODULE_ID => [
+				static::MODULE_ID.'.stub' => [],
+			],
+		];
+	}
 	//endregion
 }

@@ -3,9 +3,17 @@ this.BX.Crm = this.BX.Crm || {};
 (function (exports,d3,main_kanban,ui_notification,main_popup,main_core) {
 	'use strict';
 
-	var _templateObject;
+	function _templateObject() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-st-kanban-stub\"></div>"]);
+
+	  _templateObject = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
 	function createStub() {
-	  return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-st-kanban-stub\"></div>"])));
+	  return main_core.Tag.render(_templateObject());
 	}
 
 	function isLine(value) {
@@ -58,7 +66,45 @@ this.BX.Crm = this.BX.Crm || {};
 	  };
 	}
 
-	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4;
+	function _templateObject4() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-st-tunnel-button-counter\">0</span>"]);
+
+	  _templateObject4 = function _templateObject4() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject3() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-tunnel-button\" \n\t\t\t\t\t onmouseenter=\"", "\"\n\t\t\t\t\t onmouseleave=\"", "\"\n\t\t\t\t\t onclick=\"", "\"\n\t\t\t\t\t title=\"", "\"\n\t\t\t\t\t style=\"", "\"\n\t\t\t\t>", "</div>\n\t\t\t"]);
+
+	  _templateObject3 = function _templateObject3() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\tbottom: 0px;\n\t\t\tleft: ", "px;\n\t\t\ttransform: translate3d(-50%, 50%, 0);\n\t\t"]);
+
+	  _templateObject2 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\tbottom: 0px;\n\t\t\tleft: ", "px;\n\t\t\ttransform: translate3d(-50%, 50%, 0);\n\t\t"]);
+
+	  _templateObject$1 = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
 
 	/**
 	 * Implements interface for works with marker
@@ -408,7 +454,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      if (destinationMarker && destinationMarker.isEnabled()) {
 	        if (destinationMarker && !event.isDefaultPrevented()) {
-	          if (!this.data.column.data.canEditTunnels) {
+	          if (!this.data.column.data.isCategoryEditable) {
 	            this.emit('Marker:error', {
 	              message: main_core.Loc.getMessage('CRM_ST_TUNNEL_EDIT_ACCESS_DENIED')
 	            });
@@ -801,7 +847,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var button = this.getTunnelButton();
 	      var category = this.getCategory();
 	      var left = path[0][0];
-	      main_core.Tag.style(button)(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\tbottom: 0px;\n\t\t\tleft: ", "px;\n\t\t\ttransform: translate3d(-50%, 50%, 0);\n\t\t"])), left);
+	      main_core.Tag.style(button)(_templateObject$1(), left);
 
 	      if (!category.contains(button)) {
 	        main_core.Dom.append(button, category);
@@ -824,7 +870,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var button = this.getStubTunnelButton();
 	      var category = this.getCategory();
 	      var left = path[0][0];
-	      main_core.Tag.style(button)(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\tbottom: 0px;\n\t\t\tleft: ", "px;\n\t\t\ttransform: translate3d(-50%, 50%, 0);\n\t\t"])), left);
+	      main_core.Tag.style(button)(_templateObject2(), left);
 
 	      if (!category.contains(button)) {
 	        main_core.Dom.append(button, category);
@@ -835,9 +881,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getTunnelButton() {
 	      var _this15 = this;
 
-	      var canEdit = this.data.column.data.canEditTunnels;
+	      var canEdit = this.data.column.data.isCategoryEditable;
 	      return this.cache.remember('tunnelButton', function () {
-	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-tunnel-button\" \n\t\t\t\t\t onmouseenter=\"", "\"\n\t\t\t\t\t onmouseleave=\"", "\"\n\t\t\t\t\t onclick=\"", "\"\n\t\t\t\t\t title=\"", "\"\n\t\t\t\t\t style=\"", "\"\n\t\t\t\t>", "</div>\n\t\t\t"])), _this15.onTunnelButtonMouseEnter.bind(_this15), Marker.onTunnelButtonMouseLeave, _this15.onTunnelButtonClick.bind(_this15), main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_TITLE'), !canEdit ? 'pointer-events: none;' : '', main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_LABEL'));
+	        return main_core.Tag.render(_templateObject3(), _this15.onTunnelButtonMouseEnter.bind(_this15), Marker.onTunnelButtonMouseLeave, _this15.onTunnelButtonClick.bind(_this15), main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_TITLE'), !canEdit ? 'pointer-events: none;' : '', main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_LABEL'));
 	      });
 	    }
 	    /** @private */
@@ -854,7 +900,9 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    /** @private */
 	    value: function onTunnelButtonClick() {
-	      if (this.links.size > 1) {
+	      if (BX.Crm.Restriction.Bitrix24.isRestricted('automation')) {
+	        BX.Crm.Restriction.Bitrix24.getHandler('automation').call();
+	      } else if (this.links.size > 1) {
 	        if (this.isTunnelButtonActive()) {
 	          this.getTunnelsListMenu().close();
 	          return;
@@ -903,7 +951,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTunnelsCounter",
 	    value: function getTunnelsCounter() {
-	      return this.cache.remember('tunnelsCounter', main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-st-tunnel-button-counter\">0</span>"]))));
+	      return this.cache.remember('tunnelsCounter', main_core.Tag.render(_templateObject4()));
 	    }
 	  }, {
 	    key: "setTunnelsCounterValue",
@@ -1098,7 +1146,35 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 
-	var _templateObject$2, _templateObject2$1, _templateObject3$1;
+	function _templateObject3$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttitle: ", ";\n\t\t\t\t"]);
+
+	  _templateObject3$1 = function _templateObject3() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject2$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\ttitle: ", ";\n\t\t"]);
+
+	  _templateObject2$1 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject$2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-st-kanban-column-dot\" title=\"", "\">\n\t\t\t\t<span class=\"crm-st-kanban-column-dot-disallow-icon\"> </span>\n\t\t\t\t<span class=\"crm-st-kanban-column-dot-pulse\"> </span>\n\t\t\t</div>"]);
+
+	  _templateObject$2 = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
 
 	var Column = /*#__PURE__*/function (_Kanban$Column) {
 	  babelHelpers.inherits(Column, _Kanban$Column);
@@ -1350,7 +1426,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getDot() {
 	      if (!main_core.Type.isDomNode(this.dot)) {
 	        var title = main_core.Loc.getMessage('CRM_ST_DOT_TITLE');
-	        this.dot = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-st-kanban-column-dot\" title=\"", "\">\n\t\t\t\t<span class=\"crm-st-kanban-column-dot-disallow-icon\"> </span>\n\t\t\t\t<span class=\"crm-st-kanban-column-dot-pulse\"> </span>\n\t\t\t</div>"])), title);
+	        this.dot = main_core.Tag.render(_templateObject$2(), title);
 	      }
 
 	      return this.dot;
@@ -1375,7 +1451,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        main_core.Dom.append(dot, header);
 	      }
 
-	      main_core.Tag.attrs(header)(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\ttitle: ", ";\n\t\t"])), this.getName());
+	      main_core.Tag.attrs(header)(_templateObject2$1(), this.getName());
 	      return header;
 	    }
 	  }, {
@@ -1409,7 +1485,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          _this2.onNameChangeHandler(_this2);
 
 	          _this2.currentName = _this2.getName();
-	          main_core.Tag.attrs(_this2.getHeader())(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttitle: ", ";\n\t\t\t\t"])), _this2.getName());
+	          main_core.Tag.attrs(_this2.getHeader())(_templateObject3$1(), _this2.getName());
 	        }
 	      }, 500);
 	    }
@@ -1607,7 +1683,315 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Grid;
 	}(main_kanban.Kanban.Grid);
 
-	var _templateObject$3, _templateObject2$2, _templateObject3$2, _templateObject4$1, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24, _templateObject25, _templateObject26, _templateObject27, _templateObject28, _templateObject29, _templateObject30, _templateObject31;
+	function _templateObject31() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"crm-st-generator-link-icon\" onclick=\"", "\">", "</span>\n\t\t\t"]);
+
+	  _templateObject31 = function _templateObject31() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject30() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"crm-st-robots-link-icon\"> </span>\n\t\t\t"]);
+
+	  _templateObject30 = function _templateObject30() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject29() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-action-drag\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t>&nbsp;</span>\n\t\t\t"]);
+
+	  _templateObject29 = function _templateObject29() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject28() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-info-title-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
+
+	  _templateObject28 = function _templateObject28() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject27() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-action-buttons\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
+
+	  _templateObject27 = function _templateObject27() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject26() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input class=\"crm-st-category-info-title-editor\" \n\t\t\t\t\t onkeydown=\"", "\"\n\t\t\t\t\t onblur=\"", "\"\n\t\t\t\t\t value=\"", "\"\n\t\t\t\t\t placeholder=\"", "\"\n\t\t\t\t >\n\t\t\t"]);
+
+	  _templateObject26 = function _templateObject26() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject25() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<h3 class=\"crm-st-category-info-title\" title=\"", "\">", "</h3>\n\t\t\t"]);
+
+	  _templateObject25 = function _templateObject25() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject24() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\tdisplay: none;\n\t\t\t\t"]);
+
+	  _templateObject24 = function _templateObject24() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject23() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-remove-button\" \n\t\t\t\t\tonclick=\"", "\" \n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
+
+	  _templateObject23 = function _templateObject23() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject22() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-option-button\" \n\t\t\t\t\tonclick=\"", "\" \n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
+
+	  _templateObject22 = function _templateObject22() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject21() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\tdisplay: none;\n\t\t"]);
+
+	  _templateObject21 = function _templateObject21() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject20() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\tdisplay: null;\n\t\t"]);
+
+	  _templateObject20 = function _templateObject20() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject19() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\tdisplay: null;\n\t\t"]);
+
+	  _templateObject19 = function _templateObject19() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject18() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\tdisplay: block;\n\t\t"]);
+
+	  _templateObject18 = function _templateObject18() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject17() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-edit-button\" \n\t\t\t\t\tonmousedown=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
+
+	  _templateObject17 = function _templateObject17() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject16() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<span class=\"crm-st-category-info-links-link crm-st-generator-link crm-st-generator\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"]);
+
+	  _templateObject16 = function _templateObject16() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject15() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<span class=\"crm-st-category-info-links-link crm-st-robots-link crm-st-automation\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"]);
+
+	  _templateObject15 = function _templateObject15() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject14() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-list\"></div>\n\t\t\t"]);
+
+	  _templateObject14 = function _templateObject14() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject13() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-group crm-st-category-stages-group-fail\">\n\t\t\t\t\t<div class=\"crm-st-category-stages-group-header\">\n\t\t\t\t\t\t<span class=\"crm-st-category-stages-group-in-fail\"> </span> \n\t\t\t\t\t\t<span class=\"crm-st-category-stages-group-header-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
+
+	  _templateObject13 = function _templateObject13() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject12() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-list\"></div>\n\t\t\t"]);
+
+	  _templateObject12 = function _templateObject12() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject11() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-group crm-st-category-stages-group-success\">\n\t\t\t\t\t<div class=\"crm-st-category-stages-group-header\">\n\t\t\t\t\t\t<span class=\"crm-st-category-stages-group-in-success\"> </span> \n\t\t\t\t\t\t<span class=\"crm-st-category-stages-group-header-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
+
+	  _templateObject11 = function _templateObject11() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject10() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-list\"></div>\n\t\t\t"]);
+
+	  _templateObject10 = function _templateObject10() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject9() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-group crm-st-category-stages-group-in-progress\">\n\t\t\t\t\t<div class=\"crm-st-category-stages-group-header\">\n\t\t\t\t\t\t<span class=\"crm-st-category-stages-group-header-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
+
+	  _templateObject9 = function _templateObject9() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject8() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-info-links-help crm-st-generator\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
+
+	  _templateObject8 = function _templateObject8() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject7() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-info-links-help crm-st-automation\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
+
+	  _templateObject7 = function _templateObject7() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject6() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category\" data-id=\"", "\">\n\t\t\t\t\t<div class=\"crm-st-category-action\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-st-category-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"crm-st-category-info-links\">\n\t\t\t\t\t\t\t<div class=\"crm-st-category-info-links-item\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"crm-st-category-info-links-item\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-st-category-stages\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
+
+	  _templateObject6 = function _templateObject6() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject5() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\ttransform: null;\n\t\t\t\ttransition: null;\n\t\t\t"]);
+
+	  _templateObject5 = function _templateObject5() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject4$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttransition: 200ms;\n\t\t\t\t\ttransform: translate3d(0px, 0px, 0px);\n\t\t\t\t"]);
+
+	  _templateObject4$1 = function _templateObject4() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject3$2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttransition: 200ms;\n\t\t\t\t\ttransform: translate3d(0px, ", "px, 0px);\n\t\t\t\t"]);
+
+	  _templateObject3$2 = function _templateObject3() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject2$2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttransition: 200ms;\n\t\t\t\t\ttransform: translate3d(0px, ", "px, 0px);\n\t\t\t\t"]);
+
+	  _templateObject2$2 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject$3() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\ttransform: translate3d(0px, ", "px, 0px);\n\t\t"]);
+
+	  _templateObject$3 = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
 	var Category = /*#__PURE__*/function (_Event$EventEmitter) {
 	  babelHelpers.inherits(Category, _Event$EventEmitter);
 	  babelHelpers.createClass(Category, null, [{
@@ -1648,12 +2032,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this.cache = new main_core.Cache.MemoryCache();
 	    _this.drawed = false;
 	    _this.allowWrite = Boolean(options.allowWrite);
-	    _this.canEditTunnels = Boolean(options.canEditTunnels);
+	    _this.isCategoryEditable = Boolean(options.isCategoryEditable);
+	    _this.areStagesEditable = Boolean(options.areStagesEditable);
 	    _this.isAvailableGenerator = options.isAvailableGenerator;
-	    _this.showGeneratorRestrictionPopup = options.showGeneratorRestrictionPopup;
-	    _this.isAvailableRobots = options.isAvailableRobots;
-	    _this.showRobotsRestrictionPopup = options.showRobotsRestrictionPopup;
-	    _this.isSenderSupported = options.isSenderSupported;
 	    _this.isAutomationEnabled = options.isAutomationEnabled;
 	    _this.isStagesEnabled = options.isStagesEnabled;
 
@@ -1705,6 +2086,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      }, 500);
 	    });
 
+	    if (!_this.isCategoryEditable) {
+	      main_core.Dom.addClass(_this.getContainer(), 'crm-st-category-editing-disabled');
+	    }
+
 	    if (!_this.isAutomationEnabled) {
 	      main_core.Dom.addClass(_this.getContainer(), 'crm-st-category-automation-disabled');
 
@@ -1717,7 +2102,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      main_core.Dom.addClass(_this.getContainer(), 'crm-st-category-stages-stub');
 	    }
 
-	    if (!_this.isSenderSupported) {
+	    if (!_this.isAvailableGenerator) {
 	      main_core.Dom.addClass(_this.getContainer(), 'crm-st-category-generator-disabled');
 	    }
 
@@ -1783,7 +2168,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onDrag(x, y) {
 	      var _this5 = this;
 
-	      main_core.Tag.style(this.getContainer())(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\ttransform: translate3d(0px, ", "px, 0px);\n\t\t"])), y - this.dragOffset - this.getRectArea().top);
+	      main_core.Tag.style(this.getContainer())(_templateObject$3(), y - this.dragOffset - this.getRectArea().top);
 	      var categoryHeight = this.getRectArea().height;
 	      Category.instances.forEach(function (category, curIndex) {
 	        if (category === _this5 || main_core.Dom.hasClass(category.getContainer(), 'crm-st-category-stub')) {
@@ -1795,13 +2180,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        var categoryMiddle = categoryRectArea.middle;
 
 	        if (y > categoryMiddle && curIndex > _this5.dragIndex && categoryContainer.style.transform !== "translate3d(0px, ".concat(-categoryHeight, "px, 0px)")) {
-	          main_core.Tag.style(categoryContainer)(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttransition: 200ms;\n\t\t\t\t\ttransform: translate3d(0px, ", "px, 0px);\n\t\t\t\t"])), -categoryHeight);
+	          main_core.Tag.style(categoryContainer)(_templateObject2$2(), -categoryHeight);
 	          _this5.dragTargetCategory = category.getNextCategorySibling();
 	          category.cache.delete('rectArea');
 	        }
 
 	        if (y < categoryMiddle && curIndex < _this5.dragIndex && categoryContainer.style.transform !== "translate3d(0px, ".concat(categoryHeight, "px, 0px)")) {
-	          main_core.Tag.style(categoryContainer)(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttransition: 200ms;\n\t\t\t\t\ttransform: translate3d(0px, ", "px, 0px);\n\t\t\t\t"])), categoryHeight);
+	          main_core.Tag.style(categoryContainer)(_templateObject3$2(), categoryHeight);
 	          _this5.dragTargetCategory = category;
 	          category.cache.delete('rectArea');
 	        }
@@ -1810,7 +2195,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        var moveBackBottom = y > categoryMiddle && curIndex < _this5.dragIndex && categoryContainer.style.transform !== '' && categoryContainer.style.transform !== 'translate3d(0, 0, 0)';
 
 	        if (moveBackBottom || moveBackTop) {
-	          main_core.Tag.style(categoryContainer)(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttransition: 200ms;\n\t\t\t\t\ttransform: translate3d(0px, 0px, 0px);\n\t\t\t\t"])));
+	          main_core.Tag.style(categoryContainer)(_templateObject4$1());
 	          _this5.dragTargetCategory = category;
 
 	          if (!moveBackTop && main_core.Dom.hasClass(category.getNextCategorySibling(), 'crm-st-category-stub')) {
@@ -1831,7 +2216,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        Marker.restoreAllLinks();
 	      });
 	      Category.instances.forEach(function (category) {
-	        main_core.Tag.style(category.getContainer())(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\ttransform: null;\n\t\t\t\ttransition: null;\n\t\t\t"])));
+	        main_core.Tag.style(category.getContainer())(_templateObject5());
 	        category.cache.delete('rectArea');
 	      });
 
@@ -1861,7 +2246,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this6 = this;
 
 	      return this.cache.remember('container', function () {
-	        return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category\" data-id=\"", "\">\n\t\t\t\t\t<div class=\"crm-st-category-action\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-st-category-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"crm-st-category-info-links\">\n\t\t\t\t\t\t\t<div class=\"crm-st-category-info-links-item\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"crm-st-category-info-links-item\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-st-category-stages\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), _this6.id, _this6.getDragButton(), _this6.getTitleContainer(), _this6.getRobotsLink(), _this6.getRobotsHelpLink(), _this6.getGeneratorLink(), _this6.getGeneratorHelpLink(), _this6.getProgressContainer(), _this6.getSuccessContainer(), _this6.getFailContainer());
+	        return main_core.Tag.render(_templateObject6(), _this6.id, _this6.getDragButton(), _this6.getTitleContainer(), _this6.getRobotsLink(), _this6.getRobotsHelpLink(), _this6.getGeneratorLink(), _this6.getGeneratorHelpLink(), _this6.getProgressContainer(), _this6.getSuccessContainer(), _this6.getFailContainer());
 	      });
 	    }
 	  }, {
@@ -1874,7 +2259,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        };
 
-	        return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-info-links-help crm-st-automation\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"])), onClick, main_core.Text.encode(main_core.Loc.getMessage('CRM_ST_ROBOTS_HELP_BUTTON')));
+	        return main_core.Tag.render(_templateObject7(), onClick, main_core.Text.encode(main_core.Loc.getMessage('CRM_ST_ROBOTS_HELP_BUTTON')));
 	      });
 	    }
 	  }, {
@@ -1887,7 +2272,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        };
 
-	        return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-info-links-help crm-st-generator\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"])), onClick, main_core.Text.encode(main_core.Loc.getMessage('CRM_ST_GENERATOR_HELP_BUTTON')));
+	        return main_core.Tag.render(_templateObject8(), onClick, main_core.Text.encode(main_core.Loc.getMessage('CRM_ST_GENERATOR_HELP_BUTTON')));
 	      });
 	    }
 	  }, {
@@ -1896,14 +2281,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this7 = this;
 
 	      return this.cache.remember('progressContainer', function () {
-	        return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-group crm-st-category-stages-group-in-progress\">\n\t\t\t\t\t<div class=\"crm-st-category-stages-group-header\">\n\t\t\t\t\t\t<span class=\"crm-st-category-stages-group-header-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage(_this7.isStagesEnabled ? 'CRM_ST_STAGES_GROUP_IN_PROGRESS' : 'CRM_ST_STAGES_DISABLED'), _this7.getProgressStagesContainer());
+	        return main_core.Tag.render(_templateObject9(), main_core.Loc.getMessage(_this7.isStagesEnabled ? 'CRM_ST_STAGES_GROUP_IN_PROGRESS' : 'CRM_ST_STAGES_DISABLED'), _this7.getProgressStagesContainer());
 	      });
 	    }
 	  }, {
 	    key: "getProgressStagesContainer",
 	    value: function getProgressStagesContainer() {
 	      return this.cache.remember('progressStagesContainer', function () {
-	        return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-list\"></div>\n\t\t\t"])));
+	        return main_core.Tag.render(_templateObject10());
 	      });
 	    }
 	  }, {
@@ -1914,7 +2299,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.cache.remember('progressKanban', function () {
 	        return Category.createGrid({
 	          renderTo: _this8.getProgressStagesContainer(),
-	          editable: _this8.canEditTunnels,
+	          editable: _this8.areStagesEditable,
 	          columns: _this8.stages.P.map(function (stage) {
 	            return new Column({
 	              id: stage.STATUS_ID,
@@ -1932,14 +2317,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this9 = this;
 
 	      return this.cache.remember('successContainer', function () {
-	        return main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-group crm-st-category-stages-group-success\">\n\t\t\t\t\t<div class=\"crm-st-category-stages-group-header\">\n\t\t\t\t\t\t<span class=\"crm-st-category-stages-group-in-success\"> </span> \n\t\t\t\t\t\t<span class=\"crm-st-category-stages-group-header-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _this9.isStagesEnabled ? main_core.Loc.getMessage('CRM_ST_STAGES_GROUP_SUCCESS') : '', _this9.getSuccessStagesContainer());
+	        return main_core.Tag.render(_templateObject11(), _this9.isStagesEnabled ? main_core.Loc.getMessage('CRM_ST_STAGES_GROUP_SUCCESS') : '', _this9.getSuccessStagesContainer());
 	      });
 	    }
 	  }, {
 	    key: "getSuccessStagesContainer",
 	    value: function getSuccessStagesContainer() {
 	      return this.cache.remember('successStagesContainer', function () {
-	        return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-list\"></div>\n\t\t\t"])));
+	        return main_core.Tag.render(_templateObject12());
 	      });
 	    }
 	  }, {
@@ -1950,7 +2335,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.cache.remember('successKanban', function () {
 	        return Category.createGrid({
 	          renderTo: _this10.getSuccessStagesContainer(),
-	          editable: _this10.canEditTunnels,
+	          editable: _this10.areStagesEditable,
 	          columns: _this10.stages.S.map(function (stage) {
 	            return new Column({
 	              id: stage.STATUS_ID,
@@ -1970,14 +2355,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this11 = this;
 
 	      return this.cache.remember('failContainer', function () {
-	        return main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-group crm-st-category-stages-group-fail\">\n\t\t\t\t\t<div class=\"crm-st-category-stages-group-header\">\n\t\t\t\t\t\t<span class=\"crm-st-category-stages-group-in-fail\"> </span> \n\t\t\t\t\t\t<span class=\"crm-st-category-stages-group-header-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _this11.isStagesEnabled ? main_core.Loc.getMessage('CRM_ST_STAGES_GROUP_FAIL') : '', _this11.getFailStagesContainer());
+	        return main_core.Tag.render(_templateObject13(), _this11.isStagesEnabled ? main_core.Loc.getMessage('CRM_ST_STAGES_GROUP_FAIL') : '', _this11.getFailStagesContainer());
 	      });
 	    }
 	  }, {
 	    key: "getFailStagesContainer",
 	    value: function getFailStagesContainer() {
 	      return this.cache.remember('failStagesContainer', function () {
-	        return main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-stages-list\"></div>\n\t\t\t"])));
+	        return main_core.Tag.render(_templateObject14());
 	      });
 	    }
 	  }, {
@@ -1988,7 +2373,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.cache.remember('failKanban', function () {
 	        return Category.createGrid({
 	          renderTo: _this12.getFailStagesContainer(),
-	          editable: _this12.canEditTunnels,
+	          editable: _this12.areStagesEditable,
 	          columns: _this12.stages.F.map(function (stage) {
 	            return new Column({
 	              id: stage.STATUS_ID,
@@ -2068,7 +2453,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        currentStageGroup: this.getFailContainer(),
 	        categoryName: this.getTitle().innerText,
-	        canEditTunnels: this.canEditTunnels
+	        isCategoryEditable: this.isCategoryEditable,
+	        areStagesEditable: this.areStagesEditable
 	      };
 	    }
 	    /** @private */
@@ -2097,9 +2483,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this15 = this;
 
 	      return this.cache.remember('robotsLink', function () {
-	        var onClick = _this15.onRobotsLinkClick.bind(_this15);
+	        if (!_this15.isAutomationEnabled) {
+	          return '<span></span>';
+	        }
 
-	        return main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<span class=\"crm-st-category-info-links-link crm-st-robots-link crm-st-automation\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"])), !_this15.isAvailableRobots ? ' <span class="tariff-lock"></span>' : '', onClick, main_core.Loc.getMessage('CRM_ST_ROBOT_SETTINGS_LINK_LABEL'));
+	        var isRestricted = BX.Crm.Restriction.Bitrix24.isRestricted('automation');
+	        var onClick = isRestricted ? BX.Crm.Restriction.Bitrix24.getHandler('automation') : _this15.onRobotsLinkClick.bind(_this15);
+	        return main_core.Tag.render(_templateObject15(), isRestricted ? '<span class="tariff-lock"></span>' : '', onClick, main_core.Loc.getMessage('CRM_ST_ROBOT_SETTINGS_LINK_LABEL'));
 	      });
 	    }
 	    /** @private */
@@ -2109,23 +2499,18 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onRobotsLinkClick(event) {
 	      var _this16 = this;
 
-	      event.preventDefault();
+	      event.preventDefault(); // eslint-disable-next-line
 
-	      if (!this.isAvailableRobots) {
-	        this.showRobotsRestrictionPopup();
-	      } else {
-	        // eslint-disable-next-line
-	        BX.SidePanel.Instance.open(this.robotsSettingsLink, {
-	          cacheable: false,
-	          events: {
-	            onClose: function onClose() {
-	              _this16.emit('Category:slider:close');
+	      BX.SidePanel.Instance.open(this.robotsSettingsLink, {
+	        cacheable: false,
+	        events: {
+	          onClose: function onClose() {
+	            _this16.emit('Category:slider:close');
 
-	              _this16.emit('Category:slider:robots:close');
-	            }
+	            _this16.emit('Category:slider:robots:close');
 	          }
-	        });
-	      }
+	        }
+	      });
 	    }
 	  }, {
 	    key: "getGeneratorLink",
@@ -2133,9 +2518,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this17 = this;
 
 	      return this.cache.remember('generatorLink', function () {
-	        var onClick = _this17.onGeneratorLinkClick.bind(_this17);
+	        if (!_this17.isAvailableGenerator) {
+	          return '<span></span>';
+	        }
 
-	        return main_core.Tag.render(_templateObject16 || (_templateObject16 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<span class=\"crm-st-category-info-links-link crm-st-generator-link crm-st-generator\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"])), !_this17.isAvailableGenerator ? ' <span class="tariff-lock"></span>' : '', onClick, main_core.Loc.getMessage('CRM_ST_GENERATOR_SETTINGS_LINK_LABEL'));
+	        var isRestricted = BX.Crm.Restriction.Bitrix24.isRestricted('generator');
+	        var onClick = isRestricted ? BX.Crm.Restriction.Bitrix24.getHandler('generator') : _this17.onGeneratorLinkClick.bind(_this17);
+	        return main_core.Tag.render(_templateObject16(), isRestricted ? '<span class="tariff-lock"></span>' : '', onClick, main_core.Loc.getMessage('CRM_ST_GENERATOR_SETTINGS_LINK_LABEL'));
 	      });
 	    }
 	    /** @private */
@@ -2145,25 +2534,20 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onGeneratorLinkClick(event) {
 	      var _this18 = this;
 
-	      event.preventDefault();
+	      event.preventDefault(); // eslint-disable-next-line
 
-	      if (!this.isAvailableGenerator) {
-	        this.showGeneratorRestrictionPopup();
-	      } else {
-	        // eslint-disable-next-line
-	        BX.SidePanel.Instance.open(this.generatorSettingsLink, {
-	          cacheable: false,
-	          events: {
-	            onClose: function onClose() {
-	              _this18.emit('Category:slider:close');
+	      BX.SidePanel.Instance.open(this.generatorSettingsLink, {
+	        cacheable: false,
+	        events: {
+	          onClose: function onClose() {
+	            _this18.emit('Category:slider:close');
 
-	              _this18.emit('Category:slider:generator:close', {
-	                category: _this18
-	              });
-	            }
+	            _this18.emit('Category:slider:generator:close', {
+	              category: _this18
+	            });
 	          }
-	        });
-	      }
+	        }
+	      });
 	    }
 	  }, {
 	    key: "getEditButton",
@@ -2171,7 +2555,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this19 = this;
 
 	      return this.cache.remember('editButton', function () {
-	        return main_core.Tag.render(_templateObject17 || (_templateObject17 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-edit-button\" \n\t\t\t\t\tonmousedown=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"])), _this19.onEditButtonClick.bind(_this19), main_core.Loc.getMessage('CRM_ST_EDIT_CATEGORY_TITLE'));
+	        return main_core.Tag.render(_templateObject17(), _this19.onEditButtonClick.bind(_this19), main_core.Loc.getMessage('CRM_ST_EDIT_CATEGORY_TITLE'));
 	      });
 	    }
 	  }, {
@@ -2209,13 +2593,13 @@ this.BX.Crm = this.BX.Crm || {};
 	          innerText = _this$getTitle.innerText;
 
 	      titleEditor.value = main_core.Type.isString(value) ? value : main_core.Text.decode(innerText);
-	      main_core.Tag.style(titleEditor)(_templateObject18 || (_templateObject18 = babelHelpers.taggedTemplateLiteral(["\n\t\t\tdisplay: block;\n\t\t"])));
+	      main_core.Tag.style(titleEditor)(_templateObject18());
 	    }
 	  }, {
 	    key: "hideTitleEditor",
 	    value: function hideTitleEditor() {
 	      var titleEditor = this.getTitleEditor();
-	      main_core.Tag.style(titleEditor)(_templateObject19 || (_templateObject19 = babelHelpers.taggedTemplateLiteral(["\n\t\t\tdisplay: null;\n\t\t"])));
+	      main_core.Tag.style(titleEditor)(_templateObject19());
 	    }
 	  }, {
 	    key: "focusOnTitleEditor",
@@ -2229,12 +2613,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "showTitle",
 	    value: function showTitle() {
-	      main_core.Tag.style(this.getTitle())(_templateObject20 || (_templateObject20 = babelHelpers.taggedTemplateLiteral(["\n\t\t\tdisplay: null;\n\t\t"])));
+	      main_core.Tag.style(this.getTitle())(_templateObject20());
 	    }
 	  }, {
 	    key: "hideTitle",
 	    value: function hideTitle() {
-	      main_core.Tag.style(this.getTitle())(_templateObject21 || (_templateObject21 = babelHelpers.taggedTemplateLiteral(["\n\t\t\tdisplay: none;\n\t\t"])));
+	      main_core.Tag.style(this.getTitle())(_templateObject21());
 	    }
 	  }, {
 	    key: "saveTitle",
@@ -2281,7 +2665,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this20 = this;
 
 	      return this.cache.remember('optionButton', function () {
-	        var button = main_core.Tag.render(_templateObject22 || (_templateObject22 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-option-button\" \n\t\t\t\t\tonclick=\"", "\" \n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"])), _this20.onOptionButtonClick.bind(_this20), main_core.Loc.getMessage('CRM_ST_EDIT_RIGHTS_CATEGORY'));
+	        var button = main_core.Tag.render(_templateObject22(), _this20.onOptionButtonClick.bind(_this20), main_core.Loc.getMessage('CRM_ST_EDIT_RIGHTS_CATEGORY'));
 	        return button;
 	      });
 	    }
@@ -2423,10 +2807,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this22 = this;
 
 	      return this.cache.remember('removeButton', function () {
-	        var button = main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-remove-button\" \n\t\t\t\t\tonclick=\"", "\" \n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"])), _this22.onRemoveButtonClick.bind(_this22), main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY'));
+	        var button = main_core.Tag.render(_templateObject23(), _this22.onRemoveButtonClick.bind(_this22), main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY'));
 
 	        if (_this22.default) {
-	          main_core.Tag.style(button)(_templateObject24 || (_templateObject24 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\tdisplay: none;\n\t\t\t\t"])));
+	          main_core.Tag.style(button)(_templateObject24());
 	        }
 
 	        return button;
@@ -2529,7 +2913,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getTitle() {
 	      var safeTitle = main_core.Text.encode(this.name);
 	      return this.cache.remember('title', function () {
-	        return main_core.Tag.render(_templateObject25 || (_templateObject25 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<h3 class=\"crm-st-category-info-title\" title=\"", "\">", "</h3>\n\t\t\t"])), safeTitle, safeTitle);
+	        return main_core.Tag.render(_templateObject25(), safeTitle, safeTitle);
 	      });
 	    }
 	  }, {
@@ -2542,7 +2926,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	        var onBlur = _this25.onTitleEditorBlur.bind(_this25);
 
-	        return main_core.Tag.render(_templateObject26 || (_templateObject26 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input class=\"crm-st-category-info-title-editor\" \n\t\t\t\t\t onkeydown=\"", "\"\n\t\t\t\t\t onblur=\"", "\"\n\t\t\t\t\t value=\"", "\"\n\t\t\t\t\t placeholder=\"", "\"\n\t\t\t\t >\n\t\t\t"])), onKeyDown, onBlur, main_core.Text.encode(_this25.name), main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'));
+	        return main_core.Tag.render(_templateObject26(), onKeyDown, onBlur, main_core.Text.encode(_this25.name), main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'));
 	      });
 	    }
 	  }, {
@@ -2573,7 +2957,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this26 = this;
 
 	      return this.cache.remember('getActionsButtons', function () {
-	        return main_core.Tag.render(_templateObject27 || (_templateObject27 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-action-buttons\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _this26.canEditTunnels ? _this26.getEditButton() : '', _this26.canEditTunnels ? _this26.getOptionButton() : '', _this26.canEditTunnels ? _this26.getRemoveButton() : '');
+	        return main_core.Tag.render(_templateObject27(), _this26.isCategoryEditable ? _this26.getEditButton() : '', _this26.isCategoryEditable ? _this26.getOptionButton() : '', _this26.isCategoryEditable ? _this26.getRemoveButton() : '');
 	      });
 	    }
 	  }, {
@@ -2582,14 +2966,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this27 = this;
 
 	      return this.cache.remember('titleContainer', function () {
-	        return main_core.Tag.render(_templateObject28 || (_templateObject28 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-info-title-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _this27.getTitle(), _this27.getTitleEditor(), _this27.getActionsButtons());
+	        return main_core.Tag.render(_templateObject28(), _this27.getTitle(), _this27.getTitleEditor(), _this27.getActionsButtons());
 	      });
 	    }
 	  }, {
 	    key: "getDragButton",
 	    value: function getDragButton() {
 	      return this.cache.remember('dragButton', function () {
-	        return main_core.Tag.render(_templateObject29 || (_templateObject29 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-action-drag\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t>&nbsp;</span>\n\t\t\t"])), main_core.Loc.getMessage('CRM_ST_CATEGORY_DRAG_BUTTON'));
+	        return main_core.Tag.render(_templateObject29(), main_core.Loc.getMessage('CRM_ST_CATEGORY_DRAG_BUTTON'));
 	      });
 	    }
 	  }, {
@@ -2658,7 +3042,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getRobotsLinkIcon",
 	    value: function getRobotsLinkIcon() {
 	      return this.cache.remember('robotsLinkIcon', function () {
-	        return main_core.Tag.render(_templateObject30 || (_templateObject30 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"crm-st-robots-link-icon\"> </span>\n\t\t\t"])));
+	        return main_core.Tag.render(_templateObject30());
 	      });
 	    }
 	  }, {
@@ -2696,7 +3080,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          return BX.SidePanel.Instance.open(_this30.generatorsListUrl);
 	        };
 
-	        return main_core.Tag.render(_templateObject31 || (_templateObject31 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"crm-st-generator-link-icon\" onclick=\"", "\">", "</span>\n\t\t\t"])), onClick, _this30.generatorsCount);
+	        return main_core.Tag.render(_templateObject31(), onClick, _this30.generatorsCount);
 	      });
 	    }
 	  }, {
@@ -2969,15 +3353,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.generatorUrl = options.generatorUrl;
 	    this.permissionEditUrl = options.permissionEditUrl;
 	    this.tunnelScheme = options.tunnelScheme;
-	    this.canEditTunnels = Boolean(options.canEditTunnels);
-	    this.canAddCategory = Boolean(options.canAddCategory);
-	    this.categoriesQuantityLimit = Number(options.categoriesQuantityLimit);
-	    this.restrictionPopupCode = options.restrictionPopupCode;
+	    this.isCategoryEditable = Boolean(options.isCategoryEditable);
+	    this.isCategoryCreatable = Boolean(options.isCategoryCreatable);
+	    this.areStagesEditable = Boolean(options.areStagesEditable);
 	    this.isAvailableGenerator = options.isAvailableGenerator;
-	    this.showGeneratorRestrictionPopup = options.showGeneratorRestrictionPopup;
-	    this.isAvailableRobots = options.isAvailableRobots;
-	    this.showRobotsRestrictionPopup = options.showRobotsRestrictionPopup;
-	    this.isSenderSupported = options.isSenderSupported;
 	    this.isStagesEnabled = options.isStagesEnabled;
 	    this.isAutomationEnabled = options.isAutomationEnabled && this.isStagesEnabled;
 	    this.categories = new Map();
@@ -2986,11 +3365,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.initCategories();
 	    this.initTunnels();
 	    Backend.entityTypeId = this.entityTypeId;
-	    setTimeout(function () {
-	      if (!_this.hasTunnels()) {
-	        _this.showCategoryStub();
-	      }
-	    });
+
+	    if (this.isCategoryCreatable) {
+	      setTimeout(function () {
+	        if (!_this.hasTunnels()) {
+	          _this.showCategoryStub();
+	        }
+	      });
+	    }
+
 	    main_core.Event.bind(this.getAddCategoryButton(), 'click', this.onAddCategoryClick.bind(this));
 	    main_core.Event.bind(this.addCategoryButtonTop, 'click', this.onAddCategoryTopClick.bind(this));
 	    main_core.Event.bind(this.helpButton, 'click', this.onHelpButtonClick.bind(this));
@@ -3004,6 +3387,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	    }
+
+	    this.constructor.lastInstance = this;
 	  }
 
 	  babelHelpers.createClass(Manager, [{
@@ -3059,47 +3444,50 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      event.preventDefault();
 
-	      if (this.canAddCategory || this.categoriesQuantityLimit <= 0 || this.categoriesQuantityLimit > this.categories.size) {
-	        return Backend.createCategory({
-	          name: main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'),
-	          sort: this.getMaxSort() + 10
-	        }).then(function (response) {
-	          _this5.addCategoryFromOptions(response.data);
-
-	          var allStages = _this5.getStages();
-
-	          var newStages = [].concat(babelHelpers.toConsumableArray(response.data.STAGES.P), babelHelpers.toConsumableArray(response.data.STAGES.S), babelHelpers.toConsumableArray(response.data.STAGES.F));
-	          newStages.forEach(function (item) {
-	            return allStages.push(item);
-	          });
-
-	          var category = _this5.getCategory(response.data.ID);
-
-	          category.enableTitleEdit('');
-	          category.getAllColumns().forEach(function (column) {
-	            _this5.tunnelScheme.stages.push({
-	              categoryId: column.getData().category.id,
-	              stageId: column.getId(),
-	              locked: false,
-	              tunnels: []
-	            });
-	          });
-
-	          if (_this5.isShownCategoryStub()) {
-	            _this5.hideCategoryStub();
-	          }
-	        }).catch(function (response) {
-	          _this5.showErrorPopup(makeErrorMessageFromResponse(response));
-	        });
-	      } else {
-	        try {
-	          eval(this.restrictionPopupCode);
-	        } catch (e) {
-	          console.error(e);
-	        }
-
+	      if (!this.isCategoryCreatable) {
 	        return Promise.resolve(false);
 	      }
+
+	      if (BX.Crm.Restriction.Bitrix24.isRestricted('dealCategory')) {
+	        var restrictionData = BX.Crm.Restriction.Bitrix24.getData('dealCategory');
+
+	        if (restrictionData && restrictionData['quantityLimit'] <= this.categories.size) {
+	          BX.Crm.Restriction.Bitrix24.getHandler('dealCategory').call();
+	          return Promise.resolve(false);
+	        }
+	      }
+
+	      return Backend.createCategory({
+	        name: main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'),
+	        sort: this.getMaxSort() + 10
+	      }).then(function (response) {
+	        _this5.addCategoryFromOptions(response.data);
+
+	        var allStages = _this5.getStages();
+
+	        var newStages = [].concat(babelHelpers.toConsumableArray(response.data.STAGES.P), babelHelpers.toConsumableArray(response.data.STAGES.S), babelHelpers.toConsumableArray(response.data.STAGES.F));
+	        newStages.forEach(function (item) {
+	          return allStages.push(item);
+	        });
+
+	        var category = _this5.getCategory(response.data.ID);
+
+	        category.enableTitleEdit('');
+	        category.getAllColumns().forEach(function (column) {
+	          _this5.tunnelScheme.stages.push({
+	            categoryId: column.getData().category.id,
+	            stageId: column.getId(),
+	            locked: false,
+	            tunnels: []
+	          });
+	        });
+
+	        if (_this5.isShownCategoryStub()) {
+	          _this5.hideCategoryStub();
+	        }
+	      }).catch(function (response) {
+	        _this5.showErrorPopup(makeErrorMessageFromResponse(response));
+	      });
 	    }
 	  }, {
 	    key: "onAddCategoryTopClick",
@@ -3142,10 +3530,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          permissionEditLink: _this6.permissionEditUrl,
 	          lazy: true,
 	          isAvailableGenerator: true,
-	          showGeneratorRestrictionPopup: function showGeneratorRestrictionPopup() {},
-	          isAvailableRobots: true,
-	          showRobotsRestrictionPopup: function showRobotsRestrictionPopup() {},
-	          isStagesEnabled: _this6.isStagesEnabled
+	          isStagesEnabled: _this6.isStagesEnabled,
+	          isAutomationEnabled: true
 	        });
 	      });
 	    }
@@ -3211,7 +3597,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        appContainer: this.getAppContainer(),
 	        id: options.ID,
 	        name: options.NAME,
-	        'default': options.IS_DEFAULT === 'Y',
+	        default: options.IS_DEFAULT,
 	        stages: stages,
 	        sort: options.SORT,
 	        access: options.ACCESS,
@@ -3220,13 +3606,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        permissionEditLink: this.permissionEditUrl,
 	        generatorsCount: options.RC_COUNT,
 	        generatorsListUrl: options.RC_LIST_URL,
-	        canEditTunnels: this.canEditTunnels,
+	        isCategoryEditable: this.isCategoryEditable,
+	        areStagesEditable: this.areStagesEditable,
 	        isAvailableGenerator: this.isAvailableGenerator,
-	        showGeneratorRestrictionPopup: this.showGeneratorRestrictionPopup,
-	        isAvailableRobots: this.isAvailableRobots,
-	        showRobotsRestrictionPopup: this.showRobotsRestrictionPopup,
 	        isAutomationEnabled: this.isAutomationEnabled,
-	        isSenderSupported: this.isSenderSupported,
 	        isStagesEnabled: this.isStagesEnabled
 	      });
 	      category.subscribe('Category:title:save', function (event) {
@@ -3313,6 +3696,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 
 	        if (!event.data.preventSave) {
+	          if (BX.Crm.Restriction.Bitrix24.isRestricted('automation')) {
+	            return BX.Crm.Restriction.Bitrix24.getHandler('automation').call();
+	          }
+
 	          var from = {
 	            category: event.data.link.from.getData().column.getData().category.id,
 	            stage: event.data.link.from.getData().column.data.stage.STATUS_ID
@@ -3363,6 +3750,10 @@ this.BX.Crm = this.BX.Crm || {};
 	          var tunnel = _this7.getTunnelByLink(event.data.link);
 
 	          if (tunnel) {
+	            if (BX.Crm.Restriction.Bitrix24.isRestricted('automation')) {
+	              return BX.Crm.Restriction.Bitrix24.getHandler('automation').call();
+	            }
+
 	            var requestOptions = {
 	              srcCategory: srcCategory,
 	              srcStage: srcStage,
@@ -3392,6 +3783,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      }).subscribe('Column:changeRobotAction', function (event) {
 	        if (!_this7.isAutomationEnabled || event.data.preventSave) {
 	          return;
+	        }
+
+	        if (BX.Crm.Restriction.Bitrix24.isRestricted('automation')) {
+	          return BX.Crm.Restriction.Bitrix24.getHandler('automation').call();
 	        }
 
 	        var columnFrom = event.data.link.from.getData().column;
@@ -3768,9 +4163,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	      });
 	    }
+	  }], [{
+	    key: "getLastInstance",
+	    value: function getLastInstance() {
+	      return this.lastInstance;
+	    }
 	  }]);
 	  return Manager;
 	}();
+
+	babelHelpers.defineProperty(Manager, "lastInstance", null);
 
 	var Kanban = {
 	  Column: Column,

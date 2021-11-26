@@ -13,7 +13,7 @@ $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
  */
 define(
 	'NO_AGENT_CHECK',
-	!in_array($action, array('REBUILD_SEARCH_CONTENT', 'BUILD_TIMELINE', 'BUILD_RECURRING_TIMELINE', 'REFRESH_ACCOUNTING', 'REBUILD_SEMANTICS'), true)
+	!in_array($action, array('REBUILD_SEARCH_CONTENT', 'BUILD_TIMELINE', 'BUILD_RECURRING_TIMELINE', 'REFRESH_ACCOUNTING', 'REBUILD_SEMANTICS', 'REBUILD_SECURITY_ATTRS'), true)
 );
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
@@ -190,6 +190,27 @@ elseif ($action === 'BUILD_RECURRING_TIMELINE')
 {
 	$agent = \Bitrix\Crm\Agent\Timeline\RecurringDealTimelineBuildAgent::getInstance();
 	if($agent->isEnabled() && !$agent->isActive())
+	{
+		$agent->enable(false);
+	}
+	if(!$agent->isEnabled())
+	{
+		__CrmDealListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	$progressData = $agent->getProgressData();
+	__CrmDealListEndResponse(
+		array(
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $progressData['PROCESSED_ITEMS'],
+			'TOTAL_ITEMS' => $progressData['TOTAL_ITEMS'],
+		)
+	);
+}
+elseif ($action === 'REBUILD_SECURITY_ATTRS')
+{
+	$agent = \Bitrix\Crm\Agent\Security\DealAttributeRebuildAgent::getInstance();
+	if($agent->isEnabled() && !$agent->isRegistered())
 	{
 		$agent->enable(false);
 	}

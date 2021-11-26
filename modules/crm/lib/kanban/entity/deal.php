@@ -4,7 +4,8 @@ namespace Bitrix\Crm\Kanban\Entity;
 
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Category\DealCategoryChangeError;
-use Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmDeal;
+use Bitrix\Crm\Deal\PaymentsRepository;
+use Bitrix\Crm\Deal\ShipmentsRepository;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Filter;
@@ -13,6 +14,9 @@ use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\UI\Filter\Options;
+use Bitrix\Crm\Component\EntityList\ClientDataProvider;
+use Bitrix\Crm\Service\Display\Field;
 
 class Deal extends Entity
 {
@@ -28,7 +32,7 @@ class Deal extends Entity
 
 	public function getItemsSelectPreset(): array
 	{
-		return ['ID', 'STAGE_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'EXCH_RATE', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'IS_REPEATED_APPROACH', 'IS_RETURN_CUSTOMER', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY', 'ORDER_STAGE'];
+		return ['ID', 'STAGE_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'EXCH_RATE', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'IS_REPEATED_APPROACH', 'IS_RETURN_CUSTOMER', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'];
 	}
 
 	public function isContactCenterSupported(): bool
@@ -58,14 +62,26 @@ class Deal extends Entity
 		return 'CRM_DEAL_LIST_V12_C_' . $this->getCategoryId();
 	}
 
+
+	public function getFilterOptions(): Options
+	{
+		$options = parent::getFilterOptions();
+		$clientFieldsRestrictionManager = new \Bitrix\Crm\Component\EntityList\ClientFieldRestrictionManager();
+		$clientFieldsRestrictionManager->removeRestrictedFieldsFromFilter($options);
+
+		return $options;
+	}
+
 	protected function getFilter(): Filter\Filter
 	{
 		if(!$this->filter)
 		{
+			$flags = \Bitrix\Crm\Filter\DealSettings::FLAG_NONE | \Bitrix\Crm\Filter\DealSettings::FLAG_ENABLE_CLIENT_FIELDS;
 			$this->filter = Filter\Factory::createEntityFilter(
 				new Filter\DealSettings([
 					'ID' => $this->getGridId(),
 					'categoryID' => $this->getCategoryId(),
+					'flags' => $flags,
 				])
 			);
 		}
@@ -145,7 +161,7 @@ class Deal extends Entity
 			'TITLE' => '',
 			'OPPORTUNITY' => '',
 			'DATE_CREATE' => '',
-			'ORDER_STAGE' => '',
+			'PAYMENT_STAGE' => '',
 			'DELIVERY_STAGE' => '',
 			'CLIENT' => '',
 			'PROBLEM_NOTIFICATION' => '',
@@ -201,6 +217,60 @@ class Deal extends Entity
 		$item = parent::prepareItemCommonFields($item);
 
 		return $item;
+	}
+
+	public function appendRelatedEntitiesValues(array $items, array $selectedFields): array
+	{
+		$items = parent::appendRelatedEntitiesValues($items, $selectedFields);
+		$dealIds = array_keys($items);
+
+		if (in_array('DELIVERY_STAGE', $selectedFields))
+		{
+			$shipmentStages = (new ShipmentsRepository())->getShipmentStages($dealIds);
+			foreach ($items as $itemId => $item)
+			{
+				if (isset($shipmentStages[$itemId]))
+				{
+					$items[$itemId]['DELIVERY_STAGE'] = \CCrmViewHelper::RenderDealDeliveryStageControl(
+						$shipmentStages[$itemId],
+						'crm-kanban-item-status'
+					);
+				}
+			}
+		}
+
+		if (in_array('PAYMENT_STAGE', $selectedFields))
+		{
+			$paymentStages = (new PaymentsRepository())->getPaymentStages($dealIds);
+			foreach ($items as $itemId => $item)
+			{
+				if (isset($paymentStages[$itemId]))
+				{
+					$items[$itemId]['PAYMENT_STAGE'] = \CCrmViewHelper::RenderDealPaymentStageControl(
+						$paymentStages[$itemId],
+						'crm-kanban-item-status'
+					);
+				}
+			}
+		}
+
+		return $items;
+	}
+
+	protected function getExtraDisplayedFields()
+	{
+		$result = parent::getExtraDisplayedFields();
+		$result['DELIVERY_STAGE'] =
+			(new Field('DELIVERY_STAGE'))
+				->setType('string')
+				->setDisplayParams(['VALUE_TYPE' => 'html']);
+
+		$result['PAYMENT_STAGE'] =
+			(new Field('PAYMENT_STAGE'))
+				->setType('string')
+				->setDisplayParams(['VALUE_TYPE' => 'html']);
+
+		return $result;
 	}
 
 	public function updateItemsCategory(array $ids, int $categoryId, \CCrmPerms $permissions): Result
@@ -311,5 +381,105 @@ class Deal extends Entity
 	protected function getColumnId(array $data): string
 	{
 		return ($data['STAGE_ID'] ?? '');
+	}
+
+	public function getClientFieldsRestrictions(): ?array
+	{
+		$clientFieldsRestrictionManager = new \Bitrix\Crm\Component\EntityList\ClientFieldRestrictionManager();
+		if (!$clientFieldsRestrictionManager->hasRestrictions())
+		{
+			return null;
+		}
+
+		return [
+			'callback' => $clientFieldsRestrictionManager->getJsCallback(),
+			'filterId' =>  $this->getGridId(),
+			'filterFields' => $clientFieldsRestrictionManager->getRestrictedFilterFields($this->getFilter()),
+		];
+	}
+
+	public function getGridFilter(): array
+	{
+		$result = parent::getGridFilter();
+
+		$filterFieldsValues = $this->getFilterOptions()->GetFilter($result);
+		$this->getContactDataProvider()->prepareFilter($result, $filterFieldsValues);
+		$this->getCompanyDataProvider()->prepareFilter($result, $filterFieldsValues);
+
+		return $result;
+	}
+
+	public function getItems(array $parameters): \CDBResult
+	{
+		if (isset($parameters['select']))
+		{
+			$this->getContactDataProvider()->prepareSelect($parameters['select']);
+			$this->getCompanyDataProvider()->prepareSelect($parameters['select']);
+		}
+
+		return parent::getItems($parameters);
+	}
+
+	public function getPopupFields(string $viewType): array
+	{
+		$fields = parent::getPopupFields($viewType);
+		foreach ($fields as $i => $field)
+		{
+			if (mb_strpos($field['NAME'], 'CONTACT_') === 0 || mb_strpos($field['NAME'], 'COMPANY_') === 0)
+			{
+				unset($fields[$i]);
+			}
+		}
+
+		if ($viewType !== static::VIEW_TYPE_EDIT)
+		{
+			if (ClientDataProvider::getPriorityEntityTypeId() === \CCrmOwnerType::Contact)
+			{
+				$firstProvider = $this->getContactDataProvider();
+				$secondProvider = $this->getCompanyDataProvider();
+			}
+			else
+			{
+				$firstProvider = $this->getCompanyDataProvider();
+				$secondProvider = $this->getContactDataProvider();
+			}
+			$fields = array_merge(
+				$fields,
+				$firstProvider->getPopupFields(),
+				$secondProvider->getPopupFields(),
+			);
+		}
+
+		return $fields;
+	}
+
+	protected function prepareFieldsSections(array $configuration): array
+	{
+		$sections = parent::prepareFieldsSections($configuration);
+
+		$contactSection = [
+			'name' => 'contact_fields',
+			'title' => Loc::getMessage('CRM_KANBAN_FIELD_SECTION_CONTACTS'),
+			'type' => 'section',
+			'elementsRule' => '^CONTACT\_' // js RegExp
+		];
+		$companySection = [
+			'name' => 'company_fields',
+			'title' => Loc::getMessage('CRM_KANBAN_FIELD_SECTION_COMPANIES'),
+			'type' => 'section',
+			'elementsRule' => '^COMPANY\_' // js RegExp
+		];
+		if (ClientDataProvider::getPriorityEntityTypeId() === \CCrmOwnerType::Contact)
+		{
+			$sections[] = $contactSection;
+			$sections[] = $companySection;
+		}
+		else
+		{
+			$sections[] = $companySection;
+			$sections[] = $contactSection;
+		}
+
+		return $sections;
 	}
 }

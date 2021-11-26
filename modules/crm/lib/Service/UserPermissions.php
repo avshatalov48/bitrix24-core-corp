@@ -6,6 +6,9 @@ use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Item;
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Crm\Security\QueryBuilder;
+use Bitrix\Main\Loader;
+use Bitrix\Crm\Security\AttributesProvider;
 
 class UserPermissions
 {
@@ -26,6 +29,8 @@ class UserPermissions
 
 	protected $userId;
 	protected $crmPermissions;
+	protected $isAdmin;
+	protected $attributesProvider;
 
 	public function setCrmPermissions(\CCrmPerms $crmPermissions): UserPermissions
 	{
@@ -52,6 +57,58 @@ class UserPermissions
 	public function getUserId(): int
 	{
 		return $this->userId;
+	}
+
+	public function isAdmin(): bool
+	{
+		if ($this->isAdmin !== null)
+		{
+			return $this->isAdmin;
+		}
+
+		$this->isAdmin = false;
+		if ($this->getUserId() <= 0)
+		{
+			return $this->isAdmin; // false
+		}
+
+		$currentUser = \CCrmSecurityHelper::GetCurrentUser();
+		if((int)$currentUser->GetID() === $this->getUserId())
+		{
+			$this->isAdmin = $currentUser->isAdmin();
+		}
+		if ($this->isAdmin)
+		{
+			return $this->isAdmin; //true
+		}
+
+		try
+		{
+			if(
+				\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+				&& Loader::IncludeModule('bitrix24'))
+			{
+				if(
+					class_exists('CBitrix24')
+					&& method_exists('CBitrix24', 'IsPortalAdmin')
+				)
+				{
+					// New style check
+					$this->isAdmin = \CBitrix24::IsPortalAdmin($this->getUserId());
+				}
+			}
+			else
+			{
+				// Check user group 1 ('Portal admins')
+				$arGroups = $currentUser->GetUserGroup($this->getUserId());
+				$this->isAdmin = in_array(1, $arGroups);
+			}
+		}
+		catch(\Exception $e)
+		{
+		}
+
+		return $this->isAdmin;
 	}
 
 	public function canWriteConfig(): bool
@@ -358,7 +415,11 @@ class UserPermissions
 			}
 		}
 
-		$userAttributes = \CCrmPerms::BuildUserEntityAttr($assignedById);
+		$userAttributes = \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions((int)$assignedById)
+			->getAttributesProvider()
+			->getEntityAttributes()
+		;
 
 		return array_merge($attributes, $userAttributes['INTRANET']);
 	}
@@ -382,6 +443,11 @@ class UserPermissions
 
 	public static function getEntityNameByPermissionEntityType(string $permissionEntityType): ?string
 	{
+		if(\Bitrix\Crm\Category\DealCategory::hasPermissionEntity($permissionEntityType))
+		{
+			return \CCrmOwnerType::DealName;
+		}
+
 		if (mb_strpos($permissionEntityType, \CCrmOwnerType::DynamicTypePrefixName) === 0)
 		{
 			[$prefix, $entityTypeId, ] = explode('_', $permissionEntityType);
@@ -389,26 +455,34 @@ class UserPermissions
 			return $prefix . '_' . $entityTypeId;
 		}
 
+		if (\CCrmOwnerType::ResolveID($permissionEntityType) !== \CCrmOwnerType::Undefined)
+		{
+			return $permissionEntityType;
+		}
+
 		return null;
 	}
 
-	public function updateItemAttributes(Item $item): void
+	public static function getCategoryIdFromPermissionEntityType(string $permissionEntityType): ?int
 	{
-		$permissionAttributes = $this->prepareItemPermissionAttributes($item);
+		$dealCategoryId = \Bitrix\Crm\Category\DealCategory::convertFromPermissionEntityType($permissionEntityType);
+		if($dealCategoryId !== -1)
+		{
+			return $dealCategoryId;
+		}
 
-		\CCrmPerms::UpdateEntityAttr(
-			static::getItemPermissionEntityType($item),
-			$item->getId(),
-			$permissionAttributes
-		);
-	}
+		if (mb_strpos($permissionEntityType, \CCrmOwnerType::DynamicTypePrefixName) === 0)
+		{
+			[$prefix, $entityTypeId, $categoryId] = explode('_', $permissionEntityType);
+			if ((string)$categoryId !== '')
+			{
+				$categoryId = (int)mb_substr($categoryId, 1);
 
-	public function deleteItemAttributes(Item $item): void
-	{
-		\CCrmPerms::DeleteEntityAttr(
-			static::getItemPermissionEntityType($item),
-			$item->getId()
-		);
+				return $categoryId;
+			}
+		}
+
+		return null;
 	}
 
 	public function applyAvailableItemsFilter(
@@ -418,35 +492,29 @@ class UserPermissions
 		?string $primary = 'ID'
 	): array
 	{
-		if (!$operation)
+		$builderOptions = new \Bitrix\Crm\Security\QueryBuilder\Options();
+		$builderOptions->setNeedReturnRawQuery(true);
+		if ($operation)
 		{
-			$operation = self::OPERATION_READ;
+			$builderOptions->setOperations((array)$operation);
 		}
-		$permissions = $this->getCrmPermissions();
-		$permissionSql = \CCrmPerms::BuildSqlForEntitySet(
-			$permissionEntityTypes,
-			'',
-			$operation,
-			[
-				'RAW_QUERY' => true,
-				'PERMS' => $permissions
-			]
-		);
+		$queryBuilder = $this->createListQueryBuilder($permissionEntityTypes, $builderOptions);
+		$result = $queryBuilder->build();
 
-		if ($permissionSql === '')
+		if (!$result->hasRestrictions())
 		{
 			// no need to apply filter
 			return (array)$filter;
 		}
 
-		if ($permissionSql === false)
+		if (!$result->hasAccess())
 		{
 			// access denied
 			$expression = [0];
 		}
 		else
 		{
-			$expression = new SqlExpression($permissionSql);
+			$expression = $result->getSqlExpression();
 		}
 
 		if (!is_array($filter))
@@ -501,5 +569,23 @@ class UserPermissions
 		}
 
 		return null;
+	}
+
+	public function createListQueryBuilder(
+		$permissionEntityTypes,
+		QueryBuilder\Options $options = null
+	): QueryBuilder
+	{
+		return new QueryBuilder((array)$permissionEntityTypes, $this, $options);
+	}
+
+	public function getAttributesProvider(): AttributesProvider
+	{
+		if (!$this->attributesProvider)
+		{
+			$this->attributesProvider = new AttributesProvider($this->getUserId());
+		}
+
+		return $this->attributesProvider;
 	}
 }

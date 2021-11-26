@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Integration\BizProc\Document;
 
-use Bitrix\Crm\Order\ContactCompanyCollection;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
@@ -250,72 +249,10 @@ class Order extends \CCrmDocument implements \IBPWorkflowDocument
 			throw new \CBPArgumentNullException('documentId');
 		}
 
-		$arResult = null;
-		$order = Crm\Order\Order::load($arDocumentID['ID']);
-
-		if ($order && $fields = $order->getFieldValues())
-		{
-			$responsibleId = $fields['RESPONSIBLE_ID'];
-			$buyerId = $fields['USER_ID'];
-
-			$userKeys = [
-				'USER_ID', 'EMP_PAYED_ID', 'EMP_DEDUCTED_ID', 'EMP_STATUS_ID', 'EMP_MARKED_ID',
-				'EMP_ALLOW_DELIVERY_ID', 'CREATED_BY', 'RESPONSIBLE_ID', 'EMP_CANCELED_ID',
-			];
-			foreach ($userKeys as $userKey)
-			{
-				if (isset($fields[$userKey]))
-				{
-					$fields[$userKey] = 'user_'.$fields[$userKey];
-				}
-			}
-
-			$dbRes = ContactCompanyCollection::getList(array(
-				'select' => array('ENTITY_ID', 'ENTITY_TYPE_ID'),
-				'filter' => array(
-					'=ORDER_ID' => $arDocumentID['ID'],
-					'@ENTITY_TYPE_ID' => [\CCrmOwnerType::Contact, \CCrmOwnerType::Company],
-					'IS_PRIMARY' => 'Y'
-				),
-				'order' => ['ENTITY_TYPE_ID' => 'ASC']
-			));
-			while ($row = $dbRes->fetch())
-			{
-				$refDocumentTypeName = \CCrmOwnerType::ResolveName($row['ENTITY_TYPE_ID']);
-				$refDocument = parent::GetDocument($refDocumentTypeName.'_'.$row['ENTITY_ID']);
-				if ($refDocument)
-				{
-					self::appendReferenceValues($fields, $refDocument, $row['ENTITY_TYPE_ID']);
-				}
-			}
-
-			$fields['LID_PRINTABLE'] = $fields['LID'];
-			if ($siteResult = \CSite::GetByID($fields['LID']))
-			{
-				$site = $siteResult->fetch();
-				$fields['LID_PRINTABLE'] = $site['NAME'];
-			}
-
-			$fields['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($fields['PRICE'], $fields['CURRENCY']);
-
-			self::fillResponsibleFields($responsibleId, $fields);
-			self::fillShippingFields($order, $fields);
-			self::fillBuyerFields($buyerId, $fields);
-			self::fillShopFields($order, $fields);
-			self::convertDateFields($fields);
-
-			return $fields;
-		}
-		return null;
-	}
-
-	private static function appendReferenceValues(array &$thisValues, array $referenceValues, $entityTypeId)
-	{
-		$idPrefix = \CCrmOwnerType::ResolveName($entityTypeId);
-		foreach ($referenceValues as $id => $field)
-		{
-			$thisValues[$idPrefix.'.'.$id] = $field;
-		}
+		return new Crm\Integration\BizProc\Document\ValueCollection\Order(
+			\CCrmOwnerType::Order,
+			$arDocumentID['ID']
+		);
 	}
 
 	public static function GetDocumentType($documentId)
@@ -402,21 +339,6 @@ class Order extends \CCrmDocument implements \IBPWorkflowDocument
 				'Multiple' => true
 			]
 		];
-	}
-
-	private static function fillShippingFields(Crm\Order\Order $order, array &$fields)
-	{
-		$fields['SHIPPING.ALL.TRACKING_NUMBER'] = [];
-
-		$collection = $order->getShipmentCollection()->getNotSystemItems();
-		/** @var \Bitrix\Sale\Shipment $shipment */
-		foreach ($collection as $shipment)
-		{
-			if ($num = $shipment->getField('TRACKING_NUMBER'))
-			{
-				$fields['SHIPPING.ALL.TRACKING_NUMBER'][] = $num;
-			}
-		}
 	}
 
 	public static function getDocumentName($documentId)
@@ -530,136 +452,6 @@ class Order extends \CCrmDocument implements \IBPWorkflowDocument
 				'Type' => 'string',
 			),
 		];
-	}
-
-	private static function fillResponsibleFields($responsibleId, array &$fields)
-	{
-		$dbUsers = \CUser::GetList(
-			'id', 'asc',
-			array('ID' => (int) $responsibleId),
-			array('SELECT' => array(
-				'EMAIL',
-				'UF_SKYPE',
-				'UF_TWITTER',
-				'UF_FACEBOOK',
-				'UF_LINKEDIN',
-				'UF_XING',
-				'UF_WEB_SITES',
-				'UF_PHONE_INNER',
-			))
-		);
-
-		$arUser = is_object($dbUsers) ? $dbUsers->fetch() : null;
-		if (!$arUser)
-		{
-			return false;
-		}
-
-		$fields['RESPONSIBLE_ID.EMAIL'] = $arUser['EMAIL'];
-		$fields['RESPONSIBLE_ID.WORK_PHONE'] = $arUser['WORK_PHONE'];
-		$fields['RESPONSIBLE_ID.PERSONAL_MOBILE'] = $arUser['PERSONAL_MOBILE'];
-		$fields['RESPONSIBLE_ID.LOGIN'] = $arUser['LOGIN'];
-		$fields['RESPONSIBLE_ID.ACTIVE'] = $arUser['ACTIVE'];
-		$fields['RESPONSIBLE_ID.NAME'] = $arUser['NAME'];
-		$fields['RESPONSIBLE_ID.LAST_NAME'] = $arUser['LAST_NAME'];
-		$fields['RESPONSIBLE_ID.SECOND_NAME'] = $arUser['SECOND_NAME'];
-		$fields['RESPONSIBLE_ID.WORK_POSITION'] = $arUser['WORK_POSITION'];
-		$fields['RESPONSIBLE_ID.PERSONAL_WWW'] = $arUser['PERSONAL_WWW'];
-		$fields['RESPONSIBLE_ID.PERSONAL_CITY'] = $arUser['PERSONAL_CITY'];
-		$fields['RESPONSIBLE_ID.UF_SKYPE'] = $arUser['UF_SKYPE'];
-		$fields['RESPONSIBLE_ID.UF_TWITTER'] = $arUser['UF_TWITTER'];
-		$fields['RESPONSIBLE_ID.UF_FACEBOOK'] = $arUser['UF_FACEBOOK'];
-		$fields['RESPONSIBLE_ID.UF_LINKEDIN'] = $arUser['UF_LINKEDIN'];
-		$fields['RESPONSIBLE_ID.UF_XING'] = $arUser['UF_XING'];
-		$fields['RESPONSIBLE_ID.UF_WEB_SITES'] = $arUser['UF_WEB_SITES'];
-		$fields['RESPONSIBLE_ID.UF_PHONE_INNER'] = $arUser['UF_PHONE_INNER'];
-
-		$fields['RESPONSIBLE_ID_PRINTABLE'] = \CUser::FormatName(
-			\CSite::GetNameFormat(false),
-			[
-				'LOGIN' => $fields['RESPONSIBLE_ID.LOGIN'],
-				'NAME' => $fields['RESPONSIBLE_ID.NAME'],
-				'LAST_NAME' => $fields['RESPONSIBLE_ID.LAST_NAME'],
-				'SECOND_NAME' => $fields['RESPONSIBLE_ID.SECOND_NAME']
-			],
-			true, false
-		);
-	}
-
-	private static function fillBuyerFields($buyerId, array &$fields)
-	{
-		$dbUsers = \CUser::GetList(
-			'id', 'asc',
-			array('ID' => (int) $buyerId),
-			array('SELECT' => array(
-				'LOGIN',
-				'NAME',
-				'LAST_NAME',
-				'SECOND_NAME',
-				'EMAIL',
-			))
-		);
-
-		$arUser = is_object($dbUsers) ? $dbUsers->fetch() : null;
-		if (!$arUser)
-		{
-			return false;
-		}
-
-		$fields['USER_ID_PRINTABLE'] = \CUser::FormatName(
-			\CSite::GetNameFormat(false),
-			$arUser,
-			true, false
-		);
-	}
-
-	private static function fillShopFields(Crm\Order\Order $order, array &$fields)
-	{
-		$collection = $order->getTradeBindingCollection();
-		/** @var \Bitrix\Crm\Order\TradeBindingEntity $entity */
-		foreach ($collection as $entity)
-		{
-			$platform = $entity->getTradePlatform();
-			if ($platform === null)
-			{
-				continue;
-			}
-
-			$data = $platform->getInfo();
-			$fields['SHOP_TITLE'] = $data['TITLE'];
-			$fields['SHOP_PUBLIC_URL'] = $data['PUBLIC_URL'];
-			break;
-		}
-
-		if (empty($fields['SHOP_TITLE']))
-		{
-			$siteData = Main\SiteTable::getList([
-				"select" => ["LID", "NAME", "SITE_NAME"],
-				"filter" => ["LID" => $order->getSiteId()]
-			])->fetch();
-			if ($siteData)
-			{
-				if ($siteData["SITE_NAME"])
-				{
-					$fields['SHOP_TITLE'] = $siteData["SITE_NAME"];
-				}
-				else
-				{
-					$fields['SHOP_TITLE'] = $siteData["NAME"];
-				}
-			}
-		}
-	}
-
-	private static function convertDateFields(array &$fields)
-	{
-		foreach ($fields as $field => $value)
-		{
-			if ($value instanceof Main\Type\DateTime)
-			{
-				$fields[$field] = $value->format(Main\Type\Date::getFormat());
-			}
-		}
 	}
 
 	public static function isFeatureEnabled($documentType, $feature)

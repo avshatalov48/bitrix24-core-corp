@@ -3,18 +3,20 @@
 namespace Bitrix\Crm\Agent\Recyclebin;
 
 use Bitrix\Crm\Agent\AgentBase;
+use Bitrix\Crm\Settings\RecyclebinSettings;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Config\Option;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Recyclebin\Recyclebin;
 
 class RecyclebinAgent extends AgentBase
 {
-	private const
-		ENTITY_LIMIT = 100,
-		B24_DAYS_TTL = 30,
-		SECONDS_IN_DAY = 86400; // 60 * 60 * 24
+	private const ENTITY_LIMIT = 100;
+	private const B24_DAYS_TTL = 30;
+	private const SECONDS_IN_DAY = 86400; // 60 * 60 * 24
+	private const TIME_LIMIT = 10; // 10 seconds by default
 
 	/**
 	 * @return bool
@@ -23,14 +25,11 @@ class RecyclebinAgent extends AgentBase
 	{
 		if (Loader::includeModule('recyclebin'))
 		{
-			if (ModuleManager::isModuleInstalled('bitrix24'))
-			{
-				$ttl = self::B24_DAYS_TTL;
-			}
-			else
-			{
-				$ttl = \Bitrix\Crm\Settings\RecyclebinSettings::getCurrent()->getTtl();
-			}
+			$ttl = (
+				ModuleManager::isModuleInstalled('bitrix24')
+					? self::B24_DAYS_TTL
+					: RecyclebinSettings::getCurrent()->getTtl()
+			);
 
 			if ($ttl < 0)
 			{
@@ -39,6 +38,7 @@ class RecyclebinAgent extends AgentBase
 
 			self::removeExpiredEntities($ttl);
 		}
+
 		return true;
 	}
 
@@ -48,17 +48,28 @@ class RecyclebinAgent extends AgentBase
 	private static function removeExpiredEntities(int $ttl): void
 	{
 		$timestamp = time() + \CTimeZone::getOffset() - self::SECONDS_IN_DAY * $ttl;
+		$entityLimit = (int)Option::get('crm', 'recyclebin_agent_entity_limit', self::ENTITY_LIMIT);
+
 		$list = RecyclebinTable::getList([
 			'filter' => [
 				'MODULE_ID' => 'crm',
-				'<=TIMESTAMP' => DateTime::createFromTimestamp($timestamp)
+				'<=TIMESTAMP' => DateTime::createFromTimestamp($timestamp),
 			],
 			'order' => ['TIMESTAMP' => 'ASC'],
-			'limit' => self::ENTITY_LIMIT
+			'limit' => ($entityLimit > 0 ? $entityLimit : self::ENTITY_LIMIT),
 		]);
+
+		$timeLimit = (int)Option::get('crm', 'recyclebin_agent_time_limit', self::TIME_LIMIT);
+		$timeLimit = ($timeLimit > 0 ? $timeLimit : self::TIME_LIMIT);
+
+		$start = time();
 		foreach ($list as $item)
 		{
-			$entity = Recyclebin::remove($item['ID'], ['skipAdminRightsCheck' => true]);
+			Recyclebin::remove($item['ID'], ['skipAdminRightsCheck' => true]);
+			if (time() - $start > $timeLimit)
+			{
+				return;
+			}
 		}
 	}
 }

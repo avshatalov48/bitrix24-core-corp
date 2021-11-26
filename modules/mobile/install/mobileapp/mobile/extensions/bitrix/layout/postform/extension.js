@@ -992,6 +992,14 @@
 							end: '[/USER]'
 						},
 						{
+							full: /\[PROJECT=(\d+)\]|\[\/PROJECT\]/gi,
+							end: '[/PROJECT]'
+						},
+						{
+							full: /\[DEPARTMENT=(\d+)\]|\[\/DEPARTMENT\]/gi,
+							end: '[/DEPARTMENT]'
+						},
+						{
 							full: /\[B\]|\[\/B\]/gi,
 							end: '[/B]'
 						},
@@ -1054,7 +1062,20 @@
 						const before = this.postText.substr(0, (keyboard ? realPosition-1 : realPosition));
 						const after = this.postText.substr(realPosition, this.postText.length);
 						const entityData = recipients[key].shift();
-						const entityBB = (key === 'users' ? `[USER=${entityData.id}]${entityData.title}[/USER]` : entityData.title);
+
+						let entityBB = entityData.title;
+						switch (key)
+						{
+							case 'users':
+								entityBB = `[USER=${entityData.id}]${entityData.title}[/USER]`;
+								break;
+							case 'groups':
+								entityBB = `[PROJECT=${entityData.id}]${entityData.title}[/PROJECT]`;
+								break;
+							case 'departments':
+								entityBB = `[DEPARTMENT=${entityData.id}]${entityData.title}[/DEPARTMENT]`;
+								break;
+						}
 
 						this.postText = `${before}${(before.length > 0 ? ' ' : '')}${entityBB} ${after}`;
 						this.postTextCursorPosition += (keyboard ? -1 : 0) + `${(before.length > 0 ? ' ' : '')}${entityData.title} `.length;
@@ -1565,6 +1586,11 @@
 						{
 							votePanelRef.addQuestion();
 							votePanelRef.addAnswer(0);
+
+							setTimeout(() => {
+								votePanelRef.questions[0].element.focus();
+							}, 200);
+
 						}
 					},
 					onRejected: () => {
@@ -1614,9 +1640,10 @@
 				votePanelRef.addQuestion();
 				votePanelRef.addAnswer(newState.voteData.questions.length - 1);
 			}
-
 			this.setState(newState, () => {
-				votePanelRef.questions[newState.voteData.questions.length - 1].element.focus();
+				setTimeout(() => {
+					votePanelRef.questions[newState.voteData.questions.length - 1].element.focus();
+				}, 200)
 			});
 		};
 

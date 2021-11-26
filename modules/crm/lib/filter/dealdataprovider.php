@@ -73,14 +73,36 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 	{
 		$result =  array(
 			'ID' => $this->createField('ID'),
-			'TITLE' => $this->createField('TITLE'),
+			'TITLE' => $this->createField(
+				'TITLE',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'ASSIGNED_BY_ID' => $this->createField(
 				'ASSIGNED_BY_ID',
-				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'default' => true,
+					'partial' => true,
+				]
 			),
 			'OPPORTUNITY' => $this->createField(
 				'OPPORTUNITY',
-				array('type' => 'number')
+				[
+					'type' => 'number',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'CURRENCY_ID' => $this->createField(
 				'CURRENCY_ID',
@@ -88,7 +110,15 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 			),
 			'PROBABILITY' => $this->createField(
 				'PROBABILITY',
-				array('type' => 'number')
+				[
+					'type' => 'number',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'IS_NEW' => $this->createField(
 				'IS_NEW',
@@ -135,11 +165,6 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 			);
 		}
 
-		$result['ORDER_STAGE'] = $this->createField(
-			'ORDER_STAGE',
-			array('type' => 'list', 'default' => false, 'partial' => true)
-		);
-
 		$result['DELIVERY_STAGE'] = $this->createField(
 			'DELIVERY_STAGE',
 			array('type' => 'list', 'default' => false, 'partial' => true)
@@ -152,19 +177,44 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 
 		$result['PAYMENT_PAID'] = $this->createField(
 			'PAYMENT_PAID',
-			array('type' => 'date')
+			[
+				'type' => 'date',
+				'data' => [
+					'additionalFilter' => [
+						'isEmpty',
+						'hasAnyValue',
+					],
+				],
+			]
 		);
 
 		$result['BEGINDATE'] = $this->createField(
 			'BEGINDATE',
-			array('type' => 'date')
+			[
+				'type' => 'date',
+				'data' => [
+					'additionalFilter' => [
+						'isEmpty',
+						'hasAnyValue',
+					],
+				],
+			]
 		);
 
 		if(!$this->settings->checkFlag(DealSettings::FLAG_RECURRING))
 		{
 			$result['CLOSEDATE'] = $this->createField(
 				'CLOSEDATE',
-				array('type' => 'date', 'default' => true)
+				[
+					'type' => 'date',
+					'default' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			);
 
 			$result['CLOSED'] = $this->createField(
@@ -181,7 +231,15 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 		//region OUTDATED EVENT FIELDS
 		$result['EVENT_DATE'] = $this->createField(
 			'EVENT_DATE',
-			array('type' => 'date')
+			[
+				'type' => 'date',
+				'data' => [
+					'additionalFilter' => [
+						'isEmpty',
+						'hasAnyValue',
+					],
+				],
+			]
 		);
 
 		$result['EVENT_ID'] = $this->createField(
@@ -197,32 +255,73 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 				'CONTACT_ID',
 				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
-			'CONTACT_FULL_NAME' => $this->createField('CONTACT_FULL_NAME'),
+			'CONTACT_FULL_NAME' => $this->createField(
+				'CONTACT_FULL_NAME',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
 				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
-			'COMPANY_TITLE' => $this->createField('COMPANY_TITLE'),
-			'COMMENTS' => $this->createField('COMMENTS'),
+			'COMMENTS' => $this->createField(
+				'COMMENTS',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'TYPE_ID' => $this->createField(
 				'TYPE_ID',
 				array('type' => 'list', 'partial' => true)
 			),
 			'DATE_CREATE' => $this->createField(
 				'DATE_CREATE',
-				array('type' => 'date')
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'DATE_MODIFY' => $this->createField(
 				'DATE_MODIFY',
-				array('type' => 'date')
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
 			),
 			'MODIFY_BY_ID' => $this->createField(
 				'MODIFY_BY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
 			)
 		);
 
@@ -251,7 +350,18 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 			//region UTM
 			foreach (Crm\UtmTable::getCodeNames() as $code => $name)
 			{
-				$result[$code] = $this->createField($code, array('name' => $name));
+				$result[$code] = $this->createField(
+					$code,
+					[
+						'name' => $name,
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
+				);
 			}
 			//endregion
 		}
@@ -275,26 +385,44 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 			);
 			$result['CRM_DEAL_RECURRING_LIMIT_DATE'] = $this->createField(
 				'CRM_DEAL_RECURRING_LIMIT_DATE',
-				array(
+				[
+					'type' => 'date',
 					'name' => Loc::getMessage('CRM_DEAL_FILTER_RECURRING_LIMIT_DATE'),
-					'type' => 'date'
-				)
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			);
 			$result['CRM_DEAL_RECURRING_COUNTER_REPEAT'] = $this->createField(
 				'CRM_DEAL_RECURRING_COUNTER_REPEAT',
-				array(
+				[
 					'name' => Loc::getMessage('CRM_DEAL_FILTER_RECURRING_COUNTER_REPEAT'),
-					'type' => 'number'
-				)
+					'type' => 'number',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			);
 		}
 
 		$result['ACTIVE_TIME_PERIOD'] = $this->createField(
 			'ACTIVE_TIME_PERIOD',
-			array(
+			[
+				'type' => 'date',
 				'name' => Loc::getMessage('CRM_DEAL_FILTER_ACTIVE_TIME_PERIOD'),
-				'type' => 'date'
-			)
+				'data' => [
+					'additionalFilter' => [
+						'isEmpty',
+						'hasAnyValue',
+					],
+				],
+			]
 		);
 
 		$result['STAGE_ID_FROM_HISTORY'] = $this->createField(
@@ -343,22 +471,17 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 				'items' => \CCrmStatus::GetStatusList('DEAL_TYPE')
 			);
 		}
-		elseif($fieldID === 'ASSIGNED_BY_ID')
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID'], true))
 		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_DEAL_FILTER_ASSIGNED_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U'
-				)
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+			$referenceClass = ($factory ? $factory->getDataClass() : null);
+
+			return $this->getUserEntitySelectorParams(
+				strtolower('crm_deal_filter_' . $fieldID),
+				[
+					'fieldName' => $fieldID,
+					'referenceClass' => $referenceClass,
+				]
 			);
 		}
 		elseif($fieldID === 'STAGE_ID' || $fieldID === 'STAGE_ID_FROM_HISTORY' || $fieldID === 'STAGE_ID_FROM_SUPPOSED_HISTORY')
@@ -367,13 +490,6 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 			return array(
 				'params' => array('multiple' => 'Y'),
 				'items' => DealCategory::getStageList(max($categoryID, 0))
-			);
-		}
-		elseif($fieldID === 'ORDER_STAGE')
-		{
-			return array(
-				'params' => array('multiple' => 'Y'),
-				'items' => Crm\Order\OrderStage::getList()
 			);
 		}
 		elseif($fieldID === 'DELIVERY_STAGE')
@@ -387,7 +503,7 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 		{
 			return array(
 				'params' => ['multiple' => 'Y'],
-				'items' => Crm\Order\PaymentStage::getList()
+				'items' => Crm\Workflow\PaymentStage::getMessages()
 			);
 		}
 		elseif($fieldID === 'STAGE_SEMANTIC_ID' || $fieldID === 'STAGE_SEMANTIC_ID_FROM_HISTORY')
@@ -453,42 +569,6 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 					'enableCrm' => 'Y',
 					'enableCrmCompanies' => 'Y',
 					'convertJson' => 'Y'
-				)
-			);
-		}
-		elseif($fieldID === 'CREATED_BY_ID')
-		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_DEAL_FILTER_CREATED_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U'
-				)
-			);
-		}
-		elseif($fieldID === 'MODIFY_BY_ID')
-		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_DEAL_FILTER_MODIFY_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U'
 				)
 			);
 		}

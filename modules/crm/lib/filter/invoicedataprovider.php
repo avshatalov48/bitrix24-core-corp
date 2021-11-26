@@ -49,10 +49,52 @@ class InvoiceDataProvider extends Main\Filter\EntityDataProvider
 	{
 		$result =  [
 			'ID' => $this->createField('ID'),
-			'ACCOUNT_NUMBER' => $this->createField('ACCOUNT_NUMBER'),
-			'ORDER_TOPIC' => $this->createField('ORDER_TOPIC'),
-			'PRICE' => $this->createField('PRICE', ['type' => 'number']),
-			'DATE_INSERT' => $this->createField('DATE_INSERT', ['type' => 'date'])
+			'ACCOUNT_NUMBER' => $this->createField(
+				'ACCOUNT_NUMBER',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'ORDER_TOPIC' => $this->createField(
+				'ORDER_TOPIC',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'PRICE' => $this->createField(
+				'PRICE',
+				[
+					'type' => 'number',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'DATE_INSERT' => $this->createField(
+				'DATE_INSERT',
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 		];
 
 		if($this->settings->checkFlag(InvoiceSettings::FLAG_RECURRING))
@@ -76,29 +118,85 @@ class InvoiceDataProvider extends Main\Filter\EntityDataProvider
 				),
 				'CRM_INVOICE_RECURRING_NEXT_EXECUTION' => $this->createField(
 					'CRM_INVOICE_RECURRING_NEXT_EXECUTION',
-					array('default' => true, 'type' => 'date')
+					[
+						'type' => 'date',
+						'default' => true,
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
 				),
 				'CRM_INVOICE_RECURRING_LIMIT_DATE' => $this->createField(
 					'CRM_INVOICE_RECURRING_LIMIT_DATE',
-					array('default' => true, 'type' => 'date')
+					[
+						'type' => 'date',
+						'default' => true,
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
 				),
 				'CRM_INVOICE_RECURRING_COUNTER_REPEAT' => $this->createField(
 					'CRM_INVOICE_RECURRING_COUNTER_REPEAT',
-					array('default' => true, 'type' => 'number')
-				)
+					[
+						'default' => true,
+						'type' => 'number',
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
+				),
 			);
 		}
 		else
 		{
 			$result += array(
-				'DATE_UPDATE' => $this->createField('DATE_UPDATE', array('type' => 'date')),
+				'DATE_UPDATE' => $this->createField(
+					'DATE_UPDATE',
+					[
+						'type' => 'date',
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
+				),
 				'DATE_BILL' => $this->createField(
 					'DATE_BILL',
-					array('default' => true, 'type' => 'date')
+					[
+						'type' => 'date',
+						'default' => true,
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
 				),
 				'DATE_PAY_BEFORE' => $this->createField(
 					'DATE_PAY_BEFORE',
-					array('default' => true, 'type' => 'date')
+					[
+						'type' => 'date',
+						'default' => true,
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
 				),
 				'STATUS_ID' => $this->createField(
 					'STATUS_ID',
@@ -106,16 +204,53 @@ class InvoiceDataProvider extends Main\Filter\EntityDataProvider
 				),
 				'DATE_STATUS' => $this->createField(
 					'DATE_STATUS',
-					array('default' => false, 'type' => 'date')
+					[
+						'type' => 'date',
+						'default' => false,
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
 				),
-				'PAY_VOUCHER_NUM' => $this->createField('PAY_VOUCHER_NUM'),
+				'PAY_VOUCHER_NUM' => $this->createField(
+					'PAY_VOUCHER_NUM',
+					[
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
+				),
 				'PAY_VOUCHER_DATE' => $this->createField(
 					'PAY_VOUCHER_DATE',
-					array('default' => false, 'type' => 'date')
+					[
+						'type' => 'date',
+						'default' => false,
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
 				),
 				'DATE_MARKED' => $this->createField(
 					'DATE_MARKED',
-					array('default' => false, 'type' => 'date')
+					[
+						'type' => 'date',
+						'default' => false,
+						'data' => [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						],
+					]
 				),
 				'RESPONSIBLE_ID' => $this->createField(
 					'RESPONSIBLE_ID',

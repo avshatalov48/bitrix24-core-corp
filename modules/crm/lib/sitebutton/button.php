@@ -254,6 +254,24 @@ class Button
 		return $this->data['SETTINGS']['COPYRIGHT_REMOVED'] == 'Y';
 	}
 
+	/**
+	 * @throws \Exception
+	 */
+	public function changeOpenLineActivity(bool $isActive): bool
+	{
+		$items = $this->data['ITEMS'] ?? null;
+		if ($items && isset($items['openline']['ACTIVE']))
+		{
+			$newState = $isActive ? 'Y' : 'N';
+			$items['openline']['ACTIVE'] = $newState;
+			$updatedFields = ['ITEMS' => $items];
+			$this->mergeData($updatedFields);
+			$updateResult = Internals\ButtonTable::update($this->getId(), $updatedFields);
+			return $updateResult->isSuccess();
+		}
+		return false;
+	}
+
 	public function save()
 	{
 		$fields = $this->data;

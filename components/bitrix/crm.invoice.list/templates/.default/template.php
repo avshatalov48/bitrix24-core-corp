@@ -513,6 +513,7 @@ $APPLICATION->IncludeComponent(
 	array(
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
+		'ENABLE_FIELDS_SEARCH' => 'Y',
 		'SORT' => $arResult['SORT'],
 		'SORT_VARS' => $arResult['SORT_VARS'],
 		'ROWS' => $arResult['GRID_DATA'],
@@ -527,7 +528,13 @@ $APPLICATION->IncludeComponent(
 			'LAZY_LOAD' => array(
 				'GET_LIST' => '/bitrix/components/bitrix/crm.invoice.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.invoice.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-			)
+			),
+			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'CONFIG' => [
+				'popupColumnsCount' => 4,
+				'popupWidth' => 800,
+				'showPopupInCenter' => true,
+			],
 		),
 		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
 			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,

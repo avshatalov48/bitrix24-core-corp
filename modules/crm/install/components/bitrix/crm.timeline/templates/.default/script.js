@@ -9792,14 +9792,15 @@ if(typeof(BX.CrmHistoryItemEmail) === "undefined")
 		var entityData = this.getAssociatedEntityData();
 		var emailInfo =  BX.prop.getObject(entityData, "EMAIL_INFO", null);
 		var statusText = emailInfo !== null ? BX.prop.getString(emailInfo, "STATUS_TEXT", "") : "";
-
+		var error = emailInfo !== null? BX.prop.getBoolean(emailInfo, "STATUS_ERROR", false) : false;
+		var className = !error? "crm-entity-stream-content-event-skipped" : "crm-entity-stream-content-event-missing";
 		if(statusText !== "")
 		{
 			header.appendChild(
 				BX.create(
 					"SPAN",
 					{
-						props: { className: "crm-entity-stream-content-event-skipped" },
+						props: { className: className},
 						text: statusText
 					}
 				)

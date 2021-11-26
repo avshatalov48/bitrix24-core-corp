@@ -18,7 +18,6 @@ use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
-use Bitrix\Main\ORM\EntityError;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\ORM\Fields\ArrayField;
@@ -36,7 +35,6 @@ use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Objectify\EntityObject;
-use Bitrix\Main\ORM\Objectify\State;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
@@ -182,7 +180,16 @@ class QuoteTable extends DataManager
 				->configureDefaultValue([static::class, 'getDefaultPersonType']),
 
 			(new IntegerField('MYCOMPANY_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID')),
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID'))
+				->configureDefaultValue(static function() {
+					$defaultMyCompanyId = (int)EntityLink::getDefaultMyCompanyId();
+					if ($defaultMyCompanyId > 0)
+					{
+						return $defaultMyCompanyId;
+					}
+
+					return null;
+				}),
 
 			(new Reference('MYCOMPANY', CompanyTable::class, Join::on('this.MYCOMPANY_ID', 'ref.ID'))),
 
@@ -293,7 +300,8 @@ class QuoteTable extends DataManager
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LOCATION'))
 				->configureSize(100),
 
-			(new IntegerField('WEBFORM_ID')),
+			(new IntegerField('WEBFORM_ID'))
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_WEBFORM_ID')),
 
 			(new StringField('CLIENT_TITLE'))
 				->configureSize(255),
@@ -469,40 +477,12 @@ class QuoteTable extends DataManager
 
 	protected static function checkUfFields($object, $ufdata, $result)
 	{
-		global $USER_FIELD_MANAGER, $APPLICATION;
-
 		if (!static::$isCheckUserFields)
 		{
 			static::$isCheckUserFields = true;
 			return;
 		}
 
-		$userId = ($object->authContext && $object->authContext->getUserId())
-			? $object->authContext->getUserId()
-			: false;
-
-		$ufPrimary = ($object->sysGetState() === State::RAW)
-			? false
-			: end($object->primary);
-
-		if (!$USER_FIELD_MANAGER->CheckFields(
-			$object->entity->getUfId(),
-			$ufPrimary,
-			$ufdata,
-			$userId,
-			false)
-		)
-		{
-			if (is_object($APPLICATION) && $APPLICATION->getException())
-			{
-				$e = $APPLICATION->getException();
-				$result->addError(new EntityError($e->getString()));
-				$APPLICATION->resetException();
-			}
-			else
-			{
-				$result->addError(new EntityError("Unknown error while checking userfields"));
-			}
-		}
+		parent::checkUfFields($object, $ufdata, $result);
 	}
 }

@@ -34,7 +34,7 @@ class StepImconnector extends Step
 		{
 			$connectors = \Bitrix\ImConnector\Connector::getListConnectorMenu(true);
 			$statusList = \Bitrix\ImConnector\Status::getInstanceAll();
-			$linkTemplate = \Bitrix\ImOpenLines\Common::getPublicFolder() . "connector/";
+			$linkTemplate = \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder() . 'connector/';
 			$codeMap = \Bitrix\ImConnector\Connector::getIconClassMap();
 			$items = [];
 			foreach ($connectors as $code => $connector)

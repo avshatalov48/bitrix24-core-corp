@@ -372,13 +372,14 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 		{
 			$communicationType = $provider::getCommunicationType($activity['PROVIDER_TYPE_ID']);
 
-			$activity['COMMUNICATIONS'] = array();
+			$activity['COMMUNICATIONS'] = [];
 			foreach ((array) $this->arParams['COMMUNICATIONS'] as $item)
 			{
 				$item['OWNER_TYPE_ID'] = $item['OWNER_TYPE_ID'] ?: \CCrmOwnerType::resolveId($item['OWNER_TYPE']);
 				if (!(\CCrmOwnerType::isDefined($item['OWNER_TYPE_ID']) && $item['OWNER_ID'] > 0))
 					continue;
 
+				$entityCommunications = [];
 				if ($communicationType == $item['TYPE'] && !empty($item['VALUE']))
 				{
 					// @TODO: perf

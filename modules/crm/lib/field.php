@@ -30,6 +30,7 @@ class Field
 	public const TYPE_DATE = 'date';
 	public const TYPE_DATETIME = 'datetime';
 	public const TYPE_USER = 'user';
+	public const TYPE_FILE = 'file';
 	public const TYPE_LOCATION = 'location';
 	public const TYPE_CRM_STATUS = 'crm_status';
 	public const TYPE_CRM_CURRENCY = 'crm_currency';
@@ -37,7 +38,12 @@ class Field
 	public const TYPE_CRM_CONTACT = 'crm_contact';
 	public const TYPE_CRM_LEAD = 'crm_lead';
 	public const TYPE_CRM_DEAL = 'crm_deal';
+	public const TYPE_CRM_QUOTE = 'crm_quote';
 	public const TYPE_CRM_ENTITY = 'crm_entity';
+
+	public const VALUE_TYPE_PLAIN_TEXT = 'text';
+	public const VALUE_TYPE_HTML = 'html';
+	public const VALUE_TYPE_IMAGE = 'image';
 
 	/** @var string */
 	protected $name;
@@ -373,6 +379,16 @@ class Field
 	public function isRequired(): bool
 	{
 		return in_array(\CCrmFieldInfoAttr::Required, $this->getAttributes(), true);
+	}
+
+	/**
+	 * Return true if this field has 'Hidden' attribute
+	 *
+	 * @return bool
+	 */
+	public function isHidden(): bool
+	{
+		return in_array(\CCrmFieldInfoAttr::Hidden, $this->getAttributes(), true);
 	}
 
 	/**

@@ -4,20 +4,21 @@ namespace Bitrix\Rpa\Controller;
 
 use Bitrix\Main\Engine\ActionFilter\Scope;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\UI\FileInputUtility;
+use Bitrix\Intranet\ActionFilter;
 use Bitrix\Rpa\Driver;
 use Bitrix\Rpa\Model\PermissionTable;
 use Bitrix\Rpa\Model\StageTable;
 use Bitrix\Rpa\Model\TimelineTable;
 use Bitrix\Rpa\Model\TypeTable;
 use Bitrix\Rpa\Permission;
-use Bitrix\Rpa\UserField\UserField;
 
 abstract class Base extends Controller
 {
@@ -28,14 +29,28 @@ abstract class Base extends Controller
 		\Bitrix\Rpa\Components\Base::loadBaseLanguageMessages();
 	}
 
+	protected function getDefaultPreFilters()
+	{
+		$preFilters = parent::getDefaultPreFilters();
+
+		if (
+			!Driver::getInstance()->getUserPermissions()->isAdmin()
+			&& Loader::includeModule('intranet')
+		)
+		{
+			$preFilters[] = new ActionFilter\IntranetUser();
+		}
+
+		return $preFilters;
+	}
+
 	public function getAutoWiredParameters(): array
 	{
 		return [
 			new ExactParameter(
 				\Bitrix\Rpa\Model\Type::class,
 				'type',
-				static function($className, $typeId)
-				{
+				static function ($className, $typeId) {
 					return TypeTable::getById($typeId)->fetchObject();
 				}
 			),
@@ -50,10 +65,10 @@ abstract class Base extends Controller
 							'=ID' => $id,
 						]
 					])->fetch();
-					if($stageData && $stageData['TYPE_ID'] > 0)
+					if ($stageData && $stageData['TYPE_ID'] > 0)
 					{
 						$type = Driver::getInstance()->getType($stageData['TYPE_ID']);
-						if($type)
+						if ($type)
 						{
 							return $type->getStage($id);
 						}
@@ -65,8 +80,7 @@ abstract class Base extends Controller
 			new ExactParameter(
 				\Bitrix\Rpa\Model\Timeline::class,
 				'timeline',
-				static function($className, $id)
-				{
+				static function ($className, $id) {
 					return TimelineTable::getById($id)->fetchObject();
 				}
 			),
@@ -77,9 +91,9 @@ abstract class Base extends Controller
 	{
 		$result = [];
 
-		foreach($data as $name => $value)
+		foreach ($data as $name => $value)
 		{
-			if(is_array($value))
+			if (is_array($value))
 			{
 				$value = $this->removeDotsFromKeys($value);
 			}
@@ -93,9 +107,9 @@ abstract class Base extends Controller
 	{
 		$result = [];
 
-		foreach($data as $name => $value)
+		foreach ($data as $name => $value)
 		{
-			if(is_array($value))
+			if (is_array($value))
 			{
 				$value = $this->removeDotsFromValues($value);
 			}
@@ -109,9 +123,9 @@ abstract class Base extends Controller
 	{
 		$emptyParams = [];
 
-		foreach($requiredParamsNames as $param)
+		foreach ($requiredParamsNames as $param)
 		{
-			if(!isset($parameters[$param]) || empty($parameters[$param]))
+			if (!isset($parameters[$param]) || empty($parameters[$param]))
 			{
 				$emptyParams[] = $param;
 			}
@@ -126,16 +140,16 @@ abstract class Base extends Controller
 	 */
 	protected function prepareDateTimeFieldsForFilter(array &$filter, array $dateTimeFields): void
 	{
-		foreach($filter as $name => &$value)
+		foreach ($filter as $name => &$value)
 		{
-			if(is_array($value))
+			if (is_array($value))
 			{
 				$this->prepareDateTimeFieldsForFilter($value, $dateTimeFields);
 				continue;
 			}
-			foreach($dateTimeFields as $field)
+			foreach ($dateTimeFields as $field)
 			{
-				if($this->isCorrectFieldName($name, $field))
+				if ($this->isCorrectFieldName($name, $field))
 				{
 					$value = \CRestUtil::unConvertDateTime($value);
 					break;
@@ -146,7 +160,7 @@ abstract class Base extends Controller
 
 	protected function prepareDateTimeValue(DateTime $dateTime): string
 	{
-		if($this->getScope() === Scope::REST)
+		if ($this->getScope() === Scope::REST)
 		{
 			return \CRestUtil::ConvertDateTime($dateTime);
 		}
@@ -162,9 +176,22 @@ abstract class Base extends Controller
 	protected function isCorrectFieldName($filterName, $field): bool
 	{
 		static $prefixes = [
-			'' => true, '=' => true, '%' => true, '>' => true, '<' => true, '@' => true, '!=' => true,
-			'!%' => true, '><' => true, '>=' => true, '<=' => true, '=%' => true, '%=' => true,
-			'!><' => true, '!=%' => true, '!%=' => true,
+			'' => true,
+			'=' => true,
+			'%' => true,
+			'>' => true,
+			'<' => true,
+			'@' => true,
+			'!=' => true,
+			'!%' => true,
+			'><' => true,
+			'>=' => true,
+			'<=' => true,
+			'=%' => true,
+			'%=' => true,
+			'!><' => true,
+			'!=%' => true,
+			'!%=' => true,
 		];
 
 		return isset($prefixes[str_replace($field, '', $filterName)]);
@@ -174,21 +201,19 @@ abstract class Base extends Controller
 	{
 		$result = new Permission\Result();
 
-		if(isset($fields['PERMISSIONS']))
+		if (isset($fields['PERMISSIONS']))
 		{
-			if(!is_array($fields['PERMISSIONS']))
+			if (!is_array($fields['PERMISSIONS']))
 			{
 				$fields['PERMISSIONS'] = [];
 			}
-
 			$permissions = $fields['PERMISSIONS'];
 			$converter = new Converter(Converter::TO_UPPER | Converter::KEYS | Converter::TO_SNAKE);
-			foreach($permissions as $key => $permission)
+			foreach ($permissions as $key => $permission)
 			{
 				$permissions[$key] = $converter->process($permission);
 			}
 			$processor = new Permission\Processor($model->getPermissions());
-
 			$result = $processor->process($permissions);
 		}
 		else
@@ -196,34 +221,31 @@ abstract class Base extends Controller
 			// no need to save
 			$result->setSaved();
 		}
+
 		return $result;
 	}
 
 	protected function savePermissions(Permission\Containable $model, Permission\Result $result): Result
 	{
-		if($result->isSaved())
+		if ($result->isSaved())
 		{
 			return $result;
 		}
-
-		foreach($result->getAddPermissions() as $permission)
+		foreach ($result->getAddPermissions() as $permission)
 		{
 			$data = $permission;
 			$data['ENTITY'] = $model->getPermissionEntity();
 			$data['ENTITY_ID'] = $model->getId();
-
 			$addResult = PermissionTable::add($data);
-			if(!$addResult->isSuccess())
+			if (!$addResult->isSuccess())
 			{
 				$result->addErrors($addResult->getErrors());
 			}
 		}
-
-		foreach($result->getDeletePermission() as $permission)
+		foreach ($result->getDeletePermission() as $permission)
 		{
 			PermissionTable::delete($permission['ID']);
 		}
-
 		$result->setSaved();
 
 		return $result;
@@ -231,26 +253,22 @@ abstract class Base extends Controller
 
 	protected function uploadFile($fileContent): ?int
 	{
-		if(empty($fileContent))
+		if (empty($fileContent))
 		{
 			return null;
 		}
-
 		$fileArray = \CRestUtil::saveFile($fileContent);
-		if(!$fileArray)
+		if (!$fileArray)
 		{
 			$this->addError(new Error(Loc::getMessage('RPA_CONTROLLER_COULD_NOT_UPLOAD_FILE_ERROR')));
 			return null;
 		}
-
 		$fileArray['MODULE_ID'] = Driver::MODULE_ID;
-
 		$filePath = Driver::MODULE_ID;
 		$fileId = \CFile::SaveFile($fileArray, $filePath);
-
-		if($fileId > 0)
+		if ($fileId > 0)
 		{
-			return (int) $fileId;
+			return (int)$fileId;
 		}
 
 		return null;

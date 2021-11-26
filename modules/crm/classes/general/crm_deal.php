@@ -42,6 +42,7 @@ class CAllCrmDeal
 	protected static $TYPE_NAME = 'DEAL';
 	private static $DEAL_STAGES = null;
 	private static $FIELD_INFOS = null;
+	private static $categories = [];
 
 	function __construct($bCheckPermission = true)
 	{
@@ -174,7 +175,8 @@ class CAllCrmDeal
 					'TYPE' => 'char'
 				),
 				'COMMENTS' => array(
-					'TYPE' => 'string'
+					'TYPE' => 'string',
+					'VALUE_TYPE' => 'html',
 				),
 				'ASSIGNED_BY_ID' => array(
 					'TYPE' => 'user',
@@ -256,29 +258,11 @@ class CAllCrmDeal
 
 			'LEAD_ID' => array('FIELD' => 'L.LEAD_ID', 'TYPE' => 'int'),
 			'COMPANY_ID' => array('FIELD' => 'L.COMPANY_ID', 'TYPE' => 'int'),
-			'COMPANY_TITLE' => array('FIELD' => 'CO.TITLE', 'TYPE' => 'string', 'FROM' => $companyJoin),
-			'COMPANY_INDUSTRY' => array('FIELD' => 'CO.INDUSTRY', 'TYPE' => 'string', 'FROM' => $companyJoin),
-			'COMPANY_EMPLOYEES' => array('FIELD' => 'CO.EMPLOYEES', 'TYPE' => 'string', 'FROM' => $companyJoin),
-			'COMPANY_REVENUE' => array('FIELD' => 'CO.REVENUE', 'TYPE' => 'string', 'FROM' => $companyJoin),
-			'COMPANY_CURRENCY_ID' => array('FIELD' => 'CO.CURRENCY_ID', 'TYPE' => 'string', 'FROM' => $companyJoin),
-			'COMPANY_TYPE' => array('FIELD' => 'CO.COMPANY_TYPE', 'TYPE' => 'string', 'FROM' => $companyJoin),
 			'COMPANY_ADDRESS' => array('FIELD' => 'CO.ADDRESS', 'TYPE' => 'string', 'FROM' => $companyJoin),
 			'COMPANY_ADDRESS_LEGAL' => array('FIELD' => 'CO.ADDRESS_LEGAL', 'TYPE' => 'string', 'FROM' => $companyJoin),
-			'COMPANY_BANKING_DETAILS' => array('FIELD' => 'CO.BANKING_DETAILS', 'TYPE' => 'string', 'FROM' => $companyJoin),
-			'COMPANY_LOGO' => array('FIELD' => 'CO.LOGO', 'TYPE' => 'string', 'FROM' => $companyJoin),
 
 			'CONTACT_ID' => array('FIELD' => 'L.CONTACT_ID', 'TYPE' => 'int'),
-			'CONTACT_TYPE_ID' => array('FIELD' => 'C.TYPE_ID', 'TYPE' => 'string', 'FROM' => $contactJoin),
-			'CONTACT_HONORIFIC' => array('FIELD' => 'C.HONORIFIC', 'TYPE' => 'string', 'FROM' => $contactJoin),
-			'CONTACT_NAME' => array('FIELD' => 'C.NAME', 'TYPE' => 'string', 'FROM' => $contactJoin),
-			'CONTACT_SECOND_NAME' => array('FIELD' => 'C.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $contactJoin),
-			'CONTACT_LAST_NAME' => array('FIELD' => 'C.LAST_NAME', 'TYPE' => 'string', 'FROM' => $contactJoin),
-			'CONTACT_FULL_NAME' => array('FIELD' => 'C.FULL_NAME', 'TYPE' => 'string', 'FROM' => $contactJoin),
-
-			'CONTACT_POST' => array('FIELD' => 'C.POST', 'TYPE' => 'string', 'FROM' => $contactJoin),
 			'CONTACT_ADDRESS' => array('FIELD' => 'C.ADDRESS', 'TYPE' => 'string', 'FROM' => $contactJoin),
-			'CONTACT_SOURCE_ID' => array('FIELD' => 'C.SOURCE_ID', 'TYPE' => 'string', 'FROM' => $contactJoin),
-			'CONTACT_PHOTO' => array('FIELD' => 'C.PHOTO', 'TYPE' => 'string', 'FROM' => $contactJoin),
 
 			'QUOTE_ID' => array('FIELD' => 'L.QUOTE_ID', 'TYPE' => 'int'),
 			'QUOTE_TITLE' => array('FIELD' => 'Q.TITLE', 'TYPE' => 'string', 'FROM' => $quoteJoin),
@@ -400,6 +384,30 @@ class CAllCrmDeal
 			}
 		}
 
+		$result = array_merge(
+			$result,
+			self::prepareClientFields(
+				CCrmContact::GetFields([
+					'TABLE_ALIAS' => 'C',
+					'ADD_FIELD_ALIASES' => false,
+				]),
+				'CONTACT_',
+				$contactJoin
+			)
+		);
+
+		$result = array_merge(
+			$result,
+			self::prepareClientFields(
+				CCrmCompany::GetFields([
+					'TABLE_ALIAS' => 'CO',
+					'ADD_FIELD_ALIASES' => false,
+				]),
+				'COMPANY_',
+				$companyJoin
+			)
+		);
+
 		// add utm fields
 		$result = array_merge($result, UtmTable::getFieldsDescriptionByEntityTypeId(CCrmOwnerType::Deal));
 
@@ -430,10 +438,39 @@ class CAllCrmDeal
 
 		return $result;
 	}
+
+	private static function prepareClientFields(array $fields, string $fieldPrefix, string $joinSql): array
+	{
+		$result = [];
+		foreach ($fields as $fieldId => $fieldParams)
+		{
+			if ($fieldId === 'ID')
+			{
+				continue;
+			}
+			if (isset($fieldParams['FROM']) && !empty($fieldParams['FROM']))
+			{
+				continue;
+			}
+
+			$newFieldId = mb_strpos($fieldId, $fieldPrefix) === 0 ? $fieldId : ($fieldPrefix . $fieldId);
+
+			$fieldParams['FROM'] = $joinSql;
+			$result[$newFieldId] = $fieldParams;
+		}
+
+		return $result;
+	}
+
 	public static function __AfterPrepareSql(/*CCrmEntityListBuilder*/ $sender, $arOrder, $arFilter, $arGroupBy, $arSelectFields)
 	{
-		$sqlData = array('FROM' => array(), 'WHERE' => array());
-		if(isset($arFilter['SEARCH_CONTENT']) && $arFilter['SEARCH_CONTENT'] !== '')
+		$sqlData = [
+			'SELECT' => [],
+			'FROM' => [],
+			'WHERE' => [],
+			'ORDERBY' => [],
+		];
+		if (isset($arFilter['SEARCH_CONTENT']) && $arFilter['SEARCH_CONTENT'] !== '')
 		{
 			$tableAlias = $sender->GetTableAlias();
 			$queryWhere = new CSQLWhere();
@@ -609,6 +646,20 @@ class CAllCrmDeal
 			$sender->GetTableAlias()
 		);
 
+		$sqlData = array_merge_recursive(
+			$sqlData,
+			self::getClientUFSqlData(
+				$arOrder,
+				$arFilter,
+				CCrmOwnerType::Contact
+			),
+			self::getClientUFSqlData(
+				$arOrder,
+				$arFilter,
+				CCrmOwnerType::Company
+			),
+		);
+
 		$result = array();
 		if(!empty($sqlData['SELECT']))
 		{
@@ -621,6 +672,13 @@ class CAllCrmDeal
 		if(!empty($sqlData['WHERE']))
 		{
 			$result['WHERE'] = implode(' AND ', $sqlData['WHERE']);
+		}
+		if(!empty($sqlData['ORDERBY']))
+		{
+			$result['ORDERBY'] = [
+				'SQL' => implode(', ', $sqlData['ORDERBY']),
+				'POSITION' => 0,
+			];
 		}
 
 		return !empty($result) ? $result : false;
@@ -1365,7 +1423,7 @@ class CAllCrmDeal
 		return intval($arRes['ID']);
 	}
 
-	static public function BuildPermSql($sAliasPrefix = 'L', $mPermType = 'READ', $arOptions = array())
+	static public function BuildPermSql($sAliasPrefix = 'L', $mPermType = 'READ', $arOptions = [])
 	{
 		if(isset($arOptions['RESTRICT_BY_ENTITY_TYPES'])
 			&& is_array($arOptions['RESTRICT_BY_ENTITY_TYPES'])
@@ -1376,15 +1434,27 @@ class CAllCrmDeal
 		}
 		else
 		{
-			$entityTypes = array_merge(array('DEAL'), DealCategory::getPermissionEntityTypeList());
+			$entityTypes = array_merge(['DEAL'], DealCategory::getPermissionEntityTypeList());
 		}
 
-		return CCrmPerms::BuildSqlForEntitySet(
-			$entityTypes,
-			$sAliasPrefix,
-			$mPermType,
-			$arOptions
-		);
+		$userId = null;
+		if (isset($arOptions['PERMS']) && is_object($arOptions['PERMS']))
+		{
+			/** @var \CCrmPerms $arOptions['PERMS'] */
+			$userId = $arOptions['PERMS']->GetUserID();
+		}
+		$builderOptions =
+			Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
+				->setOperations((array)$mPermType)
+				->setAliasPrefix((string)$sAliasPrefix)
+		;
+
+		$queryBuilder = Crm\Service\Container::getInstance()
+			->getUserPermissions($userId)
+			->createListQueryBuilder($entityTypes, $builderOptions)
+		;
+
+		return $queryBuilder->buildCompatible();
 	}
 
 	public function Add(array &$arFields, $bUpdateSearch = true, $options = array())
@@ -1714,7 +1784,12 @@ class CAllCrmDeal
 			$GLOBALS['USER_FIELD_MANAGER']->Update(self::$sUFEntityID, $ID, $arFields);
 			//endregion
 
-			CCrmPerms::UpdateEntityAttr($permissionEntityType, $ID, $arEntityAttr);
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Deal)
+				->register($permissionEntityType, $ID, $securityRegisterOptions)
+			;
 
 			//region Save contacts
 			if(!empty($contactBindings))
@@ -2191,7 +2266,12 @@ class CAllCrmDeal
 			}
 		}
 
-		$arUserAttr = CCrmPerms::BuildUserEntityAttr($userID);
+		$arUserAttr = Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($userID)
+			->getAttributesProvider()
+			->getEntityAttributes()
+		;
+
 		return array_merge($arResult, $arUserAttr['INTRANET']);
 	}
 
@@ -2199,15 +2279,24 @@ class CAllCrmDeal
 	{
 		if(!is_array($IDs))
 		{
-			$IDs = array($IDs);
+			$IDs = [$IDs];
 		}
 
 		$dbResult = self::GetListEx(
-			array(),
-			array('@ID' => $IDs, 'CHECK_PERMISSIONS' => 'N'),
+			[],
+			[
+				'@ID' => $IDs,
+				'CHECK_PERMISSIONS' => 'N',
+			],
 			false,
 			false,
-			array('ID', 'ASSIGNED_BY_ID', 'OPENED', 'STAGE_ID', 'CATEGORY_ID')
+			[
+				'ID',
+				'ASSIGNED_BY_ID',
+				'OPENED',
+				'STAGE_ID',
+				'CATEGORY_ID',
+			]
 		);
 
 		if(!is_object($dbResult))
@@ -2224,7 +2313,7 @@ class CAllCrmDeal
 				continue;
 			}
 
-			$attrs = array();
+			$attrs = [];
 			if(isset($fields['OPENED']))
 			{
 				$attrs['OPENED'] = $fields['OPENED'];
@@ -2236,13 +2325,19 @@ class CAllCrmDeal
 			}
 
 			$entityAttrs = self::BuildEntityAttr($assignedByID, $attrs);
-			CCrmPerms::UpdateEntityAttr(
-				DealCategory::convertToPermissionEntityType(
-					isset($fields['CATEGORY_ID']) ? (int)$fields['CATEGORY_ID'] : 0
-				),
-				$ID,
-				$entityAttrs
-			);
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($entityAttrs)
+				->setEntityFields($fields)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Deal)
+				->register(
+					DealCategory::convertToPermissionEntityType(
+						isset($fields['CATEGORY_ID']) ? (int)$fields['CATEGORY_ID'] : 0
+					),
+					$ID,
+					$securityRegisterOptions
+				)
+			;
 		}
 	}
 
@@ -2842,7 +2937,13 @@ class CAllCrmDeal
 			}
 			//endregion
 
-			CCrmPerms::UpdateEntityAttr($permissionEntityType, $ID, $arEntityAttr);
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+				->setEntityFields($currentFields)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Deal)
+				->register($permissionEntityType, $ID, $securityRegisterOptions)
+			;
 
 			//region Save contacts
 			if(!empty($removedContactBindings))
@@ -3345,6 +3446,7 @@ class CAllCrmDeal
 			{
 				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_deal');
 			}
+			self::clearCategoryCache($ID);
 
 			self::SynchronizeCustomerData($ID, $arFields, array('ENABLE_SOURCE' => false));
 
@@ -3356,7 +3458,13 @@ class CAllCrmDeal
 
 			Bitrix\Crm\Kanban\SortTable::clearEntity($ID, \CCrmOwnerType::DealName);
 
-			$DB->Query("DELETE FROM b_crm_entity_perms WHERE ENTITY='{$permissionEntityType}' AND ENTITY_ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Deal)
+				->unregister(
+					$permissionEntityType,
+					$ID
+				)
+			;
+
 			$GLOBALS['USER_FIELD_MANAGER']->Delete(self::$sUFEntityID, $ID);
 
 			DealContactTable::unbindAllContacts($ID);
@@ -3991,21 +4099,34 @@ class CAllCrmDeal
 		{
 			return 0;
 		}
-
-		$dbRes = self::GetListEx(
-			array(),
-			array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
-			false,
-			false,
-			array('ID', 'CATEGORY_ID')
-		);
-
-		$fields = is_object($dbRes) ? $dbRes->Fetch() : null;
-		if(!is_array($fields))
+		if (!isset(self::$categories[$ID]))
 		{
-			return -1;
+
+			$dbRes = self::GetListEx(
+				[],
+				['=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'],
+				false,
+				false,
+				['ID', 'CATEGORY_ID']
+			);
+
+			$fields = is_object($dbRes) ? $dbRes->Fetch() : null;
+			if (!is_array($fields))
+			{
+				self::$categories[$ID] = -1;
+			}
+			else
+			{
+				self::$categories[$ID] = isset($fields['CATEGORY_ID']) ? (int)$fields['CATEGORY_ID'] : 0;
+			}
 		}
-		return isset($fields['CATEGORY_ID']) ? (int)$fields['CATEGORY_ID'] : 0;
+
+		return self::$categories[$ID];
+	}
+
+	public static function clearCategoryCache($ID)
+	{
+		unset(self::$categories[$ID]);
 	}
 
 	protected static function GetPermittedCategoryIDs($permissionType, CCrmPerms $userPermissions = null)
@@ -4098,17 +4219,22 @@ class CAllCrmDeal
 	{
 		if($categoryID >= 0)
 		{
-			return CCrmPerms::GetEntityAttr(DealCategory::convertToPermissionEntityType($categoryID), $IDs);
+			$permEntity = DealCategory::convertToPermissionEntityType($categoryID);
+
+			return \Bitrix\Crm\Security\Manager::resolveController($permEntity)
+				->getPermissionAttributes($permEntity, $IDs)
+			;
 		}
 
-		$results = array();
+		$results = [];
 		foreach($IDs as $ID)
 		{
-			$results += CCrmPerms::GetEntityAttr(
-				DealCategory::convertToPermissionEntityType(self::GetCategoryID($ID)),
-				array($ID)
-			);
+			$permEntity = DealCategory::convertToPermissionEntityType(self::GetCategoryID($ID));
+			$results += \Bitrix\Crm\Security\Manager::resolveController($permEntity)
+				->getPermissionAttributes($permEntity, [$ID])
+			;
 		}
+
 		return $results;
 	}
 
@@ -4690,6 +4816,43 @@ class CAllCrmDeal
 			return DealCategoryChangeError::HAS_WORKFLOWS;
 		}
 
+		$processStageID = $options['PREFERRED_STAGE_ID'] ?? '';
+		$event = new \Bitrix\Main\Event(
+			'crm',
+			'OnBeforeDealMoveToCategory',
+			[
+				'id' => $ID,
+				'categoryId' => $newCategoryID,
+				'stageId' => $processStageID,
+			]
+		);
+		$event->send();
+		/** @var @var \Bitrix\Main\EventResult $eventResult */
+		foreach ($event->getResults() as $eventResult)
+		{
+			if ($eventResult->getType() === \Bitrix\Main\EventResult::ERROR)
+			{
+				return DealCategoryChangeError::USER_EVENT_FAILURE;
+			}
+			$parameters = $eventResult->getParameters();
+			if (isset($parameters['categoryId']))
+			{
+				$newCategoryID = (int)$parameters['categoryId'];
+				if($categoryID === $newCategoryID)
+				{
+					return DealCategoryChangeError::CATEGORY_NOT_CHANGED;
+				}
+				if($newCategoryID !== 0 && !DealCategory::exists($newCategoryID))
+				{
+					return DealCategoryChangeError::CATEGORY_NOT_FOUND;
+				}
+			}
+			if (isset($parameters['stageId']))
+			{
+				$processStageID = $parameters['stageId'];
+			}
+		}
+
 		$updateOperationRestriction = Crm\Restriction\RestrictionManager::getUpdateOperationRestriction(new Crm\ItemIdentifier(
 			\CCrmOwnerType::Deal,
 			(int)$ID
@@ -4701,7 +4864,6 @@ class CAllCrmDeal
 
 		$successStageID = DealCategory::prepareStageID($newCategoryID, 'WON');
 		$failureStageID = DealCategory::prepareStageID($newCategoryID, 'LOSE');
-		$processStageID = $options['PREFERRED_STAGE_ID'] ?? '';
 		$categoryStages = self::GetStages($newCategoryID);
 		if (!$processStageID || !array_key_exists($processStageID, $categoryStages))
 		{
@@ -4759,8 +4921,10 @@ class CAllCrmDeal
 		$connection->query($sql);
 
 		//region Update Permissions
-		CCrmPerms::DeleteEntityAttr(DealCategory::convertToPermissionEntityType($categoryID), $ID);
+		$permissionEntityController = Crm\Security\Manager::getEntityController(CCrmOwnerType::Deal);
+		$permissionEntityController->unregister(DealCategory::convertToPermissionEntityType($categoryID), $ID);
 
+		self::clearCategoryCache($ID);
 		$entityAttrs = self::BuildEntityAttr(
 			$assignedByID,
 				array(
@@ -4774,8 +4938,18 @@ class CAllCrmDeal
 			$entityAttrs,
 			$userPermissions->GetPermType($permissionEntityType, 'WRITE', $entityAttrs)
 		);
-		CCrmPerms::UpdateEntityAttr($permissionEntityType, $ID, $entityAttrs);
-		//endregion
+
+		$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+			->setEntityAttributes($entityAttrs)
+			->setEntityFields(array_merge(
+				$fields,
+				[
+					'CATEGORY_ID' => $newCategoryID,
+					'STAGE_ID' => $newStageID,
+				]
+			))
+		;
+		$permissionEntityController->register($permissionEntityType, $ID, $securityRegisterOptions);
 
 		//region Reset counters
 		EntityCounterManager::reset(
@@ -4833,6 +5007,18 @@ class CAllCrmDeal
 			),
 			false
 		);
+
+		$event = new \Bitrix\Main\Event(
+			'crm',
+			'OnAfterDealMoveToCategory',
+			[
+				'id' => $ID,
+				'categoryId' => $newCategoryID,
+				'stageId' => $newStageID,
+			]
+		);
+		$event->send();
+
 		return DealCategoryChangeError::NONE;
 	}
 
@@ -5348,6 +5534,128 @@ class CAllCrmDeal
 		}
 		return false;
 	}
+
+	private static function getClientUFSqlData(
+		array $order,
+		array $filter,
+		int $entityTypeId
+	): array
+	{
+		$entities = [
+			CCrmOwnerType::Contact => [
+				'FIELD_PREFIX' => 'CONTACT_UF_',
+				'DEAL_FIELD_NAME' => 'CONTACT_ID',
+				'TABLE' => CCrmContact::TABLE_NAME,
+				'TABLE_ALIAS' => 'C',
+				'UF_ENTITY_ID' => CCrmContact::GetUserFieldEntityID(),
+			],
+			CCrmOwnerType::Company => [
+				'FIELD_PREFIX' => 'COMPANY_UF_',
+				'DEAL_FIELD_NAME' => 'COMPANY_ID',
+				'TABLE' => CCrmCompany::TABLE_NAME,
+				'TABLE_ALIAS' => 'CO',
+				'UF_ENTITY_ID' => CCrmCompany::GetUserFieldEntityID(),
+			],
+		];
+		if (!isset($entities[$entityTypeId]))
+		{
+			throw new \Bitrix\Main\NotSupportedException();
+		}
+		$entity = $entities[$entityTypeId];
+
+		$fieldPrefix = $entity['FIELD_PREFIX'];
+		$dealTableFieldName = self::TABLE_ALIAS . '.' .$entity['DEAL_FIELD_NAME'];
+		$clientTableName = $entity['TABLE'];
+		$clientTableAlias = $entity['TABLE_ALIAS'];
+		$clientUFEntityId = $entity['UF_ENTITY_ID'];
+
+		$ufFilterSql = null;
+		$ufFilter = [];
+		$sqlWhere = new CSQLWhere();
+		foreach ($filter as $filterKey => $filterValue)
+		{
+			$filterFieldName = $sqlWhere->MakeOperation($filterKey)['FIELD'];
+			if (mb_strpos($filterFieldName, $fieldPrefix) !== 0)
+			{
+				continue;
+			}
+			$filterFieldNamePos = mb_strpos($filterKey, $fieldPrefix);
+			$filterKey =
+				($filterFieldNamePos > 0 ? mb_substr($filterKey, 0, $filterFieldNamePos) : '')
+				. 'UF_'
+				. mb_substr($filterKey, $filterFieldNamePos + mb_strlen($fieldPrefix));
+
+			//Adapt nested filters for UserTypeSQL
+			if (mb_strpos($filterKey, '__INNER_FILTER') === 0)
+			{
+				$ufFilter[] = $filterValue;
+			}
+			else
+			{
+				$ufFilter[$filterKey] = $filterValue;
+			}
+		}
+		if (!empty($ufFilter))
+		{
+			$userType = new CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], $clientUFEntityId);
+			$userType->ListPrepareFilter($ufFilter);
+
+			$ufFilterSql = new CUserTypeSQL();
+			$ufFilterSql->SetEntity($clientUFEntityId, $clientTableAlias . '.ID');
+			$ufFilterSql->SetFilter($ufFilter);
+		}
+
+		$ufOrderSql = null;
+		$ufOrder = [];
+		foreach ($order as $orderField => $orderDirection)
+		{
+			if (mb_strpos($orderField, $fieldPrefix) !== 0)
+			{
+				continue;
+			}
+			$orderField = 'UF_' . mb_substr($orderField, mb_strlen($fieldPrefix));
+
+			$ufOrder[$orderField] = $orderDirection;
+		}
+		if (!empty($ufOrder))
+		{
+			$ufOrderSql = new CUserTypeSQL();
+			$ufOrderSql->SetEntity($clientUFEntityId, $clientTableAlias . '.ID');
+			$ufOrderSql->SetOrder($ufOrder);
+			$ufOrderSql->table_alias .= $clientTableAlias;
+		}
+
+		$result = [];
+		if ($ufFilterSql)
+		{
+			// Adding user fields to WHERE
+			$ufWhere = $ufFilterSql->GetFilter();
+			if ($ufWhere !== '')
+			{
+				$ufSql = $dealTableFieldName . ' IN (SELECT '
+					. $clientTableAlias . '.ID FROM ' . $clientTableName . ' ' . $clientTableAlias . ' '
+					. $ufFilterSql->GetJoin($clientTableAlias . '.ID') . ' WHERE ' . $ufWhere . ')';
+
+				// Adding user fields to joins
+				$result['WHERE'][] = $ufSql;
+			}
+		}
+
+		if ($ufOrderSql)
+		{
+			$result['FROM'][] = $ufOrderSql->GetJoin($dealTableFieldName);
+			foreach ($ufOrder as $orderField => $orderDirection)
+			{
+				$orderDirection = mb_strtoupper($orderDirection);
+				if (!in_array($orderDirection, ['ASC', 'DESC'], true))
+				{
+					$orderDirection = 'ASC';
+				}
+				$result['ORDERBY'][] = $ufOrderSql->GetOrder($orderField) . ' ' . $orderDirection;
+			}
+		}
+
+		return $result;
+	}
 }
 
-?>

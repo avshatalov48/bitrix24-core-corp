@@ -1073,9 +1073,18 @@ a.crm-kanban-sidepanel:hover {
 	padding: 5px 10px 10px 10px;
 }
 
-.crm-kanban-quick-form * {
+.crm-kanban-quick-form *:not(.ui-tag-selector-item) {
 	animation: none !important;
 	transition: none !important;
+}
+
+.crm-kanban-quick-form .webform-field-upload{
+	width: 100%;
+	min-width: 200px;
+}
+
+.crm-kanban-quick-form .field-item .file-input{
+	flex: 0 0 100%;
 }
 
 .crm-kanban-qiuck-form-buttons {
@@ -1163,6 +1172,23 @@ a.crm-kanban-sidepanel:hover {
 	font-size: 11px;
 	color: #868d96;
 	margin-bottom: 3px;
+}
+
+.crm-kanban-item-fields-item-title-icon {
+	margin-right: 3px;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.crm-kanban-item-fields-item-title-icon img {
+	max-height: 12px;
+}
+
+.crm-kanban-item-fields-item-title-text {
+	display: inline;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .crm-kanban-item-fields-item-value {
@@ -1365,12 +1391,16 @@ a.crm-kanban-sidepanel:hover {
 
 .crm-kanban-item-status {
 	display: inline-block;
+	overflow: hidden;
+	max-width: 100%;
+	box-sizing: border-box;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 	margin-bottom: 10px;
 	padding: 1px 11px 0;
 	border-radius: 10px;
 	text-transform: uppercase;
 	transition: 250ms all ease;
-	white-space: nowrap;
 	margin-top: 2px;
 	font: 700 10px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
@@ -1380,6 +1410,8 @@ a.crm-kanban-sidepanel:hover {
 	color: #1097c2;
 }
 
+.crm-kanban-item-status-default,
+.crm-kanban-item-status-not-paid,
 .crm-kanban-item-status-send,
 .crm-kanban-item-status-no-shipped,
 .crm-kanban-item-status-cancel,
@@ -1392,4 +1424,15 @@ a.crm-kanban-sidepanel:hover {
 .crm-kanban-item-status-shipped {
 	background: #e5f1bf;
 	color: #668d13;
+}
+
+.crm-kanban-item-fields-item-value .fields {
+	margin-bottom: 0;
+}
+.crm-kanban-item-fields-item-value .fields.string,
+.crm-kanban-item-fields-item-value .fields.url,
+.crm-kanban-item-fields-item-value .fields.money,
+.crm-kanban-item-fields-item-value .fields.date,
+.crm-kanban-item-fields-item-value .fields.datetime {
+	display: inline;
 }

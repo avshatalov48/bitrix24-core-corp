@@ -79,7 +79,10 @@
 
 		sanitizeText: (text) =>
 		{
-			return text.replace(/\[USER=(\d+)\]|\[\/USER\]/gi, '');
+			return text
+				.replace(/\[USER=(\d+)\]|\[\/USER\]/gi, '')
+				.replace(/\[PROJECT=(\d+)\]|\[\/PROJECT\]/gi, '')
+				.replace(/\[DEPARTMENT=(\d+)\]|\[\/DEPARTMENT\]/gi, '');
 		},
 
 		getForAllValue: ({

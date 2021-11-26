@@ -1,6 +1,7 @@
 import {Event, Tag} from 'main.core';
 import {Location, MapBase, ControlMode, Point, ErrorPublisher, LocationType} from 'location.core';
 import {Leaflet} from '../leaflet/src/leaflet';
+import OSM from './osm';
 import './css/mapservice.css';
 
 /**
@@ -50,7 +51,7 @@ export default class MapService extends MapBase
 		this.#mapFactoryMethod = props.mapFactoryMethod;
 		this.#markerFactoryMethod = props.markerFactoryMethod;
 		this.#tileLayerFactoryMethod = props.tileLayerFactoryMethod;
-		this.#tileUrlTemplate = `${props.serviceUrl}/?action=osmgateway.map.get&zoom={z}&x={x}&y={y}&lang=${props.sourceLanguageId}`;
+		this.#tileUrlTemplate = `${props.mapServiceUrl}/hot/en/{z}/{x}/{y}.png`;
 		this.#locationRepository = props.locationRepository;
 	}
 
@@ -203,28 +204,6 @@ export default class MapService extends MapBase
 		}
 	}
 
-	#obtainLocationDetails(location: Location): Promise<?Location>
-	{
-		let result;
-
-		if (location)
-		{
-			result = this.#locationRepository.findByExternalId(
-				location.externalId,
-				'OSM',
-				this.#languageId
-			);
-		}
-		else
-		{
-			result = new Promise((resolve) => {
-				resolve(null);
-			});
-		}
-
-		return result;
-	}
-
 	#createTimer(lat: string, lng: string): void
 	{
 		if (this.#timerId !== null)
@@ -239,7 +218,46 @@ export default class MapService extends MapBase
 
 				this.#geocodingService.reverse(point, this.#getReverseZoom())
 					.then(
-						this.#obtainLocationDetails.bind(this)
+						(location) => {
+							let result;
+
+							if (location)
+							{
+								result = this.#locationRepository.findByExternalId(
+									location.externalId,
+									OSM.code,
+									this.#languageId
+								).then((foundLocation) => {
+									/**
+									 * Use marker coordinates
+									 */
+									if (foundLocation)
+									{
+										foundLocation.longitude = point.longitude;
+										if (foundLocation.address)
+										{
+											foundLocation.address.longitude = point.longitude;
+										}
+
+										foundLocation.latitude = point.latitude;
+										if (foundLocation.address)
+										{
+											foundLocation.address.latitude = point.latitude;
+										}
+									}
+
+									return foundLocation;
+								});
+							}
+							else
+							{
+								result = new Promise((resolve) => {
+									resolve(null);
+								});
+							}
+
+							return result;
+						}
 					)
 					.then(
 						this.#emitOnLocationChangedEvent.bind(this)

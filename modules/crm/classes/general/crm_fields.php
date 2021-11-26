@@ -246,12 +246,14 @@ class CCrmFields
 					}
 					else
 					{
-						$arFields[] = array(
+						$arFields[] = [
 							'id' => 'DT_DEFAULT_VALUE',
-							'name' => GetMessage('CRM_FIELDS_TYPE_DT_FIXED'),
+							'name' => Loc::getMessage('CRM_FIELDS_TYPE_DT_FIXED'),
 							'type' => 'date_short',
-							'params' => array('size' => 10)
-						);
+							'params' => [
+								'size' => 10,
+							],
+						];
 					}
 				}
 				break;
@@ -265,7 +267,7 @@ class CCrmFields
 						'LIST' => Loc::getMessage('CRM_FIELDS_TYPE_E_DISPLAY_LIST'),
 						'UI' => Loc::getMessage('CRM_FIELDS_TYPE_E_DISPLAY_UI'),
 						'CHECKBOX' => Loc::getMessage('CRM_FIELDS_TYPE_E_DISPLAY_CHECKBOX'),
-//						'DIALOG' => Loc::getMessage('CRM_FIELDS_TYPE_E_DISPLAY_DIALOG'),
+						'DIALOG' => Loc::getMessage('CRM_FIELDS_TYPE_E_DISPLAY_DIALOG'),
 					],
 				];
 				$arFields[] = [

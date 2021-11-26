@@ -100,5 +100,6 @@ $MESS["CRM_DEAL_LIST_DEL_PROC_DLG_TITLE"] = "Удаление сделок";
 $MESS["CRM_DEAL_LIST_DEL_PROC_DLG_SUMMARY"] = "Будет произведено удаление выбранных сделок. Выполнение этой операции может занять продолжительное время.";
 $MESS["CRM_TIMELINE_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Перестроение поискового индекса истории лидов, сделок, контактов, компаний и др.";
 $MESS["CRM_DEAL_ACTION_MERGE"] = "Объединить";
+$MESS["CRM_DEAL_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Идет обновление системы прав доступа";
 $MESS['CRM_DEAL_HAS_INACCESSIBLE_FIELDS'] = 'Вы не можете выполнить данную операцию! Есть поля, которые недоступны для вас. Обратитесь к администратору за получением доступа и решением данной проблемы.';
 ?>

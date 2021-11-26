@@ -5,17 +5,16 @@ namespace Bitrix\Crm\Controller;
 use Bitrix\Crm\Conversion\ConversionManager;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\Intranet\CustomSection;
+use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Relation;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\UserField\UserFieldManager;
 use Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable;
 use Bitrix\Intranet\CustomSection\Entity\CustomSectionTable;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
-use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
@@ -32,10 +31,6 @@ class Type extends Base
 		$preFilters[] = new class extends ActionFilter\Base {
 			public function onBeforeAction(Event $event): ?EventResult
 			{
-				if ($this->getAction()->getController()->getScope() === Controller::SCOPE_REST)
-				{
-					Container::getInstance()->getContext()->setScope(Context::SCOPE_REST);
-				}
 				$userPermissions = Container::getInstance()->getUserPermissions();
 				if (!$userPermissions->canWriteConfig())
 				{
@@ -54,7 +49,6 @@ class Type extends Base
 		return $preFilters;
 	}
 
-	/** @noinspection PhpUnusedParameterInspection */
 	public function getAutoWiredParameters(): array
 	{
 		$params = parent::getAutoWiredParameters();
@@ -68,16 +62,16 @@ class Type extends Base
 			}
 		);
 
-		$params[] = new ExactParameter(
-			\Bitrix\Crm\Model\Dynamic\Type::class,
-			'type',
-			static function($className, $entityTypeId)
-			{
-				return Container::getInstance()->getTypeByEntityTypeId((int)$entityTypeId);
-			}
-		);
-
 		return $params;
+	}
+
+	public function fieldsAction(): ?array
+	{
+		$fieldsInfo = TypeTable::getFieldsInfo();
+
+		return [
+			'fields' => $this->prepareFieldsInfo($fieldsInfo),
+		];
 	}
 
 	public function getAction(\Bitrix\Crm\Model\Dynamic\Type $type): ?array
@@ -87,39 +81,33 @@ class Type extends Base
 		];
 	}
 
-	public function listAction(array $select = ['*'], array $order = null, array $filter = null, PageNavigation $pageNavigation = null): ?Page
+	public function listAction(array $order = null, array $filter = null, PageNavigation $pageNavigation = null): ?Page
 	{
-		if(is_array($filter))
-		{
-			$filter = $this->removeDotsFromKeys($this->convertKeysToUpper($filter));
-		}
+		$parameters = [];
+
+		$parameters['filter'] = $this->removeDotsFromKeys($this->convertKeysToUpper((array)$filter));
 		if(is_array($order))
 		{
-			$order = $this->convertKeysToUpper($order);
+			$parameters['order'] = $this->convertKeysToUpper($order);
 		}
-		if(is_array($select))
+		if($pageNavigation)
 		{
-			$select = $this->removeDotsFromValues($this->convertValuesToUpper($select));
+			$parameters['offset'] = $pageNavigation->getOffset();
+			$parameters['limit'] = $pageNavigation->getLimit();
 		}
 
 		$types = [];
 		$typeTable = Container::getInstance()->getDynamicTypeDataClass();
-		$list = $typeTable::getList([
-			'select' => $select,
-			'filter' => $filter,
-			'order' => $order,
-			'offset' => $pageNavigation ? $pageNavigation->getOffset() : null,
-			'limit' => $pageNavigation ? $pageNavigation->getLimit(): null,
-		]);
+		$list = $typeTable::getList($parameters);
 		/** @var \Bitrix\Crm\Model\Dynamic\Type $type */
 		while($type = $list->fetchObject())
 		{
-			$types[] = $type->jsonSerialize();
+			$types[] = $type->jsonSerialize(false);
 		}
 
-		return new Page('types', $types, static function() use ($filter, $typeTable)
+		return new Page('types', $types, static function() use ($parameters, $typeTable)
 		{
-			return $typeTable::getCount($filter);
+			return $typeTable::getCount($parameters['filter'] ?? []);
 		});
 	}
 
@@ -149,10 +137,13 @@ class Type extends Base
 			return null;
 		}
 		unset($fields['ID']);
-		$fields['TITLE'] = trim($fields['TITLE']);
+		if (isset($fields['TITLE']))
+		{
+			$fields['TITLE'] = trim($fields['TITLE']);
+		}
 		if(!$isNew)
 		{
-			unset($fields['ENTITY_TYPE_ID']);
+			unset($fields['ENTITY_TYPE_ID'], $fields['NAME']);
 		}
 		foreach($fields as $name => $value)
 		{

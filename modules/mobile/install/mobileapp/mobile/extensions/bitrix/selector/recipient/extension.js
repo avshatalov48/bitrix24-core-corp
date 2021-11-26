@@ -72,14 +72,6 @@
 
 			return this;
 		}
-
-		onSelectedChanged(data)
-		{
-			if (this.singleSelection)
-			{
-				this.ui.close(() => this.onResult(this.provider.prepareResult(data.items)));
-			}
-		}
 	}
 
 

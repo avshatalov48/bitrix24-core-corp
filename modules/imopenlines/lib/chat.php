@@ -1579,7 +1579,7 @@ class Chat
 									'CLASS' => 'bx-messenger-content-item-ol-output',
 									'IMOL_FORM' => 'offline',
 									'TYPE' => 'lines',
-									'COMPONENT_ID' => 'bx-imopenlines-message',
+									'COMPONENT_ID' => 'bx-imopenlines-form-offline',
 								],
 							]);
 						}
@@ -2054,7 +2054,9 @@ class Chat
 					'PAUSE' => 'N',
 					'WAIT_ACTION' => 'N',
 					'DATE_CREATE' => '0',
-					'LINE_ID' => 0
+					'LINE_ID' => 0,
+					'BLOCK_DATE' => 0,
+					'BLOCK_REASON' => 0
 				];
 
 				$fieldData = explode("|", $this->chat[self::getFieldName($field)]);
@@ -2124,9 +2126,11 @@ class Chat
 				$data = [
 					'READED' => 'N',
 					'READED_ID' => '0',
-					'READED_TIME' => false,
+					'READED_TIME' => 0,
 					'SESSION_ID' => '0',
 					'SHOW_FORM' => 'Y',
+					'WELCOME_FORM_NEEDED' => 'Y',
+					'WELCOME_TEXT_SENT' => 'N'
 				];
 				$fieldData = explode("|", $this->chat[self::getFieldName($field)]);
 				if (isset($fieldData[0]) && $fieldData[0] == 'Y')
@@ -2148,6 +2152,14 @@ class Chat
 				if (isset($fieldData[4]))
 				{
 					$data['SHOW_FORM'] = $fieldData[4] == 'N'? 'N': 'Y';
+				}
+				if (isset($fieldData[5]))
+				{
+					$data['WELCOME_FORM_NEEDED'] = $fieldData[5] === 'N'? 'N': 'Y';
+				}
+				if (isset($fieldData[6]))
+				{
+					$data['WELCOME_TEXT_SENT'] = $fieldData[7] === 'N'? 'N': 'Y';
 				}
 			}
 		}
@@ -2318,7 +2330,22 @@ class Chat
 						{
 							$data['SHOW_FORM'] = $fieldData['SHOW_FORM'] == 'N'? 'N': 'Y';
 						}
-						$updateDate[self::getFieldName($fieldType)] = $this->chat[self::getFieldName($fieldType)] = $data['READED'].'|'.$data['READED_ID'].'|'.$data['READED_TIME'].'|'.$data['SESSION_ID'].'|'.$data['SHOW_FORM'];
+						if (isset($fieldData['WELCOME_FORM_NEEDED']))
+						{
+							$data['WELCOME_FORM_NEEDED'] = $fieldData['WELCOME_FORM_NEEDED'] === 'N'? 'N': 'Y';
+						}
+						if (isset($fieldData['WELCOME_TEXT_SENT']))
+						{
+							$data['WELCOME_TEXT_SENT'] = $fieldData['WELCOME_TEXT_SENT'] === 'N'? 'N': 'Y';
+						}
+						$this->chat[self::getFieldName($fieldType)] = $data['READED'].'|'
+																	.$data['READED_ID'].'|'
+																	.$data['READED_TIME'].'|'
+																	.$data['SESSION_ID'].'|'
+																	.$data['SHOW_FORM'].'|'
+																	.$data['WELCOME_FORM_NEEDED'].'|'
+																	.$data['WELCOME_TEXT_SENT'];
+						$updateDate[self::getFieldName($fieldType)] = $this->chat[self::getFieldName($fieldType)];
 					}
 				}
 			}

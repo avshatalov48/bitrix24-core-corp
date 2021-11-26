@@ -162,17 +162,7 @@ class Event
 			return $this->prepareRelationQuery($indicator);
 		}
 
-		$query = $this->prepareNonRelationQuery();
-
-		$relations = new ORM\Fields\Relations\Reference(
-			'RELATIONS',
-			Crm\EventRelationsTable::class,
-			ORM\Query\Join::on('this.ID', 'ref.EVENT_ID'),
-			array('join_type' => 'LEFT')
-		);
-		$query->registerRuntimeField($relations);
-
-		return $query;
+		return $this->prepareNonRelationQuery();
 	}
 
 	/**
@@ -491,7 +481,6 @@ class Event
 		if ($this->prepareFilter($query))
 		{
 			$avgEventTableRowLength = (double)self::$tablesInformation[Crm\EventTable::getTableName()]['AVG_SIZE'];
-			$avgEventRelationsTableRowLength = (double)self::$tablesInformation[Crm\EventRelationsTable::getTableName()]['AVG_SIZE'];
 
 			$connection = Main\Application::getConnection();
 
@@ -525,8 +514,8 @@ class Event
 
 				->registerRuntimeField(new ORM\Fields\ExpressionField(
 					'ENTITY_SIZE',
-					'COUNT(DISTINCT %s) * '.$avgEventTableRowLength. ' + COUNT(%s) * '.$avgEventRelationsTableRowLength,
-					array('ID', 'RELATIONS.ID')
+					'COUNT(DISTINCT %s) * '.$avgEventTableRowLength,
+					'ID'
 				))
 				->addSelect('ENTITY_SIZE');
 

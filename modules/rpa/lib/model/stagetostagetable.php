@@ -4,6 +4,22 @@ namespace Bitrix\Rpa\Model;
 
 use Bitrix\Main\ORM;
 
+/**
+ * Class StageToStageTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_StageToStage_Query query()
+ * @method static EO_StageToStage_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_StageToStage_Result getById($id)
+ * @method static EO_StageToStage_Result getList(array $parameters = array())
+ * @method static EO_StageToStage_Entity getEntity()
+ * @method static \Bitrix\Rpa\Model\EO_StageToStage createObject($setDefaultValues = true)
+ * @method static \Bitrix\Rpa\Model\EO_StageToStage_Collection createCollection()
+ * @method static \Bitrix\Rpa\Model\EO_StageToStage wakeUpObject($row)
+ * @method static \Bitrix\Rpa\Model\EO_StageToStage_Collection wakeUpCollection($rows)
+ */
 class StageToStageTable extends ORM\Data\DataManager
 {
 	public static function getTableName(): string

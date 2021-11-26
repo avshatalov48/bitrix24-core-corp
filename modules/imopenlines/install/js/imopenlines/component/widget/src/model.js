@@ -67,6 +67,15 @@ export class WidgetModel extends VuexBuilderModel
 				dialogStart: false,
 				watchTyping: false,
 				showSessionId: false,
+				crmFormsSettings: {
+					useWelcomeForm: false,
+					welcomeFormId: 0,
+					welcomeFormSec: '',
+					welcomeFormDelay: false,
+					welcomeFormFilled: false,
+					successText: '',
+					errorText: ''
+				}
 			},
 			dialog:
 			{
@@ -253,6 +262,34 @@ export class WidgetModel extends VuexBuilderModel
 						state.common.widgetHeight = 0;
 						state.common.widgetWidth = 0;
 						state.common.location = payload.location;
+					}
+				}
+
+				if (Utils.types.isPlainObject(payload.crmFormsSettings))
+				{
+					if (typeof payload.crmFormsSettings.useWelcomeForm === 'string')
+					{
+						state.common.crmFormsSettings.useWelcomeForm = payload.crmFormsSettings.useWelcomeForm === 'Y';
+					}
+					if (typeof payload.crmFormsSettings.welcomeFormId === 'string')
+					{
+						state.common.crmFormsSettings.welcomeFormId = payload.crmFormsSettings.welcomeFormId;
+					}
+					if (typeof payload.crmFormsSettings.welcomeFormSec === 'string')
+					{
+						state.common.crmFormsSettings.welcomeFormSec = payload.crmFormsSettings.welcomeFormSec;
+					}
+					if (typeof payload.crmFormsSettings.welcomeFormDelay === 'string')
+					{
+						state.common.crmFormsSettings.welcomeFormDelay = payload.crmFormsSettings.welcomeFormDelay === 'Y';
+					}
+					if (typeof payload.crmFormsSettings.successText === 'string' && payload.crmFormsSettings.successText !== '')
+					{
+						state.common.crmFormsSettings.successText = payload.crmFormsSettings.successText;
+					}
+					if (typeof payload.crmFormsSettings.errorText === 'string' && payload.crmFormsSettings.errorText !== '')
+					{
+						state.common.crmFormsSettings.errorText = payload.crmFormsSettings.errorText;
 					}
 				}
 

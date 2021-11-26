@@ -31,8 +31,10 @@ $APPLICATION->setPageProperty("BodyClass",
 $data = $arResult['ITEMS'];
 $date = new \Bitrix\Main\Type\Date;
 $isBitrix24 = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24');
-$demoAccess = \CJSCore::IsExtRegistered('intranet_notify_dialog') &&
-			  \Bitrix\Main\ModuleManager::isModuleInstalled('im');
+$demoAccess =
+	\CJSCore::IsExtRegistered('intranet_notify_dialog')
+	&& \Bitrix\Main\ModuleManager::isModuleInstalled('im')
+;
 
 
 
@@ -354,3 +356,17 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 <?elseif ($arParams['ENTITY_TYPE_CHR'] === 'DEAL'):?>
 	<?\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated()?>
 <?endif;
+if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):
+	Bitrix\Main\UI\Extension::load(['crm.restriction.client-fields']);
+	?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				new BX.Crm.Restriction.ClientFieldsRestriction(
+					<?=CUtil::PhpToJSObject($arResult['CLIENT_FIELDS_RESTRICTIONS'])?>
+				);
+			}
+		);
+	</script>
+<?endif;?>

@@ -187,7 +187,7 @@ if ($isBitrix24Cloud)
 	}
 }
 ?>
-			<div id="header">
+			<div id="header" class="<?$APPLICATION->ShowProperty("HeaderClass");?>">
 				<div id="header-inner">
 					<?
 					//This component was used for menu-create-but.

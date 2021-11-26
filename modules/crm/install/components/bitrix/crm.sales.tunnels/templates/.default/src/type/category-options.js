@@ -20,15 +20,10 @@ type CategoryOptions = {
 	generatorsCount: number,
 	generatorsListUrl: string,
 	allowWrite: boolean,
-	canEditTunnels: boolean,
-	canAddCategory: boolean,
-	categoriesQuantityLimit: number,
+	isCategoryEditable: boolean,
+	areStagesEditable: boolean,
 	isAvailableGenerator: boolean,
-	showGeneratorRestrictionPopup: () => void,
-	isAvailableRobots: boolean,
-	showRobotsRestrictionPopup: () => void,
 	isAutomationEnabled: boolean,
-	isSenderSupported: boolean,
 	isStagesEnabled: boolean,
 };
 

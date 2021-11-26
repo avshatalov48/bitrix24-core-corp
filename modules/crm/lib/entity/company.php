@@ -3,8 +3,8 @@ namespace Bitrix\Crm\Entity;
 
 use Bitrix\Main;
 
+use Bitrix\Crm;
 use Bitrix\Crm\CompanyTable;
-use Bitrix\Crm\Security\EntityAuthorization;
 
 class Company extends EntityBase
 {

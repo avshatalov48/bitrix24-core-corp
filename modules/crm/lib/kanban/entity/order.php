@@ -18,6 +18,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\FieldAdapter;
+use Bitrix\Crm\Service\Display\Field;
 
 Loc::loadMessages(__FILE__);
 
@@ -44,6 +45,53 @@ class Order extends Entity
 	public function getStatusEntityId(): string
 	{
 		return OrderStatus::NAME;
+	}
+
+	public function getBaseFields(): array
+	{
+		// @todo move to \Bitrix\Crm\Service\Factory\Order::getFieldsInfo() when it will appear
+
+		$result = [];
+
+		$orderFields =
+			Loader::includeModule('sale')
+				? \Bitrix\Crm\Order\Order::getFieldsDescription()
+				: []
+		;
+
+		$specialTypes = [
+			'USER_ID' => 'user',
+			'CURRENCY' => 'crm_currency',
+			'COMPANY_ID' => 'crm_company',
+			'CREATED_BY' => 'user',
+			'RESPONSIBLE_ID' => 'user',
+			'LOCKED_BY' => 'user',
+			'EMP_PAYED_ID' => 'user',
+			'EMP_DEDUCTED_ID' => 'user',
+			'EMP_STATUS_ID' => 'user',
+			'EMP_MARKED_ID' => 'user',
+			'EMP_CANCELED_ID' => 'user',
+		];
+
+		$ignoredFields = [
+			'SEARCH_CONTENT',
+		];
+
+		/** @var \Bitrix\Main\ORM\Fields\Field $field */
+		foreach ($orderFields as $field)
+		{
+			$fieldName = $field['CODE'];
+			if (in_array($fieldName, $ignoredFields, true))
+			{
+				continue;
+			}
+
+			$result[$fieldName] = [
+				'TYPE' => $specialTypes[$fieldName] ?? $field['TYPE'],
+			];
+		}
+
+		return $result;
 	}
 
 	public function getFilterPresets(): array
@@ -173,6 +221,11 @@ class Order extends Entity
 	{
 		if(!empty($additionalFields))
 		{
+			if (in_array('USER', $additionalFields, true))
+			{
+				$additionalFields[] = 'USER_ID';
+			}
+
 			$ufSelect = preg_grep( "/^UF_/", $additionalFields);
 			$additionalFields = array_intersect($additionalFields,  \Bitrix\Crm\Order\Order::getAllFields());
 			if (!empty($ufSelect))
@@ -195,10 +248,6 @@ class Order extends Entity
 			if (in_array('SOURCE_ID', $additionalFields, true))
 			{
 				$additionalFields['SOURCE_ID'] = 'TRADING_PLATFORM.TRADING_PLATFORM.NAME';
-			}
-			if (in_array('USER', $additionalFields, true))
-			{
-				$additionalFields[] = 'USER_ID';
 			}
 		}
 
@@ -250,7 +299,7 @@ class Order extends Entity
 			$orderId = $orderClient['ORDER_ID'];
 			if ((int)$orderClient['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
 			{
-				if (empty($db[$orderId]['CONTACT_ID']) || $orderClient['IS_PRIMARY'] === 'Y')
+				if (empty($orders[$orderId]['CONTACT_ID']) || $orderClient['IS_PRIMARY'] === 'Y')
 				{
 					$orders[$orderId]['CONTACT_ID'] = $orderClient['ENTITY_ID'];
 				}
@@ -371,10 +420,122 @@ class Order extends Entity
 	{
 		$item['FORMAT_TIME'] = false;
 		$item['DATE'] = $item['DATE_INSERT'];
+		$item['USER'] = $item['USER_ID'];
 
 		$item = parent::prepareItemCommonFields($item);
 
 		return $item;
+	}
+
+	protected function getExtraDisplayedFields()
+	{
+		$result = parent::getExtraDisplayedFields();
+
+		$result['PAYMENT'] =
+			(new Field('PAYMENT'))
+				->setType('string')
+				->setWasRenderedAsHtml(true)
+		;
+		$result['SHIPMENT'] =
+			(new Field('SHIPMENT'))
+				->setType('string')
+				->setWasRenderedAsHtml(true)
+		;
+		$result['USER'] =
+			(new Field('USER'))
+				->setType('user')
+				->setDisplayParams([
+					'SHOW_URL_TEMPLATE' => '/shop/settings/sale_buyers_profile/?USER_ID=#user_id#&lang=' . LANGUAGE_ID
+				])
+		;
+
+		return $result;
+	}
+
+	public function appendRelatedEntitiesValues(array $items, array $selectedFields): array
+	{
+		$items = parent::appendRelatedEntitiesValues($items, $selectedFields);
+
+		$needAddPayment = in_array('PAYMENT', $selectedFields);
+		$needAddShipment = in_array('SHIPMENT', $selectedFields);
+		if ($needAddPayment || $needAddShipment)
+		{
+			foreach ($items as $itemId => $item)
+			{
+				if ($needAddPayment && isset($item['PAYMENT']))
+				{
+					$items[$itemId]['PAYMENT'] = $this->preparePaymentOrShipmentDisplayValue(
+						'PAYMENT',
+						(array)$item['PAYMENT']
+				);
+				}
+				if ($needAddShipment && isset($item['SHIPMENT']))
+				{
+					$items[$itemId]['SHIPMENT'] = $this->preparePaymentOrShipmentDisplayValue(
+						'SHIPMENT',
+						(array)$item['SHIPMENT']
+					);
+				}
+			}
+		}
+
+		return $items;
+	}
+
+	protected function preparePaymentOrShipmentDisplayValue(string $fieldId, array $value): string
+	{
+		$result = '';
+
+		foreach ($value as $rowCodeItem)
+		{
+			if ($fieldId === 'PAYMENT')
+			{
+				$pathSubItem = \CComponentEngine::MakePathFromTemplate(
+					\COption::GetOptionString('crm', 'path_to_order_payment_details'),
+					[
+						'payment_id' => $rowCodeItem['ID'],
+					]
+				);
+			}
+			else
+			{
+				$pathSubItem = \CComponentEngine::MakePathFromTemplate(
+					\COption::GetOptionString('crm', 'path_to_order_shipment_details'),
+					[
+						'shipment_id' => $rowCodeItem['ID'],
+					]
+				);
+			}
+
+			$price = ($fieldId === 'PAYMENT') ? $rowCodeItem['SUM'] : $rowCodeItem['PRICE_DELIVERY'];
+			$sum = \CCrmCurrency::MoneyToString(
+				$price,
+				$rowCodeItem['CURRENCY']
+			);
+
+			$title = '';
+
+			$paySystemName =  ($fieldId === 'PAYMENT') ? $rowCodeItem['PAY_SYSTEM_NAME'] : $rowCodeItem['DELIVERY_NAME'];
+			$paySystemName = htmlspecialcharsbx($paySystemName);
+			if (!empty($paySystemName))
+			{
+				$title .= $paySystemName. " ";
+			}
+
+			if (!empty($sum))
+			{
+				$title .= "({$sum})";
+			}
+
+			if (empty($title))
+			{
+				$title = htmlspecialcharsbx($rowCodeItem['ACCOUNT_NUMBER']);
+			}
+
+			$result .= "<a href='{$pathSubItem}'>{$title}</a></br>";
+		}
+
+		return $result;
 	}
 
 	/**

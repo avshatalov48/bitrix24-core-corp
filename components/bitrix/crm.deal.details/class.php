@@ -568,9 +568,10 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		$this->initializeData();
 
 		$this->arResult['ENTITY_FIELDS'] = $this->prepareFieldInfos();
+
 		//region GUID
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
-			? $this->arParams['GUID'] : $this->getDefaultGuid();
+		$this->arResult['GUID'] = $this->arParams['GUID'] ?? $this->getDefaultGuid();
+		$this->guid = $this->arResult['GUID'];
 
 		$this->arResult['EDITOR_CONFIG_ID'] = $this->prepareConfigID(
 			isset($this->arParams['EDITOR_CONFIG_ID']) ? $this->arParams['EDITOR_CONFIG_ID'] : ''
@@ -1703,7 +1704,6 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				'MULTIPLE' => $userField['MULTIPLE'],
 				'MANDATORY' => $userField['MANDATORY'],
 				'SETTINGS' => isset($userField['SETTINGS']) ? $userField['SETTINGS'] : null
-				//'CONTEXT' => $this->guid
 			);
 
 			if($userField['USER_TYPE_ID'] === 'enumeration')
@@ -2707,97 +2707,35 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			return;
 		}
 
-		$isEntityDataModified = false;
-		$attrConfigs = $this->prepareEntityFieldAttributeConfigs();
-		for($i = 0, $length = count($this->entityFieldInfos); $i < $length; $i++)
+		$requiredByAttributesFieldNames = FieldAttributeManager::prepareEditorFieldInfosWithAttributes(
+			$this->prepareEntityFieldAttributeConfigs(),
+			$this->entityFieldInfos
+		);
+
+		//region Update entity data
+		// This block allows in the component crm.entity.editor to determine the presence of mandatory
+		if (!empty($requiredByAttributesFieldNames))
 		{
-			$isPhaseDependent = FieldAttributeManager::isPhaseDependent();
-			if (!$isPhaseDependent)
+			$entityFieldInfoMap = [];
+			for($i = 0, $length = count($this->entityFieldInfos); $i < $length; $i++)
 			{
-				if (!is_array($this->entityFieldInfos[$i]['data']))
-				{
-					$this->entityFieldInfos[$i]['data'] = [];
-				}
-				$this->entityFieldInfos[$i]['data']['isPhaseDependent'] = false;
+				$entityFieldInfoMap[$this->entityFieldInfos[$i]['name']] = $i;
 			}
 
-			$fieldName = $this->entityFieldInfos[$i]['name'];
-			if(!isset($attrConfigs[$fieldName]))
+			$isEntityDataModified = false;
+			foreach ($requiredByAttributesFieldNames as $fieldName)
 			{
-				continue;
-			}
-
-			if(!isset($this->entityFieldInfos[$i]['data']))
-			{
-				$this->entityFieldInfos[$i]['data'] = array();
-			}
-
-			$this->entityFieldInfos[$i]['data']['attrConfigs'] = $attrConfigs[$fieldName];
-
-			if (is_array($attrConfigs[$fieldName]) && !empty($attrConfigs[$fieldName]))
-			{
-				$isRequiredByAttribute = false;
-				$ready = false;
-				$attrConfig = $attrConfigs[$fieldName];
-				foreach ($attrConfig as $item)
+				if ($this->isEntityFieldHasEmpyValue($this->entityFieldInfos[$entityFieldInfoMap[$fieldName]]))
 				{
-					if (is_array($item) && isset($item['typeId'])
-						&& $item['typeId'] === FieldAttributeType::REQUIRED)
-					{
-						if ($isPhaseDependent)
-						{
-							if (is_array($item['groups']))
-							{
-								foreach ($item['groups'] as $group)
-								{
-									if (is_array($group) && isset($group['phaseGroupTypeId'])
-										&& $group['phaseGroupTypeId'] === FieldAttributePhaseGroupType::ALL)
-									{
-										$isRequiredByAttribute = true;
-										$ready = true;
-										break;
-									}
-								}
-							}
-						}
-						else
-						{
-							$isRequiredByAttribute = true;
-							$ready = true;
-						}
-						if ($ready)
-						{
-							break;
-						}
-					}
-				}
-				if ($isRequiredByAttribute)
-				{
-					if (!is_array($this->entityFieldInfos[$i]['data']))
-					{
-						$this->entityFieldInfos[$i]['data'] = [];
-					}
-					$this->entityFieldInfos[$i]['data']['isRequiredByAttribute'] = true;
-
-					// This block allows in the component crm.entity.editor to determine the presence of mandatory
-					// standard entity fields with empty values.
-					if (is_array($this->entityData)
-						&& $this->isEntityFieldHasEmpyValue($this->entityFieldInfos[$i]))
-					{
-						if (!is_array($this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP']))
-						{
-							$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'] = [];
-						}
-						$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'][$fieldName] = true;
-						$isEntityDataModified = true;
-					}
+					$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'][$fieldName] = true;
+					$isEntityDataModified = true;
 				}
 			}
-		}
 
-		if ($isEntityDataModified)
-		{
-			$this->arResult['ENTITY_DATA'] = $this->entityData;
+			if ($isEntityDataModified)
+			{
+				$this->arResult['ENTITY_DATA'] = $this->entityData;
+			}
 		}
 	}
 	protected function isEntityFieldHasEmpyValue($fieldInfo)

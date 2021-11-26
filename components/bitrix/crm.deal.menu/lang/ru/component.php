@@ -38,6 +38,7 @@ $MESS["DEAL_EXPORT_EXCEL"] = "Экспорт сделок в Excel";
 $MESS["DEAL_EXPORT_EXCEL_TITLE"] = "Экспорт сделок в Excel";
 $MESS["DEAL_STEXPORT_SUMMARY"] = "Будет сформирован файл экспорта для сделок. Выполнение этой операции может занять продолжительное время при большом количестве данных.";
 $MESS["DEAL_STEXPORT_OPTION_EXPORT_ALL_FIELDS"] = "Экспортировать все поля сделок";
+$MESS["DEAL_STEXPORT_OPTION_EXPORT_ALL_CLIENT_FIELDS"] = "Экспортировать все поля контактов и компаний";
 $MESS["CRM_TASK_TITLE_PREFIX"] = "CRM: ";
 $MESS["CRM_TASK_TAG"] = "crm";
 $MESS["DEAL_ADD_CALENDAR"] = "Запланировать звонок/встречу";

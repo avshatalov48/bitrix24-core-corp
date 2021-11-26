@@ -62,7 +62,11 @@ class Filter extends Common
 				$currentPresetId = $filterOptions->getCurrentFilterId();
 				$filterSettings = $filterOptions->getFilterSettings($currentPresetId);
 
-				if (is_array($filterSettings['fields']) && (!array_key_exists('ROLEID', $filterSettings['fields']) || !$filterSettings['fields']['ROLEID']))
+				if (
+					is_array($filterSettings['fields'])
+					&& (!array_key_exists('ROLEID', $filterSettings['fields'])
+						|| !$filterSettings['fields']['ROLEID'])
+				)
 				{
 					if ($roleId)
 					{
@@ -91,15 +95,36 @@ class Filter extends Common
 	 */
 	public function getOptions()
 	{
-		if (empty(static::$options[$this->getId()]))
+		$filterId = $this->getId();
+
+		if (empty(static::$options[$filterId]))
 		{
-			static::$options[$this->getId()] = new \Bitrix\Main\UI\Filter\Options(
-				$this->getId(),
-				static::getPresets($this)
+			static::$options[$filterId] = new \Bitrix\Main\UI\Filter\Options(
+				$filterId,
+				$this->getAllPresets(),
 			);
 		}
 
-		return static::$options[$this->getId()];
+		return static::$options[$filterId];
+	}
+
+	public function getAllPresets()
+	{
+		$presets = static::getPresets($this);
+
+		foreach (FilterRegistry::getList() as $name)
+		{
+			$registryId = FilterRegistry::getId($name, $this->getGroupId());
+
+			$options = new \Bitrix\Main\UI\Filter\Options(
+				$registryId,
+				static::getPresets($this),
+			);
+
+			$presets = array_merge($presets, $options->getOptions()['filters']);
+		}
+
+		return $presets;
 	}
 
 	/**
@@ -240,7 +265,6 @@ class Filter extends Common
 	 */
 	private function postProcess(array $filter): array
 	{
-		$filter['ZOMBIE'] = 'N';
 		$filter['CHECK_PERMISSIONS'] = 'Y';
 		$filter['ONLY_ROOT_TASKS'] = 'Y';
 

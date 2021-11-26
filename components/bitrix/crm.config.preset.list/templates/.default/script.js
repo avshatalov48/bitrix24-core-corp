@@ -412,7 +412,7 @@ BX.Crm.PresetListManagerClass = (function ()
 			else
 				this.dlg.elements.name.value = "";
 		},
-		_handleAfterGridInit(params)
+		_handleAfterGridInit: function(params)
 		{
 			var eventParams = {}, i;
 			if (BX.type.isPlainObject(params) && BX.type.isPlainObject(params["initEventParams"]))
@@ -527,3 +527,235 @@ if (typeof(BX.Crm.rebuildSelect) === "undefined")
 		}
 	};
 }
+
+BX.namespace("BX.Crm.PresetListComponent");
+
+BX.Crm.PresetListComponent.ChangeCurrentCountryManager = function()
+{
+	this._id = "";
+	this._settings = {};
+	this._messages = {};
+
+	this._container = null;
+	this._okButton = null;
+	this._cancelButton = null;
+	this._closeButton = null;
+
+	this._isEventsEnabled = false;
+	this._okButtonHandler = BX.delegate(this.onOkClick, this);
+	this._cancelButtonHandler = BX.delegate(this.onCancelClick, this);
+	this._closeButtonHandler = BX.delegate(this.onCloseClick, this);
+
+	this._actionForm = null;
+};
+BX.Crm.PresetListComponent.ChangeCurrentCountryManager.prototype = {
+	initialize: function(settings)
+	{
+		this._settings = settings ? settings : {};
+
+		if (
+			BX.Type.isPlainObject(this._settings)
+			&& this._settings.hasOwnProperty("messages")
+			&& BX.Type.isPlainObject(this._settings["messages"])
+		)
+		{
+			this._messages = this._settings["messages"];
+		}
+
+		var containerId = this.getSetting("containerId", "");
+		if (BX.Type.isStringFilled(containerId))
+		{
+			var container = BX(containerId);
+			if (BX.Type.isDomNode(container))
+			{
+				this._container = container;
+			}
+		}
+
+		var actionFormId = this.getSetting("actionFormId", "");
+		var actionForm = null;
+		if (actionFormId !== "")
+		{
+			actionForm = BX(actionFormId);
+			if (BX.Type.isDomNode(actionForm))
+			{
+				this._actionForm = actionForm;
+			}
+		}
+
+		this.show();
+	},
+	getSetting: function (name, defaultval)
+	{
+		return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
+	},
+	getMessage:function(name)
+	{
+		return this._messages.hasOwnProperty(name) ? this._messages[name] : name;
+	},
+	show: function ()
+	{
+		if (this._container)
+		{
+			this._container.innerHTML =
+				"<div class=\"crm-type-ui-card crm-type-ui-card-message\">"
+				+   "<div class=\"crm-type-ui-card-header\">"
+				+     "<div class=\"crm-type-ui-card-message-icon crm-type-ui-card-message-icon--directions\"></div>"
+				+     "<div class=\"crm-type-ui-card-message-title\">"
+				+       BX.util.htmlspecialchars(this.getMessage("messageTitle"))
+				+     "</div>"
+				+   "</div>"
+				+   "<div class=\"crm-type-ui-card-body\">"
+				+     "<div class=\"crm-type-ui-card-message-description\">"
+				+     "<div style=\"margin-bottom: 20px;\">"
+				+       BX.util.htmlspecialchars(this.getMessage("messageText")).replace(/\n/g, "<br />\n")
+				+     "</div>"
+				+     "<div>"
+				+     "<div style=\"display: inline-block; width: 50%; text-align: left;\">"
+				+       "<a style=\"cursor: pointer;\">"
+				+         BX.util.htmlspecialchars(this.getMessage("okText"))
+				+       "</a>"
+				+     "</div>"
+				+     "<div style=\"display: inline-block; width: 50%; text-align: right;\">"
+				+       "<a style=\"cursor: pointer;\">"
+				+         BX.util.htmlspecialchars(this.getMessage("cancelText"))
+				+       "</a>"
+				+     "</div>"
+				+     "</div>"
+				+     "</div>"
+				+   "</div>"
+				+   "<div class=\"crm-type-ui-card-message-close-button\" title=\""
+				+      BX.util.htmlspecialchars(this.getMessage("hideMessageText")) + "\">"
+				+   "</div>"
+				+ "</div>"
+			;
+			this._container.style.display = "inline-block";
+			var buttons = this._container.querySelectorAll("div > a");
+			if (buttons.length > 1)
+			{
+				this._okButton = buttons[0];
+				this._cancelButton = buttons[1];
+			}
+			var closeButton = this._container.querySelector("div.crm-type-ui-card-message-close-button");
+			if (closeButton)
+			{
+				this._closeButton = closeButton;
+			}
+
+			this.enableEvents();
+		}
+	},
+	enableEvents: function ()
+	{
+		if (!this._isEventsEnabled)
+		{
+			if (this._okButton)
+			{
+				BX.bind(this._okButton, "click", this._okButtonHandler);
+			}
+			if (this._cancelButton)
+			{
+				BX.bind(this._cancelButton, "click", this._cancelButtonHandler);
+			}
+			if (this._closeButton)
+			{
+				BX.bind(this._closeButton, "click", this._closeButtonHandler);
+			}
+			this._isEventsEnabled = true;
+		}
+	},
+	disableEvents: function ()
+	{
+		if (this._isEventsEnabled)
+		{
+			if (this._okButton)
+			{
+				BX.unbind(this._okButton, "click", this._okButtonHandler);
+			}
+			if (this._cancelButton)
+			{
+				BX.unbind(this._cancelButton, "click", this._cancelButtonHandler);
+			}
+			if (this._closeButton)
+			{
+				BX.unbind(this._closeButton, "click", this._closeButtonHandler);
+			}
+			this._isEventsEnabled = false;
+		}
+	},
+	close: function ()
+	{
+		this.disableEvents();
+		this._container.style.display = "none";
+		this._container.innerHTML = "";
+	},
+	onOkClick: function ()
+	{
+		this.disableEvents();
+		this.runChangeCurrentCountryAction(true);
+	},
+	onCancelClick: function ()
+	{
+		this.disableEvents();
+		this.runChangeCurrentCountryAction(false);
+	},
+	onCloseClick: function ()
+	{
+		this.disableEvents();
+		this.close();
+	},
+	runChangeCurrentCountryAction: function(change)
+	{
+		BX.ajax.runComponentAction(
+			this.getSetting("componentName"),
+			"changeCurrentCountry",
+			{
+				mode: 'ajax',
+				data: {
+					change: (!!change) ? 1 : 0
+				}
+			}
+		).then(this.onSuccess.bind(this))
+			.catch(this.onError.bind(this));
+	},
+	startRefreshRequest: function()
+	{
+		if (this._actionForm)
+		{
+			var actionField = BX.findChild(this._actionForm, {"tag": "input", attr: {"name": "action"}});
+			if (BX.Type.isDomNode(actionField))
+			{
+				actionField.value = "refresh";
+				this._actionForm.submit();
+			}
+		}
+	},
+	onSuccess: function(response)
+	{
+		if (
+			BX.Type.isPlainObject(response)
+			&& response.hasOwnProperty("status")
+			&& response["status"] === "success"
+			&& response.hasOwnProperty("data")
+			&& response["data"] === true
+		)
+		{
+			this.close();
+			this.startRefreshRequest();
+		}
+		else
+		{
+			this.onError(response);
+		}
+	},
+	onError: function(response)
+	{
+		console.error(response);
+	}
+};
+BX.Crm.PresetListComponent.ChangeCurrentCountryManager.create = function(settings)
+{
+	var self = new BX.Crm.PresetListComponent.ChangeCurrentCountryManager();
+	self.initialize(settings);
+	return self;
+};

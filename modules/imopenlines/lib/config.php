@@ -831,6 +831,48 @@ class Config
 			$fields['KPI_CHECK_OPERATOR_ACTIVITY'] = 'N';
 		}
 
+		if (isset($params['USE_WELCOME_FORM']))
+		{
+			$fields['USE_WELCOME_FORM'] = $params['USE_WELCOME_FORM'] == 'Y' ? 'Y' : 'N';
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['USE_WELCOME_FORM'] = 'Y';
+		}
+
+		if (isset($params['WELCOME_FORM_ID']))
+		{
+			$fields['WELCOME_FORM_ID'] = (int)$params['WELCOME_FORM_ID'];
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			if (Loader::includeModule('crm'))
+			{
+				$defaultWelcomeFormId = (new \Bitrix\Crm\WebForm\Preset)->getInstalledId('imol_reg');
+				if ($defaultWelcomeFormId && (new \Bitrix\Crm\WebForm\Form($defaultWelcomeFormId))->isActive())
+				{
+					$fields['WELCOME_FORM_ID'] = (int)$defaultWelcomeFormId;
+				}
+				else
+				{
+					$fields['USE_WELCOME_FORM'] = 'N';
+				}
+			}
+			else
+			{
+				$fields['USE_WELCOME_FORM'] = 'N';
+			}
+		}
+
+		if (isset($params['WELCOME_FORM_DELAY']))
+		{
+			$fields['WELCOME_FORM_DELAY'] = $params['WELCOME_FORM_DELAY'] == 'Y' ? 'Y' : 'N';
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['WELCOME_FORM_DELAY'] = 'Y';
+		}
+
 		return $fields;
 	}
 

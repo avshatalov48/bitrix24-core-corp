@@ -1,8 +1,10 @@
 <?php
 namespace Bitrix\Crm\Integration\Rest;
 
+use Bitrix\Crm\Integration\Intranet\BindingMenu;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 use Bitrix\Rest;
 
 Loc::loadMessages(__FILE__);
@@ -36,5 +38,50 @@ class AppPlacementManager
 			$results[$groupName][] = $info;
 		}
 		return $results;
+	}
+
+	public static function deleteAllHandlersForType(int $entityTypeId): Result
+	{
+		if (!Main\Loader::includeModule('rest'))
+		{
+			return new Result();
+		}
+
+		$placementCodes = static::getAllPlacementCodesForType($entityTypeId);
+		if (empty($placementCodes))
+		{
+			return new Result();
+		}
+
+		$placementsGetListResult = Rest\PlacementTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'@PLACEMENT' => $placementCodes,
+			],
+		]);
+
+		$result = new Result();
+		while ($entityObject = $placementsGetListResult->fetchObject())
+		{
+			$deleteResult = $entityObject->delete();
+			if (!$deleteResult->isSuccess())
+			{
+				$result->addErrors($deleteResult->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
+	private static function getAllPlacementCodesForType(int $entityTypeId): array
+	{
+		$placementCodes = AppPlacement::getAllForType($entityTypeId);
+
+		foreach (BindingMenu\SectionCode::getAll() as $mapSectionCode)
+		{
+			$placementCodes[] = BindingMenu\CodeBuilder::getRestPlacementCode($mapSectionCode, $entityTypeId);
+		}
+
+		return array_unique($placementCodes);
 	}
 }

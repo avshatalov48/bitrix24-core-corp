@@ -1,38 +1,40 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Integration\Socialnetwork\Livefeed;
 
 use Bitrix\Socialnetwork\LogTable;
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Integration;
 
 final class CrmContact extends CrmEntity
 {
-	const PROVIDER_ID = 'CRM_LOG_CONTACT';
-	const CONTENT_TYPE_ID = 'CRM_LOG_CONTACT';
+	public const PROVIDER_ID = 'CRM_LOG_CONTACT';
+	public const CONTENT_TYPE_ID = 'CRM_LOG_CONTACT';
 
-	public static function getId()
+	public static function getId(): string
 	{
 		return static::PROVIDER_ID;
 	}
 
-	public function getEventId()
+	public function getEventId(): array
 	{
 		return [
-			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Add,
-			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Owner,
-			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Denomination,
-			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Responsible,
-			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Message
+			\CCrmLiveFeedEvent::ContactPrefix . \CCrmLiveFeedEvent::Add,
+			\CCrmLiveFeedEvent::ContactPrefix . \CCrmLiveFeedEvent::Owner,
+			\CCrmLiveFeedEvent::ContactPrefix . \CCrmLiveFeedEvent::Denomination,
+			\CCrmLiveFeedEvent::ContactPrefix . \CCrmLiveFeedEvent::Responsible,
+			\CCrmLiveFeedEvent::ContactPrefix . \CCrmLiveFeedEvent::Message
 		];
 	}
 
-	public function getMessageEventId()
+	public function getMessageEventId(): array
 	{
 		return [
-			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Message
+			\CCrmLiveFeedEvent::ContactPrefix . \CCrmLiveFeedEvent::Message,
 		];
 	}
 
-	public function getCurrentEntityFields()
+	public function getCurrentEntityFields(): array
 	{
 		$result = [];
 
@@ -63,17 +65,17 @@ final class CrmContact extends CrmEntity
 		return $result;
 	}
 
-	public function getLogEntityType()
+	public function getLogEntityType(): string
 	{
-		return \Bitrix\Crm\Integration\Socialnetwork::DATA_ENTITY_TYPE_CRM_CONTACT;
+		return Integration\Socialnetwork::DATA_ENTITY_TYPE_CRM_CONTACT;
 	}
 
-	public function getLogCommentEventId()
+	public function getLogCommentEventId(): string
 	{
 		return 'crm_contact_message';
 	}
 
-	public function setCrmEntitySourceTitle(array $entityFields = [])
+	public function setCrmEntitySourceTitle(array $entityFields = []): void
 	{
 		$this->setSourceTitle(\CCrmContact::prepareFormattedName([
 			'HONORIFIC' => $entityFields['HONORIFIC'],
@@ -88,7 +90,7 @@ final class CrmContact extends CrmEntity
 		$entityId = $this->getEntityId();
 		$logId = $this->getLogId();
 
-		$fields = $entity = $logEntry = array();
+		$fields = [];
 
 		if ($entityId > 0)
 		{
@@ -117,7 +119,7 @@ final class CrmContact extends CrmEntity
 					$this->setCrmEntitySourceTitle($fields['CURRENT_ENTITY']);
 					$fields = array_merge($fields, $logEntry['PARAMS']);
 
-					$sourceDescription = \Bitrix\Crm\Integration\Socialnetwork::buildAuxTaskDescription(
+					$sourceDescription = Integration\Socialnetwork::buildAuxTaskDescription(
 						$logEntry['PARAMS'],
 						$this->getLogEntityType()
 					);
@@ -131,7 +133,7 @@ final class CrmContact extends CrmEntity
 					}
 				}
 			}
-			elseif ($logEntry['EVENT_ID'] == $this->getLogCommentEventId())
+			elseif ($logEntry['EVENT_ID'] === $this->getLogCommentEventId())
 			{
 				$this->setSourceDescription($logEntry['MESSAGE']);
 				$this->setSourceTitle(truncateText(($logEntry['TITLE'] !== '__EMPTY__' ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
@@ -141,12 +143,12 @@ final class CrmContact extends CrmEntity
 		$this->setSourceFields($fields);
 	}
 
-	public function getSuffix()
+	public function getSuffix(): string
 	{
 		$logEventId = $this->getLogEventId();
 		if (
 			!empty($logEventId)
-			&& in_array($logEventId, $this->getMessageEventId())
+			&& in_array($logEventId, $this->getMessageEventId(), true)
 		)
 		{
 			return 'MESSAGE';

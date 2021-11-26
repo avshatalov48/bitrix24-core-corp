@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Security;
 use Bitrix\Crm\Item;
 use \Bitrix\Crm\Order;
 use Bitrix\Crm\Service\Container;
+use \Bitrix\Main;
+use \Bitrix\Crm;
 
 class EntityAuthorization
 {
@@ -350,7 +352,7 @@ class EntityAuthorization
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		$entityIDs = array_unique(array_filter($entityIDs));
+		$entityIDs = array_unique(array_filter(array_map('intval', $entityIDs)));
 
 		if($entityTypeID === \CCrmOwnerType::Lead)
 		{

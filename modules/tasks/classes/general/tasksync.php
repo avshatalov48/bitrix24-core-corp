@@ -48,7 +48,6 @@ class CTaskSync
 			FROM b_tasks 
 			WHERE 
 				EXCHANGE_ID IS NOT NULL 
-				AND ZOMBIE = 'N'
 				AND RESPONSIBLE_ID = ".intval($userId);
 		$rsIDs = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 
@@ -61,7 +60,6 @@ class CTaskSync
 				FROM b_tasks 
 				WHERE 
 					EXCHANGE_ID = '" . $DB->ForSql($taskItem["XML_ID"]) . "' 
-					AND ZOMBIE = 'N'
 					AND RESPONSIBLE_ID = ".intval($userId);
 			$rsTask = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			if ($task = $rsTask->Fetch())

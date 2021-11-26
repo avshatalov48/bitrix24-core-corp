@@ -80,6 +80,7 @@ $MESS["TASKS_LIST_GROUP_ACTION_SET_DEADLINE"] = "Вказати крайній �
 $MESS["TASKS_LIST_GROUP_ACTION_SET_GROUP"] = "Вказати групу";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL"] = "Прийняти роботу після завершення завдання";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_NO"] = "Ні";
+$MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_V2"] = "Відключити контроль після завершення";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_YES"] = "Так";
 $MESS["TASKS_LIST_GROUP_ACTION_SPRINT"] = "Створити спринт";
 $MESS["TASKS_LIST_GROUP_ACTION_SPRINT_TITLE"] = "Дата завершення спринту";

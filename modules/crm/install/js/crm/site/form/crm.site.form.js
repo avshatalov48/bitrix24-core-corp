@@ -1,9 +1,14 @@
 (function () {
-	if (!window.b24form || window.b24form.util)
+	if (window.b24form && window.b24form.util)
 	{
 		return;
 	}
-	
+
+	if (!window.b24form)
+	{
+		window.b24form = {};
+	}
+
 	/** @requires module:webpacker */
 	/** @var Object webPacker */
 	/** @var {Object} module Current module.*/
@@ -28,7 +33,10 @@
 
 		var script = document.createElement('script');
 		script.type = 'text/javascript';
-		script.onload = b24form.Loader.loadForms.bind(b24form.Loader);
+		if (b24form.Loader)
+		{
+			script.onload = b24form.Loader.loadForms.bind(b24form.Loader);
+		}
 		script.src = b24form.util.getAddress() + '/bitrix/js/crm/site/form/dist/app.bundle' + min + '.js?' + time;
 		b24form.util.resource.appendToHead(script);
 	}

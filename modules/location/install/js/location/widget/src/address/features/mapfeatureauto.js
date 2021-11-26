@@ -51,6 +51,13 @@ export default class MapFeatureAuto extends MapFeature
 				clearTimeout(this.#showMapTimerId);
 			}
 		}
+		else if (this.addressWidget.mode === ControlMode.edit && this._saveResourceStrategy === false)
+		{
+			if (this.addressWidget.address && !this.map.isShown() && event.target === this.addressWidget.inputNode)
+			{
+				this.showMap();
+			}
+		}
 	}
 
 	#onDocumentClick(event)

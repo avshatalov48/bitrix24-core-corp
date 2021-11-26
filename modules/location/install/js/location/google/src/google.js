@@ -8,7 +8,7 @@ import GeocodingService from "./geocodingservice";
 
 export class Google extends BaseSource
 {
-	#code = 'GOOGLE';
+	static code = 'GOOGLE';
 	#languageId = '';
 	#sourceLanguageId = '';
 	#loaderPromise = null;
@@ -65,7 +65,7 @@ export class Google extends BaseSource
 
 	get sourceCode(): string
 	{
-		return this.#code;
+		return Google.code;
 	}
 
 	get loaderPromise(): Promise

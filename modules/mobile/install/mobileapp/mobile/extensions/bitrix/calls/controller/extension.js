@@ -9,6 +9,8 @@
 		constructor()
 		{
 			this.callView = null;
+			this.callViewPromise = null;
+
 			this._currentCall = null;
 			Object.defineProperty(this, "currentCall", {
 				get: () => this._currentCall,
@@ -89,6 +91,8 @@
 			BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
 			BX.addCustomEvent("onAppPaused", this.onAppPaused.bind(this));
 			BX.addCustomEvent("ImRecent::counter::messages", this.onImMessagesCounter.bind(this));
+
+			BX.addCustomEvent("CallEvents::openVideoConf", this.openVideoConf.bind(this));
 
 			BX.PULL.subscribe({
 				type: "server",
@@ -418,6 +422,11 @@
 					console.warn("auto-answer A");
 					this.onAnswerButtonClick(video);
 				}
+				if (this.nativeCall && this.nativeCall.connected && !this.callAnswered)
+				{
+					console.warn("Native call is connected, but we did not receive answered event.")
+					this.answerCurrentCall(this.nativeCall.params.video);
+				}
 			});
 		}
 
@@ -431,6 +440,12 @@
 				return;
 			}
 			this.currentCall.setVideoEnabled(useVideo);
+			if (this.callAnswered)
+			{
+				console.log("Call already answered");
+			}
+			this.callAnswered = true;
+
 			this.requestDeviceAccess(useVideo).then(() =>
 			{
 				this.currentCall.answer({
@@ -723,7 +738,12 @@
 
 		openCallView(viewProps = {})
 		{
-			return new Promise((resolve, reject) =>
+			if (this.callViewPromise)
+			{
+				return this.callViewPromise;
+			}
+
+			this.callViewPromise = new Promise((resolve, reject) =>
 			{
 				this.openWidgetLayer()
 					.then(() =>
@@ -731,11 +751,17 @@
 						console.warn("creating new CallLayout");
 						this.callView = new CallLayout(viewProps);
 						this.rootWidget.showComponent(this.callView);
+						this.callViewPromise = null;
 
 						resolve();
 					})
-					.catch(error => console.error(error));
+					.catch(error => {
+						console.error(error);
+						this.callViewPromise = null;
+					});
 			});
+
+			return this.callViewPromise;
 		}
 
 		fold()
@@ -867,6 +893,8 @@
 			}
 			else
 			{
+				console.log("onAppActive");
+				this.currentCall.log("onAppActive");
 				this.currentCall.setVideoPaused(false);
 
 				if (!this._hasHeadphones() && JNVIAudioManager.currentDevice == "receiver")
@@ -884,6 +912,7 @@
 				return;
 			}
 
+			console.log("onAppPaused");
 			this.currentCall.log("onAppPaused");
 			this.currentCall.setVideoPaused(true);
 		}
@@ -1275,7 +1304,21 @@
 
 				if (!this.ignoreNativeCallAnswer)
 				{
-					this.answerCurrentCall(this.nativeCall.params.video);
+					// call view can be not initialized yet
+					if (this.callViewPromise)
+					{
+						this.callViewPromise.then(() => {
+							this.answerCurrentCall(this.nativeCall.params.video);
+						})
+					}
+					else if (this.callView)
+					{
+						this.answerCurrentCall(this.nativeCall.params.video);
+					}
+					else
+					{
+						console.error("callView is not initialized");
+					}
 				}
 			}
 		}
@@ -1310,7 +1353,6 @@
 
 		clearEverything()
 		{
-			console.trace("clearEverything");
 			if (this.currentCall)
 			{
 				this.removeCallEvents();
@@ -1336,6 +1378,8 @@
 			this.callView = null;
 			callInterface.indicator().close();
 			this.callStartTime = null;
+			this.callViewPromise = null;
+			this.callAnswered = false;
 			this.stopCallTimer();
 			media.audioPlayer().stopPlayingSound();
 			device.setIdleTimerDisabled(false);
@@ -1407,6 +1451,10 @@
 
 				var onPullStatus = ({status, additional}) =>
 				{
+					if (!additional)
+					{
+						additional = {};
+					}
 					if (status === 'online')
 					{
 						BX.removeCustomEvent("onPullStatus", onPullStatus);
@@ -1573,6 +1621,43 @@
 			callInterface.indicator().setMode("active");
 			callInterface.indicator().imageUrl = pathToExtension + "img/blank.png";
 			callInterface.indicator().show();
+		}
+
+		openVideoConf(alias)
+		{
+			console.log("CallEvents::openVideoConf", alias);
+			let jitsiServer =  BX.componentParameters.get("jitsiServer");
+			if (!jitsiServer)
+			{
+				console.error('Component parameter jitsiServer is empty');
+			}
+			let confAddress = 'org.jitsi.meet://' + jitsiServer + '/' + alias;
+			console.log(confAddress);
+			if (Application.canOpenUrl(confAddress))
+			{
+				Application.openUrl(confAddress);
+				return;
+			}
+
+			// try to open url anyway, because in IOS canOpenUrl always returns false for jitsi
+			let openResult = Application.openUrl(confAddress);
+			navigator.notification.confirm(
+				BX.message("MOBILE_CALL_INSTALL_JITSI_MEET"),
+				(button) => {
+					if (button == 1)
+					{
+						(device.platform === "iOS")
+							? Application.openUrl("https://apps.apple.com/ru/app/jitsi-meet/id1165103905")
+							: Application.openUrl("https://play.google.com/store/apps/details?id=org.jitsi.meet")
+						;
+					}
+				},
+				BX.message("MOBILE_CALL_APP_REQUIRED"),
+				[
+					(device.platform === "iOS" ? BX.message("MOBILE_CALL_OPEN_APP_STORE") : BX.message("MOBILE_CALL_OPEN_PLAY_MARKET")),
+					BX.message("MOBILE_CALL_MICROPHONE_CANCEL"),
+				],
+			);
 		}
 	}
 

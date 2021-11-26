@@ -46,7 +46,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if($id > 0)
 		{
-			if(!Permissions\Order::checkUpdatePermission($id, $this->userPermissions))
+			if (!Permissions\Payment::checkUpdatePermission($id, $this->userPermissions))
 			{
 				$this->addError(Loc::getMessage("CRM_ORDER_P_ACCESS_DENIED"));
 				return;
@@ -62,7 +62,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		}
 		else
 		{
-			if(!Permissions\Order::checkCreatePermission($this->userPermissions))
+			if (!Permissions\Payment::checkCreatePermission($this->userPermissions))
 			{
 				$this->addError(new \Bitrix\Main\Error(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED')));
 				return;
@@ -261,6 +261,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Payment::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Payment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
+			return;
+		}
+
 		if(!($payment = $this->buildPayment($formData)))
 		{
 			return;
@@ -275,6 +289,12 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	{
 		if(!($formData = $this->getFormData()))
 		{
+			return;
+		}
+
+		if (!Permissions\Payment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
 			return;
 		}
 

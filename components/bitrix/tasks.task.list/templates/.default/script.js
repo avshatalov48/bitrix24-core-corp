@@ -1180,9 +1180,21 @@ BX(function() {
 				{
 					if (parameters.action === this.actions.commentAdd)
 					{
-						var rowData = {};
-						rowData[taskId] = taskData;
-						this.updateActivityDateCellForTasks([taskId], rowData, {highlightRow: true});
+						if (parameters.isCompleteComment === true)
+						{
+							this.getGrid().updateRow(taskId);
+						}
+						else
+						{
+							var rowData = {};
+							rowData[taskId] = taskData;
+
+							this.updateActivityDateCellForTasks(
+								[taskId],
+								rowData,
+								{highlightRow: true}
+							);
+						}
 					}
 					else if (parameters.action === this.actions.taskUpdate)
 					{

@@ -182,9 +182,16 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		)
 		{
 			$members = $newTask->getMembers();
-			foreach ($data['SE_RESPONSIBLE'] as $responsible)
+			$members[RoleDictionary::ROLE_RESPONSIBLE] = [];
+			if (
+				!empty($data['SE_RESPONSIBLE'])
+				&& is_array($data['SE_RESPONSIBLE'])
+			)
 			{
-				$members[RoleDictionary::ROLE_RESPONSIBLE][] = (int)$responsible['ID'];
+				foreach ($data['SE_RESPONSIBLE'] as $responsible)
+				{
+					$members[RoleDictionary::ROLE_RESPONSIBLE][] = (int)$responsible['ID'];
+				}
 			}
 			$newTask->setMembers($members);
 
@@ -196,9 +203,16 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		)
 		{
 			$members = $newTask->getMembers();
-			foreach ($data['SE_ACCOMPLICE'] as $accomplice)
+			$members[RoleDictionary::ROLE_ACCOMPLICE] = [];
+			if (
+				!empty($data['SE_ACCOMPLICE'])
+				&& is_array($data['SE_ACCOMPLICE'])
+			)
 			{
-				$members[RoleDictionary::ROLE_ACCOMPLICE][] = (int)$accomplice['ID'];
+				foreach ($data['SE_ACCOMPLICE'] as $accomplice)
+				{
+					$members[RoleDictionary::ROLE_ACCOMPLICE][] = (int)$accomplice['ID'];
+				}
 			}
 			$newTask->setMembers($members);
 
@@ -548,6 +562,12 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	public function complete($id)
 	{
 		$result = [];
+
+		$task = TaskModel::createFromId((int)$id);
+		if ($task->isClosed())
+		{
+			return $result;
+		}
 
 		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_COMPLETE, (int)$id))
 		{

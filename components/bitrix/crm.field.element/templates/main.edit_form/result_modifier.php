@@ -24,7 +24,7 @@ $supportedTypes = DataModifiers\Element::getSupportedTypes($settings); // all en
 $arParams['ENTITY_TYPE'] = DataModifiers\Element::getEntityTypes($supportedTypes);  // only entity types are allowed for current user
 // types are defined in settings
 
-$arResult['PERMISSION_DENIED'] = (empty($arParams['ENTITY_TYPE']) ? true : false);
+$arResult['PERMISSION_DENIED'] = empty($arParams['ENTITY_TYPE']);
 
 $arResult['PREFIX'] = (count($supportedTypes) > 1 ? 'Y' : 'N');
 

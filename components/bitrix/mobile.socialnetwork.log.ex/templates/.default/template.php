@@ -12,12 +12,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /** @global CDatabase $DB */
 /** @global CMain $APPLICATION */
 
-use Bitrix\Main\Data\AppCacheManifest;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetMode;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Composite;
 use Bitrix\Main\Web\Uri;
 
 $mobileContext = new \Bitrix\Mobile\Context();
@@ -78,7 +78,7 @@ if (!empty($arResult['TARGET']))
 
 if ($arResult["FatalError"] <> '')
 {
-	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?
+	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?php
 }
 else
 {
@@ -88,21 +88,21 @@ else
 		&& !$arResult["AJAX_CALL"]
 	)
 	{
-		?><div id="post-balloon-container" class="post-balloon-box"></div><?
-		?><div id="lenta_wrapper_global" class="lenta-list-wrap"><?
+		?><div id="post-balloon-container" class="post-balloon-box"></div><?php
+		?><div id="lenta_wrapper_global" class="lenta-list-wrap"><?php
 	}
 	?>
 	<script>
 		var bGlobalReload = <?=($arResult["RELOAD"] ? "true" : "false")?>;
 	</script>
-	<?
-	AppCacheManifest::getInstance()->addAdditionalParam("page", "livefeed");
-	AppCacheManifest::getInstance()->addAdditionalParam("preventAutoUpdate", "Y");
-	AppCacheManifest::getInstance()->addAdditionalParam("MobileAPIVersion", CMobile::getApiVersion());
-	AppCacheManifest::getInstance()->addAdditionalParam("MobilePlatform", CMobile::getPlatform());
-	AppCacheManifest::getInstance()->addAdditionalParam("UserID", $arResult['currentUserId']);
-	AppCacheManifest::getInstance()->addAdditionalParam("version", "v8");
-	AppCacheManifest::getInstance()->addAdditionalParam("MobileModuleVersion", $mobileContext->version);
+	<?php
+	Composite\AppCache::getInstance()->addAdditionalParam("page", "livefeed");
+	Composite\AppCache::getInstance()->addAdditionalParam("preventAutoUpdate", "Y");
+	Composite\AppCache::getInstance()->addAdditionalParam("MobileAPIVersion", CMobile::getApiVersion());
+	Composite\AppCache::getInstance()->addAdditionalParam("MobilePlatform", CMobile::getPlatform());
+	Composite\AppCache::getInstance()->addAdditionalParam("UserID", $arResult['currentUserId']);
+	Composite\AppCache::getInstance()->addAdditionalParam("version", "v8");
+	Composite\AppCache::getInstance()->addAdditionalParam("MobileModuleVersion", $mobileContext->version);
 
 	?><script>
 		BX.message({
@@ -116,7 +116,7 @@ else
 			MSLExtranetSiteId: <?=(!empty($arResult["extranetSiteId"]) ? "'".CUtil::JSEscape($arResult["extranetSiteId"])."'" : "false")?>,
 			MSLExtranetSiteDir: <?=(!empty($arResult["extranetSiteDir"]) ? "'".CUtil::JSEscape($arResult["extranetSiteDir"])."'" : "false")?>
 		});
-	</script><?
+	</script><?php
 
 	if (
 		$arParams["EMPTY_PAGE"] !== "Y"
@@ -128,34 +128,35 @@ else
 	)
 	{
 		?><script>
-			__MSLOnFeedPreInit({
-				arAvailableGroup: <?=CUtil::PhpToJSObject(
-					!empty($arResult["arAvailableGroup"])
-					&& is_array($arResult["arAvailableGroup"])
-						? $arResult["arAvailableGroup"]
-						: false
-				)?>
+			BX.ready(function() {
+				BX.MobileLivefeed.Instance.initListOnce({
+					arAvailableGroup: <?= CUtil::PhpToJSObject(
+						!empty($arResult["arAvailableGroup"])
+						&& is_array($arResult["arAvailableGroup"])
+							? $arResult["arAvailableGroup"]
+							: false
+					) ?>
+				});
 			});
-		</script><?
+		</script><?php
 
 		if (
 			!$arParams["FILTER"]
 			&& (
 				!isset($arParams["CREATED_BY_ID"])
-				|| intval($arParams["CREATED_BY_ID"]) <= 0
+				|| (int)$arParams["CREATED_BY_ID"] <= 0
 			)
 		)
 		{
-			$frame = \Bitrix\Main\Page\Frame::getInstance();
-			$frame->setEnable();
-			$frame->setUseAppCache();
-			$frame->setPreventAutoUpdate();
+			Composite\Engine::setEnable();
+			Composite\Engine::setUseAppCache();
+			Composite\Engine::setAutoUpdate(false);
 
 			?><script>
-				window.appCacheVars = <?=CUtil::PhpToJSObject(AppCacheManifest::getInstance()->getAdditionalParams())?>;
-			</script><?
+				window.appCacheVars = <?=CUtil::PhpToJSObject(Composite\AppCache::getInstance()->getAdditionalParams())?>;
+			</script><?php
 
-			?><div id="framecache-block-feed"><?
+			?><div id="framecache-block-feed"><?php
 			$feedFrame = $this->createFrame("framecache-block-feed", false)->begin("");
 			$feedFrame->setBrowserStorage(true);
 		}
@@ -173,7 +174,7 @@ else
 		?><script>
 			var bGlobalReload = true;
 		</script>
-		<div id="bxdynamic_feed_refresh"><?
+		<div id="bxdynamic_feed_refresh"><?php
 	}
 
 	$like = COption::GetOptionString("main", "rating_text_like_y", Loc::getMessage("MOBILE_LOG_LIKE"));
@@ -193,7 +194,7 @@ else
 			MSLPostFormPhotoCamera: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_PHOTO_CAMERA")?>',
 			MSLPostFormPhotoGallery: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_PHOTO_GALLERY")?>',
 			MSLIsExtranetSite: '<?=($arResult["bExtranetSite"] ? 'Y' : 'N')?>'
-			<?
+			<?php
 			if (
 				$arResult["bDiskInstalled"]
 				|| $arResult["bWebDavInstalled"]
@@ -202,7 +203,7 @@ else
 				?>
 				, MSLPostFormDisk: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_DISK")?>'
 				, MSLPostFormDiskTitle: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_DISK_TITLE")?>'
-				<?
+			<?php
 			}
 			?>
 		});
@@ -226,7 +227,7 @@ else
 			groupID: <?=$arParams["GROUP_ID"]?>,
 			groupImage: '<?=$arResult["GROUP_IMAGE"]?>',
 			curUrl: '<?=$APPLICATION->GetCurPageParam("", array("LAST_LOG_TS", "AJAX_CALL", "RELOAD", "RELOAD_JSON"))?>',
-			appCacheDebug: <?=AppCacheManifest::getInstance()->getDebug() ? "true" : "false"?>,
+			appCacheDebug: <?= Composite\AppCache::getInstance()->getDebug() ? "true" : "false" ?>,
 			tmstmp: <?=time()?>,
 			strCounterType: '<?=$arResult["COUNTER_TYPE"]?>',
 			bFollowDefault: <?=($arResult["FOLLOW_DEFAULT"] !== "N" ? "true" : "false")?>,
@@ -248,7 +249,7 @@ else
 		});
 
 	</script>
-	<?
+	<?php
 	if (
 		$arParams["LOG_ID"] <= 0
 		&& $arParams["EMPTY_PAGE"] !== "Y"
@@ -262,27 +263,27 @@ else
 		{
 			$pageTitle = CUtil::JSEscape($arResult["GROUP_NAME"]);
 		}
-		elseif ($arParams["FILTER"] == "favorites")
+		elseif ($arParams["FILTER"] === "favorites")
 		{
 			$pageTitle = GetMessageJS("MOBILE_LOG_FAVORITES");
 		}
-		elseif ($arParams["FILTER"] == "my")
+		elseif ($arParams["FILTER"] === "my")
 		{
 			$pageTitle = GetMessageJS("MOBILE_LOG_MY");
 		}
-		elseif ($arParams["FILTER"] == "important")
+		elseif ($arParams["FILTER"] === "important")
 		{
 			$pageTitle = GetMessageJS("MOBILE_LOG_IMPORTANT");
 		}
-		elseif ($arParams["FILTER"] == "work")
+		elseif ($arParams["FILTER"] === "work")
 		{
 			$pageTitle = GetMessageJS("MOBILE_LOG_WORK");
 		}
-		elseif ($arParams["FILTER"] == "bizproc")
+		elseif ($arParams["FILTER"] === "bizproc")
 		{
 			$pageTitle = GetMessageJS("MOBILE_LOG_BIZPROC");
 		}
-		elseif ($arParams["FILTER"] == "blog")
+		elseif ($arParams["FILTER"] === "blog")
 		{
 			$pageTitle = GetMessageJS("MOBILE_LOG_BLOG");
 		}
@@ -297,11 +298,11 @@ else
 
 			BX.message({
 				MSLPageId: '<?=CUtil::JSEscape(RandString(4))?>',
-				MSLPageNavNum: <?=intval($arResult["PAGE_NAVNUM"])?>,
+				MSLPageNavNum: <?= (int)$arResult["PAGE_NAVNUM"] ?>,
 				MSLSessid: '<?=bitrix_sessid()?>',
 				MSLSiteId: '<?=CUtil::JSEscape(SITE_ID)?>',
 				MSLSiteDir: '<?=CUtil::JSEscape(SITE_DIR)?>',
-				MSLDestinationLimit: '<?=intval($arParams["DESTINATION_LIMIT_SHOW"])?>',
+				MSLDestinationLimit: '<?= (int)$arParams["DESTINATION_LIMIT_SHOW"] ?>',
 				MSLNameTemplate: '<?=CUtil::JSEscape($arParams["NAME_TEMPLATE"])?>',
 				MSLShowLogin: '<?=CUtil::JSEscape($arParams["SHOW_LOGIN"])?>',
 				MSLShowRating: '<?=CUtil::JSEscape($arParams["SHOW_RATING"])?>',
@@ -316,43 +317,43 @@ else
 				MSLPathToCrmCompany: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMCOMPANY"])?>',
 				MSLPathToKnowledgeGroup: '<?=CUtil::JSEscape($arResult["KNOWLEDGE_PATH"])?>',
 				MSLTitleKnowledgeGroup: '<?=GetMessageJS("MOBILE_LOG_MENU_KNOWLEDGE")?>',
-				MSLFirstPageLastTS : <?=intval($arResult["dateLastPageTS"])?>,
+				MSLFirstPageLastTS : <?= (int)$arResult["dateLastPageTS"] ?>,
 				MSLSliderAddPost: '<?=GetMessageJS("MOBILE_LOG_SLIDER_ADD_POST")?>',
 				MSLSliderFavorites: '<?=GetMessageJS("MOBILE_LOG_SLIDER_FAVORITES")?>',
-				MSLLoadScriptsNeeded: '<?=(COption::GetOptionString('main', 'optimize_js_files', 'N') == 'Y' ? 'N' : 'Y')?>',
+				MSLLoadScriptsNeeded: '<?=(COption::GetOptionString('main', 'optimize_js_files', 'N') === 'Y' ? 'N' : 'Y')?>',
 				MSLLogTitle: '<?=$pageTitle?>'
-				<?
-				if ($arParams["USE_FOLLOW"] == "Y")
+				<?php
+				if ($arParams["USE_FOLLOW"] === "Y")
 				{
 					?>
 					, MSLMenuItemFollowDefaultY: '<?=GetMessageJS("MOBILE_LOG_MENU_FOLLOW_DEFAULT_Y")?>'
 					, MSLMenuItemFollowDefaultN: '<?=GetMessageJS("MOBILE_LOG_MENU_FOLLOW_DEFAULT_N")?>'
 					, MSLMenuItemExpertModeY: '<?=GetMessageJS("MOBILE_LOG_MENU_EXPERT_MODE_Y")?>'
 					, MSLMenuItemExpertModeN: '<?=GetMessageJS("MOBILE_LOG_MENU_EXPERT_MODE_N")?>'
-					<?
+				<?php
 				}
 				?>
 			});
-		</script><?
+		</script><?php
 
 		require($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/include/informer.php');
 		require($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/include/pinned.php');
 	}
 	elseif ($arParams["EMPTY_PAGE"] === "Y")
 	{
-		?><div id="empty_comment" style="display: none;"><?
-			?><div class="post-comment-block" style="position: relative;"><?
-				?><div class="post-user-wrap"><?
-					?><div id="empty_comment_avatar" class="avatar"<?=($arResult["EmptyComment"]["AVATAR_SRC"] <> '' ? " style=\"background-image:url('".$arResult["EmptyComment"]["AVATAR_SRC"]."');\"" : "")?>></div><?
-					?><div class="post-comment-cont"><?
-						?><div class="post-comment-author"><?=$arResult["EmptyComment"]["AUTHOR_NAME"]?></div><?
-						?><div class="post-comment-preview-wait"></div><?
-						?><div class="post-comment-preview-undelivered"></div><?
-					?></div><?
-				?></div><?
-				?><div id="empty_comment_text" class="post-comment-text"></div><?
-			?></div><?
-		?></div><?
+		?><div id="empty_comment" style="display: none;"><?php
+			?><div class="post-comment-block" style="position: relative;"><?php
+				?><div class="post-user-wrap"><?php
+					?><div id="empty_comment_avatar" class="avatar"<?=($arResult["EmptyComment"]["AVATAR_SRC"] <> '' ? " style=\"background-image:url('".$arResult["EmptyComment"]["AVATAR_SRC"]."');\"" : "")?>></div><?php
+					?><div class="post-comment-cont"><?php
+						?><div class="post-comment-author"><?=$arResult["EmptyComment"]["AUTHOR_NAME"]?></div><?php
+						?><div class="post-comment-preview-wait"></div><?php
+						?><div class="post-comment-preview-undelivered"></div><?php
+					?></div><?php
+				?></div><?php
+				?><div id="empty_comment_text" class="post-comment-text"></div><?php
+			?></div><?php
+		?></div><?php
 		?><div style="display: none;" id="comment_send_button_waiter" class="send-message-button-waiter"></div>
 		<script>
 			BX.message({
@@ -369,7 +370,7 @@ else
 				MSLPathToCrmDeal: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMDEAL"])?>',
 				MSLPathToCrmContact: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMCONTACT"])?>',
 				MSLPathToCrmCompany: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMCOMPANY"])?>',
-				MSLDestinationLimit: '<?=intval($arParams["DESTINATION_LIMIT_SHOW"])?>',
+				MSLDestinationLimit: '<?= (int)$arParams["DESTINATION_LIMIT_SHOW"] ?>',
 				MSLReply: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENTS_REPLY")?>',
 				MSLLikesList: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENTS_LIKES_LIST")?>',
 				MSLCommentMenuEdit: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENTS_EDIT")?>',
@@ -390,10 +391,10 @@ else
 				MSLCurrentTime: '<?=time()?>',
 				MSLEmptyDetailCommentFormTitle: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENT_ADD_TITLE")?>',
 				MSLEmptyDetailCommentFormButtonTitle: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENT_ADD_BUTTON_SEND")?>',
-				MSLLoadScriptsNeeded: '<?=(COption::GetOptionString('main', 'optimize_js_files', 'N') == 'Y' ? 'N' : 'Y')?>',
+				MSLLoadScriptsNeeded: '<?=(COption::GetOptionString('main', 'optimize_js_files', 'N') === 'Y' ? 'N' : 'Y')?>',
 				MSLDateTimeFormat: '<?=CUtil::JSEscape(CDatabase::DateFormatToPHP($arParams["DATE_TIME_FORMAT"] <> '' ? $arParams["DATE_TIME_FORMAT"] : FORMAT_DATETIME))?>'
 			});
-		</script><?
+		</script><?php
 	}
 	elseif (
 		$arParams["LOG_ID"] > 0
@@ -410,14 +411,14 @@ else
 				MSLPageId: '<?=CUtil::JSEscape(RandString(4))?>',
 				MSLSessid: '<?=bitrix_sessid()?>',
 				MSLSiteId: '<?=CUtil::JSEscape(SITE_ID)?>',
-				MSLLogId: <?=intval($arParams["LOG_ID"])?>,
+				MSLLogId: <?= (int)$arParams["LOG_ID"] ?>,
 				MSLPathToUser: '<?=CUtil::JSEscape($arParams["PATH_TO_USER"])?>',
 				MSLPathToGroup: '<?=CUtil::JSEscape($arParams["PATH_TO_GROUP"])?>',
 				MSLPathToCrmLead: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMLEAD"])?>',
 				MSLPathToCrmDeal: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMDEAL"])?>',
 				MSLPathToCrmContact: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMCONTACT"])?>',
 				MSLPathToCrmCompany: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMCOMPANY"])?>',
-				MSLDestinationLimit: '<?=intval($arParams["DESTINATION_LIMIT_SHOW"])?>',
+				MSLDestinationLimit: '<?= (int)$arParams["DESTINATION_LIMIT_SHOW"] ?>',
 				MSLReply: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENTS_REPLY")?>',
 				MSLLikesList: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENTS_LIKES_LIST")?>',
 				MSLCommentMenuEdit: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENTS_EDIT")?>',
@@ -440,6 +441,7 @@ else
 
 			BX.ready(function() {
 				BX.bind(window, 'scroll', oMSL.onScrollDetail);
+				BX.MobileLivefeed.Instance.setLogId(<?= (int)$arParams['LOG_ID'] ?>);
 				BX.MobileLivefeed.DetailPageScrollInstance.checkScrollButton();
 
 				BX.onCustomEvent(window, 'BX.UserContentView.onInitCall', [{
@@ -449,12 +451,12 @@ else
 					commentsClassName: 'post-comment-wrap'
 				}]);
 			});
-		</script><?
+		</script><?php
 	}
 
 	if ($arParams['NEW_LOG_ID'] <= 0)
 	{
-		?><div class="feed-add-post-button" id="feed-add-post-button"></div><?
+		?><div class="feed-add-post-button" id="feed-add-post-button"></div><?php
 		?><div class="lenta-wrapper" id="lenta_wrapper"><?php
 			?><div class="post-comment-block-scroll post-comment-block-scroll-top"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-top"></div></div><?php
 			?><div class="post-comment-block-scroll post-comment-block-scroll-bottom"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-bottom"></div></div><?php
@@ -463,7 +465,7 @@ else
 
 	if($arResult["ErrorMessage"] <> '')
 	{
-		?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br /><?
+		?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br /><?php
 	}
 
 	if (
@@ -488,9 +490,9 @@ else
 		|| $arParams["EMPTY_PAGE"] === "Y"
 	)
 	{
-		?><script type="text/javascript">
+		?><script>
 			var commentVarLogID = null;
-			var commentVarAvatarSize = <?=intval($arParams["AVATAR_SIZE_COMMENT"])?>;
+			var commentVarAvatarSize = <?= (int)$arParams["AVATAR_SIZE_COMMENT"] ?>;
 			var commentVarNameTemplate = '<?=CUtil::JSEscape($arParams["NAME_TEMPLATE"])?>';
 			var commentVarShowLogin = '<?=CUtil::JSEscape($arParams["SHOW_LOGIN"])?>';
 			var commentVarDateTimeFormat = null;
@@ -508,76 +510,76 @@ else
 				MSLLogEntryTitle: '<?=GetMessageJS("MOBILE_LOG_ENTRY_TITLE")?>',
 				MSLEditPost: '<?=GetMessageJS("MOBILE_LOG_EDIT_POST")?>'
 			});
-		</script><?
+		</script><?php
 	}
 
 	if ($arParams["EMPTY_PAGE"] === "Y")
 	{
-		$frame = \Bitrix\Main\Page\Frame::getInstance();
-		$frame->setEnable();
-		$frame->setUseAppCache();
-		AppCacheManifest::getInstance()->addAdditionalParam("page", "empty_detail");
-		AppCacheManifest::getInstance()->addAdditionalParam("MobileAPIVersion", CMobile::getApiVersion());
-		AppCacheManifest::getInstance()->addAdditionalParam("MobilePlatform", CMobile::getPlatform());
-		AppCacheManifest::getInstance()->addAdditionalParam("version", "v6");
-		AppCacheManifest::getInstance()->addAdditionalParam("MobileModuleVersion", $mobileContext->version);
+		Composite\Engine::setEnable();
+		Composite\Engine::setUseAppCache();
 
-		?><div class="post-wrap" id="lenta_item"><?
-			?><div id="post_log_id" data-log-id="" data-ts="" style="display: none;"></div><?
-			?><div id="post_item_top_wrap" class="post-item-top-wrap post-item-copyable"><?
-				?><div class="post-item-top" id="post_item_top"></div><?
-				?><div class="post-item-post-block" id="post_block_check_cont"></div><?
-				?><div class="post-item-attached-file-wrap post-item-attached-disk-file-wrap" id="post_block_files"></div><?
+		Composite\AppCache::getInstance()->addAdditionalParam("page", "empty_detail");
+		Composite\AppCache::getInstance()->addAdditionalParam("MobileAPIVersion", CMobile::getApiVersion());
+		Composite\AppCache::getInstance()->addAdditionalParam("MobilePlatform", CMobile::getPlatform());
+		Composite\AppCache::getInstance()->addAdditionalParam("version", "v6");
+		Composite\AppCache::getInstance()->addAdditionalParam("MobileModuleVersion", $mobileContext->version);
+
+		?><div class="post-wrap" id="lenta_item"><?php
+			?><div id="post_log_id" data-log-id="" data-ts="" style="display: none;"></div><?php
+			?><div id="post_item_top_wrap" class="post-item-top-wrap post-item-copyable"><?php
+				?><div class="post-item-top" id="post_item_top"></div><?php
+				?><div class="post-item-post-block" id="post_block_check_cont"></div><?php
+				?><div class="post-item-attached-file-wrap post-item-attached-disk-file-wrap" id="post_block_files"></div><?php
 
 				$bRatingExtended = (
 				CModule::IncludeModule("mobileapp")
 					? CMobile::getApiVersion() >= 2
-					: intval($APPLICATION->GetPageProperty("api_version")) >= 2
+					: (int)$APPLICATION->GetPageProperty("api_version") >= 2
 				);
 
 				if ($bRatingExtended)
 				{
-					?><div class="post-item-inform-wrap-tree" id="rating-footer-wrap"></div><?
+					?><div class="post-item-inform-wrap-tree" id="rating-footer-wrap"></div><?php
 				}
 
-				?><div id="post_inform_wrap_two" class="post-item-inform-wrap"><?
+				?><div id="post_inform_wrap_two" class="post-item-inform-wrap"><?php
 
-					?><div class="post-item-inform-wrap-left"><?
+					?><div class="post-item-inform-wrap-left"><?php
 
 						// rating
 					$like = COption::GetOptionString("main", "rating_text_like_y", Loc::getMessage("MOBILE_LOG_LIKE"));
 
-						?><div id="rating_text" class="post-item-informers bx-ilike-block" data-counter="0" style="display: none;"></div><?
+						?><div id="rating_text" class="post-item-informers bx-ilike-block" data-counter="0" style="display: none;"></div><?php
 
-						?><div id="comments_control" style="display: none;" class="post-item-informers post-item-inform-comments" onclick="oMSL.setFocusOnCommentForm();"><?
-							?><div class="post-item-inform-comments-box"><?
-								?><span class="post-item-inform-icon"></span><?
-							?><div class="post-item-inform-left"><?=Loc::getMessage('MOBILE_LOG_COMMENT')?></div><?
-							?></div><?
-						?></div><?
+						?><div id="comments_control" style="display: none;" class="post-item-informers post-item-inform-comments" onclick="oMSL.setFocusOnCommentForm();"><?php
+							?><div class="post-item-inform-comments-box"><?php
+								?><span class="post-item-inform-icon"></span><?php
+							?><div class="post-item-inform-left"><?=Loc::getMessage('MOBILE_LOG_COMMENT')?></div><?php
+							?></div><?php
+						?></div><?php
 
-						?><div id="log_entry_follow" class="post-item-informers <?=($arResult["FOLLOW_DEFAULT"] == 'Y' ? 'post-item-follow-default-active' : 'post-item-follow-default')?>" style="display: none;"><?
-							?><div class="post-item-inform-left"></div><?
-						?></div><?
+						?><div id="log_entry_follow" class="post-item-informers <?=($arResult["FOLLOW_DEFAULT"] === 'Y' ? 'post-item-follow-default-active' : 'post-item-follow-default')?>" style="display: none;"><?php
+							?><div class="post-item-inform-left"></div><?php
+						?></div><?php
 
-					?></div><?
+					?></div><?php
 
-					?><div class="post-item-inform-wrap-right"><?
-						?><a id="post_more_limiter" class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?
-							?><?=GetMessage("MOBILE_LOG_EXPAND")?><?
-						?></a><?
-					?></div><?
+					?><div class="post-item-inform-wrap-right"><?php
+						?><a id="post_more_limiter" class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?php
+							?><?=GetMessage("MOBILE_LOG_EXPAND")?><?php
+						?></a><?php
+					?></div><?php
 
-				?></div><?
+				?></div><?php
 
-			?></div><?
-			?><div class="post-comments-wrap" id="post-comments-wrap"><span id="post-comment-last-after"></span></div><?
-		?></div><?
-		?><script type="text/javascript">
+			?></div><?php
+			?><div class="post-comments-wrap" id="post-comments-wrap"><span id="post-comment-last-after"></span></div><?php
+		?></div><?php
+		?><script>
 			var entryType = null;
-		</script><?
+		</script><?php
 
-		?><div id="post-comments-form-wrap"></div><?
+		?><div id="post-comments-form-wrap"></div><?php
 	}
 	elseif (
 		$arResult["Events"]
@@ -585,10 +587,10 @@ else
 		&& count($arResult["Events"]) > 0
 	)
 	{
-		?><script type="text/javascript">
+		?><script>
 			if (BX("lenta_block_empty", true))
 				BX("lenta_block_empty", true).style.display = "none";
-		</script><?
+		</script><?php
 
 		$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
 		$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
@@ -631,7 +633,7 @@ else
 
 	} // if ($arResult["Events"] && is_array($arResult["Events"]) && count($arResult["Events"]) > 0)
 	elseif (
-		intval($arParams["LOG_ID"]) > 0
+		(int)$arParams["LOG_ID"] > 0
 		&& $_REQUEST["empty_get_comments"] === "Y"
 		&& (
 			!$arResult["Events"]
@@ -646,7 +648,6 @@ else
 		);
 
 		CMain::FinalActions(CUtil::PhpToJSObject($res));
-		die();
 	}
 	elseif (!$arResult["AJAX_CALL"])
 	{
@@ -654,11 +655,11 @@ else
 		{
 			?><div class="post-wrap">
 				<div class="lenta-block-empty"><?=Loc::getMessage("MOBILE_LOG_ERROR_ENTRY_NOT_FOUND");?></div>
-			</div><?
+			</div><?php
 		}
 		elseif (empty($arResult['pinnedEvents']))
 		{
-			?><div class="lenta-block-empty" id="lenta_block_empty"><?=Loc::getMessage("MOBILE_LOG_MESSAGE_EMPTY");?></div><?
+			?><div class="lenta-block-empty" id="lenta_block_empty"><?=Loc::getMessage("MOBILE_LOG_MESSAGE_EMPTY");?></div><?php
 		}
 	}
 
@@ -680,15 +681,15 @@ else
 			'PAGEN_'.$arResult["PAGE_NAVNUM"] => ($arResult["PAGE_NUMBER"] + 1)
 		];
 
-		if (intval($arResult["NEXT_PAGE_SIZE"]) > 0)
+		if ((int)$arResult["NEXT_PAGE_SIZE"] > 0)
 		{
-			$uriParams['pagesize'] = intval($arResult["NEXT_PAGE_SIZE"]);
+			$uriParams['pagesize'] = (int)$arResult["NEXT_PAGE_SIZE"];
 		}
 		$uri->addParams($uriParams);
 
 		?><script>
 		BX.ready(function() {
-			<?php
+		<?php
 			if (
 				$event_cnt > 0
 				&& $event_cnt >= $arParams["PAGE_SIZE"]
@@ -726,8 +727,8 @@ else
 			foreach ($arCSSListNew as $i => $css_path)
 			{
 				if(
-					mb_strtolower(mb_substr($css_path, 0, 7)) != 'http://'
-					&& mb_strtolower(mb_substr($css_path, 0, 8)) != 'https://'
+					mb_strtolower(mb_substr($css_path, 0, 7)) !== 'http://'
+					&& mb_strtolower(mb_substr($css_path, 0, 8)) !== 'https://'
 				)
 				{
 					$css_file = (
@@ -766,7 +767,7 @@ else
 					"JS" => $arAdditionalData["SCRIPTS"],
 					"CSS" => $arAdditionalData["CSS"]
 				),
-				"LAST_TS" => ($arResult["dateLastPageTS"] ? intval($arResult["dateLastPageTS"]) : 0)
+				"LAST_TS" => ($arResult["dateLastPageTS"] ? (int)$arResult["dateLastPageTS"] : 0)
 			);
 
 			if ($arResult["COUNTER_TO_CLEAR"])
@@ -783,7 +784,6 @@ else
 			}
 
 			CMain::FinalActions(CUtil::PhpToJSObject($res));
-			die();
 		}
 	}
 
@@ -805,7 +805,7 @@ else
 				require($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/include/nextpage_loader.php');
 			}
 
-			?></div><? // lenta-wrapper, lenta-wrapper-outer, lenta-wrapper-outer-cont
+			?></div><?php // lenta-wrapper, lenta-wrapper-outer, lenta-wrapper-outer-cont
 		}
 
 		$uri = new Uri(htmlspecialcharsback(POST_FORM_ACTION_URI));
@@ -824,9 +824,9 @@ else
 			'PAGEN_'.$arResult["PAGE_NAVNUM"] => ($arResult["PAGE_NUMBER"] + 1)
 		];
 
-		if (intval($arResult["NEXT_PAGE_SIZE"]) > 0)
+		if ((int)$arResult["NEXT_PAGE_SIZE"] > 0)
 		{
-			$uriParams['pagesize'] = intval($arResult["NEXT_PAGE_SIZE"]);
+			$uriParams['pagesize'] = (int)$arResult["NEXT_PAGE_SIZE"];
 		}
 		if (
 			is_array($arResult["arLogTmpID"])
@@ -838,14 +838,14 @@ else
 		$uri->addParams($uriParams);
 
 		// sonet_log_content
-		?><script type="text/javascript">
+		?><script>
 
-			var isPullDownEnabled = false;
-			var isPullDownLocked = false;
+			BX.MobileLivefeed.Instance.isPullDownEnabled = false;
+			BX.MobileLivefeed.Instance.isPullDownLocked = false;
 
 			BX.MobileLivefeed.PageInstance.setNextPageUrl('<?=CUtil::JSEscape(htmlspecialcharsEx($uri->getUri()))?>');
 
-			<?
+			<?php
 			if (
 				($arParams['LOG_ID'] > 0 || $arParams['EMPTY_PAGE'] === "Y")
 				&& $_REQUEST['BOTTOM'] === 'Y'
@@ -853,14 +853,14 @@ else
 			{
 				?>
 				BX.MobileLivefeed.Post.moveBottom();
-				<?
+			<?php
 			}
 		?>
 		</script>
-		<?
+		<?php
 		if ($arResult["RELOAD"])
 		{
-			?></div><?
+			?></div><?php
 
 			if ($arResult["RELOAD_JSON"])
 			{
@@ -868,12 +868,12 @@ else
 
 				AddEventHandler("main", "OnEndBufferContent", function($staticContent) use($strText, $arResult)
 				{
-					$manifest = AppCacheManifest::getInstance();
+					$manifest = Composite\AppCache::getInstance();
 
 					$server = \Bitrix\Main\Context::getCurrent()->getServer();
 					$manifest->setPageURI($server->get("HTTP_BX_APPCACHE_URL"));
 					$manifestId = $manifest->getCurrentManifestID();
-					$manifestCache = $manifest->readManifestCache($manifestId);
+					$manifestCache = Composite\AppCache::readManifestCache($manifestId);
 
 					$manifestCacheFiles = array();
 					if (!empty($manifestCache['FILE_DATA']))
@@ -887,11 +887,11 @@ else
 						}
 						if (!empty($manifestCache['FILE_DATA']['CSS_FILE_IMAGES']))
 						{
-							foreach ($manifestCache['FILE_DATA']['CSS_FILE_IMAGES'] as $cssFile => $images)
+							foreach ($manifestCache['FILE_DATA']['CSS_FILE_IMAGES'] as $images)
 							{
 								if (!empty($images))
 								{
-									foreach($images as $key => $value)
+									foreach($images as $value)
 									{
 										$manifestCacheFiles[] = $value;
 									}
@@ -959,12 +959,12 @@ else
 					$manifestCSSFileImages =  array_merge($files1["CSS_FILE_IMAGES"], (!empty($files2["CSS_FILE_IMAGES"]) ? $files2["CSS_FILE_IMAGES"] : array()));
 
 					$sameFiles = (!array_diff($manifestFiles, $manifestCacheFiles) && !array_diff($manifestCacheFiles, $manifestFiles));
-					$isManifestUpdated = (!$manifestCache || !$sameFiles || $manifest->getDebug());
+					$isManifestUpdated = (!$manifestCache || !$sameFiles || Composite\AppCache::getDebug());
 
 					if ($isManifestUpdated)
 					{
 						$cache = new \CPHPCache();
-						$cachePath = AppCacheManifest::getCachePath($manifestId);
+						$cachePath = Composite\AppCache::getCachePath($manifestId);
 						$cache->CleanDir($cachePath);
 
 						$manifest->setFiles($manifestFiles);
@@ -975,7 +975,7 @@ else
 							"ID" => $manifestId,
 							"TEXT" => $manifest->getManifestContent(),
 							"FILE_HASH" => $currentHashSum,
-							"EXCLUDE_PATTERNS_HASH"=> md5(serialize($manifest->getExcludeImagePatterns())),
+							"EXCLUDE_PATTERNS_HASH" => md5(serialize($manifest->getExcludeImagePatterns())),
 							"FILE_DATA" => array(
 								"FILE_TIMESTAMPS" => $manifestFileTimestamps,
 								"CSS_FILE_IMAGES" => $manifestCSSFileImages
@@ -1014,13 +1014,11 @@ else
 					}
 
 					CMain::FinalActions(CUtil::PhpToJSObject($res));
-					die();
 				});
 			}
 			else
 			{
 				CMain::FinalActions();
-				die();
 			}
 
 		}
@@ -1028,7 +1026,7 @@ else
 		if (isset($feedFrame))
 		{
 			$feedFrame->end();
-			?></div><?
+			?></div><?php
 		}
 	}
 
@@ -1038,7 +1036,7 @@ else
 		&& !$arResult["AJAX_CALL"]
 	)
 	{
-		?></div><? // lenta_wrapper_global
+		?></div><?php // lenta_wrapper_global
 	}
 }
 
@@ -1047,4 +1045,3 @@ if ($targetHtml <> '')
 	$APPLICATION->RestartBuffer();
 	echo $targetHtml;
 }
-?>

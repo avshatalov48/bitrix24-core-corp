@@ -2080,6 +2080,31 @@ class CAllCrmActivity
 		$entitiesSql[(string)CCrmOwnerType::Company] = CCrmCompany::BuildPermSql($aliasPrefix, $permType, $permOptions);
 		$entitiesSql[(string)CCrmOwnerType::Order] =
 			CCrmPerms::BuildSql(CCrmOwnerType::OrderName, $aliasPrefix, $permType, $permOptions);
+		$entitiesSql[(string)CCrmOwnerType::Quote] =
+			CCrmPerms::BuildSql(CCrmOwnerType::QuoteName, $aliasPrefix, $permType, $permOptions);
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions($userID);
+		$dynamicTypesMap = Crm\Service\Container::getInstance()->getDynamicTypesMap()->load([
+			'isLoadStages' => false,
+			'isLoadCategories' => true,
+		]);
+		foreach ($dynamicTypesMap->getTypes() as $type)
+		{
+			if (!$userPermissions->canReadType($type->getEntityTypeId()))
+			{
+				continue;
+			}
+			$entityTypes = [];
+			foreach ($dynamicTypesMap->getCategories($type->getEntityTypeId()) as $category)
+			{
+				$entityTypes[] = $userPermissions::getPermissionEntityType($type->getEntityTypeId(), $category->getId());
+			}
+			$entitiesSql[(string)$type->getEntityTypeId()] = CCrmPerms::BuildSqlForEntitySet(
+				$entityTypes,
+				$aliasPrefix,
+				$permType,
+				$permOptions
+			);
+		}
 
 		//Invoice does not have activities
 		//$entitiesSql[strval(CCrmOwnerType::Invoice)] = CCrmInvoice::BuildPermSql($aliasPrefix, $permType, $permOptions);

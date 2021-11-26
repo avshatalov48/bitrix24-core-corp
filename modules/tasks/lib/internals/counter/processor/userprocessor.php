@@ -27,7 +27,21 @@ class UserProcessor
 	private $userId;
 	private $collector;
 
-	public function __construct(int $userId)
+	private $userTasks = null;
+
+	private static $instances = [];
+
+	public static function getInstance(int $userId)
+	{
+		if (!array_key_exists($userId, self::$instances))
+		{
+			self::$instances[$userId] = new self($userId);
+		}
+
+		return self::$instances[$userId];
+	}
+
+	private function __construct(int $userId)
 	{
 		$this->userId = $userId;
 	}
@@ -132,18 +146,22 @@ class UserProcessor
 	 */
 	private function getUserTasks(): array
 	{
-		$sql = "
-			SELECT DISTINCT(TASK_ID)
-			FROM `b_tasks_member`
-			WHERE USER_ID = {$this->userId}
-		";
-		$res = Application::getConnection()->query($sql);
-		$ids = [];
-		while ($row = $res->fetch())
+		if ($this->userTasks === null)
 		{
-			$ids[] = $row['TASK_ID'];
+			$sql = "
+				SELECT DISTINCT(TASK_ID)
+				FROM `b_tasks_member`
+				WHERE USER_ID = {$this->userId}
+			";
+			$res = Application::getConnection()->query($sql);
+			$this->userTasks = [];
+			while ($row = $res->fetch())
+			{
+				$this->userTasks[] = $row['TASK_ID'];
+			}
 		}
-		return $ids;
+
+		return $this->userTasks;
 	}
 
 	/**
@@ -153,7 +171,7 @@ class UserProcessor
 	{
 		if (!$this->collector)
 		{
-			$this->collector = new UserCollector($this->userId);
+			$this->collector = UserCollector::getInstance($this->userId);
 		}
 		return $this->collector;
 	}

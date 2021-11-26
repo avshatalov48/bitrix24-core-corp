@@ -4,6 +4,22 @@ namespace Bitrix\Rpa\Model;
 
 use Bitrix\Main\ORM;
 
+/**
+ * Class ItemHistoryFieldTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ItemHistoryField_Query query()
+ * @method static EO_ItemHistoryField_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ItemHistoryField_Result getById($id)
+ * @method static EO_ItemHistoryField_Result getList(array $parameters = array())
+ * @method static EO_ItemHistoryField_Entity getEntity()
+ * @method static \Bitrix\Rpa\Model\EO_ItemHistoryField createObject($setDefaultValues = true)
+ * @method static \Bitrix\Rpa\Model\EO_ItemHistoryField_Collection createCollection()
+ * @method static \Bitrix\Rpa\Model\EO_ItemHistoryField wakeUpObject($row)
+ * @method static \Bitrix\Rpa\Model\EO_ItemHistoryField_Collection wakeUpCollection($rows)
+ */
 class ItemHistoryFieldTable extends ORM\Data\DataManager
 {
 	public static function getTableName(): string

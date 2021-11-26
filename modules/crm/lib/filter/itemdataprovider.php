@@ -29,7 +29,7 @@ class ItemDataProvider extends EntityDataProvider
 	public const TYPE_STRING = 'string';
 	public const TYPE_TEXT = 'text';
 	public const TYPE_NUMBER = 'number';
-	public const TYPE_USER = 'dest_selector';
+	public const TYPE_USER = 'entity_selector';
 	public const TYPE_DATE = 'date';
 	public const TYPE_BOOLEAN = 'checkbox';
 	public const TYPE_CRM_ENTITY = 'crm_entity';
@@ -91,7 +91,7 @@ class ItemDataProvider extends EntityDataProvider
 				'displayFilter' => true,
 				'defaultGrid' => true,
 				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
+				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
 			],
 			Item::FIELD_NAME_CREATED_TIME => [
 				'type' => static::TYPE_DATE,
@@ -107,7 +107,7 @@ class ItemDataProvider extends EntityDataProvider
 				'displayFilter' => true,
 				'defaultGrid' => false,
 				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
+				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
 			],
 			Item::FIELD_NAME_UPDATED_TIME => [
 				'type' => static::TYPE_DATE,
@@ -123,7 +123,7 @@ class ItemDataProvider extends EntityDataProvider
 				'displayFilter' => true,
 				'defaultGrid' => true,
 				'defaultFilter' => true,
-				'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
+				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
 			],
 			Item::FIELD_NAME_OPENED => [
 				'type' => static::TYPE_BOOLEAN,
@@ -154,7 +154,7 @@ class ItemDataProvider extends EntityDataProvider
 						'displayFilter' => true,
 						'defaultGrid' => false,
 						'defaultFilter' => false,
-						'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
+						'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
 					],
 					Item::FIELD_NAME_MOVED_TIME => [
 						'type' => static::TYPE_DATE,
@@ -509,6 +509,16 @@ class ItemDataProvider extends EntityDataProvider
 					'type' => $fieldParams['type'],
 					'default' => $fieldParams['defaultFilter']
 				];
+				if ($options['type'] === 'number' || $options['type'] === 'string') {
+					if ($field !== 'ID') {
+						$options['data'] = [
+							'additionalFilter' => [
+								'isEmpty',
+								'hasAnyValue',
+							],
+						];
+					}
+				}
 			}
 
 			$fields[$field] = [
@@ -593,6 +603,10 @@ class ItemDataProvider extends EntityDataProvider
 						\Bitrix\Main\UI\Filter\DateType::NEXT_WEEK,
 						\Bitrix\Main\UI\Filter\DateType::NEXT_MONTH,
 					],
+					'additionalFilter' => [
+						'isEmpty',
+						'hasAnyValue',
+					],
 				],
 			];
 		}
@@ -602,7 +616,11 @@ class ItemDataProvider extends EntityDataProvider
 				'type' => 'date',
 				'default' => $fieldParams['defaultFilter'],
 				'data' => [
-					'time' => false
+					'time' => false,
+					'additionalFilter' => [
+						'isEmpty',
+						'hasAnyValue',
+					],
 				],
 			];
 		}
@@ -646,25 +664,16 @@ class ItemDataProvider extends EntityDataProvider
 
 		if (in_array($fieldID, $this->getFieldNamesByType(static::TYPE_USER, static::DISPLAY_IN_FILTER)))
 		{
-			$result = [
-				'params' => [
-					'apiVersion' => 3,
-					'context' => 'CRM_TYPE_'.$this->getEntityTypeId().'_ITEM_FILTER_'.$fieldID,
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'useSearch' => 'Y',
-					'departmentFlatEnable' => 'N',
-					'enableAll' => 'N',
-					'enableUsers' => 'Y',
-					'enableSonetgroups' => 'N',
-					'enableDepartments' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeId());
+			return $this->getUserEntitySelectorParams(
+				strtolower('crm_type_' . $this->getEntityTypeId() . '_item_filter_' . $fieldID),
+				[
+					'fieldName' => $fieldID,
+					'entityTypeId' => $this->getEntityTypeId(),
+					'module' => 'crm',
+					'referenceClass' => ($factory ? $factory->getDataClass() : null),
 				]
-			];
+			);
 		}
 		elseif (in_array($fieldID, $this->getFieldNamesByType(static::TYPE_CRM_ENTITY, static::DISPLAY_IN_FILTER)))
 		{
@@ -867,7 +876,9 @@ class ItemDataProvider extends EntityDataProvider
 		if (isset($requestFilter['FIND']) && !empty($requestFilter['FIND']))
 		{
 			$filter['SEARCH_CONTENT'] = $requestFilter['FIND'];
-			SearchEnvironment::prepareSearchFilter($this->getEntityTypeId(), $filter);
+			SearchEnvironment::prepareSearchFilter($this->getEntityTypeId(), $filter, [
+				'ENABLE_PHONE_DETECTION' => false,
+			]);
 		}
 
 		if ($this->factory->isCrmTrackingEnabled())
@@ -878,6 +889,14 @@ class ItemDataProvider extends EntityDataProvider
 
 		foreach ($this->getFieldNamesByType(static::TYPE_NUMBER, static::DISPLAY_IN_FILTER) as $fieldName)
 		{
+			if (isset($requestFilter[$fieldName]) && $requestFilter[$fieldName] === false)
+			{
+				$filter[$fieldName] = $requestFilter[$fieldName];
+			}
+			elseif (isset($requestFilter['!'.$fieldName]) && $requestFilter['!'.$fieldName] === false)
+			{
+				$filter['!'.$fieldName] = $requestFilter['!'.$fieldName];
+			}
 			if (isset($requestFilter[$fieldName.'_from']) && $requestFilter[$fieldName.'_from'] > 0)
 			{
 				$filter['>='.$fieldName] = $requestFilter[$fieldName.'_from'];
@@ -894,6 +913,14 @@ class ItemDataProvider extends EntityDataProvider
 
 		foreach ($this->getFieldNamesByType(static::TYPE_STRING, static::DISPLAY_IN_FILTER) as $fieldName)
 		{
+			if (isset($requestFilter[$fieldName]) && $requestFilter[$fieldName] === false)
+			{
+				$filter[$fieldName] = $requestFilter[$fieldName];
+			}
+			elseif (isset($requestFilter['!'.$fieldName]) && $requestFilter['!'.$fieldName] === false)
+			{
+				$filter['!'.$fieldName] = $requestFilter['!'.$fieldName];
+			}
 			if (!empty($requestFilter[$fieldName]))
 			{
 				$filter['%'.$fieldName] = $requestFilter[$fieldName];
@@ -904,7 +931,7 @@ class ItemDataProvider extends EntityDataProvider
 		{
 			if (!empty($requestFilter[$fieldName]))
 			{
-				$filter['='.$fieldName] = $requestFilter[$fieldName];
+				$filter['='.$fieldName] = is_array($requestFilter[$fieldName]) ? $requestFilter[$fieldName] : (int)$requestFilter[$fieldName];
 			}
 		}
 
@@ -912,7 +939,7 @@ class ItemDataProvider extends EntityDataProvider
 		{
 			if (!empty($requestFilter[$fieldName]))
 			{
-				$filter['='.$fieldName] = (int)$requestFilter[$fieldName];
+				$filter['='.$fieldName] = is_array($requestFilter[$fieldName]) ? $requestFilter[$fieldName] : (int)$requestFilter[$fieldName];
 			}
 		}
 
@@ -920,12 +947,20 @@ class ItemDataProvider extends EntityDataProvider
 		{
 			if (!empty($requestFilter[$fieldName]))
 			{
-				$filter['='.$fieldName] = (int)$requestFilter[$fieldName];
+				$filter['='.$fieldName] = is_array($requestFilter[$fieldName]) ? $requestFilter[$fieldName] : (int)$requestFilter[$fieldName];
 			}
 		}
 
 		foreach ($this->getFieldNamesByType(static::TYPE_DATE, static::DISPLAY_IN_FILTER) as $fieldName)
 		{
+			if (isset($requestFilter[$fieldName]) && $requestFilter[$fieldName] === false)
+			{
+				$filter[$fieldName] = $requestFilter[$fieldName];
+			}
+			elseif (isset($requestFilter['!'.$fieldName]) && $requestFilter['!'.$fieldName] === false)
+			{
+				$filter['!'.$fieldName] = $requestFilter['!'.$fieldName];
+			}
 			if (!empty($requestFilter[$fieldName.'_from']))
 			{
 				$filter['>='.$fieldName] = $requestFilter[$fieldName.'_from'];

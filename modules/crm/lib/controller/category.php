@@ -2,18 +2,17 @@
 
 namespace Bitrix\Crm\Controller;
 
+use Bitrix\Crm\Category\Entity;
+use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\UserPermissions;
-use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 
 class Category extends Base
 {
-	/** @var Factory */
-	protected $factory;
 	/** @var UserPermissions */
 	protected $userPermissions;
 
@@ -21,168 +20,235 @@ class Category extends Base
 	{
 		parent::init();
 
-		$entityTypeId = $this->getRequest()->get('entityTypeId');
-		if (empty($entityTypeId))
-		{
-			$this->addError(new Error(Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND')));
-			return;
-		}
-
-		$this->factory = Container::getInstance()->getFactory($entityTypeId);
-		if (!$this->factory)
-		{
-			$this->addError(new Error(Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND')));
-			return;
-		}
 		$this->userPermissions = Container::getInstance()->getUserPermissions();
 	}
 
-	protected function processBeforeAction(Action $action): bool
+	protected function getFactory(int $entityTypeId): ?Service\Factory
 	{
-		return (parent::processBeforeAction($action) && (count($this->getErrors()) <= 0));
-	}
-
-	public function getAction(int $id): ?array
-	{
-		$category = $this->factory->getCategory($id);
-		if ($category)
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
 		{
-			if (!$this->userPermissions->canViewItemsInCategory($category))
-			{
-				$this->addError(new Error(Loc::getMessage('CRM_TYPE_CATEGORY_ACCESS_DENIED')));
-				return null;
-			}
+			$this->addError(new Error(
+					Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND'),
+					ErrorCode::NOT_FOUND)
+			);
 
-			return $category->jsonSerialize();
+			return null;
 		}
-		$this->addError(new Error(Loc::getMessage('CRM_TYPE_CATEGORY_NOT_FOUND_ERROR')));
+		if (!$factory->isCategoriesSupported())
+		{
+			$this->addError(ErrorCode::getEntityTypeNotSupportedError($entityTypeId));
 
-		return null;
+			return null;
+		}
+
+		return $factory;
 	}
 
-	public function addAction(array $fields): ?array
+	public function fieldsAction(int $entityTypeId): ?array
 	{
-		$category = $this->factory->createCategory();
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+		$fieldsInfo = $factory->getCategoryFieldsInfo();
+
+		return [
+			'fields' => $this->prepareFieldsInfo($fieldsInfo),
+		];
+	}
+
+	public function getAction(int $entityTypeId, int $id): ?array
+	{
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+		$category = $factory->getCategory($id);
+		if (!$category)
+		{
+			$this->addError(ErrorCode::getNotFoundError());
+			return null;
+		}
+
+		if (!$this->userPermissions->canViewItemsInCategory($category))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return null;
+		}
+
+		return [
+			'category' => $category,
+		];
+	}
+
+	public function listAction(int $entityTypeId): ?Page
+	{
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+		$categories = $this->userPermissions->filterAvailableForReadingCategories(
+			$factory->getCategories()
+		);
+
+		return new Page(
+			'categories',
+			$categories,
+			static function () use ($categories): int {
+				return count($categories);
+			}
+		);
+	}
+
+	public function deleteAction(int $entityTypeId, int $id): void
+	{
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return;
+		}
+		$category = $factory->getCategory($id);
+		if (!$category)
+		{
+			$this->addError(ErrorCode::getNotFoundError());
+			return;
+		}
+
+		if (!$this->userPermissions->canDeleteCategory($category))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return;
+		}
+
+		$result = $category->delete();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+		}
+	}
+
+	public function addAction(int $entityTypeId, array $fields): ?array
+	{
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+		$category = $factory->createCategory();
 		if (!$this->userPermissions->canAddCategory($category))
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_TYPE_CATEGORY_ACCESS_DENIED')));
+			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
 		}
 
-		$category = $this->updateCategory($category, $fields);
-		if (!$category)
-		{
-			return null;
-		}
-
-		$result = $category->save();
-		if (!$result->isSuccess())
-		{
-			$this->addErrors($result->getErrors());
-			return null;
-		}
-
-		return $category->jsonSerialize();
+		return $this->updateCategory($factory, $category, $fields);
 	}
 
-	public function updateAction(int $id, array $fields): ?array
+	public function updateAction(int $entityTypeId, int $id, array $fields): ?array
 	{
-		$category = $this->factory->getCategory($id);
-		if (!$category)
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_TYPE_CATEGORY_NOT_FOUND_ERROR')));
 			return null;
 		}
+		$category = $factory->getCategory($id);
+		if (!$category)
+		{
+			$this->addError(ErrorCode::getNotFoundError());
+			return null;
+		}
+
 		if (!$this->userPermissions->canUpdateCategory($category))
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_TYPE_CATEGORY_ACCESS_DENIED')));
-			return null;
-		}
-		$category = $this->updateCategory($category, $fields);
-		if (!$category)
-		{
+			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
 		}
 
-		$result = $category->save();
-		if (!$result->isSuccess())
-		{
-			$this->addErrors($result->getErrors());
-			return null;
-		}
-
-		return $category->jsonSerialize();
+		return $this->updateCategory($factory, $category, $fields);
 	}
 
-	protected function updateCategory(
-		\Bitrix\Crm\Category\Entity\Category $category,
-		array $fields
-	): ?\Bitrix\Crm\Category\Entity\Category
+	protected function updateCategory(Service\Factory $factory, Entity\Category $category, array $fields): ?array
 	{
-		$name = $fields['name'] ?? '';
-		$sort = $fields['sort'] ? (int) $fields['sort'] : null;
-		$isDefault = is_bool($fields['isDefault']) ? $fields['isDefault'] : null;
-		$category->setName($name);
-		if ($sort > 0)
+		$processResult = $this->processFields($factory, $category, $fields);
+		if (!$processResult->isSuccess())
+		{
+			$this->addErrors($processResult->getErrors());
+			return null;
+		}
+
+		$saveResult = $category->save();
+		if (!$saveResult->isSuccess())
+		{
+			$this->addErrors($saveResult->getErrors());
+			return null;
+		}
+
+		return [
+			'category' => $category,
+		];
+	}
+
+	protected function processFields(Service\Factory $factory, Entity\Category $category, array $fields): Result
+	{
+		$name = isset($fields['name']) ? (string)$fields['name'] : null;
+		if (!is_null($name))
+		{
+			$category->setName($name);
+		}
+
+		$sort = isset($fields['sort']) ? (int)$fields['sort'] : null;
+		if (!is_null($sort) && $sort >= 0)
 		{
 			$category->setSort($sort);
 		}
-		if ($isDefault === true)
+
+		if ($this->canChangeWhichCategoryIsDefault($factory))
 		{
-			$defaultCategory = $this->factory->getDefaultCategory();
-			if ($defaultCategory)
+			$isDefault = $fields['isDefault'] ?? null;
+
+			if (($isDefault === 'N') || ($isDefault === false))
 			{
-				$defaultCategory->setIsDefault(false);
-				$saveDefaultCategoryResult = $defaultCategory->save();
-				if (!$saveDefaultCategoryResult->isSuccess())
+				$category->setIsDefault(false);
+			}
+			elseif (($isDefault === 'Y') || ($isDefault === true))
+			{
+				$result = $this->makeCurrentDefaultCategoryNotDefault($factory);
+
+				if ($result->isSuccess())
 				{
-					$this->addErrors($saveDefaultCategoryResult->getErrors());
-					return null;
+					$category->setIsDefault(true);
 				}
-
-				$category->setIsDefault(true);
 			}
 		}
-		else
-		{
-			$category->setIsDefault(false);
-		}
 
-		return $category;
+		return $result ?? new Result();
 	}
 
-	public function listAction(): Page
+	protected function canChangeWhichCategoryIsDefault(Service\Factory $factory): bool
 	{
-		$result = [];
-
-		$categories = $this->userPermissions->filterAvailableForReadingCategories($this->factory->getCategories());
-		foreach ($categories as $category)
+		$isDefaultFieldInfo = $factory->getCategoryFieldsInfo()['IS_DEFAULT'] ?? null;
+		if (is_null($isDefaultFieldInfo))
 		{
-			$result[] = $category->jsonSerialize();
+			return false;
 		}
 
-		return new Page('categories', $result, count($result));
+		return !\CCrmFieldInfoAttr::isFieldReadOnly($isDefaultFieldInfo);
 	}
 
-	public function deleteAction($id): void
+	protected function makeCurrentDefaultCategoryNotDefault(Service\Factory $factory): Result
 	{
-		$category = $this->factory->getCategory($id);
-		if ($category)
+		$defaultCategory = $factory->getDefaultCategory();
+		if (!$defaultCategory)
 		{
-			if (!$this->userPermissions->canDeleteCategory($category))
-			{
-				$this->addError(new Error(Loc::getMessage('CRM_TYPE_CATEGORY_ACCESS_DENIED')));
-				return;
-			}
-			$result = $category->delete();
-			if (!$result->isSuccess())
-			{
-				$this->addErrors($result->getErrors());
-			}
+			return new Result();
 		}
-		else
-		{
-			$this->addError(new Error(Loc::getMessage('CRM_TYPE_CATEGORY_NOT_FOUND_ERROR')));
-		}
+
+		$defaultCategory->setIsDefault(false);
+
+		return $defaultCategory->save();
 	}
 }

@@ -54,6 +54,12 @@ if (isset($arResult['hideBorder']) && $arResult['hideBorder'] === true)
 <?php
 $renderViews = static function(array $views): void {
 	foreach ($views as $view):
+		if (!empty($view['html']))
+		{
+			echo $view['html'];
+			continue;
+		}
+
 		$className = $view['className'] ?? 'crm-view-switcher-list-item';
 		if ($view['isActive'] === true)
 		{
@@ -83,16 +89,16 @@ $renderViews = static function(array $views): void {
 };
 ?>
 <?php if (!empty($arResult['views'])): ?>
-	<?php if (!empty($arResult['views']['left'])):?>
-		<div class="crm-view-switcher">
-			<div class="crm-view-switcher-list">
-				<?=$renderViews($arResult['views']['left']);?>
-			</div>
+	<div class="crm-view-switcher">
+		<div class="crm-view-switcher-list">
+			<?php if (!empty($arResult['views']['left'])): ?>
+				<?php $renderViews($arResult['views']['left']); ?>
+			<?php endif; ?>
 		</div>
-	<?php endif;?>
-	<?php if (!empty($arResult['views']['right'])):?>
-		<div class="crm-view-switcher-buttons">
-			<?=$renderViews($arResult['views']['right']);?>
-		</div>
-	<?endif;?>
+	</div>
+	<div class="crm-view-switcher-buttons">
+		<?php if (!empty($arResult['views']['right'])): ?>
+			<?php $renderViews($arResult['views']['right']); ?>
+		<?php endif; ?>
+	</div>
 <?php endif; ?>

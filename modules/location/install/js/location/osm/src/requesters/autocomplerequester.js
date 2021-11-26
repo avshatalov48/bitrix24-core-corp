@@ -1,10 +1,9 @@
 import type {AutocompleteServiceParams} from 'location.core';
-import {LocationType} from 'location.core';
 import BaseRequester from './baserequester';
+import OSM from '../osm';
 
 export default class AutocompleteRequester extends BaseRequester
 {
-	#locationBiasScale; // 0.1 - 10
 	#autocompletePromptsCount;
 	#sourceCode;
 	#autocompleteReplacements;
@@ -13,8 +12,7 @@ export default class AutocompleteRequester extends BaseRequester
 	{
 		super(props);
 		this.#autocompletePromptsCount = props.autocompletePromptsCount || 7;
-		this.#locationBiasScale = props.locationBiasScale || 9;
-		this.#sourceCode = props.sourceCode || 'OSM';
+		this.#sourceCode = props.sourceCode || OSM.code;
 		this.#autocompleteReplacements = props.autocompleteReplacements || {};
 	}
 
@@ -41,46 +39,17 @@ export default class AutocompleteRequester extends BaseRequester
 			+ 'action=osmgateway.autocomplete.autocomplete'
 			+ `&params[q]=${encodeURIComponent(text)}`
 			+ `&params[limit]=${this.#autocompletePromptsCount}`
-			+ `&params[lang]=${this.languageId}`;
+			+ `&params[lang]=${this.languageId}`
+			+ `&params[version]=2`;
 
-		if (autocompleteServiceParams.locationForBias)
+		if (autocompleteServiceParams.biasPoint)
 		{
-			const lat = autocompleteServiceParams.locationForBias.latitude;
-			const lon = autocompleteServiceParams.locationForBias.longitude;
+			const lat = autocompleteServiceParams.biasPoint.latitude;
+			const lon = autocompleteServiceParams.biasPoint.longitude;
 
 			if (lat && lon)
 			{
-				result += `&params[lat]=${lat}`
-					+ `&params[lon]=${lon}`
-					+ `&params[location_bias_scale]=${this.#locationBiasScale}`;
-			}
-
-			if (autocompleteServiceParams.locationForBias.address)
-			{
-				const address = autocompleteServiceParams.locationForBias.address;
-
-				if (address.getFieldValue(LocationType.LOCALITY))
-				{
-					result += `&params[probable_city]=${address.getFieldValue(LocationType.LOCALITY)}`;
-				}
-			}
-		}
-
-		if (autocompleteServiceParams.filter && autocompleteServiceParams.filter.types)
-		{
-			if (autocompleteServiceParams.filter.types.indexOf(LocationType.BUILDING) !== -1)
-			{
-				result += '&params[osm_tag][]=building&params[osm_tag][]=place&params[osm_tag][]=amenity';
-			}
-
-			if (autocompleteServiceParams.filter.types.indexOf(LocationType.STREET) !== -1)
-			{
-				result += '&params[osm_tag][]=highway';
-			}
-
-			if (autocompleteServiceParams.filter.types.indexOf(LocationType.LOCALITY) !== -1)
-			{
-				result += '&params[osm_tag][]=:locality';
+				result += `&params[lat]=${lat}&params[lon]=${lon}`;
 			}
 		}
 

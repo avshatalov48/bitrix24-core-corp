@@ -83,6 +83,7 @@ $MESS["SALESCENTER_SP_PAYSYSTEM_SKB_SKB_PUBLIC_DESCRIPTION"] = "Для опла�
 $MESS["SALESCENTER_SP_PAYSYSTEM_DELETE_CONFIRM"] = "Вы уверены, что хотите удалить эту платежную систему?";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_IFRAME_TITLE"] = "Woopkassa. Платежный фрейм";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_CHECKOUT_TITLE"] = "Woopkassa. Страница оплаты";
+$MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_CHECKOUT_DESCRIPTION"] = "Принимайте онлайн-платежи от клиентов с банковской карты, баланса мобильного телефона или кошелька Wooppay. Woopkassa – cервис по приему онлайн-платежей от Wooppay, первой зарегистрированной платежной организации в Казахстане.";
 $MESS["SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_BANK_CARD_TITLE"] = "Оплата банковской картой. Оплата через Robokassa";
 $MESS["SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_BANK_CARD_PUBLIC_NAME"] = "Банковская карта";
 $MESS["SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_BANK_CARD_PUBLIC_DESCRIPTION"] = "Для оплаты картой укажите ее номер, срок действия и CVC.";

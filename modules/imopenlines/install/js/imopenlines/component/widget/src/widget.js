@@ -32,6 +32,7 @@ import {PullClient} from "pull.client";
 // ui
 import {Vue} from "ui.vue";
 import {VuexBuilder} from "ui.vue.vuex";
+import 'ui.vue.components.crm.form';
 
 // messenger files
 import {Controller} from 'im.controller';
@@ -1383,48 +1384,6 @@ export class Widget
 				vote: result
 			}
 		});
-	}
-
-	sendForm(type, fields)
-	{
-		Logger.info('LiveChatWidgetPrivate.sendForm:', type, fields);
-
-		let query = {
-			[RestMethod.widgetFormSend]: [RestMethod.widgetFormSend, {
-				'CHAT_ID': this.getChatId(),
-				'FORM': type.toUpperCase(),
-				'FIELDS': fields
-			}],
-			[RestMethod.widgetUserGet]: [RestMethod.widgetUserGet, {}]
-		};
-		this.controller.restClient.callBatch(query, (response) =>
-		{
-			if (!response)
-			{
-				this.requestDataSend = false;
-				this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
-				return false;
-			}
-
-			let userGetResult = response[RestMethod.widgetUserGet];
-			if (userGetResult.error())
-			{
-				this.requestDataSend = false;
-				this.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
-				return false;
-			}
-			this.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
-
-			this.sendEvent({
-				type: SubscriptionType.userForm,
-				data: {
-					form: type,
-					fields: fields
-				}
-			});
-
-		}, false, false, Utils.getLogTrackingParams({name: RestMethod.widgetUserGet, dialog: this.getDialogData()}));
-
 	}
 
 	getHtmlHistory()

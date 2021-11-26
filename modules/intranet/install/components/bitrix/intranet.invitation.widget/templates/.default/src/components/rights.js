@@ -43,7 +43,15 @@ export const RightsComponent = {
 					offsetLeft: 10,
 					offsetTop: 0,
 					angle: true,
-					className: "license-right-popup-menu"
+					className: 'license-right-popup-men',
+					events: {
+						onPopupShow: ()=> {
+							Event.EventEmitter.emit('BX.Intranet.InvitationWidget:showPopupMenu');
+						},
+						onPopupClose: ()=> {
+							Event.EventEmitter.emit('BX.Intranet.InvitationWidget:closePopupMenu');
+						}
+					}
 				});
 
 				this.popupMenu.show();

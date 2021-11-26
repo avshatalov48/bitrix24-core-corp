@@ -41,7 +41,16 @@ class LeadStatusHistoryTable extends Entity\DataManager
 			'STATUS_SEMANTIC_ID' => array('data_type' => 'string'),
 			'STATUS_ID' => array('data_type' => 'string'),
 			'IS_IN_WORK' => array('data_type' => 'boolean', 'values' => array('N', 'Y')),
-			'IS_JUNK' => array('data_type' => 'boolean', 'values' => array('N', 'Y'))
+			'IS_JUNK' => array('data_type' => 'boolean', 'values' => array('N', 'Y')),
+			'HAS_SUPPOSED_HISTORY_RECORD' => array(
+				'data_type' => 'integer',
+				'expression' => array(
+					'CASE WHEN EXISTS (SELECT 1 FROM b_crm_lead_status_history_with_supposed WHERE OWNER_ID = %s AND CREATED_TIME = %s AND STATUS_ID = %s) THEN 1 ELSE 0 END',
+					'OWNER_ID',
+					'CREATED_TIME',
+					'STATUS_ID'
+				),
+			),
 		);
 	}
 	public static function deleteByOwner($ownerID)

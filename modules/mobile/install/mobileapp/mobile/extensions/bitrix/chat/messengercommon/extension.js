@@ -309,9 +309,10 @@ ChatMessengerCommon.isBirthday = function(birthday) // after change this code, s
 
 ChatMessengerCommon.purifyText = function(text, params) // after change this code, sync with IM and MOBILE
 {
+	text = text? text.toString(): '';
+
 	if (text)
 	{
-		text = text.toString();
 		text = this.trimText(text);
 
 		if (text.indexOf('/me') == 0)
@@ -328,14 +329,32 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 		}
 		text = text.replace(/<br><br \/>/ig, '<br />');
 		text = text.replace(/<br \/><br>/ig, '<br />');
+
+		text = text.replace(/\[CODE\]\n?([\0-\uFFFF]*?)\[\/CODE\]/ig, function(whole,text) {
+			return '['+BX.message('IM_M_CODE_BLOCK')+'] ';
+		});
+
+		text = text.replace(/\[PUT(?:=(?:.+?))?\](?:.+?)?\[\/PUT]/ig, function(match)
+		{
+			return match.replace(/\[PUT(?:=(.+))?\](.+?)?\[\/PUT]/ig, function(whole, command, text) {
+				return  text? text: command;
+			});
+		});
+
+		text = text.replace(/\[SEND(?:=(?:.+?))?\](?:.+?)?\[\/SEND]/ig, function(match)
+		{
+			return match.replace(/\[SEND(?:=(.+))?\](.+?)?\[\/SEND]/ig, function(whole, command, text) {
+				return  text? text: command;
+			});
+		});
+
 		text = text.replace(/\[[buis]\](.*?)\[\/[buis]\]/ig, '$1');
 		text = text.replace(/\[url\](.*?)\[\/url\]/ig, '$1');
+		text = text.replace(/\[url=([^\]]+)](.*?)\[\/url]/ig, '$2');
 		text = text.replace(/\[RATING=([1-5]{1})\]/ig, function(whole, rating) {return '['+BX.message('IM_F_RATING')+'] ';});
 		text = text.replace(/\[ATTACH=([0-9]{1,})\]/ig, function(whole, rating) {return '['+BX.message('IM_F_ATTACH')+'] ';});
 		text = text.replace(/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/ig, '$2');
 		text = text.replace(/\[CHAT=([0-9]{1,})\](.*?)\[\/CHAT\]/ig, '$2');
-		text = text.replace(/\[SEND=([0-9]{1,})\](.*?)\[\/SEND\]/ig, '$2');
-		text = text.replace(/\[PUT=([0-9]{1,})\](.*?)\[\/PUT\]/ig, '$2');
 		text = text.replace(/\[CALL=([0-9]{1,})\](.*?)\[\/CALL\]/ig, '$2');
 		text = text.replace(/\[PCH=([0-9]{1,})\](.*?)\[\/PCH\]/ig, '$2');
 		text = text.replace(/<img.*?data-code="([^"]*)".*?>/ig, '$1');
@@ -373,18 +392,24 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 			}
 			return title;
 		}.bind(this));
-		text = text.replace('<br />', ' ').replace(/<\/?[^>]+>/gi, '').replace(/------------------------------------------------------(.*?)------------------------------------------------------/gmi, " ["+BX.message("IM_M_QUOTE_BLOCK")+"] ");
+
+		text = text.split('<br />')
+			.map(function(element) { return element.replace(/(&gt;&gt;).+/ig, " ["+BX.message("IM_M_QUOTE_BLOCK")+"] ") })
+			.join(' ')
+			.replace(/<\/?[^>]+>/gi, '')
+			.replace(/------------------------------------------------------(.*?)------------------------------------------------------/gmi, " ["+BX.message("IM_M_QUOTE_BLOCK")+"] ")
+		;
 
 		text = this.trimText(text);
 	}
 
 	if (!text || text.length <= 0)
 	{
-		if (params && params.FILE_ID && params.FILE_ID.length > 0)
+		if (params && (params.WITH_FILE || params.FILE_ID && params.FILE_ID.length > 0))
 		{
 			text = '['+BX.message('IM_F_FILE')+']';
 		}
-		else if (params && params.ATTACH && params.ATTACH.length > 0)
+		else if (params && (params.WITH_ATTACH || params.ATTACH && params.ATTACH.length > 0))
 		{
 			text = '['+BX.message('IM_F_ATTACH')+']';
 		}

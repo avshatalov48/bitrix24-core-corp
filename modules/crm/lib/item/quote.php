@@ -43,11 +43,9 @@ class Quote extends Item
 {
 	public const FIELD_NAME_CONTENT = 'CONTENT';
 	public const FIELD_NAME_TERMS = 'TERMS';
-	public const FIELD_NAME_COMMENTS = 'COMMENTS';
 	public const FIELD_NAME_NUMBER = 'QUOTE_NUMBER';
 	public const FIELD_NAME_DEAL_ID = 'DEAL_ID';
 	public const FIELD_NAME_DEAL = 'DEAL';
-	public const FIELD_NAME_LEAD_ID = 'LEAD_ID';
 	public const FIELD_NAME_LEAD = 'LEAD';
 	public const FIELD_NAME_STORAGE_TYPE = 'STORAGE_TYPE_ID';
 	public const FIELD_NAME_STORAGE_ELEMENTS = 'STORAGE_ELEMENT_IDS';

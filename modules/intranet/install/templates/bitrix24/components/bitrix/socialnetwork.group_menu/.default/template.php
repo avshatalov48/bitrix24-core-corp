@@ -1,6 +1,10 @@
 <?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+    die();
+}
+
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -9,6 +13,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @global CMain $APPLICATION */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Main\UI;
@@ -27,10 +32,10 @@ UI\Extension::load([
 
 if (Loader::includeModule('bitrix24'))
 {
-	\CBitrix24::initLicenseInfoPopupJS();
+	CBitrix24::initLicenseInfoPopupJS();
 }
 
-$groupMember = in_array($arResult['CurrentUserPerms']['UserRole'], \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember());
+$groupMember = in_array($arResult['CurrentUserPerms']['UserRole'], UserToGroupTable::getRolesMember());
 
 $this->addExternalCss(SITE_TEMPLATE_PATH."/css/profile_menu.css");
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
@@ -59,7 +64,7 @@ if (
 				PROJECT: <?= ($arResult["Group"]["PROJECT"] === "Y" ? 'true' : 'false') ?>
 			});
 		});
-	</script><?
+	</script><?php
 }
 
 ?><script>
@@ -111,7 +116,7 @@ if (
 			pageId: '<?= $arParams['PAGE_ID'] ?>'
 		});
 	});
-</script><?
+</script><?php
 
 ?><div class="profile-menu profile-menu-group">
 	<div class="profile-menu-inner">
@@ -151,7 +156,7 @@ if (
 						?></span>
 					</div>
 				</div>
-				<?
+				<?php
 
 				if ($arResult["Group"]["CLOSED"] === "Y")
 				{
@@ -160,10 +165,10 @@ if (
 
 				if (!$arResult['inIframe'])
 				{
-					?><span class="profile-menu-links"><?
-						?><a href="<?=$arResult["Urls"]["Card"]?>" class="profile-menu-links-item"><?= Loc::getMessage("SONET_SGM_T_LINKS_ABOUT_PROJECT") ?></a><?
+					?><span class="profile-menu-links"><?php
+						?><a href="<?=$arResult["Urls"]["Card"]?>" class="profile-menu-links-item"><?= Loc::getMessage("SONET_SGM_T_LINKS_ABOUT_PROJECT") ?></a><?php
 
-						?><a href="<?=$arResult["Urls"]["GroupUsers"]?>" class="profile-menu-links-item"><?
+						?><a href="<?=$arResult["Urls"]["GroupUsers"]?>" class="profile-menu-links-item"><?php
 							if ((int)$arResult['Group']['NUMBER_OF_MEMBERS'] > 0)
 							{
 								echo Loc::getMessage("SONET_SGM_T_MEMBERS2", array('#NUM#' => (int)$arResult['Group']['NUMBER_OF_MEMBERS']));
@@ -172,7 +177,7 @@ if (
 							{
 								echo Loc::getMessage("SONET_SGM_T_MEMBERS");
 							}
-						?></a><?
+						?></a><?php
 
 						if (
 							$arResult["CurrentUserPerms"]["UserCanProcessRequestsIn"]
@@ -180,7 +185,7 @@ if (
 							&& (int)$arResult['Group']['NUMBER_OF_REQUESTS'] > 0
 						)
 						{
-							?><a href="<?= $arResult['Urls']['GroupRequests'] ?>" class="profile-menu-links-count">+<?= (int)$arResult['Group']['NUMBER_OF_REQUESTS'] ?></a><?
+							?><a href="<?= $arResult['Urls']['GroupRequests'] ?>" class="profile-menu-links-count">+<?= (int)$arResult['Group']['NUMBER_OF_REQUESTS'] ?></a><?php
 						}
 
 						if (
@@ -188,16 +193,16 @@ if (
 							|| $arResult["CurrentUserPerms"]["UserIsMember"]
 						)
 						{
-							?><a id="bx-group-menu-settings" href="javascript:void(0);" class="profile-menu-links-item"><?=Loc::getMessage("SONET_UM_ACTIONS_BUTTON")?></a><?
+							?><a id="bx-group-menu-settings" href="javascript:void(0);" class="profile-menu-links-item"><?=Loc::getMessage("SONET_UM_ACTIONS_BUTTON")?></a><?php
 						}
 
-					?></span><?
+					?></span><?php
 				}
 
 				if ($arResult['inIframe'])
 				{
 
-					?><span class="profile-menu-links"><?
+					?><span class="profile-menu-links"><?php
 
 						if ($arResult['bUserCanRequestGroup'])
 						{
@@ -246,19 +251,19 @@ if (
 							></button><?php
 						}
 
-						?><a href="<?=$arResult["Urls"]["Card"]?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?= Loc::getMessage('SONET_SGM_T_LINKS_ABOUT_PROJECT') ?></a><?
+						?><a href="<?=$arResult["Urls"]["Card"]?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?= Loc::getMessage('SONET_SGM_T_LINKS_ABOUT_PROJECT') ?></a><?php
 						?><button id="bx-group-menu-settings" class="ui-btn ui-btn-light-border ui-btn-icon-dots ui-btn-themes"
 							title="&hellip;"
 							onclick=""
-						></button><?
+						></button><?php
 
-					?></span><?
+					?></span><?php
 				}
 
 			?></div>
 		</div>
 		<div class="profile-menu-bottom">
-			<div class="profile-menu-items-new"><?
+			<div class="profile-menu-items-new"><?php
 
 				$menuItems = [];
 
@@ -289,7 +294,7 @@ if (
 						$item = [
 							"TEXT" => $arResult["Title"][$key],
 							"ID" => $key,
-							"IS_ACTIVE" => ($arParams["PAGE_ID"] === "group_{$key}"),
+							"IS_ACTIVE" => ($arParams['PAGE_ID'] === "group_{$key}"),
 							"IS_DISABLED" => $isDisabled,
 						];
 
@@ -315,7 +320,7 @@ if (
 						$isActive = ($arParams["PAGE_ID"] === "group_{$key}");
 						$defaultRoleId = $arResult['Tasks']['DefaultRoleId'];
 
-						$item['URL'] = (new \Bitrix\Main\Web\Uri($arResult["Urls"][$key]))->addParams([
+						$item['URL'] = (new Uri($arResult["Urls"][$key]))->addParams([
 							'F_CANCEL' => 'Y',
 							'F_STATE' => 'sR',
 						])->getUri();
@@ -333,8 +338,8 @@ if (
 						$defaultRoleId = $arResult['Tasks']['DefaultRoleId'];
 
 						$menuItems[] = [
-							'TEXT' => GetMessage("SONET_TASKS_PRESET_I_DO"),
-							'URL' => (new \Bitrix\Main\Web\Uri($arResult["Urls"][$key]))->addParams([
+							'TEXT' => Loc::getMessage('SONET_TASKS_PRESET_I_DO'),
+							'URL' => (new Uri($arResult["Urls"][$key]))->addParams([
 								'F_CANCEL' => 'Y',
 								'F_STATE' => 'sR400',
 								'clear_filter' => 'Y',
@@ -346,8 +351,8 @@ if (
 							'COUNTER' => $arResult['Tasks']['Counters']['view_role_responsible'],
 						];
 						$menuItems[] = [
-							'TEXT' => GetMessage("SONET_TASKS_PRESET_I_ACCOMPLICES"),
-							'URL' => (new \Bitrix\Main\Web\Uri($arResult["Urls"][$key]))->addParams([
+							'TEXT' => Loc::getMessage('SONET_TASKS_PRESET_I_ACCOMPLICES'),
+							'URL' => (new Uri($arResult["Urls"][$key]))->addParams([
 								'F_CANCEL' => 'Y',
 								'F_STATE' => 'sR800',
 								'clear_filter' => 'Y',
@@ -359,8 +364,8 @@ if (
 							'COUNTER' => $arResult['Tasks']['Counters']['view_role_accomplice'],
 						];
 						$menuItems[] = [
-							'TEXT' => GetMessage("SONET_TASKS_PRESET_I_ORIGINATOR"),
-							'URL' => (new \Bitrix\Main\Web\Uri($arResult["Urls"][$key]))->addParams([
+							'TEXT' => Loc::getMessage('SONET_TASKS_PRESET_I_ORIGINATOR'),
+							'URL' => (new Uri($arResult["Urls"][$key]))->addParams([
 								'F_CANCEL' => 'Y',
 								'F_STATE' => 'sRg00',
 								'clear_filter' => 'Y',
@@ -372,8 +377,8 @@ if (
 							'COUNTER' => $arResult['Tasks']['Counters']['view_role_originator'],
 						];
 						$menuItems[] = [
-							'TEXT' => GetMessage("SONET_TASKS_PRESET_I_AUDITOR"),
-							'URL' => (new \Bitrix\Main\Web\Uri($arResult["Urls"][$key]))->addParams([
+							'TEXT' => Loc::getMessage('SONET_TASKS_PRESET_I_AUDITOR'),
+							'URL' => (new Uri($arResult["Urls"][$key]))->addParams([
 								'F_CANCEL' => 'Y',
 								'F_STATE' => 'sRc00',
 								'clear_filter' => 'Y',
@@ -387,19 +392,27 @@ if (
 					}
 				}
 
-				$APPLICATION->IncludeComponent(
-					"bitrix:main.interface.buttons",
-					"",
-					array(
-						"ID" => $arResult["menuId"],
-						"ITEMS" => $menuItems,
-					)
-				);
+				if (!empty($menuItems))
+				{
+					if (count(array_filter($menuItems, function($item) { return !(bool)$item['IS_DISABLED']; })) <= 0)
+					{
+						$menuItems[0]['IS_DISABLED'] = false;
+					}
+
+					$APPLICATION->IncludeComponent(
+						"bitrix:main.interface.buttons",
+						"",
+						array(
+							"ID" => $arResult["menuId"],
+							"ITEMS" => $menuItems,
+						)
+					);
+				}
 
 			?></div>
 		</div>
 	</div>
-</div><?
+</div><?php
 
 if (!$arResult['inIframe'] || $arResult['IS_CURRENT_PAGE_FIRST'])
 {

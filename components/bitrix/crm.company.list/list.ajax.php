@@ -20,7 +20,8 @@ define(
 			'BUILD_TIMELINE',
 			'BUILD_DUPLICATE_INDEX',
 			'CONVERT_ADDRESSES',
-			'CONVERT_UF_ADDRESSES'
+			'CONVERT_UF_ADDRESSES',
+			'REBUILD_SECURITY_ATTRS'
 		],
 		true
 	)
@@ -218,6 +219,27 @@ elseif ($action === 'REBUILD_SEARCH_CONTENT')
 {
 	$agent = \Bitrix\Crm\Agent\Search\CompanySearchContentRebuildAgent::getInstance();
 	if($agent->isEnabled() && !$agent->isActive())
+	{
+		$agent->enable(false);
+	}
+	if(!$agent->isEnabled())
+	{
+		__CrmCompanyListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	$progressData = $agent->getProgressData();
+	__CrmCompanyListEndResponse(
+		array(
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $progressData['PROCESSED_ITEMS'],
+			'TOTAL_ITEMS' => $progressData['TOTAL_ITEMS'],
+		)
+	);
+}
+elseif ($action === 'REBUILD_SECURITY_ATTRS')
+{
+	$agent = \Bitrix\Crm\Agent\Security\CompanyAttributeRebuildAgent::getInstance();
+	if($agent->isEnabled() && !$agent->isRegistered())
 	{
 		$agent->enable(false);
 	}

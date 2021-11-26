@@ -53,6 +53,7 @@ export class App
 		this.sendingMethodDesc = {};
 		this.orderPublicUrl = '';
 		this.fileControl = options.fileControl;
+		this.currencyCode = options.currencyCode;
 
 		if(Type.isString(options.stageOnOrderPaid))
 		{
@@ -684,6 +685,7 @@ export class App
 			deliveryExtraServicesValues: this.store.getters['orderCreation/getDeliveryExtraServicesValues'],
 			connector: this.connector,
 			context: this.context,
+			currency: this.currencyCode,
 		};
 
 		if (this.stageOnOrderPaid !== null)

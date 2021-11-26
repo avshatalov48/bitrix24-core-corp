@@ -15,7 +15,7 @@ use Bitrix\SalesCenter\Delivery\Handlers\IRestHandler;
 
 Loc::loadMessages(__FILE__);
 
-class DeliverySelector extends \Bitrix\Main\Engine\Controller
+class DeliverySelector extends Base
 {
 	/**
 	 * @param int $personTypeId
@@ -72,6 +72,7 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 				}
 
 				$logoParams = \CFile::_GetImgParams($service['LOGOTIP']);
+				$deliveryService = Delivery\Services\Manager::getObjectById($service['ID']);
 
 				$flatServices[$service['ID']] = [
 					'id' => $service['ID'],
@@ -82,7 +83,7 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 						: '',
 
 					'restrictions' => $this->makeServiceRestrictions($service['CODE']),
-					'tags' => Delivery\Services\Manager::getObjectById($service['ID'])->getTags(),
+					'tags' => $deliveryService ? $deliveryService->getTags() : [],
 					'code' => $isChild ? $service['CODE'] : $installedHandler->getCode(),
 					'logo' => $logoParams
 						? [
@@ -202,31 +203,32 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
-		$deliveryService = $shipment->getDelivery();
-		if (!$deliveryService)
-		{
-			$this->addError(new Error('delivery service not found'));
-			return null;
-		}
-
-		$parentDeliveryService = $deliveryService->getParentService();
-
+		$parentDeliveryService = null;
 		$extraServiceDisplayValues = [];
 
-		$extraServiceInstances = $shipment->getExtraServicesObjects();
-		foreach ($extraServiceInstances as $extraServiceInstance)
+		$deliveryService = $shipment->getDelivery();
+		if ($deliveryService)
 		{
-			$extraServiceDisplayValues[] = [
-				'name' => $extraServiceInstance->getName(),
-				'value' => $extraServiceInstance->getDisplayValue(),
-			];
+			$deliveryServiceName = $deliveryService->getName();
+			$deliveryServiceLogo = $deliveryService->getLogotipPath();
+
+			$parentDeliveryService = $deliveryService->getParentService();
+
+			$extraServiceInstances = $shipment->getExtraServicesObjects();
+			foreach ($extraServiceInstances as $extraServiceInstance)
+			{
+				$extraServiceDisplayValues[] = [
+					'name' => $extraServiceInstance->getName(),
+					'value' => $extraServiceInstance->getDisplayValue(),
+				];
+			}
 		}
 
 		return [
 			'shipment' => [
 				'deliveryService' => [
-					'name' => $deliveryService->getName(),
-					'logo' => $deliveryService->getLogotipPath(),
+					'name' => $deliveryServiceName ?? $shipment->getDeliveryName(),
+					'logo' => $deliveryServiceLogo ?? null,
 					'parent' => $parentDeliveryService
 						? [
 							'name' => $parentDeliveryService->getName(),

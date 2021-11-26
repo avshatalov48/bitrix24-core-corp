@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
@@ -38,14 +38,29 @@ Loc::loadMessages(__FILE__);
 );
 ?>
 
-<?php $APPLICATION->IncludeComponent(
-	'bitrix:recyclebin.list',
-	".default",
-	[
-		"MODULE_ID"            => "tasks",
-		"USER_ID"              => \Bitrix\Tasks\Util\User::getId(),
-		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE']
-	],
-	$component,
-	["HIDE_ICONS" => "Y"]
-); ?>
+<?php if (\Bitrix\Tasks\Integration\Recyclebin\ConvertAgent::isProceed()): ?>
+	<?php \CJSCore::Init(array('update_stepper')); ?>
+	<div class="main-stepper-block">
+		<div class="main-stepper main-stepper-show" >
+			<div class="main-stepper-info"><?= GetMessage("TASKS_RECYCLEBIN_CONVERT_DATA"); ?></div>
+			<div class="main-stepper-inner">
+				<div class="main-stepper-bar">
+					<div class="main-stepper-bar-line" style="width:0%;"></div>
+				</div>
+				<div class="main-stepper-error-text"></div>
+			</div>
+		</div>
+	</div>
+<?php else: ?>
+	<?php $APPLICATION->IncludeComponent(
+		'bitrix:recyclebin.list',
+		".default",
+		[
+			"MODULE_ID"            => "tasks",
+			"USER_ID"              => \Bitrix\Tasks\Util\User::getId(),
+			'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE']
+		],
+		$component,
+		["HIDE_ICONS" => "Y"]
+	); ?>
+<?php endif; ?>

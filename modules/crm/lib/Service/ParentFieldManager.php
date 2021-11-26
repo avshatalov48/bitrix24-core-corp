@@ -3,6 +3,9 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Field;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Main\Result;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Entity;
@@ -276,5 +279,134 @@ class ParentFieldManager
 			$entityId,
 			\CrmCheckPath('PATH_TO_'.mb_strtoupper($entityTypeName).'_DETAILS', '', '')
 		);
+	}
+
+	/**
+	 * Return parent fields description for entity $entityTypeId in the same format as Factory::getFieldsInfo()
+	 *
+	 * @param int $entityTypeId
+	 * @return array
+	 */
+	public function getParentFieldsInfo(int $entityTypeId): array
+	{
+		$fields = [];
+
+		$relationManager = Container::getInstance()->getRelationManager();
+		$parentRelations = $relationManager->getParentRelations($entityTypeId);
+		foreach ($parentRelations as $relation)
+		{
+			if ($relation->isPredefined())
+			{
+				continue;
+			}
+			$parentEntityTypeId = $relation->getParentEntityTypeId();
+			$fieldName = static::getParentFieldName($parentEntityTypeId);
+			$fields[$fieldName] = [
+				'TYPE' => Field::TYPE_CRM_ENTITY,
+				'SETTINGS' => [
+					'parentEntityTypeId' => $parentEntityTypeId,
+				],
+				'TITLE' => \CCrmOwnerType::GetDescription($parentEntityTypeId),
+			];
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * Save relations of the $item passed in $data.
+	 *
+	 * @param Item $item
+	 * @param array $data
+	 * @return Result
+	 */
+	public function saveItemRelations(Item $item, array $data, array $additionalParents = []): Result
+	{
+		$result = new Result();
+
+		$child = ItemIdentifier::createByItem($item);
+		$relationManager = Container::getInstance()->getRelationManager();
+
+		$oldParentElements = $this->sortIdentifiersByEntityTypeId($relationManager->getParentElements($child));
+		$newParentElements = $this->sortIdentifiersByEntityTypeId(array_merge(
+			$this->getParentIdentifiersFromData($data),
+			$additionalParents
+		));
+
+		// delete removed relations
+		foreach ($data as $name => $value)
+		{
+			if (empty($value) && static::isParentFieldName($name))
+			{
+				/** @var string $entityTypeId */
+				$entityTypeId = static::getEntityTypeIdFromFieldName($name);
+				if (isset($oldParentElements[$entityTypeId]))
+				{
+					$unBindResult = $relationManager->unbindItems($oldParentElements[$entityTypeId], $child);
+					if (!$unBindResult->isSuccess())
+					{
+						$result->addErrors($unBindResult->getErrors());
+					}
+				}
+			}
+		}
+
+		// bind new items and change existing (not deleted) relations
+		foreach (array_diff($newParentElements, $oldParentElements) as $bindItem)
+		{
+			$oldParent = ($oldParentElements[$bindItem->getEntityTypeId()] ?? null);
+			if ($oldParent && $bindItem->getEntityId() !== $oldParent->getEntityId())
+			{
+				$unBindResult = $relationManager->unbindItems($oldParentElements[$bindItem->getEntityTypeId()], $child);
+				if (!$unBindResult->isSuccess())
+				{
+					$result->addErrors($unBindResult->getErrors());
+				}
+			}
+			$bindResult = $relationManager->bindItems($bindItem, $child);
+			if (!$bindResult->isSuccess())
+			{
+				$result->addErrors($bindResult->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param ItemIdentifier[] $parentElements
+	 * @return ItemIdentifier[]
+	 */
+	protected function sortIdentifiersByEntityTypeId(array $parentElements): array
+	{
+		$results = [];
+		foreach ($parentElements as $element)
+		{
+			$results[$element->getEntityTypeId()] = $element;
+		}
+
+		return $results;
+	}
+
+	protected function getParentIdentifiersFromData(array $data): array
+	{
+		$newParentElements = [];
+		foreach($data as $name => $value)
+		{
+			if (($value > 0) && (mb_strpos($name, self::FIELD_PARENT_PREFIX) === 0))
+			{
+				$parentEntityTypeId = (int)str_replace(self::FIELD_PARENT_PREFIX . '_', '', $name);
+				$parentEntityId = (int)$value;
+				if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
+				{
+					$newParentElements[] = new ItemIdentifier(
+						$parentEntityTypeId,
+						$parentEntityId,
+					);
+				}
+			}
+		}
+
+		return $newParentElements;
 	}
 }

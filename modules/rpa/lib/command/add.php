@@ -9,16 +9,14 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Rpa\Command;
 use Bitrix\Rpa\Driver;
 use Bitrix\Rpa\Integration\Bizproc;
+use Bitrix\Rpa\Model\PrototypeItem;
 
 class Add extends Command
 {
 	public const ERROR_CODE_FIRST_STAGE_NOT_FOUND = 'RPA_FIRST_STAGE_NOT_FOUND';
 
-	public function checkFields(): Result
-	{
-		// we do not check fields during creating
-		return new Result();
-	}
+	// checking fields turned false by default during creation.
+	protected $isCheckFieldsEnabled = false;
 
 	public function checkAccess(): Result
 	{
@@ -76,6 +74,14 @@ class Add extends Command
 		}
 		$this->item->setCreatedTime(new DateTime());
 		//$this->item->setMovedTime(new DateTime());
+
+		if (!$this->isCheckFieldsEnabled())
+		{
+			/** @var PrototypeItem $dataClass */
+			$dataClass = $this->item->sysGetEntity()->getDataClass();
+			$dataClass::disableUserFieldsCheck();
+		}
+
 		return $this->item->save();
 	}
 

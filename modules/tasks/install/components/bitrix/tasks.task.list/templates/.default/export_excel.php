@@ -9,8 +9,10 @@ define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(dirname(__FILE__).'/template.php');
 Loc::loadMessages(dirname(__FILE__).'/export_excel.php');
@@ -91,7 +93,7 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 
 						if (!array_key_exists($role, $task))
 						{
-							continue;
+							break;
 						}
 
 						$userId = $task[$role];
@@ -118,7 +120,7 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 					case 'GROUP_NAME':
 						if (!array_key_exists('GROUP_ID', $task))
 						{
-							continue;
+							break;
 						}
 
 						$groupId = $task['GROUP_ID'];
@@ -169,7 +171,7 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 						break;
 
 					case 'GROUP_ID':
-						if ($columnValue && CSocNetGroup::CanUserViewGroup($USER->GetID(), $columnValue))
+						if ($columnValue && CSocNetGroup::CanUserViewGroup(User::getId(), $columnValue))
 						{
 							$group = CSocNetGroup::GetByID($columnValue);
 							if ($group)
@@ -185,7 +187,7 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 						break;
 
 					case 'UF_CRM_TASK':
-						if (!empty($columnValue))
+						if (!empty($columnValue) && Loader::includeModule('crm'))
 						{
 							$collection = [];
 							sort($columnValue);
@@ -239,7 +241,7 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 						break;
 
 					default:
-						if (mb_strpos($field, 'UF_CRM_TASK_') === 0)
+						if (mb_strpos($field, 'UF_CRM_TASK_') === 0 && Loader::includeModule('crm'))
 						{
 							$titles = [];
 							$values = $task['UF_CRM_TASK'];
@@ -248,7 +250,7 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 
 							if (!is_array($values) || empty($values) || !in_array($currentName, $allNames, true))
 							{
-								continue;
+								break;
 							}
 
 							sort($values);

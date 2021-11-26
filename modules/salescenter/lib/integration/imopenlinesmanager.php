@@ -6,6 +6,7 @@ use Bitrix\Crm\Tracking\Channel\Imol;
 use Bitrix\ImOpenLines\Im,
 	Bitrix\ImOpenLines\SalesCenter as ImOlSalesCenter;
 use Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\ImOpenLines\Widget\FormHandler;
 use Bitrix\Main;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
@@ -219,6 +220,20 @@ class ImOpenLinesManager extends Base
 		if(is_array($sessionInfo) && $sessionInfo['CRM_ACTIVITY_ID'] > 0)
 		{
 			return $sessionInfo['CRM_ACTIVITY_ID'];
+		}
+
+		return false;
+	}
+
+	/**
+	 * @return string|false
+	 */
+	protected function getSessionUserCode()
+	{
+		$sessionInfo = $this->getSessionInfo();
+		if (is_array($sessionInfo) && isset($sessionInfo['USER_CODE']))
+		{
+			return $sessionInfo['USER_CODE'];
 		}
 
 		return false;
@@ -855,7 +870,7 @@ class ImOpenLinesManager extends Base
 	 */
 	protected function createImMessageForPaymentStatus(Payment $payment)
 	{
-		$message = Loc::getMessage('SALESCENTER_IMOPMANAGER_SYSTEM_PAYMENT_PAID_TEXT_TOP', [
+		$message = Loc::getMessage('SALESCENTER_IMOPMANAGER_SYSTEM_PAYMENT_PAID_TEXT_TOP_2', [
 			'#SUM#' => html_entity_decode(SaleManager::getInstance()->getPaymentFormattedPrice($payment)),
 			'#DATE#' => SaleManager::getInstance()->getPaymentFormattedInsertDate($payment),
 		]);
@@ -893,7 +908,7 @@ class ImOpenLinesManager extends Base
 			$message .= '[BR]';
 		}
 		$url = $this->getPageUrlWithParameters($page);
-		$message .= $this->preparePublicUrl($url, $page->isFromConnectedSite());
+		$message .= $this->preparePublicUrl($url, $page->isWebform() ?: $page->isFromConnectedSite());
 
 		return $message;
 	}
@@ -920,7 +935,7 @@ class ImOpenLinesManager extends Base
 
 	public function getImMessagePreview()
 	{
-		return Loc::getMessage('SALESCENTER_IMOPMANAGER_PAYMENT_MESSAGE_PREVIEW');
+		return Loc::getMessage('SALESCENTER_IMOPMANAGER_PAYMENT_MESSAGE_PREVIEW_2');
 	}
 
 	/**
@@ -1135,11 +1150,8 @@ class ImOpenLinesManager extends Base
 	public function getPaymentPreviewData(Payment $payment)
 	{
 		return [
-			'title' => Loc::getMessage('SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_TOP', [
-				'#SUM#' => html_entity_decode(SaleManager::getInstance()->getPaymentFormattedPrice($payment)),
-				'#DATE#' => SaleManager::getInstance()->getPaymentFormattedInsertDate($payment),
-			]),
-			'description' => Loc::getMessage('SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_BOTTOM'),
+			'title' => Loc::getMessage('SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_TOP_2'),
+			'description' => Loc::getMessage('SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_BOTTOM_2'),
 		];
 	}
 
@@ -1277,7 +1289,8 @@ class ImOpenLinesManager extends Base
 		{
 			$manager->setIds($crmInfo);
 		}
+		$userCode = $this->getSessionUserCode();
 
-		return $manager->getUrlWithParameters($page);
+		return $manager->getUrlWithParameters($page, ['USER_CODE' => $userCode, 'EVENT_POSTFIX' => FormHandler::EVENT_POSTFIX]);
 	}
 }

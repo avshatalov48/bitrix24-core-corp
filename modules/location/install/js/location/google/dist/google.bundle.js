@@ -89,6 +89,8 @@ this.BX.Location = this.BX.Location || {};
 
 	var _getPredictionPromiseLocalStorage = new WeakSet();
 
+	var _getStoredResults = new WeakSet();
+
 	var _setPredictionResult = new WeakSet();
 
 	var _getPredictionPromise = new WeakSet();
@@ -130,6 +132,8 @@ this.BX.Location = this.BX.Location || {};
 	    _getPredictionPromise.add(babelHelpers.assertThisInitialized(_this));
 
 	    _setPredictionResult.add(babelHelpers.assertThisInitialized(_this));
+
+	    _getStoredResults.add(babelHelpers.assertThisInitialized(_this));
 
 	    _getPredictionPromiseLocalStorage.add(babelHelpers.assertThisInitialized(_this));
 
@@ -211,39 +215,27 @@ this.BX.Location = this.BX.Location || {};
 
 	var _getLocalStoredResults2 = function _getLocalStoredResults2(query, params) {
 	  var result = null;
-	  var storedResults = localStorage.getItem(babelHelpers.classPrivateFieldGet(this, _localStorageKey));
 
-	  if (storedResults) {
-	    try {
-	      storedResults = JSON.parse(storedResults);
-	    } catch (e) {
-	      return null;
-	    }
+	  var storedResults = _classPrivateMethodGet(this, _getStoredResults, _getStoredResults2).call(this);
 
-	    if (Array.isArray(storedResults)) {
-	      var _iterator = _createForOfIteratorHelper(storedResults.entries()),
-	          _step;
+	  var _iterator = _createForOfIteratorHelper(storedResults.entries()),
+	      _step;
 
-	      try {
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var _step$value = babelHelpers.slicedToArray(_step.value, 2),
-	              index = _step$value[0],
-	              item = _step$value[1];
+	  try {
+	    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	      var _step$value = babelHelpers.slicedToArray(_step.value, 2),
+	          index = _step$value[0],
+	          item = _step$value[1];
 
-	          if (item && typeof item.query !== 'undefined' && item.query === query) {
-	            result = babelHelpers.objectSpread({}, item);
-	            storedResults.splice(index, 1);
-	            storedResults.push(result);
-	            localStorage.setItem(babelHelpers.classPrivateFieldGet(this, _localStorageKey), JSON.stringify(storedResults));
-	            break;
-	          }
-	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
+	      if (item && typeof item.query !== 'undefined' && item.query === query) {
+	        result = babelHelpers.objectSpread({}, item);
+	        break;
 	      }
 	    }
+	  } catch (err) {
+	    _iterator.e(err);
+	  } finally {
+	    _iterator.f();
 	  }
 
 	  return result;
@@ -265,20 +257,18 @@ this.BX.Location = this.BX.Location || {};
 	  return result;
 	};
 
+	var _getStoredResults2 = function _getStoredResults2() {
+	  var storedResults = BX.localStorage.get(babelHelpers.classPrivateFieldGet(this, _localStorageKey));
+
+	  if (storedResults && storedResults.results && Array.isArray(storedResults.results)) {
+	    return storedResults.results;
+	  }
+
+	  return [];
+	};
+
 	var _setPredictionResult2 = function _setPredictionResult2(query, params, answer, status) {
-	  var storedResults = localStorage.getItem(babelHelpers.classPrivateFieldGet(this, _localStorageKey));
-
-	  if (storedResults) {
-	    try {
-	      storedResults = JSON.parse(storedResults);
-	    } catch (e) {
-	      return;
-	    }
-	  }
-
-	  if (!Array.isArray(storedResults)) {
-	    storedResults = [];
-	  }
+	  var storedResults = _classPrivateMethodGet(this, _getStoredResults, _getStoredResults2).call(this);
 
 	  storedResults.push({
 	    status: status,
@@ -290,7 +280,9 @@ this.BX.Location = this.BX.Location || {};
 	    storedResults.shift();
 	  }
 
-	  localStorage.setItem(babelHelpers.classPrivateFieldGet(this, _localStorageKey), JSON.stringify(storedResults));
+	  BX.localStorage.set(babelHelpers.classPrivateFieldGet(this, _localStorageKey), {
+	    'results': storedResults
+	  }, 86400);
 	};
 
 	var _getPredictionPromise2 = function _getPredictionPromise2(query, params) {
@@ -303,8 +295,8 @@ this.BX.Location = this.BX.Location || {};
 	      input: query
 	    };
 
-	    if (params.locationForBias) {
-	      queryPredictionsParams.location = new google.maps.LatLng(params.locationForBias.latitude, params.locationForBias.longitude);
+	    if (params.biasPoint) {
+	      queryPredictionsParams.location = new google.maps.LatLng(params.biasPoint.latitude, params.biasPoint.longitude);
 	      queryPredictionsParams.radius = babelHelpers.classPrivateFieldGet(this, _biasBoundRadius);
 	    }
 
@@ -1179,8 +1171,6 @@ this.BX.Location = this.BX.Location || {};
 	  return result;
 	};
 
-	var _code = new WeakMap();
-
 	var _languageId$2 = new WeakMap();
 
 	var _sourceLanguageId = new WeakMap();
@@ -1203,11 +1193,6 @@ this.BX.Location = this.BX.Location || {};
 
 	    babelHelpers.classCallCheck(this, Google);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Google).call(this, props));
-
-	    _code.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: 'GOOGLE'
-	    });
 
 	    _languageId$2.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
@@ -1283,7 +1268,7 @@ this.BX.Location = this.BX.Location || {};
 	  babelHelpers.createClass(Google, [{
 	    key: "sourceCode",
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _code);
+	      return Google.code;
 	    }
 	  }, {
 	    key: "loaderPromise",
@@ -1318,6 +1303,7 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return Google;
 	}(location_core.BaseSource);
+	babelHelpers.defineProperty(Google, "code", 'GOOGLE');
 
 	exports.Google = Google;
 

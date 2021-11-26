@@ -2,11 +2,14 @@
 
 namespace Bitrix\Crm;
 
-use \Bitrix\Main\Application;
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Localization\Loc;
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
 Loc::loadMessages(__FILE__);
 
@@ -38,6 +41,7 @@ class PresetListComponent extends \CBitrixComponent
 	protected $presetEditUrl;
 	protected $presetUfieldsUrl;
 
+	/** @var EntityPreset */
 	protected $preset;
 
 	protected $currentCountryId;
@@ -615,6 +619,37 @@ class PresetListComponent extends \CBitrixComponent
 		return true;
 	}
 
+	protected function checkNeedChangeCurrentCountry(): bool
+	{
+		$countryId = (int)Option::get('crm', '~crm_requisite_current_country_can_change', 0);
+		return (
+			$countryId > 0
+			&& in_array($countryId, EntityRequisite::getAllowedRqFieldCountries(), true)
+			&& $countryId !== $this->currentCountryId
+		);
+	}
+
+	protected function getCountryName(int $countryId): string
+	{
+		return
+			($countryId > 0 && isset($this->countryList[$countryId]))
+			? $this->countryList[$countryId]
+			: ''
+		;
+	}
+
+	protected function getSrcCountryName(): string
+	{
+		return $this->getCountryName($this->currentCountryId);
+	}
+
+	protected function getDstCountryName(): string
+	{
+		$countryId = (int)Option::get('crm', '~crm_requisite_current_country_can_change', 0);
+
+		return $this->getCountryName($countryId);
+	}
+
 	protected function prepareResult()
 	{
 		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeId;
@@ -640,6 +675,11 @@ class PresetListComponent extends \CBitrixComponent
 		$this->arResult['CURRENT_COUNTRY_ID'] = $this->currentCountryId;
 		$this->arResult['COUNTRY_LIST'] = $this->countryList;
 		$this->arResult['FIXED_PRESET_SELECT_ITEMS'] = $this->fixedPresetSelectItems;
+
+		$needChangeCurrentCountry = $this->preset->checkNeedChangeCurrentCountry();
+		$this->arResult['NEED_FOR_CHANGE_CURRENT_COUNTRY'] = $needChangeCurrentCountry;
+		$this->arResult['SRC_COUNTRY_NAME'] = $needChangeCurrentCountry ? $this->getSrcCountryName() : '';
+		$this->arResult['DST_COUNTRY_NAME'] = $needChangeCurrentCountry ? $this->getDstCountryName() : '';
 
 		return true;
 	}

@@ -14,6 +14,7 @@ use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
@@ -77,6 +78,12 @@ if (Loader::includeModule('recyclebin'))
 		private static function collectAdditionalData($taskId)
 		{
 			$data = [];
+
+			$res = TaskTable::getByPrimary($taskId)->fetchObject();
+			if ($res)
+			{
+				$data['TASK'] = $res->toArray();
+			}
 
 			$res = TaskStageTable::getList(['filter' => ['TASK_ID' => $taskId], 'select' => ['STAGE_ID']]);
 			while ($row = $res->fetch())
@@ -184,9 +191,6 @@ if (Loader::includeModule('recyclebin'))
 
 			try
 			{
-				$connection = Application::getConnection();
-				$connection->queryExecute('UPDATE ' . TaskTable::getTableName() . ' SET ZOMBIE = \'N\' WHERE ID = ' . $taskId);
-
 				$logFields = [
 					"TASK_ID" => $taskId,
 					"USER_ID" => User::getId(),
@@ -209,12 +213,20 @@ if (Loader::includeModule('recyclebin'))
 			{
 				if ($taskData)
 				{
+					// we should to restore task first
+					foreach ($taskData as $key => $value)
+					{
+						if ($value['ACTION'] !== 'TASK')
+						{
+							continue;
+						}
+						self::restoreAdditionalData($taskId, $value);
+						unset($taskData[$key]);
+					}
+
 					foreach ($taskData as $value)
 					{
-						$data = unserialize($value['DATA'], ['allowed_classes' => false]);
-						$action = $value['ACTION'];
-
-						self::restoreAdditionalData($taskId, $action, $data);
+						self::restoreAdditionalData($taskId, $value);
 					}
 				}
 
@@ -248,8 +260,11 @@ if (Loader::includeModule('recyclebin'))
 		 * @param array $data
 		 * @return Result
 		 */
-		private static function restoreAdditionalData($taskId, $action, array $data = [])
+		private static function restoreAdditionalData($taskId, $value)
 		{
+			$data = unserialize($value['DATA'], ['allowed_classes' => false]);
+			$action = $value['ACTION'];
+
 			$result = new Result();
 
 			try
@@ -275,6 +290,9 @@ if (Loader::includeModule('recyclebin'))
 
 				switch ($action)
 				{
+					case 'TASK':
+						TaskTable::insert($data);
+						break;
 					case 'STAGES':
 						foreach ($data as $value)
 						{
@@ -466,7 +484,7 @@ if (Loader::includeModule('recyclebin'))
 			return [
 				'LIMIT_DATA' => [
 					'RESTORE' => [
-						'DISABLE' => TaskLimit::isLimitExceeded(),
+						'DISABLE' => TaskLimit::isLimitExceeded() || !\Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASKS_RECYCLEBIN),
 						'SLIDER_CODE' => 'limit_tasks_recycle_bin_restore',
 					],
 				],

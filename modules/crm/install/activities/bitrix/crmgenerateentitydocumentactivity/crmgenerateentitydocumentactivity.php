@@ -164,8 +164,9 @@ class CBPCrmGenerateEntityDocumentActivity
 		}
 
 		$document->setUserId($targetUserId);
+		$isWaitForPdf = ($this->UseSubscription === 'Y');
 
-		$result = $document->setValues($values)->getFile();
+		$result = $document->setValues($values)->getFile(true, true);
 		if(!$result->isSuccess())
 		{
 			$this->WriteToTrackingService(implode(',', $result->getErrorMessages()), 0, CBPTrackingType::Error);
@@ -185,7 +186,14 @@ class CBPCrmGenerateEntityDocumentActivity
 		}
 
 		//If don`t need to wait for PDF - close activity
-		if ($this->UseSubscription !== 'Y')
+		if (
+			!$isWaitForPdf
+			|| (
+				$isWaitForPdf
+				&& isset($documentData['isTransformationError'])
+				&& $documentData['isTransformationError'] === true
+			)
+		)
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}

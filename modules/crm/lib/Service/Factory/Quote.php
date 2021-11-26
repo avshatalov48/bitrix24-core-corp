@@ -23,12 +23,12 @@ use Bitrix\Main\Result;
 
 class Quote extends Factory
 {
+	protected $itemClassName = Item\Quote::class;
+
 	public function __construct()
 	{
 		Loc::loadMessages(Path::combine(__DIR__, '..', '..', 'classes', 'general', 'crm_quote.php'));
 	}
-
-	protected $itemClassName = Item\Quote::class;
 
 	/**
 	 * @inheritDoc
@@ -110,9 +110,10 @@ class Quote extends Factory
 				'TYPE' => Field::TYPE_TEXT,
 				'ATTRIBUTES' => [],
 			],
-			Item\Quote::FIELD_NAME_COMMENTS => [
+			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'ATTRIBUTES' => [],
+				'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
 			],
 			Item\Quote::FIELD_NAME_DEAL_ID => [
 				'TYPE' => Field::TYPE_CRM_DEAL,
@@ -120,7 +121,7 @@ class Quote extends Factory
 					'parentEntityTypeId' => \CCrmOwnerType::Deal,
 				],
 			],
-			Item\Quote::FIELD_NAME_LEAD_ID => [
+			Item::FIELD_NAME_LEAD_ID => [
 				'TYPE' => Field::TYPE_CRM_LEAD,
 				'SETTINGS' => [
 					'parentEntityTypeId' => \CCrmOwnerType::Lead,
@@ -133,6 +134,10 @@ class Quote extends Factory
 			Item\Quote::FIELD_NAME_STORAGE_ELEMENTS => [
 				'TYPE' => Field::TYPE_INTEGER,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed, \CCrmFieldInfoAttr::Multiple],
+			],
+			Item::FIELD_NAME_WEBFORM_ID => [
+				'TYPE' => Field::TYPE_INTEGER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
 			],
 		];
 
@@ -223,10 +228,11 @@ class Quote extends Factory
 			$info[Item::FIELD_NAME_STAGE_ID] = [
 				'TYPE' => Field::TYPE_CRM_STATUS,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::HasDefaultValue],
+				'CLASS' => Field\Stage::class,
 			];
 		}
 
-		$info[Item\Quote::FIELD_NAME_CLOSED] = [
+		$info[Item::FIELD_NAME_CLOSED] = [
 			'TYPE' => Field::TYPE_BOOLEAN,
 			'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
 			'CLASS' => Field\Closed::class,

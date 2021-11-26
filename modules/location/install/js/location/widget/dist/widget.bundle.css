@@ -325,6 +325,18 @@
 	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2219%22%20height%3D%2217%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M8.75.621v1.543c.428.063.842.168%201.238.312L8.62%203.845a4.615%204.615%200%2010.016%209.094L10%2014.303c-.4.147-.818.254-1.251.317v1.525H6.917V14.62A6.299%206.299%200%20011.604%209.3H.07V7.467h1.535a6.299%206.299%200%20015.311-5.303V.621H8.75zm3.5%203.316l1.203%201.203-2.386%202.384h7.29v1.701h-7.29l2.386%202.384-1.203%201.203-4.44-4.437%204.44-4.438z%22/%3E%3C/svg%3E) no-repeat center;
 }
 
+.location-map-address-apply-btn {
+	position: relative;
+	color: #fff;
+	border-radius: 2px;
+	background: #B0B4BA;
+	border: none;
+	outline: none;
+	font: 700 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	padding: 6px 13px 7px 13px;
+	cursor: pointer;
+}
+
 .menu-popup .menu-popup-items .menu-popup-item.highlighted {
 	background-color: #eef2f4; /* #f6f8f9;*/
 }

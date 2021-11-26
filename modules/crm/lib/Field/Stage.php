@@ -16,24 +16,26 @@ class Stage extends Field
 	{
 		$result = new Result();
 
+		$factory = Container::getInstance()->getFactory($item->getEntityTypeId());
+		if (!$factory)
+		{
+			$result->addError(new Error('Can not find factory for the entity type ' . $item->getEntityTypeId()));
+
+			return $result;
+		}
+
 		if ($this->isValueChanged($item))
 		{
 			$stageId = $item->get($this->getName());
-			$stages = Container::getInstance()->getFactory($item->getEntityTypeId())->getStages($item->getCategoryId());
+			$stages = $factory->getStages($item->getCategoryId());
 			if (!in_array($stageId, $stages->getStatusIdList(), true))
 			{
 				$result->addError($this->getValueNotValidError());
 			}
 		}
-		elseif ($item->isChanged(Item::FIELD_NAME_CATEGORY_ID))
+		elseif ($factory->isCategoriesSupported() && $item->isChanged(Item::FIELD_NAME_CATEGORY_ID))
 		{
 			// pick up first stage from new category
-			$factory = Container::getInstance()->getFactory($item->getEntityTypeId());
-			if(!$factory)
-			{
-				return $result;
-			}
-
 			$newStageId = null;
 			$currentStage = $factory->getStage($item->get($this->getName()));
 			$currentStageSemantics = $currentStage ? $currentStage->getSemantics() : null;

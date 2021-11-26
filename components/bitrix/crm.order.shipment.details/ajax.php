@@ -30,7 +30,21 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		$deliveryId = intval($formData['DELIVERY_ID']);
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Shipment::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_SD_INSUFFICIENT_RIGHTS'));
+				return;
+			}
+		}
+		elseif (!Permissions\Shipment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_SD_INSUFFICIENT_RIGHTS'));
+			return;
+		}
+
+		$deliveryId = (int)($formData['DELIVERY_ID']);
 
 		if($deliveryId <= 0)
 		{
@@ -61,6 +75,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	{
 		if(!($formData = $this->getFormData()))
 		{
+			return;
+		}
+
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Shipment::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_SD_INSUFFICIENT_RIGHTS'));
+				return;
+			}
+		}
+		elseif (!Permissions\Shipment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_SD_INSUFFICIENT_RIGHTS'));
 			return;
 		}
 
@@ -248,6 +276,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Shipment::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_SD_INSUFFICIENT_RIGHTS'));
+				return;
+			}
+		}
+		elseif (!Permissions\Shipment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_SD_INSUFFICIENT_RIGHTS'));
+			return;
+		}
+
 		if(!($shipment = $this->buildShipment($formData)))
 		{
 			return;
@@ -298,6 +340,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if(!($formData = $this->getFormData()))
 		{
+			return;
+		}
+
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Shipment::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_SD_INSUFFICIENT_RIGHTS'));
+				return;
+			}
+		}
+		elseif (!Permissions\Shipment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_SD_INSUFFICIENT_RIGHTS'));
 			return;
 		}
 
@@ -360,6 +416,12 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	{
 		if(!($formData = $this->getFormData()))
 		{
+			return;
+		}
+
+		if (!Permissions\Shipment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_SD_INSUFFICIENT_RIGHTS'));
 			return;
 		}
 

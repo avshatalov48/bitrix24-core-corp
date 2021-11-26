@@ -47,7 +47,8 @@ im.view.quotepanel
 imopenlines.component.message
 imopenlines.component.form
 im.provider.rest
+ui.vue.components.crm.form
+main.polyfill.promise
 im.controller
 im.provider.pull
 im.lib.cookie
-ui.forms

@@ -99,6 +99,11 @@ this.BX.Location = this.BX.Location || {};
 	      return result;
 	    }
 	  }, {
+	    key: "isEqual",
+	    value: function isEqual(addressFieldCollection, upTo) {
+	      return FieldCollection.areEqual(this, addressFieldCollection, upTo) && FieldCollection.areEqual(addressFieldCollection, this, upTo);
+	    }
+	  }, {
 	    key: "fields",
 	    set: function set(fields) {
 	      if (!Array.isArray(fields)) {
@@ -123,6 +128,27 @@ this.BX.Location = this.BX.Location || {};
 	    },
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _fields);
+	    }
+	  }], [{
+	    key: "areEqual",
+	    value: function areEqual(addressFieldCollection1, addressFieldCollection2, upTo) {
+	      for (var type in addressFieldCollection1.fields) {
+	        if (type > upTo) {
+	          continue;
+	        }
+
+	        var field = addressFieldCollection2.getField(type);
+
+	        if (!field) {
+	          return false;
+	        }
+
+	        if (addressFieldCollection1.fields[type].value !== field.value) {
+	          return false;
+	        }
+	      }
+
+	      return true;
 	    }
 	  }]);
 	  return FieldCollection;
@@ -408,7 +434,6 @@ this.BX.Location = this.BX.Location || {};
 	babelHelpers.defineProperty(LocationType, "ADDRESS_LINE_1", 410);
 	babelHelpers.defineProperty(LocationType, "FLOOR", 420);
 	babelHelpers.defineProperty(LocationType, "ROOM", 430);
-	babelHelpers.defineProperty(LocationType, "TMP_DISTANCE", 5000);
 	babelHelpers.defineProperty(LocationType, "TMP_TYPE_HINT", 5010);
 	babelHelpers.defineProperty(LocationType, "TMP_TYPE_CLARIFICATION", 5020);
 
@@ -2651,25 +2676,6 @@ this.BX.Location = this.BX.Location || {};
 	  return AutocompleteServiceBase;
 	}();
 
-	/**
-	 * Base class for the autocomplete filter.
-	 */
-
-	var AutocompleteServiceFilter = /*#__PURE__*/function () {
-	  function AutocompleteServiceFilter() {
-	    babelHelpers.classCallCheck(this, AutocompleteServiceFilter);
-	    babelHelpers.defineProperty(this, "types", []);
-	  }
-
-	  babelHelpers.createClass(AutocompleteServiceFilter, [{
-	    key: "reset",
-	    value: function reset() {
-	      this.types = [];
-	    }
-	  }]);
-	  return AutocompleteServiceFilter;
-	}();
-
 	var PhotoServiceBase = /*#__PURE__*/function () {
 	  function PhotoServiceBase() {
 	    babelHelpers.classCallCheck(this, PhotoServiceBase);
@@ -2907,6 +2913,60 @@ this.BX.Location = this.BX.Location || {};
 	  value: 'onError'
 	};
 
+	function _classStaticPrivateFieldSpecSet$1(receiver, classConstructor, descriptor, value) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } return value; }
+
+	function _classStaticPrivateFieldSpecGet$1(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+
+	var _lastAddressLocalStorageKey = new WeakMap();
+
+	var Storage = /*#__PURE__*/function () {
+	  function Storage() {
+	    babelHelpers.classCallCheck(this, Storage);
+
+	    _lastAddressLocalStorageKey.set(this, {
+	      writable: true,
+	      value: "bitrixLocationLastAddress"
+	    });
+	  }
+
+	  babelHelpers.createClass(Storage, [{
+	    key: "lastAddress",
+	    set: function set(address) {
+	      if (address) {
+	        BX.localStorage.set(babelHelpers.classPrivateFieldGet(this, _lastAddressLocalStorageKey), {
+	          'json': address.toJson()
+	        }, 86400 * 30);
+	      }
+	    },
+	    get: function get() {
+	      var lastAddress = BX.localStorage.get(babelHelpers.classPrivateFieldGet(this, _lastAddressLocalStorageKey));
+
+	      if (lastAddress && lastAddress['json']) {
+	        try {
+	          return JsonConverter.convertJsonToAddress(JSON.parse(lastAddress['json']));
+	        } catch (e) {}
+	      }
+
+	      return null;
+	    }
+	  }], [{
+	    key: "getInstance",
+	    value: function getInstance() {
+	      if (_classStaticPrivateFieldSpecGet$1(Storage, Storage, _instance$1) === null) {
+	        _classStaticPrivateFieldSpecSet$1(Storage, Storage, _instance$1, new Storage());
+	      }
+
+	      return _classStaticPrivateFieldSpecGet$1(Storage, Storage, _instance$1);
+	    }
+	  }]);
+	  return Storage;
+	}();
+
+	var _instance$1 = {
+	  writable: true,
+	  value: null
+	};
+
 	var Limit = /*#__PURE__*/function () {
 	  function Limit() {
 	    babelHelpers.classCallCheck(this, Limit);
@@ -3026,7 +3086,6 @@ this.BX.Location = this.BX.Location || {};
 	exports.SourceRepository = SourceRepository;
 	exports.AddressStringConverter = StringConverter;
 	exports.AutocompleteServiceBase = AutocompleteServiceBase;
-	exports.AutocompleteServiceFilter = AutocompleteServiceFilter;
 	exports.PhotoServiceBase = PhotoServiceBase;
 	exports.BaseSource = SourceBase;
 	exports.MapBase = MapBase;
@@ -3036,6 +3095,7 @@ this.BX.Location = this.BX.Location || {};
 	exports.SourceCreationError = SourceCreationError;
 	exports.MethodNotImplemented = MethodNotImplemented;
 	exports.ErrorPublisher = ErrorPublisher;
+	exports.Storage = Storage;
 	exports.Limit = Limit;
 	exports.Point = Point;
 	exports.DistanceCalculator = DistanceCalculator;

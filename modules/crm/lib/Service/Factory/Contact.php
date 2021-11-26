@@ -3,14 +3,28 @@
 namespace Bitrix\Crm\Service\Factory;
 
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\ContactTable;
+use Bitrix\Crm\Conversion\EntityConversionConfig;
+use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Service\Context;
+use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\StatusTable;
 use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\IO\Path;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotSupportedException;
-use Bitrix\Crm\ContactTable;
 
 class Contact extends Service\Factory
 {
+	protected $itemClassName = Item\Contact::class;
+
+	public function __construct()
+	{
+		Loc::loadMessages(Path::combine(__DIR__, '..', '..', 'classes', 'general', 'crm_contact.php'));
+	}
+
 	public function isSourceEnabled(): bool
 	{
 		return true;
@@ -61,29 +75,19 @@ class Contact extends Service\Factory
 		return false;
 	}
 
-	public function isAutomationEnabled(): bool
-	{
-		return false;
-	}
-
 	public function isBizProcEnabled(): bool
 	{
 		return true;
 	}
 
-	public function isObserversEnabled(): bool
-	{
-		return false;
-	}
-
-	public function isClientEnabled(): bool
-	{
-		return false;
-	}
-
 	public function getDataClass(): string
 	{
 		return ContactTable::class;
+	}
+
+	public function isMultiFieldsEnabled(): bool
+	{
+		return true;
 	}
 
 	/**
@@ -106,7 +110,130 @@ class Contact extends Service\Factory
 
 	protected function getFieldsSettings(): array
 	{
-		return \CCrmContact::GetFieldsInfo();
+		return [
+			Item::FIELD_NAME_ID => [
+				'TYPE' => Field::TYPE_INTEGER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+			],
+			Item::FIELD_NAME_HONORIFIC => [
+				'TYPE' => Field::TYPE_CRM_STATUS,
+				'CRM_STATUS_TYPE' => StatusTable::ENTITY_ID_HONORIFIC,
+			],
+			Item::FIELD_NAME_NAME => [
+				'TYPE' => Field::TYPE_STRING,
+			],
+			Item::FIELD_NAME_SECOND_NAME => [
+				'TYPE' => Field::TYPE_STRING,
+			],
+			Item::FIELD_NAME_LAST_NAME => [
+				'TYPE' => Field::TYPE_STRING,
+			],
+			Item::FIELD_NAME_FULL_NAME => [
+				'TYPE' => Field::TYPE_STRING,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Hidden],
+				'CLASS' => Field\FullName::class,
+			],
+			Item\Contact::FIELD_NAME_PHOTO => [
+				'TYPE' => Field::TYPE_FILE,
+				'VALUE_TYPE' => Field::VALUE_TYPE_IMAGE,
+			],
+			Item::FIELD_NAME_BIRTHDATE => [
+				'TYPE' => Field::TYPE_DATE,
+			],
+			Item::FIELD_NAME_BIRTHDATE_SORT => [
+				'TYPE' => Field::TYPE_INTEGER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Hidden],
+				'CLASS' => Field\BirthdaySort::class,
+			],
+			Item::FIELD_NAME_TYPE_ID => [
+				'TYPE' => Field::TYPE_CRM_STATUS,
+				'CRM_STATUS_TYPE' => StatusTable::ENTITY_ID_CONTACT_TYPE,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::HasDefaultValue],
+			],
+			Item::FIELD_NAME_SOURCE_ID => [
+				'TYPE' => Field::TYPE_CRM_STATUS,
+				'CRM_STATUS_TYPE' => StatusTable::ENTITY_ID_SOURCE,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::HasDefaultValue],
+			],
+			Item::FIELD_NAME_SOURCE_DESCRIPTION => [
+				'TYPE' => Field::TYPE_TEXT,
+			],
+			Item::FIELD_NAME_COMMENTS => [
+				'TYPE' => Field::TYPE_TEXT,
+				'ATTRIBUTES' => [],
+				'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
+			],
+			Item::FIELD_NAME_OPENED => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required],
+				'CLASS' => Field\Opened::class,
+			],
+			Item\Contact::FIELD_NAME_EXPORT => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
+			],
+			Item::FIELD_NAME_ASSIGNED => [
+				'TYPE' => Field::TYPE_USER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required],
+				'CLASS' => Field\Assigned::class,
+			],
+			Item::FIELD_NAME_CREATED_BY => [
+				'TYPE' => Field::TYPE_USER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'CLASS' => Field\CreatedBy::class,
+			],
+			Item::FIELD_NAME_UPDATED_BY => [
+				'TYPE' => Field::TYPE_USER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'CLASS' => Field\UpdatedBy::class,
+			],
+			Item::FIELD_NAME_CREATED_TIME => [
+				'TYPE' => Field::TYPE_DATETIME,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'CLASS' => Field\CreatedTime::class,
+			],
+			Item::FIELD_NAME_UPDATED_TIME => [
+				'TYPE' => Field::TYPE_DATETIME,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'CLASS' => Field\UpdatedTime::class,
+			],
+			Item::FIELD_NAME_COMPANY_ID => [
+				'TYPE' => Field::TYPE_CRM_COMPANY,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed, \CCrmFieldInfoAttr::Deprecated],
+				'SETTINGS' => [
+					'parentEntityTypeId' => \CCrmOwnerType::Company,
+				],
+			],
+			Item\Contact::FIELD_NAME_COMPANY_IDS => [
+				'TYPE' => Field::TYPE_CRM_COMPANY,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
+				'SETTINGS' => [
+					'parentEntityTypeId' => \CCrmOwnerType::Company,
+				],
+			],
+			Item::FIELD_NAME_LEAD_ID => [
+				'TYPE' => Field::TYPE_CRM_LEAD,
+				'SETTINGS' => [
+					'parentEntityTypeId' => \CCrmOwnerType::Lead,
+				],
+			],
+			Item::FIELD_NAME_ORIGINATOR_ID => [
+				'TYPE' => Field::TYPE_STRING,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
+			],
+			Item::FIELD_NAME_ORIGIN_ID => [
+				'TYPE' => Field::TYPE_STRING,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
+			],
+			Item::FIELD_NAME_ORIGIN_VERSION => [
+				'TYPE' => Field::TYPE_STRING,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
+			],
+			Item::FIELD_NAME_FACE_ID => [
+				'TYPE' => Field::TYPE_INTEGER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Hidden],
+			],
+		];
 	}
 
 	public function createCategory(array $data = []): Category
@@ -121,7 +248,12 @@ class Contact extends Service\Factory
 
 	protected function getTrackedFieldNames(): array
 	{
-		return [];
+		return [
+			Item::FIELD_NAME_NAME,
+			Item::FIELD_NAME_LAST_NAME,
+			Item::FIELD_NAME_SECOND_NAME,
+			Item::FIELD_NAME_ASSIGNED,
+		];
 	}
 
 	protected function getDependantTrackedObjects(): array
@@ -129,18 +261,28 @@ class Contact extends Service\Factory
 		return [];
 	}
 
-	public function getItems(array $parameters = []): array
+	public function getAddOperation(Item $item, Context $context = null): Operation\Add
 	{
-		throw new InvalidOperationException('Contact factory is not ready to work with items yet');
+		// duplication and statistic procession is not ready yet
+		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
 	}
 
-	public function getItem(int $id): ?Item
+	public function getUpdateOperation(Item $item, Context $context = null): Operation\Update
 	{
-		throw new InvalidOperationException('Contact factory is not ready to work with items yet');
+		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
 	}
 
-	public function createItem(array $data = []): Item
+	public function getDeleteOperation(Item $item, Context $context = null): Operation\Delete
 	{
-		throw new InvalidOperationException('Contact factory is not ready to work with items yet');
+		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
+	}
+
+	public function getConversionOperation(
+		Item $item,
+		EntityConversionConfig $configs,
+		Context $context = null
+	): Service\Operation\Conversion
+	{
+		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
 	}
 }

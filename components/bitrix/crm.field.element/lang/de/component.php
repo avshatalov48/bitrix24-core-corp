@@ -1,6 +1,6 @@
 <?php
 $MESS["CRM_ELEMENT_BUTTON_SELECT"] = "Auswählen";
-$MESS["CRM_SFE_PERMISSION_DENIED"] = "Zugriff verweigert";
+$MESS["CRM_SFE_ENTITY_NOT_SELECTED"] = "Es wurde kein Elementtyp in den Feldeinstellungen ausgewählt";
 
 $MESS["CRM_ELEMENT_ORDER"] = "Bestellungen";
 $MESS["CRM_ELEMENT_LEAD"] = "Leads";

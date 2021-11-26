@@ -17,23 +17,6 @@ final class Util
 	*/
 	public static function checkExternalAuthId($authId)
 	{
-		if ($authId == 'email')
-		{
-			return (!ModuleManager::isModuleInstalled('mail'));
-		}
-		elseif ($authId == 'replica')
-		{
-			return (!ModuleManager::isModuleInstalled('replica'));
-		}
-		elseif ($authId == 'bot')
-		{
-			return (!ModuleManager::isModuleInstalled('im'));
-		}
-		elseif ($authId == 'imconnector')
-		{
-			return (!ModuleManager::isModuleInstalled('imconnector'));
-		}
-
-		return true;
+		return !in_array($authId, \Bitrix\Main\UserTable::getExternalUserTypes());
 	}
 }

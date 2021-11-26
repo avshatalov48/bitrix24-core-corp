@@ -199,6 +199,12 @@ class CCrmRole
 			return array();
 		}
 
+		static $cache = [];
+		if (isset($cache[$userID]))
+		{
+			return $cache[$userID];
+		}
+
 		// Prepare user codes if need
 		$CAccess = new CAccess();
 		$CAccess->UpdateCodes(array('USER_ID' => $userID));
@@ -224,6 +230,8 @@ class CCrmRole
 					|| $arRow['ATTR'] > $arResult[$arRow['ENTITY']][$arRow['PERM_TYPE']][$arRow['FIELD']][$arRow['FIELD_VALUE']])
 					$arResult[$arRow['ENTITY']][$arRow['PERM_TYPE']][$arRow['FIELD']][$arRow['FIELD_VALUE']] = $arRow['ATTR'];
 		}
+		$cache[$userID] = $arResult;
+
 		return $arResult;
 	}
 

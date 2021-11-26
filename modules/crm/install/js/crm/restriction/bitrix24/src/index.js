@@ -1,29 +1,29 @@
 import {Type, Extension, SettingsCollection} from 'main.core';
 
 const Bitrix24 = {
-	settings: null,
+	data: null,
 
-	getSettings(entityId: ?string): SettingsCollection|Object
+	getData(entityId: ?string): SettingsCollection|Object|undefined
 	{
-		if (this.settings === null)
+		if (this.data === null)
 		{
-			this.settings = Extension.getSettings('crm.restriction.bitrix24');
+			this.data = Extension.getSettings('crm.restriction.bitrix24');
 		}
 		if (Type.isStringFilled(entityId))
 		{
-			return this.settings.get(entityId);
+			return this.data.get(entityId);
 		}
-		return this.settings;
+		return this.data;
 	},
 
 	isRestricted(entityId)
 	{
-		return !!this.getSettings(entityId);
+		return !!this.getData(entityId);
 	},
 
 	getHandler(entityId)
 	{
-		const restrictions = this.getSettings(entityId);
+		const restrictions = this.getData(entityId);
 
 		if (restrictions)
 		{

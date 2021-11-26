@@ -71,9 +71,10 @@ class Handler
 				&& Loader::includeModule('socialnetwork')
 			)
 			{
-				$resultParams = \Bitrix\Socialnetwork\Integration\Main\UISelector\Entities::getDepartmentData(array(
-					'DEPARTMENT_ID' => $requestFields['options']['categoryId']
-				));
+				$resultParams = \Bitrix\Socialnetwork\Integration\Main\UISelector\Entities::getDepartmentData([
+					'DEPARTMENT_ID' => $requestFields['options']['categoryId'],
+					'allowSearchSelf' => (isset($requestFields['options']['allowSearchSelf']) && $requestFields['options']['allowSearchSelf'] === 'N' ? 'N' : 'Y'),
+				]);
 			}
 		}
 

@@ -1,0 +1,8 @@
+.ui-ctl.crm-ctl-paysystem-field .ui-ctl-element {
+	display: flex;
+	align-items: center;
+}
+
+.ui-entity-editor-content-block.crm-ctl-paysystem-field img {
+	vertical-align: middle;
+}

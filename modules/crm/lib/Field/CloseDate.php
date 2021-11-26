@@ -6,7 +6,7 @@ use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Result;
-use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 
 class CloseDate extends Field
 {
@@ -18,7 +18,7 @@ class CloseDate extends Field
 			&& $this->isItemValueEmpty($item)
 		)
 		{
-			$item->set($this->getName(), new Date());
+			$item->set($this->getName(), new DateTime());
 		}
 
 		return parent::processLogic($item, $context);

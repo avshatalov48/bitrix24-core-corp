@@ -35,6 +35,11 @@ class CCrmAuthorizationHelper
 			$userPermissions = self::GetUserPermissions();
 		}
 
+		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userPermissions->GetUserID())->isAdmin())
+		{
+			return true;
+		}
+
 		if($entityID <= 0)
 		{
 			return !$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'WRITE');
@@ -56,6 +61,11 @@ class CCrmAuthorizationHelper
 		if(!$userPermissions)
 		{
 			$userPermissions = self::GetUserPermissions();
+		}
+
+		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userPermissions->GetUserID())->isAdmin())
+		{
+			return true;
 		}
 
 		if($entityID <= 0)
@@ -83,6 +93,11 @@ class CCrmAuthorizationHelper
 		if(!$userPermissions)
 		{
 			$userPermissions = self::GetUserPermissions();
+		}
+
+		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userPermissions->GetUserID())->isAdmin())
+		{
+			return true;
 		}
 
 		if($entityID <= 0)

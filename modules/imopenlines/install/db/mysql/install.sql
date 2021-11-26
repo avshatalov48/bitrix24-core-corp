@@ -155,7 +155,6 @@ CREATE TABLE b_imopenlines_config
 	CRM_SOURCE varchar(50) default 'create',
 	CRM_TRANSFER_CHANGE char(1) not null default 'Y',
 	QUEUE_TIME int(11) DEFAULT 60,
--- 	CRM_FORM_TO_USE int(11) DEFAULT 0,
 	NO_ANSWER_TIME int(11) DEFAULT 60,
 	QUEUE_TYPE varchar(50) DEFAULT 'evenly',
 	CHECK_AVAILABLE char(1) not null default 'N',
@@ -227,6 +226,9 @@ CREATE TABLE b_imopenlines_config
 	KPI_FURTHER_ANSWER_TEXT text null,
 	KPI_CHECK_OPERATOR_ACTIVITY char(1) not null default 'N',
 	SEND_NOTIFICATION_EMPTY_QUEUE char(1) not null default 'N',
+	USE_WELCOME_FORM char(1) not null DEFAULT 'Y',
+	WELCOME_FORM_ID int(11) DEFAULT NULL,
+	WELCOME_FORM_DELAY char(1) DEFAULT 'Y',
 	PRIMARY KEY PK_B_IMOPENLINES_CONFIG (ID)
 );
 

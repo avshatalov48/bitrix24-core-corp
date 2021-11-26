@@ -102,7 +102,7 @@ $gridManagerCfg = array(
 	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 	'filterFields' => array()
 );
-echo CCrmViewHelper::RenderDealStageSettings();
+echo CCrmViewHelper::RenderDealStageSettings($arParams['CATEGORY_ID']);
 $prefix = $arResult['GRID_ID'];
 $prefixLC = mb_strtolower($arResult['GRID_ID']);
 
@@ -195,7 +195,7 @@ foreach($arResult['DEAL'] as $sKey => $arDeal)
 						'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_MODIFIER']
 					)
 				) : '',
-		) + $arResult['DEAL_UF'][$sKey]
+		) + (is_array($arResult['DEAL_UF'][$sKey]) ? $arResult['DEAL_UF'][$sKey] : [])
 	);
 
 	$userActivityID = isset($arDeal['~ACTIVITY_ID']) ? intval($arDeal['~ACTIVITY_ID']) : 0;
@@ -329,9 +329,9 @@ if(isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 	foreach($arResult['ERRORS'] as $error)
 	{
 		$messages[] = array(
-    		'TYPE' => \Bitrix\Main\Grid\MessageType::ERROR,
-    		'TITLE' => $error['TITLE'],
-    		'TEXT' => $error['TEXT']
+			'TYPE' => \Bitrix\Main\Grid\MessageType::ERROR,
+			'TITLE' => $error['TITLE'],
+			'TEXT' => $error['TEXT']
 		);
 	}
 }
@@ -362,7 +362,13 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 			'FILTER_ID' => $arResult['GRID_ID'],
 			'FILTER' => $arResult['FILTER'],
 			'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-
+			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
+			'CONFIG' => [
+				'popupColumnsCount' => 4,
+				'popupWidth' => 800,
+				'showPopupInCenter' => true,
+			],
 			'NAVIGATION_BAR' => array(
 				'ITEMS' => array_merge(
 					\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Deal, $arResult['CATEGORY_ID']),
@@ -644,5 +650,18 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 
 	//endregion
 </script>
-
+<?if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):
+	Bitrix\Main\UI\Extension::load(['crm.restriction.client-fields']);
+	?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				new BX.Crm.Restriction.ClientFieldsRestriction(
+					<?=CUtil::PhpToJSObject($arResult['CLIENT_FIELDS_RESTRICTIONS'])?>
+				);
+			}
+		);
+	</script>
+<?endif;?>
 <?\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated()?>

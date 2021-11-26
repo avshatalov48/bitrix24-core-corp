@@ -9,6 +9,7 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_befo
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Tracking;
+use Bitrix\Crm\Service\Container;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -23,6 +24,7 @@ if (!CModule::IncludeModule('crm'))
  */
 global $DB, $APPLICATION;
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+Container::getInstance()->getLocalization()->loadMessages();
 
 if(!function_exists('__CrmContactDetailsEndHtmlResonse'))
 {
@@ -84,7 +86,7 @@ elseif($action === 'SAVE')
 		|| ($ID === 0 && !\CCrmContact::CheckCreatePermission($currentUserPermissions))
 	)
 	{
-		__CrmContactDetailsEndJsonResonse(array('ERROR'=>'PERMISSION DENIED!'));
+		__CrmContactDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
 	}
 
 	$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
@@ -580,7 +582,7 @@ elseif($action === 'LOAD')
 	}
 	if(!\CCrmCompany::CheckReadPermission($ID, $currentUserPermissions))
 	{
-		__CrmContactDetailsEndJsonResonse(['ERROR'=>'PERMISSION DENIED!']);
+		__CrmContactDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
 	}
 
 	CBitrixComponent::includeComponentClass('bitrix:crm.contact.details');
@@ -602,7 +604,7 @@ elseif($action === 'DELETE')
 
 	if(!\CCrmContact::CheckDeletePermission($ID, $currentUserPermissions))
 	{
-		__CrmContactDetailsEndJsonResonse(array('ERROR' => GetMessage('CRM_CONTACT_ACCESS_DENIED')));
+		__CrmContactDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
 	}
 
 	$bizProc = new CCrmBizProc('CONTACT');

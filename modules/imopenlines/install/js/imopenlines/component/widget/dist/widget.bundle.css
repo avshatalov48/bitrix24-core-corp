@@ -677,6 +677,9 @@
 	display: -ms-flexbox;
 	display: flex;
 }
+.bx-livechat-body-with-scroll {
+    overflow: auto;
+}
 .bx-livechat-dialog > div {
 	position: absolute;
 	width: 100%;

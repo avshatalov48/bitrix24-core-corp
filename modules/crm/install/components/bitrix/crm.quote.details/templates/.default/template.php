@@ -57,7 +57,7 @@ $APPLICATION->IncludeComponent(
 $messages = array_merge(Container::getInstance()->getLocalization()->loadMessages(), Loc::loadLanguageFile(__FILE__));
 if(isset($arResult['jsParams']['messages']['crmTimelineHistoryStub']))
 {
-    $messages['CRM_TIMELINE_HISTORY_STUB'] = $arResult['jsParams']['messages']['crmTimelineHistoryStub'];
+	$messages['CRM_TIMELINE_HISTORY_STUB'] = $arResult['jsParams']['messages']['crmTimelineHistoryStub'];
 }
 ?>
 

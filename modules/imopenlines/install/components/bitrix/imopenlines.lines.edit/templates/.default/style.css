@@ -1294,6 +1294,13 @@
 	margin-top: 2px;
 }
 
+.imopenlines-form-welcome-create-link {
+    display: inline-block;
+    margin-top: 7px;
+    font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    cursor: pointer;
+}
+
 .bx-helpdesk-link {
 	cursor: pointer;
 	margin-left: 5px;
@@ -1422,6 +1429,10 @@ select {
 
 .imopenlines-hint-popup-contents {
 	padding: 10px;
+}
+
+#imol_form_welcome_delay_description {
+    margin-top: 3px;
 }
 
 #imol_watch_typing_not_available {

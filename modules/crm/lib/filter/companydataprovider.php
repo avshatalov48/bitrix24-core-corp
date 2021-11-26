@@ -53,26 +53,63 @@ class CompanyDataProvider extends Main\Filter\EntityDataProvider
 	{
 		$result =  array(
 			'ID' => $this->createField('ID'),
-			'TITLE' => $this->createField('TITLE'),
+			'TITLE' => $this->createField(
+				'TITLE',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'DATE_CREATE' => $this->createField(
 				'DATE_CREATE',
-				array('type' => 'date', 'default' => true)
+				[
+					'type' => 'date',
+					'default' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'DATE_MODIFY' => $this->createField(
 				'DATE_MODIFY',
-				array('type' => 'date')
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'ASSIGNED_BY_ID' => $this->createField(
 				'ASSIGNED_BY_ID',
-				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'default' => true,
+					'partial' => true,
+				]
 			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
 			),
 			'MODIFY_BY_ID' => $this->createField(
 				'MODIFY_BY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
 			),
 			'ACTIVITY_COUNTER' => $this->createField(
 				'ACTIVITY_COUNTER',
@@ -104,7 +141,15 @@ class CompanyDataProvider extends Main\Filter\EntityDataProvider
 			),
 			'REVENUE' => $this->createField(
 				'REVENUE',
-				array('type' => 'number')
+				[
+					'type' => 'number',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'CURRENCY_ID' => $this->createField(
 				'CURRENCY_ID',
@@ -114,7 +159,17 @@ class CompanyDataProvider extends Main\Filter\EntityDataProvider
 				'EMPLOYEES',
 				array('type' => 'list', 'default' => true, 'partial' => true)
 			),
-			'COMMENTS' => $this->createField('COMMENTS')
+			'COMMENTS' => $this->createField(
+				'COMMENTS',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			)
 		);
 
 		if($this->settings->checkFlag(CompanySettings::FLAG_ENABLE_ADDRESS))
@@ -200,7 +255,18 @@ class CompanyDataProvider extends Main\Filter\EntityDataProvider
 		//region UTM
 		foreach (Crm\UtmTable::getCodeNames() as $code => $name)
 		{
-			$result[$code] = $this->createField($code, array('name' => $name));
+			$result[$code] = $this->createField(
+				$code,
+				[
+					'name' => $name,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			);
 		}
 		//endregion
 		return $result;
@@ -241,55 +307,17 @@ class CompanyDataProvider extends Main\Filter\EntityDataProvider
 				'items' => \CCrmStatus::GetStatusList('EMPLOYEES')
 			);
 		}
-		elseif($fieldID === 'ASSIGNED_BY_ID')
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID'], true))
 		{
-			return array(
-				'params' => array(
-					'context' => 'CRM_COMPANY_FILTER_ASSIGNED_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U'
-				)
-			);
-		}
-		elseif($fieldID === 'CREATED_BY_ID')
-		{
-			return array(
-				'params' => array(
-					'context' => 'CRM_COMPANY_FILTER_CREATED_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U'
-				)
-			);
-		}
-		elseif($fieldID === 'MODIFY_BY_ID')
-		{
-			return array(
-				'params' => array(
-					'context' => 'CRM_COMPANY_FILTER_MODIFY_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U'
-				)
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Company);
+			$referenceClass = ($factory ? $factory->getDataClass() : null);
+
+			return $this->getUserEntitySelectorParams(
+				strtolower('crm_company_filter_' . $fieldID),
+				[
+					'fieldName' => $fieldID,
+					'referenceClass' => $referenceClass,
+				]
 			);
 		}
 		elseif($fieldID === 'ACTIVITY_COUNTER')

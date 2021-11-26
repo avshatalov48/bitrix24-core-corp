@@ -22,6 +22,7 @@ use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Item\Task;
 use Bitrix\Tasks\Internals\RunTime;
+use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\Collection;
 
@@ -135,7 +136,6 @@ class FromTask extends \Bitrix\Tasks\Util\Replicator\Task
 			array(
 				'filter' => array(
 					'=PARENT_ID' => $id,
-					'=ZOMBIE' => 'N', // todo: remove ZOMBIE mechanism, it is nasty
 				),
 				'select' => $select,
 			),
@@ -219,11 +219,58 @@ class FromTask extends \Bitrix\Tasks\Util\Replicator\Task
 					$data[$item['TASK_ID']]['DEPENDS_ON'][] = $item['DEPENDS_ON_ID'];
 				}
 			}
+
+			foreach ($ids as $taskId)
+			{
+				$data[$taskId] = array_merge($data[$taskId], $this->processDates($data[$taskId]));
+			}
 		}
 
 		return array(
 			'DATA' => $data,
 			'TREE' => $flatTree,
 		);
+	}
+
+	private function processDates(array $taskData): array
+	{
+		$result = [];
+
+		/** @var DateTime $createdDate */
+		$createdDate = clone $taskData['CREATED_DATE'];
+		$createdDate->stripTime();
+
+		$dates = [
+			'DEADLINE',
+			'START_DATE_PLAN',
+			'END_DATE_PLAN',
+		];
+		foreach ($dates as $key)
+		{
+			if ($taskData[$key])
+			{
+				/** @var DateTime $dateDate */
+				$dateDate = clone $taskData[$key];
+				$dateDate->stripTime();
+
+				$diff = $createdDate->getDiff($dateDate);
+				$daysDiff = $diff->format('%d');
+				$daysDiff = ($diff->invert ? -$daysDiff : +$daysDiff);
+
+				($now = new DateTime())->addDay($daysDiff);
+
+				/** @var DateTime $newDate */
+				$newDate = clone $taskData[$key];
+				$newDate->setDate(
+					$now->getYearGmt(),
+					$now->getMonthGmt(),
+					$now->getDayGmt()
+				);
+
+				$result[$key] = $newDate;
+			}
+		}
+
+		return $result;
 	}
 }

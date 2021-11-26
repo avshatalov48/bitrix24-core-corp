@@ -130,8 +130,17 @@ export class FacebookConversion extends Conversion
 	logout()
 	{
 		this.slider?.showLoader();
-		return BX.ajax
-			.runAction('crm.ads.conversion.logout', { data: {} })
+		return BX.ajax.runAction(
+			'crm.ads.conversion.logout',
+			{
+					data: {},
+					analyticsLabel: {
+						connect: "FBE",
+						action: "disconnect",
+						type: "disconnect"
+					}
+				}
+			)
 			.then(()=> {
 				this.slider?.reload();
 			})

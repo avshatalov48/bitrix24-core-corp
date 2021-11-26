@@ -1292,6 +1292,7 @@ if(CModule::IncludeModule("socialnetwork"))
 					"LAZYLOAD" => "Y",
 
 					"IMAGE_SIZE" => $arParams["IMAGE_SIZE"],
+					"SHOW_POST_FORM" => "Y",
 				),
 				null
 			);

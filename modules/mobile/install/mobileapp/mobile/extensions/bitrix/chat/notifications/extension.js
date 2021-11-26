@@ -2,31 +2,31 @@
 {
 	var styles = {
 		listView: {
-			backgroundColor: '#ffffff'
+			backgroundColor: '#ffffff',
+			flex: 1
 		},
 	}
-
-	this.NotificationTypes = {
-		confirm: 1,
-		unread: 2,
-		simple: 3,
-		placeholder: 4
-	};
 
 	this.NewNotificationsComponent = class NewNotificationsComponent extends LayoutComponent
 	{
 		constructor(props)
 		{
 			super(props);
-			this.storage = Application.sharedStorage('notify');
+			this.userId = parseInt(BX.componentParameters.get('USER_ID', 0));
+			this.storage = Application.sharedStorage(`notify_${this.userId}`);
 
 			this.perPage = 50;
-			this.currentDomain = currentDomain.replace('https', 'http');
 			this.initialDataReceived = false;
 			this.users = {};
+			this.notificationsToRead = new Set();
+
+			// set of notifications id, which was read while loading notifications from the server.
+			this.tempNotificationsToRead = new Set();
 			this.lastId = 0;
-			this.lastType = 1; //confirm
+			this.lastType = Const.NotificationTypes.confirm;
 			this.isLoadingNewPage = false;
+			this.notificationsToDelete = [];
+			this.firstUnreadNotificationOnInit = null;
 
 			this.state = {
 				total: 0,
@@ -34,6 +34,8 @@
 				collection: [],
 				isRefreshing: false
 			};
+
+			this.readNotificationsQueue = new Set();
 		}
 
 		initPullHandler()
@@ -43,15 +45,54 @@
 					application: this,
 				})
 			);
+
+			BX.addCustomEvent("notification::push::get", (params) => {
+				BX.PULL.emit({
+					type: BX.PullClient.SubscriptionType.Server,
+					moduleId: 'im',
+					data: {command: 'notifyAdd', params: params}
+				});
+			});
+
+			let storedEvents =
+				BX.componentParameters.get('STORED_EVENTS')
+					? BX.componentParameters.get('STORED_EVENTS')
+					: []
+			;
+
+			if (storedEvents.length > 0)
+			{
+				//sort events and get first 50
+				storedEvents = storedEvents.sort(Utils.sortByType);
+				storedEvents = storedEvents.slice(0, 50);
+
+				setTimeout(() => {
+					storedEvents = storedEvents.filter(event => {
+						BX.onCustomEvent('notification::push::get', [event]);
+						return false;
+					});
+				}, 50);
+			}
 		}
 
 		componentDidMount()
 		{
 			this.initPullHandler();
 
-			this.drawPlaceholders().then(() => {
+			const rawCachedNotifications = this.storage.get('collection');
+			const hasCachedNotifications = !!rawCachedNotifications;
+
+			layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:true});
+			if (hasCachedNotifications)
+			{
 				this.getInitialData();
-			});
+			}
+			else
+			{
+				this.drawPlaceholders().then(() => {
+					this.getInitialData();
+				});
+			}
 
 			BX.addCustomEvent('onAppActiveBefore', () =>
 			{
@@ -59,6 +100,25 @@
 					this.getInitialData();
 				});
 			});
+
+			BX.addCustomEvent("onViewShown", () => {
+				if (this.initialDataReceived)
+				{
+					layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:true});
+					this.getInitialStateFromServer()
+						.then(state => {
+							console.log('onViewShown: setState', state);
+							this.setState(state);
+							layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false});
+						})
+						.catch((error) => {
+							console.log(error);
+							layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false});
+						});
+				}
+			});
+
+			this.readVisibleNotificationsDelayed = ChatUtils.debounce(this.readVisibleNotifications, 50, this);
 		}
 
 		drawPlaceholders()
@@ -80,72 +140,172 @@
 				placeholders.push({
 					key: `placeholder${i}`,
 					type: 'placeholder',
-					commonType: 'placeholder',
+					commonType: Const.NotificationTypes.placeholder,
 				});
 			}
 
 			return placeholders;
 		}
 
+		readAll()
+		{
+			const { collection, unreadCounter } = this.state;
+			if (unreadCounter === 0)
+			{
+				return;
+			}
+
+			let needToUpdate = false;
+			let newCounter = unreadCounter;
+			const collectionReaded = collection.map(item => {
+				if (item.notifyRead === 'N' && item.commonType !== Const.NotificationTypes.confirm)
+				{
+					item.notifyRead = 'Y';
+					needToUpdate = true;
+					newCounter = newCounter > 0 ? newCounter - 1 : newCounter;
+				}
+				return item;
+			});
+
+			if (!needToUpdate)
+			{
+				return;
+			}
+
+			//update counter
+			BX.postComponentEvent('chatdialog::counter::change', [{
+				dialogId: 'notify',
+				counter: newCounter,
+			}, true], 'im.recent');
+
+			this.setState({
+				collection: collectionReaded,
+				unreadCounter: newCounter,
+			});
+
+			BX.postComponentEvent('chatbackground::task::action', [
+				'readNotification',
+				'readNotification|0',
+				{
+					id: 0,
+					action: 'Y'
+				},
+			], 'background');
+		}
+
 		itemClickHandler(id, type)
 		{
-			console.log('itemClickHandler', id, type);
+			//console.log('itemClickHandler', id, type);
 
 			const { collection } = this.state;
 
 			if (type === 'delete')
 			{
+				this.notificationsToDelete.push(id);
+				const originalCounterBeforeUpdate = this.state.unreadCounter;
+				const deleteItemIndex = collection.findIndex( item => item.messageId === id );
+				if (collection[deleteItemIndex] && collection[deleteItemIndex].notifyRead === 'N')
+				{
+					//update counter if we delete unread notification
+					BX.postComponentEvent('chatdialog::counter::change', [{
+						dialogId: 'notify',
+						counter: --this.state.unreadCounter,
+					}, true], 'im.recent');
+				}
+
 				const filteredNotifications = collection.filter((item) => item.messageId !== id);
-
-				//update counter
-				BX.postComponentEvent('chatdialog::counter::change', [{
-					dialogId: 'notify',
-					counter: --this.state.unreadCounter,
-				}, true], 'im.recent');
-
 				this.setState({
 					collection: filteredNotifications,
 				});
-			}
+				this.storage.set('collection', JSON.stringify(filteredNotifications));
 
-			if (type === 'changeReadStatus')
-			{
-				const itemIndex = collection.findIndex( item => item.messageId === id );
-				collection[itemIndex].notifyRead = collection[itemIndex].notifyRead === 'N' ? 'Y' : 'N';
+				ChatTimer.stop('notification', 'delete', true);
+				ChatTimer.start('notification', 'delete', 1000, () => {
+					const idsToDelete = this.notificationsToDelete;
+					this.notificationsToDelete = [];
 
-				const queryParams = {
-					'ACTION': collection[itemIndex].notifyRead, //y - MarkNotifyRead
-					'ID': id,
-					'ONLY_CURRENT': 'Y'
-				};
-
-				BX.rest.callMethod('im.notify.read', queryParams)
-					.then(res => {
-						console.log('im.notify.read', res);
-					})
-					.catch(error => console.log(error));
-
-				this.setState({
-					collection: collection,
+					BX.rest.callMethod('im.notify.delete', { id: idsToDelete })
+						.then(res => {
+							console.log('im.notify.delete', res);
+						})
+						.catch(error => {
+							console.log(error);
+							// restore counter and collection
+							BX.postComponentEvent('chatdialog::counter::change', [{
+								dialogId: 'notify',
+								counter: originalCounterBeforeUpdate,
+							}, true], 'im.recent');
+							this.setState({
+								collection: collection,
+							});
+							this.storage.set('collection', JSON.stringify(collection));
+						});
 				});
 			}
 		}
 
+		onItemHeightChange(fromHeight, toHeight) {
+			if (!this.listView || fromHeight < toHeight) return;
+
+			this.listView.scrollBy({ x: 0, y: toHeight - fromHeight, animated: true, duration: 200 })
+		}
+
 		render()
+		{
+			const { collection } = this.state;
+			const isStub = collection.length === 0 && this.initialDataReceived;
+
+			return View(
+				{},
+				isStub ? this.renderStub() : this.renderList(),
+			)
+		}
+
+		renderStub()
+		{
+			return View(
+				{},
+				Image({
+					style: {
+						width: 224,
+						height: 224,
+						alignSelf: 'center'
+					},
+					uri: `${currentDomain}/bitrix/templates/mobile_app/images/notification-block/notif-empty-v2.png`
+				}),
+				Text({
+					style: {
+						color: '#99afbc',
+						fontSize: 19,
+						textAlign: 'center'
+					},
+					text: BX.message('IM_NOTIFY_EMPTY_LIST')
+				})
+			)
+		}
+
+		renderList()
 		{
 			//console.log('current state', this.state);
 			const { collection, isRefreshing } = this.state;
 
 			return ListView({
+				ref: ref => this.listView = ref,
 				style: styles.listView,
 				data: [{
 					items: collection,
 				}],
 				isRefreshing: isRefreshing,
-				renderItem: (data) => {
+				renderItem: (data, section, index) => {
 					return new NotificationItem({
 						notification: data,
-						itemClickHandler: this.itemClickHandler.bind(this)
+						itemClickHandler: this.itemClickHandler.bind(this),
+						onHeightWillChange: (fromHeight, toHeight) => this.onItemHeightChange(fromHeight, toHeight),
+						onRemove: (notification) => {
+							this.listView.deleteRow(section, index, "middle", () => {
+								this.itemClickHandler(notification.messageId, 'delete');
+							})
+						}
 					});
 				},
 				onRefresh: () => {
@@ -155,6 +315,14 @@
 						.then(state => {
 							console.log('onRefresh: setState', state);
 							this.setState(Object.assign(state, {isRefreshing: false}));
+						})
+						.catch((error) => {
+							console.error(error);
+							Utils.showError(
+								BX.message['MOBILE_EXT_CONFIRM_ITEM_BUTTONS_ERROR_TITLE'],
+								BX.message['MOBILE_EXT_CONFIRM_ITEM_BUTTONS_ERROR_TEXT'],
+								'#affb0000'
+							);
 						});
 				},
 				onLoadMore: (this.initialDataReceived && this.getRemainingPages() > 0) && (() => {
@@ -167,8 +335,29 @@
 
 				}),
 				onViewableItemsChanged: (params) => {
-					//console.log(params);
-				}
+					const messagesToRead = params[0].items
+
+					const { collection } = this.state;
+
+					messagesToRead.forEach(itemIndex => {
+						const notification = collection[itemIndex];
+						if (
+							notification !== undefined
+							&& notification.commonType !== Const.NotificationTypes.placeholder
+							&& notification.commonType !== Const.NotificationTypes.confirm
+							&& notification.notifyRead !== 'Y'
+						)
+						{
+							this.readNotificationsQueue.add(notification.messageId);
+						}
+					});
+
+					this.readVisibleNotificationsDelayed();
+				},
+				viewabilityConfig: {
+					itemVisiblePercentThreshold: 95,
+					waitForInteraction: false
+				},
 			});
 		}
 
@@ -180,7 +369,7 @@
 				'LIMIT': this.perPage,
 				'LAST_ID': this.lastId,
 				'LAST_TYPE': this.lastType,
-				'CONVERT_TEXT': 'Y'
+				'BB_CODE': 'Y'
 			};
 
 			BX.rest.callMethod('im.notify.get', queryParams)
@@ -208,6 +397,12 @@
 				console.log('setState from SERVER', state);
 				this.setState(state);
 				this.initialDataReceived = true;
+				this.tempNotificationsToRead.clear();
+				this.firstUnreadNotificationOnInit = this.getFirstUnreadNotificationOnInit();
+				layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false});
+			}).catch((error) => {
+				console.error(error);
+				layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false});
 			});
 		}
 
@@ -229,7 +424,7 @@
 			return new Promise((resolve, reject) => {
 				const queryParams = {
 					'LIMIT': this.perPage,
-					'CONVERT_TEXT': 'Y',
+					'BB_CODE': 'Y',
 				};
 
 				BX.rest.callMethod('im.notify.get', queryParams)
@@ -240,15 +435,22 @@
 
 						resolve(initialState);
 					})
-					.catch(error => console.log(error));
+					.catch(error => {
+						console.log(error);
+						reject(error);
+					});
 			});
 		}
 
 		processInitialState(data)
 		{
-			if (!data)
+			if (!data || data.length === 0)
 			{
-				return {};
+				return {
+					collection: [],
+					total: 0,
+					unreadCounter: 0
+				};
 			}
 
 			this.lastId = this.getLastItemId(data.notifications);
@@ -258,9 +460,24 @@
 				this.users[user.id] = user;
 			});
 
-			let notificationsFromServer = []
+			const notificationsFromServer = [];
+			const { collection } = this.state;
 			data.notifications.forEach(item => {
-				notificationsFromServer.push(this.prepareNotification(item));
+				const preparedItemItem = this.prepareNotification(item);
+
+				// merge local read status with server read status,
+				// only if "reading" was while loading notifications from the server.
+				const itemIndex = collection.findIndex(item => item.messageId === preparedItemItem.messageId);
+				if (
+					itemIndex >= 0
+					&& collection[itemIndex].notifyRead !== preparedItemItem.notifyRead
+					&& this.tempNotificationsToRead.has(preparedItemItem.messageId)
+				)
+				{
+					preparedItemItem.notifyRead = collection[itemIndex].notifyRead;
+				}
+
+				notificationsFromServer.push(preparedItemItem);
 			});
 
 			return {
@@ -304,14 +521,17 @@
 
 		prepareNotification(item)
 		{
+			const type = Utils.getListItemType(item);
+
 			return {
 				key: 'item'+ item.id,
-				type: item.notify_type === 1 ? 'confirm' : 'notification',
-				commonType: item.notify_type === 1 ? 'confirm' : 'notification', //todo temp
-				author: item.author_id === 0 ? '' : this.users[item.author_id].name, //todo
-				avatarUrl: item.author_id === 0 ? '' : this.users[item.author_id].avatar.replace('https','http'), //todo delete hack
-				text: item.text_converted,
-				time: item.date,
+				type: type,
+				commonType: this.getItemType(item),
+				author: item.author_id === 0 ? '' : this.users[item.author_id].name,
+				avatarUrl: item.author_id === 0 ? '' : this.users[item.author_id].avatar,
+				avatarColor: item.author_id === 0 ? '' : this.users[item.author_id].color,
+				text: Utils.htmlspecialcharsback(item.text),
+				time: (new Date(item.date)).getTime(),
 				messageId: item.id,
 				params: item.params,
 				buttons: item.notify_buttons,
@@ -333,20 +553,120 @@
 		{
 			if (item.notify_type === 1)
 			{
-				return NotificationTypes.confirm;
-			}
-			else if (item.notify_read === 'N')
-			{
-				return NotificationTypes.unread;
+				return Const.NotificationTypes.confirm;
 			}
 			else
 			{
-				return NotificationTypes.simple;
+				return Const.NotificationTypes.simple;
 			}
 		}
 		getRemainingPages()
 		{
 			return Math.ceil((this.state.total - this.state.collection.length) / this.perPage);
+		}
+		readVisibleNotifications()
+		{
+			if (this.readNotificationsQueue.size === 0)
+			{
+				return;
+			}
+
+			this.readNotificationsQueue.forEach(notificationId => {
+				this.readNotification(parseInt(notificationId, 10));
+			});
+			this.readNotificationsQueue.clear();
+		}
+		readNotification(id)
+		{
+			const { collection, unreadCounter } = this.state;
+
+			const itemIndex = collection.findIndex(item => item.messageId === id);
+			if (!collection[itemIndex] || collection[itemIndex].notifyRead === 'Y')
+			{
+				return;
+			}
+
+			this.notificationsToRead.add(id);
+			if (!this.initialDataReceived)
+			{
+				this.tempNotificationsToRead.add(id);
+			}
+			collection[itemIndex].notifyRead = 'Y';
+			const counterValueAfterRead = unreadCounter - 1;
+
+			this.setState({
+				collection: collection,
+				unreadCounter: counterValueAfterRead,
+			});
+			this.storage.set('collection', JSON.stringify(collection));
+
+			BX.postComponentEvent('chatdialog::counter::change', [{
+				dialogId: 'notify',
+				counter: counterValueAfterRead,
+			}, true], 'im.recent');
+
+			ChatTimer.stop('notification', 'read', true);
+			ChatTimer.start('notification', 'read', 1000, () => {
+				const idsToRead = [...this.notificationsToRead];
+				this.notificationsToRead.clear();
+
+				// we can read all notifications from some ID, only if we have not received new notifications
+				// (otherwise we will read notifications at the top that we are not actually seeing)
+				let canReadFromId = false;
+				if (this.firstUnreadNotificationOnInit !== null)
+				{
+					canReadFromId = Math.max(...idsToRead) <= this.firstUnreadNotificationOnInit;
+				}
+
+				if (canReadFromId)
+				{
+					const readFromId = Math.min(...idsToRead);
+
+					BX.postComponentEvent('chatbackground::task::action', [
+						'readNotification',
+						'readNotification|'+readFromId,
+						{
+							action: 'Y',
+							id: readFromId
+						},
+					], 'background');
+				}
+				else
+				{
+					BX.postComponentEvent('chatbackground::task::action', [
+						'readNotificationList',
+						'readNotificationList|'+idsToRead.join(),
+						{
+							action: 'Y',
+							ids: idsToRead
+						},
+					], 'background');
+				}
+			});
+		}
+
+		getFirstUnreadNotificationOnInit()
+		{
+			const { collection, unreadCounter } = this.state;
+
+			if (unreadCounter <= 0)
+			{
+				return null;
+			}
+
+			let unreadId = null;
+			const maxNotificationIndex = collection.length - 1;
+
+			for (let i = 0; i <= maxNotificationIndex; i++)
+			{
+				if (collection[i].notifyRead === 'N' && collection[i].commonType === Const.NotificationTypes.simple)
+				{
+					unreadId = collection[i].messageId;
+					break;
+				}
+			}
+
+			return unreadId;
 		}
 	}
 })();

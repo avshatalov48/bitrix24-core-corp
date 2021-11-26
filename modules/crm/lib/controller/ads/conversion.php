@@ -13,6 +13,8 @@ use Bitrix\Crm\WebForm\Internals;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Ads\Pixel\Configuration\Configuration;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\SystemException;
 
 class Conversion extends Controller
 {
@@ -34,6 +36,11 @@ class Conversion extends Controller
 
 	protected function checkPermissions() : bool
 	{
+		if (Loader::includeModule('bitrix24') && !Feature::isFeatureEnabled('crm_ad_conversion'))
+		{
+			throw new SystemException('Not accessible.', 100);
+		}
+
 		$user = CurrentUser::get();
 		if (!(Loader::includeModule("bitrix24") && \CBitrix24::isPortalAdmin($user->getId()) || $user->isAdmin()))
 		{
@@ -77,17 +84,16 @@ class Conversion extends Controller
 			$this->checkPermissions() &&
 			$this->checkModules() &&
 			$this->checkServices()
-			;
+		;
 	}
 
 	protected function getConfigurator() : ?Configurator
 	{
 		$serviceLocator = ServiceLocator::getInstance();
-		return
-			$serviceLocator->has('crm.service.ads.conversion.configurator')?
-				$serviceLocator->get('crm.service.ads.conversion.configurator') :
-				null
-			;
+		return $serviceLocator->has('crm.service.ads.conversion.configurator')
+			? $serviceLocator->get('crm.service.ads.conversion.configurator')
+			: null
+		;
 	}
 
 	/**

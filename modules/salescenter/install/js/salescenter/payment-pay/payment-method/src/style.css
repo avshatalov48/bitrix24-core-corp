@@ -12,3 +12,15 @@
 	overflow: hidden;
 	transition: all .3s linear;
 }
+
+.checkout-checkout-btn-info {
+	transition: background-color .3s;
+}
+
+.checkout-checkout-btn-info.btn-sm:not([class*="g-btn-size-"]) {
+	padding: 0.28571rem .7rem;
+}
+
+.checkout-checkout-btn-info:hover {
+	background-color: #f1f1f1;
+}

@@ -1,6 +1,8 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Attribute\FieldAttributeManager;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -71,15 +73,15 @@ if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
 	'',
-	array(
+	[
 		'GUID' => $guid,
-		'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+		'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 		'ENTITY_ID' => $arResult['IS_EDIT_MODE'] ? $arResult['ENTITY_ID'] : 0,
 		'ENTITY_INFO' => $arResult['ENTITY_INFO'],
 		'READ_ONLY' => $arResult['READ_ONLY'],
 		'TABS' => $arResult['TABS'],
 		'SERVICE_URL' => '/bitrix/components/bitrix/crm.company.details/ajax.php?'.bitrix_sessid_get(),
-		'EDITOR' => array(
+		'EDITOR' => [
 			'GUID' => "{$guid}_editor",
 			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],
 			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'],
@@ -101,13 +103,7 @@ $APPLICATION->IncludeComponent(
 			'CONTEXT' => $editorContext,
 			'ATTRIBUTE_CONFIG' => [
 				'ENTITY_SCOPE' => $arResult['ENTITY_ATTRIBUTE_SCOPE'],
-				'CAPTIONS' => [
-					'REQUIRED_SHORT' => GetMessage('CRM_COMPANY_DETAIL_ATTR_REQUIRED_SHORT'),
-					'REQUIRED_FULL' => GetMessage('CRM_COMPANY_DETAIL_ATTR_REQUIRED_SHORT'),
-					'GROUP_TYPE_GENERAL' => GetMessage('CRM_COMPANY_DETAIL_ATTR_GR_TYPE_GENERAL'),
-					'GROUP_TYPE_PIPELINE' => GetMessage('CRM_COMPANY_DETAIL_ATTR_GR_TYPE_PIPELINE'),
-					'GROUP_TYPE_JUNK' => GetMessage('CRM_COMPANY_DETAIL_ATTR_GR_TYPE_JUNK')
-				]
+				'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages(CCrmOwnerType::Company),
 			],
 			'COMPONENT_AJAX_DATA' => [
 				'RELOAD_ACTION_NAME' => 'LOAD',
@@ -115,8 +111,8 @@ $APPLICATION->IncludeComponent(
 					'ACTION_ENTITY_ID' => $arResult['ENTITY_ID']
 				] + $editorContext
 			]
-		),
-		'TIMELINE' => array(
+		],
+		'TIMELINE' => [
 			'GUID' => "{$guid}_timeline",
 			'ENABLE_WAIT' => false,
 			'ENABLE_CALL' => $isClientCompany,
@@ -124,11 +120,11 @@ $APPLICATION->IncludeComponent(
 			'ENABLE_MEETING' => $isClientCompany,
 			'ENABLE_TASK' => $isClientCompany,
 			'ENABLE_SMS' => $isClientCompany
-		),
+		],
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
 		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
 		'ENABLE_PROGRESS_BAR' => false
-	)
+	]
 );
 
 if($arResult['ENTITY_ID'] <= 0 && !empty($arResult['FIELDS_SET_DEFAULT_VALUE']))

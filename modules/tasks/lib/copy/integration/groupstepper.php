@@ -122,7 +122,7 @@ class GroupStepper extends Stepper
 		if ($groupId && $mapIdsCopiedTasks)
 		{
 			$queryObject = ProjectDependenceTable::getListByLegacyTaskFilter(
-				["GROUP_ID" => $groupId, "CHECK_PERMISSIONS" => "N", "ZOMBIE" => "N"]);
+				["GROUP_ID" => $groupId, "CHECK_PERMISSIONS" => "N"]);
 			while ($dependence = $queryObject->fetch())
 			{
 				if (array_key_exists($dependence["TASK_ID"], $mapIdsCopiedTasks)

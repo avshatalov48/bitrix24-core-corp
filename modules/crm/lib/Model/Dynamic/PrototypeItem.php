@@ -146,7 +146,15 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ACCOUNT_CURRENCY_ID')),
 			(new IntegerField('MYCOMPANY_ID'))
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID'))
-				->configureDefaultValue(EntityLink::getDefaultMyCompanyId()),
+				->configureDefaultValue(static function() {
+					$defaultMyCompanyId = (int)EntityLink::getDefaultMyCompanyId();
+					if ($defaultMyCompanyId > 0)
+					{
+						return $defaultMyCompanyId;
+					}
+
+					return null;
+				}),
 			(new Reference('MYCOMPANY', CompanyTable::class, Join::on('this.MYCOMPANY_ID', 'ref.ID'))),
 			(new StringField('SOURCE_ID'))
 				->configureSize(50)

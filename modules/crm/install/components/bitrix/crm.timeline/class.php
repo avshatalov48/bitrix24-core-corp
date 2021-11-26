@@ -1,21 +1,21 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm;
 use Bitrix\Crm\Activity\Provider\Zoom;
+use Bitrix\Crm\Integration;
+use Bitrix\Crm\Timeline\ActivityController;
+use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
+use Bitrix\Crm\Timeline\Entity\TimelineTable;
+use Bitrix\Crm\Timeline\TimelineEntry;
+use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Main;
-use Bitrix\Main\Page\Asset;
-use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity\Base;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Crm;
-use Bitrix\Crm\Timeline\TimelineType;
-use Bitrix\Crm\Timeline\Entity\TimelineTable;
-use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
-use Bitrix\Crm\Timeline\ActivityController;
-use Bitrix\Crm\Timeline\TimelineEntry;
-use Bitrix\Crm\Integration;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -205,7 +205,9 @@ class CCrmTimelineComponent extends CBitrixComponent
 			$this->arResult['ENABLE_REST'] = true;
 			\CJSCore::Init(array('marketplace'));
 
-			$this->arResult['REST_PLACEMENT'] = 'CRM_'.$this->entityTypeName.'_DETAIL_ACTIVITY';
+			$this->arResult['REST_PLACEMENT'] =
+				Integration\Rest\AppPlacement::getDetailActivityPlacementCode($this->entityTypeID)
+			;
 			$placementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList($this->arResult['REST_PLACEMENT']);
 
 			if(count($placementHandlerList) > 0)

@@ -104,20 +104,23 @@ class Company extends CrmEntityDataProvider
 			$this->fields['ADDRESS']['TYPE'] = \Bitrix\Crm\Integration\DocumentGenerator\Value\Address::class;
 			$this->fields['ADDRESS_LEGAL']['VALUE'] = [$this, 'getRegisteredAddress'];
 			$this->fields['ADDRESS_LEGAL']['TYPE'] = \Bitrix\Crm\Integration\DocumentGenerator\Value\Address::class;
-			$this->fields['CONTACTS'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACTS_TITLE'),
-				'PROVIDER' => ArrayDataProvider::class,
-				'OPTIONS' => [
-					'ITEM_PROVIDER' => Contact::class,
-					'ITEM_NAME' => 'CONTACT',
-					'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACT_TITLE'),
-					'ITEM_OPTIONS' => [
-						'DISABLE_MY_COMPANY' => true,
-						'isLightMode' => true,
+			if (!$this->isLightMode())
+			{
+				$this->fields['CONTACTS'] = [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACTS_TITLE'),
+					'PROVIDER' => ArrayDataProvider::class,
+					'OPTIONS' => [
+						'ITEM_PROVIDER' => Contact::class,
+						'ITEM_NAME' => 'CONTACT',
+						'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACT_TITLE'),
+						'ITEM_OPTIONS' => [
+							'DISABLE_MY_COMPANY' => true,
+							'isLightMode' => true,
+						],
 					],
-				],
-				'VALUE' => [$this, 'getContacts'],
-			];
+					'VALUE' => [$this, 'getContacts'],
+				];
+			}
 
 			if($this->isMyCompany())
 			{

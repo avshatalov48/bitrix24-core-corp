@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm\Filter\ItemDataProvider;
+use Bitrix\Crm\Integration;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Restriction\ItemsMutator;
@@ -141,6 +142,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = false;
 		$grid['SHOW_ROW_CHECKBOXES'] = false;
 		$grid['SHOW_ROW_ACTIONS_MENU'] = true;
+		$grid['ENABLE_FIELDS_SEARCH'] = 'Y';
 
 		return $grid;
 	}
@@ -183,7 +185,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function getPageNavigation(int $pageSize): PageNavigation
 	{
 		$pageNavigation = new PageNavigation($this->navParamName);
-		$pageNavigation->allowAllRecords(true)->setPageSize($pageSize)->initFromUri();
+		$pageNavigation->allowAllRecords(false)->setPageSize($pageSize)->initFromUri();
 
 		return $pageNavigation;
 	}
@@ -307,13 +309,16 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				foreach ($this->provider->getFieldNamesByType(ItemDataProvider::TYPE_USER, ItemDataProvider::DISPLAY_IN_GRID) as $columnName)
 				{
 					/** @var int|null $userId */
-					$userId = $item->get($columnName);
-					$userIds[$userId] = $userId;
+					if ($item->hasField($columnName))
+					{
+						$userId = $item->get($columnName);
+						$userIds[$userId] = $userId;
+					}
 				}
 				$itemIds[] = $item->getId();
 			}
 			$this->users = Container::getInstance()->getUserBroker()->getBunchByIds($userIds);
-			$this->webForms = Bitrix\Crm\WebForm\Manager::getListNames();
+			$this->webForms = Bitrix\Crm\WebForm\Manager::getListNamesEncoded();
 
 			$this->parents = Container::getInstance()->getParentFieldManager()->getParentFields(
 				$itemIds,
@@ -388,7 +393,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			],
 		];
 
-		return $actions;
+		return array_merge($actions, Integration\Intranet\BindingMenu::getGridContextActions($this->entityTypeId));
 	}
 
 	protected function getItemData(Item $item): array
@@ -417,8 +422,12 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$result = [];
 		foreach ($this->provider->getFieldNamesByType(ItemDataProvider::TYPE_USER, ItemDataProvider::DISPLAY_IN_GRID) as $columnName)
 		{
-			$userId = $item->get($columnName);
-			if (isset($this->users[$userId]))
+			$userId = null;
+			if ($item->hasField($columnName))
+			{
+				$userId = $item->get($columnName);
+			}
+			if ($userId && isset($this->users[$userId]))
 			{
 				$result[$columnName] = $this->prepareUserDataForGrid($this->users[$userId]);
 			}
@@ -502,8 +511,17 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		{
 			if ($this->isColumnVisible(Item::FIELD_NAME_STAGE_ID))
 			{
-				$stage = $this->factory->getStage($item->getStageId());
-				$columns[Item::FIELD_NAME_STAGE_ID] = $stage ? htmlspecialcharsbx($stage->getName()) : null;
+				$stageRender = CCrmViewHelper::RenderItemStageControl(
+					[
+						'ENTITY_ID' => $item->getId(),
+						'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
+						'CATEGORY_ID' => $item->getCategoryId(),
+						'CURRENT_ID' => $item->getStageId(),
+						'SERVICE_URL' => 'crm.controller.item.update',
+					]
+				);
+
+				$columns[Item::FIELD_NAME_STAGE_ID] = $stageRender;
 			}
 			if ($this->isColumnVisible(Item::FIELD_NAME_PREVIOUS_STAGE_ID))
 			{
@@ -577,14 +595,12 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		}
 
 		$contact = $item->getPrimaryContact();
-		$company = $item->getCompany();
 
 		/** @noinspection NullPointerExceptionInspection */
 		return $this->prepareClientInfo(
 			CCrmOwnerType::Contact,
 			$contact->getId(),
-			$contact->getFormattedName(),
-			$company ? $company->getTitle() : ''
+			$contact->getFormattedName()
 		);
 	}
 

@@ -511,6 +511,6 @@ a.socialnetwork-group-title-link:hover {
 	margin: 0;
 }
 
-.socialnetwork-group-sidebar-videocall {
+.socialnetwork-group-sidebar-videocall .ui-btn-split {
 	padding-bottom: 25px;
 }

@@ -13,6 +13,8 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.deal.menu/component.php');
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.deal.list/templates/.default/template.php');
 
+\Bitrix\Crm\Settings\Crm::markAsInitiated();
+
 // if not isset
 $categoryID = isset($arResult['VARIABLES']['category_id']) ? $arResult['VARIABLES']['category_id'] : 0;
 $arResult['PATH_TO_DEAL_EDIT'] = isset($arResult['PATH_TO_DEAL_EDIT']) ? $arResult['PATH_TO_DEAL_EDIT'] : '';

@@ -191,6 +191,11 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 			return $result;
 		}
 
+		if ($data['CREATED_BY'] <= 0)
+		{
+			$data['CREATED_BY'] = $this->userId;
+		}
+
 		$result['ID'] = $id;
 
 		// todo: check $data here, check for publicly-readable\writable keys\values

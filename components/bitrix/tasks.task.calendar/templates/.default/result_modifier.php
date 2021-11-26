@@ -31,26 +31,6 @@ $APPLICATION->SetPageProperty("title", $sTitle);
 $APPLICATION->SetTitle($sTitleShort);
 \Bitrix\Main\UI\Extension::load("ui.notification");
 
-if (is_array($arResult["LIST"]))
-{
-	foreach($arResult["LIST"] as $k=>$arTaskItem)
-	{
-		$arResult["LIST"][$k]['TITLE'] = htmlspecialcharsbx($arTaskItem['TITLE']);
-		$arResult["LIST"][$k]['GROUP_NAME'] = htmlspecialcharsbx($arTaskItem['GROUP_NAME']);
-
-		$arResult["LIST"][$k]['RESPONSIBLE_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_NAME']);
-		$arResult["LIST"][$k]['RESPONSIBLE_LAST_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_LAST_NAME']);
-		$arResult["LIST"][$k]['RESPONSIBLE_SECOND_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_SECOND_NAME']);
-		$arResult["LIST"][$k]['RESPONSIBLE_LOGIN'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_LOGIN']);
-
-		$arResult["LIST"][$k]['CREATED_BY_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_NAME']);
-		$arResult["LIST"][$k]['CREATED_BY_LAST_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_LAST_NAME']);
-		$arResult["LIST"][$k]['CREATED_BY_SECOND_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_SECOND_NAME']);
-		$arResult["LIST"][$k]['CREATED_BY_LOGIN'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_LOGIN']);
-	}
-}
-
-
 if (isset($arParams[ "SET_NAVCHAIN" ]) && $arParams[ "SET_NAVCHAIN" ] != "N")
 {
 	$APPLICATION->AddChainItem(GetMessage("TASKS_TITLE"));

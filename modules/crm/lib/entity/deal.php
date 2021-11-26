@@ -3,8 +3,7 @@ namespace Bitrix\Crm\Entity;
 
 use Bitrix\Main;
 
-use Bitrix\Crm\DealTable;
-use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm;
 
 class Deal extends EntityBase
 {
@@ -31,7 +30,7 @@ class Deal extends EntityBase
 	//region Db
 	protected function getDbEntity()
 	{
-		return DealTable::getEntity();
+		return Crm\DealTable::getEntity();
 	}
 	protected function getDbTableAlias()
 	{
@@ -53,14 +52,6 @@ class Deal extends EntityBase
 	}
 
 	//region Permissions
-	protected function buildPermissionSql(array $params)
-	{
-		return \CCrmDeal::BuildPermSql(
-			isset($params['alias']) ? $params['alias'] : 'L',
-			isset($params['permissionType']) ? $params['permissionType'] : 'READ',
-			isset($params['options']) && is_array($params['options']) ? $params['options'] : array()
-		);
-	}
 	public function checkReadPermission($entityID = 0, $userPermissions = null)
 	{
 		return \CCrmDeal::CheckReadPermission($entityID, $userPermissions);
@@ -68,6 +59,14 @@ class Deal extends EntityBase
 	public function checkDeletePermission($entityID = 0, $userPermissions = null)
 	{
 		return \CCrmDeal::CheckDeletePermission($entityID, $userPermissions);
+	}
+	protected function buildPermissionSql(array $params)
+	{
+		return \CCrmDeal::BuildPermSql(
+			isset($params['alias']) ? $params['alias'] : 'L',
+			isset($params['permissionType']) ? $params['permissionType'] : 'READ',
+			isset($params['options']) && is_array($params['options']) ? $params['options'] : array()
+		);
 	}
 	//endregion
 
@@ -164,7 +163,7 @@ class Deal extends EntityBase
 			$entityID = (int)$entityID;
 		}
 
-		$dbResult = DealTable::getList(
+		$dbResult = Crm\DealTable::getList(
 			array(
 				'select' => array('ID'),
 				'filter' => array('=ID' => $entityID)
@@ -189,7 +188,7 @@ class Deal extends EntityBase
 			return array();
 		}
 
-		$dbResult = DealTable::getList(
+		$dbResult = Crm\DealTable::getList(
 			array(
 				'filter' => array('@ID' => $entityIDs),
 				'select' => array('ID')

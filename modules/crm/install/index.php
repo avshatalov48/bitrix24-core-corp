@@ -1189,6 +1189,9 @@ class crm extends CModule
 
 		RegisterModuleDependences('intranet', 'OnTransferEMailUser', 'intranet', '\Bitrix\Crm\Integration\Intranet\InviteDialog', 'onTransferEMailUser');
 
+		RegisterModuleDependences('main', 'OnMailEventMailChangeStatus', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onMailEventMailChangeStatus');
+		RegisterModuleDependences('main', 'OnMailEventMailChangeStatus', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onMailEventSendNotification');
+
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler('main', 'OnAfterSetOption_~crm_webform_max_activated', 'crm', '\Bitrix\Crm\WebForm\Form', 'onAfterSetOptionCrmWebFormMaxActivated');
 		$eventManager->registerEventHandler('main', 'OnAfterSetOption_crm_deal_category_limit', 'crm', '\Bitrix\Crm\Restriction\RestrictionManager', 'onDealCategoryLimitChange');
@@ -1239,6 +1242,10 @@ class crm extends CModule
 		);
 
 		$eventManager->registerEventHandler('catalog', 'Bitrix\Catalog\Product\Entity::OnAfterUpdate', 'crm', '\CCrmProduct', 'handlerAfterProductUpdate');
+
+		$eventManager->registerEventHandler('crm', '\\Bitrix\\Crm\\Preset::OnAfterAdd', 'crm', '\\Bitrix\\Crm\\EntityRequisite', 'onAfterPresetAdd');
+		$eventManager->registerEventHandler('crm', '\\Bitrix\\Crm\\Preset::OnAfterUpdate', 'crm', '\\Bitrix\\Crm\\EntityRequisite', 'onAfterPresetUpdate');
+		$eventManager->registerEventHandler('crm', '\\Bitrix\\Crm\\Preset::OnAfterDelete', 'crm', '\\Bitrix\\Crm\\EntityRequisite', 'onAfterPresetDelete');
 
 		$eventManager->registerEventHandler('socialnetwork', 'onUserProfileRedirectGetUrl', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onUserProfileRedirectGetUrl');
 		$eventManager->registerEventHandler('main', 'OnUserConsentProviderList', 'crm', '\Bitrix\Crm\Integration\UserConsent', 'onProviderList');
@@ -1331,6 +1338,7 @@ class crm extends CModule
 		$eventManager->registerEventHandler('socialnetwork', 'onCommentAuxGetPostTypeList', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onCommentAuxGetPostTypeList');
 		$eventManager->registerEventHandler('socialnetwork', 'onCommentAuxGetCommentTypeList', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onCommentAuxGetCommentTypeList');
 		$eventManager->registerEventHandler('socialnetwork', 'onCommentAuxInitJs', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onCommentAuxInitJs');
+		$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'crm', '\Bitrix\Crm\Integration\Socialnetwork\Log', 'onIndexGetContent');
 
 		$eventManager->registerEventHandler('voximplant', 'onCallEnd', 'crm', '\Bitrix\Crm\Integration\VoxImplant\EventHandler', 'onCallEnd');
 		$eventManager->registerEventHandler('recyclebin', 'OnModuleSurvey', 'crm', '\Bitrix\Crm\Integration\Recyclebin\RecyclingManager', 'OnModuleSurvey');
@@ -1351,6 +1359,7 @@ class crm extends CModule
 		$eventManager->registerEventHandler('sale', 'OnBeforeSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Payment', 'OnBeforeSalePaymentEntitySaved');
 		$eventManager->registerEventHandler('sale', 'OnSaleShipmentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentEntitySaved');
 		$eventManager->registerEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
+		$eventManager->registerEventHandler('sale', 'onComponentSaleOrderCheckoutPaymentPayAction', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPaymentPayAction');
 
 		$eventManager->registerEventHandler(
 			'location', 'AddressOnUpdate',
@@ -1428,6 +1437,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Order\EventsHandler\Delivery',
 			'onNeedRecipientContactData'
+		);
+
+		$eventManager->registerEventHandler(
+			'imopenlines',
+			'OnAfterImopenlineActiveChange',
+			'crm',
+			'\Bitrix\Crm\SiteButton\Manager',
+			'onAfterImopenlineActiveChange'
 		);
 
 		$eventManager->registerEventHandler(
@@ -1577,6 +1594,9 @@ class crm extends CModule
 
 		UnRegisterModuleDependences('intranet', 'OnTransferEMailUser', 'intranet', '\Bitrix\Crm\Integration\Intranet\InviteDialog', 'onTransferEMailUser');
 
+		UnRegisterModuleDependences('main', 'OnMailEventMailChangeStatus', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onMailEventMailChangeStatus');
+		UnRegisterModuleDependences('main', 'OnMailEventMailChangeStatus', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onMailEventSendNotification');
+
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~crm_webform_max_activated', 'crm', '\Bitrix\Crm\WebForm\Form', 'onAfterSetOptionCrmWebFormMaxActivated');
 		$eventManager->unregisterEventHandler('mail', 'OnMessageObsolete', 'crm', 'CCrmEMail', 'OnImapEmailMessageObsolete');
@@ -1625,6 +1645,10 @@ class crm extends CModule
 
 		$eventManager->unRegisterEventHandler('catalog', 'Bitrix\Catalog\Product\Entity::OnAfterUpdate', 'crm', '\CCrmProduct', 'handlerAfterProductUpdate');
 
+		$eventManager->unregisterEventHandler('crm', '\\Bitrix\\Crm\\Preset::OnAfterAdd', 'crm', '\\Bitrix\\Crm\\EntityRequisite', 'onAfterPresetAdd');
+		$eventManager->unregisterEventHandler('crm', '\\Bitrix\\Crm\\Preset::OnAfterUpdate', 'crm', '\\Bitrix\\Crm\\EntityRequisite', 'onAfterPresetUpdate');
+		$eventManager->unregisterEventHandler('crm', '\\Bitrix\\Crm\\Preset::OnAfterDelete', 'crm', '\\Bitrix\\Crm\\EntityRequisite', 'onAfterPresetDelete');
+
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onUserProfileRedirectGetUrl', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onUserProfileRedirectGetUrl');
 		$eventManager->unRegisterEventHandler('main', 'OnUserConsentProviderList', 'crm', '\Bitrix\Crm\Integration\UserConsent', 'onProviderList');
 		$eventManager->unRegisterEventHandler('main', 'OnUserConsentDataProviderList', 'crm', '\Bitrix\Crm\Integration\UserConsent', 'onDataProviderList');
@@ -1671,6 +1695,8 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onLogProviderGetProvider', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onLogProviderGetProvider');
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onCommentAuxGetPostTypeList', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onCommentAuxGetPostTypeList');
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onCommentAuxGetCommentTypeList', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onCommentAuxGetCommentTypeList');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'onLogIndexGetContent', 'crm', '\Bitrix\Crm\Integration\Socialnetwork\Log', 'onIndexGetContent');
+
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onCommentAuxInitJs', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onCommentAuxInitJs');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeUpdate', 'crm', '\Bitrix\Crm\Attribute\FieldAttributeManager', 'onUserFieldUpdate');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\Attribute\FieldAttributeManager', 'onUserFieldDelete');
@@ -1805,6 +1831,15 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('sale', 'OnBeforeSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Payment', 'OnBeforeSalePaymentEntitySaved');
 		$eventManager->unRegisterEventHandler('sale', 'OnSaleShipmentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentEntitySaved');
 		$eventManager->unRegisterEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
+		$eventManager->unRegisterEventHandler('sale', 'onComponentSaleOrderCheckoutPaymentPayAction', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPaymentPayAction');
+
+		$eventManager->unRegisterEventHandler(
+			'imopenlines',
+			'OnAfterImopenlineActiveChange',
+			'crm',
+			'\Bitrix\Crm\SiteButton\Manager',
+			'onAfterImopenlineActiveChange'
+		);
 
 		$eventManager->unRegisterEventHandler(
 			'main',

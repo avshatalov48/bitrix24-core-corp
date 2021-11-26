@@ -143,7 +143,9 @@ class DeliveryController extends EntityController
 			'SETTINGS' => [
 				'FIELDS' => [
 					'MESSAGE_DATA' => $messageData,
-					'DELIVERY_SERVICE' => $this->makeDeliveryService($shipment->getDelivery()),
+					'DELIVERY_SERVICE' => $shipment->getDelivery()
+						? $this->makeDeliveryService($shipment->getDelivery())
+						: [],
 					'ADDRESS_FROM_FORMATTED' => $addressFrom ? self::formatAddress($addressFrom->getValue()) : '',
 					'ADDRESS_TO_FORMATTED' => $addressTo ? self::formatAddress($addressTo->getValue()) : '',
 				],

@@ -181,6 +181,14 @@ else
 							$dealData['CLOSED'] = isset($arResult['CLOSED_LIST'][$closed]) ? $arResult['CLOSED_LIST'][$closed] : $closed;
 							break;
 						}
+						case 'CONTACT_CREATED_BY_ID':
+						case 'CONTACT_MODIFY_BY_ID':
+						case 'CONTACT_ASSIGNED_BY_ID':
+						case 'COMPANY_CREATED_BY_ID':
+						case 'COMPANY_MODIFY_BY_ID':
+						case 'COMPANY_ASSIGNED_BY_ID':
+							$dealData[$headerID] = ($arDeal[$headerID . '_FORMATTED_NAME'] ?? '');
+							break;
 						default:
 						{
 							if(isset($arResult['DEAL_UF'][$i]) && isset($arResult['DEAL_UF'][$i][$headerID]))

@@ -455,6 +455,15 @@ final class Fields
 			);
 		}
 
+		$defaultValueType = array_filter(
+			$valueTypes,
+			function (array $item)
+			{
+				return $item['id'] === 'OTHER';
+			}
+		);
+		$defaultValueType = current($defaultValueType)['id'] ?? '';
+
 		return [
 			'id' => $field['ID'] ?? null,
 			'entityId' => \CCrmOwnerType::resolveID($data['ENTITY_NAME']),
@@ -473,7 +482,7 @@ final class Fields
 			'catalog' => $field['TYPE'] === 'product' ? $catalog : null,
 			'items' => $items,
 			'editable' => [
-				'valueType' => $field['VALUE_TYPE'],
+				'valueType' => $field['VALUE_TYPE'] ?: $defaultValueType,
 			],
 		];
 	}

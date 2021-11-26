@@ -9,6 +9,7 @@ import {Counters} from '../counters/counters';
 import {Tabs} from './header/tabs';
 
 import '../css/base.css';
+import {SidePanel} from "../service/side.panel";
 
 export type ViewInfo = {
 	name: string,
@@ -41,6 +42,8 @@ export class View extends EventEmitter
 
 		this.isOwnerCurrentUser = (params.isOwnerCurrentUser === 'Y');
 
+		this.sidePanel = new SidePanel();
+
 		this.requestSender = new RequestSender({
 			signedParameters: params.signedParameters,
 			debugMode: params.debugMode
@@ -72,6 +75,7 @@ export class View extends EventEmitter
 		}
 
 		const tabs = new Tabs({
+			sidePanel: this.sidePanel,
 			views: this.views
 		});
 

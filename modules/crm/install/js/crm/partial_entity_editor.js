@@ -660,6 +660,16 @@ if(typeof BX.Crm.QuickFormPartialEditorDialog === "undefined")
 		BX.removeCustomEvent(window, "onCrmEntityCreate", this._entityCreateSuccessHandler);
 		BX.removeCustomEvent(window, "onCrmEntityCreateError", this._entityCreateFailureHandler);
 	};
+	BX.Crm.QuickFormPartialEditorDialog.prototype.createPopup = function()
+	{
+		if (document.getElementById(this._id))
+		{
+			this.unbindEditorEvents();
+			BX.PopupWindowManager.getPopupById(this._id).destroy();
+		}
+
+		BX.Crm.QuickFormPartialEditorDialog.superclass.createPopup.apply(this);
+	};
 	BX.Crm.QuickFormPartialEditorDialog.prototype.bindEditorEvents = function()
 	{
 		BX.Crm.QuickFormPartialEditorDialog.superclass.bindEditorEvents.apply(this);

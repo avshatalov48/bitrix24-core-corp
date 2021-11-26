@@ -96,5 +96,4 @@ if (array_key_exists("IS_NEED_TO_CHECK", $arResult))
 			"bitrix:crm.config.checker",
 			"invisible"
 	);?><?
-
 }

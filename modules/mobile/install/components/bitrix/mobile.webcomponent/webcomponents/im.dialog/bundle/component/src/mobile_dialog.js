@@ -48,7 +48,7 @@ BX.ImMobile = function(params)
 
 	this.linesDetailCounter = {};
 	this.dialogDetailCounter = {};
-	
+
 	this.callController = null;
 
 	this.keyboardShow = false;
@@ -565,26 +565,24 @@ BX.ImMobile.prototype.mobileActionReady = function()
 		useImageButton:true,
 		attachFileSettings:
 		{
-			"resize":
+			previewMaxWidth: 640,
+			previewMaxHeight: 640,
+			resize:
 			{
-				"targetWidth":-1,
-                "targetHeight":-1,
-				"sourceType":1,
-				"previewMaxWidth":640,
-				"previewMaxHeight":640,
-				"encodingType":0,
-				"mediaType":2,
-				"allowsEdit":false,
-				"saveToPhotoAlbum":true,
-				"popoverOptions":false,
-				"cameraDirection":0,
-
-
+				targetWidth: -1,
+				targetHeight: -1,
+				sourceType: 1,
+				encodingType: 0,
+				mediaType: 2,
+				allowsEdit: false,
+				saveToPhotoAlbum: true,
+				popoverOptions: false,
+				cameraDirection: 0,
 			},
-			"sendFileSeparately":true,
-			"showAttachedFiles": true,
-			"editingMediaFiles":false,
-			"maxAttachedFilesCount": 100
+			sendFileSeparately: true,
+			showAttachedFiles: true,
+			editingMediaFiles:false,
+			maxAttachedFilesCount: 100
 		},
 		attachButton:{
 			items:[

@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
@@ -274,6 +274,33 @@ class CIntranetNotify
 					),
 				);
 
+				if ($bExtranetUser)
+				{
+					$workgroupCodesList = [];
+
+					$res = \Bitrix\Socialnetwork\LogRightTable::getList([
+						'filter' => [
+							'=LOG_ID' => (int)$arFields['ID'],
+						],
+						'select' => [ 'GROUP_CODE' ],
+					]);
+					while ($logRightsFields = $res->fetch())
+					{
+						if (
+							preg_match('/^SG(\d+)$/i', $logRightsFields['GROUP_CODE'], $matches)
+							&& (int)$matches[1] > 0
+						)
+						{
+							$workgroupCodesList[] = $matches[0];
+						}
+					}
+
+					if (!empty($workgroupCodesList))
+					{
+						$arResult['EVENT_FORMATTED']['DESTINATION'] = CSocNetLogTools::formatDestinationFromRights($workgroupCodesList, $arParams);
+					}
+				}
+
 				if (Loader::includeModule('bitrix24'))
 				{
 					$arResult['CREATED_BY']['FORMATTED'] = (
@@ -409,7 +436,7 @@ class CIntranetNotify
 			}
 
 			if (
-				$arParams["MOBILE"] != "Y" 
+				$arParams["MOBILE"] != "Y"
 				&& $arParams["NEW_TEMPLATE"] != "Y"
 			)
 			{
@@ -455,7 +482,7 @@ class CIntranetNotify
 				false,
 				array("GROUP_ID")
 			);
-			
+
 			$arResult = array();
 			while ($arSocNetUserToGroup = $rsSocNetUserToGroup->Fetch())
 			{
@@ -537,4 +564,3 @@ class CIntranetNotify
 		}
 	}
 }
-?>

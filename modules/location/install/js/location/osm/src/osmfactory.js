@@ -17,9 +17,9 @@ export type OSMFactoryProps = {
 	sourceLanguageId: string,
 	token: string,
 	serviceUrl: string,
+	mapServiceUrl: string,
 	hostName: string,
-	autocompletePromptsCount: ?number,
-	locationBiasScale: ?number // 0.1 - 10
+	autocompletePromptsCount: ?number
 }
 
 export default class OSMFactory
@@ -68,7 +68,6 @@ export default class OSMFactory
 		osmParams.autocompleteService = new AutocompleteService({
 			languageId: params.languageId,
 			autocompletePromptsCount: params.autocompletePromptsCount || 7,
-			locationBiasScale: params.locationBiasScale || 9,
 			autocompleteRequester: autocompleteRequester
 		});
 
@@ -93,6 +92,7 @@ export default class OSMFactory
 				return tileLayerAuth;
 			},
 			serviceUrl: params.serviceUrl,
+			mapServiceUrl: params.mapServiceUrl,
 		});
 
 		return new OSM(osmParams);

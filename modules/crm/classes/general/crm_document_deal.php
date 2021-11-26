@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Crm;
 
@@ -56,38 +56,12 @@ class CCrmDocumentDeal extends CCrmDocument
 
 	public static function GetDocument($documentId)
 	{
-		$document = parent::GetDocument($documentId);
-		if ($document)
-		{
-			if ($document['CONTACT_ID'])
-			{
-				$contact = parent::GetDocument('CONTACT_'.$document['CONTACT_ID']);
-				if ($contact)
-				{
-					self::appendReferenceValues($document, $contact, \CCrmOwnerType::Contact);
-				}
-			}
+		$documentInfo = static::GetDocumentInfo($documentId);
 
-			if ($document['COMPANY_ID'])
-			{
-				$company = parent::GetDocument( 'COMPANY_'.$document['COMPANY_ID']);
-				if ($company)
-				{
-					self::appendReferenceValues($document, $company, \CCrmOwnerType::Company);
-				}
-			}
-		}
-
-		return $document;
-	}
-
-	private static function appendReferenceValues(array &$thisValues, array $referenceValues, $entityTypeId)
-	{
-		$idPrefix = \CCrmOwnerType::ResolveName($entityTypeId);
-		foreach ($referenceValues as $id => $field)
-		{
-			$thisValues[$idPrefix.'.'.$id] = $field;
-		}
+		return new Crm\Integration\BizProc\Document\ValueCollection\Deal(
+			CCrmOwnerType::Deal,
+			$documentInfo['ID']
+		);
 	}
 
 	public static function getEntityFields($entityType)
@@ -163,31 +137,31 @@ class CCrmDocumentDeal extends CCrmDocument
 		);
 
 		$arResult += parent::getAssignedByFields();
-		$arResult += array(
-			'CREATED_BY_ID' => array(
+		$arResult += [
+			'CREATED_BY_ID' => [
 				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CREATED_BY_ID_DEAL'),
 				'Type' => 'user',
-			),
-			'MODIFY_BY_ID' => array(
+			],
+			'MODIFY_BY_ID' => [
 				'Name' => GetMessage('CRM_DOCUMENT_FIELD_MODIFY_BY_ID'),
 				'Type' => 'user',
-			),
-			'CATEGORY_ID' => array(
+			],
+			'CATEGORY_ID' => [
 				'Name' => GetMessage('CRM_FIELD_CATEGORY_ID'),
 				'Type' => 'select',
 				'Options' => DealCategory::getSelectListItems(true),
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false
-			),
-			'CATEGORY_ID_PRINTABLE' => array(
+			],
+			'CATEGORY_ID_PRINTABLE' => [
 				'Name' => GetMessage('CRM_FIELD_CATEGORY_ID').$printableFieldNameSuffix,
 				'Type' => 'string',
 				'Filterable' => false,
 				'Editable' => false,
 				'Required' => false,
-			),
-			'STAGE_ID' => array(
+			],
+			'STAGE_ID' => [
 				'Name' => GetMessage('CRM_FIELD_STAGE_ID'),
 				'Type' => 'select',
 				'Options' => DealCategory::getFullStageList(),
@@ -195,101 +169,101 @@ class CCrmDocumentDeal extends CCrmDocument
 				'Editable' => true,
 				'Required' => false,
 				'Settings' => array('Groups' => DealCategory::getStageGroupInfos())
-			),
-			'STAGE_ID_PRINTABLE' => array(
+			],
+			'STAGE_ID_PRINTABLE' => [
 				'Name' => GetMessage('CRM_FIELD_STAGE_ID').$printableFieldNameSuffix,
 				'Type' => 'string',
 				'Filterable' => false,
 				'Editable' => false,
 				'Required' => false,
-			),
-			'CLOSED' => array(
+			],
+			'CLOSED' => [
 				'Name' => GetMessage('CRM_FIELD_CLOSED'),
 				'Type' => 'bool',
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'TYPE_ID' => array(
+			],
+			'TYPE_ID' => [
 				'Name' => GetMessage('CRM_DOCUMENT_DEAL_TYPE_ID'),
 				'Type' => 'select',
 				'Options' => CCrmStatus::GetStatusListEx('DEAL_TYPE'),
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'COMMENTS' => array(
+			],
+			'COMMENTS' => [
 				'Name' => GetMessage('CRM_FIELD_COMMENTS'),
 				'Type' => 'text',
 				'Filterable' => false,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'BEGINDATE' => array(
+			],
+			'BEGINDATE' => [
 				'Name' => GetMessage('CRM_FIELD_BEGINDATE'),
 				'Type' => 'date',
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'CLOSEDATE' => array(
+			],
+			'CLOSEDATE' => [
 				'Name' => GetMessage('CRM_FIELD_CLOSEDATE'),
 				'Type' => 'datetime',
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'EVENT_DATE' => array(
+			],
+			'EVENT_DATE' => [
 				'Name' => GetMessage('CRM_FIELD_EVENT_DATE'),
 				'Type' => 'datetime',
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'EVENT_ID' => array(
+			],
+			'EVENT_ID' => [
 				'Name' => GetMessage('CRM_FIELD_EVENT_ID'),
 				'Type' => 'select',
 				'Options' => CCrmStatus::GetStatusListEx('EVENT_TYPE'),
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'EVENT_DESCRIPTION' => array(
+			],
+			'EVENT_DESCRIPTION' => [
 				'Name' => GetMessage('CRM_FIELD_EVENT_DESCRIPTION'),
 				'Type' => 'text',
 				'Filterable' => false,
 				'Editable' => true,
 				'Required' => false,
-			),
-			"OPENED" => array(
+			],
+			"OPENED" => [
 				"Name" => GetMessage("CRM_FIELD_OPENED"),
 				"Type" => "bool",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
-			),
-			"LEAD_ID" => array(
+			],
+			"LEAD_ID" => [
 				"Name" => GetMessage("CRM_FIELD_LEAD_ID"),
 				"Type" => "int",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
-			),
-			"ORIGINATOR_ID" => array(
+			],
+			"ORIGINATOR_ID" => [
 				"Name" => GetMessage("CRM_FIELD_ORIGINATOR_ID"),
 				"Type" => "string",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
-			),
-			"ORIGIN_ID" => array(
+			],
+			"ORIGIN_ID" => [
 				"Name" => GetMessage("CRM_FIELD_ORIGIN_ID"),
 				"Type" => "string",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
-			),
-			"CONTACT_ID" => array(
+			],
+			"CONTACT_ID" => [
 				"Name" => GetMessage("CRM_FIELD_CONTACT_ID"),
 				"Type" => "UF:crm",
 				"Options" => array('CONTACT' => 'Y'),
@@ -297,24 +271,24 @@ class CCrmDocumentDeal extends CCrmDocument
 				"Editable" => true,
 				"Required" => false,
 				"Multiple" => false,
-			),
-			"CONTACT_IDS" => array(
+			],
+			"CONTACT_IDS" => [
 				"Name" => GetMessage("CRM_FIELD_CONTACT_IDS"),
 				"Type" => "string",
 				"Filterable" => true,
 				"Editable" => true,
 				"Required" => false,
 				"Multiple" => true,
-			),
-			"OBSERVER_IDS" => array(
+			],
+			"OBSERVER_IDS" => [
 				"Name" => GetMessage("CRM_FIELD_OBSERVER_IDS"),
 				"Type" => "user",
 				"Filterable" => true,
 				"Editable" => false,
 				"Required" => false,
 				"Multiple" => true,
-			),
-			"COMPANY_ID" => array(
+			],
+			"COMPANY_ID" => [
 				"Name" => GetMessage("CRM_FIELD_COMPANY_ID"),
 				"Type" => "UF:crm",
 				"Options" => array('COMPANY' => 'Y'),
@@ -322,69 +296,77 @@ class CCrmDocumentDeal extends CCrmDocument
 				"Editable" => true,
 				"Required" => false,
 				"Multiple" => false,
-			),
-			'SOURCE_ID' => array(
+			],
+			'SOURCE_ID' => [
 				'Name' => GetMessage('CRM_DOCUMENT_FIELD_SOURCE_ID'),
 				'Type' => 'select',
 				'Options' => CCrmStatus::GetStatusListEx('SOURCE'),
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'SOURCE_DESCRIPTION' => array(
+			],
+			'SOURCE_DESCRIPTION' => [
 				'Name' => GetMessage('CRM_DOCUMENT_FIELD_SOURCE_DESCRIPTION'),
 				'Type' => 'text',
 				'Filterable' => false,
 				'Editable' => true,
 				'Required' => false,
-			),
-			"DATE_CREATE" => array(
+			],
+			"DATE_CREATE" => [
 				"Name" => GetMessage("CRM_DEAL_EDIT_FIELD_DATE_CREATE"),
 				"Type" => "datetime",
 				"Filterable" => true,
 				"Editable" => false,
 				"Required" => false,
-			),
-			"DATE_MODIFY" => array(
+			],
+			"DATE_MODIFY" => [
 				"Name" => GetMessage("CRM_DEAL_EDIT_FIELD_DATE_MODIFY"),
 				"Type" => "datetime",
 				"Filterable" => true,
 				"Editable" => false,
 				"Required" => false,
-			),
-			'WEBFORM_ID' => array(
+			],
+			'WEBFORM_ID' => [
 				'Name' => GetMessage('CRM_DOCUMENT_WEBFORM_ID'),
 				'Type' => 'select',
 				'Options' => static::getWebFormSelectOptions(),
 				'Filterable' => false,
 				'Editable' => false,
 				'Required' => false,
-			),
-			'IS_RETURN_CUSTOMER' => array(
+			],
+			'IS_RETURN_CUSTOMER' => [
 				'Name' => GetMessage('CRM_DOCUMENT_DEAL_IS_RETURN_CUSTOMER'),
 				'Type' => 'bool',
 				'Editable' => false,
-			),
-			"ORDER_IDS" => array(
+			],
+			"ORDER_IDS" => [
 				"Name" => GetMessage("CRM_FIELD_ORDER_IDS"),
 				"Type" => "int",
 				"Multiple" => true,
-			),
-			'IS_REPEATED_APPROACH' => array(
+			],
+			'IS_REPEATED_APPROACH' => [
 				'Name' => GetMessage('CRM_DOCUMENT_DEAL_IS_REPEATED_APPROACH'),
 				'Type' => 'bool',
 				'Editable' => false,
-			),
-			"PRODUCT_IDS" => array(
+			],
+			"PRODUCT_IDS" => [
 				"Name" => GetMessage("CRM_DOCUMENT_FIELD_PRODUCT_IDS"),
 				"Type" => "int",
 				"Multiple" => true,
-			),
-			"PRODUCT_IDS_PRINTABLE" => array(
+			],
+			"PRODUCT_IDS_PRINTABLE" => [
 				"Name" => GetMessage("CRM_DOCUMENT_FIELD_PRODUCT_IDS") . $printableFieldNameSuffix,
 				"Type" => "text",
-			),
-		);
+			],
+			'TRACKING_SOURCE_ID' => [
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_TRACKING_SOURCE_ID'),
+				'Type' => 'select',
+				'Options' => array_column(Crm\Tracking\Provider::getActualSources(), 'NAME','ID'),
+				'Filterable' => true,
+				'Editable' => true,
+				'Required' => false,
+			],
+		];
 
 		$arResult += static::getCommunicationFields();
 
@@ -401,79 +383,15 @@ class CCrmDocumentDeal extends CCrmDocument
 		return $arResult;
 	}
 
-	static public function PrepareDocument(array &$arFields)
+	/**
+	 * @deprecated
+	 * @see Crm\Integration\BizProc\Document\ValueCollection\Deal
+	 */
+	public static function PrepareDocument(array &$arFields)
 	{
-		$categoryID = isset($arFields['CATEGORY_ID']) ? (int)$arFields['CATEGORY_ID'] : 0;
-		$arFields['CATEGORY_ID_PRINTABLE'] = DealCategory::getName($categoryID);
-
-		$stageID = isset($arFields['STAGE_ID']) ? $arFields['STAGE_ID'] : '';
-		$arFields['STAGE_ID_PRINTABLE'] = DealCategory::getStageName($stageID, $categoryID);
-
-		$arFields['CONTACT_IDS'] = Crm\Binding\DealContactTable::getDealContactIDs($arFields['ID']);
-
-		$orderIds = Crm\Binding\OrderDealTable::getList([
-			'select' => ['ORDER_ID'],
-			'filter' => [
-				'=DEAL_ID' => $arFields['ID'],
-			],
-			'order' => ['ORDER_ID' => 'DESC']
-		])->fetchAll();
-
-		$arFields['ORDER_IDS'] = array_column($orderIds, 'ORDER_ID');
-
-		$productRows = Crm\ProductRowTable::getList([
-			'select' => ['ID', 'PRODUCT_ID', 'CP_PRODUCT_NAME', 'SUM_ACCOUNT'],
-			'filter' => [
-				'=OWNER_TYPE' => \CCrmOwnerTypeAbbr::Deal,
-				'=OWNER_ID' => $arFields['ID'],
-			],
-			'order' => ['SORT' => 'ASC']
-		])->fetchAll();
-
-		$arFields['PRODUCT_IDS'] = array_column($productRows, 'ID');
-		$arFields['PRODUCT_IDS_PRINTABLE'] = '';
-
-		if (!empty($arFields['PRODUCT_IDS']))
-		{
-			$arFields['PRODUCT_IDS_PRINTABLE'] = self::getProductRowsPrintable($productRows);
-		}
-
-		if ($arFields['COMPANY_ID'] <= 0)
-		{
-			//set empty value instead "0"
-			$arFields['COMPANY_ID'] = null;
-		}
-
-		if ($arFields['CONTACT_ID'] <= 0)
-		{
-			//set empty value instead "0"
-			$arFields['CONTACT_ID'] = null;
-		}
 	}
 
-	private static function getProductRowsPrintable(array $rows): string
-	{
-		$text = sprintf(
-			'[table][tr][th]%s[/th][th]%s[/th][/tr]',
-			GetMessage('CRM_DOCUMENT_FIELD_PRODUCT_NAME'),
-			GetMessage('CRM_DOCUMENT_FIELD_PRODUCT_SUM')
-		);
-
-		$currencyId = \CCrmCurrency::GetAccountCurrencyID();
-
-		foreach ($rows as $row)
-		{
-			$text .= sprintf(
-				'[tr][td]%s[/td][td]%s[/td][/tr]',
-				$row['CP_PRODUCT_NAME'],
-				\CCrmCurrency::MoneyToString($row['SUM_ACCOUNT'], $currencyId)
-			);
-		}
-
-		return $text . '[/table]';
-	}
-
-	static public function CreateDocument($parentDocumentId, $arFields)
+	public static function CreateDocument($parentDocumentId, $arFields)
 	{
 		if(!is_array($arFields))
 		{
@@ -873,10 +791,20 @@ class CCrmDocumentDeal extends CCrmDocument
 				throw new Exception($CCrmBizProc->LAST_ERROR);
 			}
 		}
-		//Region automation
+
+		if (isset($arFields['TRACKING_SOURCE_ID']))
+		{
+			Crm\Tracking\UI\Details::saveEntityData(
+				\CCrmOwnerType::Deal,
+				$arDocumentID['ID'],
+				$arFields
+			);
+		}
+
+		//region automation
 		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Deal, $arDocumentID['ID']);
 		$starter->setContextToBizproc()->runOnUpdate($arFields, $arPresentFields);
-		//End region
+		//endregion
 
 		if ($res && $useTransaction)
 		{

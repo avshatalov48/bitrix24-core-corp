@@ -106,6 +106,10 @@
 
 			return result;
 		},
+		forceReload:function (){
+			BX.rest.callMethod("mobile.component.customparams.set", {"name": "more", "clear": true})
+				.then(() => reload())
+		},
 		updateMenu: function ()
 		{
 			BX.ajax({url: component.resultUrl, dataType: "json"})
@@ -268,6 +272,14 @@
 				return item;
 
 			});
+
+			BX.addCustomEvent("onPullEvent-crm", command =>
+			{
+				if(command === 'was_inited')
+				{
+					this.forceReload();
+				}
+			});
 			BX.addCustomEvent("onPullEvent-main", (command, params) =>
 			{
 				if (command == "user_counter")
@@ -379,7 +391,7 @@
 	};
 
 	More.init();
-
+	qrauth.listenUniversalLink()
 	window.updateMenuItem = (id, data) => {
 		menu.updateItems([
 			{ filter: {id: id}, element: data }
@@ -387,6 +399,7 @@
 	};
 
 	BX.onCustomEvent("onMenuLoaded", [this.result]);
+	mobileIntent.notify("preset_task", "preset_task_"+ Application.getPlatform())
 	let intentResult = ["calendar_sync_slider", "calendar_sync_banner"]
 		.find((name, index, intents) => {
 			({intent} = Application.getLastNotification(name))
@@ -430,5 +443,6 @@
 
 		analytics.send( "calendar_sync_" + Application.getPlatform(), {type: intentResult})
 	}
+
 }).bind(this)();
 

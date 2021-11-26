@@ -106,4 +106,51 @@ class Collection implements \Iterator, \ArrayAccess, \Countable
 	{
 		return count($this->fields);
 	}
+
+	/**
+	 * Return array of field names that has attribute Hidden
+	 *
+	 * @return string[]
+	 */
+	public function getHiddenFieldNames(): array
+	{
+		$fieldNames = [];
+
+		foreach ($this->fields as $field)
+		{
+			if ($field->isHidden())
+			{
+				$fieldNames[] = $field->getName();
+			}
+		}
+
+		return $fieldNames;
+	}
+
+	/**
+	 * Remove keys from $data that among hidden fields of this collection.
+	 *
+	 * @param array $data
+	 * @return array
+	 */
+	public function removeHiddenValues(array $data): array
+	{
+		$hiddenFieldNames = $this->getHiddenFieldNames();
+
+		return static::removeHiddenValuesByFieldNames($data, $hiddenFieldNames);
+	}
+
+	/**
+	 * Remove keys from $data that present in $hiddenFieldNames.
+	 *
+	 * @param array $data
+	 * @param string[] $hiddenFieldNames
+	 * @return array
+	 */
+	public static function removeHiddenValuesByFieldNames(array $data, array $hiddenFieldNames): array
+	{
+		$hiddenFieldNames = array_combine($hiddenFieldNames, $hiddenFieldNames);
+
+		return array_diff_key($data, $hiddenFieldNames);
+	}
 }

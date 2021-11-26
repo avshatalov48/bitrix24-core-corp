@@ -83,6 +83,7 @@ $MESS["CRM_DEAL_REBUILD_ACCESS_ATTRS"] = "Для правильної робот
 $MESS["CRM_DEAL_REBUILD_SEARCH_CONTENT"] = "Для забезпечення роботи швидкого пошуку необхідно <a id=\"#ID#\" href=\"#URL#\">зробити перестроювання</a> пошукового індексу угод.";
 $MESS["CRM_DEAL_REBUILD_SEARCH_CONTENT_DLG_SUMMARY"] = "Буде виконано перестроювання пошукового індексу для угод. Виконання цієї операції може зайняти тривалий час.";
 $MESS["CRM_DEAL_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Перестроювання пошукового індексу для угод";
+$MESS["CRM_DEAL_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Йде оновлення системи прав доступу";
 $MESS["CRM_DEAL_REBUILD_SEMANTICS"] = "Для правильної роботи звітів необхідно <a id=\"#ID#\" href=«#URL#»>виконати оновлення</a> службових полів угод (дані користувача змінені не будуть).";
 $MESS["CRM_DEAL_REBUILD_SEMANTICS_DLG_SUMMARY"] = "Буде проведено оновлення службових полів угод. Виконання цієї операції може зайняти тривалий час.";
 $MESS["CRM_DEAL_REBUILD_SEMANTICS_DLG_TITLE"] = "Оновлення службових полів угод";

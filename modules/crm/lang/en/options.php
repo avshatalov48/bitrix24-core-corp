@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_OPTIONS_EMAIL_FROM"] = "\"From\" e-mail address";
 $MESS["CRM_OPTIONS_PATH_TO_ACTIVITY_CUSTOM_TYPE_LIST"] = "Activity types path template";
 $MESS["CRM_OPTIONS_PATH_TO_ACTIVITY_EDIT"] = "Template for path to activity edit form. ";
@@ -47,6 +47,7 @@ $MESS["CRM_OPTIONS_PATH_TO_LEAD_IMPORT"] = "Lead import page:";
 $MESS["CRM_OPTIONS_PATH_TO_LEAD_KANBAN"] = "Lead kanban path template";
 $MESS["CRM_OPTIONS_PATH_TO_LEAD_LIST"] = "Leads page:";
 $MESS["CRM_OPTIONS_PATH_TO_LEAD_SHOW"] = "Lead view page:";
+$MESS["CRM_OPTIONS_PATH_TO_LEAD_STATUS_LIST"] = "Lead status quick edit page";
 $MESS["CRM_OPTIONS_PATH_TO_LEAD_WIDGET"] = "Lead widget path template";
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_CHECK_DETAILS"] = "Order receipt page path";
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_DETAILS"] = "Order details page path";
@@ -84,4 +85,3 @@ $MESS["CRM_SALE_DEAL_PROBABILITY"] = "Default deal probability, %:";
 $MESS["CRM_SALE_DEAL_PROBABILITY_2"] = "Deal probability (by default), %:";
 $MESS["CRM_TAB_PATH"] = "Path Templates";
 $MESS["CRM_TAB_TITLE_PATH"] = "CRM Path Templates";
-?>

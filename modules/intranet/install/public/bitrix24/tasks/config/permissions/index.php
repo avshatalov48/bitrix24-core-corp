@@ -21,7 +21,6 @@ if (
 }
 
 \Bitrix\Main\Loader::includeModule('socialnetwork');
-$componentParams = $arParams['POPUP_COMPONENT_PARAMS'] ?? [];
 
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
@@ -29,7 +28,7 @@ $APPLICATION->IncludeComponent(
 	[
 		'POPUP_COMPONENT_NAME' => 'bitrix:tasks.config.permissions',
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
-		'POPUP_COMPONENT_PARAMS' => $componentParams,
+		'POPUP_COMPONENT_PARAMS' => [],
 		'USE_UI_TOOLBAR' => 'Y',
 		'USE_PADDING' => false,
 		'PLAIN_VIEW' => false,
@@ -40,3 +39,4 @@ $APPLICATION->IncludeComponent(
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");
 ?>
+

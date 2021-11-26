@@ -145,10 +145,10 @@ if($hasNavigationBar)
 			$APPLICATION->includeComponent(
 				'bitrix:intranet.binding.menu',
 				'',
-				array(
-					'SECTION_CODE' => 'crm_switcher',
-					'MENU_CODE' => $bindingMenuMatches[0]
-				)
+				[
+					'SECTION_CODE' => \Bitrix\Crm\Integration\Intranet\BindingMenu\SectionCode::SWITCHER,
+					'MENU_CODE' => $bindingMenuMatches[0],
+				]
 			);
 		}
 
@@ -220,12 +220,16 @@ $APPLICATION->IncludeComponent(
 		'FILTER' => $arParams['~FILTER'],
 		'FILTER_FIELDS' => isset($arParams['~FILTER_FIELDS']) ? $arParams['~FILTER_FIELDS'] : array(),
 		'FILTER_PRESETS' => $arParams['~FILTER_PRESETS'],
+		'ENABLE_FIELDS_SEARCH' => (isset($arParams['~ENABLE_FIELDS_SEARCH']) && $arParams['~ENABLE_FIELDS_SEARCH'] === 'Y') ? 'Y' : 'N',
+		'HEADERS_SECTIONS' => isset($arParams['~HEADERS_SECTIONS']) ? $arParams['~HEADERS_SECTIONS']: [],
 		'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
 		'LAZY_LOAD' => isset($arParams['~LAZY_LOAD']) ? $arParams['~LAZY_LOAD'] : null,
 		'VALUE_REQUIRED_MODE' => isset($arParams['~VALUE_REQUIRED_MODE']) && $arParams['~VALUE_REQUIRED_MODE'] === true,
 		'ENABLE_LIVE_SEARCH' => isset($arParams['~ENABLE_LIVE_SEARCH']) && $arParams['~ENABLE_LIVE_SEARCH'] === true,
 		'LIMITS' => isset($arParams['~LIMITS']) ? $arParams['~LIMITS'] : null,
-		'ENABLE_LABEL' => true
+		'ENABLE_LABEL' => true,
+		'ENABLE_ADDITIONAL_FILTERS' => true,
+		'CONFIG' => isset($arParams['~CONFIG']) ? $arParams['~CONFIG'] : null,
 	),
 	$component
 );

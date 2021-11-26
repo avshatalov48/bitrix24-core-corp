@@ -33,6 +33,7 @@ class WidgetRestAnswerHandler extends BaseRestHandler
 			connectors: data.connectors || [],
 			watchTyping: data.watchTyping,
 			showSessionId: data.showSessionId,
+			crmFormsSettings: data.crmFormsSettings
 		});
 
 		this.store.commit('application/set', {disk: data.disk});

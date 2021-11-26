@@ -3,6 +3,7 @@ $phrasesConfig = [
 	'encoding' => 'ISO-8859-1',
 	'lang' => 'en',
 	'phrases' => [
+		'CRM_BANK_DETAIL_SECTION_US_TITLE' => 'Banking details',
 		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_NAME_US_FIELD' => 'Bank Name',
 		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_NUM_US_FIELD' => 'Bank Account Number',
 		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_ADDR_US_FIELD' => 'Bank Address',

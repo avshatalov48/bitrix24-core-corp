@@ -2,7 +2,9 @@
 namespace Bitrix\Crm\Controller\Tracking\Ad;
 
 use Bitrix\Main;
+use Bitrix\Main\Loader;
 use Bitrix\Intranet;
+use Bitrix\Bitrix24\Feature;
 use Bitrix\Crm\Tracking;
 
 /**
@@ -53,6 +55,14 @@ class Report extends Main\Engine\JsonController
 	 */
 	public function buildAction(Tracking\Ad\ReportBuilder $builder)
 	{
+		if (Loader::includeModule('bitrix24') && !Feature::isFeatureEnabled('crm_tracking_reports'))
+		{
+			return [
+				'complete' => true,
+				'label' => '',
+			];
+		}
+
 		$builder->run();
 		$this->addErrors($builder->getErrorCollection()->toArray());
 

@@ -6,6 +6,7 @@ use Bitrix\Crm\Conversion\LeadConversionType;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\Color\PhaseColorScheme;
+use Bitrix\Crm\Workflow\PaymentStage;
 
 class CCrmViewHelper
 {
@@ -1896,46 +1897,59 @@ class CCrmViewHelper
 			}
 		}
 	}
-	public static function RenderDealStageSettings()
+	private static function PrepareDealStagesByCategoryId($categoryId): array
 	{
 		$result = array();
-		foreach(DealCategory::getAllIDs() as $categoryID)
+
+		$isTresholdPassed = false;
+		$successStageID = CCrmDeal::GetSuccessStageID($categoryId);
+		$failureStageID = CCrmDeal::GetFailureStageID($categoryId);
+		foreach(self::PrepareDealStages($categoryId) as $stage)
 		{
-			$typeID = "category_{$categoryID}";
-			$result[$typeID] = array();
+			$info = array(
+				'id' => $stage['STATUS_ID'],
+				'name' => $stage['NAME'],
+				'sort' => intval($stage['SORT']),
+				'color' => isset($stage['COLOR']) ? $stage['COLOR'] : ''
+			);
 
-			$isTresholdPassed = false;
-			$successStageID = CCrmDeal::GetSuccessStageID($categoryID);
-			$failureStageID = CCrmDeal::GetFailureStageID($categoryID);
-			foreach(self::PrepareDealStages($categoryID) as $stage)
+			if($stage['STATUS_ID'] === $successStageID)
 			{
-				$info = array(
-					'id' => $stage['STATUS_ID'],
-					'name' => $stage['NAME'],
-					'sort' => intval($stage['SORT']),
-					'color' => isset($stage['COLOR']) ? $stage['COLOR'] : ''
-				);
-
-				if($stage['STATUS_ID'] === $successStageID)
-				{
-					$isTresholdPassed = true;
-					$info['semantics'] = 'success';
-					$info['hint'] = GetMessage('CRM_DEAL_STAGE_MANAGER_WON_STEP_HINT');
-				}
-				elseif($stage['STATUS_ID'] ===  $failureStageID)
-				{
-					$info['semantics'] = 'failure';
-				}
-				elseif(!$isTresholdPassed)
-				{
-					$info['semantics'] = 'process';
-				}
-				else
-				{
-					$info['semantics'] = 'apology';
-				}
-				$result[$typeID][] = $info;
+				$isTresholdPassed = true;
+				$info['semantics'] = 'success';
+				$info['hint'] = GetMessage('CRM_DEAL_STAGE_MANAGER_WON_STEP_HINT');
 			}
+			elseif($stage['STATUS_ID'] ===  $failureStageID)
+			{
+				$info['semantics'] = 'failure';
+			}
+			elseif(!$isTresholdPassed)
+			{
+				$info['semantics'] = 'process';
+			}
+			else
+			{
+				$info['semantics'] = 'apology';
+			}
+			$result[] = $info;
+		}
+		return $result;
+	}
+	public static function RenderDealStageSettings($categoryId = -1): string
+	{
+		$result = array();
+		if ($categoryId === -1 || $categoryId === null)
+		{
+			foreach(DealCategory::getAllIDs() as $categoryID)
+			{
+				$typeID = "category_{$categoryID}";
+				$result[$typeID] = self::PrepareDealStagesByCategoryId($categoryID);
+			}
+		}
+		else
+		{
+			$typeID = "category_{$categoryId}";
+			$result[$typeID] = self::PrepareDealStagesByCategoryId($categoryId);
 		}
 
 		$messages = array(
@@ -2160,46 +2174,39 @@ class CCrmViewHelper
 		return $html;
 	}
 
-	public static function RenderDealOrderStageControl($stage)
+	/**
+	 * @param string $stage
+	 * @param string $cssPrefix
+	 * @return string
+	 */
+	public static function RenderDealPaymentStageControl(string $stage, string $cssPrefix = 'crm-list-item-status'): string
 	{
-		$cssPostfix = '';
-
-		if ($stage === Order\OrderStage::PAID)
-		{
-			$cssPostfix = 'paid';
-		}
-		elseif ($stage === Order\OrderStage::SENT_NO_VIEWED)
-		{
-			$cssPostfix = 'send';
-		}
-		elseif ($stage === Order\OrderStage::VIEWED_NO_PAID)
-		{
-			$cssPostfix = 'seen';
-		}
-		elseif ($stage === Order\OrderStage::PAYMENT_CANCEL)
-		{
-			$cssPostfix = 'cancel';
-		}
-		elseif ($stage === Order\OrderStage::REFUND)
-		{
-			$cssPostfix = 'refund';
-		}
-
-		$stageList = Order\OrderStage::getList();
-
-		if (!isset($stageList[$stage]))
+		if (!PaymentStage::isValid($stage))
 		{
 			return '';
 		}
 
-		return '<div class="crm-list-item-status crm-list-item-status-'.$cssPostfix.'">'.$stageList[$stage].'</div>';
+		$classMap = [
+			PaymentStage::NOT_PAID => 'not-paid',
+			PaymentStage::PAID => 'paid',
+			PaymentStage::SENT_NO_VIEWED => 'send',
+			PaymentStage::VIEWED_NO_PAID => 'seen',
+			PaymentStage::CANCEL => 'cancel',
+			PaymentStage::REFUND => 'refund',
+		];
+
+		$cssPostfix = $classMap[$stage] ?? 'default';
+		$text = PaymentStage::getMessage($stage);
+
+		return "<div class=\"$cssPrefix $cssPrefix-$cssPostfix\">$text</div>";
 	}
 
 	/**
 	 * @param string $stage
+	 * @param string $cssPrefix
 	 * @return string
 	 */
-	public static function RenderDealDeliveryStageControl($stage)
+	public static function RenderDealDeliveryStageControl($stage, string $cssPrefix = 'crm-list-item-status')
 	{
 		static $stages;
 
@@ -2217,7 +2224,9 @@ class CCrmViewHelper
 			? 'shipped'
 			: 'no-shipped';
 
-		return '<div class="crm-list-item-status crm-list-item-status-'.$cssPostfix.'">'.$stages[$stage].'</div>';
+		$text = $stages[$stage];
+
+		return "<div class=\"$cssPrefix $cssPrefix-$cssPostfix\">$text</div>";
 	}
 
 	public static function RenderDealStageControl($arParams)
@@ -2317,6 +2326,10 @@ class CCrmViewHelper
 			{
 				$infos = self::PrepareOrderShipmentStatuses();
 			}
+			elseif (\CCrmOwnerType::isPossibleDynamicTypeId($arParams['ENTITY_TYPE_ID']))
+			{
+				$infos = self::PrepareItemsStatuses($arParams['ENTITY_TYPE_ID'], $arParams['CATEGORY_ID']);
+			}
 		}
 
 		$enableCustomColors = true;
@@ -2405,6 +2418,7 @@ class CCrmViewHelper
 		{
 			$finalInfo = $infos[$finalID];
 		}
+
 		$finalSort = is_array($finalInfo) && isset($finalInfo['SORT']) ? intval($finalInfo['SORT']) : -1;
 
 		$isSuccessful = $currentSort === $finalSort;
@@ -2574,6 +2588,21 @@ class CCrmViewHelper
 		$arParams['INFOS'] = self::PrepareInvoiceStatuses();
 		$arParams['FINAL_ID'] = 'P';
 		$arParams['ENTITY_TYPE_NAME'] = CCrmOwnerType::ResolveName(CCrmOwnerType::Invoice);
+		return self::RenderProgressControl($arParams);
+	}
+	public static function RenderItemStageControl($arParams): string
+	{
+		if (!is_array($arParams))
+		{
+			$arParams = [];
+		}
+		else
+		{
+			$arParams['PREFIX'] = \CCrmStatus::getDynamicEntityStatusPrefix($arParams['ENTITY_TYPE_ID'], $arParams['CATEGORY_ID']);
+			$arParams['FINAL_ID'] = $arParams['PREFIX'].':SUCCESS';
+			$arParams['ENTITY_TYPE_NAME'] = CCrmOwnerType::ResolveName($arParams['ENTITY_TYPE_ID']);
+		}
+
 		return self::RenderProgressControl($arParams);
 	}
 	public static function PrepareFormTabFields($tabID, &$arSrcFields, &$arFormOptions, $ignoredFieldIDs = array(), $arFieldOptions = array())
@@ -2792,6 +2821,24 @@ class CCrmViewHelper
 		return self::$ORDER_SHIPMENT_STATUSES;
 	}
 
+	protected static function PrepareItemsStatuses($entityTypeId, $categoryId): array
+	{
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if ($factory && $factory->isStagesSupported())
+		{
+			$stages = $factory->getStages($categoryId);
+			$statuses = [];
+			foreach ($stages->getAll() as $stage)
+			{
+				$statuses[$stage->getStatusId()] = $stage->collectValues();
+			}
+
+			return $statuses;
+		}
+
+		return [];
+	}
+
 	public static function RenderOrderShipmentStatusSettings()
 	{
 		$result = array();
@@ -2944,6 +2991,77 @@ class CCrmViewHelper
 
 		return '<script type="text/javascript">'
 			.'BX.ready(function(){ if(typeof(BX.CrmQuoteStatusManager) === "undefined") return;  BX.CrmQuoteStatusManager.infos = '.CUtil::PhpToJSObject($result).'; BX.CrmQuoteStatusManager.messages = '.CUtil::PhpToJSObject($messages).'; });'
+			.'</script>';
+	}
+
+	private static function PrepareItemStatusesByCategoryId($entityTypeId, $categoryId): array
+	{
+		$result = [];
+
+		$prefix = \CCrmStatus::getDynamicEntityStatusPrefix($entityTypeId, $categoryId);
+		foreach (self::PrepareItemsStatuses($entityTypeId, $categoryId) as $status)
+		{
+			$info = [
+				'id' => $status['STATUS_ID'],
+				'name' => $status['NAME'],
+				'sort' => intval($status['SORT']),
+				'color' => $status['COLOR'] ?? '',
+				'semantics' => $status['SEMANTICS'],
+			];
+			if ($status['SEMANTICS'] === 'F' && $status['STATUS_ID'] === $prefix.':FAIL')
+			{
+				$info['semantics'] = 'failure';
+			}
+			if ($status['SEMANTICS'] === 'F' && $status['STATUS_ID'] !== $prefix.':FAIL')
+			{
+				$info['semantics'] = 'apology';
+			}
+			if ($status['SEMANTICS'] === 'S')
+			{
+				$info['semantics'] = 'success';
+				$info['hint'] = GetMessage('CRM_ITEM_STATUS_MANAGER_SELECTOR_TTL');
+			}
+			$result[] = $info;
+		}
+		return $result;
+	}
+	public static function RenderItemStatusSettings($entityTypeId, $categoryId): string
+	{
+		if (!isset($categoryId))
+		{
+			$categoryId = '0';
+		}
+
+		$result = [];
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if ($categoryId === '0')
+		{
+			foreach ($factory->getCategories() as $category)
+			{
+				$categoryId = $category->getId();
+				$typeId = 'category_'.$categoryId;
+				$result[$typeId] = self::PrepareItemStatusesByCategoryId($entityTypeId, $categoryId);
+			}
+		}
+		else
+		{
+			$typeId = 'category_'.$categoryId;
+			$result[$typeId] = self::PrepareItemStatusesByCategoryId($entityTypeId, $categoryId);
+		}
+
+		$messages = [
+			'dialogTitle' => GetMessage('CRM_ITEM_STATUS_MANAGER_DLG_TTL'),
+			'failureTitle' => GetMessage('CRM_ITEM_STATUS_MANAGER_FAILURE_TTL'),
+			'selectorTitle' => GetMessage('CRM_ITEM_STATUS_MANAGER_SELECTOR_TTL'),
+			'checkErrorTitle' => GetMessage('CRM_ITEM_STATUS_MANAGER_CHECK_ERROR_TTL'),
+			'checkErrorHelp' => GetMessage('CRM_STAGE_MANAGER_CHECK_ERROR_HELP'),
+			'checkErrorHelpArticleCode' => '8233923',
+		];
+
+		return '<script type="text/javascript">'
+			.'BX.ready(function(){ if(typeof(BX.CrmItemStatusManager) === "undefined") return;'
+			.'BX.CrmItemStatusManager.infos = '.CUtil::PhpToJSObject($result).';'.PHP_EOL
+			.'BX.CrmItemStatusManager.messages = '.CUtil::PhpToJSObject($messages).'; });'.PHP_EOL
 			.'</script>';
 	}
 

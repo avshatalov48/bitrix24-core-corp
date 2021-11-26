@@ -246,11 +246,7 @@ export class Counters
 			{
 				this.myCounters[type].updateCount(value);
 
-				if (value === 0)
-				{
-					this.myCounters[type].unActive();
-				}
-				else if (Counters.counterTypes.comment.includes(type))
+				if (Counters.counterTypes.comment.includes(type))
 				{
 					newCommentsCount += value;
 				}
@@ -407,7 +403,6 @@ export class Counters
 			if (Counters.counterTypes.comment.includes(type))
 			{
 				counter.updateCount(0);
-				counter.unActive();
 			}
 		});
 

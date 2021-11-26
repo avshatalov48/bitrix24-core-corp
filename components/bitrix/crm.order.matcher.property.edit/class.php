@@ -7,11 +7,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Internals\Input;
+use Bitrix\Crm;
 
 Loc::loadMessages(__FILE__);
 
 class ConfigOrderPropertyEdit extends \CBitrixComponent
 {
+	use Crm\Component\EntityDetails\SaleProps\ComponentTrait;
+
 	protected $action = null;
 	protected $errors = [];
 
@@ -1186,6 +1189,11 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 
 		$result['property'] = $this->property;
 
+		if ($propertyRows = $this->getPropertyRowsCount($result['property']))
+		{
+			$result['property']['ROWS'] = (string)$propertyRows;
+		}
+		
 		if ($this->hasErrors() || !$isCreationMode)
 		{
 			$result['html'] = $this->getInitialLoadRedraw();

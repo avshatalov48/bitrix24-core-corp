@@ -5,7 +5,6 @@ namespace Bitrix\Location\Source\Osm;
 use Bitrix\Location\Entity\Source;
 use Bitrix\Location\Repository\Location\IRepository;
 use Bitrix\Location\Source\Osm\Api\Api;
-use Bitrix\Main\IO\File;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Context;
 
@@ -58,6 +57,7 @@ final class OsmSource extends Source
 
 		return [
 			'serviceUrl' => $this->getOsmApiUrl(),
+			'mapServiceUrl' => $this->getOsmMapServiceUrl(),
 			'token' => $token ? $token->getToken() : null,
 			'useGeocodingService' => true,
 			'hostName' => $this->getOsmHostName()
@@ -132,10 +132,20 @@ final class OsmSource extends Source
 	}
 
 	/**
+	 * @return string|null
+	 */
+	public function getOsmMapServiceUrl(): ?string
+	{
+		if (defined('LOCATION_OSM_MAP_SERVICE_URL') && LOCATION_OSM_MAP_SERVICE_URL)
+		{
+			return (string)LOCATION_OSM_MAP_SERVICE_URL;
+		}
+
+		return null;
+	}
+
+	/**
 	 * @return Token|null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getOsmToken(): ?Token
 	{

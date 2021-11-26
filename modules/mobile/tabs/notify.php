@@ -35,7 +35,6 @@ class Notify implements Tabable
 		{
 			$result["params"]= [
 				"onclick"=>\Bitrix\Mobile\Tab\Utils::getComponentJSCode($data["component"]),
-				//"counter"=>"tasks_total",
 			];
 		}
 
@@ -44,19 +43,6 @@ class Notify implements Tabable
 
 	public function getDataInternal()
 	{
-//		return [
-//			"sort" => $this->defaultSortValue(),
-//			"counter" => "notifications",
-//			"useLetterImage" => true,
-//			"color" => "#40465A",
-//			"imageUrl" => "favorite/notify.png",
-//			"title" => $this->getTitle(),
-//			"params" => [
-//				"page_id" => "notifications",
-//				"url" => $this->context->siteDir . "mobile/im/notify.php"
-//			]
-//		];
-
 		return [
 			"sort" => $this->defaultSortValue(),
 			"imageName" => "bell",
@@ -64,14 +50,12 @@ class Notify implements Tabable
 			"id" => $this->getId(),
 			"component" => [
 				"name" => "JSStackComponent",
-				"title" => 'Notifications', //todo
+				"title" =>  $this->getTitle(),
 				"componentCode" => "im.notify",
 				"scriptPath" => Manager::getComponentPath("im.notify"),
 				"rootWidget" => [
 					'name' => 'layout',
 					'settings' => [
-						//'useSearch' => true,
-						//'useLargeTitleMode' => true,
 						'objectName' => 'layoutWidget',
 					],
 				],

@@ -9,6 +9,12 @@
  */
 
 
+use Bitrix\Main\Entity\Query\Join;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable;
+use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
+use Bitrix\Tasks\Integration\Recyclebin\Manager;
+
 IncludeModuleLangFile(__FILE__);
 
 if (!CModule::IncludeModule('webservice'))
@@ -635,7 +641,9 @@ class CTasksWebService extends IWebService
 		$data->addChild($obChanges = new CXMLCreator('Changes'));
 
 		if (!$changeToken)
+		{
 			$obChanges->addChild($this->__getFieldsDefinition());
+		}
 
 		$data->addChild($obData = new CXMLCreator('rs:data'));
 
@@ -643,28 +651,27 @@ class CTasksWebService extends IWebService
 
 		$arFilter['MEMBER'] = \Bitrix\Tasks\Util\User::getId();
 
-		$dbRes = CTasks::GetList(array("ID" => "ASC"), $arFilter, array(), array('bGetZombie' => true));
+		$dbRes = CTasks::GetList(array("ID" => "ASC"), $arFilter, array());
 
 		while ($arRes = $dbRes->Fetch())
 		{
-			if ($arRes['ZOMBIE'] === 'Y')
-			{
-				$obId = new CXMLCreator('Id');
-				$obId->setAttribute('ChangeType', 'Delete');
-				$obId->setData($arRes['ID']);
-				$obChanges->addChild($obId);
-			}
-			else
-			{
-				$rsFiles = CTaskFiles::GetList(array(), array("TASK_ID" => $arRes["ID"]));
-				$arRes["FILES"] = array();
+			$rsFiles = CTaskFiles::GetList(array(), array("TASK_ID" => $arRes["ID"]));
+			$arRes["FILES"] = array();
 
-				while ($arFiles = $rsFiles->fetch())
-					$arRes["FILES"][] = $arFiles["FILE_ID"];
+			while ($arFiles = $rsFiles->fetch())
+				$arRes["FILES"][] = $arFiles["FILE_ID"];
 
-				$obData->addChild($this->__getRow($arRes, $listName, $last_change));
-				$counter++;
-			}
+			$obData->addChild($this->__getRow($arRes, $listName, $last_change));
+			$counter++;
+		}
+
+		$deletedIds = $this->getDeletedTasks($arFilter);
+		foreach ($deletedIds as $deletedId)
+		{
+			$obId = new CXMLCreator('Id');
+			$obId->setAttribute('ChangeType', 'Delete');
+			$obId->setData($deletedId);
+			$obChanges->addChild($obId);
 		}
 
 		$obData->setAttribute('ItemCount', $counter);
@@ -678,6 +685,54 @@ class CTasksWebService extends IWebService
 		return array('GetListItemChangesSinceTokenResult' => $data);
 	}
 
+	/**
+	 * @param array $arFilter
+	 * @return array
+	 */
+	private function getDeletedTasks(array $arFilter): array
+	{
+		if (!\Bitrix\Main\Loader::includeModule('recyclebin'))
+		{
+			return [];
+		}
+
+		$query = RecyclebinTable::query()
+			->setSelect([
+				'TASK_ID' => 'ENTITY_ID',
+				'DATA' => 'RD.DATA'
+			])
+			->registerRuntimeField(
+				'RD',
+				new \Bitrix\Main\Entity\ReferenceField(
+					'RD',
+					RecyclebinDataTable::getEntity(),
+					Join::on('this.ID', 'ref.RECYCLEBIN_ID')->where('ref.ACTION', 'TASK'),
+					['join_type' => 'inner']
+				)
+			)
+			->where('ENTITY_TYPE', '=', Manager::TASKS_RECYCLEBIN_ENTITY);
+
+		if (array_key_exists('>CHANGED_DATE', $arFilter))
+		{
+			$format = \CAllSite::GetDateFormat('FULL');
+			$format = \Bitrix\Main\Type\Date::convertFormatToPhp($format);
+			$query->where('TIMESTAMP', '>', new \Bitrix\Main\Type\DateTime($arFilter['>CHANGED_DATE'], $format));
+		}
+
+		$res = $query->exec();
+
+		$ids = [];
+		while ($row = $res->fetch())
+		{
+			$taskData = unserialize($row['DATA'], ['allowed_classes' => false]);
+			if ($taskData['RESPONSIBLE_ID'] == $arFilter['MEMBER'])
+			{
+				$ids[] = $row['TASK_ID'];
+			}
+		}
+
+		return $ids;
+	}
 
 	function UpdateListItems($listName, $updates)
 	{

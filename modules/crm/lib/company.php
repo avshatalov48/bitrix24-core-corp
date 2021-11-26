@@ -9,6 +9,8 @@ namespace Bitrix\Crm;
 
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
+use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\StringField;
 
 Loc::loadMessages(__FILE__);
@@ -31,6 +33,8 @@ Loc::loadMessages(__FILE__);
  */
 class CompanyTable extends Entity\DataManager
 {
+	protected static $isCheckUserFields = true;
+
 	public static function getTableName()
 	{
 		return 'b_crm_company';
@@ -101,6 +105,10 @@ class CompanyTable extends Entity\DataManager
 //			),
 			'COMMENTS' => array(
 				'data_type' => 'string'
+			),
+			'OPENED' => array(
+				'data_type' => 'boolean',
+				'values' => array('N', 'Y')
 			),
 			'ADDRESS' => array(
 				'data_type' => 'string'
@@ -299,7 +307,25 @@ class CompanyTable extends Entity\DataManager
 			),
 			'SEARCH_CONTENT' => array(
 				'data_type' => 'string'
-			)
+			),
+			(new OneToMany('CONTACT_BINDINGS', Binding\ContactCompanyTable::class, 'COMPANY'))
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
 		);
+	}
+
+	public static function disableUserFieldsCheck(): void
+	{
+		static::$isCheckUserFields = false;
+	}
+
+	protected static function checkUfFields($object, $ufdata, $result)
+	{
+		if (!static::$isCheckUserFields)
+		{
+			static::$isCheckUserFields = true;
+			return;
+		}
+
+		parent::checkUfFields($object, $ufdata, $result);
 	}
 }

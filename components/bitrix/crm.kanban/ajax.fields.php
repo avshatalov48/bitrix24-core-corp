@@ -91,9 +91,10 @@ else
 	}
 	else
 	{
-		$settings = new \Bitrix\Crm\Filter\DealSettings(
-			['ID' => $filterId]
-		);
+		$settings = new \Bitrix\Crm\Filter\DealSettings([
+			'ID' => $filterId,
+			'flags' => \Bitrix\Crm\Filter\DealSettings::FLAG_ENABLE_CLIENT_FIELDS,
+		]);
 	}
 	$filter = \Bitrix\Crm\Filter\Factory::createEntityFilter($settings);
 

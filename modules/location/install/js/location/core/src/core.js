@@ -12,7 +12,6 @@ import FormatTemplate from './entity/format/formattemplate';
 import FormatTemplateCollection from './entity/format/formattemplatecollection';
 import {AutocompleteServiceBase} from './base/autocompleteservicebase';
 import type {AutocompleteServiceParams} from './base/autocompleteservicebase';
-import AutocompleteServiceFilter from './base/autocompleteservicefilter';
 
 import BaseSource from './base/sourcebase';
 import MapBase from './base/mapbase';
@@ -30,6 +29,7 @@ import LocationJsonConverter from "./entity/location/locationjsonconverter";
 import StringConverter from './entity/address/converter/stringconverter';
 import {SourceCreationError, MethodNotImplemented} from './common/error';
 import ErrorPublisher from './common/errorpublisher';
+import Storage from './common/storage';
 
 import Limit from './common/limit';
 import Point from './common/point';
@@ -54,7 +54,7 @@ export {
 	SourceRepository,
 
 	StringConverter as AddressStringConverter,
-	AutocompleteServiceBase, AutocompleteServiceFilter,
+	AutocompleteServiceBase,
 	PhotoServiceBase,
 	BaseSource,
 	MapBase,
@@ -68,6 +68,7 @@ export {
 	MethodNotImplemented,
 
 	ErrorPublisher,
+	Storage,
 	Limit,
 	Point,
 

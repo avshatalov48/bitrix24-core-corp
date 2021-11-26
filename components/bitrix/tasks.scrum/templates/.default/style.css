@@ -1,3 +1,10 @@
+/*todo remove later*/
+#workarea-content {
+	display: block;
+}
+
+
+
 .tasks-scrum-wrapper .workarea-content-paddings { padding-right: 15px !important; }
 
 .tasks-scrum-wrapper .pagetitle-below { margin-right: 15px; }
@@ -147,6 +154,7 @@
 .tasks-scrum-entity-items-loader {
 	overflow: hidden;
 }
+
 .tasks-scrum-backlog {
 	-webkit-box-flex: 1;
 	-ms-flex: 1;

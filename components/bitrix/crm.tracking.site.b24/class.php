@@ -38,9 +38,7 @@ class CrmTrackingB24SiteComponent extends \CBitrixComponent
 		$sites = is_array($sites) ? $sites : [];
 
 		$isShop = $this->arParams['IS_SHOP'] ? 'Y' : 'N';
-		Tracking\Internals\SiteB24Table::delete([
-			'IS_SHOP' => $isShop
-		]);
+		Tracking\Internals\SiteB24Table::deleteByShopField($isShop);
 		foreach ($sites as $siteId => $enabled)
 		{
 			$enabled = $enabled !== 'N';

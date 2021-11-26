@@ -1,8 +1,9 @@
 import {Loc} from 'main.core';
-
 import {
-	Location, LocationType,
-	AddressType, Address,	DistanceCalculator,
+	Location,
+	LocationType,
+	AddressType,
+	Address
 } from 'location.core';
 
 import type {AutocompleteServiceParams} from 'location.core';
@@ -24,7 +25,6 @@ export default class AutocompleteResponseConverter extends BaseResponseConverter
 		const result = [];
 		const hashMap = [];
 		const addressLine2 = response.address_tail ? response.address_tail : '';
-		const isLocationForBiasUsed = response.is_location_for_bias_used ? response.is_location_for_bias_used : false;
 
 		response.features.forEach((item) =>
 		{
@@ -56,7 +56,7 @@ export default class AutocompleteResponseConverter extends BaseResponseConverter
 			}
 		});
 
-		return isLocationForBiasUsed ? this.#sortResultByDistance(result) : result;
+		return result;
 	}
 
 	#createLocation(responseItem: {}, autocompleteServiceParams: AutocompleteServiceParams): ?Location
@@ -93,8 +93,6 @@ export default class AutocompleteResponseConverter extends BaseResponseConverter
 			languageId: this.languageId
 		});
 
-		let distance = 20000;
-
 		if (
 			responseItem.geometry
 			&& responseItem.geometry.coordinates
@@ -104,22 +102,7 @@ export default class AutocompleteResponseConverter extends BaseResponseConverter
 		{
 			location.latitude = String(responseItem.geometry.coordinates[1]);
 			location.longitude = String(responseItem.geometry.coordinates[0]);
-
-			if (autocompleteServiceParams.locationForBias)
-			{
-				distance = Math.round(
-					DistanceCalculator.getDistanceFromLatLonInKm(
-						autocompleteServiceParams.locationForBias.latitude,
-						autocompleteServiceParams.locationForBias.longitude,
-						responseItem.geometry.coordinates[1],
-						responseItem.geometry.coordinates[0]
-					)
-				);
-			}
 		}
-
-		// We'll try to sort by distance a bit later
-		location.setFieldValue(LocationType.TMP_DISTANCE, distance);
 
 		if (address)
 		{
@@ -323,6 +306,7 @@ export default class AutocompleteResponseConverter extends BaseResponseConverter
 		result += (fields?.country ?? '');
 		result += (fields?.state ?? '');
 		result += (fields?.county ?? '');
+		result += (fields?.locality ?? '');
 		result += (fields?.city ?? '');
 		result += (fields?.street ?? '');
 		result += (fields?.name ?? '');
@@ -330,32 +314,6 @@ export default class AutocompleteResponseConverter extends BaseResponseConverter
 		result += (fields?.type ?? '');
 
 		return result;
-	}
-
-	/**
-	 * Even with location_bias_scale=10 we can receive location in wrong order.
-	 */
-	#sortResultByDistance(locations: Array<Location>): Array<Location>
-	{
-		locations.sort((loc1, loc2) =>
-		{
-			let result = 0;
-			const a = loc1.getFieldValue(LocationType.TMP_DISTANCE);
-			const b = loc2.getFieldValue(LocationType.TMP_DISTANCE);
-
-			if (a > b)
-			{
-				result = 1;
-			}
-			else if (a < b)
-			{
-				result = -1;
-			}
-
-			return result;
-		});
-
-		return locations;
 	}
 
 	#convertLocationType(type: String): String

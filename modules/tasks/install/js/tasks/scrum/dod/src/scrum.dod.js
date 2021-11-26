@@ -10,6 +10,9 @@ import {RequestSender} from './request.sender';
 
 import './css/base.css';
 
+import 'ui.layout-form';
+import 'ui.forms';
+
 type Params = {
 	groupId: number
 }
@@ -37,6 +40,7 @@ export class ScrumDod
 		this.sidePanel = new SidePanel();
 		this.requestSender = new RequestSender();
 
+		this.emptyDod = true;
 		this.skipNotifications = false;
 	}
 
@@ -51,13 +55,30 @@ export class ScrumDod
 			const settings = response.data;
 
 			const types = settings.types;
+
+			this.emptyDod = (types.length === 0);
+
 			const activeTypeId = settings.activeTypeId;
+
+			if (this.isEmptyDod())
+			{
+				if (!this.skipNotifications)
+				{
+					return Promise.resolve();
+				}
+			}
 
 			this.setActiveTypeData(activeTypeId, types);
 
 			const popup = this.createPopup(types);
 
 			popup.subscribe('onAfterShow', (baseEvent: BaseEvent) => {
+
+				if (this.isEmptyDod())
+				{
+					return;
+				}
+
 				const contentContainer = popup.getContentContainer();
 				const typesNode = contentContainer.querySelector('.tasks-scrum-dod-types');
 				const listNode = contentContainer.querySelector('.tasks-scrum-dod-checklist');
@@ -65,10 +86,18 @@ export class ScrumDod
 				Event.bind(typesNode, 'change', () => {
 					const typeId = parseInt(typesNode.value, 10);
 					this.setActiveTypeData(typeId, types);
-					this.renderListTo(listNode, typeId);
+					this.renderListTo(listNode, typeId)
+						.then(() => {
+							popup.adjustPosition();
+						})
+					;
 				});
 
-				this.renderListTo(listNode, typesNode.value);
+				this.renderListTo(listNode, typesNode.value)
+					.then(() => {
+						popup.adjustPosition();
+					})
+				;
 			});
 
 			popup.subscribe('onClose', () => this.onClose());
@@ -89,6 +118,11 @@ export class ScrumDod
 
 	onClose()
 	{
+		if (this.isEmptyDod())
+		{
+			return;
+		}
+
 		const activeTypeData = this.getActiveTypeData();
 
 		this.requestSender.saveList({
@@ -193,6 +227,33 @@ export class ScrumDod
 
 	createPopup(types: Array<TypeData>): Popup
 	{
+		const buttons = [];
+
+		if (this.isEmptyDod())
+		{
+			buttons.push(
+				new Button({
+					text : Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_CLOSE_BUTTON_TEXT'),
+					color: Button.Color.LINK,
+					events : {
+						click: () => popup.close()
+					}
+				})
+			);
+		}
+		else
+		{
+			buttons.push(
+				new Button({
+					text : this.getPopupButtonText(),
+					color: Button.Color.SUCCESS,
+					events : {
+						click: () => popup.close()
+					}
+				})
+			);
+		}
+
 		const popup = new Popup(
 			Text.getRandom(),
 			null,
@@ -204,19 +265,8 @@ export class ScrumDod
 				autoHide: true,
 				closeByEsc: true,
 				closeIcon: true,
-				offsetTop: -340,
-				minWidth: document.body.offsetWidth / 1.5,
-				width: document.body.offsetWidth / 1.5,
 				overlay: true,
-				buttons: [
-					new Button({
-						text : this.getPopupButtonText(),
-						color: Button.Color.SUCCESS,
-						events : {
-							click: () => popup.close()
-						}
-					})
-				]
+				buttons: buttons
 			}
 		);
 
@@ -225,6 +275,21 @@ export class ScrumDod
 
 	renderContent(types: Array<TypeData>): HTMLElement
 	{
+		if (this.isEmptyDod())
+		{
+			return Tag.render`
+				<div class="ui-form ui-form-line tasks-scrum-dod-form">
+					<div class="ui-form-row">
+						<div class="ui-form-label">
+							<div class="ui-ctl-label-text">
+								${Loc.getMessage('TASKS_SCRUM_DOD_LABEL_EMPTY')}
+							</div>
+						</div>
+					</div>
+				</div>
+			`;
+		}
+
 		const activeTypeData = this.getActiveTypeData();
 
 		const renderOption = (typeData: TypeData) =>
@@ -258,19 +323,19 @@ export class ScrumDod
 		`;
 	}
 
-	renderListTo(container: HTMLElement, typeId: number): HTMLElement
+	renderListTo(container: HTMLElement, typeId: number): Promise
 	{
 		Dom.clean(container);
 
 		const loader = this.showLoader(container);
 
-		this.requestSender.getList({
+		return this.requestSender.getList({
 			groupId: this.groupId,
 			taskId: this.taskId,
 			typeId: typeId
 		}).then((response) => {
 			loader.hide();
-			Runtime.html(container, response.data.html);
+			return Runtime.html(container, response.data.html);
 		});
 	}
 
@@ -291,6 +356,11 @@ export class ScrumDod
 	getActiveTypeData(): TypeData
 	{
 		return this.activeTypeData;
+	}
+
+	isEmptyDod(): boolean
+	{
+		return this.emptyDod;
 	}
 
 	isListRequired(typeData: TypeData): boolean

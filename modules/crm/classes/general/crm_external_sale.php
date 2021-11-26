@@ -26,6 +26,7 @@ class CCrmExternalSale
 	{
 		COption::RemoveOption("crm", "~limit_max_shops");
 		COption::RemoveOption("crm", "~limit_max_days");
+		COption::RemoveOption("crm", "crm_deal_category_limit");
 	}
 
 	public static function GetDefaultSettings($id)

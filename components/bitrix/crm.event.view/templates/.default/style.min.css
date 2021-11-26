@@ -1,0 +1,16 @@
+table.bx-interface-grid tr.bx-grid-gutter td{padding:0 !important}table.bx-interface-grid tr.bx-grid-sorting td{padding:0 !important}table.bx-interface-grid tr.bx-grid-footer table.bx-grid-footer td{padding:2px 6px !important}
+table.bx-interface-grid tr.bx-grid-head td.bx-sorted { }
+
+table.bx-interface-grid tr.bx-grid-head td { }
+
+table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign {
+	background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/sort_no.gif") !important; background-color:transparent !important;}
+
+table.bx-interface-grid table.bx-grid-sorting td.bx-sort-up {
+	background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/sort_up.gif") !important; background-color:transparent !important;}
+
+table.bx-interface-grid table.bx-grid-sorting td.bx-sort-down {
+	background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/sort_down.gif") !important; background-color:transparent !important}table.bx-interface-grid td{padding:6px !important}.event-detail-files{margin-top:10px}.event-detail-files *{font-size:12px !important}.event-detail-files-title{float:left;white-space:nowrap;margin-right:5px;font-weight:bold}.event-detail-files-list{margin:0;padding:0}.event-detail-file{color:#616161;margin:0 0 2px 0}.event-detail-file-number{margin:0 5px 0 0;float:left}.event-detail-file-info{display:block}.event-detail-file .event-detail-file-link{color:#0069c4;text-decoration:underline;vertical-align:top}.event-detail-file .event-detail-file-link:hover{color:#1c91e7}.event-detail-file-size{color:#919191;margin:0 0 0 6px;vertical-align:top;white-space:nowrap;}
+
+.crm_notice_message {
+	background: url(./images/info.png) no-repeat 10px 7px #fffdc3; border:1px solid #ffca63;margin:1.117em 0;padding:.4em 1.117em .4em 2.4em}.crm-grid-username{max-width:100%;display:inline-flex;align-items:center;overflow:hidden;vertical-align:middle;color:#525c69;text-decoration:none;white-space:nowrap;padding:3.5px 13px 3.5px 4px;margin:-4px 0;transition:250ms linear all;box-sizing:border-box;height:29px;background:transparent;border-radius:14.5px}.crm-grid-username:hover{background:#c0edfd;text-decoration:none !important}.crm-grid-avatar{width:22px;min-width:22px;height:22px}.crm-grid-username-inner{display:inline-block;vertical-align:middle;max-width:155px;height:20px;line-height:20px;color:#525c69;padding-left:11px;overflow:hidden;text-overflow:ellipsis}

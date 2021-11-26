@@ -296,7 +296,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$this->userId = Util\User::getId();
 
 			$tmpId = (is_string($post['tmpId'] ) ? $post['tmpId'] : '');
-			$name = (is_string($post['name'] ) ? $post['name'] : 'The task');
+			$name = (is_string($post['name']) ? $post['name'] : '');
 			$entityId = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
 			$entityType = (is_string($post['entityType']) ? $post['entityType'] : 'backlog');
 			$epicId = (is_numeric($post['parentId']) ? (int)$post['parentId'] : 0);
@@ -308,6 +308,13 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$isActiveSprint = (isset($post['isActiveSprint']) && $post['isActiveSprint'] === 'Y');
 			$sortInfo = (is_array($post['sortInfo']) ? $post['sortInfo'] : []);
 			$info = (is_array($post['info']) ? $post['info'] : []);
+
+			if (empty($name))
+			{
+				$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_ADD_NAME_ERROR'));
+
+				return null;
+			}
 
 			$groupId = $this->arParams['GROUP_ID'];
 
@@ -356,6 +363,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			if ($taskService->getErrors())
 			{
 				$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_ADD_ERROR'), $taskService->getErrors());
+
 				return null;
 			}
 
@@ -381,6 +389,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			if ($itemService->getErrors())
 			{
 				$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_ADD_ERROR'), $itemService->getErrors());
+
 				return null;
 			}
 
@@ -391,6 +400,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				if ($kanbanService->getErrors())
 				{
 					$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_ADD_ERROR'), $kanbanService->getErrors());
+
 					return null;
 				}
 			}
@@ -401,6 +411,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				if ($itemService->getErrors())
 				{
 					$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_ADD_ERROR'), $itemService->getErrors());
+
 					return null;
 				}
 			}
@@ -410,6 +421,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		catch (\Exception $exception)
 		{
 			$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_ADD_ERROR'), [], $exception);
+
 			return null;
 		}
 	}

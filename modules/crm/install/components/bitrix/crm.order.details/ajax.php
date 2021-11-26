@@ -421,6 +421,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		\CBitrixComponent::includeComponentClass('bitrix:crm.order.details');
 		$component = new \CCrmOrderDetailsComponent();
+		$component->initComponent('bitrix:crm.order.details');
 		$component->initializeParams(
 			isset($this->request['PARAMS']) && is_array($this->request['PARAMS']) ? $this->request['PARAMS'] : []
 		);
@@ -1017,6 +1018,13 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	protected function getPropertiesSchemeAction()
 	{
 		$orderId = (int)$this->request['ORDER_ID'];
+
+		if (!Permissions\Order::checkReadPermission($this->userPermissions))
+		{
+			$this->addError(new \Bitrix\Main\Error(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED')));
+			return;
+		}
+
 		\CBitrixComponent::includeComponentClass('bitrix:crm.order.details');
 		$component = new \CCrmOrderDetailsComponent();
 		$component->initializeParams(
@@ -1084,6 +1092,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+			return;
+		}
+
 		if(!($order = $this->buildOrder($formData)))
 		{
 			return;
@@ -1123,6 +1145,13 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		{
 			return;
 		}
+
+		if (!Permissions\Order::checkUpdatePermission($orderId, $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+			return;
+		}
+
 		$order = Order::load($orderId);
 		if(!$order)
 		{
@@ -1152,9 +1181,15 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
+		if (!Permissions\Order::checkReadPermission($orderId, $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+			return;
+		}
+
 		$order = Order::load($orderId);
 
-		if(!$order)
+		if (!$order)
 		{
 			return;
 		}
@@ -1409,6 +1444,19 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		{
 			return;
 		}
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+			return;
+		}
 
 		if(!$order = $this->buildOrder($formData))
 		{
@@ -1451,6 +1499,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	{
 		if(!($formData = $this->getFormData()))
 		{
+			return;
+		}
+
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
 			return;
 		}
 
@@ -1516,6 +1578,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	{
 		if(!($formData = $this->getFormData()))
 		{
+			return;
+		}
+
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
 			return;
 		}
 
@@ -1598,6 +1674,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if(!($formData = $this->getFormData()))
 		{
+			return;
+		}
+
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
 			return;
 		}
 
@@ -1756,6 +1846,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+			return;
+		}
+
 		if(!($order = $this->buildOrder($formData)))
 		{
 			return;
@@ -1822,6 +1926,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if(!($formData = $this->getFormData()))
 		{
+			return;
+		}
+
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
 			return;
 		}
 
@@ -1904,6 +2022,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+			return;
+		}
+
 		if(!($order = $this->buildOrder($formData)))
 		{
 			return;
@@ -1949,6 +2081,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+			return;
+		}
+
 		$deliveryId = intval($formData['SHIPMENT'][$index]['DELIVERY_ID']);
 
 		if ($deliveryId > 0)
@@ -1987,7 +2133,15 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if (!Permissions\Order::checkUpdatePermission((int)$this->request['ENTITY_ID'], $this->userPermissions))
+		if ((int)$this->request['ENTITY_ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$this->request['ENTITY_ID'], $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
 			return;
@@ -2024,8 +2178,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	 */
 	protected function getSecondaryEntityInfosAction()
 	{
-
-		if (!Permissions\Order::checkUpdatePermission(0, $this->userPermissions))
+		if (!Permissions\Order::checkCreatePermission($this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
 			return;
@@ -2183,6 +2336,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if(!($formData = $this->getFormData()))
 		{
+			return;
+		}
+
+		if ((int)$formData['ID'] <= 0)
+		{
+			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+				return;
+			}
+		}
+		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		{
+			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
 			return;
 		}
 

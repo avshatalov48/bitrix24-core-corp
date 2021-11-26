@@ -1,7 +1,11 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-if(!\Bitrix\Main\Loader::includeModule('rpa'))
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+if (!\Bitrix\Main\Loader::includeModule('rpa'))
 {
 	return;
 }
@@ -15,7 +19,7 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 {
 	public function onPrepareComponentParams($arParams)
 	{
-		$arParams["typeId"] = (int) $arParams["typeId"];
+		$arParams["typeId"] = (int)$arParams["typeId"];
 		static::fillParameterFromRequest('stage', $arParams);
 		static::fillParameterFromRequest('robotType', $arParams);
 		static::fillParameterFromRequest('robotName', $arParams);
@@ -36,6 +40,11 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 			$this->arParams['typeId']
 		);
 
+		if (!$this->checkPermissions($this->arResult['DOCUMENT_TYPE']))
+		{
+			return $this->showError(Loc::getMessage('RPA_MODIFY_TYPE_ACCESS_DENIED'));
+		}
+
 		$this->arResult['DOCUMENT_STATUS'] = $this->arParams['stage'];
 
 		$template = new \Bitrix\Bizproc\Automation\Engine\Template($this->arResult['DOCUMENT_TYPE'], $this->arResult['DOCUMENT_STATUS']);
@@ -54,7 +63,7 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 			$this->saveRobot($template, $robotName, $robotData, $request);
 		}
 
-		$dialog = $template->getRobotSettingsDialog($robotData, $request?:null);
+		$dialog = $template->getRobotSettingsDialog($robotData, $request ?: null);
 
 		if ($dialog === '')
 		{
@@ -139,6 +148,7 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 		//@TODO: choose another algo
 		$s1 = Main\Web\Json::encode($prop1);
 		$s2 = Main\Web\Json::encode($prop2);
+
 		return ($s1 === $s2);
 	}
 
@@ -153,6 +163,7 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 		if ($name)
 		{
 			$robot = $template->getRobotByName($name);
+
 			return $robot ? $robot->toArray() : null;
 		}
 
@@ -161,23 +172,15 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 		];
 	}
 
-	protected function shouldCheckPermissions()
+	protected function checkPermissions(array $documentType)
 	{
-		return (isset($this->arParams['CHECK_PERMISSIONS']) && $this->arParams['CHECK_PERMISSIONS'] !== 'N');
-	}
+		$tplUser = new \CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
 
-	protected function getPermissionOperation()
-	{
-		return $this->arParams['PERMISSION_OPERATION'] ?? CBPCanUserOperateOperation::CreateAutomation;
-	}
-
-	protected function checkPermissions(array $documentType, \CBPWorkflowTemplateUser $tplUser, $operation)
-	{
 		return (
 			$tplUser->isAdmin()
 			||
 			CBPDocument::CanUserOperateDocumentType(
-				$operation,
+				\CBPCanUserOperateOperation::CreateAutomation,
 				$tplUser->getId(),
 				$documentType
 			)
@@ -190,7 +193,7 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 		{
 			$this->getApplication()->SetTitle(
 				!empty($this->arParams['robotName']) ?
-					GetMessage("RPA_AUTOMATION_EDITROBOT_TITLE_EDIT") :GetMessage("RPA_AUTOMATION_EDITROBOT_TITLE")
+					GetMessage("RPA_AUTOMATION_EDITROBOT_TITLE_EDIT") : GetMessage("RPA_AUTOMATION_EDITROBOT_TITLE")
 			);
 		}
 
@@ -225,6 +228,7 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 				<span class="ui-alert-message">{$message}</span>
 			</div>
 HTML;
+
 		return;
 	}
 }

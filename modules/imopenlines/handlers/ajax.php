@@ -25,32 +25,6 @@ if ($request->isPost() &&
 		CMain::FinalActions();
 		die();
 	}
-
-	if ($request->getPost('COMMAND') == "sendLivechatForm")
-	{
-		$params = Array();
-
-		$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter());
-
-		$control = new \Bitrix\ImOpenLines\Widget\Form($chatId, $userId);
-		$result = $control->saveForm($request->getPost('FORM'), $request->getPost('FIELDS'));
-		if ($result->isSuccess())
-		{
-			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
-				'ERROR' => ''
-			));
-		}
-		else
-		{
-			$errors = $result->getErrors();
-			$error = current($errors);
-
-			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
-				'CODE' => $error->getCode(),
-				'ERROR' => $error->getMessage()
-			));
-		}
-	}
 }
 else if($request->isPost() &&
 	$request->get('IM_AJAX_CALL') === 'Y' &&

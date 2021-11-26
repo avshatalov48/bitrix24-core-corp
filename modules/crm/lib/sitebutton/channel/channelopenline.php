@@ -224,7 +224,7 @@ class ChannelOpenLine implements iProvider
 		}
 
 		return array(
-			'path' => Common::getPublicFolder()."list/edit.php?ID=#ID#",
+			'path' => Common::getContactCenterPublicFolder() . 'lines_edit/?ID=#ID#',
 			'id' => '#ID#'
 		);
 	}
@@ -242,7 +242,7 @@ class ChannelOpenLine implements iProvider
 
 		$ratingRequest = \Bitrix\Imopenlines\Limit::canUseVoteClient() ? 'Y' : 'N';
 
-		return Common::getPublicFolder()."list/edit.php?ID=0&action-line=create&rating-request=" . $ratingRequest;
+		return Common::getContactCenterPublicFolder() . 'lines_edit/?ID=0&action-line=create&rating-request=' . $ratingRequest;
 	}
 
 	/**
@@ -257,7 +257,7 @@ class ChannelOpenLine implements iProvider
 			return null;
 		}
 
-		return Common::getPublicFolder()."list/edit.php?ID=0";
+		return Common::getContactCenterPublicFolder() . 'lines_edit/?ID=0';
 	}
 
 	/**
@@ -437,43 +437,43 @@ class ChannelOpenLine implements iProvider
 	 * @param array $item Item
 	 * @return array
 	 */
-	public static function getConfigFromPost(array $item = array())
+	public static function getConfigFromPost(array $item = array()): array
 	{
-		$config = array();
+		$externalConfigField = array();
 		if(isset($item['EXTERNAL_CONFIG']) && is_array($item['EXTERNAL_CONFIG']))
 		{
-			$config = $item['EXTERNAL_CONFIG'];
+			$externalConfigField = $item['EXTERNAL_CONFIG'];
 		}
 
+		$externalIdField = is_string($item['EXTERNAL_ID']) ? $item['EXTERNAL_ID'] : '';
+		$externalIds = explode(',', $externalIdField);
+
 		$result = array();
-		foreach ($config as $lineId => $connectors)
+		foreach ($externalIds as $openlineId)
 		{
-			if (!$lineId || !is_array($connectors) || count($connectors) == 0)
-			{
-				continue;
-			}
+			$openlineId = (int)$openlineId;
+			$config = $externalConfigField[$openlineId] ?? [];
 
-			$list = self::getConnectors($lineId);
-			foreach ($list as $item)
+			$connectors = self::getConnectors($openlineId);
+			foreach ($connectors as $connector)
 			{
-				if (!isset($result[$lineId]))
+				if (!isset($result[$openlineId]))
 				{
-					$result[$lineId] = array();
+					$result[$openlineId] = array();
 				}
 
-				if (!isset($result[$lineId]['excluded']))
+				if (!isset($result[$openlineId]['excluded']))
 				{
-					$result[$lineId]['excluded'] = array();
+					$result[$openlineId]['excluded'] = array();
 				}
 
-				if (in_array($item['id'], $connectors))
+				if (in_array($connector['id'], $config, true))
 				{
 					continue;
 				}
 
-				$result[$lineId]['excluded'][] = $item['id'];
+				$result[$openlineId]['excluded'][] = $connector['id'];
 			}
-
 		}
 
 		return $result;

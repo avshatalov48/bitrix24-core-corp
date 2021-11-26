@@ -9,12 +9,16 @@
 
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Notification\Task\ThrottleTable;
+use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\AgentManager;
+use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
-use Bitrix\Main\Localization\Loc;
 
 class CTaskNotifications
 {
@@ -1269,6 +1273,21 @@ class CTaskNotifications
 		array $parameters = []
 	): bool
 	{
+		if (!isset($parameters['IS_ON_BACKGROUND_JOB']) || $parameters['IS_ON_BACKGROUND_JOB'] === 'Y')
+		{
+			Bitrix\Tasks\Internals\Notification\Event\EventHandler::addEvent(
+				'message',
+				[
+					'TASK_ID' => $taskId,
+					'FROM_USER' => $fromUser,
+					'TO_USERS' => $toUsers,
+					'MESSAGES' => $messages,
+					'PARAMETERS' => $parameters,
+				]
+			);
+			return true;
+		}
+
 		if (!IsModuleInstalled('im') || !CModule::IncludeModule('im'))
 		{
 			return false;
@@ -2239,37 +2258,60 @@ class CTaskNotifications
 					$arMessageFields['NOTIFY_ANSWER'] = 'Y';
 				}
 
-				if((string) $message['MESSAGE']['PUSH'] != '')
+				if ((string)$message['MESSAGE']['PUSH'] !== '')
 				{
 					// add push message
-					$arMessageFields['PUSH_MESSAGE'] = self::placeLinkAnchor($message['MESSAGE']['PUSH'], $pathToTask, 'NONE');
+					$arMessageFields['PUSH_MESSAGE'] = self::placeLinkAnchor($message['MESSAGE']['PUSH'], $pathToTask);
 
 					// user should be able to open the task window to see the changes ...
 					// see /mobile/install/components/bitrix/mobile.rtc/templates/.default/script.js for handling details
-					$arMessageFields['PUSH_PARAMS'] = array(
+					$arMessageFields['PUSH_PARAMS'] = [
 						'ACTION' => 'tasks',
 						'TAG' => $tag,
-					);
+						'ADVANCED_PARAMS' => [],
+					];
 
-					if((string) $message['ADDITIONAL_DATA']['NOTIFY_ANSWER'])
+					if ((string)$message['ADDITIONAL_DATA']['NOTIFY_ANSWER'])
 					{
 						// ... and open an answer dialog in mobile
-						$arMessageFields['PUSH_PARAMS'] = array_merge($arMessageFields['PUSH_PARAMS'], array(
-							'CATEGORY' => 'ANSWER',
-							'URL' => SITE_DIR.'mobile/ajax.php?mobile_action=task_answer',
-							'PARAMS' => Array(
-								'TASK_ID' => $taskId
-							)
-						));
+						$arMessageFields['PUSH_PARAMS'] = array_merge(
+							$arMessageFields['PUSH_PARAMS'],
+							[
+								'CATEGORY' => 'ANSWER',
+								'URL' => SITE_DIR . 'mobile/ajax.php?mobile_action=task_answer',
+								'PARAMS' => [
+									'TASK_ID' => $taskId,
+								],
+							]
+						);
 					}
 
-					if (array_key_exists('PUSH_PARAMS', $message) && is_string($message['PUSH_PARAMS']['SENDER_NAME']))
+					if (
+						array_key_exists('PUSH_PARAMS', $message)
+						&& is_string($message['PUSH_PARAMS']['SENDER_NAME'])
+					)
 					{
 						$arMessageFields['PUSH_PARAMS']['ADVANCED_PARAMS'] = [
 							'senderName' => $message['PUSH_PARAMS']['SENDER_NAME'],
-							'senderMessage' => $arMessageFields['PUSH_MESSAGE']
+							'senderMessage' => $arMessageFields['PUSH_MESSAGE'],
 						];
 					}
+
+					$pushData = [];
+					if ($type !== 'TASK_DELETE')
+					{
+						$oldData = ($message['ADDITIONAL_DATA']['TASK_DATA'] ?? []);
+						$newData = ($message['EVENT_DATA']['arFields'] ?? []);
+						$pushData = static::preparePushData($taskId, $userId, array_merge($oldData, $newData));
+					}
+
+					$arMessageFields['PUSH_PARAMS']['ADVANCED_PARAMS'] = array_merge(
+						$arMessageFields['PUSH_PARAMS']['ADVANCED_PARAMS'],
+						[
+							'group' => 'tasks_task',
+							'data' => $pushData,
+						]
+					);
 				}
 
 				\Bitrix\Tasks\Integration\IM::notifyAdd($arMessageFields);
@@ -2313,6 +2355,203 @@ class CTaskNotifications
 		}
 
 		return !$skipMessage;
+	}
+
+	private static function preparePushData(int $taskId, int $userId, array $taskData): array
+	{
+		unset($taskData['ACTIVITY_DATE']);
+
+		$pushData = [
+			'id' => (string)$taskId,
+			'newCommentsCount' => Counter::getInstance($userId)->getCommentsCount([$taskId])[$taskId],
+		];
+
+		$data = self::getTaskData($taskId);
+		if (array_key_exists('ACTIVITY_DATE', $data))
+		{
+			$pushData['activityDate'] = self::prepareDate($userId, $data['ACTIVITY_DATE']);
+		}
+
+		if (array_key_exists('TITLE', $taskData))
+		{
+			$pushData['title'] = $taskData['TITLE'];
+		}
+		if (array_key_exists('DEADLINE', $taskData) && isset($taskData['DEADLINE']))
+		{
+			$pushData['deadline'] = self::prepareDate($userId, $taskData['DEADLINE']);
+		}
+		if (array_key_exists('STATUS', $taskData))
+		{
+			$pushData['status'] = $taskData['STATUS'];
+		}
+		if (array_key_exists('GROUP_ID', $taskData))
+		{
+			$groupId = $taskData['GROUP_ID'];
+			$groupData = self::getGroupData($groupId);
+
+			$pushData['groupId'] = $groupId;
+			$pushData['group'] = [
+				'id' => $taskData['GROUP_ID'],
+				'name' => $groupData['NAME'],
+				'image' => $groupData['IMAGE'],
+			];
+		}
+		if (array_key_exists('CREATED_BY', $taskData))
+		{
+			$pushData['creator'] = [
+				'id' => $taskData['CREATED_BY'],
+				'icon' => self::getUserAvatar($taskData['CREATED_BY']),
+			];
+		}
+		if (array_key_exists('RESPONSIBLE_ID', $taskData))
+		{
+			$pushData['responsible'] = [
+				'id' => $taskData['RESPONSIBLE_ID'],
+				'icon' => self::getUserAvatar($taskData['RESPONSIBLE_ID']),
+			];
+		}
+		if (array_key_exists('ACCOMPLICES', $taskData))
+		{
+			$pushData['accomplices'] = $taskData['ACCOMPLICES'];
+		}
+		if (array_key_exists('AUDITORS', $taskData))
+		{
+			$pushData['auditors'] = $taskData['AUDITORS'];
+		}
+
+		$map = [
+			'id' => 1,
+			'title' => 2,
+			'deadline' => 3,
+			'activityDate' => 4,
+			'status' => 5,
+			'newCommentsCount' => 6,
+
+			'groupId' => 20,
+			'group' => 21,
+			'image' => 22,
+			'name' => 23,
+
+			'creator' => 30,
+			'responsible' => 31,
+			'icon' => 32,
+
+			'accomplices' => 41,
+			'auditors' => 42,
+		];
+		$pushData = self::convertFields($pushData, $map);
+
+		return $pushData;
+	}
+
+	private static function convertFields(array $pushData, array $map)
+	{
+		$result = [];
+
+		foreach ($pushData as $key => $value)
+		{
+			$index = ($map[$key] ?? $key);
+
+			if (is_array($value))
+			{
+				$result[$index] = self::convertFields($value, $map);
+			}
+			else
+			{
+				$result[$index] = ($value ?? '');
+			}
+		}
+
+		return $result;
+	}
+
+	private static function prepareDate(int $userId, string $date): string
+	{
+		$result = '';
+
+		if (!$date)
+		{
+			return $result;
+		}
+
+		$localOffset = (new \DateTime())->getOffset();
+		$currentUserOffset = \CTimeZone::GetOffset(null, true);
+		$targetUserOffset = \CTimeZone::GetOffset($userId, true);
+		$offset = $localOffset + $targetUserOffset;
+		$newOffset = ($offset > 0 ? '+' : '') . UI::formatTimeAmount($offset, 'HH:MI');
+
+		if ($newDate = new DateTime($date))
+		{
+			$newDate->addSecond(-$currentUserOffset);
+			$newDate->addSecond($targetUserOffset);
+			$result = mb_substr($newDate->format('c'), 0, -6) . $newOffset;
+		}
+
+		return $result;
+	}
+
+	private static function getTaskData(int $taskId): array
+	{
+		static $cache = [];
+
+		if (!array_key_exists($taskId, $cache))
+		{
+			$cache[$taskId] = [];
+
+			$taskResult = TaskTable::getList([
+				'select' => ['ACTIVITY_DATE'],
+				'filter' => ['ID' => $taskId],
+			]);
+			if ($task = $taskResult->fetch())
+			{
+				$cache[$taskId] = $task;
+			}
+		}
+
+		return $cache[$taskId];
+	}
+
+	private static function getUserAvatar(int $userId): string
+	{
+		static $cache = [];
+
+		if (!array_key_exists($userId, $cache))
+		{
+			$users = User::getData([$userId], ['ID', 'PERSONAL_PHOTO']);
+			$user = $users[$userId];
+
+			$cache[$userId] = UI\Avatar::getPerson($user['PERSONAL_PHOTO']);
+		}
+
+		return $cache[$userId];
+	}
+
+	private static function getGroupData(int $groupId): array
+	{
+		static $cache = [];
+
+		if (!array_key_exists($groupId, $cache))
+		{
+			if (!$groupId)
+			{
+				$cache[$groupId] = [
+					'NAME' => '',
+					'IMAGE' => '',
+				];
+			}
+			else
+			{
+				$groupsData = SocialNetwork\Group::getData([$groupId], ['IMAGE_ID']);
+				$group = $groupsData[$groupId];
+
+				$cache[$groupId] = [
+					'NAME' => $group['NAME'],
+					'IMAGE' => (is_array($file = \CFile::GetFileArray($group['IMAGE_ID'])) ? $file['SRC'] : ''),
+				];
+			}
+		}
+
+		return $cache[$groupId];
 	}
 
 	########################
@@ -3151,6 +3390,10 @@ class CTaskNotifications
 			$item = CSocNetGroup::GetList(array(), array('ID' => $id), false, false, array('ID', 'NAME'))->fetch();
 			if(!empty($item))
 			{
+				if (!empty($item['NAME']))
+				{
+					$item['NAME'] = \Bitrix\Main\Text\Emoji::decode($item['NAME']);
+				}
 				self::$cache['GROUPS'][$id] = $item;
 			}
 		}

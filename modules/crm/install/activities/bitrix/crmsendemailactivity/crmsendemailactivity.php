@@ -324,8 +324,14 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		}
 
 		$context = new Mail\Context();
-		$context->setCategory(Mail\Context::CAT_EXTERNAL);
-		$context->setPriority(Mail\Context::PRIORITY_LOW);
+		$context->setCategory(Mail\Context::CAT_EXTERNAL)
+			->setPriority(Mail\Context::PRIORITY_LOW)
+			->setCallback(
+				(new \Bitrix\Main\Mail\Callback\Config())
+					->setModuleId("crm")
+					->setEntityType("rpa")
+					->setEntityId($urn)
+			);
 
 		$outgoingParams = [
 			'CHARSET' => SITE_CHARSET,

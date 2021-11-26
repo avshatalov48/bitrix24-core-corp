@@ -64,12 +64,12 @@ class CounterController
 		{
 			if (Counter::isSonetEnable())
 			{
-				(new ProjectProcessor())->recount($counter, $this->userId, $taskIds, $groupIds);
+				ProjectProcessor::getInstance()->recount($counter, $this->userId, $taskIds, $groupIds);
 			}
 		}
 		elseif($this->userId)
 		{
-			(new UserProcessor($this->userId))->recount($counter, $taskIds);
+			UserProcessor::getInstance($this->userId)->recount($counter, $taskIds);
 		}
 	}
 
@@ -85,7 +85,7 @@ class CounterController
 
 		self::reset($this->userId);
 
-		$userProcessor = new UserProcessor($this->userId);
+		$userProcessor = UserProcessor::getInstance($this->userId);
 		$userProcessor->recount(CounterDictionary::COUNTER_EXPIRED);
 		$userProcessor->recount(CounterDictionary::COUNTER_NEW_COMMENTS);
 
@@ -93,7 +93,7 @@ class CounterController
 		{
 			$this->readAllGroups();
 
-			$projectProcessor = new ProjectProcessor();
+			$projectProcessor = ProjectProcessor::getInstance();
 			$projectProcessor->recount(CounterDictionary::COUNTER_GROUP_EXPIRED, $this->userId);
 			$projectProcessor->recount(CounterDictionary::COUNTER_GROUP_COMMENTS, $this->userId);
 		}
@@ -110,7 +110,7 @@ class CounterController
 		{
 			return;
 		}
-		(new UserProcessor($this->userId))->readAll($groupId, $role);
+		UserProcessor::getInstance($this->userId)->readAll($groupId, $role);
 	}
 
 	/**
@@ -130,7 +130,7 @@ class CounterController
 			$groupIds = [$groupId];
 		}
 
-		(new ProjectProcessor())->readAll($this->userId, $groupIds);
+		ProjectProcessor::getInstance()->readAll($this->userId, $groupIds);
 	}
 
 	/**

@@ -5,7 +5,8 @@
 
 namespace Bitrix\Tasks;
 
-use \Bitrix\Main\Web\Json;
+use Bitrix\Main\Context;
+use Bitrix\Main\Web\Json;
 
 class UI
 {
@@ -58,6 +59,43 @@ class UI
 		}
 
 		return $path;
+	}
+
+	/**
+	 * @param array $fileIds
+	 * @param int $width
+	 * @param int $height
+	 * @param false $immediate
+	 * @return array
+	 */
+	public static function getAvatars(array $fileIds, int $width = 50, int $height = 50, bool $immediate = false): array
+	{
+		if (empty($fileIds))
+		{
+			return [];
+		}
+
+		$avatars = array_fill_keys($fileIds, '');
+
+		$res = \CFile::GetList([], ['@ID' => implode(',', $fileIds)]);
+		while ($file = $res->Fetch())
+		{
+			$fileInfo = \CFile::ResizeImageGet(
+				$file,
+				[
+					'width' => $width,
+					'height' => $height,
+				],
+				BX_RESIZE_IMAGE_EXACT,
+				false,
+				false,
+				(bool)$immediate
+			);
+
+			$avatars[$file['ID']] = $fileInfo['src'];
+		}
+
+		return $avatars;
 	}
 
 	public static function getAvatar($fileId, $width = 50, $height = 50, $immediate = false)
@@ -300,49 +338,29 @@ class UI
 		$dateFormat = static::getHumanDateFormat($timestamp);
 		$timeFormat = static::getHumanTimeFormat($timestamp);
 
-		return $dateFormat . ($timeFormat ? ', ' . $timeFormat : '');
+		return $dateFormat . ($timeFormat ? ", {$timeFormat}" : '');
 	}
 
 	public static function getHumanDateFormat(int $timestamp): string
 	{
-		$dateFormat = 'j F';
-
-		if (LANGUAGE_ID === 'en')
-		{
-			$dateFormat = "F j";
-		}
-		else if (LANGUAGE_ID === 'de')
-		{
-			$dateFormat = "j. F";
-		}
+		$culture = Context::getCurrent()->getCulture();
 
 		if (date('Y') !== date('Y', $timestamp))
 		{
-			if (LANGUAGE_ID === 'en')
-			{
-				$dateFormat .= ",";
-			}
-
-			$dateFormat .= ' Y';
+			return $culture->getLongDateFormat();
 		}
 
-		return $dateFormat;
+		return $culture->getDayMonthFormat();
 	}
 
 	public static function getHumanTimeFormat(int $timestamp): string
 	{
 		$timeFormat = '';
-		$currentTimeFormat = 'HH:MI:SS';
-
-		$resSite = \CSite::GetByID(SITE_ID);
-		if ($site = $resSite->Fetch())
-		{
-			$currentTimeFormat = str_replace($site['FORMAT_DATE'].' ', '', $site['FORMAT_DATETIME']);
-		}
+		$culture = Context::getCurrent()->getCulture();
 
 		if (date('Hi', $timestamp) > 0)
 		{
-			$timeFormat = ($currentTimeFormat === 'HH:MI:SS' ? 'G:i' : 'g:i a');
+			$timeFormat = $culture->getShortTimeFormat();
 		}
 
 		return $timeFormat;

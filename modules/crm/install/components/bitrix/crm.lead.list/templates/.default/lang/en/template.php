@@ -94,6 +94,7 @@ $MESS["CRM_LEAD_REBUILD_DUP_INDEX_DLG_TITLE"] = "Rebuild lead duplicate index";
 $MESS["CRM_LEAD_REBUILD_SEARCH_CONTENT"] = "To use Quick Search, you have to <a id=\"#ID#\" href=\"#URL#\">recreate lead search index</a>.";
 $MESS["CRM_LEAD_REBUILD_SEARCH_CONTENT_DLG_SUMMARY"] = "This will rebuild lead search index. This operation may take a while.";
 $MESS["CRM_LEAD_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Recreating Lead Search Index";
+$MESS["CRM_LEAD_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Updating access permissions";
 $MESS["CRM_LEAD_REBUILD_SEMANTICS"] = "Reports require that you <a id=\"#ID#\" href=\"#URL#\">update lead service fields</a> (this will not affect any user data).";
 $MESS["CRM_LEAD_REBUILD_SEMANTICS_DLG_SUMMARY"] = "Lead service fields will now be updated. This may take some time.";
 $MESS["CRM_LEAD_REBUILD_SEMANTICS_DLG_TITLE"] = "Update lead service fields";

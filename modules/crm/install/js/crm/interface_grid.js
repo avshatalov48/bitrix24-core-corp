@@ -1334,9 +1334,9 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 						else
 						{
 							var callListId = data.ID;
-							if(createActivity && BXIM)
+							if(createActivity && top.BXIM)
 							{
-								BXIM.startCallList(callListId, {});
+								top.BXIM.startCallList(callListId, {});
 							}
 							else
 							{

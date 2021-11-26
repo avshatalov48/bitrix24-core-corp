@@ -1,5 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Crm\Integration;
 
 /**
  * Bitrix vars
@@ -469,8 +472,8 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 	if (\Bitrix\Main\Loader::includeModule('intranet'))
 	{
 		$menuExtensions = \Bitrix\Intranet\Binding\Menu::getMenuItems(
-			'crm_timeline',
-			mb_strtolower($arResult['ENTITY_TYPE_NAME']),
+			Integration\Intranet\BindingMenu\SectionCode::TIMELINE,
+			Integration\Intranet\BindingMenu\CodeBuilder::getMenuCode((int)($arResult['ENTITY_TYPE_ID'] ?? null)),
 			[
 				'inline' => true,
 				'context' => [
@@ -790,14 +793,14 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				"CRM_TIMELINE_ZOOM_LOGIN_REQUIRED": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_LOGIN_REQUIRED")?>',
 				"CRM_TIMELINE_ZOOM_PLAY_LINK_VIDEO": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_PLAY_LINK_VIDEO")?>',
 				"CRM_TIMELINE_ZOOM_COPY_PASSWORD": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_COPY_PASSWORD")?>',
-                "CRM_TIMELINE_DOCUMENT_VIEWED": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_VIEWED")?>',
-                "CRM_TIMELINE_DOCUMENT_VIEWED_STATUS": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_VIEWED_STATUS")?>',
-                "CRM_TIMELINE_DOCUMENT_CREATED_STATUS": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_CREATED_STATUS")?>',
+				"CRM_TIMELINE_DOCUMENT_VIEWED": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_VIEWED")?>',
+				"CRM_TIMELINE_DOCUMENT_VIEWED_STATUS": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_VIEWED_STATUS")?>',
+				"CRM_TIMELINE_DOCUMENT_CREATED_STATUS": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_CREATED_STATUS")?>',
 				"CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1")?>',
-                "CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5")?>',
-                "CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_2": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_2")?>',
-                "CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_3": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_3")?>',
-                "CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_TEXT": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_TEXT")?>',
+				"CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5")?>',
+				"CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_2": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_2")?>',
+				"CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_3": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_3")?>',
+				"CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_TEXT": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_TEXT")?>',
 				"DISK_TMPLT_THUMB": '',
 				"DISK_TMPLT_THUMB2": '',
 			});
@@ -855,7 +858,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					editorZoomContainer: "<?=CUtil::JSEscape($zoomContainerID)?>",
 					visitParameters: <?= \CUtil::PhpToJSObject($arResult['VISIT_PARAMETERS'])?>,
 					spotlightFastenShowed: <?=$spotlightFastenShowed ? 'true' : 'false'?>,
-                    audioPlaybackRate: <?= (float) $arResult['AUDIO_PLAYBACK_RATE'] ?>
+					audioPlaybackRate: <?= (float) $arResult['AUDIO_PLAYBACK_RATE'] ?>
 				}
 			);
 		}

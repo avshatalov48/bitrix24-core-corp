@@ -1,10 +1,15 @@
 import {Event, Loc, Tag} from 'main.core';
 import {EventEmitter, BaseEvent} from 'main.core.events';
-import {LocationRepository, AutocompleteServiceBase, Format, Address, Location,
-	DistanceCalculator,	ErrorPublisher, LocationType,
-	AutocompleteServiceFilter,
+import {
+	LocationRepository,
+	AutocompleteServiceBase,
+	Format,
+	Address,
+	Location,
+	ErrorPublisher,
 	AddressType,
-	LocationJsonConverter
+	Storage,
+	Point
 } from 'location.core';
 import type {AutocompleteServiceParams} from 'location.core';
 import Prompt from './prompt';
@@ -34,20 +39,14 @@ export default class Autocomplete extends EventEmitter
 	#sourceCode;
 	/** {LocationRepository} */
 	#locationRepository;
-	/** {Location} */
-	#userLocation;
+	/** {Point} */
+	#userLocationPoint;
 	/** {Function} */
 	#presetLocationsProvider;
 	/** {Prompt} */
 	#prompt;
 	/** {AutocompleteServiceBase} */
 	#autocompleteService;
-	/** @type {number} */
-	#minCharsCountToAutocomplete;
-	/** {number} milliseconds promptDelay before the searching will start */
-	#promptDelay;
-	/** {number} */
-	#maxPromptDelay;
 	/** {number} */
 	#timerId = null;
 	/** {Element} */
@@ -60,20 +59,13 @@ export default class Autocomplete extends EventEmitter
 	};
 
 	#state;
+	#wasCleared = false;
 	#isDestroyed = false;
 
-	#prevKeyUpTime;
-	#avgKeyUpDelay;
-
 	#isAutocompleteRequestStarted = false;
+	#isNextAutocompleteRequestWaiting = false;
 
-	#maxFirstItemUserDistanceKm = 100;
 	#onLocationSelectTimerId = null;
-
-	#lastSelectedLocationLocalStorageKey = `bitrixLocationLastSelectedLocation`;
-
-	/** {AutocompleteServiceFilter} */
-	#filter;
 
 	constructor(props)
 	{
@@ -105,13 +97,8 @@ export default class Autocomplete extends EventEmitter
 		this.#address = props.address;
 		this.#presetLocationsProvider = props.presetLocationsProvider;
 		this.#locationRepository = props.locationRepository || new LocationRepository();
-		this.#userLocation = props.userLocation;
-		this.#promptDelay = props.promptDelay || 300;
-		this.#maxPromptDelay = props.maxPromptDelay || 500;
-		this.#minCharsCountToAutocomplete = props.minCharsCountToAutocomplete || 3;
+		this.#userLocationPoint = props.userLocationPoint;
 		this.#setState(State.INITIAL);
-		this.#avgKeyUpDelay = this.#promptDelay;
-		this.#filter = new AutocompleteServiceFilter();
 	}
 
 	render(props: {}): void
@@ -119,10 +106,12 @@ export default class Autocomplete extends EventEmitter
 		this.#inputNode = props.inputNode;
 		this.#address = props.address;
 		this.#addressString = new AddressString(this.#inputNode, this.#addressFormat, this.#address);
+		this.#inputNode.addEventListener('keydown', this.#onInputKeyDown.bind(this));
 		this.#inputNode.addEventListener('keyup', this.#onInputKeyUp.bind(this));
 		this.#inputNode.addEventListener('focus', this.#onInputFocus.bind(this));
 		this.#inputNode.addEventListener('focusout', this.#onInputFocusOut.bind(this));
 		this.#inputNode.addEventListener('click', this.#onInputClick.bind(this));
+		this.#inputNode.addEventListener('paste', this.#onInputPaste.bind(this));
 
 		this.#prompt = new Prompt({
 			inputNode: props.inputNode,
@@ -180,10 +169,10 @@ export default class Autocomplete extends EventEmitter
 	#createLeftBottomMenuNode(text: string): Element
 	{
 		return Tag.render`
-				<span>				
+				<span>
 					<span class="menu-popup-item-icon"></span>
 					<span class="menu-popup-item-text">${text}</span>
-				</span>		
+				</span>
 		`;
 	}
 
@@ -215,22 +204,33 @@ export default class Autocomplete extends EventEmitter
 		) {
 			this.#setState(State.DATA_SUPPOSED);
 
+			let isChanged = false;
 			if (this.#addressString) {
-				if (!this.#address || !this.#addressString.hasPureAddressString()) {
+				if (
+					!this.#address
+					|| !this.#addressString.hasPureAddressString()
+				)
+				{
 					this.#address = this.#convertStringToAddress(
 						this.#addressString.value
 					);
+					isChanged = true;
 				}
 				// this.#addressString === null until autocompete'll be rendered
-				else if (this.#addressString.customTail !== '') {
+				else if (this.#addressString.customTail !== '')
+				{
 					this.#address.setFieldValue(
 						this.#addressFormat.fieldForUnRecognized,
 						this.#addressString.customTail
 					);
+					isChanged = true;
 				}
 			}
 
-			this.#onAddressChangedEventEmit();
+			if (isChanged)
+			{
+				this.#onAddressChangedEventEmit([], {storeAsLastAddress: false});
+			}
 		}
 
 		if (this.#prompt)
@@ -249,64 +249,76 @@ export default class Autocomplete extends EventEmitter
 			return;
 		}
 
-		if (
-			this.#address
-			&& (!this.#address.location || !this.#address.location.hasExternalRelation())
-			&& this.#addressString.value.length > 0
-		)
+		if (!this.#address)
 		{
-			this.showPrompt(this.#addressString.value);
-		}
-	}
+			const lastAddress = Storage.getInstance().lastAddress;
 
-	#makeAutocompleteFilter(): AutocompleteServiceFilter
-	{
-		const locationForBias = this.#getLastSelectedLocation();
-		const result = new AutocompleteServiceFilter();
+			if (
+				lastAddress
+				&& lastAddress.fieldCollection.isFieldExists(AddressType.LOCALITY)
+				&& !this.#wasCleared
+			)
+			{
+				const fieldCollection = {};
 
-		if (!locationForBias)
-		{
-			return result;
-		}
-		let filterType = null;
+				fieldCollection[AddressType.LOCALITY] = lastAddress.fieldCollection.getFieldValue(
+					AddressType.LOCALITY
+				);
+				if (lastAddress.fieldCollection.isFieldExists(AddressType.COUNTRY))
+				{
+					fieldCollection[AddressType.COUNTRY] = lastAddress.fieldCollection.getFieldValue(AddressType.COUNTRY);
+				}
+				if (lastAddress.fieldCollection.isFieldExists(AddressType.ADM_LEVEL_1))
+				{
+					fieldCollection[AddressType.ADM_LEVEL_1] = lastAddress.fieldCollection.getFieldValue(AddressType.ADM_LEVEL_1);
+				}
 
-		if (locationForBias.type === LocationType.COUNTRY)
-		{
-			filterType = LocationType.LOCALITY;
-		}
-		else if (locationForBias.type === LocationType.LOCALITY)
-		{
-			filterType = LocationType.STREET;
-		}
-		else if (locationForBias.type === LocationType.STREET)
-		{
-			filterType = LocationType.BUILDING;
-		}
+				if (['RU', 'RU_2'].includes(this.#addressFormat.code))
+				{
+					fieldCollection[AddressType.ADDRESS_LINE_2] = ', ';
+				}
 
-		if (filterType)
-		{
-			result.types = [filterType];
+				this.#address = new Address({
+					languageId: lastAddress.languageId,
+					fieldCollection: fieldCollection,
+				});
+				this.#addressString.setValueFromAddress(this.#address);
+				this.#setState(State.DATA_SUPPOSED);
+				this.#onAddressChangedEventEmit(
+					[],
+					{storeAsLastAddress: false}
+				);
+
+				setTimeout(() => {
+					BX.setCaretPosition(this.#inputNode, this.#inputNode.value.length);
+				}, 0);
+			}
 		}
-		return result;
+		else
+		{
+			if (
+				this.#address
+				&& (!this.#address.location || !this.#address.location.hasExternalRelation())
+				&& this.#addressString.value.length > 0
+			)
+			{
+				this.showPrompt(this.#addressString.value);
+			}
+		}
 	}
 
 	#makeAutocompleteServiceParams(): AutocompleteServiceParams
 	{
-		let locationForBias = null;
 		const result: AutocompleteServiceParams = {};
 
-		const lastSelectedLocation = this.#getLastSelectedLocation();
-		if (lastSelectedLocation)
+		result.biasPoint = this.#userLocationPoint;
+		if (this.#address && this.#address.latitude && this.#address.longitude)
 		{
-			locationForBias = lastSelectedLocation;
+			result.biasPoint = new Point(
+				this.#address.latitude,
+				this.#address.longitude
+			);
 		}
-		else if (this.#userLocation)
-		{
-			locationForBias = this.#userLocation;
-		}
-
-		result.filter = this.#filter;
-		result.locationForBias = locationForBias;
 
 		return result;
 	}
@@ -325,7 +337,7 @@ export default class Autocomplete extends EventEmitter
 
 		if (!address)
 		{
-			this.#filter.reset();
+			this.#wasCleared = true;
 		}
 	}
 
@@ -422,91 +434,41 @@ export default class Autocomplete extends EventEmitter
 				return;
 			}
 
-			this.#prompt.setMenuItems(locationsList, this.#searchPhrase.requested, this.#getCurrentAddress());
+			this.#prompt.setMenuItems(locationsList, this.#searchPhrase.requested, this.address);
 			this.#showMenu(Loc.getMessage('LOCATION_WIDGET_PICK_ADDRESS_OR_SHOW_ON_MAP'), locationsList[0]);
 		}
 		else
 		{
-			const split = Autocomplete.#splitPhrase(this.#searchPhrase.current);
-			this.#searchPhrase.current = split[0];
-			this.#searchPhrase.dropped = `${split[1]} ${this.#searchPhrase.dropped}`;
+			this.#prompt.getMenu().clearItems();
 
-			if (this.#searchPhrase.current.length > 0)
-			{
-				this.#showPromptInner(this.#searchPhrase.current, params, 1);
-			}
-			else
-			{
-				this.#prompt.getMenu().clearItems();
-
-				this.#prompt.getMenu().addMenuItem(
-					{
-						id: 'notFound',
-						html: `<span>${Loc.getMessage('LOCATION_WIDGET_PROMPT_ADDRESS_NOT_FOUND')}</span>`,
-						// eslint-disable-next-line no-unused-vars
-						onclick: (event, item) => {
-							this.#prompt.close();
-						}
+			this.#prompt.getMenu().addMenuItem(
+				{
+					id: 'notFound',
+					html: `<span>${Loc.getMessage('LOCATION_WIDGET_PROMPT_ADDRESS_NOT_FOUND')}</span>`,
+					// eslint-disable-next-line no-unused-vars
+					onclick: (event, item) => {
+						this.#prompt.close();
 					}
-				);
+				}
+			);
 
-				this.#showMenu(Loc.getMessage('LOCATION_WIDGET_CHECK_ADDRESS_OR_SHOW_ON_MAP'), null);
-			}
+			this.#showMenu(Loc.getMessage('LOCATION_WIDGET_CHECK_ADDRESS_OR_SHOW_ON_MAP'), null);
 		}
-	}
-
-	#getCurrentAddress()
-	{
-		if (
-			this.address
-			&& this.address.getFieldValue(AddressType.LOCALITY)
-		)
-		{
-			return this.address;
-		}
-
-		const lastSelectedLocation = this.#getLastSelectedLocation();
-		if (
-			lastSelectedLocation
-			&& lastSelectedLocation.address
-			&& lastSelectedLocation.address.getFieldValue(AddressType.LOCALITY)
-		)
-		{
-			return lastSelectedLocation.address;
-		}
-
-		return null;
 	}
 
 	#getShowOnMapHandler(location: ?Location)
 	{
 		return () => {
-			if (location && this.#userLocation
-				&& location.latitude && location.longitude
-				&& this.#userLocation.latitude
-				&& this.#userLocation.longitude
-			)
+			if (location)
 			{
-				const firstItemUserDistance = DistanceCalculator.getDistanceFromLatLonInKm(
-					location.latitude,
-					location.longitude,
-					this.#userLocation.latitude,
-					this.#userLocation.longitude
-				);
-
-				if (firstItemUserDistance <= this.#maxFirstItemUserDistanceKm)
-				{
-					this.#fulfillSelection(location);
-
-					return;
-				}
+				this.#fulfillSelection(location);
+				return;
 			}
 
+			// Otherwise this click will close just opened map popup.
 			setTimeout(() => {
-					this.emit(Autocomplete.#onShowOnMapClickedEvent);
-				},
-				1 // Otherwise this click will close just opened map popup.
-			);
+				this.emit(Autocomplete.#onShowOnMapClickedEvent);
+			}, 1);
 		};
 	}
 
@@ -570,12 +532,20 @@ export default class Autocomplete extends EventEmitter
 					.then(
 						(detailedLocation: ?Location) => {
 
-							if (location.address && location.address.getFieldValue(AddressType.ADDRESS_LINE_2))
+							if (
+								location.address
+								&& location.address.getFieldValue(AddressType.ADDRESS_LINE_2)
+							)
 							{
-								detailedLocation.address.setFieldValue(
-									AddressType.ADDRESS_LINE_2,
-									location.address.getFieldValue(AddressType.ADDRESS_LINE_2)
-								);
+								let addressLine2 = '';
+								if (detailedLocation.address.getFieldValue(AddressType.ADDRESS_LINE_2))
+								{
+									addressLine2 = detailedLocation.address.getFieldValue(AddressType.ADDRESS_LINE_2);
+									addressLine2 += ', ';
+								}
+								addressLine2 += location.address.getFieldValue(AddressType.ADDRESS_LINE_2);
+
+								detailedLocation.address.setFieldValue(AddressType.ADDRESS_LINE_2, addressLine2);
 							}
 
 							this.#createOnLocationSelectTimer(detailedLocation, 0);
@@ -607,13 +577,14 @@ export default class Autocomplete extends EventEmitter
 		return result;
 	}
 
-	#onAddressChangedEventEmit(excludeSetAddressFeatures: Array = [])
+	#onAddressChangedEventEmit(excludeSetAddressFeatures: Array = [], options: Object = {})
 	{
 		this.emit(
 			Autocomplete.#onAddressChangedEvent,
 			{
 				address: this.#address,
-				excludeSetAddressFeatures
+				excludeSetAddressFeatures,
+				options: options,
 			}
 		);
 	}
@@ -678,15 +649,41 @@ export default class Autocomplete extends EventEmitter
 	 */
 	#onLocationSelect(location: ?Location): void
 	{
-		if (location)
-		{
-			this.#setLastSelectedLocation(location);
-		}
-
-		this.#filter = this.#makeAutocompleteFilter();
 		this.#address = location ? location.toAddress() : null;
 		this.#addressString.setValueFromAddress(this.#address);
 		this.#onAddressChangedEventEmit();
+	}
+
+	#onInputKeyDown(e: KeyboardEvent): void
+	{
+		if (
+			!(
+				this.#inputNode
+				&& this.#inputNode.selectionStart === 0
+				&& this.#inputNode.selectionEnd === this.#inputNode.value.length
+			)
+		)
+		{
+			return;
+		}
+
+		if (
+			(
+				e.code === 'Backspace'
+				|| e.code === 'Delete'
+				|| (e.code === 'KeyV' && ((e.ctrlKey || e.metaKey)))
+				|| (e.code === 'KeyX' && ((e.ctrlKey || e.metaKey)))
+				|| (e.code === 'Insert' && e.shiftKey)
+			)
+			|| (
+				!(e.ctrlKey || e.metaKey)
+				&& [...e.key].length === 1
+			)
+		)
+		{
+			this.address = null;
+			this.#onAddressChangedEventEmit();
+		}
 	}
 
 	#onInputKeyUp(e: KeyboardEvent): void
@@ -695,16 +692,6 @@ export default class Autocomplete extends EventEmitter
 		{
 			return;
 		}
-
-		const now = Date.now();
-
-		if (this.#prevKeyUpTime)
-		{
-			const delta = now - this.#prevKeyUpTime;
-			this.#avgKeyUpDelay = (this.#avgKeyUpDelay + delta) / 2;
-		}
-
-		this.#prevKeyUpTime = now;
 
 		if (
 			this.#state !== State.DATA_INPUTTING
@@ -760,11 +747,6 @@ export default class Autocomplete extends EventEmitter
 					}
 
 					return;
-
-				case 'Backspace':
-				case 'Delete':
-					this.#filter.reset();
-					break;
 			}
 		}
 
@@ -778,6 +760,25 @@ export default class Autocomplete extends EventEmitter
 		{
 			this.#showPresetLocations();
 		}
+	}
+
+	#onInputPaste(): void
+	{
+		setTimeout(() => {
+			if (
+				this.#state !== State.DATA_INPUTTING
+				&& this.#addressString.isChanged()
+			)
+			{
+				this.#setState(State.DATA_INPUTTING);
+			}
+
+			if (this.#addressString.isChanged())
+			{
+				this.#addressString.actualize();
+				this.showPrompt(this.#addressString.value);
+			}
+		}, 0);
 	}
 
 	#createOnLocationSelectTimer(location: Location, timeout: Number): void
@@ -802,16 +803,7 @@ export default class Autocomplete extends EventEmitter
 		this.#searchPhrase.requested = searchPhrase;
 		this.#searchPhrase.current = searchPhrase;
 		this.#searchPhrase.dropped = '';
-		this.#showPromptInner(searchPhrase, this.#computePromptDelay());
-	}
-
-	/**
-	 * @returns {number}
-	 */
-	#computePromptDelay(): number
-	{
-		const delay = this.#promptDelay > this.#avgKeyUpDelay ? this.#promptDelay : this.#avgKeyUpDelay * 1.5;
-		return delay > this.#maxPromptDelay ? this.#maxPromptDelay : delay;
+		this.#showPromptInner(searchPhrase);
 	}
 
 	closePrompt(): void
@@ -830,11 +822,11 @@ export default class Autocomplete extends EventEmitter
 		}
 	}
 
-	#showPromptInner(searchPhrase: string, promptDelay: number): void
+	#showPromptInner(searchPhrase: string): void
 	{
-		if (searchPhrase.length <= this.#minCharsCountToAutocomplete)
+		if (searchPhrase.length <= 3)
 		{
-			promptDelay *= 2;
+			return;
 		}
 
 		if (this.#timerId !== null)
@@ -842,25 +834,26 @@ export default class Autocomplete extends EventEmitter
 			clearTimeout(this.#timerId);
 		}
 
-		this.#timerId = this.#createTimer(searchPhrase, promptDelay);
+		this.#timerId = this.#createTimer(searchPhrase);
 	}
 
 	/**
 	 * Wait for further user input for some time
 	 * @param {string} searchPhrase
-	 * @param {number} promptDelay
 	 * @returns {number}
 	 */
-	#createTimer(searchPhrase: string, promptDelay: number): number
+	#createTimer(searchPhrase: string): number
 	{
 		return setTimeout(() => {
 				// to avoid multiple parallel requests, server responses are too slow.
 				if (this.#isAutocompleteRequestStarted)
 				{
 					clearTimeout(this.#timerId);
-					this.#timerId = this.#createTimer(searchPhrase, promptDelay);
+					this.#timerId = this.#createTimer(searchPhrase);
+					this.#isNextAutocompleteRequestWaiting = true;
 					return;
 				}
+				this.#isNextAutocompleteRequestWaiting = false;
 
 				this.emit(Autocomplete.#onSearchStartedEvent);
 				this.#isAutocompleteRequestStarted = true;
@@ -870,43 +863,25 @@ export default class Autocomplete extends EventEmitter
 					.then(
 						(locationsList: Array<Location>) => {
 							this.#timerId = null;
-							this.#onPromptsReceived(locationsList, params);
-							this.emit(Autocomplete.#onSearchCompletedEvent);
+							if (!this.#isNextAutocompleteRequestWaiting)
+							{
+								this.#onPromptsReceived(locationsList, params);
+								this.emit(Autocomplete.#onSearchCompletedEvent);
+							}
 							this.#isAutocompleteRequestStarted = false;
 						},
 						(error) => {
-							this.emit(Autocomplete.#onSearchCompletedEvent);
+							if (!this.#isNextAutocompleteRequestWaiting)
+							{
+								this.emit(Autocomplete.#onSearchCompletedEvent);
+							}
 							this.#isAutocompleteRequestStarted = false;
 							BX.debug(error);
 						}
 					);
 			},
-			promptDelay
+			300
 		);
-	}
-
-	#getLastSelectedLocation()
-	{
-		const lastSelectedLocation = localStorage.getItem(this.#lastSelectedLocationLocalStorageKey);
-
-		if (lastSelectedLocation)
-		{
-			try
-			{
-				return LocationJsonConverter.convertJsonToLocation(JSON.parse(lastSelectedLocation));
-			}
-			catch(e) {}
-		}
-
-		return null;
-	}
-
-	#setLastSelectedLocation(location: Location)
-	{
-		const jsonLocation = location.toJson();
-
-		localStorage.setItem(this.#lastSelectedLocationLocalStorageKey, jsonLocation);
-		BX.userOptions.save('location', 'last_selected_location', null, jsonLocation);
 	}
 
 	destroy(): void
@@ -928,10 +903,12 @@ export default class Autocomplete extends EventEmitter
 
 		if (this.#inputNode)
 		{
+			this.#inputNode.removeEventListener('keydown', this.#onInputKeyDown);
 			this.#inputNode.removeEventListener('keyup', this.#onInputKeyUp);
 			this.#inputNode.removeEventListener('focus', this.#onInputFocus);
 			this.#inputNode.removeEventListener('focusout', this.#onInputFocusOut);
 			this.#inputNode.removeEventListener('click', this.#onInputClick);
+			this.#inputNode.removeEventListener('paste', this.#onInputPaste);
 		}
 
 		document.removeEventListener('click', this.#onDocumentClick);

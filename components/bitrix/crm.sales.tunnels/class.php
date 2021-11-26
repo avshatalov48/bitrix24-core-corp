@@ -6,8 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
-use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\Integration\Sender\Rc\Service;
+use Bitrix\Crm\Integration\Sender\Rc;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\RolePermission;
 use Bitrix\Main\Engine\Contract\Controllerable;
@@ -68,7 +67,7 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 			$this->addError(new Error(Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND')));
 			return;
 		}
-		if (!$this->factory->isCategoriesEnabled())
+		if (!$this->factory->isCategoriesEnabled() && $this->factory->getEntityTypeId() !== \CCrmOwnerType::Lead)
 		{
 			$this->addError(new Error(Loc::getMessage('CRM_SALES_TUNNELS_ENTITY_CATEGORY_DISABLED')));
 			return;
@@ -82,14 +81,16 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 		$this->tunnelManager = new Crm\Automation\TunnelManager($this->factory->getEntityTypeId());
 
 		$name = $this->factory->getEntityDescription();
-		$this->getApplication()->SetTitle(Loc::getMessage('CRM_SALES_TUNNELS_TITLE', [
-			'#NAME#' => htmlspecialcharsbx($name),
-		]));
-	}
-
-	public function isSenderSupported(): bool
-	{
-		return $this->factory->getEntityTypeId() === \CCrmOwnerType::Deal;
+		if ($this->factory->getEntityTypeId() === \CCrmOwnerType::Lead)
+		{
+			$this->getApplication()->SetTitle(Loc::getMessage('CRM_SALES_STATUSES_TITLE'));
+		}
+		else
+		{
+			$this->getApplication()->SetTitle(Loc::getMessage('CRM_SALES_TUNNELS_TITLE', [
+				'#NAME#' => htmlspecialcharsbx($name),
+			]));
+		}
 	}
 
 	/**
@@ -104,14 +105,27 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 
 		$this->categories = [];
 
-		$categoriesCollection = Crm\Service\Container::getInstance()->getUserPermissions()->filterAvailableForReadingCategories(
-			$this->factory->getCategories()
-		);
 		$categories = [];
-		foreach ($categoriesCollection as $category)
+		if ($this->factory->getEntityTypeId() === \CCrmOwnerType::Lead)
 		{
-			/** @var Crm\Category\Entity\Category $category */
-			$categories[] = $category->getData();
+			$categories[] = [
+				'ID' => $this->factory->getEntityTypeId(),
+				'NAME' => $this->factory->getEntityDescription(),
+				'SORT' => 0,
+				'ENTITY_TYPE_ID' => $this->factory->getEntityTypeId(),
+				'IS_DEFAULT' => true,
+			];
+		}
+		else
+		{
+			$categoriesCollection = Crm\Service\Container::getInstance()->getUserPermissions()->filterAvailableForReadingCategories(
+				$this->factory->getCategories()
+			);
+			foreach ($categoriesCollection as $category)
+			{
+				/** @var Crm\Category\Entity\Category $category */
+				$categories[] = $category->getData();
+			}
 		}
 
 		$tunnelScheme = $this->getTunnelScheme();
@@ -161,11 +175,17 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 
 				$reducedStages[$semanticId][] = $stage;
 			}
-
-			if ($this->isSenderSupported())
+			if ($this->isAvailableGenerator())
 			{
-				$category['RC_COUNT'] = Service::getDealWorkerCount($category['ID']);
-				$category['RC_LIST_URL'] = Service::getDealWorkerUrl($category['ID']);
+				if ($this->factory->getEntityTypeId() === \CCrmOwnerType::Deal)
+				{
+					$category['RC_COUNT'] = Rc\Service::getDealWorkerCount($category['ID']);
+					$category['RC_LIST_URL'] = Rc\Service::getDealWorkerUrl($category['ID']);
+				}
+				else if ($this->factory->getEntityTypeId() === \CCrmOwnerType::Lead)
+				{
+					$category['RC_LIST_URL'] = Rc\Service::getLeadWorkerUrl();
+				}
 			}
 
 			$category['STAGES'] = $reducedStages;
@@ -232,12 +252,12 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 		if ($this->stages === null)
 		{
 			$this->stages = [];
-			//todo combine into one query
-			foreach ($this->factory->getCategories() as $category)
+
+			foreach ($this->getCategories() as $category)
 			{
-				foreach ($this->factory->getStages($category->getId()) as $stage)
+				foreach (array_merge([], $category['STAGES']['P'], $category['STAGES']['S'], $category['STAGES']['F']) as $stage)
 				{
-					$this->stages[$stage->getStatusId()] = $stage->getName();
+					$this->stages[$stage['ID']] = $stage['NAME'];
 				}
 			}
 		}
@@ -280,19 +300,19 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 		// todo if stages disabled
 		$this->arResult['entityTypeId'] = $this->factory->getEntityTypeId();
 		$this->arResult['documentType'] = CCrmBizProcHelper::ResolveDocumentType($this->arResult['entityTypeId']);
-		$this->arResult['isAutomationEnabled'] = $this->factory->isAutomationEnabled();
-		$this->arResult['isStagesEnabled'] = $this->factory->isStagesEnabled();
-		$this->arResult['isSenderSupported'] = $this->isSenderSupported();
 		$this->arResult['categories'] = $this->getCategories();
 		$this->arResult['stages'] = $this->getStages();
 		$this->arResult['tunnelScheme'] = $this->getTunnelScheme();
-		$this->arResult['canEditTunnels'] = static::canCurrentUserEditTunnels();
-		$this->arResult['restrictionPopup'] = $this->getRestrictionPopup();
-		$this->arResult['showRobotsRestrictionPopup'] = $this->getRobotsRestrictionPopup();
-		$this->arResult['showGeneratorRestrictionPopup'] = $this->getGeneratorRestrictionPopup();
-		$this->arResult['robotsUrl'] = $this->getRobotsUrl();
 
-		[$this->arResult['canAddCategory'], $this->arResult['categoriesQuantityLimit']] = $this->getLimits();
+		$this->arResult['isCategoryEditable'] = $this->isCategoryEditable();
+		$this->arResult['isCategoryCreatable'] = $this->isCategoryCreatable();
+		$this->arResult['isAutomationEnabled'] = $this->isAutomationEnabled();
+		$this->arResult['isStagesEnabled'] = $this->factory->isStagesEnabled();
+		$this->arResult['areStagesEditable'] = $this->areStagesEditable();
+		$this->arResult['isAvailableGenerator'] = $this->isAvailableGenerator();
+
+		$this->arResult['robotsUrl'] = $this->getRobotsUrl();
+		$this->arResult['generatorUrl'] = $this->getGeneratorUrl();
 
 		$this->includeComponentTemplate();
 	}
@@ -302,21 +322,36 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 		return Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig();
 	}
 
-	private function getLimits(): array
+	private function isCategoryEditable()
 	{
-		//todo remove if/else
-		if ($this->factory->getEntityTypeId() === \CCrmOwnerType::Deal)
-		{
-			$restriction = Crm\Restriction\RestrictionManager::getDealCategoryLimitRestriction();
-			$limit = $restriction->getQuantityLimit();
-			$canAdd = ($limit <= 0 || $limit > DealCategory::getCount());
-		}
-		else
-		{
-			return [true, 0];
-		}
+		return Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig()
+			&& $this->factory->getEntityTypeId() !== \CCrmOwnerType::Lead;
+	}
 
-		return [$canAdd, $limit];
+	private function isCategoryCreatable()
+	{
+		return Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig()
+			&& $this->factory->getEntityTypeId() !== \CCrmOwnerType::Lead;
+	}
+
+	private function areStagesEditable()
+	{
+		return Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig();
+	}
+
+	private function isAutomationEnabled()
+	{
+		return $this->factory->isAutomationEnabled();
+	}
+
+	private function isAvailableGenerator()
+	{
+		if ($this->factory->getEntityTypeId() === \CCrmOwnerType::Lead
+			|| $this->factory->getEntityTypeId() === \CCrmOwnerType::Deal)
+		{
+			return Bitrix\Crm\Integration\Sender\Rc\Service::canUse();
+		}
+		return false;
 	}
 
 	private function showError($message): void
@@ -326,23 +361,6 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 				<span class="ui-alert-message">{$message}</span>
 			</div>
 HTML;
-	}
-
-	private function getRestrictionPopup()
-	{
-		$restriction = Crm\Restriction\RestrictionManager::getDealCategoryLimitRestriction();
-		return $restriction->prepareInfoHelperScript();
-	}
-
-	private function getRobotsRestrictionPopup()
-	{
-		$restriction = Crm\Restriction\RestrictionManager::getAutomationRestriction();
-		return $restriction->prepareInfoHelperScript();
-	}
-	private function getGeneratorRestrictionPopup()
-	{
-		$restriction = Crm\Restriction\RestrictionManager::getGeneratorRestriction();
-		return $restriction->prepareInfoHelperScript();
 	}
 
 	protected function getRobotsUrl(): ?string
@@ -365,6 +383,11 @@ HTML;
 		}
 
 		return null;
+	}
+
+	protected function getGeneratorUrl()
+	{
+		return $this->factory->getEntityTypeId() === \CCrmOwnerType::Lead ? Rc\Service::getPathToAddLead() : Rc\Service::getPathToAddDeal();
 	}
 
 	public function configureActions(): array

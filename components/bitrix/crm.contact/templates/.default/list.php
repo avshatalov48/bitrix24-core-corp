@@ -63,17 +63,20 @@ else
 
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.dedupe.autosearch',
-		'',
-		array(
-			'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
-			'PATH_TO_MERGE' => $arResult['PATH_TO_CONTACT_MERGE'],
-			'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_CONTACT_DEDUPELIST']
-		),
-		$component,
-		array('HIDE_ICONS' => 'Y')
-	);
+	if (!$isSlider)
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:crm.dedupe.autosearch',
+			'',
+			[
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+				'PATH_TO_MERGE' => $arResult['PATH_TO_CONTACT_MERGE'],
+				'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_CONTACT_DEDUPELIST']
+			],
+			$component,
+			['HIDE_ICONS' => 'Y']
+		);
+	}
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.contact.menu',
@@ -87,7 +90,8 @@ else
 			'PATH_TO_CONTACT_DEDUPE' => $arResult['PATH_TO_CONTACT_DEDUPE'],
 			'PATH_TO_CONTACT_DEDUPEWIZARD' => $arResult['PATH_TO_CONTACT_DEDUPEWIZARD'],
 			'ELEMENT_ID' => $arResult['VARIABLES']['contact_id'],
-			'TYPE' => 'list'
+			'TYPE' => 'list',
+			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
 		),
 		$component
 	);

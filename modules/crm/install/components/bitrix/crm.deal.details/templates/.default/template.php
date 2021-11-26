@@ -1,6 +1,8 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Attribute\FieldAttributeManager;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -127,13 +129,7 @@ $APPLICATION->IncludeComponent(
 			'CONTEXT' => $editorContext,
 			'ATTRIBUTE_CONFIG' => array(
 				'ENTITY_SCOPE' => $arResult['ENTITY_ATTRIBUTE_SCOPE'],
-				'CAPTIONS' => array(
-					'REQUIRED_SHORT' => GetMessage('CRM_DEAL_DETAIL_ATTR_REQUIRED_SHORT'),
-					'REQUIRED_FULL' => GetMessage('CRM_DEAL_DETAIL_ATTR_REQUIRED_FULL'),
-					'GROUP_TYPE_GENERAL' => GetMessage('CRM_DEAL_DETAIL_ATTR_GR_TYPE_GENERAL'),
-					'GROUP_TYPE_PIPELINE' => GetMessage('CRM_DEAL_DETAIL_ATTR_GR_TYPE_PIPELINE'),
-					'GROUP_TYPE_JUNK' => GetMessage('CRM_DEAL_DETAIL_ATTR_GR_TYPE_JUNK')
-				)
+				'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages(),
 			),
 			'COMPONENT_AJAX_DATA' => [
 				'RELOAD_ACTION_NAME' => 'LOAD',
@@ -193,29 +189,31 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 				{?>
                     var fieldsSetDefaultValue = <?=CUtil::PhpToJSObject($arResult['FIELDS_SET_DEFAULT_VALUE']);?>;
                     BX.addCustomEvent("onSave", function(fieldConfigurator, params) {
-                        var field = params.field;
-                        if(
-                            fieldConfigurator instanceof BX.Crm.EntityEditorFieldConfigurator
-                            && fieldConfigurator._mandatoryConfigurator
-                            && (field instanceof BX.Crm.EntityEditorField || field instanceof BX.UI.EntityEditorField)
-                            //&& field.isChanged()
-                            && fieldsSetDefaultValue.indexOf(field._id) > -1
-                        )
-                        {
-                            if(fieldConfigurator._mandatoryConfigurator.isEnabled())
-                            {
-                                delete field._model._data[field.getDataKey()];
-                                field.refreshLayout();
-                            }
-                            else
-                            {
-                                if(field.getSchemeElement().getData().defaultValue)
-                                {
-                                    field._model._data[field.getDataKey()] = field.getSchemeElement().getData().defaultValue;
-                                    field.refreshLayout();
-                                }
-                            }
-                        }
+					var field = params.field;
+					if(
+						fieldConfigurator instanceof BX.Crm.EntityEditorFieldConfigurator
+						&& fieldConfigurator._mandatoryConfigurator
+						&& (field instanceof BX.Crm.EntityEditorField || field instanceof BX.UI.EntityEditorField)
+						//&& field.isChanged()
+						&& fieldsSetDefaultValue.indexOf(field._id) > -1
+					)
+					{
+						if(fieldConfigurator._mandatoryConfigurator.isEnabled())
+						{
+							delete field._model._data[field.getDataKey()];
+							field.refreshLayout();
+						}
+						else
+						{
+							if(field.getSchemeElement().getData().defaultValue)
+							{
+								field._model._data[field.getDataKey()] =
+									field.getSchemeElement().getData().defaultValue
+								;
+								field.refreshLayout();
+							}
+						}
+					}
                     });
 				<?php
 				}?>

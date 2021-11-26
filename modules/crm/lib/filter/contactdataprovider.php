@@ -53,32 +53,97 @@ class ContactDataProvider extends Main\Filter\EntityDataProvider
 	{
 		$result =  array(
 			'ID' => $this->createField('ID'),
-			'NAME' => $this->createField('NAME'),
-			'SECOND_NAME' => $this->createField('SECOND_NAME'),
-			'LAST_NAME' => $this->createField('LAST_NAME'),
+			'NAME' => $this->createField(
+				'NAME',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'SECOND_NAME' => $this->createField(
+				'SECOND_NAME',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'LAST_NAME' => $this->createField(
+				'LAST_NAME',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'BIRTHDATE' => $this->createField(
 				'BIRTHDATE',
-				array('type' => 'date')
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'DATE_CREATE' => $this->createField(
 				'DATE_CREATE',
-				array('type' => 'date', 'default' => true)
+				[
+					'type' => 'date',
+					'default' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'DATE_MODIFY' => $this->createField(
 				'DATE_MODIFY',
-				array('type' => 'date')
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'ASSIGNED_BY_ID' => $this->createField(
 				'ASSIGNED_BY_ID',
-				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'default' => true,
+					'partial' => true,
+				]
 			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
 			),
 			'MODIFY_BY_ID' => $this->createField(
 				'MODIFY_BY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
 			),
 			'SOURCE_ID' => $this->createField(
 				'SOURCE_ID',
@@ -100,9 +165,39 @@ class ContactDataProvider extends Main\Filter\EntityDataProvider
 				'COMPANY_ID',
 				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
-			'COMPANY_TITLE' => $this->createField('COMPANY_TITLE'),
-			'POST' => $this->createField('POST'),
-			'COMMENTS' => $this->createField('COMMENTS'),
+			'COMPANY_TITLE' => $this->createField(
+				'COMPANY_TITLE',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'POST' => $this->createField(
+				'POST',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'COMMENTS' => $this->createField(
+				'COMMENTS',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'COMMUNICATION_TYPE' => $this->createField(
 				'COMMUNICATION_TYPE',
 				array('type' => 'list', 'default' => true, 'partial' => true)
@@ -172,7 +267,18 @@ class ContactDataProvider extends Main\Filter\EntityDataProvider
 		//region UTM
 		foreach (Crm\UtmTable::getCodeNames() as $code => $name)
 		{
-			$result[$code] = $this->createField($code, array('name' => $name));
+			$result[$code] = $this->createField(
+				$code,
+				[
+					'name' => $name,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			);
 		}
 		//endregion
 		return $result;
@@ -199,58 +305,17 @@ class ContactDataProvider extends Main\Filter\EntityDataProvider
 				'items' => \CCrmStatus::GetStatusList('CONTACT_TYPE')
 			);
 		}
-		elseif($fieldID === 'ASSIGNED_BY_ID')
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID'], true))
 		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_CONTACT_FILTER_ASSIGNED_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U'
-				)
-			);
-		}
-		elseif($fieldID === 'CREATED_BY_ID')
-		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_CONTACT_FILTER_CREATED_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U'
-				)
-			);
-		}
-		elseif($fieldID === 'MODIFY_BY_ID')
-		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_CONTACT_FILTER_MODIFY_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U'
-				)
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
+			$referenceClass = ($factory ? $factory->getDataClass() : null);
+
+			return $this->getUserEntitySelectorParams(
+				strtolower('crm_contact_filter_' . $fieldID),
+				[
+					'fieldName' => $fieldID,
+					'referenceClass' => $referenceClass,
+				]
 			);
 		}
 		elseif($fieldID === 'COMMUNICATION_TYPE')

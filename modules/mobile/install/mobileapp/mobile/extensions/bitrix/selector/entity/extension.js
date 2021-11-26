@@ -16,6 +16,7 @@
 			this.sections = [];
 			this.items = [];
 			this.selectedItems = [];
+			this.title = "";
 			this.doSearch = EntitySelector.debounce(function (text)
 			{
 				this.items = [];
@@ -24,7 +25,6 @@
 
 			this.updateList = items => this.ui.setItems(items, null, false);
 		}
-
 
 		setProvider(provider)
 		{
@@ -99,9 +99,10 @@
 			}
 
 			if (params.title) {
-				this.ui.setTitle({text: params.title})
+				this.setTitle(params.title)
 			}
-			
+
+			this.ui.setTitle({text: this.title});
 			return new Promise((function (resolve, reject)
 			{
 				this.resolve = resolve;
@@ -123,8 +124,29 @@
 
 		}
 
+		setTitle(title) {
+			this.title = title;
+			return this;
+		}
+
+
+		setSingleChoose(enabled) {
+			enabled = Boolean(enabled)
+			this.singleSelection = enabled;
+			if (enabled)
+				this.ui.allowMultipleSelection(false)
+
+			return this;
+		}
+
+		setMultipleSelection(enabled) {
+			this.ui.allowMultipleSelection(Boolean(enabled))
+			return this;
+		}
+
 		setSelected(selected) {
 			this.selectedItems = this.provider.prepareSelected(selected)
+			return this;
 		}
 
 		onEvent(eventName, data)
@@ -137,7 +159,6 @@
 
 		onResult(data)
 		{
-
 			this.resolve(data);
 		}
 
@@ -168,7 +189,10 @@
 
 		onSelectedChanged(data)
 		{
-			//
+			if (this.singleSelection)
+			{
+				this.ui.close(() => this.onResult(this.provider.prepareResult(data.items)));
+			}
 		}
 
 		static debounce(fn, timeout, ctx)

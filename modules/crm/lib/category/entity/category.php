@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Category\Entity;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Result;
 
 abstract class Category implements \JsonSerializable
@@ -35,19 +36,13 @@ abstract class Category implements \JsonSerializable
 			'NAME' => $this->getName(),
 			'SORT' => $this->getSort(),
 			'ENTITY_TYPE_ID' => $this->getEntityTypeId(),
-			'IS_DEFAULT' => $this->getIsDefault() ? 'Y' : 'N',
+			'IS_DEFAULT' => $this->getIsDefault(),
 		];
 	}
 
 	public function jsonSerialize(): array
 	{
-		return [
-			'id' => $this->getId(),
-			'name' => $this->getName(),
-			'sort' => $this->getSort(),
-			'entityTypeId' => $this->getEntityTypeId(),
-			'isDefault' => $this->getIsDefault(),
-		];
+		return Container::getInstance()->getCategoryConverter()->toJson($this);
 	}
 
 	public function getItemsFilter(array $filter = []): array

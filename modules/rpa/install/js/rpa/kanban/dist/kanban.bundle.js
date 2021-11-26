@@ -2309,7 +2309,7 @@ this.BX = this.BX || {};
 
 	      if (main_core.Type.isArray(errors)) {
 	        errors.forEach(function (error) {
-	          message += error.message + "\n";
+	          message += main_core.Text.encode(error.message) + "\n";
 	        });
 	      } else {
 	        message = 'Unknown error';

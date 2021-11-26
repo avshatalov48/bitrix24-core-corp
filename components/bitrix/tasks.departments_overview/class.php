@@ -263,7 +263,6 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 				T.STATUS IN ({$statuses})
 				AND T.CREATED_BY IN ({$preparedUserIds})
 				AND T.CREATED_BY != T.RESPONSIBLE_ID
-				AND T.ZOMBIE = 'N'
 			GROUP BY T.CREATED_BY
 		")->fetchAll();
 		foreach ($res as $row)
@@ -280,7 +279,6 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 			WHERE
 				T.STATUS IN ({$statuses})
 				AND T.RESPONSIBLE_ID IN ({$preparedUserIds})
-				AND T.ZOMBIE = 'N'
 			GROUP BY T.RESPONSIBLE_ID
 		")->fetchAll();
 		foreach ($res as $row)
@@ -299,7 +297,6 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 				T.STATUS IN ({$statuses})
 				AND TM.USER_ID IN ({$preparedUserIds})
 				AND TM.TYPE IN ('A', 'U')
-				AND T.ZOMBIE = 'N'
 			GROUP BY TM.USER_ID, TM.TYPE 
 		")->fetchAll();
 		foreach ($res as $row)

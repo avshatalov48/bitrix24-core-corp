@@ -86,7 +86,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
     $filterInstance = \Bitrix\Tasks\Helper\Filter::getInstance($arParams["USER_ID"], $arParams["GROUP_ID"]);
 
     $filter = $filterInstance->getFilters();
-    $presets = $filterInstance->getPresets();
+    $presets = $filterInstance->getAllPresets();
     $gridID = $filterInstance->getId();
 
     if ($isBitrix24Template)

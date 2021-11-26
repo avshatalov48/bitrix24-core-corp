@@ -317,7 +317,6 @@ export default
 			this.editMode = true;
 
 			let address = data.address;
-			let value = address.toJson();
 
 			if (!this.isValueValid(address))
 			{
@@ -326,7 +325,7 @@ export default
 			else
 			{
 				this.enteredAddresses.push(address);
-				this.changeValue(value);
+				this.changeValue(address.toJson());
 				this.showMap();
 			}
 		});

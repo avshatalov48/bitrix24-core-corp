@@ -1,0 +1,60 @@
+<?php
+
+namespace Bitrix\Crm\Integration\BizProc\Document\ValueCollection;
+
+use Bitrix\Crm;
+
+class Company extends Base
+{
+	protected function loadValue(string $fieldId): void
+	{
+		if ($fieldId === 'CONTACT_ID')
+		{
+			$this->document['CONTACT_ID'] = Crm\Binding\ContactCompanyTable::getCompanyContactIDs($this->id);
+		}
+		else
+		{
+			$this->loadEntityValues();
+		}
+	}
+
+	protected function loadEntityValues(): void
+	{
+		if (isset($this->document['ID']))
+		{
+			return;
+		}
+
+		$result = \CCrmCompany::GetListEx(
+			[],
+			[
+				'ID' => $this->id,
+				'CHECK_PERMISSIONS' => 'N',
+			],
+			false,
+			false,
+			['*', 'UF_*']
+		);
+
+		$this->document = array_merge($this->document, $result->fetch() ?: []);
+
+		$this->appendDefaultUserPrefixes();
+
+		$this->loadAddressValues();
+		$this->loadFmValues();
+		$this->loadUserFieldValues();
+	}
+
+	protected function loadAddressValues(): void
+	{
+		parent::loadAddressValues();
+
+		$this->document['ADDRESS'] = Crm\Format\AddressFormatter::getSingleInstance()->formatTextComma(
+			Crm\CompanyAddress::mapEntityFields($this->document, ['TYPE' => Crm\EntityAddressType::Delivery])
+		);
+
+		$this->document['ADDRESS_LEGAL'] = Crm\Format\AddressFormatter::getSingleInstance()->formatTextComma(
+			Crm\CompanyAddress::mapEntityFields($this->document, ['TYPE' => Crm\EntityAddressType::Registered])
+		);
+	}
+}

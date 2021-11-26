@@ -1,27 +1,40 @@
 <?php
 class CCrmExternalSaleHelper
 {
-	public static function PrepareListItems()
+	public static function PrepareListItems(): array
 	{
-		$ary = array();
+		static $result;
 
-		$rsSaleSettings = CCrmExternalSale::GetList(array('NAME' => 'ASC', 'SERVER' => 'ASC'), array('ACTIVE' => 'Y'));
-		while($arSaleSetting = $rsSaleSettings->Fetch())
+		if ($result === null)
 		{
-			$saleSettingsID = $arSaleSetting['ID'];
-			$saleSettingName = isset($arSaleSetting['NAME']) ? strval($arSaleSetting['NAME']) : '';
-			if(!isset($saleSettingName[0]) && isset($arSaleSetting['SERVER']))
-			{
-				$saleSettingName = $arSaleSetting['SERVER'];
-			}
+			$result = [];
 
-			if(!isset($saleSettingName[0]))
+			$rsSaleSettings = CCrmExternalSale::GetList(
+				[
+					'NAME' => 'ASC',
+					'SERVER' => 'ASC',
+				],
+				[
+					'ACTIVE' => 'Y',
+				]
+			);
+			while ($arSaleSetting = $rsSaleSettings->Fetch())
 			{
-				$saleSettingName = $saleSettingsID;
+				$saleSettingsID = $arSaleSetting['ID'];
+				$saleSettingName = isset($arSaleSetting['NAME']) ? (string)$arSaleSetting['NAME'] : '';
+				if (!isset($saleSettingName[0]) && isset($arSaleSetting['SERVER']))
+				{
+					$saleSettingName = $arSaleSetting['SERVER'];
+				}
+
+				if (!isset($saleSettingName[0]))
+				{
+					$saleSettingName = $saleSettingsID;
+				}
+				$result[$saleSettingsID] = $saleSettingName;
 			}
-			$ary[$saleSettingsID] = $saleSettingName;
 		}
 
-		return $ary;
+		return $result;
 	}
 }

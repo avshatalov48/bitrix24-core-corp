@@ -4,20 +4,25 @@ namespace Bitrix\Crm\Controller;
 
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Context;
+use Bitrix\Intranet\ActionFilter\IntranetUser;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 abstract class Base extends Controller
 {
-	public const ERROR_CODE_ACCESS_DENIED = 'ACCESS_DENIED';
-	public const ERROR_CODE_NOT_FOUND = 'NOT_FOUND';
-
 	protected function init(): void
 	{
 		parent::init();
+
+		if ($this->getScope() === Controller::SCOPE_REST)
+		{
+			Container::getInstance()->getContext()->setScope(Context::SCOPE_REST);
+		}
 
 		Container::getInstance()->getLocalization()->loadMessages();
 	}
@@ -34,6 +39,18 @@ abstract class Base extends Controller
 				}
 			),
 		];
+	}
+
+	protected function getDefaultPreFilters(): array
+	{
+		$defaultPreFilter = parent::getDefaultPreFilters();
+
+		if (Loader::includeModule('intranet'))
+		{
+			$defaultPreFilter[] = new IntranetUser();
+		}
+
+		return $defaultPreFilter;
 	}
 
 	protected function convertKeysToUpper(array $data): array
@@ -152,5 +169,26 @@ abstract class Base extends Controller
 		}
 
 		return Container::getInstance()->getFileUploader()->saveFileTemporary($field, $fileArray);
+	}
+
+	protected function prepareFieldsInfo(array $fieldsInfo): array
+	{
+		foreach ($fieldsInfo as &$fieldInfo)
+		{
+			$fieldInfo['CAPTION'] = $fieldInfo['TITLE'] ?? null;
+		}
+		unset($fieldInfo);
+
+		$fieldsInfo = \CCrmRestHelper::prepareFieldInfos($fieldsInfo);
+		$upperFieldNames = array_keys($fieldsInfo);
+		$convertedFieldsInfo = $this->convertKeysToCamelCase($fieldsInfo);
+		$index = 0;
+		foreach ($fieldsInfo as &$info)
+		{
+			$info['upperName'] = $upperFieldNames[$index];
+			$index++;
+		}
+
+		return array_combine(array_keys($convertedFieldsInfo), $fieldsInfo);
 	}
 }

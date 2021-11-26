@@ -158,8 +158,18 @@
 					useNewStyle: true
 				},
 				{
+					exp: /\/company\/personal\/user\/(\d+)\/tasks\/task\/view\/(\d+)\/\?commentAction=([a-zA-z]+)/gi,
+					replace: "/mobile/tasks/snmrouter/?routePage=view&USER_ID=$1&GROUP_ID=0&TASK_ID=$2",
+					useNewStyle: true
+				},
+				{
 					exp: /\/company\/personal\/user\/(\d+)\/tasks\//gi,
 					replace: "/mobile/tasks/snmrouter/?routePage=list&USER_ID=$1",
+					useNewStyle: true
+				},
+				{
+					exp: /\/company\/personal\/user\/(\d+)\/tasks\/effective\//gi,
+					replace: "/mobile/tasks/snmrouter/?routePage=efficiency",
 					useNewStyle: true
 				},
 				{
@@ -238,22 +248,42 @@
 			var resultOpenFunction = null;
 			var resolveList = [
 				{
-					resolveFunction:BX.MobileTools.userIdFromUrl,
-					openFunction: function(userId) { BXMobileApp.Events.postToComponent("onUserProfileOpen", [userId])}
+					resolveFunction: BX.MobileTools.userIdFromUrl,
+					openFunction: function(userId) {
+						BXMobileApp.Events.postToComponent("onUserProfileOpen", [userId]);
+					}
 				},
 				{
-					resolveFunction:BX.MobileTools.taskIdFromUrl,
-					openFunction: function(data) { BXMobileApp.Events.postToComponent("taskbackground::task::action", data, "background");}
+					resolveFunction: BX.MobileTools.actionFromTaskActionUrl,
+					openFunction: function(data) {
+						BXMobileApp.Events.postToComponent("task.view.onCommentAction", data, "tasks.view");
+					}
 				},
 				{
-					resolveFunction:BX.MobileTools.diskFolderIdFromUrl,
-					openFunction: function(folderId) { BXMobileApp.Events.postToComponent("onDiskFolderOpen", [{folderId: folderId}], "background");}
+					resolveFunction: BX.MobileTools.taskIdFromUrl,
+					openFunction: function(data) {
+						BXMobileApp.Events.postToComponent("taskbackground::task::action", data, "background");
+					}
 				},
 				{
-					resolveFunction:BX.MobileTools.diskFileIdFromUrl,
-					openFunction: function(fileId) { BXMobileApp.Document.open({
-						url:"/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId="+fileId,
-					})}
+					resolveFunction: BX.MobileTools.userIdFromTaskEfficiencyUrl,
+					openFunction: function(data) {
+						BXMobileApp.Events.postToComponent("taskbackground::efficiency::open", data, "background");
+					}
+				},
+				{
+					resolveFunction: BX.MobileTools.diskFolderIdFromUrl,
+					openFunction: function(folderId) {
+						BXMobileApp.Events.postToComponent("onDiskFolderOpen", [{folderId: folderId}], "background");
+					}
+				},
+				{
+					resolveFunction: BX.MobileTools.diskFileIdFromUrl,
+					openFunction: function(fileId) {
+						BXMobileApp.Document.open({
+							url: "/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId=" + fileId
+						})
+					}
 				},
 			];
 
@@ -349,6 +379,41 @@
 					};
 				}
 			}
+		},
+		actionFromTaskActionUrl: function(url)
+		{
+			var regs = [
+				/\/company\/personal\/user\/(\d+)\/tasks\/task\/view\/(\d+)\/\?commentAction=([a-zA-Z]+)&deadline=([0-9]+)/i,
+				/\/company\/personal\/user\/(\d+)\/tasks\/task\/view\/(\d+)\/\?commentAction=([a-zA-Z]+)/i,
+			];
+			for (var i = 0; i < regs.length; i++)
+			{
+				var result = url.match(regs[i]);
+				if (result)
+				{
+					return {
+						userId: result[1],
+						taskId: result[2],
+						action: result[3],
+						deadline: result[4]
+					};
+				}
+			}
+
+			return null;
+		},
+		userIdFromTaskEfficiencyUrl: function(url)
+		{
+			var result = url.match(/\/company\/personal\/user\/(\d+)\/tasks\/effective\//i);
+			if (result)
+			{
+				return {
+					userId: result[1],
+					groupId: 0
+				};
+			}
+
+			return null;
 		},
 		diskFolderIdFromUrl:function(url)
 		{

@@ -42,3 +42,6 @@ $MESS['TASKS_ROLE_ACCOMPLICE'] = 'Помогаю';
 $MESS['TASKS_ROLE_AUDITOR'] = 'Наблюдаю';
 $MESS['TASKS_ROLE_ORIGINATOR'] = 'Поручил';
 $MESS["MEASURE_STRESS"] = "Замерить";
+$MESS["MB_SEC_B24"] = "ВАШ БИТРИКС24";
+$MESS["TO_LOGIN_ON_DESKTOP"] = "Перейти в полную версию";
+

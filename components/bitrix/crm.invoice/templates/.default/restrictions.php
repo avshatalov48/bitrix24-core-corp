@@ -21,10 +21,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		}
 	});
 </script>
+
 <?php
 \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
-
-\Bitrix\Main\Localization\Loc::getMessage('');
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
 	'',

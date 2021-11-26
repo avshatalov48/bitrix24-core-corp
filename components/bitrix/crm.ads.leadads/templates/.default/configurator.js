@@ -156,11 +156,29 @@ if (typeof(CrmAdsLeadAds) === "undefined")
 		},
 		logout: function ()
 		{
+			var analyticsLabel =
+				!(this.provider.TYPE === "facebook" || this.provider.TYPE === "instagram")
+					? {}
+					: {
+						connect: "FBE",
+						action: "disconnect",
+						type: "disconnect"
+					}
+			;
 			this.showBlock('loading');
-			this.request('logout', {}, BX.delegate(function (provider) {
-				this.provider = provider;
-				this.showBlockByAuth();
-			}, this));
+			this.request(
+				'logout',
+				{},
+				BX.delegate(
+					function (provider) {
+						this.provider = provider;
+						this.showBlockByAuth();
+					},
+					this
+				),
+				null,
+				analyticsLabel
+			);
 		},
 		logoutGroup: function ()
 		{
@@ -429,10 +447,11 @@ if (typeof(CrmAdsLeadAds) === "undefined")
 				callback.apply(this, [response.data]);
 			}
 		},
-		request: function (action, requestData, callback, callbackFailure)
+		request: function (action, requestData, callback, callbackFailure, analytics)
 		{
 			requestData.action = action;
 			requestData.type = this.provider.TYPE;
+			analytics = analytics || {};
 
 			var callbackFailureWrapper = function(callback, response) {
 				this.showErrorPopup(response);
@@ -445,9 +464,12 @@ if (typeof(CrmAdsLeadAds) === "undefined")
 			{
 				var params = [
 					requestData,
-					BX.delegate(function (response) {
-						this.onResponse(response, callback);
-					}, this),
+					BX.delegate(
+						function (response) {
+							this.onResponse(response, callback);
+						},
+						this
+					),
 					callbackFailureWrapper.bind(this, callbackFailure)
 				];
 				this.onRequest.apply(this, params);
@@ -460,19 +482,27 @@ if (typeof(CrmAdsLeadAds) === "undefined")
 					function(response) {
 						this.onResponse(response, callback);
 					},
-					callbackFailureWrapper.bind(this, callbackFailure)
+					callbackFailureWrapper.bind(this, callbackFailure),
+					analytics
 				);
 			}
 		},
-		sendActionRequest: function (action, data, callbackSuccess, callbackFailure)
+		prepareAjaxUrl : function(analytics)
+		{
+			var query = BX.ajax.prepareData({ analyticsLabel: analytics});
+
+			return this.actionRequestUrl + (query !== "" ? "?" + query : "");
+		},
+		sendActionRequest: function (action, data, callbackSuccess, callbackFailure, analytics)
 		{
 			callbackSuccess = callbackSuccess || null;
 			callbackFailure = callbackFailure || BX.proxy(this.showErrorPopup, this);
+			analytics = analytics || {};
 
 			data = data || data;
 			data.sessid = BX.bitrix_sessid();
 			BX.ajax({
-				url: this.actionRequestUrl,
+				url: this.prepareAjaxUrl(analytics),
 				method: 'POST',
 				data: data,
 				timeout: 30,

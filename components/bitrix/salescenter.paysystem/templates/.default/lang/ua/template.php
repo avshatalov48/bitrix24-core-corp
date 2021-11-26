@@ -66,6 +66,7 @@ $MESS["SALESCENTER_SP_PAYSYSTEM_UAPAY_PUBLIC_NAME"] = "UaPay";
 $MESS["SALESCENTER_SP_PAYSYSTEM_UAPAY_TITLE"] = "UaPay";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WEBMONEY_DESCRIPTION"] = "Приймайте електронні платежі від клієнтів WebMoney";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WEBMONEY_TITLE"] = "WebMoney";
+$MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_CHECKOUT_DESCRIPTION"] = "Приймайте онлайн-платежі від клієнтів з банківської карти, балансу мобільного телефону або гаманця Wooppay. Woopkassa – сервіс з прийому онлайн-платежів від Wooppay, першої зареєстрованої платіжної організації в Казахстані.";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_CHECKOUT_TITLE"] = "Woopkassa. Сторінка оплати";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_IFRAME_TITLE"] = "Woopkassa. Платіжний фрейм";
 $MESS["SALESCENTER_SP_PAYSYSTEM_YANDEXCHECKOUT_ALFABANK_DESCRIPTION"] = "Приймайте електронні платежі від клієнтів Альфа-Клік. Оплата здійснюється через сервіс Яндекс.Каса (з версії 3.х)";

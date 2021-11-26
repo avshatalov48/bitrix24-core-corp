@@ -27,7 +27,6 @@ BX.CRM.Kanban.Grid = function(options)
 	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", BX.delegate(this.onItemDragStartHandler, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", BX.delegate(this.setKanbanDragMode, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanDragMode, this));
-	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", BX.delegate(this.stopActionPanel, this));
 
 	BX.addCustomEvent("BX.Main.Filter:apply", BX.delegate(this.onApplyFilter, this));
 	BX.addCustomEvent("BX.CrmEntityCounterPanel:applyFilter", BX.delegate(this.onApplyFilterCounter, this));
@@ -37,6 +36,7 @@ BX.CRM.Kanban.Grid = function(options)
 	BX.addCustomEvent("onCrmActivityTodoChecked", BX.proxy(this.onCrmActivityTodoChecked, this));
 	BX.addCustomEvent("SidePanel.Slider:onClose", BX.proxy(this.onSliderClose, this));
 	BX.addCustomEvent("BX.CRM.Kanban.Item.select", BX.proxy(this.startActionPanel, this));
+	BX.addCustomEvent("BX.CRM.Kanban.Item.unSelect", BX.proxy(this.stopActionPanel, this));
 	BX.addCustomEvent("BX.UI.ActionPanel:clickResetAllBlock", BX.proxy(this.resetMultiSelectMode, this));
 	BX.addCustomEvent("BX.Crm.EntityEditorSection:onOpenChildMenu", BX.proxy(this.onOpenEditorMenu, this));
 	BX.addCustomEvent("BX.Crm.EntityEditor:onConfigScopeChange", BX.proxy(this.onConfigEditorScopeChange, this));
@@ -78,6 +78,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	dropZonesShow: false,
 	schemeInline: null,
 	isBindEvents: false,
+	fieldsSelectors: {},
 
 	/**
 	 * Get current checkeds items.
@@ -244,7 +245,6 @@ BX.CRM.Kanban.Grid.prototype = {
 					!BX.findParent(el.target, {"className": "ui-action-panel"})
 				)
 				{
-					this.stopActionPanel();
 					this.unSetKanbanDragMode();
 				}
 			}.bind(this));
@@ -260,7 +260,6 @@ BX.CRM.Kanban.Grid.prototype = {
 				if(el.code === "Escape")
 				{
 					this.resetMultiSelectMode();
-					this.stopActionPanel();
 					this.unSetKanbanDragMode();
 				}
 			}.bind(this));
@@ -378,6 +377,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	unSetKanbanDragMode: function()
 	{
+		this.stopActionPanel(true);
 		BX.removeClass(document.body, "crm-kanban-drag-mode");
 	},
 
@@ -487,14 +487,76 @@ BX.CRM.Kanban.Grid.prototype = {
 			url += "&group=yes"
 		}
 
-		BX.ajax({
-			method: "POST",
-			dataType: dataType,
-			url: url,
-			data: data,
-			onsuccess: onsuccess,
-			onfailure: onfailure
-		});
+		if (this.isCicleRequest(data))
+		{
+			this.reload();
+		}
+		else
+		{
+			BX.ajax({
+				method: "POST",
+				dataType: dataType,
+				url: url,
+				data: data,
+				onsuccess: onsuccess,
+				onfailure: onfailure
+			});
+		}
+	},
+
+	/**
+	 * This is a crutch that will serve as the final frontier against kanban loops
+	 * until we find all the scenarios where customers have kanban loops.
+	 * @param data
+	 * @returns {boolean}
+	 */
+	isCicleRequest: function(data)
+	{
+		if (data.action !== 'page')
+		{
+			return false;
+		}
+
+		var ciclePeriod = 10 * 1000; // 10 seconds
+		var maxRequestsInPeriod = 5;
+		var setCicleRequestParams = function(cicleRequestParams)
+		{
+			BX.localStorage.set('crm-kanban-cicle-request-params', cicleRequestParams, ciclePeriod);
+		}
+
+		var params = BX.localStorage.get('crm-kanban-cicle-request-params');
+		if (!params)
+		{
+			params = this.getEmptyCicleRequestParams();
+			params.total += 1;
+			setCicleRequestParams(params);
+			return false;
+		}
+
+		var offset = Date.now() - params.startTime;
+		if (offset < ciclePeriod && params.total >= maxRequestsInPeriod)
+		{
+			setCicleRequestParams(this.getEmptyCicleRequestParams());
+			return true;
+		}
+
+		if (offset > ciclePeriod)
+		{
+			params = this.getEmptyCicleRequestParams();
+		}
+
+		params.total += 1;
+		setCicleRequestParams(params);
+
+		return false;
+	},
+
+	getEmptyCicleRequestParams: function()
+	{
+		return {
+			total: 0,
+			startTime: Date.now(),
+		};
 	},
 
 	/**
@@ -778,13 +840,7 @@ BX.CRM.Kanban.Grid.prototype = {
 
 			if (error)
 			{
-				var message = BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType);
-				if(gridData.isDynamicEntity)
-				{
-					message = BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC")
-				}
-
-				this.getPopupCancel(message).show();
+				this.showNotCompletedPopup(gridData);
 			}
 
 			var itemsChecked = this.getChecked();
@@ -803,6 +859,7 @@ BX.CRM.Kanban.Grid.prototype = {
 
 			this.resetMultiSelectMode();
 
+			this.stopActionPanel();
 			return;
 		}
 
@@ -811,6 +868,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			targetColumn.addItem(item, item.beforeItem);
 		});
 
+		this.stopActionPanel();
 		return true;
 	},
 
@@ -942,28 +1000,23 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	/**
 	 * Hook on item drag start.
-	 * @param {BX.Kanban.Item} item
+	 * @param {BX.CRM.Kanban.Item} item
 	 * @returns {void}
 	 */
 	onItemDragStart: function(item)
 	{
 		this.setDragMode(BX.Kanban.DragMode.ITEM);
 
-		var gridData = this.getData();
-		var items = this.getItems();
-		var itemColumnData = item.getColumn().getData();
-		var itemColumnId = item.getColumnId();
-
 		if (parseInt(item.getId()) < 0)
 		{
 			return;
 		}
 
+		var items = this.getItems();
+		var itemColumnId = item.getColumnId();
+
 		// disable move for win lead
-		if (
-			this.getTypeInfoParam('disableMoveToWin')
-			&& itemColumnData.type === "WIN"
-		)
+		if (item.isItemMoveDisabled())
 		{
 			for (var itemId in items)
 			{
@@ -989,7 +1042,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	/**
 	 * Hook on item drag start.
 	 * @param {BX.Kanban.Item} item
-	 * @returns {voiid}
+	 * @returns {void}
 	 */
 	onItemDragStartHandler: function(item)
 	{
@@ -1117,7 +1170,6 @@ BX.CRM.Kanban.Grid.prototype = {
 		var gridData = this.getData();
 		var isDropZone = targetColumn instanceof BX.Kanban.DropZone;
 
-		console.log(this.itemMoving);
 		if (
 			targetColumn.getId() !== "DELETED"
 			&& itemData['updateRestrictionCallback']
@@ -1214,12 +1266,20 @@ BX.CRM.Kanban.Grid.prototype = {
 					this.itemMoving.dropEvent.denyAction();
 				}
 
-				// show editor
-				this.openPartialEditor(item.getId(), columnId, itemData.required[columnId]);
-				BX.addClass(
-					item.layout.container,
-					"main-kanban-item-waiting"
-				);
+				if (this.getChecked().length > 1)
+				{
+					this.showNotCompletedPopup(gridData);
+					this.resetMultiSelectMode();
+				}
+				else
+				{
+					// show editor
+					this.openPartialEditor(item.getId(), columnId, itemData.required[columnId]);
+					BX.addClass(
+						item.layout.container,
+						"main-kanban-item-waiting"
+					);
+				}
 				return;
 			}
 		}
@@ -1349,6 +1409,17 @@ BX.CRM.Kanban.Grid.prototype = {
 			this.clearItemMoving();
 			item.dropChangedInPullRequest();
 		}
+	},
+
+	showNotCompletedPopup: function(gridData)
+	{
+		var message = BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType);
+		if(gridData.isDynamicEntity)
+		{
+			message = BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC")
+		}
+
+		this.getPopupCancel(message).show();
 	},
 
 	/**
@@ -1729,18 +1800,6 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 	},
 
-	addCustomEditField: function(field)
-	{
-		var gridData = this.getData();
-		gridData.customEditFields.push(field);
-	},
-
-	removeCustomEditField: function(field)
-	{
-		var gridData = this.getData();
-		gridData.customEditFields.splice(gridData.customEditFields.indexOf(field), 1);
-	},
-
 	getQuickEditor: function()
 	{
 		var columns = this.getColumns();
@@ -1760,475 +1819,143 @@ BX.CRM.Kanban.Grid.prototype = {
 	/**
 	 * Show popup for selecting fields which must show in view / edit.
 	 * @param viewType
-	 * @param quickEditor
 	 */
-	showFieldsSelectPopup: function(viewType, quickEditor)
+	showFieldsSelectPopup: function(viewType)
 	{
-		var gridData = this.getData();
-		var popupHeaders = gridData.customSectionsFields;
-		var disabledFields = Object.assign({}, gridData.customDisabledFields);
-
-		if (viewType !== "edit")
+		if (!this.fieldsSelectors.hasOwnProperty(viewType))
 		{
-			viewType = "view";
-		}
-
-		if (viewType === "edit")
-		{
-			var disabledFieldsEdit = [
-				"ID", "CLOSED", "CLOSEDATE", "DATE_CREATE", "DATE_MODIFY",
-				"COMMENTS", "OPPORTUNITY"
-			];
-			for (var i = 0, c = disabledFieldsEdit.length; i < c; i++)
-			{
-				disabledFields[disabledFieldsEdit[i]] = true;
-			}
-		}
-		else
-		{
-			var disabledFieldsView = [
-				"PHONE", "EMAIL", "WEB", "IM"
-			];
-			for (var i = 0, c = disabledFieldsView.length; i < c; i++)
-			{
-				disabledFields[disabledFieldsView[i]] = true;
-			}
-		}
-
-		var customFields = (viewType === "view")
-							? gridData.customFields
-							: gridData.customEditFields;
-
-		if(!this.currentPopupFields)
-		{
-			this.currentPopupFields = viewType;
-		}
-
-		if(this.currentPopupFields !== viewType)
-		{
-			this.currentPopupFields = viewType;
-			this.destroyFieldsSelectPopup();
-		}
-
-		var customFieldsPopup = BX.Main.PopupManager.getPopupById("kanban_custom_fields");
-
-		if (!customFieldsPopup)
-		{
-			// base popup with fields and save action
-			customFieldsPopup = BX.Main.PopupManager.create(
-				"kanban_custom_fields",
-				window.body,
-				{
-					closeIcon : true,
-					offsetLeft : 0,
-					lightShadow : true,
-					overlay : true,
-					className: "crm-kanban-popup-field",
-					titleBar: {content: BX.create("span", {html: ""})},
-					draggable: true,
-					contentColor: "white",
-					closeByEsc : true,
-					bindOptions: { forceBindPosition: false },
-					maxHeight: window.innerHeight - 50,
-					buttons: [
-						// save fields
-						new BX.PopupWindowButton(
-							{
-								text: BX.message("CRM_KANBAN_POPUP_SAVE"),
-								className: "ui-btn ui-btn-primary",
-								events:
-									{
-										click: function()
-										{
-											// collect checked fields
-											var saveData = {};
-											var deleteData = {};
-											var checkboxes = BX.findChild(
-												this.customFieldsContainer,
-												{
-													tagName: "input",
-													className: "crm-kanban-popup-field-item-input"
-												},
-												true,
-												true
-											);
-											for (var i = 0, c = checkboxes.length; i < c; i++)
-											{
-												if (checkboxes[i].checked)
-												{
-													saveData[checkboxes[i].getAttribute("name")] = BX.data(checkboxes[i], "label");
-
-													if (viewType === "view")
-													{
-														gridData.customFields.push(checkboxes[i].getAttribute("name"));
-													}
-													else
-													{
-														gridData.customEditFields.push(checkboxes[i].getAttribute("name"));
-													}
-
-													if(gridData.customEditFields.indexOf(checkboxes[i].getAttribute("name")) === -1)
-													{
-														if(viewType !== "view")
-														{
-															this.addCustomEditField(checkboxes[i].getAttribute("name"));
-														}
-													}
-												}
-												else
-												{
-													deleteData[checkboxes[i].getAttribute("name")] = BX.data(checkboxes[i], "label");
-
-													if(gridData.customEditFields.indexOf(checkboxes[i].getAttribute("name")) !== -1)
-													{
-														this.removeCustomEditField(checkboxes[i].getAttribute("name"));
-													}
-												}
-											}
-
-											// save
-											this.ajax({
-													action: "saveFields",
-													fields: saveData,
-													type: viewType
-												},
-												function(data)
-												{
-													// for view-form just refresh
-													if (viewType === "view")
-													{
-														this.onApplyFilter();
-													}
-													// for edit-form add inline
-													else
-													{
-														var dataAdd = [];
-														var dataDelete = [];
-														// get etalon editor
-														var columns = this.getColumns();
-														var columnEditor = this.getQuickEditor();
-														var sectionEditor = columnEditor.getControlById("main");
-														// calculate new fields and removed fields
-														for (var key in saveData)
-														{
-															if (sectionEditor.getChildById(key) === null)
-															{
-																dataAdd.push(key);
-															}
-														}
-														for (var key in deleteData)
-														{
-															if (sectionEditor.getChildById(key) !== null)
-															{
-																dataDelete.push(key);
-															}
-														}
-														// gets editor from each column and add new fields
-														var columns = this.getColumns();
-														for (var i = 0, columnLength = columns.length; i < columnLength; i++)
-														{
-															var columnEditor = columns[i].getQuickEditor();
-															if (!columnEditor)
-															{
-																continue;
-															}
-															// add new fields
-															for (var j = 0, addDataLength = dataAdd.length; j < addDataLength; j++)
-															{
-																var element = columnEditor.getAvailableSchemeElementByName(
-																	dataAdd[j]
-																);
-																if (element)
-																{
-																	var field = columnEditor.createControl(
-																		element.getType(),
-																		element.getName(),
-																		{
-																			schemeElement: element,
-																			model: columnEditor._model,
-																			mode: columnEditor._mode
-																		}
-																	);
-
-																	if (field)
-																	{
-																		var section = columnEditor.getControlById("main");
-																		section.addChild(
-																			field,
-																			{
-																				layout: { forceDisplay: true },
-																				enableSaving: false
-																			}
-																		);
-																	}
-																}
-															}
-															// remove old fields
-															for (var k = 0, delDataLength = dataDelete.length; k < delDataLength; k++)
-															{
-																var element = columnEditor.getSchemeElementByName(
-																	dataDelete[k]
-																);
-																if (element)
-																{
-																	var section = columnEditor.getControlById("main");
-																	var control = section.getChildById(dataDelete[k]);
-																	if (control)
-																	{
-																		section.removeChild(control, { enableSaving: false });
-																	}
-																}
-															}
-
-															columnEditor.commitSchemeChanges();
-														}
-
-														this.getQuickEditor().saveSchemeChanges().then(
-															function () {
-																for (var i = 0, columnLength = columns.length; i < columnLength; i++)
-																{
-																	var columnEditor = columns[i].getQuickEditor();
-																	if (columnEditor)
-																	{
-																		columnEditor.refreshLayout();
-																	}
-																}
-															}
-														);
-													}
-												}.bind(this),
-												function(error)
-												{
-												}.bind(this)
-											);
-											customFieldsPopup.close();
-										}.bind(this)
-									}
-							}
-						),
-						new BX.PopupWindowButton(
-							{
-								text: BX.message("CRM_KANBAN_POPUP_CANCEL"),
-								className: "ui-btn ui-btn-link",
-								events:
-									{
-										click: function()
-										{
-											customFieldsPopup.close();
-											this.destroyFieldsSelectPopup();
-										}.bind(this)
-									}
-							}
-						)
-					]
-				}
-			);
-
-			var loaderContainer = BX.create("div", {
-				props: {
-					className: "crm-kanban-popup-field-loader"
-				}
-			});
-
-			var loader = new BX.Loader({
-				target: loaderContainer,
-				size: 80
-			});
-
-			loader.show();
-
-			customFieldsPopup.setContent(loaderContainer);
-
-			customFieldsPopup.setTitleBar(
-				BX.message("CRM_KANBAN_CUSTOM_FIELDS_" + viewType.toUpperCase())
-			);
-
-			// fill popup with fields from editor
-			var columnEditor = this.getQuickEditor();
-			if (columnEditor)
-			{
-				var sectionEditor = columnEditor.getControlById("main");
-			}
-
-			// get fields by ajax and build popup content
-			BX.ajax.runComponentAction('bitrix:crm.kanban', 'getFields', {
-				mode: 'ajax',
-				data: {
-					entityType: gridData.entityType,
-					viewType: viewType,
-				}
-			}).then(function(response) {
-				var result = response.data;
-				loader.destroy();
-
-				var containerChildren = [];
-				var data = [];
-				var reminder = result;
-				var formContent = [];
-				var firstItem = true;
-
-				for (var k = 0, ck = popupHeaders.length; k < ck; k++)
-				{
-					data = reminder;
-					reminder = [];
-					formContent = [];
-					firstItem = true;
-					for (var i = 0, c = data.length; i < c; i++)
+			var gridData = this.getData();
+			this.fieldsSelectors[viewType] = new BX.Crm.Kanban.FieldsSelector({
+				entityTypeName: gridData.entityType,
+				type: viewType,
+				sections: gridData.customSectionsFields,
+				selectedFields: (viewType === 'view')
+					? gridData.customFields
+					: gridData.customEditFields,
+				ignoredFields: gridData.customDisabledFields,
+				onSelect: function(selectedItems) {
+					var oldValue = [];
+					if (viewType === 'view')
 					{
-						if (disabledFields[data[i].NAME] === true)
-						{
-							continue;
-						}
-						// if fields in the current section
-						if (popupHeaders[k]["elements"] !== "*")
-						{
-							if (!popupHeaders[k]["elements"][data[i].NAME])
-							{
-								reminder.push(data[i]);
-								continue;
-							}
-							if (popupHeaders[k]["elements"][data[i].NAME]["title"])
-							{
-								data[i].LABEL = popupHeaders[k]["elements"][data[i].NAME]["title"];
-							}
-						}
-						// header of section
-						if (firstItem && ck > 1)
-						{
-							firstItem = false;
-							containerChildren.push(BX.create("div", {
-								props: {
-									className: "crm-kanban-popup-field-title"
-								},
-								text: popupHeaders[k]["title"]
-							}));
-						}
-						// one field
-
-						var inputParam, labelParam;
-
-						var checked = false;
-
-						if (viewType === "edit")
-						{
-							checked = (
-								typeof sectionEditor !== "undefined"
-								&& sectionEditor.getChildById(data[i].NAME) !== null
-							);
-						}
-						else
-						{
-							checked = BX.util.in_array(data[i].NAME, customFields);
-						}
-
-						formContent.push(BX.create("div", {
-							props: {
-								className: "crm-kanban-popup-field-item",
-								title: data[i].LABEL
-							},
-							children: [
-								inputParam = BX.create(
-									"input", {
-										props: {
-											id: "cf_" + data[i].ID,
-											type: "checkbox",
-											name: data[i].NAME,
-											checked: checked,
-											className: "crm-kanban-popup-field-item-input"
-										},
-										dataset: {
-											label: data[i].LABEL
-										}
-									}
-								),
-								labelParam = BX.create(
-									"label", {
-										attrs: {
-											"for": "cf_" + data[i].ID,
-											className: "crm-kanban-popup-field-item-label"
-										},
-										text: data[i].LABEL,
-										events: {
-											click: function(ev) {
-												var checkedSelectors = customFieldsContainer.querySelectorAll('.crm-kanban-popup-field-item-input:checked');
-												var input = this.parentNode.querySelector(".crm-kanban-popup-field-item-input");
-
-												if(input.checked && checkedSelectors.length <= 1)
-												{
-													this.parentNode.style.pointerEvents = "none";
-
-													var popupHint = BX.PopupWindowManager.create(null, input, {
-														autoHide: true,
-														animation: "fading-slide",
-														darkMode: true,
-														content: BX.message("CRM_KANBAN_POPUP_AT_LEAST_ONE_FIELD"),
-														zIndex: 9999,
-														events: {
-															onPopupClose: function() {
-																this.parentNode.style.pointerEvents = null;
-																popupHint.destroy();
-															}.bind(this)
-														}
-													});
-
-													popupHint.show();
-
-													setTimeout(function() {
-														this.parentNode.style.pointerEvents = null;
-														popupHint.destroy();
-													}.bind(this),2000);
-
-													BX.PreventDefault(ev);
-													return
-												}
-
-												if(input.checked)
-												{
-													this.parentNode.classList.remove('crm-kanban-popup-field-item-checked');
-													input.checked = false
-												}
-												else
-												{
-													this.parentNode.classList.add('crm-kanban-popup-field-item-checked');
-													input.checked= true
-												}
-												BX.PreventDefault(ev);
-											}
-										}
-									}
-								)
-							]
-						}));
+						oldValue = gridData.customFields;
+						gridData.customFields = Object.keys(selectedItems);
 					}
-
-					containerChildren.push(BX.create("div", {
-						props: {
-							className: "crm-kanban-popup-field-wrapper"
+					else
+					{
+						oldValue = gridData.customEditFields;
+						gridData.customEditFields = Object.keys(selectedItems);
+					}
+					this.ajax({
+							action: "saveFields",
+							fields: selectedItems,
+							type: viewType
 						},
-						children: formContent
-					}));
-				}
-
-				this.customFieldsContainer = BX.create("div", {
-					props: {
-						className: "crm-kanban-popup-field"
-					},
-					children: containerChildren
-				});
-
-				var customFieldsContainer = this.customFieldsContainer;
-
-				customFieldsPopup.setContent(
-					this.customFieldsContainer
-				);
-
-				customFieldsPopup.adjustPosition();
-			}.bind(this))
-			.catch(function(response) {
-				BX.Kanban.Utils.showErrorDialog(response.errors.pop().message);
+						function()
+						{
+							// for view-form just refresh
+							if (viewType === "view")
+							{
+								this.onApplyFilter();
+							}
+							else
+							{
+								this.applyCustomEditFields(gridData.customEditFields, oldValue);
+							}
+						}.bind(this)
+					);
+				}.bind(this)
 			});
+
 		}
-		customFieldsPopup.show();
+		this.fieldsSelectors[viewType].show();
+	},
+	applyCustomEditFields: function(newFields, oldFields)
+	{
+		var sectionEditor = this.getQuickEditor().getControlById("main");
+		var fieldsToAdd = newFields.filter(
+			function(fieldName)
+			{
+				return oldFields.indexOf(fieldName) < 0 && sectionEditor.getChildById(fieldName) === null;
+			}
+		);
+		var fieldsToRemove = oldFields.filter(
+			function(fieldName)
+			{
+				return newFields.indexOf(fieldName) < 0 && sectionEditor.getChildById(fieldName) !== null;
+			}
+		);
+		// gets editor from each column and add new fields
+		var columns = this.getColumns();
+		for (var i = 0; i < columns.length; i++)
+		{
+			var columnEditor = columns[i].getQuickEditor();
+			if (!columnEditor)
+			{
+				continue;
+			}
+			var element;
+			// add new fields
+			for (var j = 0; j < fieldsToAdd.length; j++)
+			{
+				element = columnEditor.getAvailableSchemeElementByName(
+					fieldsToAdd[j]
+				);
+				if (element)
+				{
+					var field = columnEditor.createControl(
+						element.getType(),
+						element.getName(),
+						{
+							schemeElement: element,
+							model: columnEditor._model,
+							mode: columnEditor._mode
+						}
+					);
+
+					if (field)
+					{
+						columnEditor.getControlById("main").addChild(
+							field,
+							{
+								layout: {forceDisplay: true},
+								enableSaving: false
+							}
+						);
+					}
+				}
+			}
+			// remove old fields
+			for (var k = 0; k < fieldsToRemove.length; k++)
+			{
+				element = columnEditor.getSchemeElementByName(
+					fieldsToRemove[k]
+				);
+				if (element)
+				{
+					var section = columnEditor.getControlById("main");
+					var control = section.getChildById(fieldsToRemove[k]);
+					if (control)
+					{
+						section.removeChild(control, { enableSaving: false });
+					}
+				}
+			}
+
+			columnEditor.commitSchemeChanges();
+		}
+
+		this.getQuickEditor().saveSchemeChanges().then(
+			function () {
+				for (var i = 0; i < columns.length; i++)
+				{
+					var columnEditor = columns[i].getQuickEditor();
+					if (columnEditor)
+					{
+						columnEditor.refreshLayout();
+					}
+				}
+			}
+		);
 	},
 
 	destroyFieldsSelectPopup: function()
@@ -2616,8 +2343,9 @@ BX.CRM.Kanban.Grid.prototype = {
 		this.actionPanel = new BX.UI.ActionPanel({
 			renderTo: renderToNode,
 			removeLeftPosition: true,
-			maxHeight: 56,
-			parentPosition: "bottom"
+			maxHeight: 58,
+			parentPosition: "bottom",
+			autoHide: false,
 		});
 
 		this.actionPanel.draw();
@@ -2764,7 +2492,13 @@ BX.CRM.Kanban.Grid.prototype = {
 								}.bind(this)
 							}
 						);
-						userSelector.open(item.layout.container);
+
+						var target = (
+							item.layout.container === undefined
+								? item.actionPanel.layout.more
+								: item.layout.container
+						);
+						userSelector.open(target);
 					}.bind(this), 100);
 				}.bind(this)
 			});
@@ -2907,14 +2641,17 @@ BX.CRM.Kanban.Grid.prototype = {
 	 * Hide action panel.
 	 * @returns {void}
 	 */
-	stopActionPanel: function()
+	stopActionPanel: function(force)
 	{
 		if (!this.actionPanel)
 		{
 			return;
 		}
 
-		this.actionPanel.hidePanel();
+		if (force || !this.getChecked().length)
+		{
+			this.actionPanel.hidePanel();
+		}
 	},
 
 	/**
@@ -2933,7 +2670,6 @@ BX.CRM.Kanban.Grid.prototype = {
 	reload: function ()
 	{
 		this.resetMultiSelectMode();
-		this.stopActionPanel();
 		this.unSetKanbanDragMode();
 		this.onApplyFilter();
 	},

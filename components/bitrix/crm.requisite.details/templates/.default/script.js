@@ -247,8 +247,14 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 				}
 			}
 		},
-		onCancelEdit: function()
+		onCancelEdit: function(context)
 		{
+			for (var id in context.getData())
+			{
+				if (context.data[id].cancel === false) {
+					context.data[id].cancel = true;
+				}
+			}
 			this.closeSlider();
 		},
 		onCloseSlider: function()

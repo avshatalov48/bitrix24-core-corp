@@ -23,22 +23,22 @@ class LeadStatusHistoryWithSupposedEntry
 
 	private static function getHistoriesToAdd($leadId)
 	{
-		$lastSavedStatusChanging = self::getLeadLastChangingFromSupposed($leadId);
+		$lastSavedStatusModification = self::getLeadLastModificationFromSupposed($leadId);
 
-		if ($lastSavedStatusChanging)
+		if ($lastSavedStatusModification)
 		{
-			$lastChangeDate = $lastSavedStatusChanging['CREATED_TIME'];
-			$existingHistoryToWrite = self::getLeadNewHistoryChangingsById($leadId, $lastChangeDate);
+			$lastModificationDate = $lastSavedStatusModification['CREATED_TIME'];
+			$existingHistoryToWrite = self::getLeadNewHistoryModificationsById($leadId, $lastModificationDate);
 			if ($existingHistoryToWrite)
 			{
-				$firstChangingToWrite = $existingHistoryToWrite[0];
-				/** @var DateTime $firstChangingDate */
-				$firstChangingDate = $firstChangingToWrite['HISTORY_CREATED_TIME'];
-				/** @var DateTime $lastSavedChangingDate */
-				$lastSavedChangingDate = $lastSavedStatusChanging['CREATED_TIME'];
-				$spentTime = $firstChangingDate->getTimestamp() - $lastSavedChangingDate->getTimestamp();
+				$firstModificationToWrite = $existingHistoryToWrite[0];
+				/** @var DateTime $firstModificationDate */
+				$firstModificationDate = $firstModificationToWrite['HISTORY_CREATED_TIME'];
+				/** @var DateTime $lastSavedModificationDate */
+				$lastSavedModificationDate = $lastSavedStatusModification['CREATED_TIME'];
+				$spentTime = $firstModificationDate->getTimestamp() - $lastSavedModificationDate->getTimestamp();
 				LeadStatusHistoryWithSupposedTable::update(
-					$lastSavedStatusChanging['ID'],
+					$lastSavedStatusModification['ID'],
 					[
 						'SPENT_TIME' => $spentTime
 					]
@@ -47,12 +47,12 @@ class LeadStatusHistoryWithSupposedEntry
 		}
 		else
 		{
-			$existingHistoryToWrite = self::getLeadNewHistoryChangingsById($leadId);
+			$existingHistoryToWrite = self::getLeadNewHistoryModificationsById($leadId);
 		}
 
 		$prepared = self::prepareHistoriesFromExistHistory($existingHistoryToWrite);
 		$historiesToAdd = [];
-		if (!$lastSavedStatusChanging)
+		if (!$lastSavedStatusModification)
 		{
 			foreach ($prepared as $statusId => $history)
 			{
@@ -66,7 +66,7 @@ class LeadStatusHistoryWithSupposedEntry
 		{
 			foreach ($prepared as $statusId => $history)
 			{
-				if ($statusId === $lastSavedStatusChanging['STATUS_ID'])
+				if ((string)$statusId === (string)$lastSavedStatusModification['STATUS_ID'])
 				{
 					break;
 				}
@@ -98,7 +98,7 @@ class LeadStatusHistoryWithSupposedEntry
 		}
 	}
 
-	private static function getLeadLastChangingFromSupposed($leadId)
+	private static function getLeadLastModificationFromSupposed($leadId)
 	{
 		$query = LeadStatusHistoryWithSupposedTable::query();
 		$query->addSelect('ID');
@@ -114,7 +114,7 @@ class LeadStatusHistoryWithSupposedEntry
 		return !empty($result) ? $result[0] : null;
 	}
 
-	private static function getLeadNewHistoryChangingsById($leadId, $fromDate = null)
+	private static function getLeadNewHistoryModificationsById($leadId, $fromDate = null)
 	{
 		$leadHistoryQuery = LeadTable::query();
 		$leadHistoryQuery->addSelect('HISTORY.OWNER_ID', 'LEAD_ID');
@@ -128,11 +128,10 @@ class LeadStatusHistoryWithSupposedEntry
 		if (!is_null($fromDate))
 		{
 			$leadHistoryQuery->where('HISTORY.CREATED_TIME', '>=', $fromDate);
+			$leadHistoryQuery->where('HISTORY.HAS_SUPPOSED_HISTORY_RECORD', '=', 0);
 		}
 
-		$leadHistory = $leadHistoryQuery->exec()->fetchAll();
-
-		return $leadHistory;
+		return $leadHistoryQuery->exec()->fetchAll();
 	}
 
 	private static function prepareHistoriesFromExistHistory($existHistory)
@@ -199,7 +198,7 @@ class LeadStatusHistoryWithSupposedEntry
 			'OWNER_ID' => $history['LEAD_ID'],
 			'STATUS_SEMANTIC_ID' => $history['STATUS_SEMANTIC_ID_FROM_HISTORY'],
 			'STATUS_ID' => $history['STATUS_ID_FROM_HISTORY'],
-			'IS_LOST' => $history['STATUS_SEMANTIC_ID_FROM_HISTORY'] == 'F' ? 'Y' : 'N',
+			'IS_LOST' => $history['STATUS_SEMANTIC_ID_FROM_HISTORY'] === 'F' ? 'Y' : 'N',
 			'IS_SUPPOSED' => 'N',
 			'LAST_UPDATE_DATE' => $history['HISTORY_CREATED_DATE'],
 			'CREATED_TIME' => $history['HISTORY_CREATED_TIME'],
@@ -236,26 +235,10 @@ class LeadStatusHistoryWithSupposedEntry
 	 */
 	public static function getExistStatusIdList()
 	{
-		$statusListQuery = new Query(StatusTable::getEntity());
-		$statusListQuery->addSelect('STATUS_ID');
-		$statusListQuery->where('ENTITY_ID', 'STATUS');
-		$statusListQuery->addOrder('SORT');
-
-		$statusList = $statusListQuery->exec()->fetchAll();
-		$result = [];
-		if (!empty($statusList))
-		{
-			foreach ($statusList as $status)
-			{
-				$result[] = $status['STATUS_ID'];
-			}
-		}
-
-		return $result;
+		return array_keys(StatusTable::getStatusesList('STATUS'));
 	}
 
-
-	private static function getLeadUnSuccessStatusList()
+	public static function getLeadUnSuccessStatusList()
 	{
 		$statusSemanticInfo = CCrmStatus::GetLeadStatusSemanticInfo();
 
@@ -269,7 +252,6 @@ class LeadStatusHistoryWithSupposedEntry
 		{
 			if ($statusId === $firstUnSuccessStatusId)
 			{
-				$unSuccessStatusList[] = $statusId;
 				$firstUnSuccessStatus = true;
 			}
 

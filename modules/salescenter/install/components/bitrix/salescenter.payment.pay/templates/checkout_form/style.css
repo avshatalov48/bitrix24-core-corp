@@ -160,13 +160,18 @@ a.check-link:hover { text-decoration: none; }
 }
 
 .checkout-basket-pay-method-text-block {
-	padding-left: 10px;
+	padding: 0 10px;
 	flex: 1;
 }
 
 .checkout-basket-pay-method-text {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
 	font: 15px/17px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #121212;
+	word-break: break-word;
+	overflow: hidden;
 }
 
 .checkout-basket-pay-method-btn-block {}
@@ -174,13 +179,17 @@ a.check-link:hover { text-decoration: none; }
 .checkout-basket-pay-method-helper { line-height: 15px; }
 
 .checkout-basket-pay-method-helper-link {
-	cursor: pointer;
-	display: inline-block;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
 	font: 12px/15px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #121212;
 	opacity: 0.4;
 	border-bottom: 1px dashed;
 	transition: 170ms linear all;
+	word-break: break-word;
+	overflow: hidden;
+	cursor: pointer;
 }
 
 .checkout-basket-pay-method-helper-link:hover {

@@ -265,7 +265,7 @@ unset($personTypeId, $arPaySystems);
 $arResult['EVENT_LIST'] = CCrmStatus::GetStatusListEx('EVENT_TYPE');
 $arResult['CLOSED_LIST'] = array('Y' => GetMessage('MAIN_YES'), 'N' => GetMessage('MAIN_NO'));
 $arResult['FILTER'] = array();
-$arResult['FILTER2LOGIC'] = array();
+$arResult['FILTER2LOGIC'] = [];
 $arResult['FILTER_PRESETS'] = array();
 $arResult['PERMS']['ADD']    = !$CCrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'ADD');
 $arResult['PERMS']['WRITE']  = !$CCrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'WRITE');
@@ -606,10 +606,18 @@ foreach ($arFilter as $k => $v)
 		}
 		\Bitrix\Crm\UI\Filter\Range::prepareTo($arFilter, $arMatch[1], $v);
 	}
+	elseif ($k === 'ORDER_TOPIC' && $v === false)
+	{
+		$arFilter['ORDER_TOPIC'] = $v;
+	}
 	elseif ($k === 'ORDER_TOPIC')
 	{
 		$arFilter['~ORDER_TOPIC'] = "%$v%";
 		unset($arFilter['ORDER_TOPIC']);
+	}
+	elseif ($k === 'ACCOUNT_NUMBER' && $v === false)
+	{
+		$arFilter['ACCOUNT_NUMBER'] = $v;
 	}
 	elseif ($k === 'ACCOUNT_NUMBER')
 	{
@@ -652,7 +660,7 @@ foreach ($arFilter as $k => $v)
 
 		unset($arFilter[$k]);
 	}
-	elseif (in_array($k, $arResult['FILTER2LOGIC']))
+	elseif (in_array($k, $arResult['FILTER2LOGIC']) && $v !== false)
 	{
 		// Bugfix #26956 - skip empty values in logical filter
 		$v = trim($v);

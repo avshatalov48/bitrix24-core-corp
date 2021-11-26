@@ -97,15 +97,18 @@ class TaskManager
 		$taskUsers = array_values($taskUsers);
 		$taskUsers = count($taskUsers) > 1 ? array_merge(...$taskUsers) : reset($taskUsers);
 
-		foreach ($taskUsers as $user)
+		if ($taskUsers)
 		{
-			if ($user['STATUS'] === \CBPTaskUserStatus::Waiting)
+			foreach ($taskUsers as $user)
 			{
-				$result['running'][] = (int) $user['USER_ID'];
-			}
-			else
-			{
-				$result['completed'][] = (int) $user['USER_ID'];
+				if ($user['STATUS'] === \CBPTaskUserStatus::Waiting)
+				{
+					$result['running'][] = (int)$user['USER_ID'];
+				}
+				else
+				{
+					$result['completed'][] = (int)$user['USER_ID'];
+				}
 			}
 		}
 

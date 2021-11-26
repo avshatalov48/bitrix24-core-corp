@@ -296,7 +296,14 @@ class CommentController extends EntityController
 			$data['COMMENT'] = trim($data['COMMENT']);
 			$cuttedComment = TruncateText($data['COMMENT'], 255);
 			$userDB = \CUser::GetByID($currentUser);
-			$entityName = \CCrmOwnerType::ResolveName($data['ENTITY_TYPE_ID']);
+			if (\CCrmOwnerType::isPossibleDynamicTypeId((int)$data['ENTITY_TYPE_ID']))
+			{
+				$entityName = \CCrmOwnerType::CommonDynamicName;
+			}
+			else
+			{
+				$entityName = \CCrmOwnerType::ResolveName($data['ENTITY_TYPE_ID']);
+			}
 			$genderSuffix = "";
 			if ($arUser = $userDB->Fetch())
 			{
@@ -332,6 +339,7 @@ class CommentController extends EntityController
 					'FROM_USER_ID' => $currentUser,
 					'NOTIFY_TYPE' => IM_NOTIFY_FROM,
 					'NOTIFY_MODULE' => 'crm',
+					'NOTIFY_EVENT' => 'mention',
 					'NOTIFY_TAG' => 'CRM|MESSAGE_TIMELINE_MENTION|' . $id,
 					'NOTIFY_MESSAGE' => $message
 				));

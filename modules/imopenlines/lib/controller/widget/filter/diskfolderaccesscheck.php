@@ -20,6 +20,11 @@ class DiskFolderAccessCheck extends Base
 	 */
 	public function onBeforeAction(Event $event)
 	{
+		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
+			return null;
+		}
+
 		//for preflight CORS request
 		$requestMethod = $this->action->getController()->getRequest()->getRequestMethod();
 		if ($requestMethod === 'OPTIONS')

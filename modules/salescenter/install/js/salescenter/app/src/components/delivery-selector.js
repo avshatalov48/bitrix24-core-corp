@@ -19,10 +19,6 @@ export default {
 	methods: {
 		onChange(payload)
 		{
-			let fromPropId = this.getAddressFromPropId();
-			let prevFrom = this.getPrevFrom(fromPropId);
-			let newFrom = this.getNewFrom(fromPropId, payload.relatedPropsValues);
-
 			this.$store.dispatch('orderCreation/setDelivery', payload.deliveryPrice);
 
 			this.$store.dispatch(
@@ -46,51 +42,15 @@ export default {
 				payload.responsibleUser ? payload.responsibleUser.id : null
 			);
 
-			if (prevFrom !== newFrom)
-			{
-				this.refreshAvailableServices();
-			}
-
 			this.$emit('change', payload);
 		},
-		getAddressFromPropId()
+		onAddressFromChanged()
 		{
-			for (let propId in this.$root.$app.options.deliveryOrderPropOptions)
-			{
-				if (this.$root.$app.options.deliveryOrderPropOptions.hasOwnProperty(propId))
-				{
-					if (this.$root.$app.options.deliveryOrderPropOptions[propId].hasOwnProperty('isFromAddress'))
-					{
-						return propId;
-					}
-				}
-			}
-
-			return null;
+			this.refreshAvailableServices();
 		},
-		getPrevFrom(fromPropId)
+		onDeliveryServiceChanged()
 		{
-			for (let prop of this.order.propertyValues)
-			{
-				if (prop.id === fromPropId)
-				{
-					return prop.value;
-				}
-			}
-
-			return null;
-		},
-		getNewFrom(fromPropId, relatedPropsValues)
-		{
-			for (let prop of relatedPropsValues)
-			{
-				if (prop.id === fromPropId)
-				{
-					return prop.value;
-				}
-			}
-
-			return null;
+			this.refreshAvailableServices();
 		},
 		onSettingsChanged()
 		{
@@ -209,6 +169,8 @@ export default {
 			:currency="config.currency"
 			:currency-symbol="config.currencySymbol"
 			@change="onChange"
+			@address-from-changed="onAddressFromChanged"
+			@delivery-service-changed="onDeliveryServiceChanged"
 			@settings-changed="onSettingsChanged"
 		></delivery-selector>
 	`

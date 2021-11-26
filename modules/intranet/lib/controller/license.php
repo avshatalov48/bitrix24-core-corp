@@ -4,12 +4,16 @@ namespace Bitrix\Intranet\Controller;
 
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Web\Json;
 use Bitrix\Bitrix24;
+use Bitrix\UI\Util;
 
 class License extends \Bitrix\Main\Engine\Controller
 {
@@ -86,7 +90,7 @@ class License extends \Bitrix\Main\Engine\Controller
 		$licenseTill = Option::get('main', '~controller_group_till');
 		$licenseTillMessage = '';
 		$scannerLockTill = $licenseScanner->getLockTill();
-		$scannerIsAlmostLocked = $scannerLockTill > time() && !$licenseScanner->isEditionCompatible($licenseType);
+		$scannerIsAlmostLocked = $scannerLockTill > time() && !$licenseScanner->isEditionCompatible('project');
 		$scannerLockTillMessage = '';
 		$daysLeftMessage = '';
 		$daysLeft = 0;
@@ -209,6 +213,57 @@ class License extends \Bitrix\Main\Engine\Controller
 		}
 
 		return $licenseData;
+	}
+
+
+	private const CACHE_BANNER_TIME_TO_LIVE = 8 * 60 * 60;
+	private const CACHE_BANNER_ID = "intranet.license.banner";
+
+	/**
+	 * Action for load actual banners
+	 * @return array|false|mixed
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function getBannerDataAction()
+	{
+		/* read response from cache if exists */
+		$cache = Application::getInstance()->getManagedCache();
+		if ($cache->read(self::CACHE_BANNER_TIME_TO_LIVE,self::CACHE_BANNER_ID))
+		{
+			return $cache->get(self::CACHE_BANNER_ID);
+		}
+
+		global $USER;
+
+		$isBitrix24Cloud = Loader::includeModule('bitrix24');
+		$isAdmin = ($isBitrix24Cloud && \CBitrix24::isPortalAdmin($USER->getId())) || (!$isBitrix24Cloud && $USER->isAdmin());
+
+		$httpClient = new HttpClient();
+		$result = $httpClient->post(
+			Util::getHelpdeskUrl() . '/widget2/license_widget_banners.php',
+			array(
+				'is_admin' => $isAdmin ? 1 : 0,
+				'tariff' => Option::get('main', '~controller_group_name', ''),
+				'is_cloud' => $isBitrix24Cloud ? '1' : '0',
+				'host'  => defined('BX24_HOST_NAME') ? BX24_HOST_NAME : '',
+				'languageId' => LANGUAGE_ID,
+			)
+		);
+
+		if (false !== $result)
+		{
+			$data = Json::decode($result);
+
+			if (is_array($data["notifications"]) && !empty($data["notifications"]))
+			{
+				$cache->set(self::CACHE_BANNER_ID, $data = $data["notifications"]);
+
+				return $data;
+			}
+		}
+
+		return [];
 	}
 
 	public function analyticsLabelAction()

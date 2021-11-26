@@ -2,6 +2,10 @@
     background-color: transparent!important;
 }
 
+.tasks-pagetitle-view .ui-side-panel-wrap-workarea {
+    display: none;
+}
+
 .task-item-updates .task-item-updates-inner {
     display: inline-block;
     height: 12px;

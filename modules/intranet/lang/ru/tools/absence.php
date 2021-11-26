@@ -3,6 +3,7 @@ $MESS["INTR_ABSENCE_IBLOCK_MODULE"] = "Модуль информационных
 $MESS["INTR_ADD_TITLE"] = "Добавить отсутствие";
 $MESS["INTR_EDIT_TITLE"] = "Редактировать отсутствие";
 $MESS["INTR_ABSENCE_NAME"] = "Причина отсутствия *";
+$MESS["INTR_ABSENCE_NAME_HINT"] = "Причина отсутствия будет видна всем сотрудникам компании";
 $MESS["INTR_ABSENCE_NO_TYPE"] = "(не установлено)";
 $MESS["INTR_ABSENCE_USER"] = "Выберите отсутствующего сотрудника *";
 $MESS["INTR_ABSENCE_TYPE"] = "Тип отсутствия";

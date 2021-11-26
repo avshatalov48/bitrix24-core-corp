@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\Discount;
+use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\InvoiceTable;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\Main\Localization\Loc;
@@ -27,7 +28,13 @@ class Invoice extends ProductsDataProvider
 				'PROVIDER' => Deal::class,
 				'VALUE' => 'UF_DEAL_ID',
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_INVOICE_DEAL_TITLE'),
+				'OPTIONS' => [
+					'isLightMode' => true,
+				],
 			];
+
+			$this->fields['PRICE']['TYPE'] = Money::class;
+			$this->fields['PRICE']['FORMAT'] = ['CURRENCY_ID' => $this->getCurrencyId()];
 		}
 
 		return $this->fields;

@@ -76,7 +76,7 @@ class ItemTarget extends BaseTarget
 	{
 		if ($categoryId === 0 && $this->factory->isCategoriesSupported())
 		{
-			$categoryId = $this->factory->getDefaultCategory()->getId();
+			$categoryId = $this->getEntity()->getCategoryId();
 		}
 
 		$statusInfos = [];

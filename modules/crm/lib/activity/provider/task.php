@@ -146,7 +146,7 @@ class Task extends Activity\Provider\Base
 				$taskItem = \CTaskItem::getInstance($entityId, $currentUser > 0 ? $currentUser : 1);
 				if($activity['COMPLETED'] === 'Y')
 				{
-					$taskItem->complete();
+					$taskItem->complete(['SKIP_ACCESS_CONTROL' => true]);
 				}
 				else
 				{

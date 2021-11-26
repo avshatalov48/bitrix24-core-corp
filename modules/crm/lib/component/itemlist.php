@@ -2,11 +2,12 @@
 
 namespace Bitrix\Crm\Component;
 
-use Bitrix\Crm\Automation\Factory;
+use Bitrix\Crm\Automation;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Filter\Filter;
 use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Filter\ItemUfDataProvider;
+use Bitrix\Crm\Integration;
 use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
@@ -35,6 +36,8 @@ abstract class ItemList extends Base
 	protected $factory;
 	/** @var Kanban\Entity */
 	protected $kanbanEntity;
+	/** @var string */
+	protected $intranetBindingMenuViewHtml;
 
 	protected function init(): void
 	{
@@ -265,7 +268,7 @@ abstract class ItemList extends Base
 	protected function prepareFilter(): array
 	{
 		$limits = null;
-		$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+		$searchRestriction = RestrictionManager::getSearchLimitRestriction();
 		if($searchRestriction->isExceeded($this->entityTypeId))
 		{
 			$limits = $searchRestriction->prepareStubInfo([
@@ -283,6 +286,13 @@ abstract class ItemList extends Base
 			'DISABLE_SEARCH' => false,
 			'ENABLE_LIVE_SEARCH' => true,
 			'LIMITS' => $limits,
+			'ENABLE_ADDITIONAL_FILTERS' => true,
+			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'CONFIG' => [
+				'popupColumnsCount' => 4,
+				'popupWidth' => 800,
+				'showPopupInCenter' => true,
+			],
 		];
 	}
 
@@ -298,19 +308,14 @@ abstract class ItemList extends Base
 
 	protected function getToolbarViews(): array
 	{
-		if (!$this->factory->isStagesEnabled())
-		{
-			return [];
-		}
-
 		$views = [];
 
-		if (Factory::isSupported($this->entityTypeId))
+		if (Automation\Factory::isSupported($this->entityTypeId))
 		{
 			$categoryId = $this->getCategoryId();
 			if (!$categoryId)
 			{
-				$categoryId = $this->factory->getDefaultCategory()->getId();
+				$categoryId = $this->factory->createDefaultCategoryIfNotExist()->getId();
 			}
 			$url = Container::getInstance()->getRouter()->getAutomationUrl(
 				$this->entityTypeId,
@@ -333,18 +338,63 @@ abstract class ItemList extends Base
 			$views[] = $robotView;
 		}
 
-		$views[Service\Router::LIST_VIEW_KANBAN] = [
-			'title' => Loc::getMessage('CRM_COMMON_KANBAN'),
-			'url' => Container::getInstance()->getRouter()->getKanbanUrl($this->entityTypeId, $this->getCategoryId()),
-			'isActive' => false,
-		];
-		$views[Service\Router::LIST_VIEW_LIST] = [
-			'title' => Loc::getMessage('CRM_COMMON_LIST'),
-			'url' => Container::getInstance()->getRouter()->getItemListUrl($this->entityTypeId, $this->getCategoryId()),
-			'isActive' => true,
-		];
+		if ($this->isIntranetBindingMenuViewAvailable())
+		{
+			$views[] = $this->getIntranetBindingMenuView();
+		}
+
+		if ($this->factory->isStagesEnabled())
+		{
+			$views[Service\Router::LIST_VIEW_KANBAN] = [
+				'title' => Loc::getMessage('CRM_COMMON_KANBAN'),
+				'url' => Container::getInstance()->getRouter()->getKanbanUrl($this->entityTypeId, $this->getCategoryId()),
+				'isActive' => false,
+			];
+			$views[Service\Router::LIST_VIEW_LIST] = [
+				'title' => Loc::getMessage('CRM_COMMON_LIST'),
+				'url' => Container::getInstance()->getRouter()->getItemListUrl($this->entityTypeId, $this->getCategoryId()),
+				'isActive' => true,
+			];
+		}
 
 		return $views;
+	}
+
+	protected function isIntranetBindingMenuViewAvailable(): bool
+	{
+		return !empty($this->getIntranetBindingMenuViewHtml());
+	}
+
+	protected function getIntranetBindingMenuView(): array
+	{
+		return [
+			'html' => $this->getIntranetBindingMenuViewHtml(),
+			'position' => Toolbar\ButtonLocation::RIGHT,
+			'isActive' => false,
+		];
+	}
+
+	protected function getIntranetBindingMenuViewHtml(): ?string
+	{
+		if (!is_string($this->intranetBindingMenuViewHtml))
+		{
+			ob_start();
+
+			$this->getApplication()->IncludeComponent(
+				'bitrix:intranet.binding.menu',
+				'',
+				[
+					'SECTION_CODE' => Integration\Intranet\BindingMenu\SectionCode::SWITCHER,
+					'MENU_CODE' => Integration\Intranet\BindingMenu\CodeBuilder::getMenuCode(
+						$this->factory->getEntityTypeId(),
+					),
+				]
+			);
+
+			$this->intranetBindingMenuViewHtml = ob_get_clean();
+		}
+
+		return $this->intranetBindingMenuViewHtml;
 	}
 
 	protected function getToolbarCategories(array $categories): array

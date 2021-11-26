@@ -84,4 +84,5 @@ $MESS["CRM_OPTIONS_PATH_TO_ORDER_PAYMENT_LIST"] = "Шаблон пути к сп
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_PAYMENT_DETAILS"] = "Шаблон пути к детальной странице оплаты";
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_FORM"] = "Шаблон пути к странице настройки формы оформления заказа";
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_IMPORT_INSTAGRAM"] = "Шаблон пути к странице импорта товаров из Instagram";
+$MESS["CRM_OPTIONS_PATH_TO_LEAD_STATUS_LIST"] = "Шаблон пути к странице быстрой настройки статусов лида";
 ?>

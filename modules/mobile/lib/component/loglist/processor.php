@@ -1,175 +1,36 @@
 <?php
+
 namespace Bitrix\Mobile\Component\LogList;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Socialnetwork\Component\LogList\Util;
 use Bitrix\Socialnetwork\ComponentHelper;
 
-class Processor
+Loader::requireModule('socialnetwork');
+
+class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 {
-	protected $component;
-	protected $request;
-
-	protected $filter = [];
-	protected $order = [];
 	protected $select = [];
-	protected $listParams = [];
 
-	protected $navParams = false;
-	protected $firstPage = false;
 	protected $eventsList = [];
 	protected $showPinnedPanel = true;
 
-	public function __construct($params)
-	{
-		if(!empty($params['component']))
-		{
-			$this->component = $params['component'];
-		}
-
-		if(!empty($params['request']))
-		{
-			$this->request = $params['request'];
-		}
-		else
-		{
-			$this->request = Util::getRequest();;
-		}
-	}
-
-	protected function getRequest()
-	{
-		return $this->request;
-	}
-
-	protected function getComponent()
-	{
-		return $this->component;
-	}
-
-	public function setFilter(array $value = [])
-	{
-		$this->filter = $value;
-	}
-
-	public function getFilter()
-	{
-		return $this->filter;
-	}
-
-	public function setFilterKey($key = '', $value = false)
-	{
-		if($key == '')
-		{
-			return;
-		}
-		$this->filter[$key] = $value;
-	}
-
-	public function unsetFilterKey($key = '')
-	{
-		if($key == '')
-		{
-			return;
-		}
-		unset($this->filter[$key]);
-	}
-
-	public function getFilterKey($key = '')
-	{
-		if($key == '')
-		{
-			return false;
-		}
-
-		return (isset($this->filter[$key]) ? $this->filter[$key] : false);
-	}
-
-	protected function setOrder(array $value = [])
-	{
-		$this->order = $value;
-	}
-	public function setOrderKey($key = '', $value = false)
-	{
-		if ($key == '')
-		{
-			return;
-		}
-		$this->order[$key] = $value;
-	}
-	public function getOrder()
-	{
-		return $this->order;
-	}
-	public function getOrderKey($key = '')
-	{
-		if ($key == '')
-		{
-			return false;
-		}
-		return (isset($this->order[$key]) ? $this->order[$key] : false);
-	}
-
-	protected function setSelect($value = [])
+	public function setSelect($value = []): void
 	{
 		$this->select = $value;
 	}
-	public function getSelect()
+
+	public function getSelect(): array
 	{
 		return $this->select;
-	}
-
-	protected function setListParams(array $value = [])
-	{
-		$this->listParams = $value;
-	}
-	public function setListParamsKey($key = '', $value = false)
-	{
-		if ($key == '')
-		{
-			return;
-		}
-		$this->listParams[$key] = $value;
-	}
-	public function getListParams()
-	{
-		return $this->listParams;
-	}
-	public function getListParamsKey($key = '')
-	{
-		if ($key == '')
-		{
-			return false;
-		}
-		return (isset($this->listParams[$key]) ? $this->listParams[$key] : false);
-	}
-
-	protected function setNavParams($value = false)
-	{
-		$this->navParams = $value;
-	}
-
-	public function getNavParams()
-	{
-		return $this->navParams;
-	}
-
-	public function setFirstPage($value = false)
-	{
-		$this->firstPage = $value;
-	}
-
-	public function getFirstPage()
-	{
-		return $this->firstPage;
 	}
 
 	public function setEventsList(array $value = [], $type = 'main')
 	{
 		$this->eventsList[$type] = $value;
 	}
+
 	public function setEventsListKey($key = '', array $value = [], $type = 'main')
 	{
 		if ($key == '')
@@ -184,6 +45,7 @@ class Processor
 
 		$this->eventsList[$type][$key] = $value;
 	}
+
 	public function appendEventsList(array $value = [], $type = 'main')
 	{
 		if (!isset($this->eventsList[$type]))
@@ -193,9 +55,10 @@ class Processor
 
 		$this->eventsList[$type][] = $value;
 	}
-	public function unsetEventsListKey($key = '', $type = 'main')
+
+	public function unsetEventsListKey($key = '', $type = 'main'): void
 	{
-		if ($key == '')
+		if ($key === '')
 		{
 			return;
 		}
@@ -313,12 +176,12 @@ class Processor
 	{
 		$params = $this->getComponent()->arParams;
 
-		if($params['LOG_ID'] > 0)
+		if ($params['LOG_ID'] > 0)
 		{
 			$this->setFilterKey('ID', $params['LOG_ID']);
 			$this->showPinnedPanel = false;
 		}
-		elseif(
+		elseif (
 			$result['AJAX_CALL']
 			&& $params['NEW_LOG_ID'] > 0
 		)
@@ -797,4 +660,3 @@ class Processor
 		]);
 	}
 }
-?>

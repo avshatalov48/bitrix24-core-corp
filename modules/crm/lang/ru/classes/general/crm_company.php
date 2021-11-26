@@ -69,6 +69,7 @@ $MESS["CRM_COMPANY_FIELD_HAS_EMAIL"] = "Задан e-mail";
 $MESS["CRM_COMPANY_FIELD_ORIGINATOR_ID"] = "Внешний источник";
 $MESS["CRM_COMPANY_FIELD_WEBFORM_ID"] = "Создана CRM-формой";
 $MESS["CRM_COMPANY_FIELD_TITLE"] = "Название компании";
+$MESS["CRM_COMPANY_FIELD_COMMUNICATION_TYPE"] = "Способ связи";
 $MESS["CRM_COMPANY_PROVIDER"] = "Компания";
 $MESS["CRM_MYCOMPANY_PROVIDER"] = "Компания продавец";
 $MESS['CRM_PS_COMPANY_FIELD_TITLE'] = "Название компании";

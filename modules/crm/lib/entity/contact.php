@@ -4,8 +4,8 @@ namespace Bitrix\Crm\Entity;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Main;
 
+use Bitrix\Crm;
 use Bitrix\Crm\ContactTable;
-use Bitrix\Crm\Security\EntityAuthorization;
 
 class Contact extends EntityBase
 {

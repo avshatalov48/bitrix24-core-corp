@@ -77,7 +77,23 @@ class ItemUfDataProvider extends UserFieldDataProvider
 						{
 							$filter['<='.$id] = $requestFilter[$id.'_to'];
 						}
+						if ($filterField['type'] === 'number' && $requestFilter[$id] === false) {
+							$filter[$id] = $requestFilter[$id];
+						}
+						elseif ($filterField['type'] === 'number' && $requestFilter['!'.$id] === false) {
+							$filter['!'.$id] = $requestFilter['!'.$id];
+						}
 						$isProcessed = true;
+					}
+					if ($filterField['type'] === 'string' || $filterField['type'] === 'text') {
+						if ($requestFilter[$id] === false)
+						{
+							$filter[$id] = $requestFilter[$id];
+						}
+						elseif ($requestFilter['!'.$id] === false)
+						{
+							$filter['!'.$id] = $requestFilter['!'.$id];
+						}
 					}
 				}
 				if (!$isProcessed && isset($requestFilter[$id]))

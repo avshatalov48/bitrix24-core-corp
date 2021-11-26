@@ -100,7 +100,10 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 			$this->users = Container::getInstance()->getUserBroker()->getBunchByIds($userIds);
 			foreach($list as $item)
 			{
-				$eventData = \CUtil::PhpToJSObject(['entityTypeId' => $item['ENTITY_TYPE_ID']]);
+				$eventData = \CUtil::PhpToJSObject([
+					'entityTypeId' => $item['ENTITY_TYPE_ID'],
+					'id' => $item['ID'],
+				]);
 				$isTypeSettingsRestricted = RestrictionManager::getDynamicTypesLimitRestriction()->isTypeSettingsRestricted($item['ENTITY_TYPE_ID']);
 				$editAction = [
 					'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_EDIT'),

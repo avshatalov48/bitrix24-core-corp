@@ -447,6 +447,24 @@ class CCrmCurrency
 	{
 		return htmlspecialcharsbx(self::GetCurrencyName($currencyID, $langID));
 	}
+
+	public static function GetCurrencyListEncoded(): array
+	{
+		static $currencies;
+
+		if (!is_array($currencies))
+		{
+			$currencies = [];
+			$allCurrencies = self::GetAll();
+			foreach ($allCurrencies as $currencyId => $currency)
+			{
+				$currencies[htmlspecialcharsbx($currencyId)] = htmlspecialcharsbx($currency['FULL_NAME']);
+			}
+		}
+
+		return $currencies;
+	}
+
 	public static function GetCurrencyName($currencyID, $langID = '')
 	{
 		$currencyID = strval($currencyID);

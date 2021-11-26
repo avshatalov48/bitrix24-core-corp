@@ -1,6 +1,7 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true){
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
 	die();
 }
 
@@ -102,12 +103,14 @@ if (
 				continue;
 			}
 
-			$firstMenuItem = preg_match('/^'.$arResult["menuId"].'_(.*)$/i', $menuItem, $matches);
-			if (!empty($matches))
+			if (preg_match('/^'.$arResult["menuId"].'_(.*)$/i', $menuItem, $matches))
 			{
 				if (
-					array_key_exists($matches[1], $arResult["ActiveFeatures"])
-					|| $matches[1] === 'general'
+					(
+						array_key_exists($matches[1], $arResult["ActiveFeatures"])
+						|| $matches[1] === 'general'
+					)
+					&& !in_array($matches[1], [ 'landing_knowledge', 'chat', 'marketplace' ], true)
 				)
 				{
 					$firstMenuItemCode = $matches[1];
@@ -150,9 +153,24 @@ if ($arParams['PAGE_ID'] === 'group')
 		)
 		{
 			$url = $arResult["Urls"][$firstMenuItemCode];
-			if (mb_substr($url, 0, 1) === "/")
+			if (mb_strpos($url, '/') === 0)
 			{
 				$redirectUrl = $url;
+			}
+			elseif (isset($menuItems))
+			{
+				foreach ($menuItems as $menuItem)
+				{
+					if (
+						preg_match('/^' . $arResult['menuId'] . '_(.*)$/i', $menuItem, $matches)
+						&& isset($arResult['Urls'][$matches[1]])
+						&& mb_strpos($arResult['Urls'][$matches[1]], '/') === 0
+					)
+					{
+						$redirectUrl = $arResult['Urls'][$matches[1]];
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -386,11 +404,16 @@ $sliderPages = [
 	'photo' => [],
 ];
 
+if (!$firstMenuItemCode)
+{
+	$firstMenuItemCode = $firstKeyDefault;
+}
+
 foreach ($arResult['Urls'] as $key => $value)
 {
 	if (
 		$arResult['inIframe']
-		&& in_array(mb_strtolower($key), [ 'view', 'general', 'tasks' ])
+		&& in_array(mb_strtolower($key), [ 'view', 'general', 'tasks', $firstMenuItemCode ], true)
 	)
 	{
 		$arResult['Urls'][$key] = (new Uri($value))->addParams([ 'IFRAME' => 'Y' ])->getUri();
@@ -439,11 +462,6 @@ foreach ($arResult['Urls'] as $key => $value)
 		$uri = new Uri($value);
 		$arResult['OnClicks'][$key] = "top.location.href = '" . $uri->getUri() . "'";
 	}
-}
-
-if (!$firstMenuItemCode)
-{
-	$firstMenuItemCode = $firstKeyDefault;
 }
 
 $arResult['IS_CURRENT_PAGE_FIRST'] = \Bitrix\Socialnetwork\ComponentHelper::isCurrentPageFirst([

@@ -586,6 +586,7 @@ class AddressItem extends EventEmitter
 		this._showAddressTypeInViewMode = BX.prop.getBoolean(settings, 'showAddressTypeInViewMode', true);
 		this._showDetails = !this._isAutocompleteEnabled || BX.prop.getBoolean(settings, 'showDetails', false);
 		this._isLoading = false;
+		this._icon = null;
 		this._isDropdownLoading = false;
 		this._addressWidget = null;
 		this._wrapper = null;
@@ -944,29 +945,46 @@ class AddressItem extends EventEmitter
 
 	refreshIcon()
 	{
-		let node = this._domNodes.icon;
-		if (Type.isDomNode(node))
+		let newIcon = this.getNewIcon();
+		if (this._icon !== newIcon)
 		{
-			let newNode;
-			if (this._isLoading)
+			let node = this._domNodes.icon;
+			if (Type.isDomNode(node))
 			{
-				newNode = Tag.render`<span class="ui-ctl-after ui-ctl-icon-loader"></span>`;
-			}
-			else
-			{
-				let address = this.getAddress();
-				if (address)
+				let newNode;
+				if (newIcon === 'loading')
 				{
-					newNode = Tag.render`<button class="ui-ctl-after ui-ctl-icon-clear" onclick="${this.onDelete.bind(this)}"></button>`;
+					newNode = Tag.render`<span class="ui-ctl-after ui-ctl-icon-loader"></span>`;
 				}
 				else
 				{
-					newNode = Tag.render`<span class="ui-ctl-after ${this._isAutocompleteEnabled ? 'ui-ctl-icon-search' : ''}"></span>`;
+					if (newIcon === 'clear')
+					{
+						newNode = Tag.render`<button type="button" class="ui-ctl-after ui-ctl-icon-clear" onclick="${this.onDelete.bind(this)}"></button>`;
+					}
+					else if (newIcon === 'search')
+					{
+						newNode = Tag.render`<span class="ui-ctl-after ${this._isAutocompleteEnabled ? 'ui-ctl-icon-search' : ''}"></span>`;
+					}
 				}
+
+				Dom.replace(node, newNode);
+				this._domNodes.icon = newNode;
 			}
 
-			Dom.replace(node, newNode);
-			this._domNodes.icon = newNode;
+			this._icon = newIcon;
+		}
+	}
+
+	getNewIcon()
+	{
+		if (this._isLoading)
+		{
+			return 'loading';
+		}
+		else
+		{
+			return this.getAddress() ? 'clear' : 'search';
 		}
 	}
 

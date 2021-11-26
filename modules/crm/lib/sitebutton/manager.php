@@ -455,6 +455,56 @@ class Manager
 	}
 
 	/**
+	 * Event handler for openline activation/deactivation
+	 * @throws \Exception
+	 */
+	public static function onAfterImopenlineActiveChange(\Bitrix\Main\Event $eventData): void
+	{
+		$lineId = (int)$eventData->getParameter('line');
+		$active = $eventData->getParameter('active') === 'Y';
+		$widgets = self::getWidgetsByOpenlineId($lineId);
+		foreach ($widgets as $widget)
+		{
+			// processing affected widgets, place your methods here
+			self::changeOpenlinePresenceForWidget($widget, $active);
+		}
+	}
+
+	private static function getWidgetsByOpenlineId(int $lineId): array
+	{
+		$result = []; // TODO: use collections
+		$widgets = Internals\ButtonTable::getList();
+		if ($widgets)
+		{
+			foreach ($widgets as $buttonData)
+			{
+				$button = new Button();
+				$button->loadByData($buttonData);
+				if (($openLine = $button->getOpenLine()) && isset($openLine['EXTERNAL_ID']))
+				{
+					$widgetLineId = (int)$openLine['EXTERNAL_ID'];
+					if ($lineId === $widgetLineId)
+					{
+						$result[] = $button;
+					}
+				}
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	private static function changeOpenlinePresenceForWidget(Button $widget, bool $active): void
+	{
+		if ($widget->changeOpenLineActivity($active))
+		{
+			self::updateScriptCache($widget->getId());
+		}
+	}
+
+	/**
 	 * Event handler of changing licence
 	 * @return void
 	 */

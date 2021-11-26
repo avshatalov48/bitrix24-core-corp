@@ -6,6 +6,8 @@ use Bitrix\Crm\Automation\Trigger\Entity\TriggerTable;
 use Bitrix\Crm\Binding\EntityContactTable;
 use Bitrix\Crm\Conversion\Entity\EntityConversionMapTable;
 use Bitrix\Crm\EventRelationsTable;
+use Bitrix\Crm\Field;
+use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Integration\Recyclebin;
 use Bitrix\Crm\Model\AssignedTable;
@@ -296,6 +298,8 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			{
 				$factory->createDefaultCategoryIfNotExist();
 			}
+
+			static::clearBindingMenuCache();
 		}
 
 		return $result;
@@ -340,6 +344,10 @@ class TypeTable extends UserField\Internal\TypeDataManager
 				$category->delete();
 			}
 		}
+
+		Container::getInstance()->getRestEventManager()->deleteDynamicItemEventsByEntityTypeId($type->getEntityTypeId());
+		Integration\Rest\AppPlacementManager::deleteAllHandlersForType($type->getEntityTypeId());
+		static::clearBindingMenuCache();
 
 		$parentResult = parent::onAfterDelete($event);
 		foreach($parentResult->getErrors() as $error)
@@ -533,6 +541,8 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 			Application::getConnection()->renameTable($oldIndexTableName, $newIndexTableName);
 		}
+
+		static::clearBindingMenuCache();
 
 		return parent::onAfterUpdate($event);
 	}
@@ -764,5 +774,99 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			->configureCascadeDeletePolicy(ORM\Fields\Relations\CascadePolicy::FOLLOW)
 			->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OBSERVERS'));
 		$localEntity->addField($oneToManyObservers);
+	}
+
+	protected static function clearBindingMenuCache(): void
+	{
+		Integration\Intranet\BindingMenu::clearCache();
+	}
+
+	public static function getFieldsInfo(): array
+	{
+		return [
+			'ID' => [
+				'TYPE' => Field::TYPE_INTEGER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+			],
+			'TITLE' => [
+				'TYPE' => Field::TYPE_STRING,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required],
+				'TITLE' => Loc::getMessage('CRM_COMMON_TITLE'),
+			],
+			'CODE' => [
+				'TYPE' => Field::TYPE_STRING,
+				'TITLE' => Loc::getMessage('CRM_COMMON_CODE'),
+			],
+			'CREATED_BY' => [
+				'TYPE' => Field::TYPE_USER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'TITLE' => Loc::getMessage('CRM_TYPE_ITEM_FIELD_CREATED_BY'),
+			],
+			'ENTITY_TYPE_ID' => [
+				'TYPE' => Field::TYPE_INTEGER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required, \CCrmFieldInfoAttr::Unique, \CCrmFieldInfoAttr::Immutable],
+				'TITLE' => Loc::getMessage('CRM_TYPE_ENTITY_TYPE_ID_TITLE'),
+			],
+			'IS_CATEGORIES_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_CATEGORIES_ENABLED_TITLE'),
+			],
+			'IS_STAGES_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_STAGES_ENABLED_TITLE'),
+			],
+			'IS_BEGIN_CLOSE_DATES_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_BEGIN_CLOSE_DATES_ENABLED_TITLE'),
+			],
+			'IS_CLIENT_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_CLIENT_ENABLED_TITLE'),
+			],
+			'IS_USE_IN_USERFIELD_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_USE_IN_USERFIELD_ENABLED_TITLE'),
+			],
+			'IS_LINK_WITH_PRODUCTS_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_LINK_WITH_PRODUCTS_ENABLED_TITLE'),
+			],
+//			'IS_CRM_TRACKING_ENABLED' => [
+//				'TYPE' => Field::TYPE_BOOLEAN,
+//				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_CRM_TRACKING_ENABLED_TITLE'),
+//			],
+			'IS_MYCOMPANY_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_MYCOMPANY_ENABLED_TITLE'),
+			],
+			'IS_DOCUMENTS_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_DOCUMENTS_ENABLED_TITLE'),
+			],
+			'IS_SOURCE_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_SOURCE_ENABLED_TITLE'),
+			],
+			'IS_OBSERVERS_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_OBSERVERS_ENABLED_TITLE'),
+			],
+			'IS_RECYCLEBIN_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_RECYCLEBIN_ENABLED_TITLE'),
+			],
+			'IS_AUTOMATION_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_AUTOMATION_ENABLED_TITLE'),
+			],
+			'IS_BIZ_PROC_ENABLED' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_BIZ_PROC_ENABLED_TITLE'),
+			],
+			'IS_SET_OPEN_PERMISSIONS' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_SET_OPEN_PERMISSIONS_TITLE'),
+			],
+		];
 	}
 }

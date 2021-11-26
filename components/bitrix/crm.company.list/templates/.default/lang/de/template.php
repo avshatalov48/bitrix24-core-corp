@@ -74,6 +74,7 @@ $MESS["CRM_COMPANY_REBUILD_DUP_INDEX_DLG_TITLE"] = "Unternehmensdubletten neu in
 $MESS["CRM_COMPANY_REBUILD_SEARCH_CONTENT"] = "Um die Schnellsuche zu nutzen, müssen Sie <a id=\"#ID#\" href=\"#URL#\">Suchindex für Unternehmen aktualisieren</a>.";
 $MESS["CRM_COMPANY_REBUILD_SEARCH_CONTENT_DLG_SUMMARY"] = "Der Suchindex für Unternehmen wird jetzt aktualisiert. Dieser Vorgang kann einige Zeit dauern.";
 $MESS["CRM_COMPANY_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Index der Unternehmenssuche wird neu erstellt";
+$MESS["CRM_COMPANY_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Zugriffsrechte werden aktualisiert";
 $MESS["CRM_COMPANY_RQ_TX"] = "Es wird empfohlen, <a id=\"#ID#\" href=\"#URL#\">vorhandene Informationen zum Unternehmen aus Rechnungen zu kopieren</a> und in Unternehmen zu übertragen. So sparen Sie sich Zeit, denn jedes Mal, wenn Sie eine neue Rechnung erstellen, werden die vorhandenen Informationen automatisch eingetragen, nachdem Sie ein Unternehmen für diese Rechnung auswählen.";
 $MESS["CRM_COMPANY_RQ_TX_PROC_DLG_DLG_SUMMARY"] = "Die Informationen zum Unternehmen werden jetzt kopiert und aus Rechnungen in Unternehmen übertragen. Dieser Vorgang kann etwas dauern.";
 $MESS["CRM_COMPANY_RQ_TX_PROC_DLG_TITLE"] = "Informationen zum Unternehmen kopieren und übertragen";

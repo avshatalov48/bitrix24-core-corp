@@ -131,6 +131,27 @@ class Manager
 		return $result;
 	}
 
+	/**
+	 * Get encoded form names list.
+	 *
+	 * @return array
+	 */
+	public static function getListNamesEncoded(): array
+	{
+		static $result = null;
+
+		if (!is_array($result))
+		{
+			$result = self::getListNames();
+			foreach ($result as $id => $name)
+			{
+				$result[$id] = htmlspecialcharsbx($name);
+			}
+		}
+
+		return $result;
+	}
+
 	public static function isEmbeddingEnabled($formId)
 	{
 		return !!$formId;

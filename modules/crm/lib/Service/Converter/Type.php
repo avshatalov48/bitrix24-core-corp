@@ -16,7 +16,7 @@ class Type extends OrmObject
 	 * @return array
 	 * @throws ArgumentException
 	 */
-	public function toJson($model): array
+	public function toJson($model, ?bool $allData = true): array
 	{
 		if (!($model instanceof Model\Dynamic\Type))
 		{
@@ -25,9 +25,16 @@ class Type extends OrmObject
 
 		$data = $this->convertKeysToCamelCase($model->collectValues());
 
-		$this->fillRelations($model, $data);
-		$this->fillLinkedUserFields($model, $data);
-		$this->fillCustomSections($model, $data);
+		unset($data['name'], $data['tableName'], $data['isCrmTrackingEnabled']);
+
+		if ($allData)
+		{
+			$this->fillRelations($model, $data);
+			$this->fillLinkedUserFields($model, $data);
+			$this->fillCustomSections($model, $data);
+		}
+
+		$data = $this->prepareData($data);
 
 		return $data;
 	}

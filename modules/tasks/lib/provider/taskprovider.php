@@ -39,7 +39,6 @@ class TaskProvider
 		$bIgnoreErrors 			= false,
 		$nPageTop 				= false,
 		$getPlusOne				= false,
-		$bGetZombie 			= false,
 		$deleteMessageId 		= false,
 		$useAccessAsWhere,
 		$distinct 				= 'DISTINCT',
@@ -297,11 +296,6 @@ class TaskProvider
 	{
 		$this->arParams['ENABLE_LEGACY_ACCESS'] = false;
 		$this->arSqlSearch = \CTasks::GetFilter($this->arOptimizedFilter, '', $this->arParams);
-
-		if (!$this->bGetZombie && !$this->isJoinMembers())
-		{
-			$this->arSqlSearch[] = " T.ZOMBIE = 'N' ";
-		}
 
 		if ($this->accessSql !== '')
 		{
@@ -906,11 +900,6 @@ class TaskProvider
 			",
 		];
 
-		if ($this->bGetZombie)
-		{
-			$this->arFields['ZOMBIE'] = 'T.ZOMBIE';
-		}
-
 		if ($this->userId)
 		{
 			$this->arFields['IS_MUTED'] = UserOption::getSelectSql($this->userId, UserOption\Option::MUTED);
@@ -944,28 +933,39 @@ class TaskProvider
 		else
 		{
 			if (isset($this->arParams['nPageTop']))
+			{
 				$this->nPageTop = $this->arParams['nPageTop'];
+			}
 
 			if (isset($this->arParams['bIgnoreErrors']))
+			{
 				$this->bIgnoreErrors = (bool) $this->arParams['bIgnoreErrors'];
-
-			if (isset($this->arParams['bGetZombie']))
-				$this->bGetZombie = (bool) $this->arParams['bGetZombie'];
+			}
 
 			if (isset($this->arParams['bIgnoreDbErrors']))
+			{
 				$this->bIgnoreDbErrors = (bool) $this->arParams['bIgnoreDbErrors'];
+			}
 
 			if (isset($this->arParams['bSkipUserFields']))
+			{
 				$this->bSkipUserFields = (bool) $this->arParams['bSkipUserFields'];
+			}
 
 			if (isset($this->arParams['bSkipExtraTables']))
+			{
 				$this->bSkipExtraTables = (bool) $this->arParams['bSkipExtraTables'];
+			}
 
 			if (isset($this->arParams['bSkipJoinTblViewed']))
+			{
 				$this->bSkipJoinTblViewed = (bool) $this->arParams['bSkipJoinTblViewed'];
+			}
 
 			if (isset($this->arParams['bNeedJoinMembersTable']))
+			{
 				$this->bNeedJoinMembersTable = (bool) $this->arParams['bNeedJoinMembersTable'];
+			}
 		}
 
 		if (!in_array('MESSAGE_ID', $this->arSelect))

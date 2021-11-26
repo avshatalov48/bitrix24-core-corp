@@ -43,7 +43,12 @@ class CompanyRelationManager extends BaseRelationManager
 		$parentLeadID = isset($recyclingData['PARENT_LEAD_ID']) ? $recyclingData['PARENT_LEAD_ID'] : 0;
 		unset($recyclingData['PARENT_LEAD_ID']);
 
-		$relations = array();
+		$relations = [];
+
+		DynamicBinderManager::getInstance()
+			->configure($entityID, \CCrmOwnerType::Company)
+			->buildCollection($relations, $recyclingData);
+
 		$this->prepareActivityRelations(
 			\CCrmOwnerType::Company,
 			$entityID,
@@ -159,5 +164,9 @@ class CompanyRelationManager extends BaseRelationManager
 				$leadIDs
 			);
 		}
+
+		DynamicBinderManager::getInstance()
+			->configure($entityID, \CCrmOwnerType::Company)
+			->recoverBindings($map);
 	}
 }

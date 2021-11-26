@@ -1,29 +1,33 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
 
-$arActivityDescription = array(
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+$arActivityDescription = [
 	'NAME' => GetMessage('CRM_CHANGE_RESPONSIBLE_NAME'),
 	'DESCRIPTION' => GetMessage('CRM_CHANGE_RESPONSIBLE_DESC'),
-	'TYPE' => array('activity', 'robot_activity'),
+	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmChangeResponsibleActivity',
 	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => array(
+	'CATEGORY' => [
 		'ID' => 'document',
 		"OWN_ID" => 'crm',
 		"OWN_NAME" => 'CRM',
-	),
-	'FILTER' => array(
-		'INCLUDE' => array(
+	],
+	'FILTER' => [
+		'INCLUDE' => [
 			['crm', 'CCrmDocumentDeal'],
 			['crm', 'CCrmDocumentLead'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Order'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Invoice'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Dynamic'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Quote'],
-		),
-	),
-	'ROBOT_SETTINGS' => array(
+		],
+	],
+	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
-		'RESPONSIBLE_PROPERTY' => 'Responsible'
-	),
-);
+		'RESPONSIBLE_PROPERTY' => 'Responsible',
+	],
+];

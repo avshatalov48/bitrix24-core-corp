@@ -115,6 +115,16 @@ class UserField implements \ArrayAccess
 		return ($this->data['USER_TYPE']['BASE_TYPE'] === 'datetime');
 	}
 
+	public function isBaseTypeBoolean(): bool
+	{
+		return ($this->data['USER_TYPE']['BASE_TYPE'] === 'boolean');
+	}
+
+	public function isBaseTypeNumerical(): bool
+	{
+		return ($this->data['USER_TYPE']['BASE_TYPE'] === 'integer' || $this->data['USER_TYPE']['BASE_TYPE'] === 'double');
+	}
+
 	public function offsetExists($offset)
 	{
 		return isset($this->data[$offset]);
@@ -133,5 +143,47 @@ class UserField implements \ArrayAccess
 	public function offsetUnset($offset)
 	{
 		throw new NotImplementedException('UserField object does not support editing');
+	}
+
+	public function isValueEmpty($fieldValue): bool
+	{
+		if (is_array ($fieldValue) && $this->isMultiple())
+		{
+			foreach ($fieldValue as $singleValue)
+			{
+				if (!$this->isValueEmpty($singleValue))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		// Interpret bool 'false' as non-empty for boolean type
+		if ($this->isBaseTypeBoolean() && (bool)$fieldValue === false)
+		{
+			return false;
+		}
+
+		if (
+			$this->isBaseTypeNumerical()
+			&& ($fieldValue === 0 || $fieldValue === 0.0 || $fieldValue === "0" || $fieldValue === "0.0" || $fieldValue === "0,0")
+		)
+		{
+			return false;
+		}
+
+		return empty($fieldValue);
+	}
+
+	public function prepareNullValue($value)
+	{
+		if ($value === '' && $this->isBaseTypeNumerical())
+		{
+			return null;
+		}
+
+		return $value;
 	}
 }

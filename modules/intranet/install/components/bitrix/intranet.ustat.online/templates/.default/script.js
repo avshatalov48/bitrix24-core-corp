@@ -987,11 +987,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var progressPercent = currentUserOnlineCount * 100 / maxUserOnlineCount;
 
 	      if (!this.circle) {
-	        this.circle = new ui_graph_circle.Circle(circleNode, 42, progressPercent, {
-	          fixCounter: currentUserOnlineCount,
-	          color1: 'rgba(49,205,255,.41)',
-	          color2: 'rgba(85, 208, 224,.32)'
-	        });
+	        this.circle = new ui_graph_circle.Circle(circleNode, 68, progressPercent, currentUserOnlineCount, true);
 	        this.circle.show();
 	      } else {
 	        this.circle.updateCounter(progressPercent, currentUserOnlineCount);

@@ -45,6 +45,14 @@ class DynamicTypesMap
 		$this->typeDataClass = Container::getInstance()->getDynamicTypeDataClass();
 	}
 
+	/**
+	 * @param array $params = [
+	 *     'isLoadStages' => true,
+	 *     'isLoadCategories' => true,
+	 * ]
+	 *
+	 * @return $this
+	 */
 	final public function load(array $params = []): self
 	{
 		$isLoadStages = $params['isLoadStages'] ?? true;

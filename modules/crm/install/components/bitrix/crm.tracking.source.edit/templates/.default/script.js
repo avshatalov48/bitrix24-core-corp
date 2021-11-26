@@ -301,7 +301,17 @@
 	};
 	Connector.prototype.disconnect = function (clientId)
 	{
+		var analyticsLabel =
+			!( this.manager.provider.TYPE === "facebook" || this.manager.provider.TYPE === "instagram")
+				? {}
+				: {
+					connect: "FBE",
+					action: "disconnect",
+					type: "disconnect"
+				}
+		;
 		this.clientSelector.disable();
+
 		this.request(
 			'disconnect',
 			{clientId: clientId},
@@ -317,7 +327,9 @@
 					this.initClient(true);
 				}
 				this.clientSelector.enable();
-			}.bind(this)
+			}.bind(this),
+			null,
+			analyticsLabel
 		);
 	};
 	Connector.prototype.onSeoAuth = function (eventData)
@@ -377,17 +389,19 @@
 
 		view.innerHTML = '';
 		view.disabled = false;
-		(response.data || []).forEach(function (item) {
-			var option = document.createElement("option");
-			option.value = item.ID || item.id;
-			option.textContent = item.NAME || item.name;
-			if (data.value && data.value === option.value)
-			{
-				option.selected = true;
-			}
-			view.appendChild(option);
-		}, this);
-
+		(response.data || []).forEach(
+			function (item) {
+				var option = document.createElement("option");
+				option.value = item.ID || item.id;
+				option.textContent = item.NAME || item.name;
+				if (data.value && data.value === option.value)
+				{
+					option.selected = true;
+				}
+				view.appendChild(option);
+			},
+			this
+		);
 		if (!doNotUpdateData)
 		{
 			data.value = view.value;
@@ -398,19 +412,21 @@
 		var node = (context || document.body).querySelector('[data-role="crm/tracking/' + code + '"]');
 		return node ? node : null;
 	};
-	Connector.prototype.request = function (action, data, callbackSuccess, callbackFailure)
+	Connector.prototype.request = function (action, data, callbackSuccess, callbackFailure, analytics)
 	{
 		data = data || {};
 		data.type = this.manager.provider.TYPE;
 
 		callbackSuccess = callbackSuccess || null;
 		callbackFailure = callbackFailure || BX.proxy(this.showErrorPopup, this);
+		analytics = analytics || {};
 
 		var self = this;
 		BX.ajax.runComponentAction(this.manager.componentName, action, {
 			'mode': 'class',
 			'signedParameters': this.manager.signedParameters,
-			'data': data
+			'data': data,
+			'analyticsLabel': analytics
 		}).then(
 			function (response)
 			{

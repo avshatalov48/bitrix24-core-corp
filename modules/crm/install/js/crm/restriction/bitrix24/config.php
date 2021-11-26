@@ -14,6 +14,22 @@ if (!$visitRestriction->hasPermission())
 		'infoHelperScript' => $visitRestriction->prepareInfoHelperScript()
 	];
 }
+$dealCategoryRestriction = Crm\Restriction\RestrictionManager::getDealCategoryLimitRestriction();
+if ($dealCategoryRestriction->getQuantityLimit() > 0)
+{
+	//Todo make another type for quantity limitations like in php
+	$restrictions['dealCategory'] = [
+		'quantityLimit' => $dealCategoryRestriction->getQuantityLimit(),
+		'infoHelperScript' => $dealCategoryRestriction->prepareInfoHelperScript()
+	];
+}
+$generatorRestriction = Crm\Restriction\RestrictionManager::getGeneratorRestriction();
+if (!$generatorRestriction->hasPermission())
+{
+	$restrictions['generator'] = [
+		'infoHelperScript' => $generatorRestriction->prepareInfoHelperScript()
+	];
+}
 
 return [
 	'css' => 'dist/index.bundle.css',

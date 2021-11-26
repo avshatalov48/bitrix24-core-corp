@@ -43,6 +43,7 @@ $MESS["CRM_COLUMN_NEXT_EXECUTION"] = "Дата наступного вистав
 $MESS["CRM_COLUMN_OPPORTUNITY"] = "Сума";
 $MESS["CRM_COLUMN_ORDER_STAGE"] = "Статус оплати угоди";
 $MESS["CRM_COLUMN_ORIGINATOR_ID"] = "Інтернет-магазин";
+$MESS["CRM_COLUMN_PAYMENT_STAGE"] = "Статус оплати";
 $MESS["CRM_COLUMN_PROBABILITY"] = "Імовірність";
 $MESS["CRM_COLUMN_PRODUCT"] = "Товар";
 $MESS["CRM_COLUMN_PRODUCT_ID"] = "Продукт";

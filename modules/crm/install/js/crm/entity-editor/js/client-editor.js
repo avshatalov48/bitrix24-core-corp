@@ -319,6 +319,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 						items: BX.prop.getArray(this._settings, "lastEntityInfos", []),
 						enableCreation: BX.prop.getBoolean(this._settings, "enableCreation", false),
 						enableCreationOnBlur: this._enableQuickEdit,
+						autocompleteDelay: 500,
 						context: { origin: "crm.entity.editor", isEmbedded: this._editor.isEmbedded()  },
 						messages:
 							{
@@ -1685,6 +1686,7 @@ if(typeof BX.Crm.PrimaryClientEditor === "undefined")
 					{
 						searchAction: "crm.api.entity.search",
 						searchOptions: { types: [ BX.CrmEntityType.names.contact, BX.CrmEntityType.names.company ] },
+						autocompleteDelay: 500,
 						//TODO: Implement CRM renderer
 						searchResultRenderer: null,
 						targetElement: this._searchInput,
@@ -2529,6 +2531,7 @@ if(typeof BX.Crm.SecondaryClientEditor === "undefined")
 					{
 						searchAction: "crm.api.entity.search",
 						searchOptions: { types: [ this._entityTypeName ] },
+						autocompleteDelay: 500,
 						//TODO: Implement CRM renderer
 						searchResultRenderer: null,
 						targetElement: this._searchInput,

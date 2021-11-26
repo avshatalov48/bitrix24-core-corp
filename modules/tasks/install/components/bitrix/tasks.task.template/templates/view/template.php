@@ -570,24 +570,19 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 
 					<div class="task-detail-sidebar-info-title"><?=Loc::getMessage("TASKS_TASK_TAGS")?></div>
 					<div class="task-detail-sidebar-info">
-						<div class="task-detail-sidebar-info-tag"><?
-							if ($canUpdate)
-							{
-								$APPLICATION->IncludeComponent(
-									"bitrix:tasks.tags.selector",
-									".default",
-									array(
-										"NAME" => "TAGS",
-										"VALUE" => $tagString,
-									),
-									null,
-									array("HIDE_ICONS" => "Y")
-								);
-							}
-							else
-							{
-								print(htmlspecialcharsbx($tagString));
-							}
+						<div class="task-detail-sidebar-info-tag">
+							<?php
+							$APPLICATION->IncludeComponent(
+								'bitrix:tasks.tags.selector',
+								'.default',
+								[
+									'NAME' => 'TAGS',
+									'VALUE' => $tagString,
+									'CAN_EDIT' => $canUpdate,
+								],
+								null,
+								['HIDE_ICONS' => 'Y']
+							);
 							?>
 						</div>
 					</div>

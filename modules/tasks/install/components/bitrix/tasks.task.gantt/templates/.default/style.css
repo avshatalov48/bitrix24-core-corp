@@ -1,3 +1,7 @@
+.tasks-pagetitle-view .ui-side-panel-wrap-workarea {
+    display: none;
+}
+
 .task-iframe-popup-side-slider .tasks-gantt{
     margin-left:30px;
     margin-right:20px;

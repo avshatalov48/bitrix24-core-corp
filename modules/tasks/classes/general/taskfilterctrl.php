@@ -319,7 +319,6 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 							FROM b_tasks T
 							WHERE T.CREATED_BY = $this->userId
 								AND (T.STATUS = 4 OR T.STATUS = 5)
-								AND T.ZOMBIE = 'N'
 						) AS TT
 					"
 				),

@@ -4,75 +4,45 @@ namespace Bitrix\Crm\Controller;
 
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
 use Bitrix\Crm\Field;
+use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\EditorAdapter;
-use Bitrix\Crm\Service\Factory;
+use Bitrix\Crm\Settings\RestSettings;
 use Bitrix\Main\Component\ParameterSigner;
-use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
-use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\BFile;
 use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
-use Bitrix\Main\Event;
-use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UI\FileInputUtility;
 use Bitrix\Main\UI\PageNavigation;
 
 class Item extends Base
 {
-	/** @var Factory */
-	protected $factory;
-
-	public function setFactory(Factory $factory): self
-	{
-		$this->factory = $factory;
-
-		return $this;
-	}
-
 	public function configureActions(): array
 	{
 		$configureActions = parent::configureActions();
 		$configureActions['getFile'] = [
 			'-prefilters' => [
 				Csrf::class,
-				Filter\Factory::class,
 			],
 		];
 
 		return $configureActions;
 	}
 
-	/**
-	 * @inheritDoc
-	 */
-	public function getDefaultPreFilters(): array
+	protected function getFactory(int $entityTypeId): ?Service\Factory
 	{
-		$preFilters = parent::getDefaultPreFilters();
-		$preFilters[] = new class extends ActionFilter\Base {
-			public function onBeforeAction(Event $event): ?EventResult
-			{
-				if ($this->getAction()->getController()->getScope() === Controller::SCOPE_REST)
-				{
-					Container::getInstance()->getContext()->setScope(Context::SCOPE_REST);
-				}
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			$this->addError(new Error(
+					Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND'),
+					ErrorCode::NOT_FOUND)
+			);
+		}
 
-				return new EventResult(
-					$this->errorCollection->isEmpty() ? EventResult::SUCCESS : EventResult::ERROR,
-					null,
-					null,
-					$this
-				);
-			}
-		};
-
-		$preFilters[] = new Filter\Factory();
-
-		return $preFilters;
+		return $factory;
 	}
 
 	/**
@@ -81,14 +51,19 @@ class Item extends Base
 	 * @param int $id
 	 * @return array|null
 	 */
-	public function getAction(int $id): ?array
+	public function getAction(int $id, int $entityTypeId): ?array
 	{
-		$item = $this->factory->getItem($id);
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+		$item = $factory->getItem($id);
 		if (!$item)
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND'),
-				static::ERROR_CODE_NOT_FOUND
+				ErrorCode::NOT_FOUND
 			));
 			return null;
 		}
@@ -96,13 +71,13 @@ class Item extends Base
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_COMMON_READ_ACCESS_DENIED'),
-				static::ERROR_CODE_ACCESS_DENIED
+				ErrorCode::ACCESS_DENIED
 			));
 			return null;
 		}
 
 		return [
-			'item' => $item,
+			'item' => $this->getJsonForItems($factory, [$item])[$item->getId()],
 		];
 	}
 
@@ -115,14 +90,20 @@ class Item extends Base
 	 * @return Page|null
 	 */
 	public function listAction(
+		int $entityTypeId,
 		array $order = null,
 		array $filter = null,
 		PageNavigation $pageNavigation = null
 	): ?Page
 	{
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
 		$parameters = [];
 		$parameters['filter'] = $this->convertKeysToUpper((array)$filter);
-		$parameters['filter'] = $this->prepareFilter($parameters['filter']);
+		$parameters['filter'] = $this->prepareFilter($factory, $parameters['filter']);
 		if(is_array($order))
 		{
 			$parameters['order'] = $this->convertKeysToUpper($order);
@@ -134,13 +115,14 @@ class Item extends Base
 			$parameters['limit'] = $pageNavigation->getLimit();
 		}
 
-		$items = $this->factory->getItemsFilteredByPermissions($parameters);
+		$items = $factory->getItemsFilteredByPermissions($parameters);
+		$items = array_values($this->getJsonForItems($factory, $items));
 
 		return new Page(
 			'items',
 			$items,
-			function() use($parameters) {
-				return $this->factory->getItemsCountFilteredByPermissions($parameters['filter']);
+			function() use($parameters, $factory) {
+				return $factory->getItemsCountFilteredByPermissions($parameters['filter']);
 			}
 		);
 	}
@@ -151,14 +133,19 @@ class Item extends Base
 	 * @param int $id
 	 * @return array|null
 	 */
-	public function deleteAction(int $id): ?array
+	public function deleteAction(int $entityTypeId, int $id): ?array
 	{
-		$item = $this->factory->getItem($id);
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+		$item = $factory->getItem($id);
 		if (!$item)
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND'),
-				static::ERROR_CODE_NOT_FOUND
+				ErrorCode::NOT_FOUND
 			));
 			return null;
 		}
@@ -166,14 +153,14 @@ class Item extends Base
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
-				static::ERROR_CODE_ACCESS_DENIED
+				ErrorCode::ACCESS_DENIED
 			));
 			return null;
 		}
 
 		$categoryId = $item->getCategoryId();
 
-		$operation = $this->factory->getDeleteOperation($item);
+		$operation = $factory->getDeleteOperation($item);
 		$result = $operation->launch();
 		if (!$result->isSuccess())
 		{
@@ -185,7 +172,7 @@ class Item extends Base
 		{
 			return [
 				'redirectUrl' => Container::getInstance()->getRouter()
-					->getItemListUrlInCurrentView($this->factory->getEntityTypeId(), $categoryId),
+					->getItemListUrlInCurrentView($entityTypeId, $categoryId),
 			];
 		}
 
@@ -205,6 +192,8 @@ class Item extends Base
 		Field\Collection $collection
 	): void
 	{
+		$fields = $collection->removeHiddenValues($fields);
+
 		foreach($collection as $field)
 		{
 			$fieldName = $field->getName();
@@ -336,30 +325,42 @@ class Item extends Base
 	 * @param array $fields
 	 * @return array|null
 	 */
-	public function addAction(array $fields): ?array
+	public function addAction(int $entityTypeId, array $fields): ?array
 	{
-		$item = $this->factory->createItem();
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+		$item = $factory->createItem();
 
 		$fields = $this->convertKeysToUpper($fields);
-		$this->processFields($item, $fields, $this->factory->getFieldsCollection());
+		$this->processFields($item, $fields, $factory->getFieldsCollection());
 
 		if (!Container::getInstance()->getUserPermissions()->canAddItem($item))
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
-				static::ERROR_CODE_ACCESS_DENIED
+				ErrorCode::ACCESS_DENIED
 			));
 			return null;
 		}
 
-		$operation = $this->factory->getAddOperation($item);
+		$operation = $factory->getAddOperation($item);
+		if (
+			$this->getScope() === static::SCOPE_REST
+			&& !RestSettings::getCurrent()->isRequiredUserFieldCheckEnabled()
+		)
+		{
+			$operation->disableCheckRequiredUserFields();
+		}
 		$result = $operation->launch();
 		if ($result->isSuccess())
 		{
-			$item = $operation->getItem();
+			Container::getInstance()->getParentFieldManager()->saveItemRelations($item, $fields);
 
 			return [
-				'item' => $item,
+				'item' => $this->getJsonForItems($factory, [$operation->getItem()])[$item->getId()],
 			];
 		}
 
@@ -375,14 +376,19 @@ class Item extends Base
 	 * @param array $fields
 	 * @return array|null
 	 */
-	public function updateAction(int $id, array $fields): ?array
+	public function updateAction(int $entityTypeId, int $id, array $fields): ?array
 	{
-		$item = $this->factory->getItem($id);
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+		$item = $factory->getItem($id);
 		if (!$item)
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND'),
-				static::ERROR_CODE_NOT_FOUND
+				ErrorCode::NOT_FOUND
 			));
 			return null;
 		}
@@ -390,21 +396,30 @@ class Item extends Base
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
-				static::ERROR_CODE_ACCESS_DENIED
+				ErrorCode::ACCESS_DENIED
 			));
 			return null;
 		}
 
 		$fields = $this->convertKeysToUpper($fields);
-		$this->processFields($item, $fields, $this->factory->getFieldsCollection());
-		$operation = $this->factory->getUpdateOperation($item);
+		$this->processFields($item, $fields, $factory->getFieldsCollection());
+		$operation = $factory->getUpdateOperation($item);
+		if (
+			$this->getScope() === static::SCOPE_REST
+			&& !RestSettings::getCurrent()->isRequiredUserFieldCheckEnabled()
+		)
+		{
+			$operation->disableCheckRequiredUserFields();
+		}
 		$result = $operation->launch();
 		if ($result->isSuccess())
 		{
+			Container::getInstance()->getParentFieldManager()->saveItemRelations($item, $fields);
+
 			$item = $operation->getItem();
 
 			return [
-				'item' => $item,
+				'item' => $this->getJsonForItems($factory, [$operation->getItem()])[$item->getId()],
 			];
 		}
 
@@ -425,6 +440,7 @@ class Item extends Base
 	 * @return Component|null
 	 */
 	public function getEditorAction(
+		int $entityTypeId,
 		int $id,
 		string $guid = null,
 		string $configId = null,
@@ -433,7 +449,11 @@ class Item extends Base
 		array $params = []
 	): ?Component
 	{
-		$entityTypeId = $this->factory->getEntityTypeId();
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
 		$componentName = $params['componentName']
 			?? Container::getInstance()->getRouter()->getItemDetailComponentName($entityTypeId);
 		if (!$componentName)
@@ -539,16 +559,14 @@ class Item extends Base
 	 * @param array $filter
 	 * @return array
 	 */
-	public function prepareFilter(array $filter): array
+	public function prepareFilter(Service\Factory $factory, array $filter): array
 	{
 		if($this->getScope() === static::SCOPE_REST)
 		{
-			$this->prepareDateTimeFieldsForFilter($filter, $this->factory->getFieldsCollection());
+			$this->prepareDateTimeFieldsForFilter($filter, $factory->getFieldsCollection());
 		}
 
-		$filter = $this->removeDotsFromKeys($filter);
-
-		return $filter;
+		return $this->removeDotsFromKeys($filter);
 	}
 
 	/**
@@ -556,29 +574,27 @@ class Item extends Base
 	 *
 	 * @return array|null
 	 */
-	public function fieldsAction(): ?array
+	public function fieldsAction(int $entityTypeId): ?array
 	{
-		if (!Container::getInstance()->getUserPermissions()->checkReadPermissions($this->factory->getEntityTypeId()))
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+		if (!Container::getInstance()->getUserPermissions()->checkReadPermissions($entityTypeId))
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_COMMON_READ_ACCESS_DENIED'),
-				static::ERROR_CODE_ACCESS_DENIED
+				ErrorCode::ACCESS_DENIED
 			));
+
 			return null;
 		}
 
-		$fieldsInfo = $this->factory->getFieldsInfo() + $this->factory->getUserFieldsInfo();
-
-		foreach ($fieldsInfo as &$fieldInfo)
-		{
-			$fieldInfo['CAPTION'] = $fieldInfo['TITLE'] ?? null;
-		}
-		unset($fieldInfo);
-
-		$fieldsInfo = \CCrmRestHelper::prepareFieldInfos($fieldsInfo);
+		$fieldsInfo = $factory->getFieldsInfo() + $factory->getUserFieldsInfo();
 
 		return [
-			'fields' => $this->convertKeysToCamelCase($fieldsInfo),
+			'fields' => $this->prepareFieldsInfo($fieldsInfo),
 		];
 	}
 
@@ -588,32 +604,28 @@ class Item extends Base
 	 * @param int $id
 	 * @param string $fieldName
 	 * @param int $fileId
+	 * @param int|null $entityTypeId
 	 * @return BFile|null
-	 * @throws \Bitrix\Main\ObjectNotFoundException
 	 */
-	public function getFileAction(int $id, string $fieldName, int $fileId, int $entityTypeId = null): ?BFile
+	public function getFileAction(
+		int $entityTypeId,
+		int $id,
+		string $fieldName,
+		int $fileId
+	): ?BFile
 	{
-		if (!$entityTypeId)
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
 		{
-			$entityTypeId = (int)$this->getRequest()->get('entityTypeId');
-		}
-
-		$this->factory = Container::getInstance()->getFactory($entityTypeId);
-		if (!$this->factory)
-		{
-			$this->addError(new Error(
-					Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND'),
-					\Bitrix\Crm\Controller\Base::ERROR_CODE_NOT_FOUND)
-			);
 			return null;
 		}
 
-		$item = $this->factory->getItem($id);
+		$item = $factory->getItem($id);
 		if (!$item)
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND'),
-				static::ERROR_CODE_NOT_FOUND
+				ErrorCode::NOT_FOUND
 			));
 			return null;
 		}
@@ -621,12 +633,12 @@ class Item extends Base
 		{
 			$this->addError(new Error(
 				Loc::getMessage('CRM_COMMON_READ_ACCESS_DENIED'),
-				static::ERROR_CODE_ACCESS_DENIED
+				ErrorCode::ACCESS_DENIED
 			));
 			return null;
 		}
 
-		$field = $this->factory->getFieldsCollection()->getField($fieldName);
+		$field = $factory->getFieldsCollection()->getField($fieldName);
 		if (!$field || !$field->isFileUserField())
 		{
 			$this->addError(new Error('Field ' . $fieldName . ' is not a file field'));
@@ -636,12 +648,65 @@ class Item extends Base
 		if(
 			($value === $fileId)
 			||
-			(is_array($value) && in_array($fileId, $value))
+			(
+				is_array($value)
+				&& in_array($fileId, $value, true)
+			)
 		)
 		{
 			return BFile::createByFileId($fileId);
 		}
 
 		return null;
+	}
+
+	/**
+	 * @param \Bitrix\Crm\Item[] $items
+	 * @return array
+	 */
+	protected function getJsonForItems(Service\Factory $factory, array $items): array
+	{
+		$result = [];
+		foreach ($items as $item)
+		{
+			$result[$item->getId()] = $item->jsonSerialize();
+		}
+		if (empty($result))
+		{
+			return $result;
+		}
+
+		$parentFieldManager = Container::getInstance()->getParentFieldManager();
+		$entityTypeId = $factory->getEntityTypeId();
+		$parentFields = $parentFieldManager->getParentFieldsInfo($entityTypeId);
+		if (empty($parentFields))
+		{
+			return $result;
+		}
+		$parentFieldNames = array_keys($parentFields);
+		$casedFieldNames = array_combine($parentFieldNames, $parentFieldNames);
+		$casedFieldNames = array_flip($this->convertKeysToCamelCase($casedFieldNames));
+
+		$parentFieldValues = $parentFieldManager->getParentFields(
+			array_keys($result),
+			$parentFieldNames,
+			$entityTypeId
+		);
+		foreach ($result as $itemId => $itemData)
+		{
+			foreach ($casedFieldNames as $fieldName)
+			{
+				$result[$itemId][$fieldName] = null;
+			}
+		}
+		foreach ($parentFieldValues as $itemId => $parents)
+		{
+			foreach ($parents as $parentValue)
+			{
+				$result[$itemId][$casedFieldNames[$parentValue['code']]] = $parentValue['id'];
+			}
+		}
+
+		return $result;
 	}
 }

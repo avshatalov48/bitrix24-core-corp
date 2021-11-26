@@ -2,8 +2,12 @@
 namespace Bitrix\Crm\Attribute;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Attribute\Entity\FieldAttributeTable;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+use CCrmOwnerType;
 
 class FieldAttributeManager
 {
@@ -19,8 +23,8 @@ class FieldAttributeManager
 	public static function isEntitySupported(int $entityTypeId): bool
 	{
 		if (
-			$entityTypeId === \CCrmOwnerType::Contact
-			|| $entityTypeId === \CCrmOwnerType::Company
+			$entityTypeId === CCrmOwnerType::Contact
+			|| $entityTypeId === CCrmOwnerType::Company
 		)
 		{
 			return false;
@@ -37,7 +41,7 @@ class FieldAttributeManager
 
 	public static function resolveEntityScope($entityTypeID, $entityID, array $options = null): string
 	{
-		if (!\CCrmOwnerType::IsDefined($entityTypeID))
+		if (!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			throw new Main\ArgumentException(
 				'The argument must be valid CCrmOwnerType.',
@@ -47,7 +51,7 @@ class FieldAttributeManager
 
 		$categoryID = null;
 
-		if ($entityTypeID === \CCrmOwnerType::Deal)
+		if ($entityTypeID === CCrmOwnerType::Deal)
 		{
 			$categoryID = is_array($options) && isset($options['CATEGORY_ID']) ? (int)$options['CATEGORY_ID'] : -1;
 			if ($categoryID < 0)
@@ -87,9 +91,269 @@ class FieldAttributeManager
 		return $categoryId > 0 ? "category_{$categoryId}" : "";
 	}
 
-	public static function processPhaseDeletion($phaseID, $entityTypeID, $entityScope)
+	protected static function sortPhasesBySortAscAndIdDesc(array $phases): array
 	{
-		Crm\Attribute\Entity\FieldAttributeTable::deleteByPhase($phaseID, $entityTypeID, $entityScope);
+		$sortData = [
+			'sort' => [],
+			'id' => [],
+			'keys' => [],
+			'phases' => [],
+		];
+
+		$isError = false;
+		foreach ($phases as $key => $phase)
+		{
+			if (
+				isset($phase['SORT'])
+				&& is_numeric($phase['SORT'])
+				&& $phase['SORT'] > 0
+				&& isset($phase['ID'])
+				&& $phase['ID'] > 0
+			)
+			{
+				$sortData['sort'][] = (int)$phase['SORT'];
+				$sortData['id'][] = (int)$phase['ID'];
+				$sortData['keys'][] = $key;
+			}
+			else
+			{
+				$isError = true;
+				break;
+			}
+		}
+
+		if (
+			!$isError
+			&& array_multisort(
+				$sortData['sort'], SORT_ASC, SORT_NUMERIC,
+				$sortData['id'], SORT_DESC, SORT_NUMERIC,
+				$sortData['keys']
+			)
+		)
+		{
+			foreach ($sortData['keys'] as $key)
+			{
+				$sortData['phases'][$key] = $phases[$key];
+			}
+			$phases = $sortData['phases'];
+		}
+
+		return $phases;
+	}
+
+	public static function processPhaseCreation(
+		string $phaseID,
+		int $entityTypeID,
+		string $entityScope,
+		array $phases
+	): void
+	{
+		// If there is a range with a finish stage that comes before the created one,
+		// then the range is expanded, or a new range is added if the semantics are final.
+
+		$phases = static::sortPhasesBySortAscAndIdDesc($phases);
+
+		$phaseID = is_string($phaseID) ? $phaseID : '';
+		if ($phaseID === '')
+		{
+			return;
+		}
+		if (!CCrmOwnerType::IsDefined($entityTypeID))
+		{
+			return;
+		}
+
+		$isPrevPhaseExists = false;
+		$curPhaseId = '';
+		$prevPhaseId = '';
+		$prevPhaseSemantics = '';
+		foreach ($phases as $curPhaseId => $phase)
+		{
+			$curPhaseSemantics = $phase['SEMANTICS'] ?? '';
+			if (
+				$curPhaseId === $phaseID
+				&& $prevPhaseId !== ''
+				&& $curPhaseSemantics === $prevPhaseSemantics
+			)
+			{
+				$isPrevPhaseExists = true;
+				break;
+			}
+			$prevPhaseId = $curPhaseId;
+			$prevPhaseSemantics = $curPhaseSemantics;
+		}
+		if ($isPrevPhaseExists)
+		{
+			$res = FieldAttributeTable::getList(
+				[
+					'filter' => [
+						'=ENTITY_TYPE_ID' => $entityTypeID,
+						'=ENTITY_SCOPE' => $entityScope,
+						'=TYPE_ID' => FieldAttributeType::REQUIRED,
+					]
+				]
+			);
+			$addRecords = [];
+			while ($row = $res->fetch())
+			{
+				if ($row['FINISH_PHASE'] === $prevPhaseId)
+				{
+					if ($prevPhaseSemantics === PhaseSemantics::FAILURE)
+					{
+						$record = $row;
+						unset($record['ID']);
+						$record['CREATED_TIME'] = new Main\Type\DateTime();
+						$record['START_PHASE'] = $curPhaseId;
+						$record['FINISH_PHASE'] = $curPhaseId;
+						$addRecords[] = $record;
+					}
+					else
+					{
+						Entity\FieldAttributeTable::update(
+							(int)$row['ID'],
+							[
+								'CREATED_TIME' => new Main\Type\DateTime(),
+								'FINISH_PHASE' => $curPhaseId,
+							]
+						);
+					}
+				}
+			}
+			if (!empty($addRecords))
+			{
+				foreach ($addRecords as $data)
+				{
+					Entity\FieldAttributeTable::add($data);
+				}
+			}
+		}
+	}
+
+	public static function findNeighborPhases(int $phaseID, array $phases = []): array
+	{
+		$found = false;
+		$prevPhaseId = null;
+		$curPhaseId = null;
+		$nextPhaseId = null;
+		$phaseIds = array_keys($phases);
+		$phaseCount = count($phases);
+		$steps = $phaseCount + 1;
+		for ($i = 0; $i <= $steps; $i++)
+		{
+			$prevPhaseId = $curPhaseId;
+			$curPhaseId = $nextPhaseId;
+			$nextPhaseId = ($i < $phaseCount) ? $phaseIds[$i] : null;
+			if ($curPhaseId === $phaseID)
+			{
+				$found = true;
+				break;
+			}
+		}
+		if (!$found)
+		{
+			$prevPhaseId = null;
+			$nextPhaseId = null;
+		}
+
+		return [
+			$prevPhaseId,
+			$nextPhaseId,
+		];
+	}
+
+	public static function processPhaseDeletion($phaseID, $entityTypeID, $entityScope, array $phases = [])
+	{
+		$phaseID = (int)$phaseID;
+		$entityTypeID = (int)$entityTypeID;
+		$entityScope = (string)$entityScope;
+
+		if (!is_array($phases))
+		{
+			$phases = [];
+		}
+
+		// The state of the phases must be before deletion
+		$phases = static::sortPhasesBySortAscAndIdDesc($phases);
+
+		// Find prev and next phases
+		list($prevPhaseId, $nextPhaseId) = static::findNeighborPhases($phaseID, $phases);
+
+		// Preparation of actions for deleting or changing attributes,
+		// the extreme phase of which coincides with the status to be deleted.
+		// If the range includes one status, then the attribute is removed.
+		// If the range includes more than one status, the range is reduced,
+		// so that the deleted status is not included in it.
+		$actions = [];
+		$res = FieldAttributeTable::getList(
+			[
+				'filter' => [
+					'=ENTITY_TYPE_ID' => $entityTypeID,
+					'=ENTITY_SCOPE' => $entityScope,
+					'=TYPE_ID' => FieldAttributeType::REQUIRED,
+					[
+						'LOGIC' => 'OR',
+						'=START_PHASE' => $phaseID,
+						'=FINISH_PHASE' => $phaseID,
+					]
+				]
+			]
+		);
+		while ($row = $res->fetch())
+		{
+			$isStartPhase = $row['START_PHASE'] === $phaseID;
+			$isFinishPhase = $row['FINISH_PHASE'] === $phaseID;
+			if (
+				$row['START_PHASE'] === $row['FINISH_PHASE']
+				|| ($isStartPhase && $nextPhaseId === null)
+				|| ($isFinishPhase && $prevPhaseId === null)
+			)
+			{
+				$actions[] = [
+					'type' => 'delete',
+					'params' => [
+						'id' => (int)$row['ID'],
+					],
+				];
+			}
+			else
+			{
+				$updateFields = [];
+				if ($isStartPhase)
+				{
+					$updateFields = [
+						'START_PHASE' => $nextPhaseId
+					];
+				}
+				else if ($isFinishPhase)
+				{
+					$updateFields = [
+						'FINISH_PHASE' => $prevPhaseId,
+					];
+				}
+				if (!empty($updateFields))
+				{
+					$actions[] = [
+						'type' => 'update',
+						'params' => [
+							'id' => (int)$row['ID'],
+							'fields' => $updateFields,
+						],
+					];
+				}
+			}
+		}
+
+		foreach ($actions as $action)
+		{
+			if ($action['type'] === 'update')
+			{
+				FieldAttributeTable::update($action['params']['id'], $action['params']['fields']);
+			}
+			else if ($action['type'] === 'delete')
+			{
+				FieldAttributeTable::delete($action['params']['id']);
+			}
+		}
 	}
 
 	public static function processPhaseModification($phaseID, $entityTypeID, $entityScope, array $phases)
@@ -106,7 +370,9 @@ class FieldAttributeManager
 		$phaseSql = $helper->forSql($phaseID);
 
 		$dbResult = $connection->query(
-			"SELECT * FROM b_crm_field_attr WHERE ENTITY_TYPE_ID = {$entityTypeID} AND ENTITY_SCOPE = '{$scopeSql}' AND (START_PHASE = '{$phaseSql}' OR FINISH_PHASE = '{$phaseSql}')"
+			"SELECT * FROM b_crm_field_attr "
+			. "WHERE ENTITY_TYPE_ID = {$entityTypeID} AND ENTITY_SCOPE = '{$scopeSql}' "
+			. "AND (START_PHASE = '{$phaseSql}' OR FINISH_PHASE = '{$phaseSql}')"
 		);
 
 		while($fields = $dbResult->fetch())
@@ -130,14 +396,14 @@ class FieldAttributeManager
 			$finishPhaseSort = isset($finishPhase['SORT']) ? (int)$finishPhase['SORT'] : 0;
 			if($startPhaseSort > $finishPhaseSort)
 			{
-				Crm\Attribute\Entity\FieldAttributeTable::delete($fields['ID']);
+				FieldAttributeTable::delete($fields['ID']);
 			}
 		}
 	}
 
 	public static function getEntityConfigurations($entityTypeID, $entityScope)
 	{
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
+		if(!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			throw new Main\ArgumentException(
 				'The argument must be valid CCrmOwnerType.',
@@ -173,7 +439,7 @@ class FieldAttributeManager
 
 	private static function getFieldAttributes(int $entityTypeID, string $entityScope):array
 	{
-		$query = new Main\Entity\Query(Crm\Attribute\Entity\FieldAttributeTable::getEntity());
+		$query = new Main\Entity\Query(FieldAttributeTable::getEntity());
 		//$query->addSelect('ID');
 		$query->addSelect('TYPE_ID');
 		//$query->addSelect('IS_CUSTOM_FIELD');
@@ -312,14 +578,20 @@ class FieldAttributeManager
 		$connection->queryExecute('DELETE FROM b_crm_field_attr WHERE '.$conditionSql);
 	}
 
-	public static function getRequiredFields($entityTypeID, $entityID, array $entityData, $fieldOrigin = 0, array $options = null)
+	public static function getRequiredFields(
+		$entityTypeID,
+		$entityID,
+		array $entityData,
+		$fieldOrigin = 0,
+		array $options = null
+	)
 	{
 		if(!is_int($entityTypeID))
 		{
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
+		if(!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			throw new Main\ArgumentException(
 				'The argument must be valid CCrmOwnerType.',
@@ -338,7 +610,7 @@ class FieldAttributeManager
 		}
 
 		$entityScope = '';
-		if($entityTypeID === \CCrmOwnerType::Deal)
+		if($entityTypeID === CCrmOwnerType::Deal)
 		{
 			$categoryID = isset($entityData['CATEGORY_ID']) ? (int)$entityData['CATEGORY_ID'] : -1;
 			$stageID = isset($entityData['STAGE_ID']) ? $entityData['STAGE_ID'] : '';
@@ -378,7 +650,7 @@ class FieldAttributeManager
 			}
 
 			$entityScope = self::resolveEntityScope(
-				\CCrmOwnerType::Deal,
+				CCrmOwnerType::Deal,
 				$entityID,
 				array('CATEGORY_ID' => $categoryID)
 			);
@@ -429,11 +701,13 @@ class FieldAttributeManager
 		return $result;
 	}
 
+	/** @deprecated  */
 	public static function getRequiredUserFields($entityTypeID, $entityID, array $entityData)
 	{
 		return self::getRequiredFields($entityTypeID, $entityID, $entityData, FieldOrigin::CUSTOM);
 	}
 
+	/** @deprecated  */
 	public static function getRequiredSystemFields($entityTypeID, $entityID, array $entityData)
 	{
 		return self::getRequiredFields($entityTypeID, $entityID, $entityData, FieldOrigin::SYSTEM);
@@ -491,7 +765,13 @@ class FieldAttributeManager
 		}
 	}
 
-	protected static function checkPhaseCondition($entityTypeID, array $entityData, $startPhase, $finishPhase, array $options = null)
+	protected static function checkPhaseCondition(
+		$entityTypeID,
+		array $entityData,
+		$startPhase,
+		$finishPhase,
+		array $options = null
+	)
 	{
 		//If Start Phase and Finish Phase are empty, then field is required always.
 		if($startPhase === '' && $finishPhase === '')
@@ -504,7 +784,7 @@ class FieldAttributeManager
 			$options = array();
 		}
 
-		if($entityTypeID === \CCrmOwnerType::Deal)
+		if($entityTypeID === CCrmOwnerType::Deal)
 		{
 			$categoryID = isset($entityData['CATEGORY_ID']) ? (int)$entityData['CATEGORY_ID'] : -1;
 			if($categoryID < 0 && isset($options['CATEGORY_ID']))
@@ -522,7 +802,7 @@ class FieldAttributeManager
 
 			return($stageSort >= $startStageSort && $stageSort <= $finishStageSort);
 		}
-		if($entityTypeID === \CCrmOwnerType::Lead)
+		if($entityTypeID === CCrmOwnerType::Lead)
 		{
 			$startStatusSort = \CCrmLead::GetStatusSort($startPhase);
 			$finishStatusSort = \CCrmLead::GetStatusSort($finishPhase);
@@ -534,12 +814,12 @@ class FieldAttributeManager
 
 			return($statusSort >= $startStatusSort && $statusSort <= $finishStatusSort);
 		}
-		if($entityTypeID === \CCrmOwnerType::Contact)
+		if($entityTypeID === CCrmOwnerType::Contact)
 		{
 			// There are no statuses for contacts yet
 			return true;
 		}
-		if($entityTypeID === \CCrmOwnerType::Company)
+		if($entityTypeID === CCrmOwnerType::Company)
 		{
 			// There are no statuses for companies yet
 			return true;
@@ -553,14 +833,39 @@ class FieldAttributeManager
 	 *
 	 * @return array
 	 */
-	public static function getCaptionsForEntityWithStages(): array
+	public static function getCaptionsForEntityWithStages(int $entityTypeId = CCrmOwnerType::Undefined): array
 	{
+		if ($entityTypeId === CCrmOwnerType::Lead)
+		{
+			return [
+				'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
+				'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_FULL'),
+				'GROUP_TYPE_GENERAL' => Loc::getMessage(
+					'CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_GENERAL'
+				),
+				'GROUP_TYPE_PIPELINE' => Loc::getMessage(
+					'CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_PIPELINE'
+				),
+				'GROUP_TYPE_JUNK' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_JUNK'),
+			];
+		}
+		elseif ($entityTypeId === CCrmOwnerType::Company || $entityTypeId === CCrmOwnerType::Contact)
+		{
+			return [
+				'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
+				'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
+				'GROUP_TYPE_GENERAL' => '',
+				'GROUP_TYPE_PIPELINE' => '',
+				'GROUP_TYPE_JUNK' => '',
+			];
+		}
+
 		return [
-			'REQUIRED_SHORT' => Main\Localization\Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_REQUIRED_SHORT'),
-			'REQUIRED_FULL' => Main\Localization\Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_REQUIRED_FULL'),
-			'GROUP_TYPE_GENERAL' => Main\Localization\Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_GROUP_TYPE_GENERAL'),
-			'GROUP_TYPE_PIPELINE' => Main\Localization\Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_GROUP_TYPE_PIPELINE'),
-			'GROUP_TYPE_JUNK' => Main\Localization\Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_GROUP_TYPE_JUNK')
+			'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_REQUIRED_SHORT'),
+			'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_REQUIRED_FULL_1'),
+			'GROUP_TYPE_GENERAL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_GROUP_TYPE_GENERAL'),
+			'GROUP_TYPE_PIPELINE' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_GROUP_TYPE_PIPELINE'),
+			'GROUP_TYPE_JUNK' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_GROUP_TYPE_JUNK'),
 		];
 	}
 
@@ -576,26 +881,21 @@ class FieldAttributeManager
 	{
 		$requiredByAttributeFieldNames = [];
 
+		$isPhaseDependent = static::isPhaseDependent();
 		for ($i = 0, $length = count($fieldInfos); $i < $length; $i++)
 		{
-			$isPhaseDependent = static::isPhaseDependent();
 			if (!$isPhaseDependent)
 			{
 				$fieldInfos[$i]['data']['isPhaseDependent'] = false;
 			}
 
 			$fieldName = $fieldInfos[$i]['name'];
-			if(!isset($attrConfigs[$fieldName]))
+			if(!is_array($attrConfigs[$fieldName]) || empty($attrConfigs[$fieldName]))
 			{
 				continue;
 			}
 
 			$fieldInfos[$i]['data']['attrConfigs'] = $attrConfigs[$fieldName];
-
-			if (!is_array($attrConfigs[$fieldName]) || empty($attrConfigs[$fieldName]))
-			{
-				continue;
-			}
 
 			$isRequiredByAttribute = false;
 			$ready = false;
@@ -637,12 +937,7 @@ class FieldAttributeManager
 			}
 			if ($isRequiredByAttribute)
 			{
-				if (!is_array($fieldInfos[$i]['data']))
-				{
-					$fieldInfos[$i]['data'] = [];
-				}
 				$fieldInfos[$i]['data']['isRequiredByAttribute'] = true;
-
 				$requiredByAttributeFieldNames[] = $fieldName;
 			}
 		}
@@ -718,7 +1013,6 @@ class FieldAttributeManager
 		string $currentStageId
 	): array
 	{
-		$entityTypeId = null;
 		$result = [];
 
 		if (!static::isPhaseDependent())
@@ -744,8 +1038,16 @@ class FieldAttributeManager
 				continue;
 			}
 
-			$startStageSort = isset($stages[$fieldConfig['START_PHASE']]) ? $stages[$fieldConfig['START_PHASE']]->getSort() : -1;
-			$finishStageSort = isset($stages[$fieldConfig['FINISH_PHASE']]) ? $stages[$fieldConfig['FINISH_PHASE']]->getSort() : -1;
+			$startStageSort =
+				isset($stages[$fieldConfig['START_PHASE']])
+				? $stages[$fieldConfig['START_PHASE']]->getSort()
+				: -1
+			;
+			$finishStageSort =
+				isset($stages[$fieldConfig['FINISH_PHASE']])
+				? $stages[$fieldConfig['FINISH_PHASE']]->getSort()
+				: -1
+			;
 
 			if ($currentStageSort >= $startStageSort && $currentStageSort <= $finishStageSort)
 			{
@@ -754,5 +1056,23 @@ class FieldAttributeManager
 		}
 
 		return $result;
+	}
+
+	public static function deleteByOwnerType(int $entityTypeId)
+	{
+		$res = FieldAttributeTable::getList(
+			[
+				'filter' => [
+					'=ENTITY_TYPE_ID' => $entityTypeId
+				],
+				'select' => [
+					'ID'
+				]
+			]
+		);
+		while($item = $res->fetch())
+		{
+			FieldAttributeTable::delete($item['ID']);
+		}
 	}
 }

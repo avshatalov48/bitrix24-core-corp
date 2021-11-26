@@ -1,6 +1,6 @@
 <?php
 $MESS['CRM_ELEMENT_BUTTON_SELECT'] = 'Выбрать';
-$MESS['CRM_SFE_PERMISSION_DENIED'] = 'Доступ запрещен';
+$MESS['CRM_SFE_ENTITY_NOT_SELECTED'] = 'Не выбран ни один тип сущности в настройках поля';
 
 $MESS['CRM_ELEMENT_LEAD'] = 'Лиды';
 $MESS['CRM_ELEMENT_CONTACT'] = 'Контакты';

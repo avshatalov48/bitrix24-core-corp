@@ -13,7 +13,7 @@ $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
  */
 define(
 	'NO_AGENT_CHECK',
-	!in_array($action, array('REBUILD_SEARCH_CONTENT', 'BUILD_TIMELINE', 'REFRESH_ACCOUNTING', 'REBUILD_SEMANTICS', 'REBUILD_CONVERSION_STATISTICS'), true)
+	!in_array($action, array('REBUILD_SEARCH_CONTENT', 'BUILD_TIMELINE', 'REFRESH_ACCOUNTING', 'REBUILD_SEMANTICS', 'REBUILD_CONVERSION_STATISTICS', 'REBUILD_SECURITY_ATTRS'), true)
 );
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
@@ -43,6 +43,7 @@ use Bitrix\Crm\Conversion\LeadConversionConfig;
 use Bitrix\Crm\Conversion\LeadConversionWizard;
 use Bitrix\Crm\Conversion\EntityConversionException;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
+use Bitrix\Main\Localization\Loc;
 
 $userPerms = CCrmPerms::GetCurrentUserPermissions();
 if(!CCrmPerms::IsAuthorized())
@@ -52,7 +53,7 @@ if(!CCrmPerms::IsAuthorized())
 
 if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 {
-	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+	Loc::loadMessages(__FILE__);
 
 	if(!CCrmLead::CheckReadPermission(0, $userPerms))
 	{
@@ -224,6 +225,27 @@ elseif ($action === 'BUILD_TIMELINE')
 		)
 	);
 }
+elseif ($action === 'REBUILD_SECURITY_ATTRS')
+{
+	$agent = \Bitrix\Crm\Agent\Security\LeadAttributeRebuildAgent::getInstance();
+	if($agent->isEnabled() && !$agent->isRegistered())
+	{
+		$agent->enable(false);
+	}
+	if(!$agent->isEnabled())
+	{
+		__CrmLeadListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	$progressData = $agent->getProgressData();
+	__CrmLeadListEndResponse(
+		array(
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $progressData['PROCESSED_ITEMS'],
+			'TOTAL_ITEMS' => $progressData['TOTAL_ITEMS'],
+		)
+	);
+}
 elseif ($action === 'SAVE_PROGRESS')
 {
 	$ID = isset($_REQUEST['ID']) ? intval($_REQUEST['ID']) : 0;
@@ -324,7 +346,7 @@ elseif ($action === 'SAVE_PROGRESS')
 }
 elseif ($action === 'REBUILD_DUPLICATE_INDEX')
 {
-	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+	Loc::loadMessages(__FILE__);
 
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 	$entityTypeName = isset($params['ENTITY_TYPE_NAME']) ? $params['ENTITY_TYPE_NAME'] : '';
@@ -446,7 +468,7 @@ elseif ($action === 'REBUILD_DUPLICATE_INDEX')
 elseif ($action === 'REBUILD_STATISTICS')
 {
 	//~CRM_REBUILD_LEAD_STATISTICS
-	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+	Loc::loadMessages(__FILE__);
 
 	if(!CCrmLead::CheckUpdatePermission(0))
 	{
@@ -543,7 +565,7 @@ elseif ($action === 'REBUILD_STATISTICS')
 elseif ($action === 'REBUILD_SUM_STATISTICS')
 {
 	//~CRM_REBUILD_LEAD_SUM_STATISTICS
-	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+	Loc::loadMessages(__FILE__);
 
 	if(!CCrmLead::CheckUpdatePermission(0))
 	{
@@ -689,7 +711,7 @@ elseif ($action === 'REBUILD_SEMANTICS')
 }
 elseif ($action === 'GET_ROW_COUNT')
 {
-	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+	Loc::loadMessages(__FILE__);
 
 	if(!CCrmLead::CheckReadPermission(0, $userPerms))
 	{
@@ -723,7 +745,7 @@ elseif ($action === 'GET_ROW_COUNT')
 }
 elseif ($action === 'DELETE')
 {
-	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+	Loc::loadMessages(__FILE__);
 
 	if(!CCrmLead::CheckDeletePermission(0, $userPerms))
 	{
@@ -1040,16 +1062,36 @@ elseif ($action === 'PREPARE_BATCH_CONVERSION')
 		$status = 'REQUIRES_SYNCHRONIZATION';
 	}
 
+	Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead.list/templates/.default/template.php');
+
 	__CrmLeadListEndResponse(
-		array(
-			'DATA' => array(
+		[
+			'DATA' => [
 				'STATUS' => $status,
 				'REQUIRES_SYNCHRONIZATION' => $needForSync,
 				'CONFIG' => $config->toJavaScript(),
 				'FIELD_NAMES' => array_values($syncFieldNames),
-				'ERRORS' => $errors
-			)
-		)
+				'ERRORS' => $errors,
+				'messages' =>  [
+					'accessDenied' =>  Loc::getMessage('CRM_LEAD_CONV_ACCESS_DENIED'),
+					'generalError' =>  Loc::getMessage('CRM_LEAD_CONV_GENERAL_ERROR'),
+					'dialogTitle' =>  Loc::getMessage('CRM_LEAD_CONV_DIALOG_TITLE'),
+					'syncEditorLegend' =>  Loc::getMessage('CRM_LEAD_CONV_DIALOG_SYNC_LEGEND'),
+					'syncEditorFieldListTitle' =>  Loc::getMessage('CRM_LEAD_CONV_DIALOG_SYNC_FILED_LIST_TITLE'),
+					'syncEditorEntityListTitle' =>  Loc::getMessage('CRM_LEAD_CONV_DIALOG_SYNC_ENTITY_LIST_TITLE'),
+					'continueButton' =>  Loc::getMessage('CRM_LEAD_CONV_DIALOG_CONTINUE_BTN'),
+					'cancelButton' =>  Loc::getMessage('CRM_LEAD_CONV_DIALOG_CANCEL_BTN'),
+					'selectButton' =>  Loc::getMessage('CRM_LEAD_CONV_ENTITY_SEL_BTN'),
+					'openEntitySelector' =>  Loc::getMessage('CRM_LEAD_CONV_OPEN_ENTITY_SEL'),
+					'entitySelectorTitle' =>  Loc::getMessage('CRM_LEAD_CONV_ENTITY_SEL_TITLE'),
+					'contact' =>  Loc::getMessage('CRM_LEAD_CONV_ENTITY_SEL_CONTACT'),
+					'company' =>  Loc::getMessage('CRM_LEAD_CONV_ENTITY_SEL_COMPANY'),
+					'noresult' =>  Loc::getMessage('CRM_LEAD_CONV_ENTITY_SEL_SEARCH_NO_RESULT'),
+					'search' =>  Loc::getMessage('CRM_LEAD_CONV_ENTITY_SEL_SEARCH'),
+					'last' =>  Loc::getMessage('CRM_LEAD_CONV_ENTITY_SEL_LAST'),
+				],
+			],
+		]
 	);
 }
 elseif ($action === 'STOP_BATCH_CONVERSION')

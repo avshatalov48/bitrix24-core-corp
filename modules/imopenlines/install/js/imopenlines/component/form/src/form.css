@@ -1,0 +1,49 @@
+.bx-imopenlines-form-wrapper {
+    display: flex;
+    width: 320px;
+    padding-left: 16px;
+}
+
+.bx-imopenlines-form-result-container {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 320px;
+    min-height: 181px;
+    border-radius: 6px;
+}
+
+.bx-imopenlines-form-result-container.bx-imopenlines-form-success {
+    background: #A0BE47;
+    border-bottom: 5px solid #FFD110;
+}
+
+.bx-imopenlines-form-result-container.bx-imopenlines-form-error {
+    background: #F25830;
+    border-bottom: 5px solid #FFD110;
+}
+
+.bx-imopenlines-form-result-icon {
+    margin-top: 20px;
+    width: 66px;
+    height: 66px;
+    margin-bottom: 15px;
+}
+
+.bx-imopenlines-form-success .bx-imopenlines-form-result-icon {
+    background: url("data:image/svg+xml,%3Csvg%20width%3D%2266%22%20height%3D%2266%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ccircle%20cx%3D%2233%22%20cy%3D%2233%22%20r%3D%2233%22%20fill%3D%22%23000%22%20fill-opacity%3D%22.07%22%2F%3E%3Ccircle%20cx%3D%2233%22%20cy%3D%2233%22%20r%3D%2232.5%22%20stroke%3D%22%23000%22%20stroke-opacity%3D%22.05%22%2F%3E%3Cg%20filter%3D%22url%28%23filter0_ii%29%22%3E%3Ccircle%20cx%3D%2233%22%20cy%3D%2233%22%20r%3D%2225.58%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fg%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M30.014%2041.787l-7.754-7.556%202.714-2.645%205.04%204.912%2011.402-11.113%202.714%202.644-14.116%2013.758z%22%20fill%3D%22%23A0BE47%22%2F%3E%3Cdefs%3E%3Cfilter%20id%3D%22filter0_ii%22%20x%3D%226.42%22%20y%3D%226.42%22%20width%3D%2253.16%22%20height%3D%2253.16%22%20filterUnits%3D%22userSpaceOnUse%22%20color-interpolation-filters%3D%22sRGB%22%3E%3CfeFlood%20flood-opacity%3D%220%22%20result%3D%22BackgroundImageFix%22%2F%3E%3CfeBlend%20in%3D%22SourceGraphic%22%20in2%3D%22BackgroundImageFix%22%20result%3D%22shape%22%2F%3E%3CfeColorMatrix%20in%3D%22SourceAlpha%22%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%20127%200%22%20result%3D%22hardAlpha%22%2F%3E%3CfeOffset%20dx%3D%22-1%22%20dy%3D%22-1%22%2F%3E%3CfeGaussianBlur%20stdDeviation%3D%22.5%22%2F%3E%3CfeComposite%20in2%3D%22hardAlpha%22%20operator%3D%22arithmetic%22%20k2%3D%22-1%22%20k3%3D%221%22%2F%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0886691%200%22%2F%3E%3CfeBlend%20in2%3D%22shape%22%20result%3D%22effect1_innerShadow%22%2F%3E%3CfeColorMatrix%20in%3D%22SourceAlpha%22%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%20127%200%22%20result%3D%22hardAlpha%22%2F%3E%3CfeOffset%20dx%3D%221%22%20dy%3D%221%22%2F%3E%3CfeGaussianBlur%20stdDeviation%3D%22.5%22%2F%3E%3CfeComposite%20in2%3D%22hardAlpha%22%20operator%3D%22arithmetic%22%20k2%3D%22-1%22%20k3%3D%221%22%2F%3E%3CfeColorMatrix%20values%3D%220%200%200%200%201%200%200%200%200%201%200%200%200%200%201%200%200%200%200.292286%200%22%2F%3E%3CfeBlend%20in2%3D%22effect1_innerShadow%22%20result%3D%22effect2_innerShadow%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3C%2Fsvg%3E");
+}
+
+.bx-imopenlines-form-error .bx-imopenlines-form-result-icon {
+    background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20169%20169%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Ccircle%20id%3D%22a%22%20cx%3D%2284.5%22%20cy%3D%2284.5%22%20r%3D%2265.5%22/%3E%3Cfilter%20x%3D%22-.8%25%22%20y%3D%22-.8%25%22%20width%3D%22101.5%25%22%20height%3D%22101.5%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22b%22%3E%3CfeGaussianBlur%20stdDeviation%3D%22.5%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowBlurInner1%22/%3E%3CfeOffset%20dx%3D%22-1%22%20dy%3D%22-1%22%20in%3D%22shadowBlurInner1%22%20result%3D%22shadowOffsetInner1%22/%3E%3CfeComposite%20in%3D%22shadowOffsetInner1%22%20in2%3D%22SourceAlpha%22%20operator%3D%22arithmetic%22%20k2%3D%22-1%22%20k3%3D%221%22%20result%3D%22shadowInnerInner1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0886691434%200%22%20in%3D%22shadowInnerInner1%22%20result%3D%22shadowMatrixInner1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%22.5%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowBlurInner2%22/%3E%3CfeOffset%20dx%3D%221%22%20dy%3D%221%22%20in%3D%22shadowBlurInner2%22%20result%3D%22shadowOffsetInner2%22/%3E%3CfeComposite%20in%3D%22shadowOffsetInner2%22%20in2%3D%22SourceAlpha%22%20operator%3D%22arithmetic%22%20k2%3D%22-1%22%20k3%3D%221%22%20result%3D%22shadowInnerInner2%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%201%200%200%200%200%201%200%200%200%200%201%200%200%200%200.292285839%200%22%20in%3D%22shadowInnerInner2%22%20result%3D%22shadowMatrixInner2%22/%3E%3CfeMerge%3E%3CfeMergeNode%20in%3D%22shadowMatrixInner1%22/%3E%3CfeMergeNode%20in%3D%22shadowMatrixInner2%22/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20stroke-opacity%3D%22.05%22%20stroke%3D%22%23000%22%20fill-opacity%3D%22.07%22%20fill%3D%22%23000%22%20cx%3D%2284.5%22%20cy%3D%2284.5%22%20r%3D%2284%22/%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23b%29%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cpath%20d%3D%22M91.638%2084.567l14.496%2014.495-7.072%207.072-14.495-14.496-14.496%2014.496L63%2099.062l14.496-14.495L63%2070.07%2070.071%2063l14.496%2014.496L99.062%2063l7.072%207.071-14.496%2014.496z%22%20fill%3D%22%23F25830%22/%3E%3C/g%3E%3C/svg%3E');
+}
+
+.bx-imopenlines-form-result-title {
+    margin-bottom: 30px;
+    color: #FFF;
+    font: 17px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 700;
+    line-height: 26px;
+    text-align: center;
+}

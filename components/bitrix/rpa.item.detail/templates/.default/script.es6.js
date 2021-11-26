@@ -665,7 +665,7 @@ class ItemDetailComponent
 						}
 					})
 					.then((response) => {
-						if(response.data && Type.isString(response.data.comment) && response.data.comment.length > 0)
+						if(response.data && response.data.comment)
 						{
 							event.getData().comment = response.data.comment;
 							resolve();

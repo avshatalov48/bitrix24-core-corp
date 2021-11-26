@@ -33,7 +33,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject21() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>"]);
 
 	  _templateObject21 = function _templateObject21() {
 	    return data;
@@ -953,6 +953,7 @@ this.BX = this.BX || {};
 	    _this2._showAddressTypeInViewMode = BX.prop.getBoolean(settings, 'showAddressTypeInViewMode', true);
 	    _this2._showDetails = !_this2._isAutocompleteEnabled || BX.prop.getBoolean(settings, 'showDetails', false);
 	    _this2._isLoading = false;
+	    _this2._icon = null;
 	    _this2._isDropdownLoading = false;
 	    _this2._addressWidget = null;
 	    _this2._wrapper = null;
@@ -1277,25 +1278,38 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "refreshIcon",
 	    value: function refreshIcon() {
-	      var node = this._domNodes.icon;
+	      var newIcon = this.getNewIcon();
 
-	      if (main_core.Type.isDomNode(node)) {
-	        var newNode;
+	      if (this._icon !== newIcon) {
+	        var node = this._domNodes.icon;
 
-	        if (this._isLoading) {
-	          newNode = main_core.Tag.render(_templateObject20());
-	        } else {
-	          var address = this.getAddress();
+	        if (main_core.Type.isDomNode(node)) {
+	          var newNode;
 
-	          if (address) {
-	            newNode = main_core.Tag.render(_templateObject21(), this.onDelete.bind(this));
+	          if (newIcon === 'loading') {
+	            newNode = main_core.Tag.render(_templateObject20());
 	          } else {
-	            newNode = main_core.Tag.render(_templateObject22(), this._isAutocompleteEnabled ? 'ui-ctl-icon-search' : '');
+	            if (newIcon === 'clear') {
+	              newNode = main_core.Tag.render(_templateObject21(), this.onDelete.bind(this));
+	            } else if (newIcon === 'search') {
+	              newNode = main_core.Tag.render(_templateObject22(), this._isAutocompleteEnabled ? 'ui-ctl-icon-search' : '');
+	            }
 	          }
+
+	          main_core.Dom.replace(node, newNode);
+	          this._domNodes.icon = newNode;
 	        }
 
-	        main_core.Dom.replace(node, newNode);
-	        this._domNodes.icon = newNode;
+	        this._icon = newIcon;
+	      }
+	    }
+	  }, {
+	    key: "getNewIcon",
+	    value: function getNewIcon() {
+	      if (this._isLoading) {
+	        return 'loading';
+	      } else {
+	        return this.getAddress() ? 'clear' : 'search';
 	      }
 	    }
 	  }, {

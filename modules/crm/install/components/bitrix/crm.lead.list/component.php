@@ -363,7 +363,7 @@ $arResult['GRID_ID'] = 'CRM_LEAD_LIST_V12'.($bInternal && !empty($arParams['GRID
 $arResult['HONORIFIC'] = CCrmStatus::GetStatusListEx('HONORIFIC');
 $arResult['STATUS_LIST'] = CCrmStatus::GetStatusListEx('STATUS');
 $arResult['SOURCE_LIST'] = CCrmStatus::GetStatusListEx('SOURCE');
-$arResult['WEBFORM_LIST'] = WebFormManager::getListNames();
+$arResult['WEBFORM_LIST'] = WebFormManager::getListNamesEncoded();
 $arResult['BOOLEAN_VALUES_LIST'] = array(
 	'N' => GetMessage('CRM_COLUMN_BOOLEAN_VALUES_N'),
 	'Y' => GetMessage('CRM_COLUMN_BOOLEAN_VALUES_Y')
@@ -965,7 +965,7 @@ foreach ($arFilter as $k => $v)
 		}
 		\Bitrix\Crm\UI\Filter\Range::prepareTo($arFilter, $arMatch[1], $v);
 	}
-	elseif (in_array($k, $arResult['FILTER2LOGIC']))
+	elseif (in_array($k, $arResult['FILTER2LOGIC']) && $v !== false)
 	{
 		// Bugfix #26956 - skip empty values in logical filter
 		$v = trim($v);
@@ -1002,7 +1002,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter['COMMUNICATION_TYPE']);
 	}
-	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1 && $v !== false)
 	{
 		$arFilter['%'.$k] = $v;
 		unset($arFilter[$k]);
@@ -2794,7 +2794,8 @@ if (!$isInExportMode)
 		$arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'] =
 		$arResult['NEED_FOR_REBUILD_LEAD_ATTRS'] =
 		$arResult['NEED_FOR_REFRESH_ACCOUNTING'] =
-		$arResult['NEED_FOR_BUILD_TIMELINE'] = false;
+		$arResult['NEED_FOR_BUILD_TIMELINE'] =
+		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] = false;
 
 	if(!$bInternal)
 	{
@@ -2811,6 +2812,7 @@ if (!$isInExportMode)
 		$arResult['NEED_FOR_BUILD_TIMELINE'] = \Bitrix\Crm\Agent\Timeline\LeadTimelineBuildAgent::getInstance()->isEnabled();
 		$arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT'] = \Bitrix\Crm\Agent\Search\TimelineSearchContentRebuildAgent::getInstance()->isEnabled();
 		$arResult['NEED_FOR_REFRESH_ACCOUNTING'] = \Bitrix\Crm\Agent\Accounting\LeadAccountSyncAgent::getInstance()->isEnabled();
+		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] = \Bitrix\Crm\Agent\Security\LeadAttributeRebuildAgent::getInstance()->isEnabled();
 
 		if(CCrmPerms::IsAdmin())
 		{

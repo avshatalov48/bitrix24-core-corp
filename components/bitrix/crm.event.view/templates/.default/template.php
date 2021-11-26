@@ -89,14 +89,14 @@ $prefix = $arResult['GRID_ID'];
 		{
 			$photoUrl = isset($arEvent['CREATED_BY_PHOTO_URL']) ? $arEvent['CREATED_BY_PHOTO_URL'] : '';
 			$authorHtml = "<div class = \"crm-client-summary-wrapper\">
-				<div class = \"crm-client-photo-wrapper\">
-					<div class=\"ui-icon ui-icon-common-user crm-client-def-pic\">
-						<i ".($photoUrl ? "style=\"background-image: url({$photoUrl})\"" : "")."></i>
-					</div>
-				</div>
 				<div class=\"crm-client-info-wrapper\">
 					<div class=\"crm-client-title-wrapper\">
-						<a href=\"{$arEvent['CREATED_BY_LINK']}\" id=\"balloon_{$arResult['GRID_ID']}_{$arEvent['ID']}\" bx-tooltip-user-id=\"{$arEvent['CREATED_BY_ID']}\">{$arEvent['CREATED_BY_FULL_NAME']}</a>
+						<a class='crm-grid-username' href='{$arEvent['CREATED_BY_LINK']}' id=\"balloon_{$arResult['GRID_ID']}_{$arEvent['ID']}\" bx-tooltip-user-id=\"{$arEvent['CREATED_BY_ID']}\">
+							<span class='crm-grid-avatar ui-icon ui-icon-common-user'>
+								<i ".($photoUrl ? "style=\"background-image: url('{$photoUrl}')\"" : "")."></i>
+							</span>
+							<span class='crm-grid-username-inner'>{$arEvent['CREATED_BY_FULL_NAME']}</span>
+						</a>
 					</div>
 				</div>
 			</div>";

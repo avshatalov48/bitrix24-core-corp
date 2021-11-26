@@ -133,7 +133,7 @@ BX.Tasks.Shared.Form.ProjectPlan = BX.Tasks.Util.Widget.extend({
 			return this.instances.deadlinePicker;
 		},
 
-		onDeadLineChange: function(stamp)
+		onDeadLineChange: function(stamp, value, display, local)
 		{
 			if (this.checkNoWorkDays(this.matchWorkTime()))
 			{
@@ -141,7 +141,7 @@ BX.Tasks.Shared.Form.ProjectPlan = BX.Tasks.Util.Widget.extend({
 			}
 
 			this.solveDeadline(stamp);
-			this.fireEvent('change-deadline', [this.getDeadlinePicker().getValue()]);
+			this.fireEvent('change-deadline', [this.getDeadlinePicker().getValue(), local]);
 		},
 
 		onStartDatePlanChange: function()

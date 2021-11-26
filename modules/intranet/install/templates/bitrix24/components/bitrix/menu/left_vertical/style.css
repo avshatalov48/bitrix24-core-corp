@@ -212,10 +212,12 @@
 
 .menu-items-body {
 	overflow: hidden;
+	padding-right: 3px;
 }
 
 .menu-items-body:hover {
 	overflow-y: auto;
+	padding-right: 0;
 }
 
 .menu-collapsed-mode .menu-items-body {
@@ -291,11 +293,11 @@
 	align-items: center;
 	-ms-flex: 1 0 auto;
 	flex: 1 0 auto;
+	flex-shrink: initial;
 	overflow: hidden;
 	border-bottom: none;
 	margin: 0;
 	padding: 3px 12px 4px 34px;
-	/*display: block;*/
 	font-size: 14px;
 	height: 29px;
 	line-height: 24px;
@@ -1334,15 +1336,13 @@
 }
 
 .menu-fav-editable-btn {
-	position: absolute;
 	height: 100%;
-	top: 0;
-	right: 0;
-	width: 22px;
+	width: 0;
 	opacity: 0;
 	transition: opacity 250ms;
 	cursor: pointer;
 	z-index: 2;
+	position: relative;
 }
 
 .menu-fav-editable-btn-hide {
@@ -1387,6 +1387,8 @@
 .menu-favorites-editable .menu-fav-editable-btn {
 	opacity: 1;
 	transition-delay: 0ms;
+	width: 22px;
+	min-width: 22px;
 }
 
 .menu-fav-editable-btn:hover .menu-favorites-btn-icon {

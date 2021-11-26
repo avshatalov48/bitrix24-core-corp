@@ -19,6 +19,8 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead.menu/component.php');
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead.list/templates/.default/template.php');
 
+\Bitrix\Crm\Settings\Crm::markAsInitiated();
+
 // if not isset
 $arResult['PATH_TO_LEAD_EDIT'] = isset($arResult['PATH_TO_LEAD_EDIT']) ? $arResult['PATH_TO_LEAD_EDIT'] : '';
 $arResult['PATH_TO_LEAD_LIST'] = isset($arResult['PATH_TO_LEAD_LIST']) ? $arResult['PATH_TO_LEAD_LIST'] : '';

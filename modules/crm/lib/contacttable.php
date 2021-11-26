@@ -32,6 +32,8 @@ Loc::loadMessages(Path::combine(__DIR__, 'contact.php'));
  */
 class ContactTable extends ORM\Data\DataManager
 {
+	protected static $isCheckUserFields = true;
+
 	public static function getTableName()
 	{
 		return 'b_crm_contact';
@@ -85,6 +87,10 @@ class ContactTable extends ORM\Data\DataManager
 			),
 			'COMMENTS' => array(
 				'data_type' => 'string'
+			),
+			'OPENED' => array(
+				'data_type' => 'boolean',
+				'values' => array('N', 'Y')
 			),
 			'TYPE_ID' => array(
 				'data_type' => 'string'
@@ -315,5 +321,21 @@ class ContactTable extends ORM\Data\DataManager
 			),
 			new StringField('PHOTO'),
 		);
+	}
+
+	public static function disableUserFieldsCheck(): void
+	{
+		static::$isCheckUserFields = false;
+	}
+
+	protected static function checkUfFields($object, $ufdata, $result)
+	{
+		if (!static::$isCheckUserFields)
+		{
+			static::$isCheckUserFields = true;
+			return;
+		}
+
+		parent::checkUfFields($object, $ufdata, $result);
 	}
 }

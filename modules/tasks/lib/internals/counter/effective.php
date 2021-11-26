@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Tasks\Internals\Counter;
 
-use Bitrix\Main;
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Tasks\Integration\Recyclebin\Manager;
 
 /**
  * Class EffectiveTable
@@ -104,6 +104,14 @@ class EffectiveTable extends DataManager
 				'data_type' => 'Bitrix\Tasks\TaskTable',
 				'reference' => array('=this.TASK_ID' => 'ref.ID')
 			),
+
+			'RECYCLE' => array(
+				'data_type' => 'Bitrix\Recyclebin\Internals\Models\RecyclebinTable',
+				'reference' => [
+					'=ref.ENTITY_TYPE' => ['?', Manager::TASKS_RECYCLEBIN_ENTITY],
+					'=this.TASK_ID' => 'ref.ENTITY_ID'
+				]
+			)
 		);
 	}
 }

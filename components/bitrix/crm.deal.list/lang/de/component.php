@@ -43,6 +43,7 @@ $MESS["CRM_COLUMN_NEXT_EXECUTION"] = "Datum nächster Rechnung";
 $MESS["CRM_COLUMN_OPPORTUNITY"] = "Gewinn";
 $MESS["CRM_COLUMN_ORDER_STAGE"] = "Status der Auftragszahlung";
 $MESS["CRM_COLUMN_ORIGINATOR_ID"] = "E-Shop";
+$MESS["CRM_COLUMN_PAYMENT_STAGE"] = "Zahlungsstatus";
 $MESS["CRM_COLUMN_PROBABILITY"] = "Gewinnwahrscheinlichkeit, %";
 $MESS["CRM_COLUMN_PRODUCT"] = "Produkt";
 $MESS["CRM_COLUMN_PRODUCT_ID"] = "Produkt";

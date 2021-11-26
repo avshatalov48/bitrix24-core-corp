@@ -15240,6 +15240,7 @@
 	var BitrixVue = /*#__PURE__*/function () {
 	  function BitrixVue(VueVendor) {
 	    babelHelpers.classCallCheck(this, BitrixVue);
+	    this._appCounter = 0;
 	    this._components = {};
 	    this._mutations = {};
 	    this._clones = {};
@@ -15279,6 +15280,118 @@
 	  }, {
 	    key: "createApp",
 	    value: function createApp(params) {
+	      var bitrixVue = this; // 1. Init Bitrix public api
+
+	      var $Bitrix = {}; // 1.1 Localization
+
+	      $Bitrix.Loc = {
+	        messages: {},
+	        getMessage: function getMessage(messageId) {
+	          if (typeof this.messages[messageId] !== 'undefined') {
+	            return this.messages[messageId];
+	          }
+
+	          this.messages[messageId] = main_core.Loc.getMessage(messageId);
+	          return this.messages[messageId];
+	        },
+	        getMessages: function getMessages() {
+	          if (typeof BX.message !== 'undefined') {
+	            return babelHelpers.objectSpread({}, BX.message, this.messages);
+	          }
+
+	          return babelHelpers.objectSpread({}, this.messages);
+	        },
+	        setMessage: function setMessage(id, value) {
+	          if (main_core.Type.isString(id)) {
+	            this.messages[id] = value;
+	          }
+
+	          if (main_core.Type.isObject(id)) {
+	            for (var code in id) {
+	              if (id.hasOwnProperty(code)) {
+	                this.messages[code] = id[code];
+	              }
+	            }
+	          }
+	        }
+	      }; // 1.2  Application Data
+
+	      $Bitrix.Application = {
+	        instance: null,
+	        get: function get() {
+	          return this.instance;
+	        },
+	        set: function set(instance) {
+	          this.instance = instance;
+	        }
+	      }; // 1.3  Application Data
+
+	      $Bitrix.Data = {
+	        data: {},
+	        get: function get(name, defaultValue) {
+	          var _this$data$name;
+
+	          return (_this$data$name = this.data[name]) !== null && _this$data$name !== void 0 ? _this$data$name : defaultValue;
+	        },
+	        set: function set(name, value) {
+	          this.data[name] = value;
+	        }
+	      }; // 1.4  Application EventEmitter
+
+	      $Bitrix.eventEmitter = new main_core_events.EventEmitter();
+
+	      if (typeof $Bitrix.eventEmitter.setEventNamespace === 'function') {
+	        this._appCounter++;
+	        $Bitrix.eventEmitter.setEventNamespace('vue:app:' + this._appCounter);
+	      } else // hack for old version of Bitrix SM
+	        {
+	          window.BX.Event.EventEmitter.prototype.setEventNamespace = function () {};
+
+	          $Bitrix.eventEmitter.setEventNamespace = function () {};
+	        } // 1.5  Application RestClient
+
+
+	      $Bitrix.RestClient = {
+	        instance: null,
+	        get: function get() {
+	          var _this$instance;
+
+	          return (_this$instance = this.instance) !== null && _this$instance !== void 0 ? _this$instance : rest_client.rest;
+	        },
+	        set: function set(instance) {
+	          this.instance = instance;
+	          $Bitrix.eventEmitter.emit(bitrixVue.events.restClientChange);
+	        },
+	        isCustom: function isCustom() {
+	          return this.instance !== null;
+	        }
+	      }; // 1.6  Application PullClient
+
+	      $Bitrix.PullClient = {
+	        instance: null,
+	        get: function get() {
+	          var _this$instance2;
+
+	          return (_this$instance2 = this.instance) !== null && _this$instance2 !== void 0 ? _this$instance2 : pull_client.PULL;
+	        },
+	        set: function set(instance) {
+	          this.instance = instance;
+	          $Bitrix.eventEmitter.emit(bitrixVue.events.pullClientChange);
+	        },
+	        isCustom: function isCustom() {
+	          return this.instance !== null;
+	        }
+	      };
+
+	      if (typeof params.mixins === 'undefined') {
+	        params.mixins = [];
+	      }
+
+	      params.mixins.unshift({
+	        beforeCreate: function beforeCreate() {
+	          this.$bitrix = $Bitrix;
+	        }
+	      });
 	      var instance = new this._instance(params);
 
 	      instance.mount = function (rootContainer) {
@@ -15340,7 +15453,7 @@
 	    value: function localComponent(name, definition) {
 	      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	      return this.component(name, definition, babelHelpers.objectSpread({
-	        immutable: true
+	        immutable: false
 	      }, options, {
 	        local: true
 	      }));
@@ -16023,113 +16136,15 @@
 	     * @deprecated Special method for plugin registration
 	     */
 	    value: function install(app, options) {
-	      var bitrixVue = this; // 1. Init Bitrix public api
-
-	      var $Bitrix = {}; // 1.1 Localization
-
-	      $Bitrix.Loc = {
-	        messages: {},
-	        getMessage: function getMessage(messageId) {
-	          if (typeof this.messages[messageId] !== 'undefined') {
-	            return this.messages[messageId];
-	          }
-
-	          this.messages[messageId] = main_core.Loc.getMessage(messageId);
-	          return this.messages[messageId];
-	        },
-	        getMessages: function getMessages() {
-	          if (typeof BX.message !== 'undefined') {
-	            return babelHelpers.objectSpread({}, BX.message, this.messages);
-	          }
-
-	          return babelHelpers.objectSpread({}, this.messages);
-	        },
-	        setMessage: function setMessage(id, value) {
-	          if (main_core.Type.isString(id)) {
-	            this.messages[id] = value;
-	          }
-
-	          if (main_core.Type.isObject(id)) {
-	            for (var code in id) {
-	              if (id.hasOwnProperty(code)) {
-	                this.messages[code] = id[code];
-	              }
-	            }
-	          }
-	        }
-	      }; // 1.2  Application Data
-
-	      $Bitrix.Application = {
-	        instance: null,
-	        get: function get() {
-	          return this.instance;
-	        },
-	        set: function set(instance) {
-	          this.instance = instance;
-	        }
-	      }; // 1.3  Application Data
-
-	      $Bitrix.Data = {
-	        data: {},
-	        get: function get(name, defaultValue) {
-	          var _this$data$name;
-
-	          return (_this$data$name = this.data[name]) !== null && _this$data$name !== void 0 ? _this$data$name : defaultValue;
-	        },
-	        set: function set(name, value) {
-	          this.data[name] = value;
-	        }
-	      }; // 1.4  Application EventEmitter
-
-	      $Bitrix.eventEmitter = new main_core_events.EventEmitter();
-
-	      if (typeof $Bitrix.eventEmitter.setEventNamespace === 'function') {
-	        $Bitrix.eventEmitter.setEventNamespace('vue:app:' + app._uid);
-	      } else // hack for old version of Bitrix SM
-	        {
-	          window.BX.Event.EventEmitter.prototype.setEventNamespace = function () {};
-
-	          $Bitrix.eventEmitter.setEventNamespace = function () {};
-	        } // 1.5  Application RestClient
-
-
-	      $Bitrix.RestClient = {
-	        instance: null,
-	        get: function get() {
-	          var _this$instance;
-
-	          return (_this$instance = this.instance) !== null && _this$instance !== void 0 ? _this$instance : rest_client.rest;
-	        },
-	        set: function set(instance) {
-	          this.instance = instance;
-	          $Bitrix.eventEmitter.emit(bitrixVue.events.restClientChange);
-	        },
-	        isCustom: function isCustom() {
-	          return this.instance !== null;
-	        }
-	      }; // 1.6  Application PullClient
-
-	      $Bitrix.PullClient = {
-	        instance: null,
-	        get: function get() {
-	          var _this$instance2;
-
-	          return (_this$instance2 = this.instance) !== null && _this$instance2 !== void 0 ? _this$instance2 : pull_client.PULL;
-	        },
-	        set: function set(instance) {
-	          this.instance = instance;
-	          $Bitrix.eventEmitter.emit(bitrixVue.events.pullClientChange);
-	        },
-	        isCustom: function isCustom() {
-	          return this.instance !== null;
-	        }
-	      }; // 2. Apply global properties
-
-	      app.prototype.$bitrix = $Bitrix;
 	      app.mixin({
+	        beforeCreate: function beforeCreate() {
+	          if (typeof this.$root !== 'undefined') {
+	            this.$bitrix = this.$root.$bitrix;
+	          }
+	        },
 	        computed: {
 	          $Bitrix: function $Bitrix() {
-	            return this.$bitrix;
+	            return this.$root.$bitrix;
 	          }
 	        },
 	        mounted: function mounted() {
@@ -21212,6 +21227,7 @@
 
 
 })();
+
 
 
 
@@ -52193,7 +52209,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return text;
 	      }
 
-	      return text.replace(/\&quot;/g, '"').replace(/&#39;/g, "'").replace(/\&lt;/g, '<').replace(/\&gt;/g, '>').replace(/\&amp;/g, '&').replace(/\&nbsp;/g, ' ');
+	      return text.replace(/\&quot;/g, '"').replace(/&#039;/g, "'").replace(/\&lt;/g, '<').replace(/\&gt;/g, '>').replace(/\&amp;/g, '&').replace(/\&nbsp;/g, ' ');
 	    },
 	    getLocalizeForNumber: function getLocalizeForNumber(phrase, number) {
 	      var language = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'en';
@@ -52991,6 +53007,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          store.commit('changeRightPanelMode', payload);
 	        },
 	        setPermissionsRequested: function setPermissionsRequested(store, payload) {
+	          if (typeof payload.status !== 'boolean') {
+	            return false;
+	          }
+
 	          store.commit('setPermissionsRequested', payload);
 	        },
 	        setPresenters: function setPresenters(store, payload) {
@@ -53107,7 +53127,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          state.common.rightPanelMode = mode;
 	        },
 	        setPermissionsRequested: function setPermissionsRequested(state, payload) {
-	          state.common.permissionsRequested = true;
+	          state.common.permissionsRequested = payload.status;
 	        },
 	        startCall: function startCall(state, payload) {
 	          state.common.state = im_const.ConferenceStateType.call;
@@ -54439,8 +54459,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          image = _params$image === void 0 ? true : _params$image,
 	          _params$text = params.text,
 	          text = _params$text === void 0 ? '' : _params$text,
-	          _params$highlightText = params.highlightText,
-	          highlightText = _params$highlightText === void 0 ? '' : _params$highlightText,
 	          _params$isConverted = params.isConverted,
 	          isConverted = _params$isConverted === void 0 ? false : _params$isConverted,
 	          _params$enableBigSmil = params.enableBigSmile,
@@ -54504,10 +54522,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (changed) {
 	          text = text.replace(/<\/span>(\n?)<br(\s\/?)>/ig, '</span>').replace(/<br(\s\/?)>(\n?)<br(\s\/?)>(\n?)<span/ig, '<br /><span');
 	        }
-	      }
-
-	      if (highlightText) {
-	        text = text.replace(new RegExp("(" + highlightText.replace(/[\-\[\]\/{}()*+?.\\^$|]/g, "\\$&") + ")", 'ig'), '<span class="bx-messenger-highlight">$1</span>');
 	      }
 
 	      if (enableBigSmile) {
@@ -66001,7 +66015,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 
 // file: /bitrix/js/imopenlines/component/message/dist/message.bundle.js
-(function (exports,im_view_message,main_core_events) {
+(function (exports,ui_vue,ui_vue_vuex,im_view_message,main_core_events) {
 	'use strict';
 
 	/**
@@ -66083,7 +66097,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  widgetUserGet: 'imopenlines.widget.user.get',
 	  widgetUserConsentApply: 'imopenlines.widget.user.consent.apply',
 	  widgetVoteSend: 'imopenlines.widget.vote.send',
-	  widgetFormSend: 'imopenlines.widget.form.send',
 	  widgetActionSend: 'imopenlines.widget.action.send',
 	  pullServerTime: 'server.time',
 	  pullConfigGet: 'pull.config.get'
@@ -66129,28 +66142,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  like: 'like',
 	  dislike: 'dislike'
 	});
-	BX.WidgetVue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message', {
+	ui_vue.WidgetBitrixVue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message', {
 	  methods: {
-	    checkFormShow: function checkFormShow() {
+	    checkMessageParamsForForm: function checkMessageParamsForForm() {
 	      if (!this.message.params || !this.message.params.IMOL_FORM) {
 	        return true;
 	      }
 
-	      if (this.message.params.IMOL_FORM === 'welcome') {
-	        if (!this.widget.dialog.sessionClose && !this.widget.user.name && !this.widget.user.lastName && !this.widget.user.email && !this.widget.user.phone) {
-	          main_core_events.EventEmitter.emit(EventType.requestShowForm, {
-	            type: FormType$1.welcome,
-	            delayed: true
-	          });
-	        }
-	      } else if (this.message.params.IMOL_FORM === 'offline') {
-	        if (!this.widget.dialog.sessionClose && !this.widget.user.email) {
-	          main_core_events.EventEmitter.emit(EventType.requestShowForm, {
-	            type: FormType$1.offline,
-	            delayed: true
-	          });
-	        }
-	      } else if (this.message.params.IMOL_FORM === 'history-delay') {
+	      if (this.message.params.IMOL_FORM === FormType$1.like) {
 	        if (parseInt(this.message.params.IMOL_VOTE) === this.widget.dialog.sessionId && this.widget.dialog.userVote === VoteType$1.none) {
 	          main_core_events.EventEmitter.emit(EventType.requestShowForm, {
 	            type: FormType$1.like,
@@ -66161,7 +66160,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    }
 	  },
 	  created: function created() {
-	    this.checkFormShow();
+	    this.checkMessageParamsForForm();
 	  },
 	  computed: babelHelpers.objectSpread({
 	    dialogNumber: function dialogNumber() {
@@ -66180,14 +66179,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return true;
 	      }
 
-	      if (this.message.params.IMOL_FORM && this.message.params.IMOL_FORM === 'history-delay' // TODO change after release to vote
-	      ) {
-	          return false;
-	        }
+	      if (this.message.params.IMOL_FORM && this.message.params.IMOL_FORM === 'like') {
+	        return false;
+	      }
 
 	      return true;
 	    }
-	  }, BX.WidgetVuex.mapState({
+	  }, ui_vue_vuex.WidgetVuex.mapState({
 	    widget: function widget(state) {
 	      return state.widget;
 	    }
@@ -66195,7 +66193,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div v-if=\"showMessage\" class=\"bx-imopenlines-message\">\n\t\t\t<div v-if=\"dialogNumber\" class=\"bx-imopenlines-message-dialog-number\">{{dialogNumber}}</div>\n\t\t\t#PARENT_TEMPLATE#\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),window,BX.Event));
+}((this.window = this.window || {}),BX,BX,window,BX.Event));
  
 
 
@@ -66203,46 +66201,210 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 // file: /bitrix/js/imopenlines/component/form/dist/form.bundle.js
 (function (exports,ui_vue,ui_vue_vuex) {
-	'use strict';
+    'use strict';
 
-	/**
-	 * Bitrix Messenger
-	 * Form Vue component
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2019 Bitrix
-	 */
-	BX.WidgetVue.cloneComponent('bx-test-form', 'bx-im-view-message', {
-	  data: function data() {
-	    return {
-	      formValue: ''
-	    };
-	  },
-	  created: function created() {},
-	  computed: babelHelpers.objectSpread({
-	    wasFilled: function wasFilled() {
-	      return !!this.message.params.CRM_FORM_VALUE;
-	    }
-	  }, ui_vue_vuex.WidgetVuex.mapState({
-	    widget: function widget(state) {
-	      return state.widget;
-	    }
-	  })),
-	  methods: {
-	    onFillForm: function onFillForm() {
-	      this.$Bitrix.RestClient.get().callMethod('imopenlines.widget.form.fill', {
-	        'CRM_FORM_VALUE': this.formValue,
-	        'MESSAGE_ID': this.message.id
-	      }).then(function (response) {
-	        console.log(response);
-	      }).catch(function (error) {
-	        console.log(error);
-	      });
-	    }
-	  },
-	  template: "\n\t\t<div class=\"bx-im-message bx-im-message-without-menu bx-im-message-without-avatar\">\n\t\t\t<div v-if=\"!wasFilled\" class=\"bx-im-message-content\">\n\t\t\t\t<div style=\"margin-bottom: 10px;\">Form component with id {{message.params.CRM_FORM_ID}}</div>\n\t\t\t\t<div style=\"margin-bottom: 10px; display: flex;\">\n\t\t\t\t\t<input type=\"text\" v-model=\"formValue\" style=\"margin-right: 15px;\" />\n\t\t\t\t\t<button @click=\"onFillForm\" class=\"bx-im-textarea-send-button bx-im-textarea-send-button-bright-arrow\" style=\"background-color: rgb(23, 163, 234);\"></button>\t\n\t\t\t\t</div>\n\t\t\t\t<!--#PARENT_TEMPLATE#-->\n\t\t\t</div>\n\t\t\t<div v-else class=\"bx-im-message-content\">\n\t\t\t\tForm was already filled with the value - \"{{message.params.CRM_FORM_VALUE[0]}}\"!\n\t\t\t</div>\n\t\t</div>\n\t"
-	});
+    /**
+     * Bitrix Messenger
+     * Form Vue component
+     *
+     * @package bitrix
+     * @subpackage im
+     * @copyright 2001-2019 Bitrix
+     */
+    var EVENT_POSTFIX = 'Openlines';
+    var LIVECHAT_PREFIX = 'livechat';
+    ui_vue.WidgetBitrixVue.component('bx-imopenlines-form', {
+      props: {
+        message: {
+          type: Object,
+          required: false
+        }
+      },
+      data: function data() {
+        return {
+          formSuccess: false,
+          formError: false
+        };
+      },
+      mounted: function mounted() {
+        if (this.filledFormFlag) {
+          this.formSuccess = true;
+        }
+      },
+      computed: babelHelpers.objectSpread({
+        chatId: function chatId() {
+          return this.application.dialog.chatId;
+        },
+        formId: function formId() {
+          if (this.message) {
+            return String(this.message.params.CRM_FORM_ID);
+          }
+
+          if (this.widget.common.crmFormsSettings.welcomeFormId) {
+            return this.widget.common.crmFormsSettings.welcomeFormId;
+          }
+
+          return '';
+        },
+        formSec: function formSec() {
+          if (this.message) {
+            return this.message.params.CRM_FORM_SEC;
+          }
+
+          if (this.widget.common.crmFormsSettings.welcomeFormSec) {
+            return this.widget.common.crmFormsSettings.welcomeFormSec;
+          }
+
+          return '';
+        },
+        showForm: function showForm() {
+          return this.formId && this.formSec && !this.formSuccess && !this.formError;
+        },
+        filledFormFlag: function filledFormFlag() {
+          if (this.message) {
+            return this.message.params.CRM_FORM_FILLED === 'Y';
+          }
+
+          return false;
+        },
+        messageCount: function messageCount() {
+          return this.dialog.messageCount;
+        }
+      }, ui_vue_vuex.WidgetVuex.mapState({
+        widget: function widget(state) {
+          return state.widget;
+        },
+        application: function application(state) {
+          return state.application;
+        },
+        dialog: function dialog(state) {
+          return state.dialogues.collection[state.application.dialog.dialogId];
+        }
+      })),
+      watch: {
+        filledFormFlag: function filledFormFlag(newValue) {
+          if (newValue === true && !this.formSuccess) {
+            this.formSuccess = true;
+          }
+        },
+        chatId: function chatId(newValue) {
+          // chatId > 0 means chat and user were initialized
+          if (newValue !== 0 && this.widgetInitPromiseResolve) {
+            this.widgetInitPromiseResolve();
+          }
+        }
+      },
+      methods: {
+        getCrmBindings: function getCrmBindings() {
+          var _this = this;
+
+          return new Promise(function (resolve, reject) {
+            _this.$Bitrix.RestClient.get().callMethod('imopenlines.widget.crm.bindings.get', {
+              'OPENLINES_CODE': _this.buildOpenlinesCode()
+            }).then(resolve).catch(reject);
+          });
+        },
+        onBeforeFormSubmit: function onBeforeFormSubmit(eventData) {
+          if (this.signedEntities && this.signedEntities !== '') {
+            eventData.sign = this.signedEntities;
+          }
+        },
+        onFormSubmit: function onFormSubmit(eventData) {
+          var _this2 = this;
+
+          this.eventData = eventData; // redefine form promise so we can send form manually later
+
+          this.eventData.promise = this.eventData.promise.then(function () {
+            return new Promise(function (resolve) {
+              if (_this2.chatId === 0) {
+                // promise we resolve after user and chat are inited, resolve method is saved to use in chatId watcher
+                new Promise(function (widgetResolve, widgetReject) {
+                  _this2.widgetInitPromiseResolve = widgetResolve;
+                }).then(function () {
+                  _this2.setFormProperties();
+
+                  return resolve();
+                });
+
+                _this2.getApplication().requestData();
+              } // we have user and chat so we can just resolve form promise instantly
+              else {
+                  // request current crm bindings and attach them to form
+                  if (_this2.widget.common.crmFormsSettings.welcomeFormDelay) {
+                    _this2.getCrmBindings().then(function (result) {
+                      _this2.signedEntities = result.data();
+
+                      _this2.setFormProperties();
+
+                      return resolve();
+                    }).catch(function (error) {
+                      console.error('Error getting CRM bindings', error);
+                    });
+                  } else {
+                    _this2.setFormProperties();
+
+                    return resolve();
+                  }
+                }
+            });
+          });
+        },
+        setFormProperties: function setFormProperties() {
+          if (!this.eventData) {
+            return false;
+          }
+
+          this.eventData.form.setProperty('eventNamePostfix', EVENT_POSTFIX);
+          this.eventData.form.setProperty('openlinesCode', this.buildOpenlinesCode());
+
+          if (this.message) {
+            var _this$message$params$;
+
+            this.eventData.form.setProperty('messageId', this.message.id);
+            this.eventData.form.setProperty('isWelcomeForm', (_this$message$params$ = this.message.params.IS_WELCOME_FORM) !== null && _this$message$params$ !== void 0 ? _this$message$params$ : 'N');
+          } else {
+            this.eventData.form.setProperty('isWelcomeForm', 'Y');
+          }
+        },
+        buildOpenlinesCode: function buildOpenlinesCode() {
+          var configId = 0;
+
+          if (this.dialog.entityId !== '') {
+            configId = this.dialog.entityId.split('|')[0];
+          }
+
+          var chatId = this.dialog.chatId || 0;
+          var userId = this.application.common.userId || 0;
+          return "".concat(LIVECHAT_PREFIX, "|").concat(configId, "|").concat(chatId, "|").concat(userId);
+        },
+        onFormSendSuccess: function onFormSendSuccess() {
+          if (!this.message) {
+            this.$store.commit('widget/common', {
+              dialogStart: true
+            });
+          }
+
+          this.$emit('formSendSuccess');
+          this.formSuccess = true;
+        },
+        onFormSendError: function onFormSendError(error) {
+          this.formError = true;
+          this.$emit('formSendError', {
+            error: error
+          });
+        },
+        getSuccessText: function getSuccessText() {
+          return this.widget.common.crmFormsSettings.successText;
+        },
+        getErrorText: function getErrorText() {
+          return this.widget.common.crmFormsSettings.errorText;
+        },
+        getApplication: function getApplication() {
+          return this.$Bitrix.Application.get();
+        }
+      },
+      template: "\n\t\t<div class=\"bx-im-message bx-im-message-without-menu bx-im-message-without-avatar bx-imopenlines-form-wrapper\">\n\t\t\t<div v-show=\"showForm\" class=\"bx-imopenlines-form-content\">\n\t\t\t\t<bx-crm-form\n\t\t\t\t\t:id=\"formId\"\n\t\t\t\t\t:sec=\"formSec\"\n\t\t\t\t\t:address=\"widget.common.host\"\n\t\t\t\t\t:lang=\"application.common.languageId\"\n\t\t\t\t\t@form:submit:post:before=\"onBeforeFormSubmit\"\n\t\t\t\t\t@form:submit=\"onFormSubmit\"\n\t\t\t\t\t@form:send:success=\"onFormSendSuccess\"\n\t\t\t\t\t@form:send:error=\"onFormSendError\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t\t<div v-show=\"formSuccess\" class=\"bx-imopenlines-form-result-container bx-imopenlines-form-success\">\n\t\t\t\t<div class=\"bx-imopenlines-form-result-icon\"></div>\n\t\t\t\t<div class=\"bx-imopenlines-form-result-title\">\n\t\t\t\t\t{{ getSuccessText() }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-show=\"formError\" class=\"bx-imopenlines-form-result-container bx-imopenlines-form-error\">\n\t\t\t\t<div class=\"bx-imopenlines-form-result-icon\"></div>\n\t\t\t\t<div class=\"bx-imopenlines-form-result-title\">\n\t\t\t\t\t{{ getErrorText() }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+    });
 
 }((this.window = this.window || {}),BX,BX));
  
@@ -66576,11 +66738,508 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 
 
 
+// file: /bitrix/js/main/polyfill/promise/js/promise.js
+;(function(window) {
+	'use strict';
+
+	if (typeof window.Promise === 'undefined' ||
+		window.Promise.toString().indexOf('[native code]') === -1)
+	{
+		var PROMISE_STATUS = '[[PromiseStatus]]';
+		var PROMISE_VALUE = '[[PromiseValue]]';
+		var STATUS_PENDING = 'pending';
+		var STATUS_INTERNAL_PENDING = 'internal pending';
+		var STATUS_RESOLVED = 'resolved';
+		var STATUS_REJECTED = 'rejected';
+
+
+		/**
+		 * Handles promise done
+		 * @param {Promise} promise
+		 * @param {Handler} deferred
+		 */
+		var handle = function(promise, deferred)
+		{
+			if (promise[PROMISE_STATUS] === STATUS_INTERNAL_PENDING)
+			{
+				promise = promise[PROMISE_VALUE];
+			}
+
+			if (promise[PROMISE_STATUS] === STATUS_PENDING)
+			{
+				promise.deferreds.push(deferred);
+			}
+			else
+			{
+				promise.handled = true;
+
+				setTimeout(function() {
+					var callback = promise[PROMISE_STATUS] === STATUS_RESOLVED ?
+						deferred.onFulfilled : deferred.onRejected;
+
+					if (callback)
+					{
+						try {
+							resolve(deferred.promise, callback(promise[PROMISE_VALUE]));
+						} catch (err) {
+							reject(deferred.promise, err);
+						}
+					}
+					else
+					{
+						if (promise[PROMISE_STATUS] === STATUS_RESOLVED)
+						{
+							resolve(deferred.promise, promise[PROMISE_VALUE]);
+						}
+						else
+						{
+							reject(deferred.promise, promise[PROMISE_VALUE]);
+						}
+					}
+				}, 0);
+			}
+		};
+
+
+		/**
+		 * Resolves promise with value
+		 * @param {Promise} promise
+		 * @param {*} value
+		 */
+		var resolve = function(promise, value) {
+			if (value === promise)
+			{
+				throw new TypeError('A promise cannot be resolved with it promise.');
+			}
+
+			try {
+				if (value && (typeof value === 'object' || typeof value === 'function'))
+				{
+					if (value instanceof Promise)
+					{
+						promise[PROMISE_STATUS] = STATUS_INTERNAL_PENDING;
+						promise[PROMISE_VALUE] = value;
+						finale(promise);
+						return;
+					}
+					else if (typeof value.then === 'function')
+					{
+						executePromise(value.then.bind(value), promise);
+						return;
+					}
+				}
+
+				promise[PROMISE_STATUS] = STATUS_RESOLVED;
+				promise[PROMISE_VALUE] = value;
+				finale(promise);
+			} catch (err) {
+				reject(promise, err);
+			}
+		};
+
+
+		/**
+		 * Rejects promise with reason
+		 * @param promise
+		 * @param reason
+		 */
+		var reject = function(promise, reason)
+		{
+			promise[PROMISE_STATUS] = STATUS_REJECTED;
+			promise[PROMISE_VALUE] = reason;
+			finale(promise);
+		};
+
+
+		/**
+		 * Calls async callback
+		 * @param {Promise} promise
+		 */
+		var finale = function(promise)
+		{
+			if (promise[PROMISE_STATUS] === STATUS_REJECTED && promise.deferreds.length === 0)
+			{
+				setTimeout(function() {
+					if (!promise.handled)
+					{
+						console.error('Unhandled Promise Rejection: ' + promise[PROMISE_VALUE]);
+					}
+				}, 0);
+			}
+
+			promise.deferreds.forEach(function(deferred) {
+				handle(promise, deferred);
+			});
+
+			promise.deferreds = null;
+		};
+
+
+		/**
+		 * Executes promise
+		 * @param {function} resolver - Resolver
+		 * @param {Promise} promise
+		 */
+		var executePromise = function(resolver, promise)
+		{
+			var done = false;
+
+			try {
+				resolver(resolveWrapper, rejectWrapper);
+			} catch (err) {
+				if (!done)
+				{
+					done = true;
+					reject(promise, err);
+				}
+			}
+
+			// Resolve function
+			function resolveWrapper(value)
+			{
+				if (!done)
+				{
+					done = true;
+					resolve(promise, value);
+				}
+			}
+
+			// Reject function
+			function rejectWrapper(reason)
+			{
+				if (!done)
+				{
+					done = true;
+					reject(promise, reason);
+				}
+			}
+		};
+
+
+		/**
+		 * Implements interface for works with promise handlers
+		 * @param {?function} [onFulfilled]
+		 * @param {?function} [onRejected]
+		 * @param {Promise} promise
+		 *
+		 * @constructor
+		 */
+		var Handler = function(onFulfilled, onRejected, promise)
+		{
+			this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+			this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+			this.promise = promise;
+		};
+
+
+		/**
+		 * Implements Promise polyfill
+		 * @param {function} resolver
+		 *
+		 * @constructor
+		 */
+		var Promise = function(resolver)
+		{
+			this[PROMISE_STATUS] = STATUS_PENDING;
+			this[PROMISE_VALUE] = null;
+			this.handled = false;
+			this.deferreds = [];
+
+			// Try execute promise resolver
+			executePromise(resolver, this);
+		};
+
+
+		/**
+		 * Appends a rejection handler callback to the promise,
+		 * and returns a new promise resolving to the return value of the callback if it is called,
+		 * or to its original fulfillment value if the promise is instead fulfilled.
+		 *
+		 * @param {function} onRejected
+		 */
+		Promise.prototype['catch'] = function(onRejected) {
+			return this.then(null, onRejected);
+		};
+
+
+		/**
+		 * Appends fulfillment and rejection handlers to the promise,
+		 * and returns a new promise resolving to the return value of the called handler,
+		 * or to its original settled value if the promise was not handled
+		 * (i.e. if the relevant handler onFulfilled or onRejected is not a function).
+		 *
+		 * @param {function} onFulfilled
+		 * @param {function} [onRejected]
+		 * @returns {Promise}
+		 */
+		Promise.prototype.then = function(onFulfilled, onRejected)
+		{
+			var promise = new Promise(function() {});
+			handle(this, new Handler(onFulfilled, onRejected, promise));
+			return promise;
+		};
+
+
+		/**
+		 * The method returns a single Promise that resolves when all of the promises
+		 * in the iterable argument have resolved or when the iterable argument contains no promises.
+		 * It rejects with the reason of the first promise that rejects.
+		 *
+		 * @static
+		 * @param iterable - An iterable object such as an Array or String
+		 * @return {Promise}
+		 */
+		Promise.all = function(iterable)
+		{
+			var args = [].slice.call(iterable);
+
+			return new Promise(function(resolve, reject) {
+				if (args.length === 0)
+				{
+					resolve(args);
+				}
+				else
+				{
+					var remaining = args.length;
+
+					var res = function(i, val)
+					{
+						try {
+							if (val && (typeof val === 'object' || typeof val === 'function'))
+							{
+								if (typeof val.then === 'function')
+								{
+									val.then.call(val, function(val) {
+										res(i, val);
+									}, reject);
+									return;
+								}
+							}
+
+							args[i] = val;
+
+							if (--remaining === 0)
+							{
+								resolve(args);
+							}
+						} catch (ex) {
+							reject(ex);
+						}
+					};
+
+					for (var i = 0; i < args.length; i++)
+					{
+						res(i, args[i]);
+					}
+				}
+			});
+		};
+
+
+		/**
+		 * The method returns a Promise object that is resolved with the given value.
+		 * If the value is a thenable (i.e. has a 'then' method),
+		 * the returned promise will 'follow' that thenable, adopting its eventual state;
+		 * if the value was a promise, that object becomes the result of the call to Promise.resolve;
+		 * otherwise the returned promise will be fulfilled with the value.
+		 *
+		 * @param {*|Promise} value - Argument to be resolved by this Promise. Can also be a Promise or a thenable to resolve.
+		 * @returns {Promise}
+		 */
+		Promise.resolve = function(value)
+		{
+			if (value && typeof value === 'object' && value.constructor === Promise)
+			{
+				return value;
+			}
+
+			return new Promise(function(resolve) {
+				resolve(value);
+			});
+		};
+
+
+		/**
+		 * The method returns a Promise object that is rejected with the given reason.
+		 *
+		 * @param {*} reason - Reason why this Promise rejected.
+		 * @returns {Promise}
+		 */
+		Promise.reject = function(reason)
+		{
+			return new Promise(function(resolve, reject) {
+				reject(reason);
+			});
+		};
+
+
+		/**
+		 * The Promise.race(iterable) method returns a promise that resolves or rejects
+		 * as soon as one of the promises in the iterable resolves or rejects,
+		 * with the value or reason from that promise.
+		 *
+		 * @static
+		 * @param iterable - An iterable object, such as an Array.
+		 * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols
+		 * @returns {Promise}
+		 */
+		Promise.race = function(iterable)
+		{
+			return new Promise(function(resolve, reject) {
+				for (var i = 0, len = iterable.length; i < len; i++)
+				{
+					iterable[i].then(resolve, reject);
+				}
+			});
+		};
+
+		window.Promise = Promise;
+	}
+})(window);
+
+
+
+// file: /bitrix/js/ui/vue/components/crm/form/dist/crm.form.bundle.js
+this.BX = this.BX || {};
+this.BX.Ui = this.BX.Ui || {};
+this.BX.Ui.Vue = this.BX.Ui.Vue || {};
+this.BX.Ui.Vue.Components = this.BX.Ui.Vue.Components || {};
+(function (exports,ui_vue) {
+    'use strict';
+
+    var loadAppPromise = null;
+    ui_vue.WidgetVue.component('bx-crm-form', {
+      props: {
+        id: {
+          type: String,
+          required: true
+        },
+        sec: {
+          type: String,
+          required: true
+        },
+        lang: {
+          type: String,
+          required: true,
+          default: 'en'
+        },
+        address: {
+          type: String,
+          required: true,
+          default: function _default() {
+            return window.location.origin;
+          }
+        },
+        design: {
+          type: Object,
+          required: false,
+          default: function _default() {
+            return {
+              compact: true
+            };
+          }
+        }
+      },
+      data: function data() {
+        return {
+          message: '',
+          isLoading: false,
+          obj: {}
+        };
+      },
+      beforeDestroy: function beforeDestroy() {
+        if (this.obj.instance) {
+          this.obj.instance.destroy();
+        }
+      },
+      mounted: function mounted() {
+        var _this = this;
+
+        var loadForm = function loadForm() {
+          _this.isLoading = false;
+          _this.message = '';
+          _this.obj.config.data.node = _this.$el;
+          _this.obj.config.data.design = babelHelpers.objectSpread({}, _this.obj.config.data.design, _this.design);
+          _this.obj.instance = window.b24form.App.createForm24(_this.obj.config, _this.obj.config.data);
+
+          _this.obj.instance.subscribeAll(function (data, instance, type) {
+            data.form = instance;
+
+            _this.$emit('form:' + type, data);
+          });
+        };
+
+        this.isLoading = true;
+        var promise = null;
+
+        if (window.fetch) {
+          var formData = new FormData();
+          formData.append('id', this.id);
+          formData.append('sec', this.sec);
+          promise = fetch(this.address + "/bitrix/services/main/ajax.php?action=crm.site.form.get", {
+            method: 'POST',
+            body: formData,
+            mode: "cors"
+          });
+        } else {
+          this.message = 'error';
+          return;
+        }
+
+        promise.then(function (response) {
+          return response.json();
+        }).then(function (data) {
+          if (data.error) {
+            throw new Error(data.error_description);
+          }
+
+          _this.obj.config = data.result.config;
+
+          if (window.b24form && window.b24form.App) {
+            loadForm();
+            return;
+          }
+
+          if (!loadAppPromise) {
+            loadAppPromise = new Promise(function (resolve, reject) {
+              var checker = function checker() {
+                if (!window.b24form || !window.b24form || !window.b24form.App) {
+                  setTimeout(checker, 200);
+                } else {
+                  resolve();
+                }
+              };
+
+              var node = document.createElement('script');
+              node.src = data.result.loader.app.link;
+              node.onload = checker;
+              node.onerror = reject;
+              document.head.appendChild(node);
+            });
+          }
+
+          loadAppPromise.then(loadForm).catch(function (e) {
+            _this.message = 'App load failed:' + e;
+          });
+        }).catch(function (error) {
+          _this.isLoading = false;
+          _this.message = error;
+        });
+      },
+      template: "\n\t\t<div>\n\t\t\t<div v-if=\"isLoading\" class=\"ui-vue-crm-form-loading-container\"></div>\n\t\t\t<div v-else-if=\"message\">{{ message }}</div>\n\t\t</div>\n\t"
+    });
+
+}((this.BX.Ui.Vue.Components.Crm = this.BX.Ui.Vue.Components.Crm || {}),BX));
+ 
+
+
+
+
 // file: /bitrix/js/im/provider/pull/dist/registry.bundle.js
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
-(function (exports,ui_vue_vuex,im_lib_logger,main_core_events,im_const,im_lib_utils,pull_client) {
+(function (exports,ui_vue_vuex,im_const,im_lib_logger,main_core_events,pull_client) {
 	'use strict';
 
 	/**
@@ -67379,18 +68038,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "handleMessageChat",
 	    value: function handleMessageChat(params) {
-	      var rightPanelMode = this.store.state.conference.common.rightPanelMode;
-
-	      if (params.chatId === this.application.getChatId() && rightPanelMode !== im_const.ConferenceRightPanelMode.chat && rightPanelMode !== im_const.ConferenceRightPanelMode.split && params.message.senderId !== this.controller.getUserId() && !this.store.state.conference.common.error) {
-	        var text = im_lib_utils.Utils.text.purify(params.message.textOriginal, params.message.params, params.files);
-
-	        if (params.message.senderId !== 0 && params.message.system !== 'Y') {
-	          var userName = params.users[params.message.senderId].name;
-	          text = "".concat(userName, ": ").concat(text);
-	        }
-
-	        this.application.sendNewMessageNotify(text);
-	      }
+	      this.application.sendNewMessageNotify(params);
 	    }
 	  }, {
 	    key: "handleChatRename",
@@ -67673,7 +68321,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	exports.ImCallPullHandler = ImCallPullHandler;
 	exports.ImNotificationsPullHandler = ImNotificationsPullHandler;
 
-}((this.BX.Messenger.Provider.Pull = this.BX.Messenger.Provider.Pull || {}),BX,BX.Messenger.Lib,BX.Event,BX.Messenger.Const,BX.Messenger.Lib,BX));
+}((this.BX.Messenger.Provider.Pull = this.BX.Messenger.Provider.Pull || {}),BX,BX.Messenger.Const,BX.Messenger.Lib,BX.Event,BX));
  
 
 
@@ -68983,7 +69631,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 
 // file: /bitrix/js/imopenlines/component/widget/dist/widget.bundle.js
-(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_uploader,im_lib_logger,im_mixin,main_md5,main_core_events,im_const,main_core_minimal,ui_icons,ui_forms,ui_vue_vuex,im_lib_utils,ui_vue) {
+(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,ui_vue_components_crm_form,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_uploader,im_lib_utils,im_lib_logger,im_mixin,main_md5,main_core_events,im_const,main_core_minimal,ui_vue_vuex,ui_vue) {
 	'use strict';
 
 	/**
@@ -69065,7 +69713,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  widgetUserGet: 'imopenlines.widget.user.get',
 	  widgetUserConsentApply: 'imopenlines.widget.user.consent.apply',
 	  widgetVoteSend: 'imopenlines.widget.vote.send',
-	  widgetFormSend: 'imopenlines.widget.form.send',
 	  widgetActionSend: 'imopenlines.widget.action.send',
 	  pullServerTime: 'server.time',
 	  pullConfigGet: 'pull.config.get'
@@ -69159,7 +69806,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          consentUrl: '',
 	          dialogStart: false,
 	          watchTyping: false,
-	          showSessionId: false
+	          showSessionId: false,
+	          crmFormsSettings: {
+	            useWelcomeForm: false,
+	            welcomeFormId: 0,
+	            welcomeFormSec: '',
+	            welcomeFormDelay: false,
+	            welcomeFormFilled: false,
+	            successText: '',
+	            errorText: ''
+	          }
 	        },
 	        dialog: {
 	          sessionId: 0,
@@ -69340,6 +69996,32 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              state.common.widgetHeight = 0;
 	              state.common.widgetWidth = 0;
 	              state.common.location = payload.location;
+	            }
+	          }
+
+	          if (im_lib_utils.Utils.types.isPlainObject(payload.crmFormsSettings)) {
+	            if (typeof payload.crmFormsSettings.useWelcomeForm === 'string') {
+	              state.common.crmFormsSettings.useWelcomeForm = payload.crmFormsSettings.useWelcomeForm === 'Y';
+	            }
+
+	            if (typeof payload.crmFormsSettings.welcomeFormId === 'string') {
+	              state.common.crmFormsSettings.welcomeFormId = payload.crmFormsSettings.welcomeFormId;
+	            }
+
+	            if (typeof payload.crmFormsSettings.welcomeFormSec === 'string') {
+	              state.common.crmFormsSettings.welcomeFormSec = payload.crmFormsSettings.welcomeFormSec;
+	            }
+
+	            if (typeof payload.crmFormsSettings.welcomeFormDelay === 'string') {
+	              state.common.crmFormsSettings.welcomeFormDelay = payload.crmFormsSettings.welcomeFormDelay === 'Y';
+	            }
+
+	            if (typeof payload.crmFormsSettings.successText === 'string' && payload.crmFormsSettings.successText !== '') {
+	              state.common.crmFormsSettings.successText = payload.crmFormsSettings.successText;
+	            }
+
+	            if (typeof payload.crmFormsSettings.errorText === 'string' && payload.crmFormsSettings.errorText !== '') {
+	              state.common.crmFormsSettings.errorText = payload.crmFormsSettings.errorText;
 	            }
 	          }
 
@@ -69728,7 +70410,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        consentUrl: data.consentUrl,
 	        connectors: data.connectors || [],
 	        watchTyping: data.watchTyping,
-	        showSessionId: data.showSessionId
+	        showSessionId: data.showSessionId,
+	        crmFormsSettings: data.crmFormsSettings
 	      });
 	      this.store.commit('application/set', {
 	        disk: data.disk
@@ -71389,51 +72072,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	    }
 	  }, {
-	    key: "sendForm",
-	    value: function sendForm(type, fields) {
-	      var _query3,
-	          _this18 = this;
-
-	      im_lib_logger.Logger.info('LiveChatWidgetPrivate.sendForm:', type, fields);
-	      var query = (_query3 = {}, babelHelpers.defineProperty(_query3, RestMethod.widgetFormSend, [RestMethod.widgetFormSend, {
-	        'CHAT_ID': this.getChatId(),
-	        'FORM': type.toUpperCase(),
-	        'FIELDS': fields
-	      }]), babelHelpers.defineProperty(_query3, RestMethod.widgetUserGet, [RestMethod.widgetUserGet, {}]), _query3);
-	      this.controller.restClient.callBatch(query, function (response) {
-	        if (!response) {
-	          _this18.requestDataSend = false;
-
-	          _this18.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
-
-	          return false;
-	        }
-
-	        var userGetResult = response[RestMethod.widgetUserGet];
-
-	        if (userGetResult.error()) {
-	          _this18.requestDataSend = false;
-
-	          _this18.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
-
-	          return false;
-	        }
-
-	        _this18.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
-
-	        _this18.sendEvent({
-	          type: SubscriptionType.userForm,
-	          data: {
-	            form: type,
-	            fields: fields
-	          }
-	        });
-	      }, false, false, im_lib_utils.Utils.getLogTrackingParams({
-	        name: RestMethod.widgetUserGet,
-	        dialog: this.getDialogData()
-	      }));
-	    }
-	  }, {
 	    key: "getHtmlHistory",
 	    value: function getHtmlHistory() {
 	      var chatId = this.getChatId();
@@ -72210,7 +72848,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      textareaHeight: 100,
 	      textareaMinimumHeight: 100,
 	      textareaMaximumHeight: im_lib_utils.Utils.device.isMobile() ? 200 : 300,
-	      zIndexStackInstance: null
+	      zIndexStackInstance: null,
+	      welcomeFormFilled: false
 	    };
 	  },
 	  created: function created() {
@@ -72225,6 +72864,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    main_core_events.EventEmitter.subscribe(EventType.requestShowForm, this.onRequestShowForm);
 	  },
 	  mounted: function mounted() {
+	    if (this.widget.user.id > 0) {
+	      this.welcomeFormFilled = true;
+	    }
+
 	    this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
 
 	    if (this.zIndexStackInstance && !!this.$refs.widgetWrapper) {
@@ -72258,7 +72901,25 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    EventType: function EventType$$1() {
 	      return im_const.EventType;
 	    },
-	    textareaHeightStyle: function textareaHeightStyle(state) {
+	    showTextarea: function showTextarea() {
+	      var crmFormsSettings = this.widget.common.crmFormsSettings; // show if we dont use welcome form
+
+	      if (!crmFormsSettings.useWelcomeForm || !crmFormsSettings.welcomeFormId) {
+	        return true;
+	      } else {
+	        // show if we use welcome form with delay
+	        if (crmFormsSettings.welcomeFormDelay) {
+	          return true;
+	        } else {
+	          return this.welcomeFormFilled;
+	        }
+	      }
+	    },
+	    showWelcomeForm: function showWelcomeForm() {
+	      //we are using welcome form, it has delay and it was not already filled
+	      return this.widget.common.crmFormsSettings.useWelcomeForm && !this.widget.common.crmFormsSettings.welcomeFormDelay && this.widget.common.crmFormsSettings.welcomeFormId && !this.welcomeFormFilled;
+	    },
+	    textareaHeightStyle: function textareaHeightStyle() {
 	      return {
 	        flex: '0 0 ' + this.textareaHeight + 'px'
 	      };
@@ -72488,27 +73149,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        showForm: FormType.like
 	      });
 	    },
-	    showWelcomeForm: function showWelcomeForm() {
-	      clearTimeout(this.showFormTimeout);
-	      this.$store.commit('widget/common', {
-	        showForm: FormType.welcome
-	      });
-	    },
-	    showOfflineForm: function showOfflineForm() {
-	      clearTimeout(this.showFormTimeout);
-
-	      if (this.widget.dialog.showForm !== FormType.welcome) {
-	        this.$store.commit('widget/common', {
-	          showForm: FormType.offline
-	        });
-	      }
-	    },
-	    showHistoryForm: function showHistoryForm() {
-	      clearTimeout(this.showFormTimeout);
-	      this.$store.commit('widget/common', {
-	        showForm: FormType.history
-	      });
-	    },
 	    onOpenMenu: function onOpenMenu(event) {
 	      this.getApplication().getHtmlHistory();
 	    },
@@ -72680,23 +73320,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var event = _ref2.data;
 	      clearTimeout(this.showFormTimeout);
 
-	      if (event.type === FormType.welcome) {
-	        if (event.delayed) {
-	          this.showFormTimeout = setTimeout(function () {
-	            _this2.showWelcomeForm();
-	          }, 5000);
-	        } else {
-	          this.showWelcomeForm();
-	        }
-	      } else if (event.type === FormType.offline) {
-	        if (event.delayed) {
-	          this.showFormTimeout = setTimeout(function () {
-	            _this2.showOfflineForm();
-	          }, 3000);
-	        } else {
-	          this.showOfflineForm();
-	        }
-	      } else if (event.type === FormType.like) {
+	      if (event.type === FormType.like) {
 	        if (event.delayed) {
 	          this.showFormTimeout = setTimeout(function () {
 	            _this2.showLikeForm();
@@ -73020,10 +73644,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.onWindowScrollTimeout = setTimeout(function () {
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setBlur, true);
 	      }, 50);
+	    },
+	    onWelcomeFormSendSuccess: function onWelcomeFormSendSuccess() {
+	      this.welcomeFormFilled = true;
+	    },
+	    onWelcomeFormSendError: function onWelcomeFormSendError(error) {
+	      console.error('onWelcomeFormSendError', error);
+	      this.welcomeFormFilled = true;
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @openMenu=\"onOpenMenu\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\t\t\t\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<template v-if=\"!widget.common.dialogStart\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"welcome-body\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\" \n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\t \n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\t\n\t\t\t\t\t\t<div class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\t\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
+	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @openMenu=\"onOpenMenu\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div v-show=\"!widget.common.dialogStart\" class=\"bx-livechat-body\" :class=\"{'bx-livechat-body-with-scroll': showWelcomeForm}\" key=\"welcome-body\">\n\t\t\t\t\t\t\t<bx-imopenlines-form\n\t\t\t\t\t\t\t  v-show=\"showWelcomeForm\"\n\t\t\t\t\t\t\t  @formSendSuccess=\"onWelcomeFormSendSuccess\"\n\t\t\t\t\t\t\t  @formSendError=\"onWelcomeFormSendError\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<template v-if=\"!showWelcomeForm\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<template v-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<div v-if=\"showTextarea\" class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	});
 
 	/**
@@ -73288,138 +73919,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	/**
 	 * Bitrix OpenLines widget
-	 * Form history component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
-	ui_vue.WidgetBitrixVue.component('bx-livechat-form-history', {
-	  data: function data() {
-	    return {
-	      fieldEmail: ''
-	    };
-	  },
-	  watch: {
-	    fieldEmail: function fieldEmail(value) {
-	      clearTimeout(this.fieldEmailTimeout);
-	      this.fieldEmailTimeout = setTimeout(this.checkEmailField, 300);
-	    }
-	  },
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.WidgetVuex.mapState({
-	    widget: function widget(state) {
-	      return state.widget;
-	    }
-	  })),
-	  created: function created() {
-	    this.fieldEmail = '' + this.widget.user.email;
-	  },
-	  methods: {
-	    formShowed: function formShowed() {
-	      if (!im_lib_utils.Utils.platform.isMobile()) {
-	        this.$refs.emailInput.focus();
-	      }
-	    },
-	    sendForm: function sendForm() {
-	      var email = this.checkEmailField() ? this.fieldEmail : '';
-
-	      if (email) {
-	        this.$Bitrix.Application.get().sendForm(FormType.history, {
-	          email: email
-	        });
-	      }
-
-	      this.hideForm();
-	    },
-	    hideForm: function hideForm(event) {
-	      clearTimeout(this.fieldEmailTimeout);
-	      this.$parent.hideForm();
-	    },
-	    onFieldEnterPress: function onFieldEnterPress(event) {
-	      this.sendForm();
-	      event.preventDefault();
-	    },
-	    checkEmailField: function checkEmailField() {
-	      if (this.fieldEmail.match(/^(.*)@(.*)\.[a-zA-Z]{2,}$/)) {
-	        if (this.$refs.email) {
-	          this.$refs.email.classList.remove('ui-ctl-danger');
-	        }
-
-	        return true;
-	      } else {
-	        if (document.activeElement !== this.$refs.emailInput) {
-	          if (this.$refs.email) {
-	            this.$refs.email.classList.add('ui-ctl-danger');
-	          }
-	        }
-
-	        return false;
-	      }
-	    }
-	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\" @after-enter=\"formShowed\">\n\t\t\t<div v-if=\"false\" class=\"bx-livechat-alert-box bx-livechat-form-show\" key=\"welcome\">\t\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-form-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-sm\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_MAIL_TITLE_NEW')}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"email\">\n\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-mail bx-livechat-form-icon\" :title=\"$Bitrix.Loc.getMessage('BX_LIVECHAT_FIELD_MAIL_TOOLTIP')\"></div>\n\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"$Bitrix.Loc.getMessage('BX_LIVECHAT_FIELD_MAIL')\" v-model=\"fieldEmail\" ref=\"emailInput\" @blur=\"checkEmailField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" @click=\"sendForm\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_MAIL_BUTTON_NEW')}}</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\n\t\t</transition>\t\n\t"
-	});
-
-	/**
-	 * Bitrix OpenLines widget
-	 * Form offline component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
-	ui_vue.WidgetVue.cloneComponent('bx-livechat-form-offline', 'bx-livechat-form-welcome', {
-	  methods: {
-	    formShowed: function formShowed() {
-	      if (!im_lib_utils.Utils.platform.isMobile()) {
-	        this.$refs.emailInput.focus();
-	      }
-	    },
-	    sendForm: function sendForm() {
-	      var name = this.fieldName;
-	      var email = this.checkEmailField() ? this.fieldEmail : '';
-	      var phone = this.checkPhoneField() ? this.fieldPhone : '';
-
-	      if (name || email || phone) {
-	        this.$Bitrix.Application.get().sendForm(FormType.offline, {
-	          name: name,
-	          email: email,
-	          phone: phone
-	        });
-	      }
-
-	      this.hideForm();
-	    },
-	    onFieldEnterPress: function onFieldEnterPress(event) {
-	      if (event.target === this.$refs.emailInput) {
-	        this.showFullForm();
-	        this.$refs.phoneInput.focus();
-	      } else if (event.target === this.$refs.phoneInput) {
-	        this.$refs.nameInput.focus();
-	      } else {
-	        this.sendForm();
-	      }
-
-	      event.preventDefault();
-	    }
-	  },
-	  watch: {
-	    fieldName: function fieldName() {
-	      clearTimeout(this.fieldNameTimeout);
-	      this.fieldNameTimeout = setTimeout(this.checkNameField, 300);
-	    },
-	    fieldEmail: function fieldEmail() {
-	      clearTimeout(this.showFormTimeout);
-	      this.showFormTimeout = setTimeout(this.showFullForm, 1000);
-	      clearTimeout(this.fieldEmailTimeout);
-	      this.fieldEmailTimeout = setTimeout(this.checkEmailField, 300);
-	    }
-	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\" @after-enter=\"formShowed\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-show\" key=\"welcome\">\t\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-form-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-sm\">{{localize.BX_LIVECHAT_OFFLINE_TITLE}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"email\">\n\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-mail bx-livechat-form-icon\" :title=\"localize.BX_LIVECHAT_FIELD_MAIL_TOOLTIP\"></div>\n\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_MAIL\" v-model=\"fieldEmail\" ref=\"emailInput\" @blur=\"checkEmailField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div :class=\"['bx-livechat-form-short', {\n\t\t\t\t\t\t'bx-livechat-form-full': isFullForm,\n\t\t\t\t\t}]\">\n\t\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"phone\">\n\t\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-phone bx-livechat-form-icon\" :title=\"localize.BX_LIVECHAT_FIELD_PHONE_TOOLTIP\"></div>\n\t\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_PHONE\" v-model=\"fieldPhone\" ref=\"phoneInput\" @blur=\"checkPhoneField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-w100 ui-ctl-lg\" ref=\"name\">\n\t\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_NAME\" v-model=\"fieldName\" ref=\"nameInput\" @blur=\"checkNameField\" @keydown.enter=\"onFieldEnterPress\"  @keydown.tab=\"onFieldEnterPress\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" @click=\"sendForm\">{{localize.BX_LIVECHAT_ABOUT_SEND}}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\n\t\t</transition>\t\n\t"
-	});
-
-	/**
-	 * Bitrix OpenLines widget
 	 * Form vote component (Vue component)
 	 *
 	 * @package bitrix
@@ -73451,152 +73950,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    }
 	  },
 	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-rate-show\" key=\"vote\">\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-rate-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-mdl\">{{widget.common.vote.messageText}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-like\" @click=\"userVote(VoteType.like)\" :title=\"widget.common.vote.messageLike\"></button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-dislike\" @click=\"userVote(VoteType.dislike)\" :title=\"widget.common.vote.messageDislike\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\t\n\t"
-	});
-
-	/**
-	 * Bitrix OpenLines widget
-	 * Form welcome component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
-	ui_vue.WidgetBitrixVue.component('bx-livechat-form-welcome', {
-	  data: function data() {
-	    return {
-	      fieldName: '',
-	      fieldEmail: '',
-	      fieldPhone: '',
-	      isFullForm: im_lib_utils.Utils.platform.isMobile()
-	    };
-	  },
-	  watch: {
-	    fieldName: function fieldName() {
-	      clearTimeout(this.showFormTimeout);
-	      this.showFormTimeout = setTimeout(this.showFullForm, 1000);
-	      clearTimeout(this.fieldNameTimeout);
-	      this.fieldNameTimeout = setTimeout(this.checkNameField, 300);
-	    },
-	    fieldEmail: function fieldEmail(value) {
-	      clearTimeout(this.fieldEmailTimeout);
-	      this.fieldEmailTimeout = setTimeout(this.checkEmailField, 300);
-	    },
-	    fieldPhone: function fieldPhone(value) {
-	      clearTimeout(this.fieldPhoneTimeout);
-	      this.fieldPhoneTimeout = setTimeout(this.checkPhoneField, 300);
-	    }
-	  },
-	  computed: babelHelpers.objectSpread({
-	    localize: function localize() {
-	      return ui_vue.WidgetBitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
-	    }
-	  }, ui_vue_vuex.WidgetVuex.mapState({
-	    widget: function widget(state) {
-	      return state.widget;
-	    }
-	  })),
-	  created: function created() {
-	    this.fieldName = '' + this.widget.user.name;
-	    this.fieldEmail = '' + this.widget.user.email;
-	    this.fieldPhone = '' + this.widget.user.phone;
-	  },
-	  methods: {
-	    formShowed: function formShowed() {
-	      if (!im_lib_utils.Utils.platform.isMobile()) {
-	        this.$refs.nameInput.focus();
-	      }
-	    },
-	    showFullForm: function showFullForm() {
-	      clearTimeout(this.showFormTimeout);
-	      this.isFullForm = true;
-	    },
-	    sendForm: function sendForm() {
-	      var name = this.fieldName;
-	      var email = this.checkEmailField() ? this.fieldEmail : '';
-	      var phone = this.checkPhoneField() ? this.fieldPhone : '';
-
-	      if (name || email || phone) {
-	        this.$Bitrix.Application.get().sendForm(FormType.welcome, {
-	          name: name,
-	          email: email,
-	          phone: phone
-	        });
-	      }
-
-	      this.hideForm();
-	    },
-	    hideForm: function hideForm(event) {
-	      clearTimeout(this.showFormTimeout);
-	      clearTimeout(this.fieldNameTimeout);
-	      clearTimeout(this.fieldEmailTimeout);
-	      clearTimeout(this.fieldPhoneTimeout);
-	      this.$parent.hideForm();
-	    },
-	    onFieldEnterPress: function onFieldEnterPress(event) {
-	      if (event.target === this.$refs.nameInput) {
-	        this.showFullForm();
-	        this.$refs.emailInput.focus();
-	      } else if (event.target === this.$refs.emailInput) {
-	        this.$refs.phoneInput.focus();
-	      } else {
-	        this.sendForm();
-	      }
-
-	      event.preventDefault();
-	    },
-	    checkNameField: function checkNameField() {
-	      if (this.fieldName.length > 0) {
-	        if (this.$refs.name) {
-	          this.$refs.name.classList.remove('ui-ctl-danger');
-	        }
-
-	        return true;
-	      } else {
-	        if (document.activeElement !== this.$refs.nameInput) {
-	          if (this.$refs.name) {
-	            this.$refs.name.classList.add('ui-ctl-danger');
-	          }
-	        }
-
-	        return false;
-	      }
-	    },
-	    checkEmailField: function checkEmailField() {
-	      if (this.fieldEmail.match(/^(.*)@(.*)\.[a-zA-Z]{2,}$/)) {
-	        if (this.$refs.email) {
-	          this.$refs.email.classList.remove('ui-ctl-danger');
-	        }
-
-	        return true;
-	      } else {
-	        if (document.activeElement !== this.$refs.emailInput) {
-	          if (this.$refs.email) {
-	            this.$refs.email.classList.add('ui-ctl-danger');
-	          }
-	        }
-
-	        return false;
-	      }
-	    },
-	    checkPhoneField: function checkPhoneField() {
-	      if (this.fieldPhone.match(/^(\s*)?(\+)?([- _():=+]?\d[- _():=+]?){10,14}(\s*)?$/)) {
-	        if (this.$refs.phone) {
-	          this.$refs.phone.classList.remove('ui-ctl-danger');
-	        }
-
-	        return true;
-	      } else {
-	        if (document.activeElement !== this.$refs.phoneInput) {
-	          if (this.$refs.phone) {
-	            this.$refs.phone.classList.add('ui-ctl-danger');
-	          }
-	        }
-
-	        return false;
-	      }
-	    }
-	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\" @after-enter=\"formShowed\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-show\" key=\"welcome\">\t\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-form-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-sm\">{{localize.BX_LIVECHAT_ABOUT_TITLE}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-w100 ui-ctl-lg\" ref=\"name\">\n\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_NAME\" v-model=\"fieldName\" ref=\"nameInput\" @blur=\"checkNameField\" @keydown.enter=\"onFieldEnterPress\"  @keydown.tab=\"onFieldEnterPress\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div :class=\"['bx-livechat-form-short', {\n\t\t\t\t\t\t'bx-livechat-form-full': isFullForm,\n\t\t\t\t\t}]\">\n\t\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"email\">\n\t\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-mail bx-livechat-form-icon\" :title=\"localize.BX_LIVECHAT_FIELD_MAIL_TOOLTIP\"></div>\n\t\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_MAIL\" v-model=\"fieldEmail\" ref=\"emailInput\" @blur=\"checkEmailField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"phone\">\n\t\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-phone bx-livechat-form-icon\" :title=\"localize.BX_LIVECHAT_FIELD_PHONE_TOOLTIP\"></div>\n\t\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_PHONE\" v-model=\"fieldPhone\" ref=\"phoneInput\" @blur=\"checkPhoneField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" @click=\"sendForm\">{{localize.BX_LIVECHAT_ABOUT_SEND}}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\n\t\t</transition>\t\n\t"
 	});
 
 	/**
@@ -73633,7 +73986,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  detail: {}
 	}));
 
-}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Mixin,BX,BX.Event,BX.Messenger.Const,BX,BX,BX,BX,BX.Messenger.Lib,BX));
+}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Ui.Vue.Components.Crm,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Mixin,BX,BX.Event,BX.Messenger.Const,BX,BX,BX));
  
 
 

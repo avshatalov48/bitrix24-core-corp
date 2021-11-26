@@ -179,7 +179,15 @@ class Cleaner
 					break;
 				}
 
-				$cleaner->setIterationCount($indicator->countEntity());
+				$countLeft = $cleaner->getCountToDrop($subTask) - $cleaner->getDroppedCount($subTask) - $cleaner->getFailCount();
+				if ($countLeft <= $indicator::MAX_ENTITY_PER_INTERACTION)
+				{
+					$cleaner->setIterationCount($indicator->countEntity());
+				}
+				else
+				{
+					$cleaner->setIterationCount($indicator::MAX_ENTITY_PER_INTERACTION);
+				}
 
 				if ($indicator->clearEntity())
 				{
@@ -224,7 +232,15 @@ class Cleaner
 					break;
 				}
 
-				$cleaner->setIterationCount($indicator->countEntityWithFile());
+				$countLeft = $cleaner->getCountToDrop($subTask) - $cleaner->getDroppedCount($subTask) - $cleaner->getFailCount();
+				if ($countLeft <= $indicator::MAX_FILE_PER_INTERACTION)
+				{
+					$cleaner->setIterationCount($indicator->countEntityWithFile());
+				}
+				else
+				{
+					$cleaner->setIterationCount($indicator::MAX_FILE_PER_INTERACTION);
+				}
 
 				if ($indicator->clearFiles())
 				{
@@ -269,7 +285,15 @@ class Cleaner
 					break;
 				}
 
-				$cleaner->setIterationCount($indicator->countEvent());
+				$countLeft = $cleaner->getCountToDrop($subTask) - $cleaner->getDroppedCount($subTask) - $cleaner->getFailCount();
+				if ($countLeft <= $indicator::MAX_ENTITY_PER_INTERACTION)
+				{
+					$cleaner->setIterationCount($indicator->countEvent());
+				}
+				else
+				{
+					$cleaner->setIterationCount($indicator::MAX_ENTITY_PER_INTERACTION);
+				}
 
 				if ($indicator->clearEvent())
 				{
@@ -314,7 +338,15 @@ class Cleaner
 					break;
 				}
 
-				$cleaner->setIterationCount($indicator->countActivity());
+				$countLeft = $cleaner->getCountToDrop($subTask) - $cleaner->getDroppedCount($subTask) - $cleaner->getFailCount();
+				if ($countLeft <= $indicator::MAX_ENTITY_PER_INTERACTION)
+				{
+					$cleaner->setIterationCount($indicator->countActivity());
+				}
+				else
+				{
+					$cleaner->setIterationCount($indicator::MAX_ENTITY_PER_INTERACTION);
+				}
 
 				if ($indicator->clearActivity())
 				{

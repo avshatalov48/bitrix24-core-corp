@@ -92,11 +92,12 @@ class CrmAutomationComponent extends \CBitrixComponent implements Main\Engine\Co
 		$this->includeComponentTemplate();
 	}
 
-	public function generateWebhookPasswordAction()
+	public function generateWebhookPasswordAction($entityTypeId, $entityCategoryId)
 	{
 		if (
 			!Main\Loader::includeModule('crm')
 			|| !Main\Loader::includeModule('rest')
+			|| !Main\Loader::includeModule('bizproc')
 			|| !WebHookTrigger::isEnabled()
 			|| !Rest\Engine\Access::isAvailableCount(Rest\Engine\Access::ENTITY_TYPE_WEBHOOK)
 		)
@@ -105,6 +106,20 @@ class CrmAutomationComponent extends \CBitrixComponent implements Main\Engine\Co
 		}
 
 		$userId = Main\Engine\CurrentUser::get()->getId();
+
+		$documentType = \CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+		$canCreate = CBPDocument::CanUserOperateDocumentType(
+			CBPCanUserOperateOperation::CreateAutomation,
+			$userId,
+			$documentType,
+			['DocumentCategoryId' => $entityCategoryId]
+		);
+
+		if (!$canCreate)
+		{
+			return ['error' => Loc::getMessage('CRM_AUTOMATION_NOT_AVAILABLE')];
+		}
+
 		$pwd = WebHookTrigger::touchPassword($userId);
 
 		if (!$pwd)

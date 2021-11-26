@@ -498,7 +498,13 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 								BX.ajax.runComponentAction(
 									'bitrix:crm.automation',
 									'generateWebhookPassword',
-									{mode: 'class'}
+									{
+										mode: 'class',
+										data: {
+											entityTypeId: <?= (int)$arResult['ENTITY_TYPE_ID'] ?>,
+											entityCategoryId: <?= (int)$arResult['ENTITY_CATEGORY_ID'] ?>
+										}
+									}
 								).then(
 									function(response)
 									{

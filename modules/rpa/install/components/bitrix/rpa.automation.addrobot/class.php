@@ -1,19 +1,23 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-if(!\Bitrix\Main\Loader::includeModule('rpa'))
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+if (!\Bitrix\Main\Loader::includeModule('rpa'))
 {
 	return;
 }
 
-use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Rpa;
 
 class RpaAutomationAddRobotComponent extends Rpa\Components\Base
 {
 	public function onPrepareComponentParams($arParams)
 	{
-		$arParams["typeId"] = (int) $arParams["typeId"];
+		$arParams["typeId"] = (int)$arParams["typeId"];
 		static::fillParameterFromRequest('stage', $arParams);
 		$arParams["SET_TITLE"] = ($arParams["SET_TITLE"] === "N" ? "N" : "Y");
 
@@ -31,6 +35,11 @@ class RpaAutomationAddRobotComponent extends Rpa\Components\Base
 			$this->arParams['typeId']
 		);
 
+		if (!$this->checkPermissions($this->arResult['DOCUMENT_TYPE']))
+		{
+			return $this->showError(Loc::getMessage('RPA_MODIFY_TYPE_ACCESS_DENIED'));
+		}
+
 		$this->arResult['ROBOTS'] = \CBPRuntime::getRuntime()
 			->searchActivitiesByType('rpa_activity', $this->arResult['DOCUMENT_TYPE']);
 
@@ -40,5 +49,31 @@ class RpaAutomationAddRobotComponent extends Rpa\Components\Base
 		}
 
 		$this->includeComponentTemplate();
+	}
+
+	protected function checkPermissions(array $documentType)
+	{
+		$tplUser = new \CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+
+		return (
+			$tplUser->isAdmin()
+			||
+			CBPDocument::CanUserOperateDocumentType(
+				\CBPCanUserOperateOperation::CreateAutomation,
+				$tplUser->getId(),
+				$documentType
+			)
+		);
+	}
+
+	private function showError($message)
+	{
+		echo <<<HTML
+			<div class="ui-alert ui-alert-danger ui-alert-icon-danger">
+				<span class="ui-alert-message">{$message}</span>
+			</div>
+HTML;
+
+		return;
 	}
 }

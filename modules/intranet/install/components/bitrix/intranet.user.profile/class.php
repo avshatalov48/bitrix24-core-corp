@@ -111,6 +111,7 @@ class CIntranetUserProfileComponent extends UserProfile
 		$this->arResult["IsOwnProfile"] = $USER->GetID() === $this->arParams["ID"];
 		$this->arResult["StressLevel"] = $this->getStressLevelInstance()->getStub();
 
+		$this->filterHiddenFields();
 		$this->checkNumAdminRestrictions();
 
 		if (Loader::includeModule("security") && \Bitrix\Security\Mfa\Otp::isOtpEnabled())
@@ -145,5 +146,46 @@ class CIntranetUserProfileComponent extends UserProfile
 		$APPLICATION->SetTitle($title);
 
 		$this->includeComponentTemplate();
+	}
+
+	private function filterHiddenFields()
+	{
+		if ($this->arResult["Permissions"]['edit'])
+		{
+			return;
+		}
+
+		if (empty($this->arResult['SettingsFieldsView']))
+		{
+			return;
+		}
+
+		if (empty($this->arResult['SettingsFieldsAll']))
+		{
+			return;
+		}
+
+		$filterFields = array_diff(
+			array_column($this->arResult['SettingsFieldsAll'], 'VALUE'),
+			array_column($this->arResult['SettingsFieldsView'], 'VALUE')
+		);
+		$user = $this->arResult["User"];
+		foreach ($user as $key => $value)
+		{
+			if (in_array($key, $filterFields))
+			{
+				if (is_array($value) && !is_array_assoc($value))
+				{
+					$value = [];
+				}
+				else
+				{
+					$value = '';
+				}
+
+				$user[$key] = $value;
+			}
+		}
+		$this->arResult["User"] = $user;
 	}
 }

@@ -344,6 +344,62 @@ class Order extends ProductsDataProvider
 		return $this->taxes;
 	}
 
+	protected function loadVatTaxesInfo()
+	{
+		$taxes = parent::loadVatTaxesInfo();
+		$taxInfos = \CCrmTax::GetVatRateInfos();
+
+		$order = $this->getOrder();
+		if (!$order || empty($taxInfos))
+		{
+			return $taxes;
+		}
+		$taxNames = [];
+		foreach($taxInfos as $taxInfo)
+		{
+			$taxNames[$taxInfo['VALUE']] = $taxInfo['NAME'];
+		}
+		$currencyID = $this->getCurrencyId();
+		foreach ($order->getShipmentCollection() as $shipment)
+		{
+			/** @var \Bitrix\Crm\Order\Shipment $shipment */
+			$vatSum = $shipment->getVatSum();
+			if ($vatSum <= 0)
+			{
+				continue;
+			}
+			$vatRate = $shipment->getVatRate() * 100;
+			if (!isset($taxNames[$vatRate]))
+			{
+				continue;
+			}
+			if (!isset($taxes[$vatRate]))
+			{
+				$taxes[$vatRate] = [
+					'NAME' => $taxNames[$vatRate],
+					'VALUE' => new Money(0, ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]),
+					'NETTO' => new Money(0, ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]),
+					'BRUTTO' => new Money(0, ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]),
+					'RATE' => $vatRate,
+					'TAX_INCLUDED' => 'Y',
+					'MODE' => Tax::MODE_VAT,
+				];
+			}
+
+			$value = $taxes[$vatRate]['VALUE']->getValue();
+			$value += $vatSum;
+			$taxes[$vatRate]['VALUE'] = new Money($value, ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]);
+			$netto = $taxes[$vatRate]['NETTO']->getValue();
+			$netto += ($shipment->getPrice() - $value);
+			$taxes[$vatRate]['NETTO'] = new Money($netto, ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]);
+			$brutto = $taxes[$vatRate]['BRUTTO']->getValue();
+			$brutto += $shipment->getPrice();
+			$taxes[$vatRate]['BRUTTO'] = new Money($brutto, ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]);
+		}
+
+		return $taxes;
+	}
+
 	/**
 	 * @return null|string
 	 * @throws \Bitrix\Main\ArgumentNullException

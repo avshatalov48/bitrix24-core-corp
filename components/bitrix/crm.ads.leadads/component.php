@@ -1,14 +1,28 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+use Bitrix\Main\Loader;
 use Bitrix\Crm\WebForm\Form;
 use Bitrix\Crm\Ads\AdsForm;
 
-if (!CModule::IncludeModule('crm'))
+if (!Loader::includeModule("crm"))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
+
+if (!Loader::includeModule("seo"))
+{
+	ShowError("module SEO is not installed.");
+
+	return;
+}
+
 
 $adsType = $arParams['PROVIDER_TYPE'];
 $providers = \Bitrix\Crm\Ads\AdsForm::getProviders([$adsType]);

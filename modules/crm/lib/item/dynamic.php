@@ -6,7 +6,6 @@ use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\EntityContactTable;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\DI\ServiceLocator;
 
 class Dynamic extends Item
 {
@@ -42,5 +41,15 @@ class Dynamic extends Item
 			$dataClass = $factory->getDataClass();
 			$dataClass::disableUserFieldsCheck();
 		}
+	}
+
+	protected function getExternalizableFieldNames(): array
+	{
+		return array_merge(
+			parent::getExternalizableFieldNames(),
+			[
+				Item::FIELD_NAME_OBSERVERS,
+			],
+		);
 	}
 }

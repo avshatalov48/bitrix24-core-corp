@@ -16,7 +16,7 @@ export default class AutocompleteFeature extends BaseFeature
 
 	constructor(props)
 	{
-		super();
+		super(props);
 
 		if(!(props.autocomplete instanceof Autocomplete))
 		{
@@ -30,7 +30,12 @@ export default class AutocompleteFeature extends BaseFeature
 			{
 				const data = event.getData();
 
-				this.#addressWidget.setAddressByFeature(data.address, this, data.excludeSetAddressFeatures);
+				this.#addressWidget.setAddressByFeature(
+					data.address,
+					this,
+					data.excludeSetAddressFeatures,
+					data.options
+				);
 			});
 
 		this.#autocomplete.onStateChangedEventSubscribe(

@@ -29,6 +29,7 @@ use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\Error;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Forum;
@@ -160,6 +161,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 					[
 						'URL_TEMPLATES_PROFILE_VIEW' => Option::get('socialnetwork', 'user_page', '/company/personal/') . 'user/#user_id#/',
 						'SKIP_USER_READ' => $skipUserRead,
+						'AUX_LIVE_PARAMS' => ($data['AUX_LIVE_PARAMS'] ?? []),
 					]
 				);
 			}
@@ -817,6 +819,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				'module_id' => 'tasks',
 				'command' => 'comment_add',
 				'params' => [
+					'taskId' => $taskId,
 					'entityXmlId' => $arData['PARAMS']['XML_ID'],
 					'ownerId' => $occurAsUserId,
 					'messageId' => $messageId,
@@ -1288,143 +1291,168 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		$log->add($fields);
 	}
 
-	private static function processMentions(array $fields)
+	private static function processMentions(array $fields): array
 	{
-		global $DB;
-
-		$currentUserId = User::getId();
-		$userIdToShareList = array();
+		$newMentionedUserIds = [];
 
 		if (
-			is_array($fields)
-			&& isset($fields['MESSAGE']['POST_MESSAGE'], $fields['PARAMS']['AUX'])
-			&& ($fields['PARAMS']['AUX'] !== 'Y' || $fields['PARAMS']['IS_PING_COMMENT'] === 'Y')
+			TaskLimit::isLimitExceeded()
+			|| !is_array($fields)
+			|| !isset($fields['MESSAGE']['POST_MESSAGE'], $fields['PARAMS']['AUX'])
+			|| ($fields['PARAMS']['AUX'] === 'Y' && $fields['PARAMS']['IS_PING_COMMENT'] !== 'Y')
 		)
 		{
-			preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $fields['MESSAGE']['POST_MESSAGE'], $matches);
-			if (
-				is_array($matches)
-				&& !empty($matches)
-				&& !empty($matches[1])
-				&& is_array($matches[1])
-			)
+			return $newMentionedUserIds;
+		}
+
+		preg_match_all(
+			"/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is" . BX_UTF_PCRE_MODIFIER,
+			$fields['MESSAGE']['POST_MESSAGE'],
+			$matches
+		);
+
+		if (!is_array($matches) || empty($matches) || !is_array($matches[1]) || empty($matches[1]))
+		{
+			return $newMentionedUserIds;
+		}
+
+		$mentionedUserIds = $matches[1];
+		$task = false;
+		$taskData = false;
+		$taskMembers = [];
+
+		if (isset($fields['PARAMS']['XML_ID']))
+		{
+			preg_match("/TASK_(\d+)/is" . BX_UTF_PCRE_MODIFIER, $fields['PARAMS']['XML_ID'], $matches);
+			if (is_array($matches) && !empty($matches[1]) && (int)$matches[1])
 			{
-				$mentionUserIdList = $matches[1];
-				$taskParticipantList = array();
-				$taskObject = $task = false;
-
-				if (
-					isset($fields['PARAMS'])
-					&& isset($fields['PARAMS']['XML_ID'])
-				)
+				try
 				{
-					preg_match("/TASK_(\d+)/is".BX_UTF_PCRE_MODIFIER, $fields['PARAMS']['XML_ID'], $matches);
-					if (
-						is_array($matches)
-						&& !empty($matches[1])
-						&& intval($matches[1]) > 0
-					)
-					{
-						try
-						{
-							$taskObject = new \CTaskItem(intval($matches[1]), $currentUserId);
-							$task = $taskObject->getData();
-							$taskParticipantList = \CTaskNotifications::getRecipientsIDs($task, false);
-						}
-						catch (\TasksException | \CTaskAssertException $e)
-						{
-
-						}
-					}
+					$task = new \CTaskItem((int)$matches[1], User::getId());
+					$taskData = $task->getData();
+					$taskMembers = \CTaskNotifications::getRecipientsIDs($taskData, false);
 				}
-
-				if (!empty($taskParticipantList))
+				catch (\TasksException | \CTaskAssertException $e)
 				{
-					foreach ($mentionUserIdList as $mentionUserId)
-					{
-						if (!in_array($mentionUserId, $taskParticipantList))
-						{
-							$userIdToShareList[] = (int)$mentionUserId;
-						}
-					}
-				}
 
-				if (!empty($userIdToShareList) && $taskObject && $task)
-				{
-					$commentPoster = Comments\Task\CommentPoster::getInstance($taskObject->getId(), $currentUserId);
-					$commentPoster->enableDeferredPostMode();
-					$commentPoster->clearComments();
-
-					foreach($userIdToShareList as $userIdToShare)
-					{
-						$taskObject->startWatch($userIdToShare, true);
-					}
-
-					$commentPoster->disableDeferredPostMode();
-					$commentPoster->postComments();
-					$commentPoster->clearComments();
-
-					if ($taskNew = \CTasks::getByID($task['ID'], false, array('returnAsArray' => true)))
-					{
-						\CTaskNotifications::sendUpdateMessage(
-							array (
-								'AUDITORS' => $taskNew['AUDITORS'],
-								'CHANGED_BY' => $currentUserId,
-								'CHANGED_DATE' => $DB->currentTimeFunction(),
-								'OUTLOOK_VERSION' => $taskNew['OUTLOOK_VERSION'],
-								'DEADLINE_COUNTED' => $taskNew['DEADLINE_COUNTED'],
-								'IGNORE_RECIPIENTS' => $userIdToShareList
-							),
-							$task,
-							false,
-							array(
-								'THROTTLE_MESSAGES' => false,
-								'USER_ID' => $currentUserId,
-								'CHECK_RIGHTS_ON_FILES' => true,
-								'CORRECT_DATE_PLAN' => true,
-								'CORRECT_DATE_PLAN_DEPENDENT_TASKS' => true
-							)
-						);
-
-						if (Loader::includeModule('socialnetwork'))
-						{
-							$crm = \CTaskNotifications::isCrmTask($taskNew);
-							$logFilter = \CTaskNotifications::getSonetLogFilter($taskNew["ID"], $crm);
-
-							$res = \CSocNetLog::getList(
-								array(),
-								$logFilter,
-								false,
-								false,
-								array("ID")
-							);
-							if ($logEntry = $res->fetch())
-							{
-								\CTaskNotifications::setSonetLogRights(array(
-									'LOG_ID' => $logEntry['ID'],
-									'EFFECTIVE_USER_ID' => $currentUserId
-								), $taskNew, $taskNew);
-							}
-						}
-					}
-				}
-
-				if ($taskObject)
-				{
-					$taskId = $taskObject->getId();
-
-					foreach ($mentionUserIdList as $userId)
-					{
-						if (UserOption::isOptionSet($taskId, $userId, UserOption\Option::MUTED))
-						{
-							UserOption::delete($taskId, $userId, UserOption\Option::MUTED);
-						}
-					}
 				}
 			}
 		}
 
-		return $userIdToShareList;
+		if (!empty($taskMembers))
+		{
+			foreach ($mentionedUserIds as $userId)
+			{
+				if (!in_array($userId, $taskMembers))
+				{
+					$newMentionedUserIds[] = (int)$userId;
+				}
+			}
+		}
+
+		if ($task && $taskData)
+		{
+			if (!empty($newMentionedUserIds))
+			{
+				static::addNewAuditorsFromMentions($task, $newMentionedUserIds);
+				static::sendUpdateNotificationToOldMembers($taskData, $newMentionedUserIds);
+			}
+			static::unmuteMentionedUsers($task, $mentionedUserIds);
+		}
+
+		return $newMentionedUserIds;
+	}
+
+	private static function addNewAuditorsFromMentions(\CTaskItem $task, array $newMentionedUserIds): void
+	{
+		$commentPoster = Comments\Task\CommentPoster::getInstance($task->getId(), User::getId());
+		if ($commentPoster)
+		{
+			$commentPoster->enableDeferredPostMode();
+			$commentPoster->clearComments();
+		}
+
+		foreach ($newMentionedUserIds as $userId)
+		{
+			$task->startWatch($userId, true);
+		}
+
+		if ($commentPoster)
+		{
+			$commentPoster->disableDeferredPostMode();
+			$commentPoster->postComments();
+			$commentPoster->clearComments();
+		}
+	}
+
+	private static function sendUpdateNotificationToOldMembers(array $oldTaskData, array $newMentionedUserIds)
+	{
+		global $DB;
+
+		if ($newTask = \CTasks::getByID($oldTaskData['ID'], false, ['returnAsArray' => true]))
+		{
+			$currentUserId = User::getId();
+
+			\CTaskNotifications::sendUpdateMessage(
+				[
+					'AUDITORS' => $newTask['AUDITORS'],
+					'CHANGED_BY' => $currentUserId,
+					'CHANGED_DATE' => $DB->currentTimeFunction(),
+					'OUTLOOK_VERSION' => $newTask['OUTLOOK_VERSION'],
+					'DEADLINE_COUNTED' => $newTask['DEADLINE_COUNTED'],
+					'IGNORE_RECIPIENTS' => $newMentionedUserIds,
+				],
+				$oldTaskData,
+				false,
+				[
+					'THROTTLE_MESSAGES' => false,
+					'USER_ID' => $currentUserId,
+					'CHECK_RIGHTS_ON_FILES' => true,
+					'CORRECT_DATE_PLAN' => true,
+					'CORRECT_DATE_PLAN_DEPENDENT_TASKS' => true,
+				]
+			);
+			static::resetSonetLogRights($newTask);
+		}
+	}
+
+	private static function resetSonetLogRights(array $taskData): void
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return;
+		}
+
+		$isCrmTask = \CTaskNotifications::isCrmTask($taskData);
+		$logFilter = \CTaskNotifications::getSonetLogFilter($taskData['ID'], $isCrmTask);
+		$res = \CSocNetLog::getList([], $logFilter, false, false, ['ID']);
+		if ($logEntry = $res->fetch())
+		{
+			\CTaskNotifications::setSonetLogRights(
+				[
+					'LOG_ID' => $logEntry['ID'],
+					'EFFECTIVE_USER_ID' => User::getId(),
+				],
+				$taskData,
+				$taskData
+			);
+		}
+	}
+
+	private static function unmuteMentionedUsers($task, array $mentionedUserIds): void
+	{
+		if ($task)
+		{
+			/** @var \CTaskItem $task */
+			$taskId = $task->getId();
+			foreach ($mentionedUserIds as $userId)
+			{
+				if (UserOption::isOptionSet($taskId, $userId, UserOption\Option::MUTED))
+				{
+					UserOption::delete($taskId, $userId, UserOption\Option::MUTED);
+				}
+			}
+		}
 	}
 
 	/**

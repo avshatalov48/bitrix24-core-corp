@@ -217,7 +217,7 @@ else
 				}
 				if (isset($orderData[$headerID]))
 				{
-					echo ($orderData[$headerID] !== '') ? '"'.str_replace('"', "'", htmlspecialcharsback($orderData[$headerID])).'";' : ';';
+					echo ($orderData[$headerID] !== '') ? '"'.str_replace('"', "'", strip_tags(htmlspecialcharsback($orderData[$headerID]))).'";' : ';';
 				}
 			}
 			echo "\n";

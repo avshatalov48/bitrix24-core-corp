@@ -78,6 +78,9 @@ $component = $this->getComponent();
 if($component->isMobileMode())
 {
 	Asset::getInstance()->addJs(
+		'/bitrix/js/mobile/userfield/mobile_field.js'
+	);
+	Asset::getInstance()->addJs(
 		'/bitrix/components/bitrix/intranet.field.employee/templates/main.view/mobile.js'
 	);
 }

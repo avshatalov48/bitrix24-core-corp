@@ -188,6 +188,8 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 			'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'],
 			'PATH_TO_DEAL_SHOW' => $arResult['PATH_TO_DEAL_SHOW'],
 			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
+			'PATH_TO_DEAL_RECUR' => $arResult['PATH_TO_DEAL_RECUR'],
+			'PATH_TO_DEAL_RECUR_CATEGORY' => $arResult['PATH_TO_DEAL_RECUR_CATEGORY'],
 			'ELEMENT_ID' => 0,
 			'DISABLE_EXPORT' => 'Y',
 			'DISABLE_DEDUPE' => 'Y',

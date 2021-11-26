@@ -174,7 +174,7 @@
 				params: {
 					MODE: 'view',
 					COMPONENT_CODE: componentCode,
-					USER_ID: userId || 0,
+					USER_ID: userId || env.userId,
 					TASK_ID: taskId,
 					FORM_ID: 'MOBILE_TASK_VIEW',
 					LANGUAGE_ID: languageId,

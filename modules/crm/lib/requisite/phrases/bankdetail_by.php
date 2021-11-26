@@ -3,6 +3,7 @@ $phrasesConfig = [
 	'encoding' => 'Windows-1251',
 	'lang' => 'ru',
 	'phrases' => [
+		'CRM_BANK_DETAIL_SECTION_BY_TITLE' => 'Банковские реквизиты',
 		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_NAME_BY_FIELD' => 'Наименование банка',
 		'CRM_BANK_DETAIL_ENTITY_RQ_BIK_BY_FIELD' => 'БИК',
 		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_NUM_BY_FIELD' => 'Расчетный счёт',

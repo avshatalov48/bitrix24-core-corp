@@ -168,6 +168,14 @@ class Delivery extends Activity\Provider\Base
 					$shipment
 				);
 			}
+
+			AddEventToStatFile(
+				'sale',
+				'deliveryActivityCreation',
+				$activityId,
+				$deliveryService->getServiceCode(),
+				'delivery_service_code'
+			);
 		}
 
 		return $activityId ?? null;

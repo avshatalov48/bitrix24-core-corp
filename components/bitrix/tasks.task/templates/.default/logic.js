@@ -419,16 +419,35 @@ BX.namespace('Tasks.Component');
 				this.instances.projectPlan = new BX.Tasks.Shared.Form.ProjectPlan({
 					scope: this.control('date-plan-manager'),
 					parent: this,
-					matchWorkTime: this.getTaskData().MATCH_WORK_TIME == 'Y'
+					matchWorkTime: (this.getTaskData().MATCH_WORK_TIME === 'Y')
 				});
-				this.instances.projectPlan.bindEvent('change-deadline', BX.delegate(function(stamp){
+				this.instances.projectPlan.bindEvent('change-deadline', BX.delegate(function(stamp, local) {
+					if (!this.isEditMode() && stamp)
+					{
+						this.showExpiredDeadlineHint(local.getTime());
+					}
 					// fire event on reminder block, if any
-					BX.Tasks.Util.Dispatcher.fireEvent(
-						'reminder-'+this.id(),
-						'setTaskDeadLine',
-						[stamp]
-					);
+					BX.Tasks.Util.Dispatcher.fireEvent('reminder-' + this.id(), 'setTaskDeadLine', [stamp]);
 				}, this));
+
+				if (!this.isEditMode() && this.getTaskData().DEADLINE_ISO)
+				{
+					this.showExpiredDeadlineHint((new Date(this.getTaskData().DEADLINE_ISO)).getTime());
+				}
+			},
+
+			showExpiredDeadlineHint: function(deadline)
+			{
+				if (deadline < Date.now())
+				{
+					BX.Tasks.Util.hintManager.show(
+						this.instances.projectPlan.getDeadlinePicker().control('display'),
+						BX.message('TASKS_TASK_COMPONENT_TEMPLATE_HINT_DEADLINE_EXPIRED'),
+						null,
+						null,
+						{autoHide: true}
+					);
+				}
 			},
 
 			initParentTask: function()

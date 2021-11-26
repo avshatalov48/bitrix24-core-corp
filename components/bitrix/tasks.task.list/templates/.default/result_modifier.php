@@ -286,7 +286,7 @@ if (!function_exists('prepareGroupActionItems'))
 		];
 
 		$actionList[] = [
-			'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL'),
+			'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_V2'),
 			'VALUE' => 'settaskcontrol',
 			'ONCHANGE' => [
 				[
@@ -299,11 +299,11 @@ if (!function_exists('prepareGroupActionItems'))
 							'ITEMS' => [
 								[
 									'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_YES'),
-									'VALUE' => 'Y',
+									'VALUE' => 'N',
 								],
 								[
 									'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_NO'),
-									'VALUE' => 'N',
+									'VALUE' => 'Y',
 								],
 							],
 						],

@@ -118,6 +118,7 @@ if($MOD_RIGHT>='R'):
 		array('path_to_order_payment_details', Loc::getMessage('CRM_OPTIONS_PATH_TO_ORDER_PAYMENT_DETAILS'), '/shop/orders/payment/details/#payment_id#/', Array('text', '40')),
 		array('path_to_order_form', Loc::getMessage('CRM_OPTIONS_PATH_TO_ORDER_FORM'), '/shop/orderform/', Array('text', '40')),
 		array('path_to_order_import_instagram', Loc::getMessage('CRM_OPTIONS_PATH_TO_ORDER_IMPORT_INSTAGRAM'), '/shop/import/instagram/', Array('text', '40')),
+		array('path_to_lead_status_list', Loc::getMessage('CRM_OPTIONS_PATH_TO_LEAD_STATUS_LIST'), '/crm/type/1/categories/', Array('text', '40')),
 	);
 
 	$arAllOptions = array_merge($arOptionsPath, $arOptionsBase);

@@ -337,54 +337,41 @@ class CrmQuoteDetailsComponent extends FactoryBased
 
 	protected function getToolbarParameters(): array
 	{
-		$buttons = [];
+		$parameters = parent::getToolbarParameters();
+		$buttons = $parameters['buttons'] ?? [];
 
 		if(!$this->item->isNew())
 		{
-			if (Buttons\IntranetBindingMenu::isAvailable())
-			{
-				$buttons[ButtonLocation::AFTER_TITLE][] = Buttons\IntranetBindingMenu::createByComponentParameters(
-					$this->getIntranetBindingMenuParameters()
-				);
-			}
-
 			$buttons[ButtonLocation::AFTER_TITLE][] = $this->getActionsToolbarButton();
-
-			$buttons[ButtonLocation::AFTER_TITLE][] = new Buttons\SettingsButton([
-				'menu' => [
-					'items' => [
-						[
-							'text' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),
-							'href' => Container::getInstance()->getRouter()->getItemCopyUrl($this->getEntityTypeID(), $this->item->getId(), $this->categoryId),
-						],
-						[
-							'text' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE'),
-							'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
-						],
-					],
-				],
-			]);
-
-			if ($this->isDocumentButtonAvailable())
-			{
-				$buttons[ButtonLocation::AFTER_TITLE][] = $this->getDocumentToolbarButton();
-			}
-
-			if (
-				\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->item->getEntityTypeId())
-				&& $this->getBizprocStarterConfig()
-			)
-			{
-				$buttons[ButtonLocation::AFTER_TITLE][] = $this->getBizprocToolbarButton();
-			}
 
 			$buttons[ButtonLocation::AFTER_TITLE][] = $this->getConversionToolbarButton();
 		}
 
-		return [
-			'buttons' => $buttons,
-			'communications' => $this->getCommunicationToolbarParameters(),
-		];
+		$parameters['buttons'] = $buttons;
+
+		return $parameters;
+	}
+
+	protected function getSettingsToolbarButton(): Buttons\SettingsButton
+	{
+		return new Buttons\SettingsButton([
+			'menu' => [
+				'items' => [
+					[
+						'text' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),
+						'href' => Container::getInstance()->getRouter()->getItemCopyUrl(
+							$this->getEntityTypeID(),
+							$this->item->getId(),
+							$this->categoryId
+						),
+					],
+					[
+						'text' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE'),
+						'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
+					],
+				],
+			],
+		]);
 	}
 
 	protected function getActionsToolbarButton(): Buttons\Button

@@ -222,6 +222,8 @@ Class imopenlines extends CModule
 		$eventManager->registerEventHandler('imopenlines', 'OnChatMarkSpam', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
 		$eventManager->registerEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
 
+		$eventManager->registerEventHandler('crm', 'onSiteFormFilledOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFilled');
+
 		CAgent::AddAgent('\Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue();', 'imopenlines', 'N');
 
 		CAgent::AddAgent('\Bitrix\ImOpenLines\Session::transferToNextInQueueAgent(0);', "imopenlines", "N", 60);

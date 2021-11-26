@@ -6,6 +6,7 @@ use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\LanguageTable;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 if (Loader::includeModule('catalog'))
 {
@@ -25,7 +26,7 @@ if (Loader::includeModule('catalog'))
 		 */
 		public static function getTypeId(): string
 		{
-			$result = (string)Main\Config\Option::get('crm', 'product_catalog_type_id');
+			$result = Main\Config\Option::get('crm', 'product_catalog_type_id');
 			return ($result !== '' ? $result : self::DEFAULT_TYPE_ID);
 		}
 
@@ -40,9 +41,14 @@ if (Loader::includeModule('catalog'))
 
 			if ($id > 0)
 			{
+				$filter = ['=ID' => $id];
+				if (ModuleManager::isModuleInstalled('bitrix24'))
+				{
+					$filter['=IBLOCK_TYPE_ID'] = static::getTypeId();
+				}
 				$iterator = Iblock\IblockTable::getList([
 					'select' => ['ID'],
-					'filter' => ['=ID' => $id, '=IBLOCK_TYPE_ID' => static::getTypeId()]
+					'filter' => $filter,
 				]);
 				$row = $iterator->fetch();
 				if (empty($row))
@@ -84,7 +90,7 @@ if (Loader::includeModule('catalog'))
 			return static::getDefaultSettings();
 		}
 
-		public static function getDefaultOfferSettings()
+		public static function getDefaultOfferSettings(): array
 		{
 			$result = static::getDefaultSettings();
 			$result['LIST_MODE'] = Iblock\IblockTable::LIST_MODE_SEPARATE;
@@ -207,7 +213,6 @@ if (Loader::includeModule('catalog'))
 				if (empty($row))
 				{
 					$result->addError(new Main\Error(Loc::getMessage('CRM_PRODUCT_CATALOG_IBLOCK_IS_ABSENT')));
-					$success = false;
 				}
 				else
 				{

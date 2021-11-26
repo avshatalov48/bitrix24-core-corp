@@ -9,12 +9,19 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\History\Entity\DealStageHistoryTable;
 use Bitrix\Crm\History\Entity\DealStageHistoryWithSupposedTable;
+use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Main;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\StringField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\ORM\Event;
+use Bitrix\Main\ORM\EventResult;
+use Bitrix\Main\ORM\Fields\DateField;
+use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
+use Bitrix\Main\ORM\Fields\Relations\OneToMany;
+use Bitrix\Main\Type\Date;
 
 Loc::loadMessages(__FILE__);
 
@@ -36,6 +43,8 @@ Loc::loadMessages(__FILE__);
  */
 class DealTable extends Main\ORM\Data\DataManager
 {
+	protected static $isCheckUserFields = true;
+
 	public static function getTableName()
 	{
 		return 'b_crm_deal';
@@ -94,6 +103,10 @@ class DealTable extends Main\ORM\Data\DataManager
 				'data_type' => 'boolean',
 				'values' => array('N', 'Y')
 			),
+			'OPENED' => array(
+				'data_type' => 'boolean',
+				'values' => array('N', 'Y')
+			),
 			'IS_REPEATED_APPROACH' => array(
 				'data_type' => 'boolean',
 				'values' => array('N', 'Y')
@@ -119,18 +132,21 @@ class DealTable extends Main\ORM\Data\DataManager
 			'COMMENTS' => array(
 				'data_type' => 'string'
 			),
-			'BEGINDATE' => array(
-				'data_type' => 'datetime'
-			),
+			'BEGINDATE' => (new DateField('BEGINDATE'))
+				->configureRequired()
+				->configureDefaultValue(static function()
+				{
+					return new Date();
+				}),
 			'BEGINDATE_SHORT' => array(
 				'data_type' => 'datetime',
 				'expression' => array(
 					$DB->datetimeToDateFunction('%s'), 'BEGINDATE'
 				)
 			),
-			'CLOSEDATE' => array(
-				'data_type' => 'datetime'
-			),
+			'CLOSEDATE' => (new DateField('CLOSEDATE'))
+				->configureRequired()
+				->configureDefaultValue([static::class, 'getDefaultCloseDate']),
 			'CLOSEDATE_SHORT' => array(
 				'data_type' => 'datetime',
 				'expression' => array(
@@ -347,6 +363,13 @@ class DealTable extends Main\ORM\Data\DataManager
 				Binding\OrderDealTable::class,
 				Main\ORM\Query\Join::on('this.ID', 'ref.DEAL_ID')
 			),
+			(new OneToMany('CONTACT_BINDINGS', Binding\DealContactTable::class, 'DEAL'))
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
+			(new OneToMany('PRODUCT_ROWS', ProductRowTable::class, 'DEAL_OWNER'))
+				// products will be deleted in onAfterDelete, if it's needed
+				->configureCascadeDeletePolicy(CascadePolicy::NO_ACTION),
+			(new OneToMany('OBSERVERS', ObserverTable::class, 'DEAL'))
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
 		);
 
 		$codeList = UtmTable::getCodeList();
@@ -361,5 +384,47 @@ class DealTable extends Main\ORM\Data\DataManager
 		}
 
 		return $map;
+	}
+
+	public static function disableUserFieldsCheck(): void
+	{
+		static::$isCheckUserFields = false;
+	}
+
+	protected static function checkUfFields($object, $ufdata, $result)
+	{
+		if (!static::$isCheckUserFields)
+		{
+			static::$isCheckUserFields = true;
+			return;
+		}
+
+		parent::checkUfFields($object, $ufdata, $result);
+	}
+
+	public static function getDefaultCloseDate(): Date
+	{
+		$currentDate = new Date();
+
+		return $currentDate->add(static::getCloseDateOffset());
+	}
+
+	protected static function getCloseDateOffset(): string
+	{
+		return '7D';
+	}
+
+	public static function onAfterUpdate(Event $event): EventResult
+	{
+		$item = $event->getParameter('object');
+		if (!$item)
+		{
+			return new EventResult();
+		}
+
+		$result = new EventResult();
+		ProductRowTable::handleOwnerUpdate($item, $result);
+
+		return $result;
 	}
 }

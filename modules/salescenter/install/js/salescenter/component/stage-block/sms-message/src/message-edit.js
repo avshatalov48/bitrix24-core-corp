@@ -40,7 +40,10 @@ const MessageEdit = {
 						},
 						analyticsLabel: 'salescenterSmsTemplateChange'
 					}
-				);
+				).catch((response) => {
+					const errorMessage = response.errors.map(function(err){return err.message}).join("; ");
+					alert(errorMessage);
+				});
 			},
 
 			adjustUpdateMessage(e)

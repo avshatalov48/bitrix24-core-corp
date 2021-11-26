@@ -10,6 +10,7 @@ use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Tracking;
 use Bitrix\Location;
+use Bitrix\Crm\Service\Container;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -23,6 +24,8 @@ if (!CModule::IncludeModule('crm'))
  */
 global $DB, $APPLICATION;
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+Container::getInstance()->getLocalization()->loadMessages();
+
 if(!function_exists('__CrmLeadDetailsEndJsonResponse'))
 {
 	function __CrmLeadDetailsEndJsonResponse($result)
@@ -86,7 +89,7 @@ elseif($action === 'SAVE')
 		|| ($ID === 0 && !\CCrmLead::CheckCreatePermission($currentUserPermissions))
 	)
 	{
-		__CrmLeadDetailsEndJsonResponse(array('ERROR'=>'PERMISSION DENIED!'));
+		__CrmLeadDetailsEndJsonResponse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
 	}
 
 	$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
@@ -780,7 +783,7 @@ elseif($action === 'LOAD')
 	}
 	if(!\CCrmDeal::CheckReadPermission($ID, $currentUserPermissions))
 	{
-		__CrmLeadDetailsEndJsonResponse(['ERROR'=>'PERMISSION DENIED!']);
+		__CrmLeadDetailsEndJsonResponse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
 	}
 
 	CBitrixComponent::includeComponentClass('bitrix:crm.lead.details');
@@ -803,7 +806,7 @@ elseif($action === 'DELETE')
 
 	if(!\CCrmLead::CheckDeletePermission($ID, $currentUserPermissions))
 	{
-		__CrmLeadDetailsEndJsonResponse(array('ERROR' => GetMessage('CRM_LEAD_ACCESS_DENIED')));
+		__CrmLeadDetailsEndJsonResponse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
 	}
 
 	$bizProc = new CCrmBizProc('LEAD');
@@ -835,7 +838,7 @@ elseif($action === 'EXCLUDE')
 
 	if(!(\Bitrix\Crm\Exclusion\Access::current()->canWrite()))
 	{
-		__CrmLeadDetailsEndJsonResponse(array('ERROR' => GetMessage('CRM_LEAD_ACCESS_DENIED')));
+		__CrmLeadDetailsEndJsonResponse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
 	}
 
 	\Bitrix\Crm\Exclusion\Store::addFromEntity(CCrmOwnerType::Lead, $ID);
@@ -855,7 +858,7 @@ elseif($action === 'EXCLUDE')
 			$ex = $APPLICATION->GetException();
 			__CrmLeadDetailsEndJsonResponse(
 				array(
-					'ERROR' => ($ex instanceof CApplicationException) ? $ex->GetString() : GetMessage('CRM_LEAD_DELETION_ERROR')
+					'ERROR' => ($ex instanceof CApplicationException) ? $ex->GetString() : GetMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')
 				)
 			);
 		}
@@ -926,6 +929,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 
 	if(empty($fieldNames))
 	{
+		$component->prepareFieldInfos();
 		$entityConfig = $component->prepareConfiguration();
 	}
 	else

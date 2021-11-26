@@ -74,6 +74,7 @@ $MESS["SALESCENTER_SP_PAYSYSTEM_UAPAY_PUBLIC_NAME"] = "UaPay";
 $MESS["SALESCENTER_SP_PAYSYSTEM_UAPAY_TITLE"] = "UaPay";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WEBMONEY_DESCRIPTION"] = "WebMoney payment";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WEBMONEY_TITLE"] = "WebMoney";
+$MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_CHECKOUT_DESCRIPTION"] = "Accept online payments from banking cards, mobile phone or Wooppay wallet. Woopkassa supports payments via Wooppay, the first registered payment service in Kazakhstan.";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_CHECKOUT_TITLE"] = "Woopkassa. Payment page";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_IFRAME_TITLE"] = "Woopkassa. Payment frame";
 $MESS["SALESCENTER_SP_PAYSYSTEM_YANDEXCHECKOUT_ALFABANK_DESCRIPTION"] = "Alfa click payment processed by Yandex.Checkout (version 3.x and higher)";

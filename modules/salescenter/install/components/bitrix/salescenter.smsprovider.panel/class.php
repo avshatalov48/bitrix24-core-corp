@@ -1,6 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Main,
 	Bitrix\Main\Loader,
 	Bitrix\Main\Localization\Loc,
@@ -264,7 +265,6 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 	protected function getSmsProviderItems()
 	{
 		$result = [];
-
 		$smsSenders = \Bitrix\Crm\Integration\SmsManager::getSenderInfoList();
 		$saleshubItems = SaleManager::getSaleshubSmsProviderItems();
 
@@ -308,12 +308,33 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 						'type' => 'smsprovider',
 						'connectPath' => '/bitrix/components/bitrix/salescenter.smsprovider.panel/slider.php?senderId='.$senderId,
 						'recommendation' => $saleshubItem['recommendation'],
+						'isSelectedItemTitleDark' => in_array($senderId, $this->getDarkSelectedTitleProviders()),
 					]
 				];
 			}
 		}
-
 		Main\Type\Collection::sortByColumn($result, ['sort' => SORT_ASC]);
+
+		if (NotificationsManager::isAvailable())
+		{
+			array_unshift(
+				$result,
+				[
+					'id' => 'bitrix24',
+					'title' => Loc::getMessage('SPP_SMSPROVIDER_SMS_AND_WHATS_APP') . "\n" . Loc::getMessage('SPP_SMSPROVIDER_APP_BITRIX24'),
+					'image' => '/bitrix/components/bitrix/salescenter.smsprovider.panel/templates/.default/images/bitrix24.svg',
+					'itemSelectedColor' => '#1EC6FA',
+					'itemSelectedImage' => '/bitrix/components/bitrix/salescenter.smsprovider.panel/templates/.default/images/bitrix24-active.svg',
+					'itemSelected' => NotificationsManager::isConnected(),
+					'data' => [
+						'type' => 'bitrix24',
+						'connectPath' => NotificationsManager::getConnectUrl(),
+						'recommendation' => false,
+						'isSelectedItemTitleDark' => in_array($senderId, $this->getDarkSelectedTitleProviders()),
+					]
+				]
+			);
+		}
 
 		return $result;
 	}
@@ -324,7 +345,13 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 			'smsastby' => '#188A98',
 			'smsru' => '#8EB807',
 			'twilio' => '#F12E45',
+			'smsednaru' => '#1AEA76',
 		];
+	}
+
+	private function getDarkSelectedTitleProviders() : array
+	{
+		return ['smsednaru'];
 	}
 
 	/**
@@ -476,6 +503,7 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 			$installedApps = $this->getMarketplaceInstalledApps();
 			$result = array_merge($result, $this->getMarketplaceItems(array_keys($installedApps)));
 		}
+
 		return $result;
 	}
 

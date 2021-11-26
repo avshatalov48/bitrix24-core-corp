@@ -6,8 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Automation\Factory;
-use Bitrix\Crm\Integration\Sender\Rc;
-use Bitrix\Main\Loader;
+use Bitrix\Crm\Integration;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
@@ -21,6 +20,7 @@ Extension::load([
 	'ui.notification',
 	'dd',
 	'ui.popup',
+	'crm.restriction.bitrix24'
 ]);
 
 ?>
@@ -31,7 +31,7 @@ Extension::load([
 		<svg class="crm-st-svg-links-root"> </svg>
 	</div>
 	<div class="crm-st-footer">
-		<? if ($arResult['canEditTunnels']) : ?>
+		<? if ($arResult['isCategoryCreatable']) : ?>
 			<button class="ui-btn ui-btn-link ui-btn-xs ui-btn-icon-add crm-st-add-category-btn"><?=Loc::getMessage('CRM_ST_ADD_NEW_CATEGORY_BUTTON_LABEL')?></button>
 		<? endif; ?>
 	</div>
@@ -48,17 +48,23 @@ $this->SetViewTarget('pagetitle', 100);
 		$APPLICATION->includeComponent(
 			'bitrix:intranet.binding.menu',
 			'',
-			array(
-				'SECTION_CODE' => 'crm_tunnels',
-				'MENU_CODE' => mb_strtolower(\CCrmOwnerType::ResolveName($arResult['entityTypeId'])),
-			)
+			[
+				'SECTION_CODE' => Integration\Intranet\BindingMenu\SectionCode::TUNNELS,
+				'MENU_CODE' => Integration\Intranet\BindingMenu\CodeBuilder::getMenuCode(
+					(int)($arResult['entityTypeId'] ?? null),
+				),
+			]
 		);
 	}
+	if ($arResult['entityTypeId'] !== \CCrmOwnerType::Lead)
+	{
+		?><button class="ui-btn ui-btn-icon-info ui-btn-light-border crm-st-help-button"><?=Loc::getMessage('CRM_ST_HELP_BUTTON')?></button><?php
+	}
+	if ($arResult['isCategoryCreatable'])
+	{
+		?><button class="ui-btn ui-btn-primary crm-st-add-category-btn-top"><?=Loc::getMessage('CRM_ST_ADD_FUNNEL_BUTTON')?></button><?php
+	}
 	?>
-	<button class="ui-btn ui-btn-icon-info ui-btn-light-border crm-st-help-button"><?=Loc::getMessage('CRM_ST_HELP_BUTTON')?></button>
-	<? if ($arResult['canEditTunnels']) : ?>
-		<button class="ui-btn ui-btn-primary crm-st-add-category-btn-top"><?=Loc::getMessage('CRM_ST_ADD_FUNNEL_BUTTON')?></button>
-	<? endif; ?>
 </div>
 
 <?php
@@ -76,7 +82,6 @@ $APPLICATION->includeComponent(
 		'DOCUMENT_TYPE' => \CCrmBizProcHelper::ResolveDocumentType($arResult['entityTypeId']),
 	]
 );
-
 ?>
 <script>
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
@@ -90,29 +95,23 @@ $APPLICATION->includeComponent(
 	void new BX.Crm.SalesTunnels.Manager({
 		entityTypeId: <?=(int)$arResult['entityTypeId']?>,
 		documentType: <?= \Bitrix\Main\Web\Json::encode($arResult['documentType']) ?>,
-		isSenderSupported: <?=($arResult['isSenderSupported'] ? 'true' : 'false')?>,
-		isAutomationEnabled: <?=($arResult['isAutomationEnabled'] ? 'true' : 'false')?>,
-		isStagesEnabled: <?=($arResult['isStagesEnabled'] ? 'true' : 'false')?>,
         container: document.querySelector('.crm-st'),
 		addCategoryButtonTop: document.querySelector('.crm-st-add-category-btn-top'),
 		helpButton: document.querySelector('.crm-st-help-button'),
 		categories: <?=CUtil::phpToJsObject($arResult['categories'])?>,
 		tunnelScheme: <?=CUtil::phpToJsObject($arResult['tunnelScheme'])?>,
-		canAddCategory: <?=CUtil::phpToJsObject($arResult['canAddCategory'])?>,
-		categoriesQuantityLimit: <?=CUtil::phpToJsObject($arResult['categoriesQuantityLimit'])?>,
+
+		isAutomationEnabled: <?=($arResult['isAutomationEnabled'] ? 'true' : 'false')?>,
+		isStagesEnabled: <?=($arResult['isStagesEnabled'] ? 'true' : 'false')?>,
+		isCategoryEditable: <?=CUtil::phpToJsObject($arResult['isCategoryEditable'])?>,
+		isCategoryCreatable: <?=CUtil::phpToJsObject($arResult['isCategoryCreatable'])?>,
+
+		areStagesEditable: <?=CUtil::phpToJsObject($arResult['areStagesEditable'])?>,
+		isAvailableGenerator: <?=CUtil::phpToJsObject($arResult['isAvailableGenerator'])?>,
+
 		robotsUrl: '<?=$arResult['robotsUrl']?>',
-		generatorUrl: '<?=Rc\Service::getPathToAddDeal()?>',
+		generatorUrl: '<?=$arResult['generatorUrl']?>',
 		permissionEditUrl: '<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('crm', 'path_to_perm_list'))?>/',
 		allowWrite: true,
-		canEditTunnels: <?=CUtil::phpToJsObject($arResult['canEditTunnels'])?>,
-		restrictionPopupCode: <?=CUtil::phpToJsObject($arResult['restrictionPopup'])?>,
-		isAvailableGenerator: <?=CUtil::phpToJsObject(Rc\Service::isAvailable())?>,
-		showGeneratorRestrictionPopup: function() {
-			<?=$arResult['showGeneratorRestrictionPopup']?>
-		},
-		isAvailableRobots: <?=CUtil::phpToJsObject(Factory::isAutomationAvailable(\CCrmOwnerType::Deal))?>,
-		showRobotsRestrictionPopup: function() {
-			<?=$arResult['showRobotsRestrictionPopup']?>
-		}
 	});
 </script>

@@ -357,9 +357,24 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 
 		$arUser = parent::_GetUserArray($value["VALUE"]);
 		if ($arUser)
-			$UF_HeadName = $arUser["NAME"] == "" && $arUser["LAST_NAME"] == "" ? $arUser["LOGIN"] : $arUser["NAME"]." ".$arUser["LAST_NAME"];
+		{
+			if (isset($arProperty['FORMAT_NAME']))
+			{
+				$UF_HeadName = CUser::FormatName($arProperty['FORMAT_NAME'], $arUser, false, false);
+			}
+			else
+			{
+				$UF_HeadName =
+					($arUser["NAME"] === "" && $arUser["LAST_NAME"] === "")
+						? $arUser["LOGIN"]
+						: $arUser["NAME"] . " " . $arUser["LAST_NAME"]
+				;
+			}
+		}
 		else
+		{
 			$UF_HeadName = "";
+		}
 
 		$controlID = "Single_" . RandString(6);
 		$controlName = $strHTMLControlName['VALUE'];

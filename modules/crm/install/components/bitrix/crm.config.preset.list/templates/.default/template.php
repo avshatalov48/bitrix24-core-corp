@@ -1,6 +1,11 @@
-<?
+<?php
+
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
+
+use Bitrix\Main\Localization\Loc;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -16,6 +21,16 @@ $presetUfieldsUrl = str_replace(
 	array($arResult['ENTITY_TYPE_ID']),
 	$arResult['PRESET_UFIELDS_URL']
 );
+
+$needForChangeCurrentCountry = (
+	isset($arResult['NEED_FOR_CHANGE_CURRENT_COUNTRY'])
+	&& $arResult['NEED_FOR_CHANGE_CURRENT_COUNTRY']
+);
+
+if ($needForChangeCurrentCountry)
+{
+	?><div id="crmChangeCurrentCountryMessageBox" style="display: none;"></div><?php
+}
 
 $errorsContainerId = $arResult['GRID_ID'].'_err_container';
 ?><div class="ajax-mode-err-container" id="<?= $errorsContainerId ?>" style="display: none;"></div><?
@@ -206,3 +221,36 @@ $APPLICATION->IncludeComponent(
 		}
 	});
 </script>
+<?php if ($needForChangeCurrentCountry):
+$messageBoxParams = [
+	'containerId' => 'crmChangeCurrentCountryMessageBox',
+	'componentName' => $component->getName(),
+	'actionFormId' => $presetAddFormId,
+	'messages' => [
+		'messageTitle' => Loc::getMessage(
+			'CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_TITLE',
+			['#DST_COUNTRY_NAME#' => $arResult['DST_COUNTRY_NAME']]
+		),
+		'messageText' => Loc::getMessage(
+				'CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_TEXT',
+				[
+					'#SRC_COUNTRY_NAME#' => $arResult['SRC_COUNTRY_NAME'],
+					'#DST_COUNTRY_NAME#' => $arResult['DST_COUNTRY_NAME'],
+				]
+		),
+		'okText' => Loc::getMessage('CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_TEXT_OK'),
+		'cancelText' => Loc::getMessage('CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_TEXT_CANCEL'),
+		'hideMessageText' => Loc::getMessage('CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_HIDE_TEXT'),
+	],
+];
+?><script type="text/javascript">
+BX.ready(
+	function()
+	{
+		var messageBoxManager = BX.Crm.PresetListComponent.ChangeCurrentCountryManager.create(
+			<?= CUtil::PhpToJSObject($messageBoxParams) ?>
+		);
+	}
+);
+</script><?php
+endif; ?>

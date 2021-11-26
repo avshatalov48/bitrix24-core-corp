@@ -18,6 +18,7 @@ $MESS["BPTA1A_TASKACCOMPLICES"] = "Соисполнители";
 $MESS["BPTA1A_TASKPRIORITY_V2"] = "Важность";
 $MESS["BPTA1A_TASKFORUM"] = "Форум для комментариев";
 $MESS["BPTA1A_CHECK_RESULT"] = "Принять работу после завершения задачи";
+$MESS["BPTA1A_CHECK_RESULT_V2"] = "Проконтролировать задачу после завершения";
 $MESS["BPTA1A_ADD_TO_REPORT_2"] = "Включить задачу в отчет по эффективности";
 $MESS["BPTA1A_CHANGE_DEADLINE"] = "Разрешить ответственному менять крайний срок";
 $MESS["BPTA1A_ALLOW_TIME_TRACKING"] = "Включить учет времени по задаче";

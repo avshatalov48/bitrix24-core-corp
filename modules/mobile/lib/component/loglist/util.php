@@ -1,11 +1,11 @@
 <?php
+
 namespace Bitrix\Mobile\Component\LogList;
 
-class Util
+use Bitrix\Main\Loader;
+
+Loader::requireModule('socialnetwork');
+
+class Util extends \Bitrix\Socialnetwork\Component\LogListCommon\Util
 {
-	public static function getCollapsedPinnedPanelItemsLimit()
-	{
-		return 3;
-	}
 }
-?>

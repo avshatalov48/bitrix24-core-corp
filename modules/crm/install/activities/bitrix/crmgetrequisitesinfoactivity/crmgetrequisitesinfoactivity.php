@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use \Bitrix\Crm\EntityPreset;
 use \Bitrix\Crm\EntityRequisite;
@@ -167,19 +171,19 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 
 	protected function getSelectedByColumnId(array $data, int $selectedId): array
 	{
-		if (count($data) === 0)
+		if (!$data)
 		{
-			return array();
+			return [];
 		}
-		elseif (count($data) === 1 || $selectedId === 0)
+		if (count($data) === 1 || $selectedId === 0)
 		{
 			return $data[0];
 		}
 
-		$selectedData = array();
+		$selectedData = [];
 		foreach ($data as $value)
 		{
-			if ($value['ID'] == $selectedId)
+			if ((int)$value['ID'] === $selectedId)
 			{
 				$selectedData = $value;
 				break;
@@ -258,12 +262,14 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		$fieldPresetId = $map['RequisitePresetId']['FieldName'];
 		$fieldAddressTypeId = $map['AddressTypeId']['FieldName'];
 
-		$requisiteFieldsMap = self::getRequisiteFieldsMap();
 		$userFieldsMap = self::getUserFieldsMap();
 
 		if (self::isValueVariable($map['RequisitePresetId'], $currentValues[$fieldPresetId]) === false)
 		{
 			$presetId = $currentValues[$fieldPresetId];
+			$requisiteFieldsMap = self::getRequisiteFieldsMap(
+				EntityRequisite::getSingleInstance()->getCountryIdByPresetId($presetId)
+			);
 			$addressTypeId = $currentValues[$fieldAddressTypeId];
 			$returnValuesMap = array();
 
@@ -285,6 +291,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		}
 		else
 		{
+			$requisiteFieldsMap = self::getRequisiteFieldsMap();
 			$returnValuesMap = array_merge($requisiteFieldsMap, $userFieldsMap);
 		}
 
@@ -363,7 +370,13 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		return $presetFieldNames;
 	}
 
-	protected static function getValues(array $documentType, CBPDocumentService $documentService, array $fieldsMap, array $currentValues, array &$errors): array
+	protected static function getValues(
+		array $documentType,
+		CBPDocumentService $documentService,
+		array $fieldsMap,
+		array $currentValues,
+		array &$errors
+	): array
 	{
 		$values = array();
 
@@ -414,22 +427,41 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		return array_merge($errors, parent::ValidateProperties($testProperties, $user));
 	}
 
-	protected static function getRequisiteFieldsMap(): array
+	protected static function getRequisiteFieldsMap(int $countryId = 0): array
 	{
-		$rqFields = EntityRequisite::getSingleInstance()->getRqFields();
+		if ($countryId === 0)
+		{
+			$countryId = EntityPreset::getCurrentCountryId();
+		}
+		$requisite = EntityRequisite::getSingleInstance();
+
+		$rqFields = $requisite->getRqFields();
+
 		$addressFieldIndex = array_search(EntityRequisite::ADDRESS, $rqFields, true);
 		if ($addressFieldIndex !== false)
 		{
 			unset($rqFields[$addressFieldIndex]);
 		}
 
-		return self::combineFieldsMap(
+		$map = static::combineFieldsMap(
 			$rqFields,
 			array_merge(
-				EntityRequisite::getSingleInstance()->getFieldsTitles(GetCountryIdByCode('US')),
-				EntityRequisite::getSingleInstance()->getFieldsTitles()
+				$requisite->getFieldsTitles(GetCountryIdByCode('US')),
+				$requisite->getFieldsTitles()
 			)
 		);
+
+		foreach ($requisite->getRqListFields() as $fieldName)
+		{
+			$map[$fieldName]['Type'] = \Bitrix\Bizproc\FieldType::SELECT;
+			$map[$fieldName]['Options'] = array_column(
+				$requisite->getRqListFieldItems($fieldName, $countryId),
+				'NAME',
+				'VALUE'
+			);
+		}
+
+		return $map;
 	}
 
 	protected static function getUserFieldsMap(): array

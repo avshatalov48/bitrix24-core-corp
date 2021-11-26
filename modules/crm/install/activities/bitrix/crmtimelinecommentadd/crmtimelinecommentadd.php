@@ -26,7 +26,7 @@ class CBPCrmTimelineCommentAdd
 		$ownerTypeId = \CCrmOwnerType::ResolveID($ownerTypeName);
 
 		$authorId = CBPHelper::ExtractUsers($this->CommentUser, $documentId, true);
-		$text = (string) $this->CommentText;
+		$text = $this->getCommentText();
 
 		$entryID = \Bitrix\Crm\Timeline\CommentEntry::create(
 			array(
@@ -51,6 +51,17 @@ class CBPCrmTimelineCommentAdd
 		Bitrix\Crm\Timeline\CommentController::getInstance()->onCreate($entryID, $saveData);
 
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	private function getCommentText(): string
+	{
+		$text = $this->ParseValue($this->getRawProperty('CommentText'), 'text');
+		if (is_array($text))
+		{
+			$text = implode(', ', \CBPHelper::MakeArrayFlat($text));
+		}
+
+		return (string)$text;
 	}
 
 	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)

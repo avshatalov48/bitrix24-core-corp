@@ -98,7 +98,6 @@ class salescenter extends CModule
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnSalePsServiceProcessRequestBeforePaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onSalePsServiceProcessRequestBeforePaid');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnPrintableCheckSend', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnPrintableCheckSend');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnCheckPrintError', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnCheckPrintError');
-		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('crm', 'OnActivityAdd', 'salescenter', '\Bitrix\SalesCenter\Integration\CrmManager', 'onActivityAdd');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('pull', 'OnGetDependentModule', 'salescenter', '\Bitrix\SalesCenter\Driver', 'onGetDependentModule', 1000);
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnPaymentPaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onPaymentPaid');
 

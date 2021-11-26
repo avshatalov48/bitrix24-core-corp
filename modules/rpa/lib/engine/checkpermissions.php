@@ -80,22 +80,32 @@ class CheckPermissions extends Base
 				if($stage)
 				{
 					$typeId = $stage->getTypeId();
-					if(!$typeId)
-					{
-						$this->addError(new Error(Loc::getMessage('RPA_PERMISSION_TYPE_NOT_FOUND')));
-					}
-					elseif($this->actionType === UserPermissions::ACTION_VIEW && !$this->userPermissions->canViewType($typeId))
-					{
-						$this->addError(new Error(Loc::getMessage('RPA_PERMISSION_STAGE_VIEW_DENIED')));
-					}
-					elseif($this->actionType === UserPermissions::ACTION_MODIFY && !$this->userPermissions->canModifyType($typeId))
-					{
-						$this->addError(new Error(Loc::getMessage('RPA_PERMISSION_STAGE_MODIFY_DENIED')));
-					}
 				}
 				else
 				{
 					$this->addError(new Error(Loc::getMessage('RPA_STAGE_NOT_FOUND_ERROR')));
+				}
+			}
+
+			if ($this->errorCollection->isEmpty())
+			{
+				if(!$typeId)
+				{
+					$this->addError(new Error(Loc::getMessage('RPA_PERMISSION_TYPE_NOT_FOUND')));
+				}
+				elseif($this->actionType === UserPermissions::ACTION_VIEW && !$this->userPermissions->canViewType($typeId))
+				{
+					$this->addError(new Error(Loc::getMessage('RPA_PERMISSION_STAGE_VIEW_DENIED')));
+				}
+				elseif(
+					(
+						$this->actionType === UserPermissions::ACTION_MODIFY
+						|| $this->actionType === UserPermissions::ACTION_CREATE
+					)
+					&& !$this->userPermissions->canModifyType($typeId)
+				)
+				{
+					$this->addError(new Error(Loc::getMessage('RPA_PERMISSION_STAGE_MODIFY_DENIED')));
 				}
 			}
 		}

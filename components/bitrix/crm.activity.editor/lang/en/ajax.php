@@ -1,7 +1,8 @@
-<?
+<?php
 $MESS["CRM_ACTION_DEFAULT_SUBJECT"] = "New activity (#DATE#)";
 $MESS["CRM_ACTIVITY_COULD_NOT_CREATE_POSTING"] = "Cannot register the e-mail message.";
 $MESS["CRM_ACTIVITY_COULD_NOT_SAVE_POSTING_FILE"] = "Cannot attach the \"#FILE_NAME#\" to the message.";
+$MESS["CRM_ACTIVITY_EMAIL_BLACKLISTED"] = "Email message canceled. The following addresses are %link_start% blacklisted %link_end%: %emails%";
 $MESS["CRM_ACTIVITY_EMAIL_CREATION_CANCELED"] = "E-mail message canceled.";
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD"] = "Please specify the message sender.";
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD"] = "Please specify the message recipient.";
@@ -27,4 +28,3 @@ $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
 $MESS["CRM_TITLE_EMAIL_FROM"] = "From";
 $MESS["CRM_TITLE_EMAIL_SUBJECT"] = "Subject";
 $MESS["CRM_TITLE_EMAIL_TO"] = "To";
-?>

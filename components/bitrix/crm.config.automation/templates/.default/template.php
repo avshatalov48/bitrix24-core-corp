@@ -68,7 +68,7 @@ if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y'
 <?endif;?>
 <?if ($arResult['CATEGORIES'] && count($arResult['CATEGORIES']) > 1):?>
 	<div class="crm-config-automation-button-container">
-		<div class="ui-btn ui-btn-dropdown ui-btn-light-border" data-role="category-selector" data-categories="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['CATEGORIES']))?>">
+		<div class="ui-btn ui-btn-dropdown ui-btn-themes ui-btn-light-border" data-role="category-selector" data-categories="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['CATEGORIES']))?>">
 			<?=htmlspecialcharsbx($arResult['CATEGORY_NAME'])?>
 		</div>
 	</div><!--pagetitle-container-->

@@ -68,7 +68,7 @@ $isStExportAllFields = (isset($arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_
 $arResult['STEXPORT_EXPORT_ALL_FIELDS'] = ($isStExport && $isStExportAllFields) ? 'Y' : 'N';
 
 $isStExportRequisiteMultiline = (isset($arParams['STEXPORT_INITIAL_OPTIONS']['REQUISITE_MULTILINE'])
-								&& $arParams['STEXPORT_INITIAL_OPTIONS']['REQUISITE_MULTILINE'] === 'Y');
+								 && $arParams['STEXPORT_INITIAL_OPTIONS']['REQUISITE_MULTILINE'] === 'Y');
 $arResult['STEXPORT_REQUISITE_MULTILINE'] = ($isStExport && $isStExportRequisiteMultiline) ? 'Y' : 'N';
 
 $arResult['STEXPORT_MODE'] = $isStExport ? 'Y' : 'N';
@@ -107,6 +107,7 @@ if ($isErrorOccured)
 
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Main;
+use Bitrix\Main\Grid\Editor;
 use Bitrix\Crm;
 use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
@@ -309,10 +310,10 @@ $arResult['GRID_ID'] = 'CRM_CONTACT_LIST_V12'.($bInternal && !empty($arParams['G
 $arResult['HONORIFIC'] = CCrmStatus::GetStatusListEx('HONORIFIC');
 $arResult['TYPE_LIST'] = CCrmStatus::GetStatusListEx('CONTACT_TYPE');
 $arResult['SOURCE_LIST'] = CCrmStatus::GetStatusListEx('SOURCE');
-$arResult['WEBFORM_LIST'] = WebFormManager::getListNames();
+$arResult['WEBFORM_LIST'] = WebFormManager::getListNamesEncoded();
 $arResult['EXPORT_LIST'] = array('Y' => GetMessage('MAIN_YES'), 'N' => GetMessage('MAIN_NO'));
 $arResult['FILTER'] = array();
-$arResult['FILTER2LOGIC'] = array();
+$arResult['FILTER2LOGIC'] = [];
 $arResult['FILTER_PRESETS'] = array();
 
 $arResult['AJAX_MODE'] = isset($arParams['AJAX_MODE']) ? $arParams['AJAX_MODE'] : ($arResult['INTERNAL'] ? 'N' : 'Y');
@@ -362,8 +363,7 @@ if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
 //region Filter initialization
 if (!$bInternal)
 {
-	$arResult['FILTER2LOGIC'] = array('TITLE', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'POST', 'COMMENTS');
-
+	$arResult['FILTER2LOGIC'] = ['TITLE', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'POST', 'COMMENTS'];
 	$filterFlags = Crm\Filter\ContactSettings::FLAG_NONE;
 	if($enableOutmodedFields)
 	{
@@ -919,7 +919,7 @@ foreach ($arFilter as $k => $v)
 		$arFilter['ASSOCIATED_COMPANY_TITLE'] = $arFilter['COMPANY_TITLE'];
 		unset($arFilter['COMPANY_TITLE']);
 	}
-	elseif (in_array($k, $arResult['FILTER2LOGIC']))
+	elseif (in_array($k, $arResult['FILTER2LOGIC']) && $v !== false)
 	{
 		// Bugfix #26956 - skip empty values in logical filter
 		$v = trim($v);
@@ -948,7 +948,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter['COMMUNICATION_TYPE']);
 	}
-	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1 && $v !== false)
 	{
 		$arFilter['%'.$k] = $v;
 		unset($arFilter[$k]);
@@ -2529,7 +2529,9 @@ if (!$isInExportMode)
 		$arResult['NEED_FOR_BUILD_TIMELINE'] =
 		$arResult['NEED_FOR_BUILD_DUPLICATE_INDEX'] =
 		$arResult['NEED_TO_CONVERT_ADDRESSES'] =
-		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] = false;
+		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] =
+		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] =
+		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] = false;
 
 	if(!$bInternal)
 	{
@@ -2539,6 +2541,7 @@ if (!$isInExportMode)
 		}
 
 		$arResult['NEED_FOR_BUILD_TIMELINE'] = \Bitrix\Crm\Agent\Timeline\ContactTimelineBuildAgent::getInstance()->isEnabled();
+		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] = \Bitrix\Crm\Agent\Security\ContactAttributeRebuildAgent::getInstance()->isEnabled();
 
 		$agent = Bitrix\Crm\Agent\Duplicate\ContactDuplicateIndexRebuildAgent::getInstance();
 		$isAgentEnabled = $agent->isEnabled();

@@ -523,6 +523,14 @@ class Instagram
 		return \CCrmProduct::GetLastError();
 	}
 
+	protected static function generateProductCode(string $name): string
+	{
+		return
+			(new \CIBlockElement())
+				->generateMnemonicCode(uniqid($name), static::getIblockId())
+		;
+	}
+
 	protected static function addProduct($fields)
 	{
 		$images = $fields['IMAGES'];
@@ -556,6 +564,7 @@ class Instagram
 			'CATALOG_ID' => static::getIblockId(),
 			'SECTION_ID' => static::getSectionId(),
 			'NAME' => $fields['NAME'],
+			'CODE' => static::generateProductCode($fields['NAME']),
 			'DESCRIPTION' => $fields['DESCRIPTION'],
 			'CURRENCY_ID' => $currencyId,
 			'ACTIVE' => 'Y',

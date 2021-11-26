@@ -42,8 +42,6 @@ class RestrictionManager
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $detailsSearchByEdrpouRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $automationRestriction;
-	/** @var Bitrix24AccessRestriction|null  */
 	private static $generatorRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $webformRestriction;
@@ -69,6 +67,8 @@ class RestrictionManager
 	private static $quotesRestriction;
 	/** @var OrderRestriction|null  */
 	private static $orderRestriction;
+	/** @var ClientFieldsRestriction  */
+	private static $clientFieldsRestriction;
 	/** @var Bitrix24AccessRestriction  */
 	private static $observersRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
@@ -130,8 +130,7 @@ class RestrictionManager
 	 */
 	public static function getAutomationRestriction()
 	{
-		self::initialize();
-		return self::$automationRestriction;
+		return null;
 	}
 
 	/**
@@ -318,7 +317,6 @@ class RestrictionManager
 		self::$invoiceRecurringRestriction->reset();
 		self::$detailsSearchByInnRestriction->reset();
 		self::$detailsSearchByEdrpouRestriction->reset();
-		self::$automationRestriction->reset();
 		self::$generatorRestriction->reset();
 		self::$webformRestriction->reset();
 		self::$webformLimitRestriction->reset();
@@ -340,7 +338,6 @@ class RestrictionManager
 		self::$invoiceRecurringRestriction = null;
 		self::$detailsSearchByInnRestriction = null;
 		self::$detailsSearchByEdrpouRestriction = null;
-		self::$automationRestriction = null;
 		self::$generatorRestriction = null;
 		self::$webformRestriction = null;
 		self::$webformLimitRestriction = null;
@@ -639,18 +636,16 @@ class RestrictionManager
 		}
 		//endregion
 
-		self::$automationRestriction = new Bitrix24AccessRestriction(
-			'crm_automation_deal',
-			false,
-			[],
-			[
-				'ID' => 'limit_crm_robots',
-				'TITLE' => GetMessage('CRM_ST_ROBOTS_POPUP_TITLE'),
-				'CONTENT' => GetMessage('CRM_ST_ROBOTS_POPUP_TEXT')
-			]
+		self::$generatorRestriction = new Bitrix24AccessRestriction(
+			'crm_generator', false, [],
+			['ID' => 'limit_crm_marketing_sales_generator']
 		);
-
-		self::$generatorRestriction = new Bitrix24AccessRestriction('crm_generator', false, [], ['ID' => 'limit_crm_marketing_sales_generator']);
+		if (!self::$generatorRestriction->load())
+		{
+			self::$generatorRestriction->permit(
+				Bitrix24Manager::isFeatureEnabled('sender_rc')
+			);
+		}
 
 		self::$webformRestriction = new Bitrix24AccessRestriction(
 			'crm_generator', false, [],
@@ -838,6 +833,16 @@ class RestrictionManager
 		return self::$orderRestriction;
 	}
 
+	public static function getDealClientFieldsRestriction(): ClientFieldsRestriction
+	{
+		if (!static::$clientFieldsRestriction)
+		{
+			static::$clientFieldsRestriction = new ClientFieldsRestriction(\CCrmOwnerType::Deal);
+		}
+
+		return static::$clientFieldsRestriction;
+	}
+
 	public static function getObserversRestriction(): Bitrix24AccessRestriction
 	{
 		if (self::$observersRestriction === null)
@@ -858,7 +863,6 @@ class RestrictionManager
 
 		return self::$observersRestriction;
 	}
-
 	public static function getContactExportRestriction(): Bitrix24AccessRestriction
 	{
 		if (!static::$contactExportRestriction)

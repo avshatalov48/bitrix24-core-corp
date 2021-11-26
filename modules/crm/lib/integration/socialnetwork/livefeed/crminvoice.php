@@ -1,20 +1,21 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Integration\Socialnetwork\Livefeed;
 
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
 final class CrmInvoice extends CrmEntity
 {
-	const PROVIDER_ID = 'CRM_INVOICE';
-	const CONTENT_TYPE_ID = 'CRM_INVOICE';
+	public const PROVIDER_ID = 'CRM_INVOICE';
+	public const CONTENT_TYPE_ID = 'CRM_INVOICE';
 
-	public function getEventId()
+	public function getEventId(): array
 	{
-		return array(
-			\CCrmLiveFeedEvent::InvoicePrefix.\CCrmLiveFeedEvent::Add
-		);
+		return [
+			\CCrmLiveFeedEvent::InvoicePrefix . \CCrmLiveFeedEvent::Add,
+		];
 	}
 
 	public function initSourceFields()

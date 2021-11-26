@@ -1,10 +1,12 @@
-import {Vuex} from 'ui.vue.vuex';
+import { Vuex } from 'ui.vue.vuex';
 import StageBlocksList from './components/deal-receiving-payment/stage-blocks-list';
 import StageBlocksListShipment from './components/deal-creating-shipment/stage-blocks-list';
 import ComponentMixin from './component-mixin';
-import {Loc} from 'main.core';
-import {MixinTemplatesType} from './components/templates-type-mixin';
+import { Loc } from 'main.core';
+import { MixinTemplatesType } from './components/templates-type-mixin';
 import Start from './start';
+
+import { SenderConfig } from "salescenter.lib";
 
 export default {
 	mixins: [MixinTemplatesType, ComponentMixin],
@@ -89,6 +91,18 @@ export default {
 		{
 			BX.Salescenter.Manager.openIntegrationRequestForm(event);
 		},
+		freeMessages()
+		{
+			let senders = this.$root.$app.options.senders
+
+			let sender = senders.filter(item => item.code === SenderConfig.BITRIX24)
+
+			if(sender.length > 0)
+			{
+				let fixed = SenderConfig.openSliderFreeMessages(sender[0].connectUrl);
+				fixed().then()
+			}
+		}
 		// endregion
 	},
 	computed: {
@@ -103,6 +117,18 @@ export default {
 		initialMode()
 		{
 			return this.$root.$app.options.initialMode;
+		},
+		isAllowedFreeMessagesButton()
+		{
+			let senders = this.$root.$app.options.senders
+
+			let sender = senders.filter(item => item.code === SenderConfig.BITRIX24)
+
+			if(sender.length > 0)
+			{
+				return SenderConfig.needConfigure(sender[0])
+			}
+			return false;
 		},
 		isOnlyDeliveryItemVisible()
 		{
@@ -262,7 +288,7 @@ export default {
 								${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_OFFER_SCRIPT')}
 							</div>
 						</a>
-					</li>
+					</li>					
 					<li class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm">
 						<a
 							@click="howItWorks($event)"
@@ -270,6 +296,19 @@ export default {
 						>
 							<div class="ui-sidepanel-menu-link-text">
 								${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_HOW_WORKS')}
+							</div>
+						</a>
+					</li>
+					<li
+						v-if="isAllowedFreeMessagesButton"
+						class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm"
+					>
+						<a
+							@click="freeMessages($event)"
+							class="ui-sidepanel-menu-link"
+						>
+							<div class="ui-sidepanel-menu-link-text">
+								${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_FREE_MESSAGES')}
 							</div>
 						</a>
 					</li>

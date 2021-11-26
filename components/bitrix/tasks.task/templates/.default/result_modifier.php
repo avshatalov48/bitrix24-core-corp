@@ -129,8 +129,8 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
 	),
 	"BUTTONS" => $buttons,
 	"BUTTONS_HTML" => array(
-		"Checklist" => '<span class="tasks-task-mpf-link" data-bx-id="task-edit-toggler" data-target="checklist">'.Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_CHECKLIST').'</span>',
-		"ToCheckList" => '<span class="tasks-task-mpf-link" data-bx-id="task-edit-to-checklist">' . Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST') . '</span>',
+		"Checklist" => '<span data-bx-id="task-edit-toggler" data-target="checklist">'.Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_CHECKLIST').'</span>',
+		"ToCheckList" => '<span data-bx-id="task-edit-to-checklist">' . Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST') . '</span>',
 	),
 	"FILES" => Array(
 		"VALUE" => array(),
@@ -472,6 +472,7 @@ if (is_array($arResult['DATA']['TASK']['SE_RELATEDTASK']))
 	foreach ($arResult['DATA']['TASK']['SE_RELATEDTASK'] as $item)
 	{
 		$taskId = $item['ID'];
+		$arResult['DATA']['TASK']['DEPENDS_ON'] = ($arResult['DATA']['TASK']['DEPENDS_ON'] ?? []);
 
 		if (!in_array($taskId, $arResult['DATA']['TASK']['DEPENDS_ON']))
 		{

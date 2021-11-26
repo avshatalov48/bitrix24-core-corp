@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'mobile.js',
 	'rel' => [
-		'main.core',
+		'main.polyfill.core',
 	],
-	'skip_core' => false,
+	'skip_core' => true,
 ];

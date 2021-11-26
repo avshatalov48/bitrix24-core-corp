@@ -15,7 +15,6 @@
 			this.smsProviderParams = config.smsProviderParams;
 			this.smsProviderAppParams = config.smsProviderAppParams;
 			this.signedParameters = config.signedParameters;
-
 			this.smsProvider = new BX.TileGrid.Grid(this.smsProviderParams);
 			this.smsProvider.draw();
 
@@ -227,7 +226,8 @@
 			var defaultColors = [
 				"8eb807",
 				"188a98",
-				"f12e45"
+				"f12e45",
+				"1ec6fa",
 			];
 
 			if (BX.util.in_array(hex, defaultColors))
@@ -257,7 +257,8 @@
 
 				if(this.itemSelected)
 				{
-					this.layout.title.style.color = this.isDarkColor(this.itemSelectedColor) ? '#fff': '#525c69';
+					var isTitleDark = this.data.isSelectedItemTitleDark || this.isDarkColor(this.itemSelectedColor);
+					this.layout.title.style.color = isTitleDark ? '#fff': '#525c69';
 				}
 			}
 
@@ -432,6 +433,13 @@
 						}
 					});
 				}
+			}
+			else if(this.data.type === 'bitrix24')
+			{
+				var self = this;
+				BX.Salescenter.SenderConfig.openSliderFreeMessages(this.data.connectPath)().then(function () {
+					self.reload.call(self, BX.SaleCenterSmsProvider.mode, BX.SaleCenterSmsProvider.signedParameters);
+				});
 			}
 		},
 

@@ -45,8 +45,7 @@ import 'pull.component.status';
 import "./dialog.css";
 
 // widget components
-import "./component/bx-messenger";
-
+import "./component/dialog";
 
 export class MobileDialogApplication
 {
@@ -146,7 +145,7 @@ export class MobileDialogApplication
 				autoplayVideo: ChatPerformance.isAutoPlayVideoSupported(),
 				backgroundType: 'LIGHT_GRAY'
 			}).then(options => {
-				this.controller.getStore().commit('application/set', {
+				this.controller.getStore().dispatch('application/set', {
 					dialog: {
 						dialogId: data.DIALOG_ID
 					},
@@ -156,8 +155,7 @@ export class MobileDialogApplication
 						autoplayVideo: options.autoplayVideo,
 						darkBackground: ChatDialogBackground && ChatDialogBackground[options.backgroundType] && ChatDialogBackground[options.backgroundType].dark
 					}
-				});
-				resolve();
+				}).then(() => resolve());
 			})
 		});
 	}

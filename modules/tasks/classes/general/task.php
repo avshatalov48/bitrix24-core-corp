@@ -19,6 +19,7 @@ use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\Query\Join;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
@@ -111,10 +112,44 @@ class CTasks
 		return $this->previousData;
 	}
 
-	function CheckFields(&$arFields, $ID = false, $effectiveUserId = null)
+	/**
+	 * @param $fields
+	 * @param false $taskId
+	 * @param null $effectiveUserId
+	 * @return bool
+	 */
+	private function checkFields(&$fields, $taskId = false, $effectiveUserId = null): bool
 	{
-		global $APPLICATION;
+		$effectiveUserId = $this->checkEffectiveUser($effectiveUserId);
 
+		$fields = $this->checkTitle($fields, $taskId);
+		$fields = $this->checkStatus($fields);
+		$fields = $this->checkPriority($fields);
+		$fields = $this->checkMark($fields);
+		$fields = $this->checkFlags($fields);
+		$fields = $this->checkParent($fields, $taskId, $effectiveUserId);
+		$fields = $this->checkDates($fields, $taskId, $effectiveUserId);
+		$fields = $this->checkMembers($fields, $taskId, $effectiveUserId);
+		$fields = $this->checkDependencies($fields, $taskId);
+		$fields = $this->checkGuid($fields, $taskId);
+
+		if (!empty($this->_errors))
+		{
+			global $APPLICATION;
+			$APPLICATION->ThrowException(new CAdminException($this->_errors));
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param null $effectiveUserId
+	 * @return bool|int|mixed|null
+	 */
+	private function checkEffectiveUser($effectiveUserId = null)
+	{
 		if ($effectiveUserId === null)
 		{
 			$effectiveUserId = User::getId();
@@ -124,162 +159,342 @@ class CTasks
 			}
 		}
 
-		if ((is_set($arFields, "TITLE") || $ID === false))
-		{
-			$arFields["TITLE"] = trim((string)$arFields["TITLE"]);
+		return $effectiveUserId;
+	}
 
-			if ($arFields["TITLE"] == '')
+	/**
+	 * @param array $fields
+	 * @param $taskId
+	 * @return array
+	 */
+	private function checkTitle(array $fields, $taskId): array
+	{
+		if ($taskId === false || array_key_exists('TITLE', $fields))
+		{
+			$title = trim((string)$fields['TITLE']);
+			if ($title === '')
 			{
-				$this->_errors[] = array("text" => GetMessage("TASKS_BAD_TITLE"), "id" => "ERROR_BAD_TASKS_TITLE");
+				$this->_errors[] = [
+					'id' => 'ERROR_BAD_TASKS_TITLE',
+					'text' => Loc::getMessage('TASKS_BAD_TITLE'),
+				];
 			}
-			elseif (mb_strlen($arFields['TITLE']) > 250)
+			elseif (mb_strlen($title) > 250)
 			{
-				$arFields['TITLE'] = mb_substr($arFields['TITLE'], 0, 250);
+				$title = mb_substr($title, 0, 250);
+			}
+			$fields['TITLE'] = $title;
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * @param array $fields
+	 * @return array
+	 */
+	private function checkStatus(array $fields): array
+	{
+		if (array_key_exists('STATUS', $fields) && (int)$fields['STATUS'] === 1)
+		{
+			$fields['STATUS'] = 2; // status CTasks::STATE_NEW (=1) deprecated
+		}
+
+		$enum = [
+			self::STATE_PENDING,
+			self::STATE_IN_PROGRESS,
+			self::STATE_SUPPOSEDLY_COMPLETED,
+			self::STATE_COMPLETED,
+			self::STATE_DEFERRED,
+		];
+		if (!Type::checkEnumKey($fields, 'STATUS', $enum))
+		{
+			$this->_errors[] = [
+				'id' => 'ERROR_TASKS_INCORRECT_STATUS',
+				'text' => Loc::getMessage('TASKS_INCORRECT_STATUS'),
+			];
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * @param array $fields
+	 * @return array
+	 */
+	private function checkPriority(array $fields): array
+	{
+		$enum = [
+			self::PRIORITY_LOW,
+			self::PRIORITY_AVERAGE,
+			self::PRIORITY_HIGH,
+		];
+		Type::checkEnumKey($fields, 'PRIORITY', $enum, self::PRIORITY_AVERAGE);
+
+		return $fields;
+	}
+
+	/**
+	 * @param array $fields
+	 * @return array
+	 */
+	private function checkMark(array $fields): array
+	{
+		$enum = [
+			self::MARK_NEGATIVE,
+			self::MARK_POSITIVE,
+			'',
+		];
+		Type::checkEnumKey($fields, 'MARK', $enum);
+
+		return $fields;
+	}
+
+	/**
+	 * @param array $fields
+	 * @return array
+	 */
+	private function checkFlags(array $fields): array
+	{
+		Type::checkYNKey($fields, 'ALLOW_CHANGE_DEADLINE');
+		Type::checkYNKey($fields, 'TASK_CONTROL');
+		Type::checkYNKey($fields, 'ADD_IN_REPORT');
+		Type::checkYNKey($fields, 'MATCH_WORK_TIME');
+		Type::checkYNKey($fields, 'REPLICATE');
+
+		return $fields;
+	}
+
+	/**
+	 * @param array $fields
+	 * @param $taskId
+	 * @param $userId
+	 * @return array
+	 */
+	private function checkParent(array $fields, $taskId, $userId): array
+	{
+		if (!array_key_exists('PARENT_ID', $fields))
+		{
+			return $fields;
+		}
+
+		$parentId = (int)$fields['PARENT_ID'];
+		if (!$parentId)
+		{
+			$fields['PARENT_ID'] = false;
+
+			return $fields;
+		}
+
+		$result = CTasks::GetByID($parentId, true, ['USER_ID' => $userId]);
+		if (!$result->Fetch())
+		{
+			$this->_errors[] = [
+				'id' => 'ERROR_TASKS_BAD_PARENT_ID',
+				'text' => Loc::getMessage('TASKS_BAD_PARENT_ID'),
+			];
+		}
+
+		if ($taskId)
+		{
+			if (ProjectDependenceTable::checkLinkExists($taskId, $parentId, ['BIDIRECTIONAL' => true]))
+			{
+				$this->_errors[] = [
+					'id' => 'ERROR_TASKS_IS_LINKED',
+					'text' => Loc::getMessage('TASKS_IS_LINKED_SET_PARENT'),
+				];
+			}
+
+			$result = Dependence::canAttach($taskId, $parentId);
+			if (!$result->isSuccess() && ($errors = $result->getErrors()))
+			{
+				foreach ($errors->getMessages() as $message)
+				{
+					$this->_errors[] = [
+						'id' => 'ERROR_TASKS_PARENT_SELF',
+						'text' => $message,
+					];
+				}
 			}
 		}
 
-		if (is_set($arFields, 'STATUS') && $arFields['STATUS'] == 1)
-		{
-			$arFields['STATUS'] = 2; // status CTasks::STATE_NEW (=1) deprecated
-		}
+		return $fields;
+	}
+
+	/**
+	 * @param array $fields
+	 * @param $taskId
+	 * @param $userId
+	 * @return array
+	 */
+	private function checkDates(array $fields, $taskId, $userId): array
+	{
+		$this->checkDatesInProject($fields, $taskId, $userId);
+
+		$startDate = $fields['START_DATE_PLAN'];
+		$endDate = $fields['END_DATE_PLAN'];
 
 		// you are not allowed to clear up END_DATE_PLAN while the task is linked
-		if ($ID && ((isset($arFields['END_DATE_PLAN']) && (string)$arFields['END_DATE_PLAN'] == '')))
+		if (
+			$taskId
+			&& isset($endDate)
+			&& (string)$endDate === ''
+			&& ProjectDependenceTable::checkItemLinked($taskId)
+		)
 		{
-			if (ProjectDependenceTable::checkItemLinked($ID))
-			{
-				$this->_errors[] = array(
-					"text" => GetMessage("TASKS_IS_LINKED_END_DATE_PLAN_REMOVE"),
-					"id"   => "ERROR_TASKS_IS_LINKED"
-				);
-			}
+			$this->_errors[] = [
+				'id' => 'ERROR_TASKS_IS_LINKED',
+				'text' => Loc::getMessage('TASKS_IS_LINKED_END_DATE_PLAN_REMOVE'),
+			];
 		}
 
-		if (array_key_exists('GROUP_ID', $arFields) && (int)$arFields['GROUP_ID'] > 0)
+		if (isset($startDate, $endDate) && $startDate !== '' && $endDate !== '')
 		{
-			if (\Bitrix\Main\Loader::IncludeModule('socialnetwork'))
+			$startDateTs = MakeTimeStamp($startDate);
+			$endDateTs = MakeTimeStamp($endDate);
+
+			if ($startDateTs > 0 && $endDateTs > 0)
 			{
-				$group = \CSocNetGroup::getById($arFields['GROUP_ID']);
-
-				if ($group && $group['PROJECT'] == 'Y' && ($group['PROJECT_DATE_START'] || $group['PROJECT_DATE_FINISH']))
+				if ($endDateTs < $startDateTs)
 				{
-					$projectStartDate = DateTime::createFrom($group['PROJECT_DATE_START']);
-					$projectFinishDate = DateTime::createFrom($group['PROJECT_DATE_FINISH']);
-
-					if ($projectFinishDate)
-					{
-						$projectFinishDate->addSecond(86399); // + 23:59:59
-					}
-
-					$deadline = null;
-					$endDatePlan = null;
-					$startDatePlan = null;
-
-					if (isset($arFields['DEADLINE']) && $arFields['DEADLINE'])
-					{
-						$deadline = DateTime::createFrom($arFields['DEADLINE']);
-					}
-					if (isset($arFields['END_DATE_PLAN']) && $arFields['END_DATE_PLAN'])
-					{
-						$endDatePlan = DateTime::createFrom($arFields['END_DATE_PLAN']);
-					}
-					if (isset($arFields['START_DATE_PLAN']) && $arFields['START_DATE_PLAN'])
-					{
-						$startDatePlan = DateTime::createFrom($arFields['START_DATE_PLAN']);
-					}
-
-					if ($deadline && !$deadline->checkInRange($projectStartDate, $projectFinishDate))
-					{
-						$this->_errors[] = ["text" => GetMessage("TASKS_DEADLINE_OUT_OF_PROJECT_RANGE"), "id" => "ERROR_TASKS_OUT_OF_PROJECT_DATE"];
-					}
-
-					if ($endDatePlan && !$endDatePlan->checkInRange($projectStartDate, $projectFinishDate))
-					{
-						$this->_errors[] = ["text" => GetMessage("TASKS_PLAN_DATE_END_OUT_OF_PROJECT_RANGE"), "id" => "ERROR_TASKS_OUT_OF_PROJECT_DATE"];
-					}
-
-					if ($startDatePlan && !$startDatePlan->checkInRange($projectStartDate, $projectFinishDate))
-					{
-						$this->_errors[] = ["text" => GetMessage("TASKS_PLAN_DATE_START_OUT_OF_PROJECT_RANGE"), "id" => "ERROR_TASKS_OUT_OF_PROJECT_DATE"];
-					}
+					$this->_errors[] = [
+						'id' => 'ERROR_BAD_TASKS_PLAN_DATES',
+						'text' => Loc::getMessage('TASKS_BAD_PLAN_DATES'),
+					];
+				}
+				if ($endDateTs - $startDateTs > self::MAX_INT)
+				{
+					$this->_errors[] = [
+						'id' => 'ERROR_TASKS_BAD_DURATION',
+						'text' => Loc::getMessage('TASKS_BAD_DURATION'),
+					];
 				}
 			}
 		}
 
-		if ($ID && (isset($arFields['PARENT_ID']) && intval($arFields['PARENT_ID']) > 0))
+		return $fields;
+	}
+
+	/**
+	 * @param array $fields
+	 * @param $taskId
+	 * @param $userId
+	 * @throws Main\LoaderException
+	 */
+	private function checkDatesInProject(array $fields, $taskId, $userId)
+	{
+		$groupId = 0;
+
+		if (array_key_exists('GROUP_ID', $fields) && (int)$fields['GROUP_ID'] > 0)
 		{
-			if (ProjectDependenceTable::checkLinkExists($ID, $arFields['PARENT_ID'], array('BIDIRECTIONAL' => true)))
+			$groupId = (int)$fields['GROUP_ID'];
+		}
+		elseif ($taskId)
+		{
+			$taskResult = CTasks::GetList([], ['ID' => $taskId], ['GROUP_ID'], ['USER_ID' => $userId]);
+			if ($task = $taskResult->Fetch())
 			{
-				$this->_errors[] = array(
-					"text" => GetMessage("TASKS_IS_LINKED_SET_PARENT"),
-					"id"   => "ERROR_TASKS_IS_LINKED"
-				);
+				$groupId = (int)$task['GROUP_ID'];
 			}
 		}
 
-		// If plan dates were set
-		if (isset($arFields['START_DATE_PLAN']) &&
-			($arFields['START_DATE_PLAN'] != '') &&
-			isset($arFields['END_DATE_PLAN']) &&
-			($arFields['END_DATE_PLAN'] != ''))
+		if (!$groupId)
 		{
-			$startDate = MakeTimeStamp($arFields['START_DATE_PLAN']);
-			$endDate = MakeTimeStamp($arFields['END_DATE_PLAN']);
+			return;
+		}
 
-			// and they were really set
-			if ($startDate > 0 && $endDate > 0)
+		if (
+			Loader::includeModule('socialnetwork')
+			&& ($group = \CSocNetGroup::getById($groupId))
+			&& ($group['PROJECT'] === 'Y')
+			&& ($group['PROJECT_DATE_START'] || $group['PROJECT_DATE_FINISH'])
+		)
+		{
+			$projectStartDate = DateTime::createFrom($group['PROJECT_DATE_START']);
+			$projectFinishDate = DateTime::createFrom($group['PROJECT_DATE_FINISH']);
+
+			if ($projectFinishDate)
 			{
-				// and end date is before start date => then emit error
-				if ($endDate < $startDate)
-				{
-					$this->_errors[] = array(
-						'text' => GetMessage('TASKS_BAD_PLAN_DATES'),
-						'id'   => 'ERROR_BAD_TASKS_PLAN_DATES'
-					);
-				}
+				$projectFinishDate->addSecond(86399); // + 23:59:59
+			}
 
-				$duration = $endDate - $startDate;
-				if ($duration > self::MAX_INT)
-				{
-					$this->_errors[] = array(
-						'text' => GetMessage('TASKS_BAD_DURATION'),
-						'id'   => 'ERROR_TASKS_BAD_DURATION'
-					);
-				}
+			$deadline = null;
+			$endDatePlan = null;
+			$startDatePlan = null;
+
+			if (isset($fields['DEADLINE']) && $fields['DEADLINE'])
+			{
+				$deadline = DateTime::createFrom($fields['DEADLINE']);
+			}
+			if (isset($fields['END_DATE_PLAN']) && $fields['END_DATE_PLAN'])
+			{
+				$endDatePlan = DateTime::createFrom($fields['END_DATE_PLAN']);
+			}
+			if (isset($fields['START_DATE_PLAN']) && $fields['START_DATE_PLAN'])
+			{
+				$startDatePlan = DateTime::createFrom($fields['START_DATE_PLAN']);
+			}
+
+			if ($deadline && !$deadline->checkInRange($projectStartDate, $projectFinishDate))
+			{
+				$this->_errors[] = [
+					'id' => 'ERROR_TASKS_OUT_OF_PROJECT_DATE',
+					'text' => Loc::getMessage('TASKS_DEADLINE_OUT_OF_PROJECT_RANGE'),
+				];
+			}
+			if ($endDatePlan && !$endDatePlan->checkInRange($projectStartDate, $projectFinishDate))
+			{
+				$this->_errors[] = [
+					'id' => 'ERROR_TASKS_OUT_OF_PROJECT_DATE',
+					'text' => Loc::getMessage('TASKS_PLAN_DATE_END_OUT_OF_PROJECT_RANGE'),
+				];
+			}
+			if ($startDatePlan && !$startDatePlan->checkInRange($projectStartDate, $projectFinishDate))
+			{
+				$this->_errors[] = [
+					'id' => 'ERROR_TASKS_OUT_OF_PROJECT_DATE',
+					'text' => Loc::getMessage('TASKS_PLAN_DATE_START_OUT_OF_PROJECT_RANGE'),
+				];
+			}
+		}
+	}
+
+	/**
+	 * @param array $fields
+	 * @param $taskId
+	 * @param $userId
+	 * @return array
+	 */
+	private function checkMembers(array $fields, $taskId, $userId): array
+	{
+		$isAdding = ($taskId === false);
+
+		if ($isAdding)
+		{
+			if (!array_key_exists('RESPONSIBLE_ID', $fields))
+			{
+				$this->_errors[] = [
+					'id' => 'ERROR_TASKS_BAD_RESPONSIBLE_ID',
+					'text' => Loc::getMessage('TASKS_BAD_RESPONSIBLE_ID'),
+				];
+			}
+			if (!array_key_exists('CREATED_BY', $fields) || $fields['CREATED_BY'] < 1)
+			{
+				$this->_errors[] = [
+					'id' => 'ERROR_TASKS_BAD_CREATED_BY',
+					'text' => Loc::getMessage('TASKS_BAD_CREATED_BY'),
+				];
 			}
 		}
 
-		if ($ID === false && !is_set($arFields, "RESPONSIBLE_ID"))
+		if (array_key_exists('RESPONSIBLE_ID', $fields))
 		{
-			$this->_errors[] = array(
-				"text" => GetMessage("TASKS_BAD_RESPONSIBLE_ID"),
-				"id"   => "ERROR_TASKS_BAD_RESPONSIBLE_ID"
-			);
-		}
-
-		if ($ID === false && !is_set($arFields, "CREATED_BY"))
-			$this->_errors[] = array(
-				"text" => GetMessage("TASKS_BAD_CREATED_BY"),
-				"id"   => "ERROR_TASKS_BAD_CREATED_BY"
-			);
-
-		if (is_set($arFields, "CREATED_BY"))
-		{
-			if (!($arFields['CREATED_BY'] >= 1))
-				$this->_errors[] = array(
-					"text" => GetMessage("TASKS_BAD_CREATED_BY"),
-					"id"   => "ERROR_TASKS_BAD_CREATED_BY"
-				);
-		}
-
-		if (is_set($arFields, 'RESPONSIBLE_ID'))
-		{
-			$responsibleId = (int)$arFields['RESPONSIBLE_ID'];
+			$newResponsibleId = (int)$fields['RESPONSIBLE_ID'];
 
 			$userResult = CUser::GetList(
 				'id',
 				'asc',
-				['ID_EQUAL_EXACT' => $responsibleId],
+				['ID_EQUAL_EXACT' => $newResponsibleId],
 				[
 					'FIELDS' => ['ID'],
 					'SELECT' => ['UF_DEPARTMENT'],
@@ -289,9 +504,9 @@ class CTasks
 			{
 				$currentResponsible = 0;
 
-				if ($ID)
+				if ($taskId)
 				{
-					$taskResult = CTasks::GetList([], ['ID' => $ID], ['RESPONSIBLE_ID'], ['USER_ID' => $effectiveUserId]);
+					$taskResult = CTasks::GetList([], ['ID' => $taskId], ['RESPONSIBLE_ID'], ['USER_ID' => $userId]);
 					if ($task = $taskResult->Fetch())
 					{
 						$currentResponsible = (int)$task['RESPONSIBLE_ID'];
@@ -299,156 +514,86 @@ class CTasks
 				}
 
 				// new task or responsible changed
-				if (!$ID || ($currentResponsible && $currentResponsible !== $responsibleId))
+				if ($isAdding || ($currentResponsible && $currentResponsible !== $newResponsibleId))
 				{
 					// check if $createdBy is director for responsible
-					$subordinateDepartments = CTasks::GetSubordinateDeps($arFields['CREATED_BY']);
+					$subordinateDepartments = Integration\Intranet\Department::getSubordinateIds(
+						$fields['CREATED_BY'],
+						true
+					);
 
 					$userDepartment = $user['UF_DEPARTMENT'];
 					$userDepartment = (is_array($userDepartment) ? $userDepartment : [$userDepartment]);
 
-					$isSubordinate = count(array_intersect($subordinateDepartments, $userDepartment)) > 0;
+					$isSubordinate = (count(array_intersect($subordinateDepartments, $userDepartment)) > 0);
 
-					if (!$arFields['STATUS'])
+					if (!$fields['STATUS'])
 					{
-						$arFields['STATUS'] = self::STATE_PENDING;
+						$fields['STATUS'] = self::STATE_PENDING;
 					}
 					if (!$isSubordinate)
 					{
-						$arFields['ADD_IN_REPORT'] = 'N';
+						$fields['ADD_IN_REPORT'] = 'N';
 					}
-					$arFields['DECLINE_REASON'] = false;
+					$fields['DECLINE_REASON'] = false;
 				}
 			}
 			else
 			{
 				$this->_errors[] = [
-					"text" => GetMessage("TASKS_BAD_RESPONSIBLE_ID_EX"),
-					"id" => "ERROR_TASKS_BAD_RESPONSIBLE_ID_EX",
+					'id' => 'ERROR_TASKS_BAD_RESPONSIBLE_ID_EX',
+					'text' => Loc::getMessage('TASKS_BAD_RESPONSIBLE_ID_EX'),
 				];
 			}
 		}
 
-		// move 0 to null in PARENT_ID to avoid constraint and query problems
-		// todo: move PARENT_ID, GROUP_ID and other "foreign keys" to the unique way of keeping absense of relation: null, 0 or ''
-		if (array_key_exists('PARENT_ID', $arFields))
+		Type::checkArrayOfUPIntegerKey($fields, 'ACCOMPLICES');
+		Type::checkArrayOfUPIntegerKey($fields, 'AUDITORS');
+
+		return $fields;
+	}
+
+	/**
+	 * @param array $fields
+	 * @param $taskId
+	 * @return array
+	 */
+	private function checkDependencies(array $fields, $taskId): array
+	{
+		if ($taskId !== false && is_array($fields['DEPENDS_ON']) && in_array($taskId, $fields['DEPENDS_ON']))
 		{
-			$parentId = intval($arFields['PARENT_ID']);
-			if (!intval($parentId))
+			$this->_errors[] = [
+				'id' => 'ERROR_TASKS_DEPENDS_ON_SELF',
+				'text' => Loc::getMessage('TASKS_DEPENDS_ON_SELF'),
+			];
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * @param array $fields
+	 * @param $taskId
+	 * @return array
+	 */
+	private function checkGuid(array $fields, $taskId): array
+	{
+		if (!$taskId && array_key_exists('GUID', $fields) && trim($fields['GUID']))
+		{
+			global $DB;
+
+			$guid = $DB->ForSql($fields['GUID']);
+			$res = $DB->Query("SELECT COUNT(ID) as cnt FROM b_tasks WHERE GUID='{$guid}'");
+			if ($res && ($result = $res->Fetch()) && $result['cnt'] > 0)
 			{
-				$arFields['PARENT_ID'] = false;
+				$this->_errors[] = [
+					'id' => 'ERROR_TASKS_GUID_NON_UNIQUE',
+					'text' => Loc::getMessage('ERROR_TASKS_GUID_NON_UNIQUE'),
+				];
 			}
 		}
 
-		if (is_set($arFields, "PARENT_ID") && intval($arFields["PARENT_ID"]) > 0)
-		{
-			$r = CTasks::GetByID($arFields["PARENT_ID"], true, array('USER_ID' => $effectiveUserId));
-			if (!$r->Fetch())
-			{
-				$this->_errors[] = array(
-					"text" => GetMessage("TASKS_BAD_PARENT_ID"),
-					"id"   => "ERROR_TASKS_BAD_PARENT_ID"
-				);
-			}
-		}
-
-		if ($ID !== false && intval($arFields["PARENT_ID"]))
-		{
-			$result = \Bitrix\Tasks\Internals\Helper\Task\Dependence::canAttach($ID, $arFields["PARENT_ID"]);
-
-			if (!$result->isSuccess())
-			{
-				foreach ($result->getErrors()->getMessages() as $message)
-				{
-					$this->_errors[] = array("text" => $message, "id" => "ERROR_TASKS_PARENT_SELF");
-				}
-			}
-		}
-
-		if ($ID !== false && is_array($arFields["DEPENDS_ON"]) && in_array($ID, $arFields["DEPENDS_ON"]))
-		{
-			$this->_errors[] = array(
-				"text" => GetMessage("TASKS_DEPENDS_ON_SELF"),
-				"id"   => "ERROR_TASKS_DEPENDS_ON_SELF"
-			);
-		}
-
-		/*
-		if(!$ID)
-		{
-			// since this time we dont allow to create tasks with a non-bbcode description
-			if($arFields['DESCRIPTION_IN_BBCODE'] == 'N')
-			{
-				$this->_errors[] = array("text" => GetMessage("TASKS_DESCRIPTION_IN_BBCODE_NO_NOT_ALLOWED"), "id" => "ERROR_TASKS_DESCRIPTION_IN_BBCODE_NO_NOT_ALLOWED");
-			}
-			else
-			{
-				$arFields['DESCRIPTION_IN_BBCODE'] = 'Y';
-			}
-		}
-		*/
-
-		// accomplices & auditors
-		Type::checkArrayOfUPIntegerKey($arFields, 'ACCOMPLICES');
-		Type::checkArrayOfUPIntegerKey($arFields, 'AUDITORS');
-
-		if (!Type::checkEnumKey(
-			$arFields,
-			'STATUS',
-			array(
-				CTasks::STATE_NEW,
-				CTasks::STATE_PENDING,
-				CTasks::STATE_IN_PROGRESS,
-				CTasks::STATE_SUPPOSEDLY_COMPLETED,
-				CTasks::STATE_COMPLETED,
-				CTasks::STATE_DEFERRED,
-				CTasks::STATE_DECLINED,
-			)
-		))
-		{
-			$this->_errors[] = array(
-				"text" => GetMessage("TASKS_INCORRECT_STATUS"),
-				"id"   => "ERROR_TASKS_INCORRECT_STATUS"
-			);
-		}
-
-		Type::checkEnumKey(
-			$arFields,
-			'PRIORITY',
-			array(self::PRIORITY_LOW, self::PRIORITY_AVERAGE, self::PRIORITY_HIGH),
-			self::PRIORITY_AVERAGE
-		);
-		Type::checkEnumKey($arFields, 'MARK', array(self::MARK_NEGATIVE, self::MARK_POSITIVE, ''));
-
-		// flags
-		Type::checkYNKey($arFields, 'ALLOW_CHANGE_DEADLINE');
-		Type::checkYNKey($arFields, 'TASK_CONTROL');
-		Type::checkYNKey($arFields, 'ADD_IN_REPORT');
-		Type::checkYNKey($arFields, 'MATCH_WORK_TIME');
-		Type::checkYNKey($arFields, 'REPLICATE');
-
-        if (!$ID && array_key_exists('GUID', $arFields) && trim($arFields['GUID'])) // !$ID for check only add function
-        {
-            global $DB;
-            $res = $DB->Query("SELECT COUNT(ID) as cnt FROM b_tasks WHERE GUID='".$DB->ForSql($arFields['GUID'])."'");
-            if($res && ($result = $res->Fetch()) && $result['cnt'] > 0)
-            {
-                $this->_errors[] = array(
-                    "text" => GetMessage("ERROR_TASKS_GUID_NON_UNIQUE"),
-                    "id"   => "ERROR_TASKS_GUID_NON_UNIQUE"
-                );
-            }
-        }
-
-		if (!empty($this->_errors))
-		{
-			$e = new CAdminException($this->_errors);
-			$APPLICATION->ThrowException($e);
-
-			return false;
-		}
-
-		return true;
+		return $fields;
 	}
 
 	/**
@@ -553,7 +698,7 @@ class CTasks
 			$arFields['CREATED_BY'] = $effectiveUserId;
 		}
 
-		if ($this->CheckFields($arFields, false, $effectiveUserId))
+		if ($this->checkFields($arFields, false, $effectiveUserId))
 		{
 			// never, never step on this option. hot lava!
 			if ($arParams['CLONE_DISK_FILE_ATTACHMENT'] === true || $arParams['CLONE_DISK_FILE_ATTACHMENT'] === 'Y')
@@ -1100,7 +1245,7 @@ class CTasks
 		$rsTask = CTasks::GetByID($ID, false, array('USER_ID' => $userID));
 		if ($arTask = $rsTask->Fetch())
 		{
-			if ($this->CheckFields($arFields, $ID, $userID))
+			if ($this->checkFields($arFields, $ID, $userID))
 			{
 				$ufCheck = true;
 				$hasUfs = UserField::checkContainsUFKeys($arFields);
@@ -1460,29 +1605,31 @@ class CTasks
 							}
 						}
 
-						$bSkipNotification = (isset($arParams['SKIP_NOTIFICATION']) && $arParams['SKIP_NOTIFICATION']);
-						$notifArFields = array_merge($arFields, array('CHANGED_BY' => $occurAsUserId));
-
-						if (($status = intval($arFields["STATUS"])) &&
-							$status > 0 &&
-							$status < 8 &&
-							((int)$arTask['STATUS'] !== (int)$arFields['STATUS'])    // only if status changed
-						)
+						$statusChanged =
+							($status = (int)$arFields['STATUS'])
+							&& $status >= CTasks::STATE_NEW
+							&& $status <= CTasks::STATE_DECLINED
+							&& ($status !== (int)$arTask['STATUS'])
+						;
+						if ($statusChanged && $status === CTasks::STATE_DECLINED)
 						{
-							if ($status == 7)
-							{
-								$arTask["DECLINE_REASON"] = $arFields["DECLINE_REASON"];
-							}
-
-							if (!$bSkipNotification)
-							{
-								CTaskNotifications::SendStatusMessage($arTask, $status, $notifArFields);
-							}
+							$arTask['DECLINE_REASON'] = $arFields['DECLINE_REASON'];
 						}
 
-						if (!$bSkipNotification)
+						$skipNotification = (isset($arParams['SKIP_NOTIFICATION']) && $arParams['SKIP_NOTIFICATION']);
+						$notificationFields = array_merge($arFields, ['CHANGED_BY' => $occurAsUserId]);
+						if (!$skipNotification)
 						{
-							CTaskNotifications::SendUpdateMessage($notifArFields, $arTask, false, $arParams);
+							if ($statusChanged)
+							{
+								CTaskNotifications::SendStatusMessage($arTask, $status, $notificationFields);
+							}
+							CTaskNotifications::SendUpdateMessage(
+								$notificationFields,
+								$arTask,
+								false,
+								$arParams
+							);
 						}
 
 						CTaskComments::onAfterTaskUpdate($ID, $arTask, $arFields);
@@ -2093,12 +2240,6 @@ class CTasks
 				}
 			}
 
-			// todo: see \CTaskPlannerMaintance::reviseTaskLists(), move task list from option to a table, and then just do cleaning
-			// todo: dayplan by TASK_ID here for each user, regardless to the role; the following solution works only for current user, creator and responsible
-			//\CTaskPlannerMaintance::plannerActions(array('remove' => array($taskId)));
-			//\CTaskPlannerMaintance::plannerActions(array('remove' => array($taskId)), SITE_ID, $taskData['CREATED_BY']);
-			//\CTaskPlannerMaintance::plannerActions(array('remove' => array($taskId)), SITE_ID, $taskData['RESPONSIBLE_ID']);
-
 			$CACHE_MANAGER->ClearByTag("tasks_" . $taskId);
 
 			// clear cache
@@ -2139,63 +2280,54 @@ class CTasks
 					  $taskId;
 			$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 
-			$strUpdate = $DB->PrepareUpdate(
-				"b_tasks",
-				[
-					'ZOMBIE' => 'Y',
-					'CHANGED_BY' => $actorUserId,
-					'CHANGED_DATE' => \Bitrix\Tasks\UI::formatDateTime(User::getTime())
-				],
-				"tasks"
-			);
-			$strSql = "UPDATE b_tasks SET " . $strUpdate . " WHERE ID = " . $taskId;
+			CTaskNotifications::SendDeleteMessage($taskData, (bool) $safeDelete);
 
-			if ($DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__))
+			if (!$safeDelete)
 			{
-				CTaskNotifications::SendDeleteMessage($taskData, (bool) $safeDelete);
+				Integration\Forum\Task\Topic::delete($taskData["FORUM_TOPIC_ID"]);
+				$USER_FIELD_MANAGER->Delete('TASKS_TASK', $taskId);
+			}
 
-				if (!$safeDelete)
-				{
-					Integration\Forum\Task\Topic::delete($taskData["FORUM_TOPIC_ID"]);
-					$USER_FIELD_MANAGER->Delete('TASKS_TASK', $taskId);
-				}
+			if (!$skipExchangeSync)
+			{
+				CTaskSync::DeleteItem($taskData); // MS Exchange
+			}
 
-				if (!$skipExchangeSync)
-				{
-					CTaskSync::DeleteItem($taskData); // MS Exchange
-				}
+			Counter\CounterService::addEvent(
+				Counter\Event\EventDictionary::EVENT_AFTER_TASK_DELETE,
+				$taskData
+			);
 
-				Counter\CounterService::addEvent(
-					Counter\Event\EventDictionary::EVENT_AFTER_TASK_DELETE,
-					$taskData
-				);
+			// Emit pull event
+			static::sendDeletePullEvent([
+				'TASK_ID' => $taskId,
+				'PARTICIPANTS' => $arParticipants,
+				'GROUP_ID' => $taskData['GROUP_ID'],
+				'EVENT_GUID' => $eventGuid,
+			]);
 
-				// Emit pull event
-				static::sendDeletePullEvent([
-					'TASK_ID' => $taskId,
-					'PARTICIPANTS' => $arParticipants,
-					'GROUP_ID' => $taskData['GROUP_ID'],
-					'EVENT_GUID' => $eventGuid,
-				]);
+			foreach (GetModuleEvents('tasks', 'OnTaskDelete', true) as $arEvent)
+			{
+				ExecuteModuleEventEx($arEvent, [$taskId]);
+			}
 
-				foreach (GetModuleEvents('tasks', 'OnTaskDelete', true) as $arEvent)
-				{
-					ExecuteModuleEventEx($arEvent, [$taskId]);
-				}
+			if (CModule::IncludeModule("search"))
+			{
+				CSearch::DeleteIndex("tasks", $taskId);
+			}
 
-				if (CModule::IncludeModule("search"))
-				{
-					CSearch::DeleteIndex("tasks", $taskId);
-				}
+			Integration\Bizproc\Listener::onTaskDelete($taskId);
 
-				Integration\Bizproc\Listener::onTaskDelete($taskId);
+			ItemTable::deactivateBySourceId($taskId);
 
-				if (!$safeDelete)
-				{
-					\Bitrix\Tasks\Internals\TaskTable::delete($taskId);
-				}
-
-				ItemTable::deactivateBySourceId($taskId);
+			if (!$safeDelete)
+			{
+				\Bitrix\Tasks\Internals\TaskTable::delete($taskId);
+			}
+			else
+			{
+				$sql = "DELETE FROM `b_tasks` WHERE ID = ".$taskId;
+				$DB->Query($sql);
 			}
 
 			return true;
@@ -2664,7 +2796,6 @@ class CTasks
 				case 'MARK':
 				case 'XML_ID':
 				case 'SITE_ID':
-				case 'ZOMBIE':
 				case 'ADD_IN_REPORT':
 				case 'ALLOW_TIME_TRACKING':
 				case 'ALLOW_CHANGE_DEADLINE':
@@ -2967,7 +3098,7 @@ class CTasks
 							."{$sAliasPrefix}T.PARENT_ID IS NULL OR "
 							."{$sAliasPrefix}T.PARENT_ID = '0' OR "
 						 	."{$sAliasPrefix}T.PARENT_ID NOT IN ("
-							.CTasks::GetRootSubQuery($arFilter, $bGetZombie, $sAliasPrefix, $params)
+							.CTasks::GetRootSubQuery($arFilter, $sAliasPrefix, $params)
 							."))";
 					}
 					break;
@@ -3026,7 +3157,6 @@ class CTasks
 								OR (".$sAliasPrefix."PT.GROUP_ID = 0 AND ".$sAliasPrefix."T.GROUP_ID IS NULL)
 								OR (".$sAliasPrefix."PT.GROUP_ID IS NULL AND ".$sAliasPrefix."T.GROUP_ID = 0)
 								)
-							".($bGetZombie ? "" : " AND ".$sAliasPrefix."PT.ZOMBIE = 'N' ")."
 						)";
 					}
 					break;
@@ -3606,12 +3736,6 @@ class CTasks
 			$userID = User::getId();
 		}
 
-		$bGetZombie = false;
-		if (isset($arParams['bGetZombie']))
-		{
-			$bGetZombie = (bool)$arParams['bGetZombie'];
-		}
-
 		// if TRUE will be generated constraint for members
 		$bMembersTableJoined = false;
 		if (isset($arParams['bMembersTableJoined']))
@@ -3619,6 +3743,7 @@ class CTasks
 			$bMembersTableJoined = (bool)$arParams['bMembersTableJoined'];
 		}
 
+		$bGetZombie = false;
 		$sql = self::GetSqlByFilter($arFilter, $userID, $sAliasPrefix, $bGetZombie, $bMembersTableJoined, $arParams);
 		if($sql <> '')
 		{
@@ -4367,16 +4492,10 @@ class CTasks
 		if (!($userId >= 1))
 			$userId = 0;
 
-		$bGetZombie = false;
-		if (isset($arParams['bGetZombie']))
-			$bGetZombie = (bool)$arParams['bGetZombie'];
-
 		if (!isset($ALLOWED_GROUPS[$userId]) && CModule::IncludeModule("socialnetwork"))
 		{
 			// bottleneck
 			$strSql = "SELECT DISTINCT(T.GROUP_ID) FROM b_tasks T WHERE T.GROUP_ID IS NOT NULL";
-			if (!$bGetZombie)
-				$strSql .= " AND T.ZOMBIE = 'N'";
 
 			$rsGroups = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			$ALLOWED_GROUPS[$userId] = $arGroupsWithTasks = array();
@@ -4904,11 +5023,11 @@ class CTasks
 
 		if ($getUf)
 		{
-			$uf = $USER_FIELD_MANAGER->GetUserFields('TASKS_TASK');
+			$uf = $USER_FIELD_MANAGER->GetUserFields('TASKS_TASK', 0, LANGUAGE_ID);
 			foreach ($uf as $key => $item)
 			{
 				$fields[$key] = [
-					'title' => $item['USER_TYPE']['DESCRIPTION'],
+					'title' => $item['EDIT_FORM_LABEL'],
 					'type' => $item['USER_TYPE_ID'],
 				];
 			}
@@ -5776,7 +5895,6 @@ class CTasks
 			'GROUP_ID' => true, // number
 			'PARENT_ID' => true, // number
 			'FORUM_TOPIC_ID' => true, // number
-			'ZOMBIE' => true, // string_equal
 			'MATCH_WORK_TIME' => true, // string_equal
 
 			//dates
@@ -5797,7 +5915,6 @@ class CTasks
 			'ALLOW_CHANGE_DEADLINE' => true, // string_equal
 			'ALLOW_TIME_TRACKING' => true, // string_equal
 			'ADD_IN_REPORT' => true, // string_equal
-			'ZOMBIE' => true, // string_equal
 			'MATCH_WORK_TIME' => true, // string_equal
 		);
 
@@ -5873,22 +5990,16 @@ class CTasks
 
 	/**
 	 * @param array $filter
-	 * @param bool $getZombie
 	 * @param string $aliasPrefix
 	 * @param array $params
 	 * @return string
 	 */
-	private static function GetRootSubQuery($filter = [], $getZombie = false, $aliasPrefix = '', $params = [])
+	private static function GetRootSubQuery($filter = [], $aliasPrefix = '', $params = [])
 	{
 		$filter = (isset($params['SOURCE_FILTER'])? $params['SOURCE_FILTER'] : $filter);
 		$userId = (isset($params['USER_ID'])? $params['USER_ID'] : User::getId());
 
 		$sqlSearch = ["(PT.ID = " . $aliasPrefix . "T.PARENT_ID)"];
-
-		if (!$getZombie)
-		{
-			$sqlSearch[] = " (PT.ZOMBIE = 'N') ";
-		}
 
 		if ($filter["SAME_GROUP_PARENT"] == "Y")
 		{
@@ -6225,7 +6336,6 @@ class CTasks
 		unset($filter["ONLY_ROOT_TASKS"]);
 
 		$sqlSearch = CTasks::GetFilter($filter);
-		$sqlSearch[] = " T.ZOMBIE = 'N' ";
 
 		$r = $obUserFieldsSql->GetFilter();
 		if ($r <> '')
@@ -6283,7 +6393,6 @@ class CTasks
 		CTaskAssert::assert($loggedInUserId && is_array($arFilter));
 
 		$arSqlSearch = CTasks::GetFilter($arFilter, '', array('USER_ID' => $loggedInUserId));
-		$arSqlSearch[] = " T.ZOMBIE = 'N' ";
 
 		$keysFiltered = CTasks::GetFilteredKeys($arFilter);
 
@@ -6528,7 +6637,7 @@ class CTasks
 
 				$tagFields = [
 					'TASK_ID' => $taskId,
-					'USER_ID' => $userId,
+					'USER_ID' => ($effectiveUserId ?: $userId),
 					'NAME' => $tag,
 				];
 				$tagHandler = new CTaskTags();
@@ -7231,7 +7340,6 @@ class CTasks
 			"SELECT ID AS TASK_ID
 			FROM b_tasks
 			WHERE GROUP_ID = $groupId
-				AND ZOMBIE = 'N'
 			";
 
 		$result = $DB->Query($strSql, false, 'File: ' . __FILE__ . '<br>Line: ' . __LINE__);
@@ -7546,7 +7654,6 @@ class CTasks
 						AND TM.USER_ID = $userId
 					)
 				)
-				AND T.ZOMBIE = 'N'
 				AND GROUP_ID IS NOT NULL
 				AND GROUP_ID != 0
 			GROUP BY GROUP_ID
@@ -7686,7 +7793,7 @@ class CTasks
 		$taskId = intval($taskId);
 
 		$result = array();
-		$res = $DB->query("select ID from b_tasks where ZOMBIE != 'Y' and ".($taskId ? "PARENT_ID = '".$taskId."'" : "PARENT_ID is null or PARENT_ID = '0'"));
+		$res = $DB->query("select ID from b_tasks where ".($taskId ? "PARENT_ID = '".$taskId."'" : "PARENT_ID is null or PARENT_ID = '0'"));
 		while($item = $res->fetch())
 		{
 			if(intval($item['ID']))

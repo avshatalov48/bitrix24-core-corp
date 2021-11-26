@@ -46,8 +46,7 @@ class ExpiredAgentCreator extends Stepper
 				SELECT ID, DEADLINE
 				FROM b_tasks 
 				WHERE 
-					ZOMBIE = 'N'
-					AND STATUS < 4
+					STATUS < 4
 					AND DEADLINE IS NOT NULL
 					AND DEADLINE > NOW()
 					AND ID > {$parameters['last_id']}
@@ -99,8 +98,7 @@ class ExpiredAgentCreator extends Stepper
 				SELECT COUNT(ID) AS CNT
 				FROM b_tasks
 				WHERE
-					ZOMBIE = 'N'
-					AND STATUS < 4
+					STATUS < 4
 				  	AND DEADLINE IS NOT NULL
 					AND DEADLINE > NOW()
 			")->fetch();

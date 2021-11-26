@@ -8,9 +8,10 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CBitrixComponentTemplate $this */
 /** @var CCrmEntityProgressBarComponent $component */
 
-use \Bitrix\Crm\Category\DealCategory;
-use \Bitrix\Crm\Conversion\EntityConverter;
-use \Bitrix\Crm\Conversion\LeadConversionType;
+use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Conversion\LeadConversionType;
 
 \Bitrix\Main\UI\Extension::load(["crm.scoringbutton"]);
 
@@ -124,16 +125,10 @@ $APPLICATION->IncludeComponent(
 			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
 			'CONTEXT' => $editorContext,
-			'ATTRIBUTE_CONFIG' => array(
+			'ATTRIBUTE_CONFIG' => [
 				'ENTITY_SCOPE' => $arResult['ENTITY_ATTRIBUTE_SCOPE'],
-				'CAPTIONS' => array(
-					'REQUIRED_SHORT' => GetMessage('CRM_LEAD_DETAIL_ATTR_REQUIRED_SHORT'),
-					'REQUIRED_FULL' => GetMessage('CRM_LEAD_DETAIL_ATTR_REQUIRED_FULL'),
-					'GROUP_TYPE_GENERAL' => GetMessage('CRM_LEAD_DETAIL_ATTR_GR_TYPE_GENERAL'),
-					'GROUP_TYPE_PIPELINE' => GetMessage('CRM_LEAD_DETAIL_ATTR_GR_TYPE_PIPELINE'),
-					'GROUP_TYPE_JUNK' => GetMessage('CRM_LEAD_DETAIL_ATTR_GR_TYPE_JUNK')
-				)
-			),
+				'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages(CCrmOwnerType::Lead),
+			],
 			'COMPONENT_AJAX_DATA' => [
 				'RELOAD_ACTION_NAME' => 'LOAD',
 				'RELOAD_FORM_DATA' => [
@@ -214,35 +209,37 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 
 				<?php
 				if($arResult['ENTITY_ID'] <= 0 && !empty($arResult['FIELDS_SET_DEFAULT_VALUE']))
-                {?>
-                    var fieldsSetDefaultValue = <?=CUtil::PhpToJSObject($arResult['FIELDS_SET_DEFAULT_VALUE']);?>;
-                    BX.addCustomEvent("onSave", function(fieldConfigurator, params) {
-                        var field = params.field;
-                        if(
-                            fieldConfigurator instanceof BX.Crm.EntityEditorFieldConfigurator
+				{?>
+					var fieldsSetDefaultValue = <?=CUtil::PhpToJSObject($arResult['FIELDS_SET_DEFAULT_VALUE']);?>;
+					BX.addCustomEvent("onSave", function(fieldConfigurator, params) {
+						var field = params.field;
+						if(
+							fieldConfigurator instanceof BX.Crm.EntityEditorFieldConfigurator
 							&& fieldConfigurator._mandatoryConfigurator
-                            && (field instanceof BX.Crm.EntityEditorField || field instanceof BX.UI.EntityEditorField)
+							&& (field instanceof BX.Crm.EntityEditorField || field instanceof BX.UI.EntityEditorField)
 							//&& field.isChanged()
 							&& fieldsSetDefaultValue.indexOf(field._id) > -1
-                        )
-                        {
+						)
+						{
 							if(fieldConfigurator._mandatoryConfigurator.isEnabled())
 							{
-                                delete field._model._data[field.getDataKey()];
-                                field.refreshLayout();
+								delete field._model._data[field.getDataKey()];
+								field.refreshLayout();
 							}
 							else
 							{
-                                if(field.getSchemeElement().getData().defaultValue)
-                                {
-                                    field._model._data[field.getDataKey()] = field.getSchemeElement().getData().defaultValue;
-                                    field.refreshLayout();
-                                }
+								if(field.getSchemeElement().getData().defaultValue)
+								{
+									field._model._data[field.getDataKey()] =
+										field.getSchemeElement().getData().defaultValue
+									;
+									field.refreshLayout();
+								}
 							}
-                        }
-                    });
-                <?php
-                }?>
+						}
+					});
+				<?php
+				}?>
 			}
 		);
 	</script><?

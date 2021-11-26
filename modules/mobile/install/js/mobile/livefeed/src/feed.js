@@ -71,6 +71,11 @@ class Feed
 		this.maxScroll = 0;
 
 		this.lastActivityDate = 0;
+		this.availableGroupList = {};
+
+		this.isPullDownEnabled = false;
+		this.isPullDownLocked = false;
+		this.isFrameDataReceived = false;
 
 		this.init();
 	}
@@ -84,17 +89,161 @@ class Feed
 		BXMobileApp.addCustomEvent('Livefeed::showLoader', this.showLoader.bind(this));
 		BXMobileApp.addCustomEvent('Livefeed::hideLoader', this.hideLoader.bind(this));
 		BXMobileApp.addCustomEvent('Livefeed::scrollTop', this.scrollTop.bind(this));
-		BXMobileApp.addCustomEvent("Livefeed::onLogEntryDetailNotFound", this.removePost.bind(this)); // from detail page
+		BXMobileApp.addCustomEvent('Livefeed::onLogEntryDetailNotFound', this.removePost.bind(this)); // from detail page
 		BXMobileApp.addCustomEvent('Livefeed.PinnedPanel::change', this.onPinnedPanelChange.bind(this));
 		BXMobileApp.addCustomEvent('Livefeed.PostDetail::pinChanged', this.onPostPinChanged.bind(this));
 
 		EventEmitter.subscribe('BX.LazyLoad:ImageLoaded', this.onLazyLoadImageLoaded.bind(this));
+		EventEmitter.subscribe('MobileBizProc:onRenderLogMessages', this.onMobileBizProcRenderLogMessages.bind(this));
 		EventEmitter.subscribe('MobilePlayer:onError', this.onMobilePlayerError);
 
 		document.addEventListener('DOMContentLoaded', () =>
 		{
 			document.addEventListener('click', this.handleClick.bind(this));
 		});
+	}
+
+	initListOnce(params)
+	{
+		if (!Type.isPlainObject(params))
+		{
+			params = {};
+		}
+
+		if (!Type.isUndefined(params.arAvailableGroup))
+		{
+			this.availableGroupList = params.arAvailableGroup;
+		}
+
+		EventEmitter.subscribe('onFrameDataReceivedBefore', BitrixMobile.LazyLoad.clearImages);
+
+		EventEmitter.subscribe('BX.LazyLoad:ImageLoaded', () => {
+			this.setMaxScroll(document.documentElement.scrollHeight - window.innerHeight - 190);
+		});
+
+		EventEmitter.subscribe('onFrameDataReceived', () => {
+			this.isPullDownEnabled = false;
+			this.isPullDownLocked = false;
+			this.isFrameDataReceived = true;
+			app.exec('pullDownLoadingStop');
+			BitrixMobile.LazyLoad.showImages(true);
+		});
+
+		EventEmitter.subscribe('onFrameDataProcessed', (event: BaseEvent) => {
+			const [ blocks, bFromCache ] = event.getCompatData();
+
+			if (
+				!Type.isUndefined(blocks)
+				&& !Type.isUndefined(blocks[0])
+				&& !Type.isUndefined(bFromCache)
+				&& !!bFromCache
+			)
+			{
+				if (
+					!Type.isUndefined(blocks[0].PROPS)
+					&& !Type.isUndefined(blocks[0].PROPS.TS)
+					&& parseInt(blocks[0].PROPS.TS) > 0
+				)
+				{
+					this.setOptions({
+						frameCacheTs: parseInt(blocks[0].PROPS.TS),
+					});
+				}
+			}
+
+			BitrixMobile.LazyLoad.showImages(true);
+
+			if (!!bFromCache)
+			{
+				PageInstance.setPreventNextPage(true);
+			}
+		});
+
+		EventEmitter.subscribe('onCacheDataRequestStart', () => {
+			setTimeout(() => {
+				if (!this.isFrameDataReceived)
+				{
+					this.isPullDownLocked = true;
+					app.exec('pullDownLoadingStart');
+				}
+			}, 1000);
+		});
+
+		EventEmitter.subscribe('onFrameDataReceivedError', () => {
+			app.BasicAuth({
+				success: () => {
+					BX.frameCache.update(true);
+				},
+				failture: () => {
+					this.isPullDownLocked = false;
+					app.exec('pullDownLoadingStop');
+					PageInstance.requestError('refresh', true);
+				},
+			});
+		});
+
+		EventEmitter.subscribe('onFrameDataRequestFail', (event: BaseEvent) => {
+			const [ response ] = event.getCompatData();
+
+			if (
+				!Type.isUndefined(response)
+				&& Type.isStringFilled(response.reason)
+				&& response.reason === 'bad_eval'
+			)
+			{
+				this.isPullDownLocked = false;
+				app.exec('pullDownLoadingStop');
+				PageInstance.requestError('refresh', true);
+			}
+			else
+			{
+				app.BasicAuth({
+					success: () => {
+						BX.frameCache.update(true);
+					},
+					failture: () => {
+						this.isPullDownLocked = false;
+						app.exec('pullDownLoadingStop');
+						PageInstance.requestError('refresh', true)
+					}
+				});
+			}
+		});
+
+		EventEmitter.subscribe('onCacheInvokeAfter', (event: BaseEvent) => {
+			const [ storageBlocks, resultSet ] = event.getCompatData();
+
+			if (resultSet.items.length <= 0)
+			{
+				BX.frameCache.update(true, true);
+			}
+		});
+
+		BXMobileApp.addCustomEvent('onAfterEdit', (params) => {
+			this.afterEdit({
+				responseData: params.postResponseData,
+				logId: params.postData.data.log_id,
+			});
+		});
+
+		EventEmitter.subscribe('onPullDownDisable', () => {
+			BXMobileApp.UI.Page.Refresh.setEnabled(false);
+		});
+		EventEmitter.subscribe('onPullDownEnable', () => {
+			BXMobileApp.UI.Page.Refresh.setEnabled(true);
+		});
+
+		BXMobileApp.UI.Page.Refresh.setParams({
+			callback: () => {
+				if (!this.isPullDownLocked)
+				{
+					PageInstance.refresh(true);
+				}
+			},
+			backgroundColor: '#E7E9EB',
+		});
+
+		BXMobileApp.UI.Page.Refresh.setEnabled(true);
 	}
 
 	setPageId(value)
@@ -691,6 +840,11 @@ class Feed
 		this.setMaxScroll(document.documentElement.scrollHeight - window.innerHeight - 190);
 	}
 
+	onMobileBizProcRenderLogMessages()
+	{
+		this.recalcMaxScroll();
+	}
+
 	onPinnedPanelChange(params)
 	{
 		const logId = (params.logId ? parseInt(params.logId) : 0);
@@ -1241,6 +1395,48 @@ class Feed
 	getLastActivityDate()
 	{
 		return this.lastActivityDate;
+	}
+
+	afterEdit({
+		responseData,
+		logId
+	})
+	{
+		logId = (!Type.isUndefined(logId) ? parseInt(logId) : 0);
+
+		const newPostNode = Tag.render`<div>${responseData.text}</div>`;
+
+		const container = document.getElementById('blog-post-first-after');
+		if (container)
+		{
+			container.parentNode.insertBefore(newPostNode, container.nextSibling);
+		}
+
+		const detailTextNode = newPostNode.querySelector(`.post-item-post-block`);
+		const topNode = newPostNode.querySelector(`.post-item-top`);
+		const filesNode = newPostNode.querySelector(`.post-item-attached-file-wrap`);
+
+		if (
+			logId > 0
+			&& detailTextNode
+			&& topNode
+		)
+		{
+			const postData = {
+				detailText: detailTextNode.innerHTML,
+				topText: topNode.innerHTML,
+				logID: logId
+			};
+
+			if (filesNode)
+			{
+				postData.filesBlockText = filesNode.innerHTML;
+			}
+
+			BXMobileApp.onCustomEvent('onEditedPostInserted', postData, true, true);
+		}
+
+		BitrixMobile.LazyLoad.showImages();
 	}
 }
 

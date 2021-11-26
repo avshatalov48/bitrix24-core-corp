@@ -529,13 +529,7 @@ class ProductLoader
 	protected function getRawPropertyValue(array $property, int $elementId)
 	{
 		$propertyValues = $this->loadPropertyValues();
-		$propertyValue = $propertyValues[$elementId][(int)$property['ID']] ?? null;
-		if (is_array($propertyValue) && $property['MULTIPLE'] === 'Y')
-		{
-			$propertyValue = reset($propertyValue);
-		}
-
-		return $propertyValue;
+		return $propertyValues[$elementId][(int)$property['ID']] ?? null;
 	}
 
 	protected function getPreparedDirectoryImagePropertyValue($propertyId, int $elementId)
@@ -556,6 +550,10 @@ class ProductLoader
 		}
 
 		$propertyValue = $this->getRawPropertyValue($property, $elementId);
+		if (is_array($propertyValue))
+		{
+			$propertyValue = reset($propertyValue);
+		}
 		if (empty($propertyValue))
 		{
 			return null;
@@ -592,9 +590,17 @@ class ProductLoader
 		{
 			return null;
 		}
+		$isMultiple = (isset($property['MULTIPLE'])
+			&& $property['MULTIPLE'] === 'Y'
+			&& is_array($propertyValue)
+		);
 
 		if ($property['PROPERTY_TYPE'] === 'F')
 		{
+			if (is_array($propertyValue))
+			{
+				$propertyValue = reset($propertyValue);
+			}
 			$propertyValue = (int)$propertyValue;
 			if ($propertyValue > 0)
 			{
@@ -606,59 +612,186 @@ class ProductLoader
 		{
 			if ($property['USER_TYPE'] === 'HTML')
 			{
-				if (!empty($propertyValue) && is_string($propertyValue))
+				$getTextFromValue = static function($propertyValue): ?string {
+					if (!empty($propertyValue) && is_string($propertyValue))
+					{
+						$propertyValue = unserialize($propertyValue, ['allowed_classes' => false]);
+					}
+					if (is_array($propertyValue) && (isset($propertyValue['HTML']) || isset($propertyValue['TEXT'])))
+					{
+						return $propertyValue['HTML'] ?? $propertyValue['TEXT'];
+					}
+
+					return null;
+				};
+				if ($isMultiple)
 				{
-					$propertyValue = unserialize($propertyValue, ['allowed_classes' => false]);
+					$propertyValue = array_map($getTextFromValue, $propertyValue);
+					$this->preparedPropertyValues[$propertyId][$elementId] = new Value\Multiple($propertyValue);
 				}
-				if (is_array($propertyValue) && (isset($propertyValue['HTML']) || isset($propertyValue['TEXT'])))
+				else
 				{
-					$this->preparedPropertyValues[$propertyId][$elementId] = $propertyValue['HTML'] ?? $propertyValue['TEXT'];
-					return $this->preparedPropertyValues[$propertyId][$elementId];
+					$this->preparedPropertyValues[$propertyId][$elementId] = $getTextFromValue($propertyValue);
 				}
+
+				return $this->preparedPropertyValues[$propertyId][$elementId];
 			}
 			if ($property['USER_TYPE'] === 'Date')
 			{
-				$this->preparedPropertyValues[$propertyId][$elementId] = new Value\DateTime($propertyValue);
+				if ($isMultiple)
+				{
+					$this->preparedPropertyValues[$propertyId][$elementId] = new Value\Multiple(
+						array_map(
+							static function($value) {
+								return new Value\DateTime($value);
+							},
+							$propertyValue
+						)
+					);
+				}
+				else
+				{
+					$this->preparedPropertyValues[$propertyId][$elementId] = new Value\DateTime($propertyValue);
+				}
+
 				return $this->preparedPropertyValues[$propertyId][$elementId];
 			}
 			if ($property['USER_TYPE'] === 'DateTime')
 			{
-				$this->preparedPropertyValues[$propertyId][$elementId] = new Value\DateTime(
-					$propertyValue,
-					[
-						'format' => DateTime::getFormat(DataProviderManager::getInstance()->getCulture()),
-					]
-				);
+				if ($isMultiple)
+				{
+					$this->preparedPropertyValues[$propertyId][$elementId] = new Value\Multiple(
+						array_map(
+							static function($value) {
+								return new Value\DateTime(
+									$value,
+									[
+										'format' => DateTime::getFormat(DataProviderManager::getInstance()->getCulture()),
+									]
+								);
+							},
+							$propertyValue
+						)
+					);
+				}
+				else
+				{
+					$this->preparedPropertyValues[$propertyId][$elementId] = new Value\DateTime(
+						$propertyValue,
+						[
+							'format' => DateTime::getFormat(DataProviderManager::getInstance()->getCulture()),
+						]
+					);
+				}
+
 				return $this->preparedPropertyValues[$propertyId][$elementId];
 			}
-			if ($property['USER_TYPE'] === 'Money' && is_string($propertyValue))
+			if ($property['USER_TYPE'] === 'Money')
 			{
-				[$value, $currency] = explode('|', $propertyValue);
-				$this->preparedPropertyValues[$propertyId][$elementId] = new Money($value, [
-					'CURRENCY_ID' => $currency,
-				]);
+				if ($isMultiple)
+				{
+					$this->preparedPropertyValues[$propertyId][$elementId] = new Value\Multiple(
+						array_map(
+							static function ($value) {
+								if (!is_string($value))
+								{
+									return null;
+								}
+
+								[$value, $currency] = explode('|', $value);
+
+								return new Money($value, [
+									'CURRENCY_ID' => $currency,
+								]);
+							},
+							$propertyValue
+						)
+					);
+				}
+				elseif(is_string($propertyValue))
+				{
+					[$value, $currency] = explode('|', $propertyValue);
+					$this->preparedPropertyValues[$propertyId][$elementId] = new Money($value, [
+						'CURRENCY_ID' => $currency,
+					]);
+				}
+				else
+				{
+					$this->preparedPropertyValues[$propertyId][$elementId] = null;
+				}
+
 				return $this->preparedPropertyValues[$propertyId][$elementId];
 			}
 			if ($property['USER_TYPE'] === 'directory')
 			{
-				$value = $this->getPropertyDirectoryValue($property, $propertyValue);
-				$this->preparedPropertyValues[$propertyId][$elementId] = $value['VALUE'] ?? null;
+				if ($isMultiple)
+				{
+					$this->preparedPropertyValues[$propertyId][$elementId] = new Value\Multiple(
+						$this->getPropertyDirectoryValueMultiple($property, $propertyValue)
+					);
+				}
+				else
+				{
+					$value = $this->getPropertyDirectoryValue($property, $propertyValue);
+					$this->preparedPropertyValues[$propertyId][$elementId] = $value['VALUE'] ?? null;
+				}
+
 				return $this->preparedPropertyValues[$propertyId][$elementId];
+			}
+			if ($property['USER_TYPE'] === 'employee' || $property['USER_TYPE'] === 'ECrm')
+			{
+				if ($isMultiple)
+				{
+					$propertyValue = reset($propertyValue);
+					$isMultiple = false;
+				}
 			}
 		}
 		elseif ($property['PROPERTY_TYPE'] === 'L')
 		{
-			$this->preparedPropertyValues[$propertyId][$elementId] = $this->getPropertyEnumValue($propertyId, $propertyValue);
+			if ($isMultiple)
+			{
+				$this->preparedPropertyValues[$propertyId][$elementId] = new Value\Multiple(
+					$this->getPropertyEnumValueMultiple($propertyId, $propertyValue)
+				);
+			}
+			else
+			{
+				$this->preparedPropertyValues[$propertyId][$elementId] = $this->getPropertyEnumValue($propertyId, $propertyValue);
+			}
+
 			return $this->preparedPropertyValues[$propertyId][$elementId];
 		}
 		elseif ($property['PROPERTY_TYPE'] === 'E')
 		{
-			$this->preparedPropertyValues[$propertyId][$elementId] = $this->getPropertyElementValue((int)$propertyValue);
+			if ($isMultiple)
+			{
+				$this->preparedPropertyValues[$propertyId][$elementId] = new Value\Multiple(
+					$this->getPropertyElementValueMultiple($propertyValue)
+				);
+			}
+			else
+			{
+				$this->preparedPropertyValues[$propertyId][$elementId] = $this->getPropertyElementValue((int)$propertyValue);
+			}
+
 			return $this->preparedPropertyValues[$propertyId][$elementId];
 		}
 		elseif ($property['PROPERTY_TYPE'] === 'N')
 		{
-			$propertyValue = (float)$propertyValue;
+			if ($isMultiple)
+			{
+				$propertyValue = array_map('floatval', $propertyValue);
+			}
+			else
+			{
+				$propertyValue = (float)$propertyValue;
+			}
+		}
+
+		if ($isMultiple)
+		{
+			$propertyValue = new Value\Multiple($propertyValue);
 		}
 
 		$this->preparedPropertyValues[$propertyId][$elementId] = $propertyValue;
@@ -673,6 +806,19 @@ class ProductLoader
 		}
 
 		return $this->loadedDirectoryPropertyValues[$property['ID']][$value];
+	}
+
+	protected function getPropertyDirectoryValueMultiple(array $property, array $values): array
+	{
+		$result = [];
+
+		foreach ($values as $value)
+		{
+			$value = $this->getPropertyDirectoryValue($property, $value);
+			$result[] = $value['VALUE'] ?? null;
+		}
+
+		return $result;
 	}
 
 	protected function getPropertyEnumValue(int $propertyId, $propertyValue)
@@ -690,6 +836,18 @@ class ProductLoader
 		}
 
 		return $this->loadedEnumPropertyValues[$propertyId][$propertyValue] ?? null;
+	}
+
+	protected function getPropertyEnumValueMultiple(int $propertyId, array $values): array
+	{
+		$result = [];
+
+		foreach ($values as $value)
+		{
+			$result[] = $this->getPropertyEnumValue($propertyId, $value);
+		}
+
+		return $result;
 	}
 
 	protected function getPropertyElementValue(int $propertyValue)
@@ -713,7 +871,18 @@ class ProductLoader
 				foreach ($this->getProductIds() as $productId)
 				{
 					$value = $this->getRawPropertyValue($property, $productId);
-					if ($value > 0)
+					if (
+						isset($property['MULTIPLE'])
+						&& $property['MULTIPLE'] === 'Y'
+						&& is_array($value)
+					)
+					{
+						foreach ($value as $id)
+						{
+							$this->linkedElements[$id] = [];
+						}
+					}
+					elseif ($value > 0)
 					{
 						$this->linkedElements[$value] = [];
 					}
@@ -749,6 +918,18 @@ class ProductLoader
 		}
 
 		return $this->linkedElements[$propertyValue] ?? null;
+	}
+
+	protected function getPropertyElementValueMultiple(array $values): array
+	{
+		$result = [];
+
+		foreach ($values as $value)
+		{
+			$result[] = $this->getPropertyElementValue($value);
+		}
+
+		return $result;
 	}
 
 	protected function getFieldsStub(): array

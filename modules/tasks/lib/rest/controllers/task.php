@@ -422,7 +422,7 @@ final class Task extends Base
 		$localOffset = (new \DateTime())->getOffset();
 		$userOffset =  \CTimeZone::GetOffset(null, true);
 		$offset = $localOffset + $userOffset;
-		$newOffset = ($offset > 0 ? '+' : '').UI::formatTimeAmount($offset, 'HH:MI');
+		$newOffset = ($offset >= 0 ? '+' : '').UI::formatTimeAmount($offset, 'HH:MI');
 
 		foreach ($dateFields as $fieldName => $fieldData)
 		{

@@ -1,10 +1,12 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\Main,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\ImOpenLines\Crm\Common;
-
+use Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\ImOpenLines\Widget\FormHandler;
+use Bitrix\Main;
+use	Bitrix\Main\Localization\Loc;
+use	Bitrix\ImOpenLines\Crm\Common;
+use Bitrix\Main\Engine\CurrentUser;
 
 if(!\Bitrix\Main\Loader::includeModule('rest'))
 	return;
@@ -21,6 +23,7 @@ class Rest extends \IRestService
 
 				'imopenlines.dialog.get' => array(__CLASS__, 'dialogGet'),
 				'imopenlines.dialog.user.depersonalization' => array('callback' => array(__CLASS__, 'dialogUserDepersonalization'), 'options' => array('private' => true)),
+				'imopenlines.dialog.form.send' => array(__CLASS__, 'dialogFormSend'),
 
 				'imopenlines.operator.answer' => array(__CLASS__, 'operatorAnswer'),
 				'imopenlines.operator.skip' => array(__CLASS__, 'operatorSkip'),
@@ -47,8 +50,7 @@ class Rest extends \IRestService
 				'imopenlines.widget.operator.get' =>  array('callback' => array(__CLASS__, 'widgetOperatorGet'), 'options' => array()),
 				'imopenlines.widget.vote.send' =>  array('callback' => array(__CLASS__, 'widgetVoteSend'), 'options' => array()),
 				'imopenlines.widget.action.send' =>  array('callback' => array(__CLASS__, 'widgetActionSend'), 'options' => array()),
-				'imopenlines.widget.form.send' =>  array('callback' => array(__CLASS__, 'widgetFormSend'), 'options' => array()),
-//				'imopenlines.widget.form.fill' =>  array('callback' => array(__CLASS__, 'widgetFormFill'), 'options' => array()),
+				'imopenlines.widget.crm.bindings.get' =>  array('callback' => array(__CLASS__, 'widgetCrmBindingsGet'), 'options' => array()),
 
 				'imopenlines.config.path.get' => array(__CLASS__, 'configGetPath'),
 				'imopenlines.config.get' => array(__CLASS__, 'configGet'),
@@ -97,6 +99,99 @@ class Rest extends \IRestService
 		$result['dialog_id'] = 'chat'.$chatId;
 
 		return $result;
+	}
+
+	public static function dialogFormSend($params, $n, \CRestServer $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		if (!Main\Loader::includeModule('im'))
+		{
+			throw new \Bitrix\Rest\RestException("Messenger is not installed.", "IM_NOT_INSTALLED", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!Main\Loader::includeModule('crm'))
+		{
+			throw new \Bitrix\Rest\RestException("CRM module is not installed.", "CRM_NOT_INSTALLED", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!isset($params['SESSION_ID']))
+		{
+			throw new \Bitrix\Rest\RestException("You need to specify session id", "SESSION_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (
+			!isset($params['CRM_FORM']['ID']) ||
+			!isset($params['CRM_FORM']['CODE']) ||
+			!isset($params['CRM_FORM']['SEC']) ||
+			!isset($params['CRM_FORM']['NAME'])
+		)
+		{
+			throw new \Bitrix\Rest\RestException("You need to specify CRM-form details", "FORM_INFO_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$sessionData = SessionTable::getByIdPerformance($params['SESSION_ID'])->fetch();
+		if (!$sessionData)
+		{
+			throw new \Bitrix\Rest\RestException("Error getting session info", "NO_SESSION_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+		$session = new Session();
+		$session->load([
+			'USER_CODE' => $sessionData['USER_CODE'],
+			'SKIP_CREATE' => 'Y'
+	   	]);
+
+		if (!\Bitrix\Im\Chat::isUserInChat($session->getData('CHAT_ID')))
+		{
+			throw new \Bitrix\Rest\RestException("You do not have access to the specified dialog", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$formLink = \Bitrix\Crm\WebForm\Script::getPublicUrl([
+			'ID' => $params['CRM_FORM']['ID'],
+			'CODE' => $params['CRM_FORM']['CODE'],
+			'SECURITY_CODE' => $params['CRM_FORM']['SEC']
+		]);
+		$formLinkWithParams = $formLink;
+
+		// for other connectors we send public link, need to attach properties and crm bindings to the link
+		if ($session->getData('SOURCE') !== Connector::TYPE_LIVECHAT)
+		{
+			$operatorChat = $session->getChat();
+			$crmBindings = $operatorChat->getFieldData(Chat::FIELD_CRM);
+
+			$signedData = new \Bitrix\Crm\WebForm\Embed\Sign();
+			$signedData->setProperty('eventNamePostfix', FormHandler::EVENT_POSTFIX)
+					   ->setProperty('openlinesCode', $session->getData('USER_CODE'));
+
+			foreach ($crmBindings as $bindingType => $bindingId)
+			{
+				if ($bindingId > 0)
+				{
+					$signedData->addEntity(\CCrmOwnerType::ResolveId($bindingType), $bindingId);
+				}
+			}
+
+			$uri = new \Bitrix\Main\Web\Uri($formLink);
+			$signedData->appendUriParameter($uri);
+
+			$urlManager = \Bitrix\Main\Engine\UrlManager::getInstance();
+			$host = $urlManager->getHostUrl();
+			$formLinkWithParams = $host . \CBXShortUri::GetShortUri($uri->getLocator());
+		}
+
+		return Im::addMessage([
+			"TO_CHAT_ID" => $session->getData('CHAT_ID'),
+			"MESSAGE" => FormHandler::buildSentFormMessageForClient($formLinkWithParams),
+			"AUTHOR_ID" => CurrentUser::get()->getId(),
+			"FROM_USER_ID" => CurrentUser::get()->getId(),
+			"IMPORTANT_CONNECTOR" => 'Y',
+			"PARAMS" => [
+				"COMPONENT_ID" => FormHandler::FORM_COMPONENT_NAME,
+				"CRM_FORM_ID" => $params['CRM_FORM']['ID'],
+				"CRM_FORM_SEC" => $params['CRM_FORM']['SEC'],
+				"CRM_FORM_FILLED" => 'N',
+			]
+		]);
 	}
 
 	public static function dialogUserDepersonalization($params, $n, \CRestServer $server)
@@ -667,7 +762,7 @@ class Rest extends \IRestService
 			$params['USER_HASH'] = $_SESSION['LIVECHAT']['REGISTER']['hash'];
 		}
 
-		$userData = \Bitrix\Imopenlines\Widget\User::register([
+		$userDataFields = [
 			'NAME' => $params['NAME'],
 			'LAST_NAME' => $params['LAST_NAME'],
 			'AVATAR' => $params['AVATAR'],
@@ -676,7 +771,8 @@ class Rest extends \IRestService
 			'PERSONAL_GENDER' => $params['GENDER'],
 			'WORK_POSITION' => $params['POSITION'],
 			'USER_HASH' => $params['USER_HASH'],
-		]);
+		];
+		$userData = \Bitrix\Imopenlines\Widget\User::register($userDataFields);
 		if (!$userData)
 		{
 			throw new \Bitrix\Rest\RestException(
@@ -707,6 +803,15 @@ class Rest extends \IRestService
 		];
 
 		$_SESSION['LIVECHAT']['REGISTER'] = $result;
+
+		// check if welcome form needed (if we have name/lastName and email - we dont show form)
+		if (
+			($userDataFields['NAME'] !== '' || $userDataFields['LAST_NAME'] !== '')
+			&& $userDataFields['EMAIL'] !== '')
+		{
+			$clientChat = new Chat($dialogData['CHAT_ID']);
+			$clientChat->updateFieldData([Chat::FIELD_LIVECHAT => ['WELCOME_FORM_NEEDED' => 'N']]);
+		}
 
 		\Bitrix\ImOpenLines\Widget\Cache::set($userData['ID'], [
 			'TRACE_DATA' => (string)$params['TRACE_DATA'],
@@ -822,57 +927,72 @@ class Rest extends \IRestService
 		return true;
 	}
 
-	public static function widgetFormSend($params, $n, \CRestServer $server)
+	public static function widgetCrmBindingsGet($params, $n, \CRestServer $server)
 	{
 		if ($server->getAuthType() != \Bitrix\Imopenlines\Widget\Auth::AUTH_TYPE)
 		{
 			throw new \Bitrix\Rest\RestException("Access for this method allowed only by livechat authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
 		}
 
+		if (!\Bitrix\Main\Loader::includeModule('crm'))
+		{
+			throw new \Bitrix\Rest\RestException("CRM module is not installed.", "NO_CRM", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		$params['CHAT_ID'] = intval($params['CHAT_ID']);
-		if ($params['CHAT_ID'] <= 0)
+		if (!is_string($params['OPENLINES_CODE']) || $params['OPENLINES_CODE' === ''])
 		{
-			throw new \Bitrix\Rest\RestException("Chat id is not specified.", "CHAT_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new \Bitrix\Rest\RestException("Wrong imopenlines code.", "WRONG_IMOL_CODE", \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$params['FIELDS'] = array_change_key_case($params['FIELDS'], CASE_UPPER);
-		if (empty($params['FIELDS']))
+		$parsedOpenlinesCode = \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($params['OPENLINES_CODE']);
+		$configId = $parsedOpenlinesCode['lineId'];
+		$clientChatId = $parsedOpenlinesCode['connectorChatId'];
+		$userId = $parsedOpenlinesCode['connectorUserId'];
+
+		if (!$configId || !$clientChatId || !$userId)
 		{
-			throw new \Bitrix\Rest\RestException("Form fields is not specified.", "FIELDS_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new \Bitrix\Rest\RestException("Wrong imopenlines code.", "WRONG_IMOL_CODE", \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		if ($params['FORM'] === \Bitrix\ImOpenLines\Widget\Form::FORM_HISTORY)
+		// get operator chat from IMOL code
+		$operatorChat = new \Bitrix\ImOpenLines\Chat();
+		$chatLoadResult = $operatorChat->load(['USER_CODE' => $params['OPENLINES_CODE'], 'ONLY_LOAD' => 'Y']);
+		if (!$chatLoadResult)
 		{
-			return true; // TODO temporary blocked fix 0134384
+			throw new \Bitrix\Rest\RestException("Error loading chat", "CHAT_LOAD_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$control = new \Bitrix\ImOpenLines\Widget\Form($params['CHAT_ID']);
-		$result = $control->saveForm($params['FORM'], $params['FIELDS']);
-		if (!$result->isSuccess())
+		// check if current user is in chat
+		$isUserInChat = \Bitrix\Im\Chat::isUserInChat($operatorChat->getData('ID'));
+		if (!$isUserInChat)
 		{
-			$errors = $result->getErrors();
-			$error = current($errors);
-
-			throw new \Bitrix\Rest\RestException('Form error: "'.$error->getMessage().'" ['.$error->getCode().']', "SAVE_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new \Bitrix\Rest\RestException("You dont have access to this chat", "ACCESS_DENIED", \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		return true;
+		// get crm bindings from field data
+		$crmBindings = $operatorChat->getFieldData(Chat::FIELD_CRM);
+
+		// sign bindings if they exist
+		$signedData =  (new \Bitrix\Crm\WebForm\Embed\Sign);
+		$bindingsExist = false;
+		foreach ($crmBindings as $bindingType => $bindingId)
+		{
+			if ($bindingId > 0)
+			{
+				$bindingsExist = true;
+				$signedData->addEntity(\CCrmOwnerType::ResolveId($bindingType), $bindingId);
+			}
+		}
+
+		if (!$bindingsExist)
+		{
+			return '';
+		}
+
+		return $signedData->pack();
 	}
-
-//	public static function widgetFormFill($params, $n, \CRestServer $server)
-//	{
-//		if ($server->getAuthType() != \Bitrix\Imopenlines\Widget\Auth::AUTH_TYPE)
-//		{
-//			throw new \Bitrix\Rest\RestException("Access for this method allowed only by livechat authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
-//		}
-//
-//		\CIMMessageParam::Set($params['MESSAGE_ID'], ['CRM_FORM_VALUE' => $params['CRM_FORM_VALUE']]);
-//		\CIMMessageParam::SendPull($params['MESSAGE_ID'], ['CRM_FORM_VALUE']);
-//
-//		return true;
-//	}
 
 	public static function widgetUserGet($params, $n, \CRestServer $server)
 	{
@@ -1048,6 +1168,20 @@ class Rest extends \IRestService
 
 		shuffle($config['OPERATORS']);
 		$config['OPERATORS'] = array_slice($config['OPERATORS'], 0, 3);
+
+		//get security code and statuses texts for welcome CRM-form
+		if ($config['CRM_FORMS_SETTINGS']['USE_WELCOME_FORM'] && Main\Loader::includeModule('crm'))
+		{
+			$welcomeFormId = (int)$config['CRM_FORMS_SETTINGS']['WELCOME_FORM_ID'];
+			$welcomeForm = new \Bitrix\Crm\WebForm\Form($welcomeFormId);
+			if ($welcomeForm && $welcomeForm->isActive())
+			{
+				$config['CRM_FORMS_SETTINGS']['WELCOME_FORM_SEC'] = $welcomeForm->get()['SECURITY_CODE'];
+			}
+
+			$config['CRM_FORMS_SETTINGS']['SUCCESS_TEXT'] = $welcomeForm->get()['RESULT_SUCCESS_TEXT'];
+			$config['CRM_FORMS_SETTINGS']['ERROR_TEXT'] = $welcomeForm->get()['RESULT_FAILURE_TEXT'];
+		}
 
 		$result = self::objectEncode($config);
 

@@ -110,6 +110,7 @@ if (!$isAlreadyAuthorized)
 else
 {
 	$isExtranetModuleInstalled = \Bitrix\Main\Loader::includeModule("extranet");
+	$intent = $_REQUEST['intent'];
 	if ($isExtranetModuleInstalled)
 	{
 		$extranetSiteId = \CExtranet::getExtranetSiteId();
@@ -186,7 +187,17 @@ else
 		"siteDir"=>$siteDir,
 		"version"=>$moduleVersion,
 	]);
-	$menuTabs = (new \Bitrix\Mobile\Tab\Manager($context))->getActiveTabsData();
+
+	$manager = new \Bitrix\Mobile\Tab\Manager($context);
+	if ($intent && strpos($intent, 'preset_') === 0) {
+		$components = explode('_', $intent);
+		if (count($components) >= 2) {
+			$preset = $components[1];
+			$manager->setPresetName($preset);
+		}
+	}
+
+	$menuTabs = $manager->getActiveTabsData();
 
 //	array_shift($menuTabs);
 	$voximplantServer = '';
@@ -225,6 +236,7 @@ else
 			"LOGIN" => $USER->GetLogin()
 		]),
 		"sessid_md5" => bitrix_sessid(),
+        "backend_version" => \Bitrix\Main\ModuleManager::getVersion('mobile'),
 		"target" => md5($USER->GetID() . CMain::GetServerUniqID()),
 		"photoUrl" => $avatarSource,
 		"wkWebViewSupported" => true,

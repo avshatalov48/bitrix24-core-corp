@@ -42,6 +42,7 @@ $APPLICATION->AddHeadScript('/bitrix/templates/bitrix24/components/bitrix/social
 			) ?>,
 			urls: <?= CUtil::PhpToJSObject($arResult['Urls']) ?>,
 			slider: <?= ($arResult['IS_IFRAME'] ? 'true' : 'false') ?>,
+			isChatActive: <?= $arResult['bChatActive'] ? 'true' : 'false' ?>,
 		});
 	});
 

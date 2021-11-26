@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Mobile\Component;
 
 use Bitrix\Main\Config\Option;
@@ -18,16 +19,14 @@ use Bitrix\Main\Application;
 use Bitrix\Main\IO;
 use Bitrix\Mobile\Livefeed;
 
-class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
-{
-	/** @var ErrorCollection errorCollection */
-	protected $errorCollection;
+Loader::requireModule('socialnetwork');
 
+class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
+{
 	protected $ajaxCall = false;
 	protected $reloadCall = false;
 	protected $crmActivityIdList = [];
 
-	protected $request = null;
 	protected $paramsInstance = null;
 	protected $pathInstance = null;
 	protected $paramsPhotogalleryInstance = null;
@@ -36,40 +35,6 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 	protected $counterProcessorInstance = null;
 
 	public $useLogin = false;
-	public function configureActions()
-	{
-		return [];
-	}
-
-	/**
-	 * Getting once error with the necessary code.
-	 * @param string $code Code of error.
-	 * @return Error
-	 */
-	public function getErrorByCode($code)
-	{
-		return $this->errorCollection->getErrorByCode($code);
-	}
-
-	/**
-	 * Getting array of errors.
-	 * @return Error[]
-	 */
-	public function getErrors()
-	{
-		return $this->errorCollection->toArray();
-	}
-
-
-	protected function getRequest()
-	{
-		if ($this->request == null)
-		{
-			$this->request = Util::getRequest();
-		}
-
-		return $this->request;
-	}
 
 	protected function getParamsInstance()
 	{
@@ -359,6 +324,9 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 			$processorInstance->processNextPageSize($result);
 			$processorInstance->processContentList($result);
 			$logPageProcessorInstance->setLogPageData($result);
+
+			$processorInstance->getUnreadTaskCommentsIdList($result);
+
 			$counterProcessorInstance->clearLogCounter($result);
 			$this->setFollowData($result);
 			$this->setExpertModeData($result);
@@ -520,6 +488,13 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 		)
 		{
 			$this->crmActivityIdList[] = (int)$eventFields['ENTITY_ID'];
+		}
+		elseif ($eventFields['EVENT_ID'] === 'tasks')
+		{
+			$task2LogList = $this->getTask2LogListValue();
+			$task2LogList[(int)$eventFields['SOURCE_ID']] = (int)$eventFields['ID'];
+			$this->setTask2LogListValue($task2LogList);
+			unset($task2LogList);
 		}
 
 		$cnt++;
@@ -750,4 +725,3 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 		}
 	}
 }
-?>

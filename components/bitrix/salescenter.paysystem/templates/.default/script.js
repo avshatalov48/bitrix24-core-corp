@@ -374,13 +374,10 @@
 				analyticsLabel = 'salescenterAddPaymentSystem';
 			}
 
-			if (this.paySystemMode && this.paySystemHandler === 'yandexcheckout')
+			type = this.paySystemHandler;
+			if (this.paySystemMode)
 			{
-				type = this.paySystemMode;
-			}
-			else
-			{
-				type = this.paySystemHandler;
+				type = type + ':' + this.paySystemMode;
 			}
 
 			return BX.ajax.runComponentAction(
@@ -933,15 +930,12 @@
 			event.preventDefault();
 			if(this.paySystemId > 0 && confirm(BX.message('SALESCENTER_SP_PAYSYSTEM_DELETE_CONFIRM')))
 			{
-				var type;
-				if(this.paySystemMode && this.paySystemHandler === 'yandexcheckout')
+				var type = this.paySystemHandler;
+				if (this.paySystemMode)
 				{
-					type = this.paySystemMode;
+					type = type + ':' + this.paySystemMode;
 				}
-				else
-				{
-					type = this.paySystemHandler;
-				}
+
 				BX.ajax.runComponentAction(
 					'bitrix:salescenter.paysystem',
 					'deletePaySystem',

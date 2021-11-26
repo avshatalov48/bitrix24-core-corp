@@ -447,6 +447,12 @@ class TasksTaskListComponent extends TasksBaseComponent
 		];
 	}
 
+	protected function loadGrid()
+	{
+		$this->grid = Grid::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
+		$this->filter = Filter::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
+	}
+
 	protected function doPreAction()
 	{
 		parent::doPreAction();
@@ -463,8 +469,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			);
 		}
 
-		$this->grid = Grid::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
-		$this->filter = Filter::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
+		$this->loadGrid();
 
 		$this->arResult['USER_ID'] = $this->userId;
 		$this->arResult['OWNER_ID'] = $this->arParams['USER_ID'];
@@ -506,7 +511,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->arResult['MESSAGES'] = [];
 
 		$this->arResult["FILTER"] = $this->filter->getFilters();
-		$this->arResult["PRESETS"] = $this->filter->getPresets();
+		$this->arResult["PRESETS"] = $this->filter->getAllPresets();
 
 		$this->listParameters['filter'] = $this->arParams['IS_MOBILE'] ? array() : $this->filter->process(); //TODO!
 
@@ -806,6 +811,8 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	private function canProceedExpiredTour(): bool
 	{
+		return false;
+
 		if ($this->arParams['GROUP_ID'] > 0)
 		{
 			return false;

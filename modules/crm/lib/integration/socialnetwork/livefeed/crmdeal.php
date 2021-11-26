@@ -10,12 +10,12 @@ Loc::loadMessages(__FILE__);
 
 final class CrmDeal extends CrmEntity
 {
-	const PROVIDER_ID = 'CRM_LOG_DEAL';
-	const CONTENT_TYPE_ID = 'CRM_LOG_DEAL';
+	public const PROVIDER_ID = 'CRM_LOG_DEAL';
+	public const CONTENT_TYPE_ID = 'CRM_LOG_DEAL';
 
 	private const EMPTY_TITLE = '__EMPTY__';
 
-	public function getEventId()
+	public function getEventId(): array
 	{
 		return [
 			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Add,
@@ -27,14 +27,14 @@ final class CrmDeal extends CrmEntity
 		];
 	}
 
-	public function getMessageEventId()
+	public function getMessageEventId(): array
 	{
 		return [
 			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Message
 		];
 	}
 
-	public function getCurrentEntityFields()
+	public function getCurrentEntityFields(): array
 	{
 		$result = [];
 
@@ -65,17 +65,17 @@ final class CrmDeal extends CrmEntity
 		return $result;
 	}
 
-	public function getLogEntityType()
+	public function getLogEntityType(): string
 	{
 		return Socialnetwork::DATA_ENTITY_TYPE_CRM_DEAL;
 	}
 
-	public function getLogCommentEventId()
+	public function getLogCommentEventId(): string
 	{
 		return 'crm_deal_message';
 	}
 
-	public function setCrmEntitySourceTitle(array $entityFields = [])
+	public function setCrmEntitySourceTitle(array $entityFields = []): void
 	{
 		$this->setSourceTitle($entityFields['TITLE']);
 	}
@@ -166,12 +166,12 @@ final class CrmDeal extends CrmEntity
 		return $result;
 	}
 
-	public function getSuffix()
+	public function getSuffix(): string
 	{
 		$logEventId = $this->getLogEventId();
 		if (
 			!empty($logEventId)
-			&& in_array($logEventId, $this->getMessageEventId())
+			&& in_array($logEventId, $this->getMessageEventId(), true)
 		)
 		{
 			return 'MESSAGE';

@@ -2,9 +2,13 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Order\Matcher\BaseEntityMatcher;
+use Bitrix\Crm\Order\Matcher\Internals\OrderPropsMatchTable;
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -46,7 +50,7 @@ class EntityPreset
 		);
 		return $entityTypes;
 	}
-	
+
 	public static function getUserFieldTypes()
 	{
 		$result = Array(
@@ -78,7 +82,7 @@ class EntityPreset
 	{
 		\COption::SetOptionInt("crm", "crm_requisite_preset_country_id", $countryId);
 	}
-	
+
 	public static function getCountriesInfo()
 	{
 		if (self::$countryInfo === null)
@@ -156,7 +160,7 @@ class EntityPreset
 
 	public static function isUTFMode()
 	{
-		if (Main\Config\Option::get('crm', 'entity_preset_force_utf_mode', 'N') === 'Y')
+		if (Option::get('crm', 'entity_preset_force_utf_mode', 'N') === 'Y')
 			return true;
 
 		if (defined('BX_UTF') && BX_UTF)
@@ -337,11 +341,11 @@ class EntityPreset
 			'IN_SHORT_LIST' => array('data_type' => 'boolean')
 		);
 	}
-	
+
 	public function getSettingsFieldsAvailableToAdd($entityTypeId, $presetId)
 	{
 		$result = new Main\Result();
-		
+
 		if (!self::checkEntityType($entityTypeId))
 		{
 			$result->addError(
@@ -352,7 +356,7 @@ class EntityPreset
 			);
 			return $result;
 		}
-		
+
 		$requisite = new EntityRequisite();
 		$presetId = (int)$presetId;
 		$presetData = null;
@@ -419,7 +423,7 @@ class EntityPreset
 	public function add($fields, $options = array())
 	{
 		unset($fields['ID'], $fields['DATE_MODIFY'], $fields['MODIFY_BY_ID']);
-		$fields['DATE_CREATE'] = new \Bitrix\Main\Type\DateTime();
+		$fields['DATE_CREATE'] = new DateTime();
 		$fields['CREATED_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
 
 		if (isset($fields['SETTINGS']))
@@ -433,7 +437,7 @@ class EntityPreset
 	public function update($id, $fields, $options = array())
 	{
 		unset($fields['DATE_CREATE'], $fields['CREATED_BY_ID']);
-		$fields['DATE_MODIFY'] = new \Bitrix\Main\Type\DateTime();
+		$fields['DATE_MODIFY'] = new DateTime();
 		$fields['MODIFY_BY_ID '] = \CCrmSecurityHelper::GetCurrentUserID();
 
 		if (isset($fields['SETTINGS']))
@@ -642,10 +646,10 @@ class EntityPreset
 				$numberOfModified++;
 			}
 		}
-		
+
 		if ($numberOfModified <= 0)
 			return false;
-		
+
 		return true;
 	}
 
@@ -814,7 +818,7 @@ class EntityPreset
 			}
 
 			$iResult = array();
-			
+
 			$select = array('ID');
 			if ($arrangeByCountry)
 				$select[] = 'COUNTRY_ID';
@@ -1007,6 +1011,28 @@ class EntityPreset
 		return true;
 	}
 
+	/**
+	 * @param \CCrmPerms $userPermissions
+	 * @return bool
+	 */
+	public static function checkChangeCurrentCountryPermission($userPermissions = null)
+	{
+		if ($userPermissions === null)
+		{
+			$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
+		}
+
+		if (
+			$userPermissions instanceof \CCrmPerms
+			&& $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE')
+		)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	public static function formatName($id, $title)
 	{
 		$title = trim(strval($title));
@@ -1024,5 +1050,613 @@ class EntityPreset
 			'cache' => 3600
 		])->fetch();
 		return $preset ? $preset['ID'] : false;
+	}
+
+	public function checkNeedChangeCurrentCountry(): bool
+	{
+		$countryId = (int)Option::get('crm', '~crm_requisite_current_country_can_change', 0);
+		return (
+			$countryId > 0
+			&& in_array($countryId, EntityRequisite::getAllowedRqFieldCountries(), true)
+			&& $countryId !== static::getCurrentCountryId()
+			&& static::checkChangeCurrentCountryPermission()
+		);
+	}
+
+	public function changeCurrentCountry(int $countryId): Main\Result
+	{
+		$result = new Main\Result();
+
+		if ($countryId <= 0 || !in_array($countryId, EntityRequisite::getAllowedRqFieldCountries(), true))
+		{
+			$result->addError(new Main\Error("Incorrect country for change (ID: $countryId)"));
+		}
+
+		if ($result->isSuccess())
+		{
+			if (!static::checkChangeCurrentCountryPermission())
+			{
+				$result->addError(new Main\Error('Access denied!'));
+			}
+		}
+
+		if ($result->isSuccess())
+		{
+			$currentCountryId = static::getCurrentCountryId();
+
+			if ($currentCountryId > 0)
+			{
+				//region Delete all default presets for which there are no requisites.
+				$fixedPresetList = EntityRequisite::getFixedPresetList();
+				$defPresetsXmlIds = [];
+				foreach ($fixedPresetList as $presetInfo)
+				{
+					$defPresetsXmlIds[] = $presetInfo['XML_ID'];
+				}
+				unset($presetInfo);
+
+				$existsDefPresetMap = [];
+				$existsDefPresetsByXmlId = [];
+				$res = $this->getList(
+					[
+						'filter' => [
+							'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+							[
+								'LOGIC' => 'OR',
+								'=CREATED_BY_ID' => 0,
+								'@XML_ID' => $defPresetsXmlIds,
+							]
+
+						],
+						'select' => ['ID', 'COUNTRY_ID', 'XML_ID']
+					]
+				);
+				unset($defPresetsXmlIds);
+				if (is_object($res))
+				{
+					$requisite = EntityRequisite::getSingleInstance();
+					$emptyXmlIdIndex = 1;
+					while ($row = $res->fetch())
+					{
+						$id = (int)$row['ID'];
+						$presetCountryId = (int)$row['COUNTRY_ID'];
+						$deleted = 'N';
+
+						if ($presetCountryId !== $countryId)
+						{
+							$resRq = $requisite->getList(
+								[
+									'filter' => ['=PRESET_ID' => $id],
+									'select' => ['ID'],
+									'limit' => 1,
+								]
+							);
+							if (is_object($resRq))
+							{
+								$rowRq = $resRq->fetch();
+								if (!$rowRq)
+								{
+									// Remove directly through the table because you need to avoid
+									// checks and setting default presets.
+									$delResult = PresetTable::delete($id);
+									if ($delResult->isSuccess())
+									{
+										$deleted = 'Y';
+									}
+								}
+							}
+						}
+
+						$xmlId = '';
+						if (isset($row['XML_ID']) && is_string($row['XML_ID']) && $row['XML_ID'] !== '')
+						{
+							$xmlId = $row['XML_ID'];
+							$index = $row['XML_ID'];
+						}
+						else
+						{
+							$index = "<EMPTY_XML_ID_$emptyXmlIdIndex>";
+							$emptyXmlIdIndex++;
+						}
+						$emptyXmlIdIndex++;
+						$existsDefPresetMap[$id] = [
+							'COUNTRY_ID' => $presetCountryId,
+							'XML_ID' => $xmlId,
+							'deleted' => $deleted
+						];
+						$existsDefPresetsByXmlId[$index] = [
+							'ID' => $id,
+							'COUNTRY_ID' => $presetCountryId,
+							'deleted' => $deleted
+						];
+					}
+				}
+				unset(
+					$id,
+					$deleted,
+					$row,
+					$res,
+					$rowRq,
+					$resRq,
+					$presetCountryId,
+					$requisite,
+					$resDel,
+					$defPresetsOptionValue,
+					$emptyXmlIdIndex,
+					$xmlId,
+					$index
+				);
+				//endregion Delete all default presets for which there are no requisites.
+
+				//region Create new default presets.
+				$sort = 500;
+				$datetimeEntity = new Main\DB\SqlExpression(
+					Main\Application::getConnection()->getSqlHelper()->getCurrentDateTimeFunction()
+				);
+				foreach ($fixedPresetList as $presetData)
+				{
+					if ($countryId === (int)$presetData['COUNTRY_ID'])
+					{
+						$sort += 10;
+						if (
+							!isset($existsDefPresetsByXmlId[$presetData['XML_ID']])
+							|| (
+								isset($existsDefPresetsByXmlId[$presetData['XML_ID']]['deleted'])
+								&& $existsDefPresetsByXmlId[$presetData['XML_ID']]['deleted'] === 'Y'
+							)
+						)
+						{
+							$presetFields = [
+								'ENTITY_TYPE_ID' => EntityPreset::Requisite,
+								'COUNTRY_ID' => $countryId,
+								'DATE_CREATE' => $datetimeEntity,
+								'CREATED_BY_ID' => 0,
+								'NAME' => $presetData['NAME'],
+								'ACTIVE' => $presetData['ACTIVE'],
+								'SORT' => $sort,
+								'XML_ID' => $presetData['XML_ID'],
+								'SETTINGS' => $presetData['SETTINGS']
+							];
+
+							//region Rename existing presets if their names match the new one.
+							$res = $this->getList(
+								[
+									'filter' => [
+										'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+										'=NAME' => $presetFields['NAME'],
+									],
+									'select' => ['ID', 'NAME', 'COUNTRY_ID'],
+								]
+							);
+							if (is_object($res))
+							{
+								while ($row = $res->fetch())
+								{
+									$countryCode = EntityPreset::getCountryCodeById($row['COUNTRY_ID']);
+									if ($countryCode !== '')
+									{
+										PresetTable::update(
+											(int)$row['ID'],
+											['NAME' => $row['NAME'] . " ($countryCode)"]
+										);
+									}
+								}
+							}
+							unset($res, $row, $countryCode);
+							//endregion Rename existing presets if their names match the new one.
+
+							PresetTable::add($presetFields);
+						}
+					}
+				}
+				unset(
+					$existsDefPresetsByXmlId,
+					$fixedPresetList,
+					$presetData,
+					$sort,
+					$presetFields
+				);
+				//endregion Create new default presets.
+
+				// Set new identifier of the current country.
+				Option::set('crm', 'crm_requisite_preset_country_id', $countryId);
+
+				$entityTypeNames = ['COMPANY', 'CONTACT'];
+
+				//region Get current default presets identifiers
+				$defPresetMap = [];
+				foreach ($entityTypeNames as $entityTypeName)
+				{
+					$defPresetMap[$entityTypeName] = [
+						'ID' => 0,
+						'COUNTRY_ID' => 0,
+						'NAME' => '',
+						'SETTINGS' => []
+					];
+				}
+				unset($entityTypeName);
+				$optionValue = Option::get('crm', 'requisite_default_presets');
+				$optionModified = false;
+				if ($optionValue !== '')
+				{
+					$optionValue = unserialize($optionValue, ['allowed_classes' => false]);
+				}
+				if (!is_array($optionValue))
+				{
+					$optionValue = [];
+				}
+				foreach ($entityTypeNames as $entityTypeName)
+				{
+					if (isset($optionValue[$entityTypeName]))
+					{
+						$defPresetMap[$entityTypeName]['ID'] = (int)$optionValue[$entityTypeName];
+						if ($defPresetMap[$entityTypeName]['ID'] < 0)
+						{
+							$defPresetMap[$entityTypeName]['ID'] = 0;
+							$optionModified = true;
+						}
+					}
+				}
+				unset($entityTypeName);
+
+				//region Check existing of default presets
+				$existsDefPreset = [];
+				foreach ($entityTypeNames as $entityTypeName)
+				{
+					$existsDefPreset[$entityTypeName] = false;
+				}
+				unset($entityTypeName);
+				if ($defPresetMap['COMPANY']['ID'] > 0 || $defPresetMap['CONTACT']['ID'] > 0)
+				{
+					$ids = [];
+					foreach ($entityTypeNames as $entityTypeName)
+					{
+						if (
+							$defPresetMap[$entityTypeName]['ID'] > 0
+							&& !in_array($defPresetMap[$entityTypeName]['ID'], $ids, true)
+						)
+						{
+							$ids[] = $defPresetMap[$entityTypeName]['ID'];
+						}
+					}
+					unset($entityTypeName);
+
+					if (!empty($ids))
+					{
+						$res = $this->getList(
+							[
+								'filter' => [
+									'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+									'@ID' => $ids
+								],
+								'select' => ['ID', 'COUNTRY_ID', 'NAME', 'SETTINGS'],
+							]
+						);
+						if (is_object($res))
+						{
+							while ($row = $res->fetch())
+							{
+								$presetId = is_array($row) && isset($row['ID']) ? (int)$row['ID'] : 0;
+								if ($presetId > 0)
+								{
+									foreach ($entityTypeNames as $entityTypeName)
+									{
+										if ($presetId === $defPresetMap[$entityTypeName]['ID'])
+										{
+											$existsDefPreset[$entityTypeName] = true;
+											$defPresetMap[$entityTypeName]['COUNTRY_ID'] = (int)$row['COUNTRY_ID'];
+											if ($defPresetMap[$entityTypeName]['COUNTRY_ID'] < 0)
+											{
+												$defPresetMap[$entityTypeName]['COUNTRY_ID'] = 0;
+											}
+											if (isset($row['NAME']) && is_string($row['NAME']) && $row['NAME'] !== '')
+											{
+												$defPresetMap[$entityTypeName]['NAME'] = $row['NAME'];
+											}
+											if (is_array($row['SETTINGS']))
+											{
+												$defPresetMap[$entityTypeName]['SETTINGS'] = $row['SETTINGS'];
+											}
+										}
+									}
+								}
+							}
+						}
+						unset($ids, $res, $row, $presetId, $entityTypeName);
+					}
+				}
+				foreach ($entityTypeNames as $entityTypeName)
+				{
+					if (!$existsDefPreset[$entityTypeName])
+					{
+						$defPresetMap[$entityTypeName]['ID'] = 0;
+						$optionModified = true;
+					}
+				}
+				unset($entityTypeName, $existsDefPreset);
+				//endregion Check existing of default presets
+
+				$optionValue = [];
+				foreach ($entityTypeNames as $entityTypeName)
+				{
+					$optionValue[$entityTypeName] = $defPresetMap[$entityTypeName]['ID'];
+				}
+				unset($entityTypeNames, $entityTypeName);
+				//endregion Get current default presets identifiers
+
+				//region Reset default presets to option
+				$countryCode = static::getCountryCodeById($countryId);
+				$personTypeMap = [
+					'COMPANY' => $countryCode === 'RU' ? 'COMPANY' : 'LEGALENTITY',
+					'CONTACT' => 'PERSON',
+				];
+				foreach ($personTypeMap as $optionParamName => $personType)
+				{
+					$xmlId = str_replace(
+						['%COUNTRY%', '%PERSON%'],
+						[$countryCode, $personType],
+						'#CRM_REQUISITE_PRESET_DEF_%COUNTRY%_%PERSON%#'
+					);
+					$res = $this->getList(
+						[
+							'order' => ['SORT' => 'ASC', 'ID' => 'ASC'],
+							'filter' => [
+								'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+								'=XML_ID' => $xmlId
+							],
+							'select' => ['ID', 'COUNTRY_ID', 'NAME', 'SETTINGS'],
+							'limit' => 1
+						]
+					);
+					if (is_object($res))
+					{
+						$row = $res->fetch();
+						if (is_array($row))
+						{
+							$presetId = isset($row['ID']) ? (int)$row['ID'] : 0;
+							$presetCountryId =
+								(isset($row['COUNTRY_ID']) && $row['COUNTRY_ID'] > 0)
+								? (int)$row['COUNTRY_ID']
+								: 0
+							;
+							$presetName = (isset($row['NAME']) && is_string($row['NAME'])) ? $row['NAME'] : '';
+							$settings = is_array($row['SETTINGS']) ? $row['SETTINGS'] : [];
+							if ($presetId > 0)
+							{
+								$optionValue[$optionParamName] = $presetId;
+								$defPresetMap[$optionParamName]['ID'] = $presetId;
+								$defPresetMap[$optionParamName]['COUNTRY_ID'] = $presetCountryId;
+								$defPresetMap[$optionParamName]['NAME'] = $presetName;
+								$defPresetMap[$optionParamName]['SETTINGS'] = $settings;
+								$optionModified = true;
+							}
+						}
+					}
+				}
+				unset(
+					$personTypeMap,
+					$optionParamName,
+					$personType,
+					$xmlId,
+					$res,
+					$row,
+					$presetId,
+					$presetCountryId,
+					$presetName,
+					$settings
+				);
+
+				if ($optionModified)
+				{
+					Option::set('crm', 'requisite_default_presets', serialize($optionValue));
+				}
+				unset($optionModified, $optionValue);
+				//endregion Reset default presets to option
+
+				//region Convert synchronization settings for order properties with requisite fields
+				$this->convertOrderPropsSyncSettings(
+					$defPresetMap,
+					$existsDefPresetMap
+				);
+				//endregion Convert synchronization settings for order properties with requisite fields
+
+				unset($defPresetMap, $existsDefPresetMap);
+			}
+		}
+
+		return $result;
+	}
+
+	private function convertOrderPropsSyncSettings(array $newPresetMap, array $existsDefPresetMap)
+	{
+		//region Verification of initial data
+		$presetMap = [];
+		foreach (['COMPANY', 'CONTACT'] as $entityTypeName)
+		{
+			$isValidPreset = (
+				is_array($newPresetMap[$entityTypeName])
+				&& isset($newPresetMap[$entityTypeName]['ID'])
+				&& $newPresetMap[$entityTypeName]['ID'] > 0
+				&& isset($newPresetMap[$entityTypeName]['COUNTRY_ID'])
+				&& $newPresetMap[$entityTypeName]['COUNTRY_ID'] > 0
+				&& isset($newPresetMap[$entityTypeName]['NAME'])
+				&& is_string($newPresetMap[$entityTypeName]['NAME'])
+				&& is_array($newPresetMap[$entityTypeName]['SETTINGS'])
+				&& is_array($newPresetMap[$entityTypeName]['SETTINGS']['FIELDS'])
+			);
+			$presetMap[$entityTypeName] = [
+				'IS_VALID' => $isValidPreset,
+				'ID' => $isValidPreset ? (int)$newPresetMap[$entityTypeName]['ID'] : 0,
+				'COUNTRY_ID' => $isValidPreset ? (int)$newPresetMap[$entityTypeName]['COUNTRY_ID'] : 0,
+				'NAME' => $isValidPreset ? $newPresetMap[$entityTypeName]['NAME'] : '',
+				'SETTINGS' => $isValidPreset ? $newPresetMap[$entityTypeName]['SETTINGS'] : [],
+			];
+		}
+		$newPresetMap = $presetMap;
+		unset($entityTypeName, $isValidPreset, $presetMap);
+		//endregion Verification of initial data
+
+		if (
+			($newPresetMap['COMPANY']['IS_VALID'] || $newPresetMap['CONTACT']['IS_VALID'])
+			&& !empty($existsDefPresetMap)
+		)
+		{
+			$bankDetail = EntityBankDetail::getSingleInstance();
+
+			$res = OrderPropsMatchTable::getList(
+				[
+					'filter' => [
+						'@CRM_ENTITY_TYPE' => [
+							\CCrmOwnerType::Company,
+							\CCrmOwnerType::Contact
+						],
+						'@CRM_FIELD_TYPE' => [
+							BaseEntityMatcher::REQUISITE_FIELD_TYPE,
+							BaseEntityMatcher::BANK_DETAIL_FIELD_TYPE
+						]
+					],
+					'select' => [
+						'ID',
+						'CRM_ENTITY_TYPE',
+						'CRM_FIELD_TYPE',
+						'SETTINGS',
+						'CRM_FIELD_CODE'
+					]
+				]
+			);
+			if (is_object($res))
+			{
+				$settingsFieldsMap = [];
+				$bankDetailFieldsMap = $bankDetail->getRqFieldByCountry();
+				while ($row = $res->fetch())
+				{
+					if (
+						is_array($row['SETTINGS'])
+						&& isset($row['SETTINGS']['RQ_PRESET_ID'])
+						&& $row['SETTINGS']['RQ_PRESET_ID'] > 0
+					)
+					{
+						$propPresetId = (int)$row['SETTINGS']['RQ_PRESET_ID'];
+						if (is_array($existsDefPresetMap[$propPresetId]))
+						{
+							$entityTypeId = \CCrmOwnerType::Undefined;
+							$presetInfo = $existsDefPresetMap[$propPresetId];
+
+							//region Detect entity type
+							if (
+								isset($presetInfo['XML_ID'])
+								&& is_string($presetInfo['XML_ID'])
+								&& $presetInfo['XML_ID'] !== ''
+							)
+							{
+								$xmlIdLength = mb_strlen($presetInfo['XML_ID']);
+								$signMap = [
+									'COMPANY' => \CCrmOwnerType::Company,
+									'INDIVIDUAL' => \CCrmOwnerType::Company,
+									'PERSON' => \CCrmOwnerType::Contact,
+									'LEGALENTITY' => \CCrmOwnerType::Company,
+								];
+								foreach (array_keys($signMap) as $sign)
+								{
+									$suffix = mb_substr($presetInfo['XML_ID'], $xmlIdLength - mb_strlen($sign) - 1);
+									if ($suffix === ($sign . '#'))
+									{
+										$entityTypeId = $signMap[$sign];
+										break;
+									}
+								}
+							}
+							if ($entityTypeId === \CCrmOwnerType::Undefined)
+							{
+								if (isset($row['CRM_ENTITY_TYPE']) && $row['CRM_ENTITY_TYPE'] > 0)
+								{
+									$entityTypeId = (int)$row['CRM_ENTITY_TYPE'];
+								}
+								if (
+									!(
+										$entityTypeId === \CCrmOwnerType::Company
+										|| $entityTypeId === \CCrmOwnerType::Contact
+									)
+								)
+								{
+									$entityTypeId = \CCrmOwnerType::Company;
+								}
+							}
+							//endregion Detect entity type
+
+							$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+							if (
+								is_array($newPresetMap[$entityTypeName])
+								&& $newPresetMap[$entityTypeName]['IS_VALID']
+								&& isset($row['ID'])
+								&& $row['ID'] > 0
+								&& isset($row['CRM_FIELD_TYPE'])
+								&& $row['CRM_FIELD_TYPE'] > 0
+								&& isset($row['CRM_FIELD_CODE'])
+								&& is_string($row['CRM_FIELD_CODE'])
+								&& $row['CRM_FIELD_CODE'] !== ''
+								&& isset($row['SETTINGS']['RQ_NAME'])
+								&& isset($row['SETTINGS']['RQ_PRESET_ID'])
+							)
+							{
+								$crmFieldType = (int)$row['CRM_FIELD_TYPE'];
+								$presetId = $newPresetMap[$entityTypeName]['ID'];
+								$presetCountryId = $newPresetMap[$entityTypeName]['COUNTRY_ID'];
+								$fields = [
+									'SETTINGS' => $row['SETTINGS']
+								];
+								$fields['SETTINGS']['RQ_PRESET_ID'] = $presetId;
+								$fields['SETTINGS']['RQ_NAME'] = $newPresetMap[$entityTypeName]['NAME'];
+								$needUpdate = false;
+
+								if ($crmFieldType === BaseEntityMatcher::REQUISITE_FIELD_TYPE)
+								{
+									if (!isset($settingsFieldsMap[$presetId]))
+									{
+										$settingsFieldsMap[$presetId] = [];
+										if (is_array($newPresetMap[$entityTypeName]['SETTINGS']['FIELDS']))
+										{
+											$presetFields = $newPresetMap[$entityTypeName]['SETTINGS']['FIELDS'];
+											foreach ($presetFields as $presetField)
+											{
+												if (
+													isset($presetField['FIELD_NAME'])
+													&& is_string($presetField['FIELD_NAME'])
+													&& $presetField['FIELD_NAME'] !== ''
+												)
+												{
+													$settingsFieldsMap[$presetId][$presetField['FIELD_NAME']] = true;
+												}
+											}
+										}
+									}
+
+									if (isset($settingsFieldsMap[$presetId][$row['CRM_FIELD_CODE']]))
+									{
+										$needUpdate = true;
+									}
+								}
+								elseif ($crmFieldType === BaseEntityMatcher::BANK_DETAIL_FIELD_TYPE)
+								{
+									if (isset($bankDetailFieldsMap[$presetCountryId][$row['CRM_FIELD_CODE']]))
+									{
+										$fields['SETTINGS']['BD_NAME'] =
+											$bankDetail->getDefaultSectionTitle($presetCountryId)
+										;
+										$fields['SETTINGS']['BD_COUNTRY_ID'] = $presetCountryId;
+										$needUpdate = true;
+									}
+								}
+
+								if ($needUpdate)
+								{
+									OrderPropsMatchTable::update((int)$row['ID'], ['fields' => $fields]);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }

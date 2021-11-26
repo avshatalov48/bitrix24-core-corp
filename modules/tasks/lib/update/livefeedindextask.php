@@ -1,49 +1,50 @@
-<?
+<?php
+
 namespace Bitrix\Tasks\Update;
 
-use \Bitrix\Main\Update\Stepper;
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Tasks\Integration;
-use \Bitrix\Socialnetwork\Item\LogIndex;
-use \Bitrix\Socialnetwork\LogTable;
-use \Bitrix\Socialnetwork\LogIndexTable;
-use \Bitrix\Main\Config\Option;
-use \Bitrix\Main\Loader;
+use Bitrix\Main\Update\Stepper;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration;
+use Bitrix\Socialnetwork\Item\LogIndex;
+use Bitrix\Socialnetwork\LogTable;
+use Bitrix\Socialnetwork\LogIndexTable;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
 final class LivefeedIndexTask extends Stepper
 {
-	protected static $moduleId = "tasks";
+	protected static $moduleId = 'tasks';
 
-	public function execute(array &$result)
+	public function execute(array &$result): bool
 	{
-		if (!(
-			Loader::includeModule("tasks")
-			&& Loader::includeModule("socialnetwork")
-			&& Option::get('tasks', 'needLivefeedIndex', 'Y') == 'Y'
-		))
+		if (
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('socialnetwork')
+			|| Option::get('tasks', 'needLivefeedIndex', 'Y') !== 'Y'
+		)
 		{
 			return false;
 		}
 
 		$return = false;
 
-		$params = Option::get("tasks", "livefeedindextask", "");
-		$params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : array());
-		$params = (is_array($params) ? $params : array());
+		$params = Option::get('tasks', 'livefeedindextask', '');
+		$params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : []);
+		$params = (is_array($params) ? $params : []);
 		if (empty($params))
 		{
-			$params = array(
+			$params = [
 				"lastId" => 0,
 				"number" => 0,
 				"count" => LogTable::getCount(
-					array(
+					[
 						'@EVENT_ID' => Integration\Socialnetwork\Log::getEventIdList(),
-						'!SOURCE_ID' => false
-					)
-				)
-			);
+						'!SOURCE_ID' => false,
+					]
+				),
+			];
 		}
 
 		$found = false;
@@ -55,25 +56,25 @@ final class LivefeedIndexTask extends Stepper
 			$result["steps"] = "";
 			$result["count"] = $params["count"];
 
-			$res = LogTable::getList(array(
-				'order' => array('ID' => 'ASC'),
-				'filter' => array(
+			$res = LogTable::getList([
+				'order' => [ 'ID' => 'ASC' ],
+				'filter' => [
 					'>ID' => $params["lastId"],
 					'@EVENT_ID' => Integration\Socialnetwork\Log::getEventIdList(),
 					'!SOURCE_ID' => false
-				),
-				'select' => array('ID', 'EVENT_ID', 'SOURCE_ID'),
+				],
+				'select' => [ 'ID', 'EVENT_ID', 'SOURCE_ID' ],
 				'offset' => 0,
-				'limit' => 100
-			));
+				'limit' => 100,
+			]);
 
 			while ($record = $res->fetch())
 			{
-				LogIndex::setIndex(array(
+				LogIndex::setIndex([
 					'itemType' => LogIndexTable::ITEM_TYPE_LOG,
 					'itemId' => $record['ID'],
-					'fields' => $record
-				));
+					'fields' => $record,
+				]);
 
 				$params["lastId"] = $record['ID'];
 				$params["number"]++;
@@ -92,11 +93,10 @@ final class LivefeedIndexTask extends Stepper
 
 		if ($found === false)
 		{
-			Option::delete("tasks", array("name" => "livefeedindextask"));
+			Option::delete("tasks", [ 'name' => 'livefeedindextask' ]);
 			Option::set('tasks', 'needLivefeedIndex', 'N');
 		}
 
 		return $return;
 	}
 }
-?>

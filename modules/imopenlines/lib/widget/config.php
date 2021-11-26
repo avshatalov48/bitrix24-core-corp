@@ -122,7 +122,12 @@ class Config
 			],
 			'TEXT_MESSAGES' => $result['TEXT_PHRASES'],
 			'WATCH_TYPING' => $config['WATCH_TYPING'] === 'Y',
-			'SHOW_SESSION_ID' => $result['SHOW_SESSION_ID'] === 'Y'
+			'SHOW_SESSION_ID' => $result['SHOW_SESSION_ID'] === 'Y',
+			'CRM_FORMS_SETTINGS' => [
+				'USE_WELCOME_FORM' => $config['USE_WELCOME_FORM'],
+				'WELCOME_FORM_ID' => $config['WELCOME_FORM_ID'],
+				'WELCOME_FORM_DELAY' => $config['WELCOME_FORM_DELAY']
+			]
 		];
 	}
 

@@ -1,3 +1,5 @@
+import OSM from '../osm';
+
 /**
  * Abstract class BaseResponseConverter
  */
@@ -9,7 +11,7 @@ export default class BaseResponseConverter
 	constructor(props)
 	{
 		this.languageId = props.languageId;
-		this.sourceCode = props.sourceCode ?? 'OSM';
+		this.sourceCode = props.sourceCode ?? OSM.code;
 	}
 
 	/**

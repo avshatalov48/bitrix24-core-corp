@@ -1515,16 +1515,6 @@ class CCrmProduct
 			return true;
 		}
 
-		$rowsCount = CCrmProductRow::GetList(array(), array('PRODUCT_ID' => $ID), array(), false, array());
-		if($rowsCount > 0 || CCrmInvoice::HasProductRows($ID))
-		{
-			self::RegisterError(Loc::getMessage(
-					'CRM_COULD_NOT_DELETE_PRODUCT_ROWS_EXIST_EXT',
-					array('#NAME#' => static::GetProductName($ID), '#ID#' => $ID))
-			);
-			return false;
-		}
-
 		foreach (GetModuleEvents('crm', 'OnBeforeCrmProductDelete', true) as $arEvent)
 		{
 			if (ExecuteModuleEventEx($arEvent, array($ID)) === false)

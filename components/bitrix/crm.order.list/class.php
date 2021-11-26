@@ -1417,7 +1417,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		}
 		if ($this->isExportMode())
 		{
-			$this->exportParams['SELECTED_HEADERS'] = array_merge($columns, $ufColumns);
+			$this->exportParams['SELECTED_HEADERS'] = array_merge($columns, array_diff($ufColumns, $columns));
 		}
 		$arSelect[] = 'ORDER_TOPIC';
 
@@ -1687,30 +1687,30 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		$basketData = [];
 
-		if(in_array('BASKET', $visibleColumns, true))
+		if(in_array('BASKET', $columns, true))
 		{
 			$basketData = $this->loadBasketData($ordersIds);
 		}
 
 		$shipmentData = [];
 
-		if(in_array('SHIPMENT', $visibleColumns, true))
+		if(in_array('SHIPMENT', $columns, true))
 		{
 			$shipmentData = $this->loadShipmentData($ordersIds);
 		}
 
 		$paymentData = [];
 
-		if(in_array('PAYMENT', $visibleColumns, true))
+		if(in_array('PAYMENT', $columns, true))
 		{
 			$paymentData = $this->loadPaymentData($ordersIds);
 		}
 
 
 		$clientData = [];
-		$needContactAndCompany = in_array('CLIENT', $visibleColumns, true);
-		$needContact = $needContactAndCompany || in_array('CONTACT', $visibleColumns, true);
-		$needCompany = $needContactAndCompany || in_array('COMPANY', $visibleColumns, true);
+		$needContactAndCompany = in_array('CLIENT', $columns, true);
+		$needContact = $needContactAndCompany || in_array('CONTACT', $columns, true);
+		$needCompany = $needContactAndCompany || in_array('COMPANY', $columns, true);
 
 		if($needContact || $needCompany)
 		{
@@ -2101,7 +2101,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				$arOrder['CLIENT'] = $arOrder['COMPANY'];
 			}
 
-			if(in_array('PROPS', $visibleColumns, true))
+			if(in_array('PROPS', $columns, true))
 			{
 				$arOrder['PROPS'] = $this->loadPropsData($entityID);
 			}

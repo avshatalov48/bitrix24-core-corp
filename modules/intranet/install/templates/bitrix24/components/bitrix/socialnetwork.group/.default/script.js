@@ -34,6 +34,7 @@ window.B24SGControl = function()
 	this.canPickTheme = false;
 	this.urls = {};
 	this.slider = false;
+	this.isChatActive = true;
 };
 
 window.B24SGControl.getInstance = function()
@@ -74,6 +75,7 @@ window.B24SGControl.prototype = {
 		this.canProcessRequestsIn = !!params.canProcessRequestsIn;
 		this.canPickTheme = !!params.canPickTheme;
 		this.slider = !!params.slider;
+		this.isChatActive = (BX.type.isBoolean(params.isChatActive) ? params.isChatActive : true);
 
 		if (BX.type.isObject(params.urls))
 		{
@@ -549,6 +551,11 @@ window.B24SGControl.prototype = {
 
 	initIntranetControlButton: function()
 	{
+		if (!this.isChatActive)
+		{
+			return;
+		}
+
 		BX.loadExt('intranet.control-button').then(function() {
 			if (BX.Intranet.ControlButton)
 			{

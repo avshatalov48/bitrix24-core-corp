@@ -108,6 +108,7 @@ $MESS["TASKS_SCRUM_ROBOTS_BUTTON"] = "Роботы";
 $MESS["TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE"] = "Вы действительно хотите удалить тип?";
 $MESS["TASKS_SCRUM_CREATE_TYPE"] = "Создать тип";
 $MESS["TASKS_SCRUM_CREATE_TYPE_PROMPT"] = "Создайте новый тип задачи";
+$MESS['TASKS_SCRUM_TASK_ADD_NAME_ERROR'] = 'Не указано название задачи.';
 
 $MESS["KANBAN_SORT_TITLE_MY"] = "Сортировка:";
 $MESS["KANBAN_SORT_TITLE"] = "Новые задачи:";

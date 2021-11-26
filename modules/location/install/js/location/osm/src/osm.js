@@ -17,7 +17,7 @@ export type OSMConstructorProps = {
  */
 export default class OSM extends BaseSource
 {
-	static #code = 'OSM';
+	static code = 'OSM';
 	static #onPropsChangedEvent = 'onPropsChanged';
 
 	#languageId = '';
@@ -69,7 +69,7 @@ export default class OSM extends BaseSource
 
 	get sourceCode(): string
 	{
-		return OSM.#code;
+		return OSM.code;
 	}
 
 	// todo: move

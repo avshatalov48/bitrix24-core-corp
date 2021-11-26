@@ -136,6 +136,10 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 		<input type="hidden" name="CALENDAR_EVENT_ID" value="<?= (int)$arResult['COMPONENT_DATA']['CALENDAR_EVENT_ID'] ?>">
 		<input type="hidden" name="CALENDAR_EVENT_DATA" value="<?= htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['COMPONENT_DATA']['CALENDAR_EVENT_DATA'])) ?>">
 
+		<input type="hidden" name="SOURCE_POST_ENTITY_TYPE" value="<?= htmlspecialcharsbx($arResult['COMPONENT_DATA']['SOURCE_POST_ENTITY_TYPE']) ?>">
+		<input type="hidden" name="SOURCE_ENTITY_TYPE" value="<?= htmlspecialcharsbx($arResult['COMPONENT_DATA']['SOURCE_ENTITY_TYPE']) ?>">
+		<input type="hidden" name="SOURCE_ENTITY_ID" value="<?= (int)$arResult['COMPONENT_DATA']['SOURCE_ENTITY_ID'] ?>">
+
 		<input type="hidden" name="FIRST_GRID_TASK_CREATION_TOUR_GUIDE" value="<?= htmlspecialcharsbx($arResult['COMPONENT_DATA']['FIRST_GRID_TASK_CREATION_TOUR_GUIDE']) ?>">
 
 		<?// todo: move to hit state?>
@@ -474,8 +478,8 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 										[
 											'CODE' => 'TASK_CONTROL',
 											'VALUE' => $taskData['TASK_CONTROL'],
-											'TEXT' => Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_TASK_CONTROL'),
-											'HELP_TEXT' => Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_HINT_ALLOW_TASK_CONTROL'),
+											'TEXT' => Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_TASK_CONTROL_V2'),
+											'HELP_TEXT' => Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_HINT_ALLOW_TASK_CONTROL_V2'),
 										],
 									];
 

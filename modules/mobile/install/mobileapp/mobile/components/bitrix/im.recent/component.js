@@ -207,6 +207,7 @@ RecentList.init = function()
 			if (this.cache.inited)
 			{
 				this.push.updateList();
+				this.push.updateNotificationList();
 				this.refresh();
 			}
 		});
@@ -298,15 +299,36 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 
 	if (element.type == 'notification' || dialogId === 'notify')
 	{
-		let dialogParams = this.getOpenDialogParams(dialogId);
-		let pageParams = {
-			data : dialogParams,
-			unique : true,
-			cache: false,
-			url : env.siteDir+"mobile/im/notify.php"
-		};
-		BX.postWebEvent("onNotifyRefresh", {});
-		PageManager.openPage(pageParams);
+		if (Application.getApiVersion() < 39 || BX.componentParameters.get('NEXT_NOTIFICATIONS', 'N') === 'N')
+		{
+			let dialogParams = this.getOpenDialogParams(dialogId);
+			let pageParams = {
+				data : dialogParams,
+				unique : true,
+				cache: false,
+				url : env.siteDir+"mobile/im/notify.php"
+			};
+			BX.postWebEvent("onNotifyRefresh", {});
+			PageManager.openPage(pageParams);
+		}
+		else
+		{
+			PageManager.openComponent('JSStackComponent', {
+				componentCode: 'im.notify',
+				scriptPath: `/mobileapp/jn/im.notify/?version=${BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0')}`,
+				title: BX.message('IM_LIST_NOTIFICATIONS'),
+				rootWidget: {
+					name: 'layout',
+					settings: {
+						objectName: 'layoutWidget',
+					}
+				},
+				params: {
+					STORED_EVENTS : this.pull.getNotifyStoredEvents(),
+					WIDGET_CHAT_USERS_VERSION : BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0'),
+				}
+			});
+		}
 
 		return true;
 	}
@@ -888,12 +910,12 @@ RecentList.refresh = function(params)
 				{
 					let recentIndex = recentList.map(element => element.id);
 					this.list = this.list.filter(element => !recentIndex.includes(element.id)).concat(recentList);
-					this.redraw();
 				}
 				else if (this.viewLoaded)
 				{
 					dialogList.stopRefreshing();
 				}
+				this.redraw();
 			}
 
 			if (
@@ -1919,6 +1941,7 @@ RecentList.push.init = function()
 	if (this.base.isRecent())
 	{
 		this.manager = Application.getNotificationHistory("im_message");
+		this.notifyManager = Application.getNotificationHistory("im_notify");
 	}
 	else
 	{
@@ -2024,6 +2047,105 @@ RecentList.push.updateList = function()
 	return true;
 };
 
+RecentList.push.updateNotificationList = function()
+{
+	const pushList = this.notifyManager.get();
+	if (!pushList || pushList.length <= 0)
+	{
+		console.info('RecentList.push.updateNotificationList: push list is empty');
+		return true;
+	}
+
+	console.info('RecentList.push.updateList: parse push notifications', pushList);
+
+	for (const pushTag in pushList)
+	{
+		if (pushList.hasOwnProperty(pushTag))
+		{
+			pushList[pushTag].forEach(push => {
+				if (!push.data || push.data.cmd !== 'notifyAdd')
+				{
+					return false;
+				}
+
+				let senderMessage = '';
+				if (typeof push.senderMessage !== 'undefined')
+				{
+					senderMessage = push.senderMessage;
+				}
+				else if (typeof push.aps !== 'undefined' && push.aps.alert.body)
+				{
+					senderMessage = push.aps.alert.body;
+				}
+
+				if (!senderMessage)
+				{
+					return false;
+				}
+
+				const event = {
+					module_id: 'im',
+					command: push.data.cmd,
+					params: ChatDataConverter.prepareNotificationPushFormat(push.data)
+				};
+
+				if (typeof event.params.text === 'undefined')
+				{
+					event.params.text  = senderMessage.toString()
+						.replace(/&/g, '&amp;')
+						.replace(/"/g, '&quot;')
+						.replace(/</g, '&lt;')
+						.replace(/>/g, '&gt;');
+				}
+
+				const notifyStoredEvent = ChatUtils.objectClone(event.params);
+
+				// checks if im.notify is loaded
+				// if yes - we generate event for im.notify component. Component will emit p&p event from it.
+				// if no - we pass push events as component params and im.notify will use it as p&p event after start.
+				jnComponent.getState('im.notify')
+					.then(components => {
+						let isNotificationVisible = false;
+						if (components.length > 0)
+						{
+							for (let i = 0; i < components.length; i++)
+							{
+								if (components[i].code === 'im.notify' && components[i].isViewVisible === true)
+								{
+									isNotificationVisible = true;
+								}
+							}
+						}
+						if (isNotificationVisible)
+						{
+							BX.postComponentEvent('notification::push::get', [notifyStoredEvent]);
+						}
+						else
+						{
+							this.pull.notifyStoredEvents = this.pull.notifyStoredEvents.filter(element => element.id !== notifyStoredEvent.id);
+							this.pull.notifyStoredEvents.push(notifyStoredEvent);
+						}
+					})
+					.catch(() => {
+						this.pull.notifyStoredEvents = this.pull.notifyStoredEvents.filter(element => element.id !== notifyStoredEvent.id);
+						this.pull.notifyStoredEvents.push(notifyStoredEvent);
+					});
+
+				// update preview in recent list
+				const element = this.base.list.find(element => element && element.id.toString() === 'notify');
+				if (!element || element.message.id < event.params.id)
+				{
+					this.pull.eventExecute(event);
+				}
+			});
+		}
+	}
+
+	this.notifyManager.clear();
+
+	return true;
+};
+
 RecentList.push.actionExecute = function()
 {
 	if (Application.isBackground())
@@ -2103,6 +2225,7 @@ RecentList.pull.init = function ()
 	}
 
 	this.storedEvents = [];
+	this.notifyStoredEvents = [];
 };
 
 RecentList.pull.getStoredEvents = function()
@@ -2110,6 +2233,14 @@ RecentList.pull.getStoredEvents = function()
 	let list = [].concat(this.storedEvents);
 
 	this.storedEvents = [];
+
+	return list;
+};
+
+RecentList.pull.getNotifyStoredEvents = function()
+{
+	let list = [].concat(this.notifyStoredEvents);
+	this.notifyStoredEvents = [];
 
 	return list;
 };
@@ -2188,8 +2319,8 @@ RecentList.pull.getFormattedElement = function(element)
 	if (typeof element.message != 'undefined')
 	{
 		newElement.message.id = parseInt(element.message.id);
-		newElement.message.text = element.message.text;
-		newElement.message.author_id = element.message.senderId && element.message.system != 'Y'? element.message.senderId: 0;
+		newElement.message.text = ChatMessengerCommon.purifyText(element.message.text, element.message.params);
+		newElement.message.author_id = element.message.senderId && element.message.system !== 'Y'? element.message.senderId: 0;
 		newElement.message.date = new Date(element.message.date);
 		newElement.message.file = element.message.params && element.message.params.FILE_ID? element.message.params.FILE_ID.length > 0: false;
 		newElement.message.attach = element.message.params && element.message.params.ATTACH? element.message.params.ATTACH.length > 0: false;
@@ -2773,6 +2904,34 @@ RecentList.pull.eventExecute = function(data)
 	{
 		if (command == 'notifyAdd')
 		{
+			// auto read for notification, if it is "I like the message" notification for the opened dialog.
+			const dialog = PageManager.getNavigator().getVisible();
+			const isDialogOpened = dialog && dialog.data && typeof(dialog.data.DIALOG_ID) !== 'undefined';
+			const isLikeNotification = params.settingName === 'im|like' && params.originalTag.startsWith('RATING|IM|');
+
+			if (isDialogOpened && isLikeNotification)
+			{
+				const message = params.originalTag.split('|');
+				const dialogType = message[2];
+				const chatId = message[3];
+				const dialogId = dialogType === 'P' ? chatId : `chat${chatId}`;
+
+				const isSameDialog = dialogId === dialog.data.DIALOG_ID.toString();
+				if (isSameDialog)
+				{
+					BX.postComponentEvent('chatbackground::task::action', [
+						'readNotification',
+						'readNotification|'+params.id,
+						{
+							action: 'Y',
+							id: params.id
+						},
+					], 'background');
+
+					return;
+				}
+			}
+
 			this.notify.counter = params.counter;
 			this.notify.refresh();
 			this.base.updateCounter(false);
@@ -2783,6 +2942,10 @@ RecentList.pull.eventExecute = function(data)
 
 			if (!params.onlyFlash)
 			{
+				const notifyStoredEvent = ChatUtils.objectClone(params);
+				this.notifyStoredEvents = this.notifyStoredEvents.filter(element => element.id !== notifyStoredEvent.id);
+				this.notifyStoredEvents.push(notifyStoredEvent);
+
 				let elem = this.base.getElement('notify');
 				if (elem)
 				{
@@ -2792,7 +2955,8 @@ RecentList.pull.eventExecute = function(data)
 							author_id: params.userId,
 							date: params.date,
 							id: params.id,
-							text: params.text
+							text: params.text_converted,
+							params: params.params
 						},
 						user: {
 							id: params.userId,
@@ -2825,6 +2989,17 @@ RecentList.pull.eventExecute = function(data)
 						}
 					});
 				}
+			}
+
+			if (extra && extra.server_time_ago <= 5)
+			{
+				const purifiedNotificationText = ChatMessengerCommon.purifyText(params.text, params.params);
+				this.notifier.show({
+					dialogId: 'notify',
+					title: BX.message('IM_LIST_NOTIFICATIONS'),
+					text: (userName ? userName + ': ' : '') + purifiedNotificationText,
+					avatar: params.userAvatar ? params.userAvatar : '',
+				});
 			}
 		}
 		else if (command == 'notifyRead' || command == 'notifyUnread' || command == 'notifyConfirm')

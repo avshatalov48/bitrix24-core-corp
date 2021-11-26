@@ -871,13 +871,58 @@ if(typeof BX.Crm.EntityFieldAttributePhaseGroup === "undefined")
 				}
 				else if(phaseGroupTypeId === this._phaseGroupTypeId && items.length > 0)
 				{
+					var j;
 					if(this._phaseGroupTypeId === BX.Crm.EntityFieldAttributePhaseGroupType.pipeline)
 					{
-						this.selectPhaseCheckBox(BX.prop.getString(items[0], "startPhaseId", ""));
+						var phaseIds = [];
+						for(j = 0, itemQty = items.length; j < itemQty; j++)
+						{
+							var startPhaseId = BX.prop.getString(items[j], "startPhaseId", "");
+							var finishPhaseId = BX.prop.getString(items[j], "finishPhaseId", "");
+							if (
+								BX.Type.isStringFilled(startPhaseId)
+								&& BX.Type.isStringFilled(finishPhaseId)
+							)
+							{
+								var startPhaseFound = false;
+								var finishPhaseFound = false;
+								var itemPhaseIds = [];
+								var k;
+								for (k = 0; k < this._phases.length; k++)
+								{
+									if (!startPhaseFound && this._phases[k]["id"] === startPhaseId)
+									{
+										startPhaseFound = true;
+									}
+									if (startPhaseFound && !finishPhaseFound)
+									{
+										itemPhaseIds.push(this._phases[k]["id"]);
+										if (this._phases[k]["id"] === finishPhaseId)
+										{
+											finishPhaseFound = true;
+										}
+									}
+								}
+								if (startPhaseFound && finishPhaseFound)
+								{
+									for (k = 0; k < itemPhaseIds.length; k++)
+									{
+										if (phaseIds.indexOf(itemPhaseIds[k]) < 0)
+										{
+											phaseIds.push(itemPhaseIds[k]);
+										}
+									}
+								}
+							}
+						}
+						for (k = 0; k < phaseIds.length; k++)
+						{
+							this.selectPhaseCheckBox(phaseIds[k]);
+						}
 					}
 					else if(this._phaseGroupTypeId === BX.Crm.EntityFieldAttributePhaseGroupType.junk)
 					{
-						for(var j = 0, itemQty = items.length; j < itemQty; j++)
+						for(j = 0, itemQty = items.length; j < itemQty; j++)
 						{
 							this.selectPhaseCheckBox(BX.prop.getString(items[j], "startPhaseId", ""));
 						}
@@ -892,25 +937,27 @@ if(typeof BX.Crm.EntityFieldAttributePhaseGroup === "undefined")
 			var items = [];
 			if(this._phaseGroupTypeId === BX.Crm.EntityFieldAttributePhaseGroupType.pipeline)
 			{
-				var startPhaseIndex = -1;
-				for(i = 0, length = this._phaseCheckBoxes.length; i < length; i++)
+				var curState;
+				var nextState;
+				var startPhaseDetected = false;
+				var startPhaseId = "";
+				var finishPhaseId = "";
+				var lastIndex = this._phaseCheckBoxes.length - 1;
+				for(i = 0; i <= lastIndex; i++)
 				{
-					phaseCheckBox = this._phaseCheckBoxes[i];
-					if(phaseCheckBox.checked)
+					curState = this._phaseCheckBoxes[i].checked;
+					nextState = (i === lastIndex) ? false : this._phaseCheckBoxes[i + 1].checked;
+					if (!startPhaseDetected && curState)
 					{
-						startPhaseIndex = i;
-						break;
+						startPhaseDetected = true;
+						startPhaseId = this._phaseCheckBoxes[i]["id"];
 					}
-				}
-
-				if(startPhaseIndex >= 0)
-				{
-					items.push(
-						{
-							startPhaseId: this._phaseCheckBoxes[startPhaseIndex]["id"],
-							finishPhaseId: this._phaseCheckBoxes[this._phaseCheckBoxes.length - 1]["id"]
-						}
-					);
+					if (startPhaseDetected && !nextState)
+					{
+						startPhaseDetected = false;
+						finishPhaseId = this._phaseCheckBoxes[i]["id"];
+						items.push({startPhaseId: startPhaseId, finishPhaseId: finishPhaseId});
+					}
 				}
 			}
 			else if(this._phaseGroupTypeId === BX.Crm.EntityFieldAttributePhaseGroupType.junk)
@@ -1072,39 +1119,6 @@ if(typeof BX.Crm.EntityFieldAttributePhaseGroup === "undefined")
 			if(this._isReadOnly)
 			{
 				checkbox.checked = !checkbox.checked;
-			}
-			else
-			{
-				if(this._phaseGroupTypeId === BX.Crm.EntityFieldAttributePhaseGroupType.pipeline)
-				{
-					var isFound = false, haveUnselected = false;
-					for(var i = 0, length = this._phaseCheckBoxes.length; i < length; i++)
-					{
-						var phaseCheckBox = this._phaseCheckBoxes[i];
-						if(!isFound)
-						{
-							isFound = checkbox === phaseCheckBox;
-							if(isFound)
-							{
-								if(haveUnselected && !phaseCheckBox.checked)
-								{
-									//return selection back if it last unselected checkbox.
-									phaseCheckBox.checked = true;
-								}
-								continue;
-							}
-						}
-
-						if(phaseCheckBox.checked !== isFound)
-						{
-							phaseCheckBox.checked = isFound;
-							if(!isFound && !haveUnselected)
-							{
-								haveUnselected = true;
-							}
-						}
-					}
-				}
 			}
 
 			if(notify)

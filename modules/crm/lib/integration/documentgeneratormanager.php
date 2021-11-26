@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration;
 
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Integration\DocumentGenerator\ProductLoader;
+use Bitrix\Crm\Integration\Rest\EventManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\DocumentGenerator\Document;
 use Bitrix\DocumentGenerator\Driver;
@@ -187,6 +188,13 @@ class DocumentGeneratorManager
 			if($provider && $provider instanceof DataProvider\CrmEntityDataProvider)
 			{
 				$provider->onDocumentCreate($document);
+
+				$event = new Event('crm', EventManager::EVENT_DOCUMENTGENERATOR_DOCUMENT_ADD, [
+					'document' => $document,
+					'entityTypeId' => $provider->getCrmOwnerType(),
+					'entityId' => (int)$provider->getSource(),
+				]);
+				$event->send();
 			}
 		}
 
@@ -211,6 +219,13 @@ class DocumentGeneratorManager
 			if($provider && $provider instanceof DataProvider\CrmEntityDataProvider)
 			{
 				$provider->onDocumentDelete($document);
+
+				$event = new Event('crm', EventManager::EVENT_DOCUMENTGENERATOR_DOCUMENT_DELETE, [
+					'document' => $document,
+					'entityTypeId' => $provider->getCrmOwnerType(),
+					'entityId' => (int)$provider->getSource(),
+				]);
+				$event->send();
 			}
 		}
 
@@ -231,6 +246,13 @@ class DocumentGeneratorManager
 			if($provider && $provider instanceof DataProvider\CrmEntityDataProvider)
 			{
 				$provider->onDocumentUpdate($document);
+
+				$event = new Event('crm', EventManager::EVENT_DOCUMENTGENERATOR_DOCUMENT_UPDATE, [
+					'document' => $document,
+					'entityTypeId' => $provider->getCrmOwnerType(),
+					'entityId' => (int)$provider->getSource(),
+				]);
+				$event->send();
 			}
 		}
 
@@ -366,5 +388,19 @@ class DocumentGeneratorManager
 		}
 
 		return null;
+	}
+
+	public function getEntityTypeIdByProvider(string $provider): int
+	{
+		$providersMap = $this->getCrmOwnerTypeProvidersMap();
+
+		$entityTypeId = array_search($provider, $providersMap, true);
+
+		if (!is_int($entityTypeId))
+		{
+			$entityTypeId = \CCrmOwnerType::Undefined;
+		}
+
+		return $entityTypeId;
 	}
 }

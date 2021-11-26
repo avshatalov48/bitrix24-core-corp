@@ -251,9 +251,6 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 				if ($basketItem->getField("MODULE") == "catalog" && !empty($catalogProductsFields[$productId]))
 					$params = $catalogProductsFields[$productId];
 
-				AddMessage2Log('Params');
-				AddMessage2Log($params);
-
 				if (intval($basketItem->getField("MEASURE_CODE")) > 0)
 					$params["MEASURE_CODE"] = intval($basketItem->getField("MEASURE_CODE"));
 				elseif (!isset($params["MEASURE_CODE"]))
@@ -263,11 +260,6 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 					$params["MEASURE_TEXT"] = $basketItem->getField("MEASURE_NAME");
 				elseif(!isset($params["MEASURE_TEXT"]))
 					$params["MEASURE_TEXT"] = "";
-
-/*				if($params["EDIT_PAGE_URL"] <> '')
-				{
-					$params["EDIT_PAGE_URL"] = '/shop/settings/'.str_replace('.php', '/', $params["EDIT_PAGE_URL"]);
-				} */
 
 				if ($basketItem->isBundleParent())
 				{

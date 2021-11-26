@@ -4,9 +4,9 @@
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2015 Bitrix
- * 
+ *
  * @access private
- * 
+ *
  * Dont use getdate() here, it returns time according to the php timezone, which is incorrect in this use-case.
  * todo: make this class work not only with current user`s timezone, but any other user`s
  *
@@ -119,10 +119,10 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 	{
 		return gmmktime(
 			intval($dateTime['hours']), // 01 => 1
-			intval($dateTime['minutes']), 
-			intval($dateTime['seconds']), 
+			intval($dateTime['minutes']),
+			intval($dateTime['seconds']),
 			$monthZeroBase ? intval($dateTime['mon']) + 1 : intval($dateTime['mon']),
-			intval($dateTime['day']), 
+			intval($dateTime['day']),
 			intval($dateTime['year'])
 		);
 	}
@@ -163,7 +163,7 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 	}
 
 	/**
-	 * $unix is treated as GMT time stamp, 
+	 * $unix is treated as GMT time stamp,
 	 * e.g. 1445337000 is "Tue, 20 Oct 2015 10:30:00 GMT", but NOT "10/20/2015 12:30:00 PM GMT+2:00 DST"
 	 */
 	public static function createFromTimestampGmt($unix)
@@ -268,7 +268,7 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 		$unix = gmmktime(
 			0,0,0,
 			$this->getMonthGmt(),
-			$this->getDayGmt(), 
+			$this->getDayGmt(),
 			$this->getYearGmt()
 		);
 		$this->value->setTimestamp($unix);
@@ -311,7 +311,7 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 
 	/**
 	 * This function is for debug purposes only
-	 * 
+	 *
 	 * @access private
 	 */
 	public function getInfoGmt()
@@ -370,6 +370,14 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 	{
 		$time = new \DateTime();
 		return $time->getTimezone();
+	}
+
+	/**
+	 * @return int
+	 */
+	public static function getCurrentTimestamp(): int
+	{
+		return self::createFromTimestampGmt(time())->format('U');
 	}
 
 	private static function disableTimeZone()

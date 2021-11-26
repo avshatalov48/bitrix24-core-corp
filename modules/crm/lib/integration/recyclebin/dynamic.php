@@ -47,7 +47,7 @@ class Dynamic extends RecyclableEntity
 		foreach($typesMap->getTypes() as $type)
 		{
 			$data[self::PREFIX . $type->getEntityTypeId()] = [
-				'NAME' => Main\Text\HtmlFilter::encode($type->getTitle()),
+				'NAME' => $type->getTitle(),
 				'HANDLER' => __CLASS__
 			];
 		}

@@ -857,8 +857,7 @@ select {
 .crm-orderform-edit-field-settings,
 .crm-orderform-edit-field-close {
 	position: absolute;
-	top: 50%;
-	display: inline-block;
+	top: 18px;
 	padding: 10px;
 	width: 14px;
 	height: 15px;

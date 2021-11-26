@@ -16,7 +16,7 @@ export default class MapFeature extends BaseFeature
 
 	constructor(props)
 	{
-		super();
+		super(props);
 
 		if(!(props.map instanceof MapPopup))
 		{

@@ -1,4 +1,4 @@
-(function (exports,im_view_message,main_core_events) {
+(function (exports,ui_vue,ui_vue_vuex,im_view_message,main_core_events) {
 	'use strict';
 
 	/**
@@ -80,7 +80,6 @@
 	  widgetUserGet: 'imopenlines.widget.user.get',
 	  widgetUserConsentApply: 'imopenlines.widget.user.consent.apply',
 	  widgetVoteSend: 'imopenlines.widget.vote.send',
-	  widgetFormSend: 'imopenlines.widget.form.send',
 	  widgetActionSend: 'imopenlines.widget.action.send',
 	  pullServerTime: 'server.time',
 	  pullConfigGet: 'pull.config.get'
@@ -126,28 +125,14 @@
 	  like: 'like',
 	  dislike: 'dislike'
 	});
-	BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message', {
+	ui_vue.BitrixVue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message', {
 	  methods: {
-	    checkFormShow: function checkFormShow() {
+	    checkMessageParamsForForm: function checkMessageParamsForForm() {
 	      if (!this.message.params || !this.message.params.IMOL_FORM) {
 	        return true;
 	      }
 
-	      if (this.message.params.IMOL_FORM === 'welcome') {
-	        if (!this.widget.dialog.sessionClose && !this.widget.user.name && !this.widget.user.lastName && !this.widget.user.email && !this.widget.user.phone) {
-	          main_core_events.EventEmitter.emit(EventType.requestShowForm, {
-	            type: FormType$1.welcome,
-	            delayed: true
-	          });
-	        }
-	      } else if (this.message.params.IMOL_FORM === 'offline') {
-	        if (!this.widget.dialog.sessionClose && !this.widget.user.email) {
-	          main_core_events.EventEmitter.emit(EventType.requestShowForm, {
-	            type: FormType$1.offline,
-	            delayed: true
-	          });
-	        }
-	      } else if (this.message.params.IMOL_FORM === 'history-delay') {
+	      if (this.message.params.IMOL_FORM === FormType$1.like) {
 	        if (parseInt(this.message.params.IMOL_VOTE) === this.widget.dialog.sessionId && this.widget.dialog.userVote === VoteType$1.none) {
 	          main_core_events.EventEmitter.emit(EventType.requestShowForm, {
 	            type: FormType$1.like,
@@ -158,7 +143,7 @@
 	    }
 	  },
 	  created: function created() {
-	    this.checkFormShow();
+	    this.checkMessageParamsForForm();
 	  },
 	  computed: babelHelpers.objectSpread({
 	    dialogNumber: function dialogNumber() {
@@ -177,14 +162,13 @@
 	        return true;
 	      }
 
-	      if (this.message.params.IMOL_FORM && this.message.params.IMOL_FORM === 'history-delay' // TODO change after release to vote
-	      ) {
-	          return false;
-	        }
+	      if (this.message.params.IMOL_FORM && this.message.params.IMOL_FORM === 'like') {
+	        return false;
+	      }
 
 	      return true;
 	    }
-	  }, BX.Vuex.mapState({
+	  }, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
 	      return state.widget;
 	    }
@@ -192,5 +176,5 @@
 	  template: "\n\t\t<div v-if=\"showMessage\" class=\"bx-imopenlines-message\">\n\t\t\t<div v-if=\"dialogNumber\" class=\"bx-imopenlines-message-dialog-number\">{{dialogNumber}}</div>\n\t\t\t#PARENT_TEMPLATE#\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),window,BX.Event));
+}((this.window = this.window || {}),BX,BX,window,BX.Event));
 //# sourceMappingURL=message.bundle.js.map

@@ -159,7 +159,7 @@ $arResult['TEMPLATE_DATA']['BLOCKS'] = [
 		'FILLED' => true, // responsible always filled and thus visible
 	],
 	'SE_ORIGINATOR' => [
-		'FILLED' => (int)$template['CREATED_BY'] !== Util\User::getId(),
+		'FILLED' => ((int)$template['CREATED_BY'] > 0 && (int)$template['CREATED_BY'] !== Util\User::getId()),
 	],
 	'SE_AUDITOR' => [
 		'FILLED' => $template['AUDITORS'] && !$template['AUDITORS']->isEmpty(),
@@ -235,8 +235,11 @@ if (count($seUser) == 1 && $seUser[0]['ID'] == 0)
 }
 $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_RESPONSIBLE'] = $seUser;
 
-$seUser = array();
-if(array_key_exists($template['CREATED_BY'], $users))
+$seUser = [];
+if(
+	$template['CREATED_BY'] > 0
+	&& array_key_exists($template['CREATED_BY'], $users)
+)
 {
 	$seUser[] = $users[$template['CREATED_BY']];
 }

@@ -36,6 +36,8 @@ use Bitrix\Tasks\Util\Type\Structure;
 use Bitrix\Tasks\Util\Type\StructureChecker;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Socialnetwork\Helper\ServiceComment;
+use Bitrix\Socialnetwork\CommentAux;
 
 Loc::loadMessages(__FILE__);
 
@@ -390,7 +392,7 @@ class TasksTaskComponent extends TasksBaseComponent
 	{
 		$this->manageSubTasks();
 		$this->manageTemplates();
-		$this->handleCalendarEvent();
+		$this->handleSourceEntity();
 		$this->handleFirstGridTaskCreationTourGuide();
 	}
 
@@ -433,12 +435,47 @@ class TasksTaskComponent extends TasksBaseComponent
 		Tasks\Item\Task\Template::leaveBatchState();
 	}
 
-	private function handleCalendarEvent(): void
+	private function handleSourceEntity(): void
 	{
 		$operationResult = $this->getTaskActionResult();
 		$isTaskAdding = ($operationResult['OPERATION'] === 'task.add');
 
-		if ($isTaskAdding && ($calendarEventId = (int)$this->request->get('CALENDAR_EVENT_ID')))
+		if ($isTaskAdding)
+		{
+			if ((int)$this->request->get('CALENDAR_EVENT_ID') > 0)
+			{
+				$this->handleCalendarEvent();
+			}
+			elseif (
+				!empty((string)$this->request->get('SOURCE_ENTITY_TYPE'))
+				&& (int)$this->request->get('SOURCE_ENTITY_ID') > 0
+			)
+			{
+				$operationResult = $this->getTaskActionResult();
+
+				if (Loader::includeModule('socialnetwork'))
+				{
+					ServiceComment::processLogEntryCreateEntity([
+						'ENTITY_TYPE' => 'TASK',
+						'ENTITY_ID' => $operationResult['RESULT']['ID'],
+						'POST_ENTITY_TYPE' => (string)$this->request->get('SOURCE_POST_ENTITY_TYPE'),
+						'SOURCE_ENTITY_TYPE' => (string)$this->request->get('SOURCE_ENTITY_TYPE'),
+						'SOURCE_ENTITY_ID' => (int)$this->request->get('SOURCE_ENTITY_ID'),
+//						'SOURCE_ENTITY_DATA' => $calendarEventData,
+						'LIVE' => 'Y'
+					]);
+
+				}
+			}
+		}
+	}
+
+
+	private function handleCalendarEvent(): void
+	{
+		$operationResult = $this->getTaskActionResult();
+
+		if ($calendarEventId = (int)$this->request->get('CALENDAR_EVENT_ID'))
 		{
 			$calendarEventData = $this->request->get('CALENDAR_EVENT_DATA');
 			try
@@ -877,14 +914,20 @@ class TasksTaskComponent extends TasksBaseComponent
 		$title = $this->hitState->get('INITIAL_TASK_DATA.TITLE');
 		if ($title !== '')
 		{
-			$data['TITLE'] = $title;
+			$data['TITLE'] = htmlspecialchars_decode($title, ENT_QUOTES);
 		}
 
 		// description
 		$description = $this->hitState->get('INITIAL_TASK_DATA.DESCRIPTION');
-		if ($description !== '' && $this->request->get('CALENDAR_EVENT_ID'))
+		if ($description !== '')
 		{
 			$data['DESCRIPTION'] = $description;
+		}
+
+		$diskFiles = $this->hitState->get('INITIAL_TASK_DATA.' . Integration\Disk\UserField::getMainSysUFCode());
+		if (!empty($diskFiles))
+		{
+			$data[Integration\Disk\UserField::getMainSysUFCode()] = $diskFiles;
 		}
 
 		// crm links
@@ -952,6 +995,10 @@ class TasksTaskComponent extends TasksBaseComponent
 		$this->arResult['COMPONENT_DATA']['OPEN_TIME'] = (new DateTime())->getTimestamp();
 		$this->arResult['COMPONENT_DATA']['CALENDAR_EVENT_ID'] = $this->request->get('CALENDAR_EVENT_ID');
 		$this->arResult['COMPONENT_DATA']['CALENDAR_EVENT_DATA'] = $this->request->get('CALENDAR_EVENT_DATA');
+
+		$this->arResult['COMPONENT_DATA']['SOURCE_POST_ENTITY_TYPE'] = (string)$this->request->get('SOURCE_POST_ENTITY_TYPE');
+		$this->arResult['COMPONENT_DATA']['SOURCE_ENTITY_TYPE'] = (string)$this->request->get('SOURCE_ENTITY_TYPE');
+		$this->arResult['COMPONENT_DATA']['SOURCE_ENTITY_ID'] = (int)$this->request->get('SOURCE_ENTITY_ID');
 
 		$this->arResult['COMPONENT_DATA']['FIRST_GRID_TASK_CREATION_TOUR_GUIDE'] =
 			$this->request->get('FIRST_GRID_TASK_CREATION_TOUR_GUIDE')
@@ -1053,8 +1100,19 @@ class TasksTaskComponent extends TasksBaseComponent
 					}
 					elseif ((int)$this->request['COPY'] || (int)$this->request['_COPY']) // copy from another task?
 					{
-						$taskIdToCopy = ((int)$this->request['COPY']?: (int)$this->request['_COPY']);
+						$taskIdToCopy = (int)($this->request['COPY'] ?: $this->request['_COPY']);
 						$sourceData = $this->cloneDataFromTask($taskIdToCopy);
+
+						$localOffset = (new \DateTime())->getOffset();
+						$userOffset =  \CTimeZone::GetOffset(null, true);
+						$offset = $localOffset + $userOffset;
+						$newOffset = ($offset > 0 ? '+' : '') . UI::formatTimeAmount($offset, 'HH:MI');
+
+						$deadline = $sourceData['DATA']['DEADLINE'];
+						if ($deadline && ($date = new Type\DateTime($deadline)))
+						{
+							$sourceData['DATA']['DEADLINE_ISO'] = mb_substr($date->format('c'), 0, -6) . $newOffset;
+						}
 
 						$this->setDataSource(static::DATA_SOURCE_TASK, $taskIdToCopy);
 						$this->arResult['DATA']['CHECKLIST_CONVERTED'] = TaskCheckListConverterHelper::checkEntityConverted($taskIdToCopy);
@@ -1199,16 +1257,18 @@ class TasksTaskComponent extends TasksBaseComponent
 	 */
 	private function cloneDataFromTask($itemId)
 	{
-		$data = array();
+		$data = [];
 
 		$task = new Tasks\Item\Task($itemId, $this->userId);
 		$result = $task->transform(new Tasks\Item\Converter\Task\ToTask());
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$data = Task::convertFromItem($result->getInstance());
 
 			// exception for responsibles, it may be multiple in the form
-			$data['SE_RESPONSIBLE'] = array(array('ID' => $task['RESPONSIBLE_ID']));
+			$data['SE_RESPONSIBLE'] = [
+				['ID' => $task['RESPONSIBLE_ID']],
+			];
 
 			$checkListItems = TaskCheckListFacade::getItemsForEntity($itemId, $this->userId);
 			foreach (array_keys($checkListItems) as $id)
@@ -1217,9 +1277,53 @@ class TasksTaskComponent extends TasksBaseComponent
 				unset($checkListItems[$id]['ID']);
 			}
 			$data['SE_CHECKLIST'] = $checkListItems;
+
+			$data = array_merge($data, $this->processDates($task));
 		}
 
-		return array('DATA' => $data);
+		return ['DATA' => $data];
+	}
+
+	private function processDates(Tasks\Item\Task $task): array
+	{
+		$result = [];
+
+		/** @var Type\DateTime $createdDate */
+		$createdDate = clone $task->get('CREATED_DATE');
+		$createdDate->stripTime();
+
+		$dates = [
+			'DEADLINE',
+			'START_DATE_PLAN',
+			'END_DATE_PLAN',
+		];
+		foreach ($dates as $key)
+		{
+			if ($task->get($key))
+			{
+				/** @var Type\DateTime $dateDate */
+				$dateDate = clone $task->get($key);
+				$dateDate->stripTime();
+
+				$diff = $createdDate->getDiff($dateDate);
+				$daysDiff = $diff->format('%d');
+				$daysDiff = ($diff->invert ? -$daysDiff : +$daysDiff);
+
+				($now = new Type\DateTime())->addDay($daysDiff);
+
+				/** @var Type\DateTime $newDate */
+				$newDate = clone $task->get($key);
+				$newDate->setDate(
+					$now->getYearGmt(),
+					$now->getMonthGmt(),
+					$now->getDayGmt()
+				);
+
+				$result[$key] = $newDate;
+			}
+		}
+
+		return $result;
 	}
 
 	protected function getDataAux()
@@ -1535,6 +1639,8 @@ class TasksTaskComponent extends TasksBaseComponent
 				{
 					$this->arResult['DATA']['EFFECTIVE'] = $this->getEffective();
 				}
+
+				\CPullWatch::Add($this->userId, "TASK_VIEW_{$this->task->getId()}", true);
 			}
 
 			$this->getEventData(); // put some data to $arResult for emitting javascript event when page loads
@@ -2018,6 +2124,7 @@ if(CModule::IncludeModule('tasks'))
 						'DESCRIPTION' => ['VALUE' => StructureChecker::TYPE_STRING],
 						Integration\CRM\UserField::getMainSysUFCode() => ['VALUE' => StructureChecker::TYPE_STRING],
 						Integration\Mail\UserField::getMainSysUFCode() => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
+						Integration\Disk\UserField::getMainSysUFCode() => ['VALUE' => StructureChecker::TYPE_ARRAY_OF_STRING],
 						'TAGS' => [
 							'VALUE' => StructureChecker::TYPE_ARRAY_OF_STRING,
 							'CAST' => function($value) {

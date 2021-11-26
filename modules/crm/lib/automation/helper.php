@@ -46,6 +46,18 @@ class Helper
 		];
 	}
 
+	public static function prepareCompatibleData(int $entityTypeId, array $compatibleData): array
+	{
+		$entity = \CCrmBizProcHelper::ResolveDocumentName($entityTypeId);
+
+		if ($entity && method_exists($entity, 'prepareCompatibleData'))
+		{
+			return call_user_func([$entity, 'prepareCompatibleData'], $compatibleData);
+		}
+
+		return $compatibleData;
+	}
+
 	public static function __callStatic($name, $arguments)
 	{
 		if (static::isBizprocEnabled())

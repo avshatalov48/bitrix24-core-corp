@@ -87,25 +87,48 @@ class ObserverManager
 		);
 	}
 
+	public static function getEntityBulkObserverIDs($entityTypeID, array $entityIDs)
+	{
+		$entityTypeID = static::normalizeEntityTypeId($entityTypeID);
+
+		$entityIDs = array_unique(array_filter(array_map('intval', $entityIDs)));
+		if(empty($entityIDs))
+		{
+			return [];
+		}
+
+		$dbResult = Entity\ObserverTable::getList(
+			[
+				'filter' => [
+					'=ENTITY_TYPE_ID' => $entityTypeID,
+					'@ENTITY_ID' => $entityIDs
+				],
+				'select' => ['ENTITY_ID', 'USER_ID'],
+				'order' => ['SORT' => 'ASC']
+			]
+		);
+
+		$results = array();
+		while($fields = $dbResult->fetch())
+		{
+			$entityID = $fields['ENTITY_ID'];
+			if(!$results[$entityID])
+			{
+				$results[$entityID] = array();
+			}
+			$results[$entityID][] = (int)$fields['USER_ID'];
+		}
+		return $results;
+	}
+
 	public static function getEntityObserverIDs($entityTypeID, $entityID)
 	{
 		$entityTypeID = static::normalizeEntityTypeId($entityTypeID);
 		$entityID = static::normalizeEntityId($entityID);
 
-		$dbResult = Entity\ObserverTable::getList(
-			[
-				'filter' => ['=ENTITY_TYPE_ID' => $entityTypeID, '=ENTITY_ID' => $entityID],
-				'select' => ['USER_ID'],
-				'order' => ['SORT' => 'ASC']
-			]
-		);
+		$results = self::getEntityBulkObserverIDs($entityTypeID, [$entityID]);
 
-		$results = [];
-		while($fields = $dbResult->fetch())
-		{
-			$results[] = (int)$fields['USER_ID'];
-		}
-		return $results;
+		return ($results[$entityID] ?? []);
 	}
 
 	public static function prepareObserverChanges(array $origin, array $current, array &$added, array &$removed)

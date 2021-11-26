@@ -78,4 +78,36 @@ export default class FieldCollection
 
 		return result;
 	}
+
+	isEqual(addressFieldCollection: FieldCollection, upTo: Number)
+	{
+		return (
+			FieldCollection.areEqual(this, addressFieldCollection, upTo)
+			&& FieldCollection.areEqual(addressFieldCollection, this, upTo)
+		);
+	}
+
+	static areEqual(addressFieldCollection1: FieldCollection, addressFieldCollection2: FieldCollection, upTo: Number)
+	{
+		for (let type in addressFieldCollection1.fields)
+		{
+			if (type > upTo)
+			{
+				continue;
+			}
+
+			let field = addressFieldCollection2.getField(type);
+			if (!field)
+			{
+				return false;
+			}
+
+			if (addressFieldCollection1.fields[type].value !== field.value)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
 }

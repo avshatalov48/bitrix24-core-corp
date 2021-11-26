@@ -1,4 +1,10 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -6,30 +12,40 @@
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 /** @var boolean $bUnread */
+/** @var array $arEvent */
+/** @var string $ind */
 
 $component = $this->getComponent();
 
 $arComponentParams = array_merge($arParams, [
-		"LOG_ID" => $arEvent["ID"],
-		"IS_LIST" => (
-			(int)$arParams["LOG_ID"] <= 0
-			|| $arParams["IS_LIST"] === 'Y'
-		),
-		"LAST_LOG_TS" => $arResult["LAST_LOG_TS"],
-		"COUNTER_TYPE" => $arResult["COUNTER_TYPE"],
-		"AJAX_CALL" => $arResult["AJAX_CALL"],
-		"PATH_TO_LOG_ENTRY_EMPTY" => $arParams["PATH_TO_LOG_ENTRY_EMPTY"],
-		"bReload" => $arResult["bReload"],
-		"IND" => $ind,
-		"EVENT" => [
-			"IS_UNREAD" => $bUnread,
-			"LOG_DATE" => $arEvent["LOG_DATE"],
-			"COMMENTS_COUNT" => $arEvent["COMMENTS_COUNT"],
-		],
-		"TOP_RATING_DATA" => ($arResult['TOP_RATING_DATA'][$arEvent["ID"]] ?? false),
-		"TARGET" => (isset($arParams["TARGET"]) && $arParams["TARGET"] <> '' ? $arParams["TARGET"] : false)
-	]
-);
+	"LOG_ID" => $arEvent["ID"],
+	"IS_LIST" => (
+		(int)$arParams["LOG_ID"] <= 0
+		|| $arParams["IS_LIST"] === 'Y'
+	),
+	"LAST_LOG_TS" => $arResult["LAST_LOG_TS"],
+	"COUNTER_TYPE" => $arResult["COUNTER_TYPE"],
+	"AJAX_CALL" => $arResult["AJAX_CALL"],
+	"PATH_TO_LOG_ENTRY_EMPTY" => $arParams["PATH_TO_LOG_ENTRY_EMPTY"],
+	"bReload" => $arResult["bReload"],
+	"IND" => $ind,
+	"EVENT" => [
+		"IS_UNREAD" => $bUnread,
+		"LOG_DATE" => $arEvent["LOG_DATE"],
+		"COMMENTS_COUNT" => $arEvent["COMMENTS_COUNT"],
+	],
+	"TOP_RATING_DATA" => ($arResult['TOP_RATING_DATA'][$arEvent["ID"]] ?? false),
+	"TARGET" => (isset($arParams["TARGET"]) && $arParams["TARGET"] <> '' ? $arParams["TARGET"] : false)
+]);
+
+if (isset($arResult['UNREAD_COMMENTS_ID_LIST'][$arEvent['ID']]))
+{
+	$arComponentParams['UNREAD_COMMENTS_ID_LIST'] = $arResult['UNREAD_COMMENTS_ID_LIST'][$arEvent['ID']];
+}
+elseif ($arResult['LOG_COUNTER'] <= 0)
+{
+	$arComponentParams['UNREAD_COMMENTS_ID_LIST'] = [];
+}
 
 if ($arResult['currentUserId'] > 0)
 {

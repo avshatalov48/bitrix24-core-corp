@@ -199,12 +199,12 @@ require 'js_templates.php';
 					<? foreach ($arResult['ENTITY_SCHEMES']['BY_NON_INVOICE'] as $searchSchemeId => $entityScheme): ?>
 						<label for="ENTITY_SCHEME_<?=htmlspecialcharsbx($entityScheme['ID'])?>">
 							<input type="radio" id="ENTITY_SCHEME_<?=htmlspecialcharsbx($entityScheme['ID'])?>"
-									data-bx-order-form-entity-scheme-value=""
-									name="ENTITY_SCHEME_SELECTOR"
-									class="crm-orderform-edit-task-options-document-settings-radio"
+								   data-bx-order-form-entity-scheme-value=""
+								   name="ENTITY_SCHEME_SELECTOR"
+								   class="crm-orderform-edit-task-options-document-settings-radio"
 								<?=($entityScheme['SELECTED'] ? 'checked' : '')?>
 								<?=($entityScheme['DISABLED'] ? 'disabled' : '')?>
-									value="<?=htmlspecialcharsbx($searchSchemeId)?>"
+								   value="<?=htmlspecialcharsbx($searchSchemeId)?>"
 							>
 							<span class="crm-orderform-edit-task-options-document-settings-radio-element">
 							<?=htmlspecialcharsbx($entityScheme['NAME'])?>
@@ -360,6 +360,7 @@ require 'js_templates.php';
 					isFramePopup: <?=CUtil::PhpToJSObject($arParams['IFRAME'])?>,
 					isItemWasAdded: <?=CUtil::PhpToJSObject($arResult['IS_ITEM_WAS_ADDED'])?>,
 					relations: <?=CUtil::PhpToJSObject($arResult['FORM']['RELATIONS'])?>,
+					allRelations: <?=CUtil::PhpToJSObject($arResult['FORM']['ALL_RELATIONS'])?>,
 					relationEntities: <?=CUtil::PhpToJSObject($arResult['RELATION_ENTITIES'])?>,
 					templates: {
 						field: 'tmpl_field_%type%',

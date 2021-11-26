@@ -33,6 +33,7 @@ $arResult['PATH_TO_LEAD_WIDGET'] = CrmCheckPath('PATH_TO_LEAD_WIDGET', $arParams
 $arResult['PATH_TO_LEAD_KANBAN'] = CrmCheckPath('PATH_TO_LEAD_KANBAN', $arParams['PATH_TO_LEAD_KANBAN'],$APPLICATION->GetCurPage()."?kanban");
 $arResult['PATH_TO_LEAD_CALENDAR'] = CrmCheckPath('PATH_TO_LEAD_CALENDAR', $arParams['PATH_TO_LEAD_CALENDAR'],$APPLICATION->GetCurPage()."?calendar");
 $arResult['PATH_TO_CONFIG_CHECKER'] = CComponentEngine::MakePathFromTemplate(\COption::GetOptionString('crm', 'path_to_config_checker'));
+$arResult['PATH_TO_LEAD_STATUS_LIST'] = CrmCheckPath('PATH_TO_LEAD_STATUS_LIST', $arParams['PATH_TO_LEAD_STATUS_LIST'], COption::GetOptionString('crm', 'path_to_lead_status_list'));
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
 
@@ -489,7 +490,7 @@ if($arParams['TYPE'] === 'list')
 			$arResult['BUTTONS'][] = [
 				'TEXT' => GetMessage("CONFIG_CHECKER"),
 				'TITLE' => GetMessage("CONFIG_CHECKER_TITLE"),
-				'ONCLICK' => 'BX.SidePanel.Instance.open(\''.$arResult["PATH_TO_CONFIG_CHECKER"].'\');'
+				'ONCLICK' => 'BX.SidePanel.Instance.open(\''.$arResult["PATH_TO_CONFIG_CHECKER"].'\', {cacheable: false});'
 			];
 			$arResult["IS_NEED_TO_CHECK"] = true;
 		}
@@ -499,6 +500,7 @@ if($arParams['TYPE'] === 'list')
 			'TITLE' => GetMessage('LEAD_VERTICAL_CRM_TITLE'),
 			'ONCLICK' => 'BX.SidePanel.Instance.open(\''.$url.'\');'
 		];
+		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 	}
 
 	if ($bConfig)
@@ -508,6 +510,11 @@ if($arParams['TYPE'] === 'list')
 			'TEXT' => GetMessage('LEAD_CRM_TYPE'),
 			'TITLE' => GetMessage('LEAD_CRM_TYPE'),
 			'ONCLICK' => \Bitrix\Crm\Settings\LeadSettings::showCrmTypePopup()
+		);
+		$arResult['BUTTONS'][] = array(
+			'TEXT' => GetMessage('LEAD_CRM_CONFIG_STATUSES'),
+			'TITLE' => GetMessage('LEAD_CRM_CONFIG_STATUSES_TITLE'),
+			'ONCLICK' => 'BX.Crm.Lead.Menu.onClickConfigStatuses(\''.CUtil::JSEscape($arResult["PATH_TO_LEAD_STATUS_LIST"]).'\')'
 		);
 	}
 
@@ -661,13 +668,13 @@ if ($bAdd && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show' || $arP
 	);
 }
 
-if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show' || $arParams['TYPE'] == 'convert') && $bDelete
-	&& !empty($arParams['ELEMENT_ID']))
+/*if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show' || $arParams['TYPE'] == 'convert') && $bDelete
+	&& !empty($arParams['ELEMENT_ID']))*/
 {
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('LEAD_DELETE'),
 		'TITLE' => GetMessage('LEAD_DELETE_TITLE'),
-		'LINK' => "javascript:lead_delete('".GetMessage('LEAD_DELETE_DLG_TITLE')."', '".GetMessage('LEAD_DELETE_DLG_MESSAGE')."', '".GetMessage('LEAD_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_EDIT'],
+		'LINK' => "javascript:BX.Crm.Lead.Menu.onClickDelete('".GetMessage('LEAD_DELETE_DLG_TITLE')."', '".GetMessage('LEAD_DELETE_DLG_MESSAGE')."', '".GetMessage('LEAD_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_EDIT'],
 				array(
 					'lead_id' => $arParams['ELEMENT_ID']
 				)),

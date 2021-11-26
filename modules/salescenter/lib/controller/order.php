@@ -186,6 +186,11 @@ class Order extends Base
 			$formData['PAYMENT'][] = $this->obtainPaymentFields($formData);
 		}
 
+		if (!empty($params['currency']))
+		{
+			$formData['CURRENCY'] = $params['currency'];
+		}
+
 		return $formData;
 	}
 
@@ -409,7 +414,7 @@ class Order extends Base
 					'PRODUCT_NAME' => $product['name'],
 					'PRICE' => $product['price'],
 					'PRICE_ACCOUNT' => $product['price'],
-					'PRICE_EXCLUSIVE' => $product['basePrice'],
+					'PRICE_EXCLUSIVE' => $product['priceExclusive'],
 					'PRICE_NETTO' => $product['basePrice'],
 					'PRICE_BRUTTO' => $product['price'],
 					'QUANTITY' => $product['quantity'],
@@ -432,39 +437,6 @@ class Order extends Base
 				}
 
 				$result[] = $item;
-			}
-
-			/**
-			 * Delivery
-			 */
-			$hasActualDelivery = false;
-			$emptyDeliveryServiceId = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
-			$deliverySystemIds = $order->getDeliveryIdList();
-			foreach ($deliverySystemIds as $deliverySystemId)
-			{
-				if ($deliverySystemId != $emptyDeliveryServiceId)
-				{
-					$hasActualDelivery = true;
-					break;
-				}
-			}
-
-			if ($hasActualDelivery)
-			{
-				$deliveryPrice = $order->getDeliveryPrice();
-
-				$sort += 10;
-
-				$result[] = [
-					'PRODUCT_NAME' => Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_DELIVERY'),
-					'PRICE' => $deliveryPrice,
-					'PRICE_ACCOUNT' => $deliveryPrice,
-					'PRICE_EXCLUSIVE' => $deliveryPrice,
-					'PRICE_NETTO' => $deliveryPrice,
-					'PRICE_BRUTTO' => $deliveryPrice,
-					'QUANTITY' => 1,
-					'SORT' => $sort,
-				];
 			}
 		}
 		else
@@ -522,7 +494,7 @@ class Order extends Base
 							}
 
 							$result[$index]['PRICE'] = $product['price'];
-							$result[$index]['PRICE_EXCLUSIVE'] = $product['basePrice'];
+							$result[$index]['PRICE_EXCLUSIVE'] = $product['priceExclusive'];
 							$result[$index]['PRICE_ACCOUNT'] = $product['price'];
 							$result[$index]['PRICE_NETTO'] = $product['basePrice'];
 							$result[$index]['PRICE_BRUTTO'] = $product['price'];
@@ -548,7 +520,7 @@ class Order extends Base
 					'PRODUCT_NAME' => $product['name'],
 					'PRICE' => $product['price'],
 					'PRICE_ACCOUNT' => $product['price'],
-					'PRICE_EXCLUSIVE' => $product['basePrice'],
+					'PRICE_EXCLUSIVE' => $product['priceExclusive'],
 					'PRICE_NETTO' => $product['basePrice'],
 					'PRICE_BRUTTO' => $product['price'],
 					'QUANTITY' => $product['quantity'],
@@ -1923,6 +1895,7 @@ HTML;
 	{
 		$requisite = EntityRequisite::getSingleInstance()->getList(
 			[
+				'select' => ['ID'],
 				'order' => [
 					'SORT' => 'ASC',
 					'ID' => 'ASC'

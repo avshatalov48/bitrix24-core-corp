@@ -28,4 +28,19 @@ return [
 		],
 		'readonly' => true,
 	],
+	'ui.entity-selector' => [
+		'value' => [
+			'entities' => [
+				[
+					'entityId' => 'imopenlines-crm-form',
+					'provider' => [
+						'moduleId' => 'imopenlines',
+						'className' => '\\Bitrix\\ImOpenlines\\Integrations\\UI\\EntitySelector\\CrmFormProvider',
+					],
+				]
+			],
+			'extensions' => ['imopenlines.entity-selector']
+		],
+		'readonly' => true,
+	],
 ];

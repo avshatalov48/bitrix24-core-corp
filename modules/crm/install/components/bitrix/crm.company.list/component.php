@@ -321,9 +321,9 @@ $arResult['GRID_ID'] = $gridId.($bInternal && !empty($arParams['GRID_ID_SUFFIX']
 $arResult['COMPANY_TYPE_LIST'] = CCrmStatus::GetStatusListEx('COMPANY_TYPE');
 $arResult['EMPLOYEES_LIST'] = CCrmStatus::GetStatusListEx('EMPLOYEES');
 $arResult['INDUSTRY_LIST'] = CCrmStatus::GetStatusListEx('INDUSTRY');
-$arResult['WEBFORM_LIST'] = WebFormManager::getListNames();
+$arResult['WEBFORM_LIST'] = WebFormManager::getListNamesEncoded();
 $arResult['FILTER'] = array();
-$arResult['FILTER2LOGIC'] = array();
+$arResult['FILTER2LOGIC'] = [];
 $arResult['FILTER_PRESETS'] = array();
 
 $arResult['AJAX_MODE'] = isset($arParams['AJAX_MODE']) ? $arParams['AJAX_MODE'] : ($arResult['INTERNAL'] ? 'N' : 'Y');
@@ -367,8 +367,7 @@ if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
 //region Filter initialization
 if (!$bInternal)
 {
-	$arResult['FILTER2LOGIC'] = array('TITLE', 'BANKING_DETAILS', 'COMMENTS');
-
+	$arResult['FILTER2LOGIC'] = ['TITLE', 'BANKING_DETAILS', 'COMMENTS'];
 	$filterFlags = Crm\Filter\CompanySettings::FLAG_NONE;
 	if($enableOutmodedFields)
 	{
@@ -867,7 +866,7 @@ foreach ($arFilter as $k => $v)
 		}
 		\Bitrix\Crm\UI\Filter\Range::prepareTo($arFilter, $arMatch[1], $v);
 	}
-	elseif (in_array($k, $arResult['FILTER2LOGIC']))
+	elseif (in_array($k, $arResult['FILTER2LOGIC']) && $v !== false)
 	{
 		// Bugfix #26956 - skip empty values in logical filter
 		$v = trim($v);
@@ -896,7 +895,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter['COMMUNICATION_TYPE']);
 	}
-	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1 && $v !== false)
 	{
 		$arFilter['%'.$k] = $v;
 		unset($arFilter[$k]);
@@ -981,13 +980,13 @@ if($actionData['ACTIVE'])
 							if (!$isMyCompanyMode)
 							{
 								$arErrors = [];
-								CCrmBizProcHelper::AutoStartWorkflows(
-									CCrmOwnerType::Company,
-									$ID,
-									CCrmBizProcEventType::Edit,
-									$arErrors
-								);
-							}
+							CCrmBizProcHelper::AutoStartWorkflows(
+								CCrmOwnerType::Company,
+								$ID,
+								CCrmBizProcEventType::Edit,
+								$arErrors
+							);
+						}
 						}
 						else
 						{
@@ -1080,13 +1079,13 @@ if($actionData['ACTIVE'])
 						if (!$isMyCompanyMode)
 						{
 							$arErrors = [];
-							CCrmBizProcHelper::AutoStartWorkflows(
-								CCrmOwnerType::Company,
-								$ID,
-								CCrmBizProcEventType::Edit,
-								$arErrors
-							);
-						}
+						CCrmBizProcHelper::AutoStartWorkflows(
+							CCrmOwnerType::Company,
+							$ID,
+							CCrmBizProcEventType::Edit,
+							$arErrors
+						);
+					}
 					}
 					else
 					{
@@ -1165,13 +1164,13 @@ if($actionData['ACTIVE'])
 						if (!$isMyCompanyMode)
 						{
 							$arErrors = [];
-							CCrmBizProcHelper::AutoStartWorkflows(
-								CCrmOwnerType::Company,
-								$ID,
-								CCrmBizProcEventType::Edit,
-								$arErrors
-							);
-						}
+						CCrmBizProcHelper::AutoStartWorkflows(
+							CCrmOwnerType::Company,
+							$ID,
+							CCrmBizProcEventType::Edit,
+							$arErrors
+						);
+					}
 					}
 					else
 					{
@@ -2303,7 +2302,8 @@ if (!$isInExportMode)
 		$arResult['NEED_FOR_BUILD_TIMELINE'] =
 		$arResult['NEED_FOR_BUILD_DUPLICATE_INDEX'] =
 		$arResult['NEED_TO_CONVERT_ADDRESSES'] =
-		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] = false;
+		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] = 
+		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] = false;
 
 	if(!$bInternal)
 	{
@@ -2313,6 +2313,7 @@ if (!$isInExportMode)
 		}
 
 		$arResult['NEED_FOR_BUILD_TIMELINE'] = \Bitrix\Crm\Agent\Timeline\CompanyTimelineBuildAgent::getInstance()->isEnabled();
+		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] = \Bitrix\Crm\Agent\Security\CompanyAttributeRebuildAgent::getInstance()->isEnabled();
 
 		$agent = Bitrix\Crm\Agent\Duplicate\CompanyDuplicateIndexRebuildAgent::getInstance();
 		$isAgentEnabled = $agent->isEnabled();

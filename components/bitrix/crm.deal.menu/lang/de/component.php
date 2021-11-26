@@ -62,6 +62,7 @@ $MESS["DEAL_REGISTER_CALL"] = "Anruf registrieren";
 $MESS["DEAL_REGISTER_CALL_TITLE"] = "Anruf registrieren";
 $MESS["DEAL_SHOW"] = "Anzeigen";
 $MESS["DEAL_SHOW_TITLE"] = "Auftrag anzeigen";
+$MESS["DEAL_STEXPORT_OPTION_EXPORT_ALL_CLIENT_FIELDS"] = "Alle Felder von Kontakten und Unternehmen exportieren";
 $MESS["DEAL_STEXPORT_OPTION_EXPORT_ALL_FIELDS"] = "Alle Auftragsfelder exportieren";
 $MESS["DEAL_STEXPORT_OPTION_EXPORT_PRODUCT_FIELDS"] = "Detaillierte Produktvarianten exportieren";
 $MESS["DEAL_STEXPORT_SUMMARY"] = "Es wird eine Exportdatei für Aufträge erstellt. Export vieler Daten kann einige Zeit in Anspruch nehmen.";

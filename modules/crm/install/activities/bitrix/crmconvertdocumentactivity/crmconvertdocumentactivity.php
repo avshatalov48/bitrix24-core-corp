@@ -116,6 +116,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		if ($conversionResult->isSuccess())
 		{
 			$this->setReturnIds($conversionResult);
+			$this->onSuccessConversion($entityTypeId, $entityId);
 		}
 		else
 		{
@@ -150,6 +151,18 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			{
 				$this->__set($key, $boundEntity->getId());
 			}
+		}
+	}
+
+	private function onSuccessConversion($entityTypeId, $entityId)
+	{
+		if (
+			$entityTypeId === \CCrmOwnerType::Lead
+			&& $this->GetRootActivity()->getDocumentEventType() === CBPDocumentEventType::Automation
+		)
+		{
+			$this->workflow->Terminate();
+			throw new Exception('TerminateActivity');
 		}
 	}
 

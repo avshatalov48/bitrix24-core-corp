@@ -3,23 +3,66 @@
 namespace Bitrix\Crm\UserField;
 
 use \Bitrix\Crm\Service\Factory;
+use Bitrix\Crm\UserField\DisplayStrategy\BaseStrategy;
+use Bitrix\Crm\UserField\DisplayStrategy\DefaultStrategy;
+use Bitrix\Crm\Service\Container;
 
 class Display
 {
 	/** @var Factory */
 	protected $factory;
 	protected $values;
-	protected $processedValues;
 	protected $userFields;
+	/** @var BaseStrategy */
+	protected $strategy;
 
 	public function __construct(Factory $factory, array $values = [])
 	{
 		$this->factory = $factory;
 		$this->values = $values;
-		$this->processedValues = [];
 
 		global $USER_FIELD_MANAGER;
 		$this->userFields = $USER_FIELD_MANAGER->getUserFields($this->factory->getUserFieldEntityId(), 0, LANGUAGE_ID);
+
+		$this->setStrategy(new DefaultStrategy($factory->getEntityTypeId()));
+	}
+
+	public static function createByEntityTypeId(int $entityTypeId): Display
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			// waiting when we will have factories for every entity type
+			// really sorry for this:
+			$factory = new class extends \Bitrix\Crm\Service\Factory\Contact
+			{
+				protected $entityTypeIdInternal;
+
+				public function setEntityTypeIdInternal(int $entityTypeId)
+				{
+					$this->entityTypeIdInternal = $entityTypeId;
+				}
+				public function getUserFieldEntityId(): string
+				{
+					return (\CCrmOwnerType::ResolveUserFieldEntityID($this->entityTypeIdInternal));
+				}
+				public function getEntityTypeId(): int
+				{
+					return $this->entityTypeIdInternal;
+				}
+			};
+			$factory->setEntityTypeIdInternal($entityTypeId);
+		}
+
+		return new self($factory);
+	}
+
+	public function setStrategy(BaseStrategy $strategy): Display
+	{
+		$this->strategy = $strategy;
+		$this->strategy->setUserFields($this->userFields);
+
+		return $this;
 	}
 
 	public function addValues(int $itemId, array $values): Display
@@ -36,33 +79,7 @@ class Display
 
 	protected function processValues(): array
 	{
-		$view = new \Bitrix\Main\UserField\Display(\Bitrix\Main\UserField\Display::MODE_VIEW);
-		$view->setAdditionalParameter('FILE_MAX_WIDTH', 300, true);
-		$view->setAdditionalParameter('FILE_SHOW_POPUP', 'Y', true);
-		$view->setAdditionalParameter('FILE_MAX_HEIGHT', 300, true);
-
-		foreach($this->values as $id => $values)
-		{
-			if (!empty($this->processedValues[$id]))
-			{
-				continue;
-			}
-
-			foreach($values as $fieldName => $value)
-			{
-				if(!empty($this->getUserFields()[$fieldName]))
-				{
-					$userField = $this->getUserFields()[$fieldName];
-					$userField['VALUE'] = $value;
-
-					$view->setField($userField);
-					$this->processedValues[$id][$fieldName] = $view->display();
-					$view->clear();
-				}
-			}
-		}
-
-		return $this->processedValues;
+		return $this->strategy->processValues($this->values);
 	}
 
 	protected function getUserFields(): array

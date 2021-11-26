@@ -321,8 +321,10 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 							EntityRequisite::getAddresses($this->requisiteId);
 						if (!empty($this->rawRequisiteData[EntityRequisite::ADDRESS]))
 						{
-							foreach ($this->rawRequisiteData[EntityRequisite::ADDRESS] as
-							            $addressTypeId => $addressFields)
+							foreach (
+								$this->rawRequisiteData[EntityRequisite::ADDRESS]
+								as $addressTypeId => $addressFields
+							)
 							{
 								$locationAddress = RequisiteAddress::makeLocationAddressByFields($addressFields);
 								if ($locationAddress)
@@ -1407,11 +1409,25 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 								default:
 									$fieldType = 'text';
 							}
-							$fields[] = [
+
+							$fieldFormConfig = [
 								'title' => $fieldTitle,
 								'name' => $fieldName,
 								'type' => $fieldType
 							];
+
+							if ($fieldInfo['formType'] === 'crm_status')
+							{
+								$fieldFormConfig['type'] = 'list';
+								$fieldFormConfig['data'] = $this->requisite->getRqListFieldFormData(
+									$fieldName,
+									$this->presetCountryId
+								);
+							}
+
+							$fields[] = $fieldFormConfig;
+
+							unset($fieldFormConfig);
 						}
 					}
 				}

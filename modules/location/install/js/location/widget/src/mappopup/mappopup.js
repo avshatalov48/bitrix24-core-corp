@@ -1,12 +1,19 @@
 import {Tag, Type, Dom, Event} from 'main.core';
 import {
-	Address, Format, Location, ControlMode, MapBase, GeocodingServiceBase, AddressStringConverter
+	Address,
+	Format,
+	Location,
+	ControlMode,
+	MapBase,
+	GeocodingServiceBase,
+	AddressStringConverter,
+	LocationType
 } from 'location.core';
 import {EventEmitter} from 'main.core.events';
 import AddressString from './addressstring';
-import './css/mappopup.css';
+import AddressApplier from './addressapplier';
 import Popup from './popup';
-import AddressRestorer from './addressrestorer';
+import './css/mappopup.css';
 
 export default class MapPopup extends EventEmitter
 {
@@ -21,7 +28,7 @@ export default class MapPopup extends EventEmitter
 	#address;
 	#popup;
 	#addressString;
-	#addressRestorer;
+	#addressApplier;
 	#addressFormat;
 	#gallery;
 	#locationRepository;
@@ -29,8 +36,7 @@ export default class MapPopup extends EventEmitter
 	#mapInnerContainer;
 	#geocodingService;
 	#contentWrapper;
-	#needRestore = false;
-	#userLocation;
+	#userLocationPoint;
 
 	constructor(props)
 	{
@@ -68,12 +74,7 @@ export default class MapPopup extends EventEmitter
 		this.#addressString = new AddressString({
 			addressFormat: this.#addressFormat
 		});
-
-		this.#addressRestorer = new AddressRestorer({
-			addressFormat: this.#addressFormat
-		});
-
-		this.#addressRestorer.onRestoreEventSubscribe(this.#onAddressRestore.bind(this));
+		this.#createAddressApplier();
 
 		if (props.gallery)
 		{
@@ -81,7 +82,33 @@ export default class MapPopup extends EventEmitter
 		}
 
 		this.#locationRepository = props.locationRepository;
-		this.#userLocation = props.userLocation;
+		this.#userLocationPoint = props.userLocationPoint;
+	}
+
+	#createAddressApplier()
+	{
+		this.#addressApplier = new AddressApplier(
+			{
+				propsData: {
+					address: this.#address,
+					addressFormat: this.#addressFormat,
+					isHidden: true,
+				}
+			}
+		);
+		this.#addressApplier.$mount();
+		this.#addressApplier.$on('apply', (event) => {
+			const prevAddress = event.address;
+
+			this.#address = prevAddress;
+			this.#addressString.address = prevAddress;
+			this.#addressApplier.$props.isHidden = true;
+
+			this.emit(
+				MapPopup.#onChangedEvent,
+				{address: prevAddress}
+			);
+		});
 	}
 
 	#onLocationChanged(event: Event)
@@ -90,51 +117,45 @@ export default class MapPopup extends EventEmitter
 		const location = data.location;
 		const address = location.toAddress();
 
-		this.#address = address;
-		this.#addressString.address = address;
-
-		if (this.#needRestore)
+		if (!this.#address)
 		{
-			if (this.#addressRestorer.isHidden())
-			{
-				this.#addressRestorer.show();
-			}
+			this.#address = address;
+			this.#addressString.address = address;
+			this.emit(
+				MapPopup.#onChangedEvent,
+				{address: address}
+			);
+		}
+		else if (address.fieldCollection.isEqual(this.#address.fieldCollection, LocationType.ADDRESS_LINE_1))
+		{
+			this.#address.latitude = address.latitude;
+			this.#address.longitude = address.longitude;
+			this.#address.location.latitude = address.latitude;
+			this.#address.location.longitude = address.longitude;
+
+			this.emit(
+				MapPopup.#onChangedEvent,
+				{address: this.#address}
+			);
+
+			this.#addressApplier.$props.isHidden = true;
+		}
+		else
+		{
+			this.#addressString.address = address;
+			this.#addressApplier.$props.address = address;
+			this.#addressApplier.$props.isHidden = false;
 		}
 
 		if (this.#gallery)
 		{
 			this.#gallery.location = location;
 		}
-
-		this.emit(
-			MapPopup.#onChangedEvent,
-			{address: address}
-		);
-	}
-
-	#onAddressRestore(event: Event)
-	{
-		const data = event.getData();
-			const prevAddress = data.address;
-
-		prevAddress.latitude = this.#address.latitude;
-		prevAddress.longitude = this.#address.longitude;
-
-		this.#address = prevAddress;
-		this.#addressString.address = prevAddress;
-
-		this.#addressRestorer.hide();
-
-		this.emit(
-			MapPopup.#onChangedEvent,
-			{address: prevAddress}
-		);
 	}
 
 	render(props: object): void
 	{
 		this.#address = props.address;
-		this.#needRestore = true;
 		this.#mode = props.mode;
 		this.#isMapRendered = false;
 		this.#mapInnerContainer = Tag.render`<div class="location-map-inner"></div>`;
@@ -157,7 +178,7 @@ export default class MapPopup extends EventEmitter
 					${gallery}
 				</div>
 				${this.#mode === ControlMode.edit ? this.#addressString.render({address: this.#address}) : ''}
-				${this.#mode === ControlMode.edit ? this.#addressRestorer.render({address: this.#address}) : ''}
+				${this.#mode === ControlMode.edit ? this.#addressApplier.$el : ''}
 			</div>`;
 
 		Event.bind(this.#contentWrapper, 'click', (e) => e.stopPropagation());
@@ -187,9 +208,7 @@ export default class MapPopup extends EventEmitter
 	set address(address: ?Address): void
 	{
 		this.#address = address;
-		this.#needRestore = true;
 		this.#addressString.address = address;
-		this.#addressRestorer.address = address;
 
 		this.#convertAddressToLocation(address)
 			.then((location) => {
@@ -228,12 +247,17 @@ export default class MapPopup extends EventEmitter
 	#convertAddressToLocation(address: ?Address, useUserLocation: boolean = false): Promise<?Location>
 	{
 		return new Promise((resolve) => {
-
-			let location = null;
-
 			if (useUserLocation)
 			{
-				location = this.#userLocation && this.#mode !== ControlMode.view ? this.#userLocation : null;
+				resolve(
+					this.#userLocationPoint && this.#mode !== ControlMode.view
+						? new Location({
+							latitude: this.#userLocationPoint.latitude,
+							longitude: this.#userLocationPoint.longitude
+						})
+						: null
+				);
+				return;
 			}
 
 			if (address)
@@ -249,40 +273,18 @@ export default class MapPopup extends EventEmitter
 					}));
 					return;
 				}
-
-				// Try to find via geocoding by string name
-				if (this.#geocodingService)
-				{
-					const addressStr = address.toString(
-						this.#addressFormat,
-						AddressStringConverter.STRATEGY_TYPE_FIELD_TYPE,
-						AddressStringConverter.CONTENT_TYPE_TEXT
-					);
-
-					this.#geocodingService.geocode(addressStr)
-						.then((locationsList: ?Array) =>
-						{
-							// If we have found just one location - we probably have found the right one.
-							if (Array.isArray(locationsList) && locationsList.length === 1)
-							{
-								location = locationsList[0];
-							}
-
-							// geocoded or user's location
-							resolve(location);
-						});
-
-					return;
-				}
 			}
 
-			resolve(location);
+			resolve(null);
 		});
 	}
 
 	#setLocationInternal(location: ?Location): void
 	{
-		this.#map.location = location;
+		if (this.#map)
+		{
+			this.#map.location = location;
+		}
 
 		if (this.#gallery)
 		{
@@ -353,14 +355,7 @@ export default class MapPopup extends EventEmitter
 	close(): void
 	{
 		this.#popup.close();
-
-		this.#needRestore = false;
-
-		if (!this.#addressRestorer.isHidden())
-		{
-			this.#addressRestorer.hide();
-		}
-
+		this.#addressApplier.$props.isHidden = true;
 		this.emit(MapPopup.#onClosedEvent);
 	}
 
@@ -394,7 +389,7 @@ export default class MapPopup extends EventEmitter
 		this.#map = null;
 		this.#gallery = null;
 		this.#addressString = null;
-		this.#addressRestorer = null;
+		this.#addressApplier = null;
 
 		this.#popup.destroy();
 		this.#popup = null;

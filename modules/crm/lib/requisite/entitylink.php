@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Requisite;
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Service;
 
 /**
  * Class EntityLink
@@ -143,115 +144,86 @@ class EntityLink
 		{
 			$parentFileds = array_values($parentFieldMap[$entityTypeId]);
 		}
-		unset($parentFieldMap);
-		$row = null;
-		switch ($entityTypeId)
+		if ($entityTypeId === \CCrmOwnerType::Invoice)
 		{
-			case \CCrmOwnerType::Deal:
-				$select = array('ID', 'COMPANY_ID', 'CONTACT_ID', 'MYCOMPANY_ID');
-				$res = \CCrmDeal::GetListEx(
-					array(),
-					array('ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'),
-					false,
-					false,
-					array_merge($select, $parentFileds)
-				);
-				$row = $res->Fetch();
-				if (is_array($row))
-				{
-					if (isset($row['COMPANY_ID']) && $row['COMPANY_ID'] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
-						$result['CLIENT_ENTITY_ID'] = (int)$row['COMPANY_ID'];
-					}
-					else if (isset($row['CONTACT_ID']) && $row['CONTACT_ID'] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
-						$result['CLIENT_ENTITY_ID'] = (int)$row['CONTACT_ID'];
-					}
-
-					if (isset($row['MYCOMPANY_ID']) && $row['MYCOMPANY_ID'] > 0)
-						$result['MYCOMPANY_ID'] = (int)$row['MYCOMPANY_ID'];
-				}
-				else
-				{
-					$entityNotFound = true;
-				}
-				break;
-
-			case \CCrmOwnerType::Quote:
-				$select = array('ID', 'COMPANY_ID', 'CONTACT_ID', 'MYCOMPANY_ID');
-				$res = \CCrmQuote::GetList(
-					array(),
-					array('=ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'),
-					false,
-					false,
-					array_merge($select, $parentFileds)
-				);
-				$row = $res->Fetch();
-				if (is_array($row))
-				{
-					if (isset($row['COMPANY_ID']) && $row['COMPANY_ID'] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
-						$result['CLIENT_ENTITY_ID'] = (int)$row['COMPANY_ID'];
-					}
-					else if (isset($row['CONTACT_ID']) && $row['CONTACT_ID'] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
-						$result['CLIENT_ENTITY_ID'] = (int)$row['CONTACT_ID'];
-					}
-
-					if (isset($row['MYCOMPANY_ID']) && $row['MYCOMPANY_ID'] > 0)
-						$result['MYCOMPANY_ID'] = (int)$row['MYCOMPANY_ID'];
-				}
-				else
-				{
-					$entityNotFound = true;
-				}
-				break;
-
-			case \CCrmOwnerType::Invoice:
-				$select = array('ID', 'UF_COMPANY_ID', 'UF_CONTACT_ID', 'UF_MYCOMPANY_ID');
-				$res = \CCrmInvoice::GetList(
-					array(),
-					array('ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'),
-					false,
-					false,
-					array_merge($select, $parentFileds)
-				);
-				$row = $res->Fetch();
-				if (is_array($row))
-				{
-					if (isset($row['UF_COMPANY_ID']) && $row['UF_COMPANY_ID'] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
-						$result['CLIENT_ENTITY_ID'] = (int)$row['UF_COMPANY_ID'];
-					}
-					else if (isset($row['UF_CONTACT_ID']) && $row['UF_CONTACT_ID'] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
-						$result['CLIENT_ENTITY_ID'] = (int)$row['UF_CONTACT_ID'];
-					}
-
-					if (isset($row['UF_MYCOMPANY_ID']) && $row['UF_MYCOMPANY_ID'] > 0)
-						$result['MYCOMPANY_ID'] = (int)$row['UF_MYCOMPANY_ID'];
-				}
-				else
-				{
-					$entityNotFound = true;
-				}
-				break;
-		}
-
-		if ($getParentEntityFields && is_array($row))
-		{
-			foreach ($parentFileds as $fieldName)
+			$select = array('ID', 'UF_COMPANY_ID', 'UF_CONTACT_ID', 'UF_MYCOMPANY_ID');
+			$res = \CCrmInvoice::GetList(
+				array(),
+				array('ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'),
+				false,
+				false,
+				array_merge($select, $parentFileds)
+			);
+			$row = $res->Fetch();
+			if (is_array($row))
 			{
-				if (array_key_exists($fieldName, $row))
+				if (isset($row['UF_COMPANY_ID']) && $row['UF_COMPANY_ID'] > 0)
 				{
-					$result[$fieldName] = (int)$row[$fieldName];
+					$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
+					$result['CLIENT_ENTITY_ID'] = (int)$row['UF_COMPANY_ID'];
 				}
+				else if (isset($row['UF_CONTACT_ID']) && $row['UF_CONTACT_ID'] > 0)
+				{
+					$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
+					$result['CLIENT_ENTITY_ID'] = (int)$row['UF_CONTACT_ID'];
+				}
+
+				if (isset($row['UF_MYCOMPANY_ID']) && $row['UF_MYCOMPANY_ID'] > 0)
+					$result['MYCOMPANY_ID'] = (int)$row['UF_MYCOMPANY_ID'];
+			}
+			else
+			{
+				$entityNotFound = true;
+			}
+		}
+		else
+		{
+			$factory = Service\Container::getInstance()->getFactory($entityTypeId);
+			if ($factory)
+			{
+				$item = $factory->getItem($entityId);
+				if ($item)
+				{
+					$companyId = $item->getCompanyId();
+					$contactId = $item->getContactId();
+					if ($companyId > 0)
+					{
+						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
+						$result['CLIENT_ENTITY_ID'] = $companyId;
+					}
+					elseif($contactId > 0)
+					{
+						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
+						$result['CLIENT_ENTITY_ID'] = $contactId;
+					}
+					if ($item->hasField(Crm\Item::FIELD_NAME_MYCOMPANY_ID))
+					{
+						$myCompanyId = $item->getMycompanyId();
+						if ($myCompanyId > 0)
+						{
+							$result['MYCOMPANY_ID'] = $myCompanyId;
+						}
+					}
+
+					if ($getParentEntityFields)
+					{
+						foreach ($parentFileds as $fieldName)
+						{
+							if ($item->hasField($fieldName) && $item->get($fieldName) > 0)
+							{
+								$result[$fieldName] = $item->get($fieldName);
+							}
+						}
+					}
+				}
+				else
+				{
+					$entityNotFound = true;
+				}
+			}
+			else
+			{
+				$entityNotFound = true;
 			}
 		}
 
@@ -284,12 +256,9 @@ class EntityLink
 			);
 		}
 
-		if($enableEntityCheck
-			&& (!is_int($entityTypeId)
-				|| $entityTypeId <= 0
-				|| !($entityTypeId === \CCrmOwnerType::Deal
-				|| $entityTypeId === \CCrmOwnerType::Quote
-				|| $entityTypeId === \CCrmOwnerType::Invoice)))
+		$availableEntityTypeIds = static::getAvailableEntityTypeIds();
+
+		if ($enableEntityCheck && !isset($availableEntityTypeIds[$entityTypeId]))
 		{
 			throw new Main\SystemException(
 				'Entity type is not defined or invalid.',
@@ -1104,51 +1073,50 @@ class EntityLink
 
 		if (is_array($entityFields))
 		{
-			switch ($entityTypeId)
+			if ($entityTypeId === \CCrmOwnerType::Invoice)
 			{
-				case \CCrmOwnerType::Deal:
-				case \CCrmOwnerType::Quote:
-					if (isset($entityFields['COMPANY_ID']) && $entityFields['COMPANY_ID'] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
-						$result['CLIENT_ENTITY_ID'] = (int)$entityFields['COMPANY_ID'];
-					}
-					else if (isset($entityFields['CONTACT_ID']) && $entityFields['CONTACT_ID'] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
-						$result['CLIENT_ENTITY_ID'] = (int)$entityFields['CONTACT_ID'];
-					}
-					else if ($entityTypeId === \CCrmOwnerType::Deal
-						&& is_array($entityFields['CONTACT_IDS'])
-						&& !empty($entityFields['CONTACT_IDS'])
-						&& $entityFields['CONTACT_IDS'][0] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
-						$result['CLIENT_ENTITY_ID'] = (int)$entityFields['CONTACT_IDS'][0];
-					}
-					if (isset($entityFields['MYCOMPANY_ID']) && $entityFields['MYCOMPANY_ID'] > 0)
-					{
-						$result['SELLER_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
-						$result['SELLER_ENTITY_ID'] = (int)$entityFields['MYCOMPANY_ID'];
-					}
-					break;
-				case \CCrmOwnerType::Invoice:
-					if (isset($entityFields['UF_COMPANY_ID']) && $entityFields['UF_COMPANY_ID'] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
-						$result['CLIENT_ENTITY_ID'] = (int)$entityFields['UF_COMPANY_ID'];
-					}
-					else if (isset($entityFields['UF_CONTACT_ID']) && $entityFields['UF_CONTACT_ID'] > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
-						$result['CLIENT_ENTITY_ID'] = (int)$entityFields['UF_CONTACT_ID'];
-					}
-					if (isset($entityFields['UF_MYCOMPANY_ID']) && $entityFields['UF_MYCOMPANY_ID'] > 0)
-					{
-						$result['SELLER_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
-						$result['SELLER_ENTITY_ID'] = (int)$entityFields['UF_MYCOMPANY_ID'];
-					}
-					break;
+				if (isset($entityFields['UF_COMPANY_ID']) && $entityFields['UF_COMPANY_ID'] > 0)
+				{
+					$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
+					$result['CLIENT_ENTITY_ID'] = (int)$entityFields['UF_COMPANY_ID'];
+				}
+				else if (isset($entityFields['UF_CONTACT_ID']) && $entityFields['UF_CONTACT_ID'] > 0)
+				{
+					$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
+					$result['CLIENT_ENTITY_ID'] = (int)$entityFields['UF_CONTACT_ID'];
+				}
+				if (isset($entityFields['UF_MYCOMPANY_ID']) && $entityFields['UF_MYCOMPANY_ID'] > 0)
+				{
+					$result['SELLER_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
+					$result['SELLER_ENTITY_ID'] = (int)$entityFields['UF_MYCOMPANY_ID'];
+				}
+			}
+			else
+			{
+				if (isset($entityFields['COMPANY_ID']) && $entityFields['COMPANY_ID'] > 0)
+				{
+					$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
+					$result['CLIENT_ENTITY_ID'] = (int)$entityFields['COMPANY_ID'];
+				}
+				else if (isset($entityFields['CONTACT_ID']) && $entityFields['CONTACT_ID'] > 0)
+				{
+					$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
+					$result['CLIENT_ENTITY_ID'] = (int)$entityFields['CONTACT_ID'];
+				}
+				elseif (
+					is_array($entityFields['CONTACT_IDS'])
+					&& !empty($entityFields['CONTACT_IDS'])
+					&& $entityFields['CONTACT_IDS'][0] > 0
+				)
+				{
+					$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
+					$result['CLIENT_ENTITY_ID'] = (int)$entityFields['CONTACT_IDS'][0];
+				}
+				if (isset($entityFields['MYCOMPANY_ID']) && $entityFields['MYCOMPANY_ID'] > 0)
+				{
+					$result['SELLER_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
+					$result['SELLER_ENTITY_ID'] = (int)$entityFields['MYCOMPANY_ID'];
+				}
 			}
 		}
 
@@ -1170,10 +1138,8 @@ class EntityLink
 			'MC_BANK_DETAIL_ID' => 0
 		];
 
-		if ($entityTypeId !== \CCrmOwnerType::Deal
-			&& $entityTypeId !== \CCrmOwnerType::Quote
-			&& $entityTypeId !== \CCrmOwnerType::Invoice
-			/*&& $entityTypeId !== \CCrmOwnerType::Order*/)
+		$availableEntityIds = static::getAvailableEntityTypeIds();
+		if (!isset($availableEntityIds[$entityTypeId]))
 		{
 			return $resultLink;
 		}
@@ -1684,6 +1650,26 @@ class EntityLink
 		Main\Config\Option::set('crm', 'def_mycompany_id', (int)$defMyCompanyId);
 	}
 
+	public static function getAvailableEntityTypeIds(): array
+	{
+		$types = [
+			\CCrmOwnerType::Deal => \CCrmOwnerType::Deal,
+			\CCrmOwnerType::Invoice => \CCrmOwnerType::Invoice,
+			\CCrmOwnerType::Quote => \CCrmOwnerType::Quote,
+		];
+		$dynamicTypesMap = Service\Container::getInstance()->getDynamicTypesMap()->load([
+			'isLoadCategories' => false,
+			'isLoadStages' => false,
+		]);
+
+		foreach ($dynamicTypesMap->getTypes() as $type)
+		{
+			$types[$type->getEntityTypeId()] = $type->getEntityTypeId();
+		}
+
+		return $types;
+	}
+
 	/**
 	 * @param int $entityTypeID
 	 * @param int $entityID
@@ -1696,24 +1682,22 @@ class EntityLink
 			$entityTypeID = (int)$entityTypeID;
 		}
 
+		$userPermissions = Service\Container::getInstance()->getUserPermissions();
+
 		if(intval($entityTypeID) <= 0 && intval($entityID) <= 0)
 		{
-			return (
-				\CCrmAuthorizationHelper::CheckReadPermission(\CCrmOwnerType::Deal, 0)
-				|| \CCrmAuthorizationHelper::CheckReadPermission(\CCrmOwnerType::Quote, 0)
-				|| \CCrmAuthorizationHelper::CheckReadPermission(\CCrmOwnerType::Invoice, 0)
-			);
+			foreach (static::getAvailableEntityTypeIds() as $entityTypeId)
+			{
+				if ($userPermissions->canReadType($entityTypeId))
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Deal
-			|| $entityTypeID === \CCrmOwnerType::Quote
-			|| $entityTypeID === \CCrmOwnerType::Invoice)
-		{
-			$entityType = \CCrmOwnerType::ResolveName($entityTypeID);
-			return \CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityID);
-		}
-
-		return false;
+		return $userPermissions->checkReadPermissions($entityTypeID, $entityID);
 	}
 
 	/**

@@ -46,7 +46,7 @@ class Call extends Base
 		{
 			return parent::getStatusAnchor();
 		}
-		
+
 		return array(
 			'TEXT' => (static::isActive() ? Loc::getMessage('VOXIMPLANT_ACTIVITY_PROVIDER_ACTIVE') : Loc::getMessage('VOXIMPLANT_ACTIVITY_PROVIDER_INACTIVE')),
 			'URL' => \CVoxImplantMain::GetPublicFolder().'lines.php'
@@ -160,7 +160,7 @@ class Call extends Base
 			$result = true;
 		else if($providerTypeId === static::ACTIVITY_PROVIDER_TYPE_CALLBACK)
 			$result = false;
-		
+
 		return $result;
 	}
 
@@ -360,7 +360,7 @@ class Call extends Base
 	public static function renderView(array $activity)
 	{
 		global $APPLICATION;
-		
+
 		if(!Loader::includeModule('voximplant'))
 		{
 			return '<div class="crm-task-list-call">
@@ -396,5 +396,19 @@ class Call extends Base
 			CommunicationStatistics::STATISTICS_STREAMS,
 			CommunicationStatistics::STATISTICS_MARKS
 		);
+	}
+
+	public static function onAfterAdd($activityFields, array $params = null)
+	{
+		$direction =
+			isset($activityFields['DIRECTION'])
+				? (int)$activityFields['DIRECTION']
+				: \CCrmActivityDirection::Undefined
+		;
+
+		if ($direction === \CCrmActivityDirection::Outgoing && \Bitrix\Crm\Automation\Factory::canUseAutomation())
+		{
+			\Bitrix\Crm\Automation\Trigger\OutgoingCallTrigger::execute($activityFields['BINDINGS'], $activityFields);
+		}
 	}
 }

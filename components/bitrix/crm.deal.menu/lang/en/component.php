@@ -62,6 +62,7 @@ $MESS["DEAL_REGISTER_CALL"] = "Register call";
 $MESS["DEAL_REGISTER_CALL_TITLE"] = "Register call";
 $MESS["DEAL_SHOW"] = "View";
 $MESS["DEAL_SHOW_TITLE"] = "View Deal";
+$MESS["DEAL_STEXPORT_OPTION_EXPORT_ALL_CLIENT_FIELDS"] = "Export all fields of contacts and companies";
 $MESS["DEAL_STEXPORT_OPTION_EXPORT_ALL_FIELDS"] = "Export all deal fields";
 $MESS["DEAL_STEXPORT_OPTION_EXPORT_PRODUCT_FIELDS"] = "Export detailed SKU's";
 $MESS["DEAL_STEXPORT_SUMMARY"] = "This will create a deal export file. Exporting a considerable amount of data may take some time.";

@@ -14,6 +14,7 @@ import Marker from '../marker/marker';
 
 export default class Manager
 {
+	static lastInstance:?Manager = null;
 	categories: Map<number, Category>;
 
 	constructor(options: {
@@ -27,18 +28,14 @@ export default class Manager
 		robotsUrl: string,
 		generatorUrl: string,
 		permissionEditUrl: string,
-		canEditTunnels: boolean,
-		canAddCategory: boolean,
-		categoriesQuantityLimit: number,
-		restrictionPopupCode: string,
+
+		isCategoryEditable: boolean,
+		isCategoryCreatable: boolean,
+		areStagesEditable: boolean,
 		isAvailableGenerator: boolean,
-		showGeneratorRestrictionPopup: () => void,
-		isAvailableRobots: boolean,
-		showRobotsRestrictionPopup: () => void,
-		isSenderSupported: boolean,
 		isAutomationEnabled: boolean,
 		isStagesEnabled: boolean,
-		isChanged: boolean;
+		isChanged: boolean,
 	})
 	{
 		this.container = options.container;
@@ -51,15 +48,10 @@ export default class Manager
 		this.generatorUrl = options.generatorUrl;
 		this.permissionEditUrl = options.permissionEditUrl;
 		this.tunnelScheme = options.tunnelScheme;
-		this.canEditTunnels = Boolean(options.canEditTunnels);
-		this.canAddCategory = Boolean(options.canAddCategory);
-		this.categoriesQuantityLimit = Number(options.categoriesQuantityLimit);
-		this.restrictionPopupCode = options.restrictionPopupCode;
+		this.isCategoryEditable = Boolean(options.isCategoryEditable);
+		this.isCategoryCreatable = Boolean(options.isCategoryCreatable);
+		this.areStagesEditable = Boolean(options.areStagesEditable);
 		this.isAvailableGenerator = options.isAvailableGenerator;
-		this.showGeneratorRestrictionPopup = options.showGeneratorRestrictionPopup;
-		this.isAvailableRobots = options.isAvailableRobots;
-		this.showRobotsRestrictionPopup = options.showRobotsRestrictionPopup;
-		this.isSenderSupported = options.isSenderSupported;
 		this.isStagesEnabled = options.isStagesEnabled;
 		this.isAutomationEnabled = options.isAutomationEnabled && this.isStagesEnabled;
 		this.categories = new Map();
@@ -71,12 +63,15 @@ export default class Manager
 
 		Backend.entityTypeId = this.entityTypeId;
 
-		setTimeout(() => {
-			if (!this.hasTunnels())
-			{
-				this.showCategoryStub();
-			}
-		});
+		if (this.isCategoryCreatable)
+		{
+			setTimeout(() => {
+				if (!this.hasTunnels())
+				{
+					this.showCategoryStub();
+				}
+			});
+		}
 
 		Event.bind(this.getAddCategoryButton(), 'click', this.onAddCategoryClick.bind(this));
 		Event.bind(this.addCategoryButtonTop, 'click', this.onAddCategoryTopClick.bind(this));
@@ -95,6 +90,7 @@ export default class Manager
 				}
 			});
 		}
+		this.constructor.lastInstance = this;
 	}
 
 	hasTunnels(): boolean
@@ -141,63 +137,59 @@ export default class Manager
 	{
 		event.preventDefault();
 
-		if (
-			this.canAddCategory
-			|| this.categoriesQuantityLimit <= 0
-			|| this.categoriesQuantityLimit > this.categories.size
-		)
+		if (!this.isCategoryCreatable)
 		{
-			return Backend
-				.createCategory({
-					name: Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'),
-					sort: this.getMaxSort() + 10
-				})
-				.then((response) => {
-					this.addCategoryFromOptions(response.data);
-
-					const allStages = this.getStages();
-					const newStages = [
-						...response.data.STAGES.P,
-						...response.data.STAGES.S,
-						...response.data.STAGES.F,
-					];
-
-					newStages.forEach(item => allStages.push(item));
-
-					const category = this.getCategory(response.data.ID);
-
-					category.enableTitleEdit('');
-					category.getAllColumns()
-						.forEach((column) => {
-							this.tunnelScheme.stages.push({
-								categoryId: column.getData().category.id,
-								stageId: column.getId(),
-								locked: false,
-								tunnels: [],
-							});
-						});
-
-					if (this.isShownCategoryStub())
-					{
-						this.hideCategoryStub();
-					}
-				})
-				.catch((response) => {
-					this.showErrorPopup(makeErrorMessageFromResponse(response));
-				});
-		}
-		else
-		{
-			try
-			{
-				eval(this.restrictionPopupCode);
-			}
-			catch (e) {
-				console.error(e);
-			}
-
 			return Promise.resolve(false);
 		}
+
+		if (BX.Crm.Restriction.Bitrix24.isRestricted('dealCategory'))
+		{
+			const restrictionData = BX.Crm.Restriction.Bitrix24.getData('dealCategory');
+			if (restrictionData && restrictionData['quantityLimit'] <= this.categories.size)
+			{
+				BX.Crm.Restriction.Bitrix24.getHandler('dealCategory').call();
+				return Promise.resolve(false);
+			}
+		}
+
+		return Backend
+			.createCategory({
+				name: Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'),
+				sort: this.getMaxSort() + 10
+			})
+			.then((response) => {
+				this.addCategoryFromOptions(response.data);
+
+				const allStages = this.getStages();
+				const newStages = [
+					...response.data.STAGES.P,
+					...response.data.STAGES.S,
+					...response.data.STAGES.F,
+				];
+
+				newStages.forEach(item => allStages.push(item));
+
+				const category = this.getCategory(response.data.ID);
+
+				category.enableTitleEdit('');
+				category.getAllColumns()
+					.forEach((column) => {
+						this.tunnelScheme.stages.push({
+							categoryId: column.getData().category.id,
+							stageId: column.getId(),
+							locked: false,
+							tunnels: [],
+						});
+					});
+
+				if (this.isShownCategoryStub())
+				{
+					this.hideCategoryStub();
+				}
+			})
+			.catch((response) => {
+				this.showErrorPopup(makeErrorMessageFromResponse(response));
+			});
 	}
 
 	onAddCategoryTopClick(event)
@@ -241,10 +233,8 @@ export default class Manager
 				permissionEditLink: this.permissionEditUrl,
 				lazy: true,
 				isAvailableGenerator: true,
-				showGeneratorRestrictionPopup: () => {},
-				isAvailableRobots: true,
-				showRobotsRestrictionPopup: () => {},
 				isStagesEnabled: this.isStagesEnabled,
+				isAutomationEnabled: true,
 			});
 		});
 	}
@@ -306,7 +296,7 @@ export default class Manager
 			appContainer: this.getAppContainer(),
 			id: options.ID,
 			name: options.NAME,
-			'default': (options.IS_DEFAULT === 'Y'),
+			default: options.IS_DEFAULT,
 			stages: stages,
 			sort: options.SORT,
 			access: options.ACCESS,
@@ -315,13 +305,10 @@ export default class Manager
 			permissionEditLink: this.permissionEditUrl,
 			generatorsCount: options.RC_COUNT,
 			generatorsListUrl: options.RC_LIST_URL,
-			canEditTunnels: this.canEditTunnels,
+			isCategoryEditable: this.isCategoryEditable,
+			areStagesEditable: this.areStagesEditable,
 			isAvailableGenerator: this.isAvailableGenerator,
-			showGeneratorRestrictionPopup: this.showGeneratorRestrictionPopup,
-			isAvailableRobots: this.isAvailableRobots,
-			showRobotsRestrictionPopup: this.showRobotsRestrictionPopup,
 			isAutomationEnabled: this.isAutomationEnabled,
-			isSenderSupported: this.isSenderSupported,
 			isStagesEnabled: this.isStagesEnabled,
 		});
 
@@ -423,6 +410,10 @@ export default class Manager
 				}
 				if (!event.data.preventSave)
 				{
+					if (BX.Crm.Restriction.Bitrix24.isRestricted('automation'))
+					{
+						return BX.Crm.Restriction.Bitrix24.getHandler('automation').call();
+					}
 					const from = {
 						category: event.data.link.from.getData().column.getData().category.id,
 						stage: event.data.link.from.getData().column.data.stage.STATUS_ID,
@@ -478,6 +469,10 @@ export default class Manager
 
 					if (tunnel)
 					{
+						if (BX.Crm.Restriction.Bitrix24.isRestricted('automation'))
+						{
+							return BX.Crm.Restriction.Bitrix24.getHandler('automation').call();
+						}
 						const requestOptions = {
 							srcCategory,
 							srcStage,
@@ -518,6 +513,10 @@ export default class Manager
 				if (!this.isAutomationEnabled || event.data.preventSave)
 				{
 					return;
+				}
+				if (BX.Crm.Restriction.Bitrix24.isRestricted('automation'))
+				{
+					return BX.Crm.Restriction.Bitrix24.getHandler('automation').call();
 				}
 				const columnFrom = event.data.link.from.getData().column;
 				const columnTo = event.data.link.to.getData().column;
@@ -951,5 +950,10 @@ export default class Manager
 					}
 				});
 			});
+	}
+
+	static getLastInstance(): ?Manager
+	{
+		return this.lastInstance;
 	}
 }

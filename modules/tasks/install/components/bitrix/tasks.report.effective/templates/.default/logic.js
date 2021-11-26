@@ -261,11 +261,7 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 				if (!circle)
 				{
 					// circle = new BX.Tasks.Graph.Circle(BX(this.control('circle')), 200, efficiency);
-					circle = new BX.UI.Graph.Circle(this.control('circle'), 187, efficiency, {
-						fixCounter: null,
-						color1: 'rgba(183, 235, 129, .45)',
-						color2: 'rgba(178, 232, 0, 0.29)'
-					});
+					circle = new BX.UI.Graph.Circle(this.control('circle'), 187, efficiency, null);
 					circle.show();
 					this.option('circle', circle);
 				}

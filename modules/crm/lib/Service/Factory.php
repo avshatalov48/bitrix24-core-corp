@@ -75,6 +75,23 @@ abstract class Factory
 	}
 
 	/**
+	 * Returns data about item fields with fields map applied
+	 *
+	 * @return array
+	 */
+	public function getFieldsInfoByMap(): array
+	{
+		$fieldsInfo = $this->getFieldsInfo();
+		$result = [];
+		foreach ($fieldsInfo as $fieldId => $fieldInfo)
+		{
+			$result[$this->getEntityFieldNameByMap($fieldId)] = $fieldInfo;
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Returns map of common field names that have entity-specific name for the entity
 	 *
 	 * @return string[] commonFieldName => entityFieldName
@@ -501,7 +518,6 @@ abstract class Factory
 		if (in_array(Item::FIELD_NAME_PRODUCTS, $parameters['select'], true) && $this->isLinkWithProductsEnabled())
 		{
 			$parameters['select'][] = Item::FIELD_NAME_PRODUCTS.'.IBLOCK_ELEMENT';
-			$parameters['select'][] = Item::FIELD_NAME_PRODUCTS.'.CP_PRODUCT_NAME';
 		}
 
 		return $this->replaceCommonFieldNames($parameters);
@@ -722,6 +738,29 @@ abstract class Factory
 	public function isCategoriesEnabled(): bool
 	{
 		return false;
+	}
+
+	public function getCategoryFieldsInfo(): array
+	{
+		return [
+			'ID' => [
+				'TYPE' => Field::TYPE_INTEGER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+			],
+			'NAME' => [
+				'TYPE' => Field::TYPE_STRING,
+			],
+			'SORT' => [
+				'TYPE' => Field::TYPE_INTEGER,
+			],
+			'ENTITY_TYPE_ID' => [
+				'TYPE' => Field::TYPE_INTEGER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required],
+			],
+			'IS_DEFAULT' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+			],
+		];
 	}
 
 	/**
@@ -1110,7 +1149,7 @@ abstract class Factory
 
 	public function getStage(string $statusId): ?EO_Status
 	{
-		if(isset($this->stages[$statusId]))
+		if (isset($this->stages[$statusId]))
 		{
 			return $this->stages[$statusId];
 		}
@@ -1118,9 +1157,18 @@ abstract class Factory
 		$stage = $this->statusTableClassName::getList([
 			'filter' => [
 				'=STATUS_ID' => $statusId,
+				'=ENTITY_ID' => $this->getStagesEntityId(),
 			],
 		])->fetchObject();
-		if($stage)
+		if (!$stage)
+		{
+			$stage = $this->statusTableClassName::getList([
+				'filter' => [
+					'=STATUS_ID' => $statusId,
+				],
+			])->fetchObject();
+		}
+		if ($stage)
 		{
 			$this->stages[$stage->getStatusId()] = $stage;
 
@@ -1280,6 +1328,16 @@ abstract class Factory
 	public function isNewRoutingForAutomationEnabled(): bool
 	{
 		return true;
+	}
+
+	/**
+	 * Return true if this entity has own multi fields.
+	 *
+	 * @return bool
+	 */
+	public function isMultiFieldsEnabled(): bool
+	{
+		return false;
 	}
 
 	public function getEditorAdapter(): EditorAdapter

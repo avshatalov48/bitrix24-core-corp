@@ -4,6 +4,9 @@ namespace Bitrix\Crm\Deal;
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Workflow\PaymentStage;
+use Bitrix\Crm\Workflow\PaymentWorkflow;
+use Bitrix\Crm\Workflow\EntityStageTable;
 use Bitrix\Sale;
 
 /**
@@ -165,24 +168,22 @@ class PaymentDocumentsRepository
 			$payment['ORIG_CURRENCY'] = $payment['CURRENCY'];
 			$payment['DATE'] = $payment['DATE_BILL'];
 
-			$payment['STAGE'] = ($payment['PAID'] === 'Y')
-				? Crm\Order\PaymentStage::PAID
-				: Crm\Order\PaymentStage::NOT_PAID;
+			$payment['STAGE'] = ($payment['PAID'] === 'Y') ? PaymentStage::PAID : PaymentStage::NOT_PAID;
 
 			$result[$payment['ID']] = $payment;
 		}
 
 		if (count($paymentIds) > 0)
 		{
-			$paymentStages = Crm\Binding\OrderPaymentStageTable::getList([
-				'select' => ['PAYMENT_ID', 'STAGE'],
-				'filter' => ['=PAYMENT_ID' => $paymentIds]
+			$paymentStages = EntityStageTable::getList([
+				'select' => ['ENTITY_ID', 'STAGE'],
+				'filter' => ['=ENTITY_ID' => $paymentIds, '=WORKFLOW_CODE' => PaymentWorkflow::getWorkflowCode()]
 			]);
 			while ($paymentStage = $paymentStages->fetch())
 			{
-				if ($result[$paymentStage['PAYMENT_ID']] && $result[$paymentStage['PAYMENT_ID']]['PAID'] !== 'Y')
+				if ($result[$paymentStage['ENTITY_ID']])
 				{
-					$result[$paymentStage['PAYMENT_ID']]['STAGE'] = $paymentStage['STAGE'];
+					$result[$paymentStage['ENTITY_ID']]['STAGE'] = $paymentStage['STAGE'];
 				}
 			}
 		}

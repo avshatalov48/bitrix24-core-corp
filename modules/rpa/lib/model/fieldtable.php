@@ -5,6 +5,22 @@ namespace Bitrix\Rpa\Model;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Result;
 
+/**
+ * Class FieldTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Field_Query query()
+ * @method static EO_Field_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Field_Result getById($id)
+ * @method static EO_Field_Result getList(array $parameters = array())
+ * @method static EO_Field_Entity getEntity()
+ * @method static \Bitrix\Rpa\Model\EO_Field createObject($setDefaultValues = true)
+ * @method static \Bitrix\Rpa\Model\EO_Field_Collection createCollection()
+ * @method static \Bitrix\Rpa\Model\EO_Field wakeUpObject($row)
+ * @method static \Bitrix\Rpa\Model\EO_Field_Collection wakeUpCollection($rows)
+ */
 class FieldTable extends ORM\Data\DataManager
 {
 	public const VISIBILITY_VISIBLE = 'visible';

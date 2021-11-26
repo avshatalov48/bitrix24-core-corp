@@ -1,11 +1,9 @@
 <?php
 
+use Bitrix\Intranet\AI;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\MobileApp\Mobile;
-use Bitrix\Intranet\AI;
-use Bitrix\Socialnetwork\Controller\User\StressLevel;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -94,6 +92,13 @@ $taskParams = json_encode([
 	]
 ]);
 
+$initialized = true;
+
+if (Loader::includeModule('crm'))
+{
+	$initialized = \Bitrix\Crm\Settings\Crm::wasInitiated();
+}
+
 $menuStructure = [ ];
 $favorite = [
 	"title" => Loc::getMessage("MB_SEC_FAVORITE"),
@@ -112,6 +117,22 @@ $favorite = [
 				"counter" => "bp_tasks",
 			],
 			"hidden" => ($isExtranetUser || !\Bitrix\Main\ModuleManager::isModuleInstalled("bizproc")),
+		],
+		[
+			"title" => "CRM",
+			"imageUrl" => $imageDir . "favorite/icon-crm.png?3",
+			"color" => "#00ACE3",
+			"type" => 'info',
+			"hidden" => $initialized,
+			"attrs" => [
+				"onclick" => <<<JS
+				qrauth.open({
+					title: this.title,
+					type:'crm',
+					redirectUrl: '/crm/deal/'
+				})
+JS
+			],
 		],
 		[
 			"title" => Loc::getMessage("MB_CALENDAR_LIST"),
@@ -443,7 +464,7 @@ if (
 	$crmMenuItems = [
 		"title" => "CRM",
 		"sort" => 120,
-		"hidden" => false,
+		"hidden" => !$initialized,
 		"items" => [
 			[
 				"title" => Loc::getMessage("MB_CRM_ACTIVITY"),
@@ -705,7 +726,7 @@ if (!empty($groups) || !empty($extranetGroups))
 
 }
 $timemanEnabledForUser = false;
-if (\Bitrix\Main\Loader::includeModule('timeman'))
+if (Loader::includeModule('timeman'))
 {
 	$timemanEnabledForUser = CTimeMan::CanUse();
 }
@@ -728,7 +749,7 @@ $menuStructure[] = [
 ];
 
 $voximplantInstalled = false;
-if ($voximplantInstalled = Main\Loader::includeModule('voximplant'))
+if ($voximplantInstalled = Loader::includeModule('voximplant'))
 {
 	$menuStructure[] = [
 		"title" => GetMessage("MENU_TELEPHONY"),
@@ -753,17 +774,33 @@ JS
 }
 
 $settingsComponentPath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("settings");
+$qrComponentPath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("qrcodeauth");
 $settingsUserId = $USER->GetID();
 $settingsSiteId = SITE_ID;
 $isUserAdmin = ((\CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($settingsUserId) : $USER->isAdmin()))? "true": "false";
 
 $settingsLanguageId = LANGUAGE_ID;
 
+
 $menuStructure[] = [
-	"title" => "",
-	"min_api_version" => 25,
-	"sort" => 1,
+	'title' => Loc::getMessage('MB_SEC_B24'),
+	'min_api_version' => 25,
+	'sort' => 1,
 	"items" => [
+		[
+			"title" => Loc::getMessage("TO_LOGIN_ON_DESKTOP"),
+			"useLetterImage" => true,
+			"color" => "#4BA3FB",
+			'type'=>'info',
+			"imageUrl" => $imageDir . "settings/desktop_login.png",
+			'attrs'=>[
+				"onclick" => <<<JS
+				qrauth.open({
+					title: this.title
+				})
+JS
+			]
+		],
 		[
 			"title" => Loc::getMessage("MENU_SETTINGS"),
 			"useLetterImage" => false,
@@ -805,12 +842,12 @@ if (Loader::includeModule("intranet") && !$isExtranetUser)
 	if ($assistantAppId > 0 && count($assistants) > 0)
 	{
 		$items = [];
-
 		foreach ($assistants as $assistant)
 		{
+			$hidden = isset($assistant['data']['featureEnabled']) && $assistant['data']['featureEnabled'] === false;
 			$items[] = [
 				"title" => $assistant["name"],
-				"hidden" => false,
+				"hidden" => $hidden,
 				"attrs" => [
 					"url" =>
 						"/mobile/marketplace/?id=$assistantAppId&" .

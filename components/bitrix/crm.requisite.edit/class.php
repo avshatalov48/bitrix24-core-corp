@@ -1626,6 +1626,21 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 								'params' => array('data-requisite' => 'field')
 							);
 						}
+						elseif ($this->requisite->isRqListField($fieldName))
+						{
+							$items = [];
+							foreach ($this->requisite->getRqListFieldItems($fieldName, $this->presetCountryId) as $item)
+							{
+								$items[$item['VALUE']] = $item['NAME'];
+							}
+							$rqFields[] = array(
+								'id' => $fieldName,
+								'name' => $fieldTitle,
+								'type' => 'list',
+								'items' => $items,
+								'value' => isset($this->fields[$fieldName]) ? $this->fields[$fieldName] : ''
+							);
+						}
 						else
 						{
 							$rqFields[] = array(

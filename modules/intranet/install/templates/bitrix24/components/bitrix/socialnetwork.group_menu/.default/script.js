@@ -40,13 +40,13 @@
 		this.canPickTheme = !!params.canPickTheme;
 		this.pageId = params.pageId;
 
-		if (typeof params.urls != 'undefined')
+		if (!BX.type.isUndefined(params.urls))
 		{
 			this.urls = params.urls;
 		}
 
-		this.editFeaturesAllowed = (typeof params.editFeaturesAllowed != 'undefined' ? !!params.editFeaturesAllowed : true);
-		this.copyFeatureAllowed = (typeof params.copyFeatureAllowed != 'undefined' ? !!params.copyFeatureAllowed : true);
+		this.editFeaturesAllowed = (!BX.type.isUndefined(params.editFeaturesAllowed) ? !!params.editFeaturesAllowed : true);
+		this.copyFeatureAllowed = (!BX.type.isUndefined(params.copyFeatureAllowed) ? !!params.copyFeatureAllowed : true);
 
 		var f = BX.delegate(function(eventData) {
 
@@ -74,7 +74,7 @@
 			else if (
 				BX.util.in_array(eventData.code, [ 'afterDelete', 'afterLeave' ])
 				&& BX.type.isNotEmptyObject(eventData.data)
-				&& typeof eventData.data.groupId != 'undefined'
+				&& !BX.type.isUndefined(eventData.data.groupId)
 				&& parseInt(eventData.data.groupId) === parseInt(this.groupId)
 			)
 			{
@@ -101,19 +101,10 @@
 		{
 			var sonetGroupMenu = BX.SocialnetworkUICommon.SonetGroupMenu.getInstance();
 			sonetGroupMenu.favoritesValue = this.favoritesValue;
+			BX.bind(BX('bx-group-menu-settings'), 'click', BX.delegate(this.showMenu, this));
 		}
 
 		this.bindEvents();
-
-		if (BX('bx-group-menu-join'))
-		{
-			BX.bind(BX('bx-group-menu-join'), 'click', BX.delegate(this.sendJoinRequest, this));
-		}
-
-		if (BX('bx-group-menu-settings'))
-		{
-			BX.bind(BX('bx-group-menu-settings'), 'click', BX.delegate(this.showMenu, this));
-		}
 
 		var controlButtonContainer = document.getElementById('group-menu-control-button-cont');
 		if (controlButtonContainer)
@@ -229,7 +220,7 @@
 				BX.removeClass(el[i], 'main-buttons-item-active');
 			}
 
-			if (typeof roleId === 'undefined' || !roleId)
+			if (BX.type.isUndefined(roleId) || !roleId)
 			{
 				roleId = 'view_all';
 			}
@@ -259,7 +250,7 @@
 
 			if (
 				response.data.success
-				&& BX.type.isNotEmptyString(this.urls.group)
+				&& BX.type.isNotEmptyString(this.urls.view)
 			)
 			{
 				BX.onCustomEvent(window.top, 'sonetGroupEvent', [ {
@@ -269,7 +260,7 @@
 					}
 				} ]);
 
-				top.location.href = this.urls.group;
+				window.location.href = this.urls.view;
 			}
 		}.bind(this), function(response) {
 			BX.SocialnetworkUICommon.hideButtonWait(button);

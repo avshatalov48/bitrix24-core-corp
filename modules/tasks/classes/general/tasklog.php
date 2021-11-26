@@ -6,6 +6,8 @@
  * @copyright 2001-2013 Bitrix
  */
 
+use Bitrix\Tasks\Kanban\StagesTable;
+
 class CTaskLog
 {
 	// left for compatibility
@@ -17,6 +19,7 @@ class CTaskLog
 		'MARK' => 'string',
 		'PARENT_ID' => 'integer',
 		'GROUP_ID' => 'integer',
+		'STAGE_ID' => 'integer',
 		'CREATED_BY' => 'integer',
 		'RESPONSIBLE_ID' => 'integer',
 		'ACCOMPLICES' => 'array',
@@ -218,69 +221,153 @@ class CTaskLog
 
 	public static function GetChanges($currentFields, $newFields)
 	{
-		$arChanges = array();
+		$changes = [];
 
-		array_walk($currentFields, array("CTaskLog", "UnifyFields"));
-		array_walk($newFields, array("CTaskLog", "UnifyFields"));
+		array_walk($currentFields, ['CTaskLog', 'UnifyFields']);
+		array_walk($newFields, ['CTaskLog', 'UnifyFields']);
 
-		if (array_key_exists('REAL_STATUS', $currentFields)) {
-			$currentFields["STATUS"] = $currentFields["REAL_STATUS"];
+		if (array_key_exists('REAL_STATUS', $currentFields))
+		{
+			$currentFields['STATUS'] = $currentFields['REAL_STATUS'];
 		}
 
 		$comparedFields = static::getTrackedFields();
 
-		foreach ($newFields as $key => $value) {
-			if (array_key_exists($key, $comparedFields) && $currentFields[$key] != $newFields[$key]) {
-				if (!array_key_exists($key, $currentFields) || !array_key_exists($key, $newFields)) {
+		foreach ($newFields as $key => $value)
+		{
+			if (array_key_exists($key, $comparedFields) && $currentFields[$key] != $newFields[$key])
+			{
+				if (!array_key_exists($key, $currentFields) || !array_key_exists($key, $newFields))
+				{
 					continue;
 				}
 
-				if ($key == "FILES") {
-					$arDeleted = array_diff($currentFields[$key], $newFields[$key]);
-					if (sizeof($arDeleted) > 0) {
+				if ($key === 'FILES')
+				{
+					$filesChanges = static::getFilesChanges($currentFields[$key], $value);
 
-						$rsFiles = CFile::GetList(array(), array("@ID" => implode(",", $arDeleted)));
-						$arFilesNames = array();
-						while ($arFile = $rsFiles->Fetch()) {
-							$arFilesNames[] = $arFile["ORIGINAL_NAME"];
-						}
-						if (sizeof($arFilesNames)) {
-							$arChanges["DELETED_FILES"] = array("FROM_VALUE" => implode(", ", $arFilesNames), "TO_VALUE" => false);
-						}
+					if (array_key_exists('DELETED_FILES', $filesChanges))
+					{
+						$changes['DELETED_FILES'] = $filesChanges['DELETED_FILES'];
 					}
-
-					$arNew = array_diff($newFields[$key], $currentFields[$key]);
-					if (sizeof($arNew) > 0) {
-
-						$rsFiles = CFile::GetList(array(), array("@ID" => implode(",", $arNew)));
-						$arFilesNames = array();
-						while ($arFile = $rsFiles->Fetch()) {
-							$arFilesNames[] = $arFile["ORIGINAL_NAME"];
-						}
-						if (sizeof($arFilesNames)) {
-							$arChanges["NEW_FILES"] = array("FROM_VALUE" => false, "TO_VALUE" => implode(", ", $arFilesNames));
-						}
+					if (array_key_exists('NEW_FILES', $filesChanges))
+					{
+						$changes['NEW_FILES'] = $filesChanges['NEW_FILES'];
 					}
-				} else {
-					if ($comparedFields[$key]['TYPE'] == "text") {
+				}
+				elseif ($key === 'STAGE_ID')
+				{
+					$oldGroupId = $currentFields['GROUP_ID'];
+					$newGroupId = (array_key_exists('GROUP_ID', $newFields) ? $newFields['GROUP_ID'] : $oldGroupId);
+					$stageChanges = static::getStageChanges($currentFields[$key], $value, $oldGroupId, $newGroupId);
+					if (!empty($stageChanges))
+					{
+						$changes['STAGE'] = $stageChanges;
+					}
+				}
+				else
+				{
+					if ($comparedFields[$key]['TYPE'] === 'text')
+					{
 						$currentFields[$key] = false;
 						$newFields[$key] = false;
-					} elseif ($comparedFields[$key]['TYPE'] == "array") {
-						$currentFields[$key] = implode(",", $currentFields[$key]);
-						$newFields[$key] = implode(",", $newFields[$key]);
+					}
+					elseif ($comparedFields[$key]['TYPE'] === 'array')
+					{
+						$currentFields[$key] = implode(',', $currentFields[$key]);
+						$newFields[$key] = implode(',', $value);
 					}
 
-					$arChanges[$key] = array(
-						"FROM_VALUE" => $currentFields[$key] || $key == "PRIORITY" ? $currentFields[$key] : false,
-						"TO_VALUE" => $newFields[$key] || $key == "PRIORITY" ? $newFields[$key] : false
-					);
+					$changes[$key] = [
+						'FROM_VALUE' => ($currentFields[$key] || $key === 'PRIORITY' ? $currentFields[$key] : false),
+						'TO_VALUE' => ($newFields[$key] || $key === 'PRIORITY' ? $newFields[$key] : false),
+					];
 				}
 			}
 		}
 
-		return $arChanges;
+		return $changes;
 	}
 
+	private static function getFilesChanges(array $currentFiles, array $newFiles): array
+	{
+		$filesChanges = [];
+
+		$deleted = array_diff($currentFiles, $newFiles);
+		if (count($deleted) > 0)
+		{
+			$fileNames = [];
+			$res = CFile::GetList([], ['@ID' => implode(',', $deleted)]);
+			while ($file = $res->Fetch())
+			{
+				$fileNames[] = $file['ORIGINAL_NAME'];
+			}
+			if (count($fileNames))
+			{
+				$filesChanges['DELETED_FILES'] = [
+					'FROM_VALUE' => implode(', ', $fileNames),
+					'TO_VALUE' => false,
+				];
+			}
+		}
+
+		$added = array_diff($newFiles, $currentFiles);
+		if (count($added) > 0)
+		{
+			$fileNames = [];
+			$res = CFile::GetList([], ['@ID' => implode(',', $added)]);
+			while ($file = $res->Fetch())
+			{
+				$fileNames[] = $file['ORIGINAL_NAME'];
+			}
+			if (count($fileNames))
+			{
+				$filesChanges['NEW_FILES'] = [
+					'FROM_VALUE' => false,
+					'TO_VALUE' => implode(', ', $fileNames)
+				];
+			}
+		}
+
+		return $filesChanges;
+	}
+
+	public static function getStageChanges(int $oldStageId, int $newStageId, int $oldGroupId, int $newGroupId): array
+	{
+		if ($newGroupId !== $oldGroupId)
+		{
+			return [];
+		}
+
+		if (!$oldStageId && $oldGroupId)
+		{
+			$oldStageId = (int)StagesTable::getDefaultStageId($oldGroupId);
+		}
+
+		$stageFrom = false;
+		$stageTo = false;
+
+		$res = StagesTable::getList([
+			'select' => ['ID', 'TITLE'],
+			'filter' => ['@ID' => [$oldStageId, $newStageId]],
+		]);
+		while ($stage = $res->fetch())
+		{
+			if ((int)$stage['ID'] === $oldStageId)
+			{
+				$stageFrom = $stage['TITLE'];
+			}
+			elseif ((int)$stage['ID'] === $newStageId)
+			{
+				$stageTo = $stage['TITLE'];
+			}
+		}
+
+		return [
+			'FROM_VALUE' => $stageFrom,
+			'TO_VALUE' => $stageTo,
+		];
+	}
 
 	public static function UnifyFields(&$value, $key)
 	{

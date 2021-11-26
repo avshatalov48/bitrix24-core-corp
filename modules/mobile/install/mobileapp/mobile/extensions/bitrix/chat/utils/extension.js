@@ -200,3 +200,8 @@ ChatUtils.debounce = function(callback, wait, context = this){
 		timeout = setTimeout(nextCallback, wait);
 	}
 };
+
+ChatUtils.openVideoconf = function(alias)
+{
+	BXMobileApp.Events.postToComponent("CallEvents::openVideoConf", [alias], 'calls');
+}

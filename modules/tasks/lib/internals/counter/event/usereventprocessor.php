@@ -15,6 +15,8 @@ use Bitrix\Tasks\Internals\Counter\Agent;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Counter\CounterController;
 use Bitrix\Tasks\Internals\Counter\Push\PushSender;
+use Bitrix\Tasks\Internals\Marketing\Event\QrMobileEvent;
+use Bitrix\Tasks\Internals\Marketing\EventManager;
 
 class UserEventProcessor
 {
@@ -155,9 +157,33 @@ class UserEventProcessor
 		$users = array_unique(array_merge($members, $deletedMembers));
 		(new PushSender())->sendUserCounters($users);
 
+		$this->setMarketingEvents($users);
+
 		if (!empty($efficiencyUpdated))
 		{
 			(new Counter\Processor\EfficiencyProcessor())->recount($efficiencyUpdated);
+		}
+	}
+
+	/**
+	 * @param array $userIds
+	 */
+	private function setMarketingEvents(array $userIds)
+	{
+		foreach ($userIds as $userId)
+		{
+			$marketingManager = new EventManager((int) $userId);
+
+			$counter = Counter::getInstance($userId);
+			$counters = $counter->getCounters(Counter\Role::ALL);
+			if ((int)$counters['total']['counter'] > 0)
+			{
+				$marketingManager->add(QrMobileEvent::class);
+			}
+			else
+			{
+				$marketingManager->drop(QrMobileEvent::class);
+			}
 		}
 	}
 

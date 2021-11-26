@@ -53,7 +53,7 @@ class TasksTaskCalendarComponent extends TasksTaskListComponent implements  \Bit
 
 	protected function getPageSize()
 	{
-		return 300;
+		return 500;
 	}
 
 	protected function getData()
@@ -66,8 +66,8 @@ class TasksTaskCalendarComponent extends TasksTaskListComponent implements  \Bit
 			$this->listParameters['filter']['ONLY_ROOT_TASKS'] = 'N';
 
 			$getListParameters = [
-				'order'        => $this->getOrder(),
-				'select'       => $this->getSelect(),
+				'order' => $this->getOrder(),
+				'select' => $this->getSelect(),
 				'legacyFilter' => $this->listParameters['filter'],
 			];
 
@@ -85,23 +85,14 @@ class TasksTaskCalendarComponent extends TasksTaskListComponent implements  \Bit
 			if ($this->exportAs === false)
 			{
 				$getListParameters['NAV_PARAMS'] = [
-					'nPageSize'          => $this->getPageSize(),
+					// 'nPageSize' => $this->getPageSize(),
 					'bDescPageNumbering' => false,
-					'NavShowAll'         => false,
-					'bShowAll'           => false,
-					'showAlways'         => false,
-					'SHOW_ALWAYS'        => false
+					'NavShowAll' => true,
+					'bShowAll' => true,
+					'showAlways' => false,
+					'SHOW_ALWAYS' => false,
+					'iNumPage' => 1
 				];
-			}
-
-			if (isset($this->listParameters['filter']['PARENT_ID']))
-			{
-				$getListParameters['NAV_PARAMS']['NavShowAll'] = true;
-			}
-
-			if (array_key_exists('clear_nav', $_REQUEST) && $_REQUEST['clear_nav'] == 'Y')
-			{
-				$getListParameters['NAV_PARAMS']['iNumPage'] = 1;
 			}
 
 			if (array_key_exists('USER_ID', $this->arParams))

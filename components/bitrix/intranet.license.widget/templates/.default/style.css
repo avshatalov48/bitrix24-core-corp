@@ -1415,3 +1415,82 @@ a.license-widget-item-info-text:hover { color: #2b89ea; }
 	border-radius: 10px;
 	overflow: hidden;
 }
+
+.license-widget-banner-container.--relative {
+	position: relative;
+}
+
+.license-widget-banner-slider {
+	display: block;
+	position: relative;
+	overflow: hidden;
+	white-space: nowrap;
+	font-size: 0;
+	/*margin: -7px -14px -6px -12px;*/
+}
+
+.license-widget-banner-slider-item {
+	display: inline-block;
+	vertical-align: top;
+	position: relative;
+}
+
+.license-widget-banner-slider-item img {
+	display: block;
+	min-width: 100%;
+	min-height: 100%;
+	object-fit: cover;
+}
+
+.license-widget-banner-slider-item a {
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 0;
+	bottom: 0;
+	z-index: 9;
+}
+
+.license-widget-banner-slider-wrapper {
+	display: inline-block;
+	white-space: nowrap;
+	font-size: 0;
+	transition: .5s;
+}
+
+.license-widget-banner-slider-nav {
+	display: block;
+	overflow: hidden;
+	text-align: center;
+}
+
+.license-widget-banner-slider-nav-item {
+	display: inline-block;
+	position: relative;
+	height: 20px;
+	width: 20px;
+	cursor: pointer;
+}
+
+.license-widget-banner-slider-nav-item:before {
+	content: '';
+	position: absolute;
+	width: 6px;
+	height: 6px;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+	background: #989898;
+	border-radius: 100%;
+}
+
+.license-widget-banner-slider-nav-item.--active:before {
+	background: #217ede;
+}
+
+.license-widget-item.license-widget-item--widew {
+	width: auto;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}

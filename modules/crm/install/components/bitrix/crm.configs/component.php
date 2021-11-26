@@ -52,6 +52,8 @@ foreach ($smsSenders as $sender)
 	}
 }
 
+\Bitrix\Crm\Settings\Crm::markAsInitiated();
+
 $arResult['PERM_CONFIG'] = false;
 $arResult['IS_ACCESS_ENABLED'] = false;
 /** @var \CCrmPerms $crmPerms */

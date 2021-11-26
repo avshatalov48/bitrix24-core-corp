@@ -1,18 +1,15 @@
-<?
+<?php
 
-use Bitrix\Crm\CompanyAddress;
-use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm;
 
 if (!CModule::IncludeModule('bizproc'))
 	return;
 
 IncludeModuleLangFile(dirname(__FILE__)."/crm_document.php");
 
-class CCrmDocumentCompany extends CCrmDocument
-	implements IBPWorkflowDocument
+class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 {
-	static public function GetDocumentFields($documentType)
+	public static function GetDocumentFields($documentType)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentType.'_0');
 		if (empty($arDocumentID))
@@ -21,6 +18,16 @@ class CCrmDocumentCompany extends CCrmDocument
 		$arResult = self::getEntityFields($arDocumentID['TYPE']);
 
 		return $arResult;
+	}
+
+	public static function GetDocument($documentId)
+	{
+		$documentInfo = static::GetDocumentInfo($documentId);
+
+		return new Crm\Integration\BizProc\Document\ValueCollection\Company(
+			CCrmOwnerType::Company,
+			$documentInfo['ID']
+		);
 	}
 
 	public static function getEntityFields($entityType)
@@ -229,6 +236,14 @@ class CCrmDocumentCompany extends CCrmDocument
 				'Editable' => false,
 				'Required' => false,
 			),
+			'TRACKING_SOURCE_ID' => [
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_TRACKING_SOURCE_ID'),
+				'Type' => 'select',
+				'Options' => array_column(Crm\Tracking\Provider::getActualSources(), 'NAME','ID'),
+				'Filterable' => true,
+				'Editable' => true,
+				'Required' => false,
+			],
 		);
 
 		$arResult += static::getCommunicationFields();
@@ -275,7 +290,7 @@ class CCrmDocumentCompany extends CCrmDocument
 		return $arResult;
 	}
 
-	static public function CreateDocument($parentDocumentId, $arFields)
+	public static function CreateDocument($parentDocumentId, $arFields)
 	{
 		if(!is_array($arFields))
 		{
@@ -622,21 +637,27 @@ class CCrmDocumentCompany extends CCrmDocument
 			}
 		}
 
+		if (isset($arFields['TRACKING_SOURCE_ID']))
+		{
+			Crm\Tracking\UI\Details::saveEntityData(
+				\CCrmOwnerType::Company,
+				$arDocumentID['ID'],
+				$arFields
+			);
+		}
+
 		if ($res && $useTransaction)
 		{
 			$DB->Commit();
 		}
 	}
 
-	static public function PrepareDocument(array &$arFields)
+	/**
+	 * @deprecated
+	 * @see Crm\Integration\BizProc\Document\ValueCollection\Company
+	 */
+	public static function PrepareDocument(array &$arFields)
 	{
-		$arFields['ADDRESS'] = AddressFormatter::getSingleInstance()->formatTextComma(
-			CompanyAddress::mapEntityFields($arFields, ['TYPE' => EntityAddressType::Delivery])
-		);
-		$arFields['ADDRESS_LEGAL'] = AddressFormatter::getSingleInstance()->formatTextComma(
-			CompanyAddress::mapEntityFields($arFields, ['TYPE' => EntityAddressType::Registered])
-		);
-		$arFields['CONTACT_ID'] = \Bitrix\Crm\Binding\ContactCompanyTable::getCompanyContactIDs($arFields['ID']);
 	}
 
 	public static function getDocumentName($documentId)

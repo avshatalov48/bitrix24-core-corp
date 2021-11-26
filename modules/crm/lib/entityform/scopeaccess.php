@@ -63,6 +63,6 @@ class ScopeAccess extends \Bitrix\Ui\EntityForm\ScopeAccess
 
 	public function isAdmin(): bool
 	{
-		return CCrmPerms::IsAdmin();
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin();
 	}
 }

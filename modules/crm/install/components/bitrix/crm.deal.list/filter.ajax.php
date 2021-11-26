@@ -41,14 +41,18 @@ else
 		'UPDATE' => \CCrmDeal::GetPermittedToUpdateCategoryIDs($userPermissions)
 	);
 
+	$flags = \Bitrix\Crm\Filter\DealSettings::FLAG_NONE | \Bitrix\Crm\Filter\DealSettings::FLAG_ENABLE_CLIENT_FIELDS;
+	if (isset($_REQUEST['is_recurring']) && $_REQUEST['is_recurring'] === 'Y')
+	{
+		$flags |= \Bitrix\Crm\Filter\DealSettings::FLAG_RECURRING;
+	}
 	$filter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
 		new \Bitrix\Crm\Filter\DealSettings(
 			array(
 				'ID' => isset($_REQUEST['filter_id']) ? $_REQUEST['filter_id'] : 'CRM_DEAL_LIST_V12',
 				'categoryID' =>$categoryID,
 				'categoryAccess' => $categoryAccess,
-				'flags' => isset($_REQUEST['is_recurring']) && $_REQUEST['is_recurring'] === 'Y'
-					? \Bitrix\Crm\Filter\DealSettings::FLAG_RECURRING : \Bitrix\Crm\Filter\DealSettings::FLAG_NONE
+				'flags' => $flags,
 			)
 		)
 	);

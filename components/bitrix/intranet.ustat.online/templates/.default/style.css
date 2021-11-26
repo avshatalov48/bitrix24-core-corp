@@ -23,7 +23,7 @@
 	color: #fff;
 	text-transform: uppercase;
 	background-color: #ff5752;
-	z-index: 3;
+	z-index: 1;
 }
 
 .intranet-ustat-online-counter {
@@ -36,17 +36,31 @@
 }
 
 .intranet-ustat-online-counter .ui-graph-circle-wrapper {
-	position: relative;
-	width: 46px;
-	height: 46px;
-	border: 2px solid #fff;
-	border-radius: 50%;
-	box-shadow: 0 0 0 3px #47e4c2;
-	overflow: hidden;
-	box-sizing: border-box;
-	z-index: 2;
+	width: 56px;
+	height: 56px;
+	background-image: url(images/intranet-ustat-online-circle.gif);
+	background-size: cover;
 }
 
+@keyframes intranet-ustat-online-counter-show {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+.intranet-ustat-online-counter .ui-graph-circle-bar,
+.intranet-ustat-online-counter .ui-graph-circle-waves-wrapper {
+	display: none;
+}
+
+.intranet-ustat-online-counter .ui-graph-circle-number,
+.intranet-ustat-online-counter .ui-graph-circle-wrapper {
+	animation: intranet-ustat-online-counter-show 1.2s forwards;
+	opacity: 0;
+}
 
 .intranet-ustat-online-counter .ui-graph-circle-number {
 	font-size: 21px;
@@ -63,23 +77,27 @@
 	stroke-width: 3px;
 }
 
-.intranet-ustat-online-counter .ui-graph-circle-waves-wrapper,
-.intranet-ustat-online-counter .ui-graph-circle-canvas {
-	position: absolute;
+.intranet-ustat-online-counter .ui-graph-circle-waves-wrapper {
 	top: 13px;
 	left: 13px;
 	width: 42px;
 	height: 42px;
 }
 
-.intranet-ustat-online-counter .ui-graph-circle-canvas {
-	left: 0;
-}
-
 .intranet-ustat-online-counter .ui-graph-circle-counter .ui-graph-circle-number {
-	margin-top: 0;
+	margin-top: 1px;
 }
 
+/*.intranet-ustat-online-counter .ui-graph-circle {*/
+/*    font-size: 56px;*/
+/*    transform: perspective(1px) scale3d(.28, .28, 1) translateZ(0);*/
+/*    -webkit-font-smoothing: subpixel-antialiased;*/
+/*    -webkit-backface-visibility: hidden;*/
+/*    backface-visibility: hidden;*/
+/*    -webkit-perspective: 1000;*/
+/*    transform-style: preserve-3d;*/
+/*    will-change: transform;*/
+/*}*/
 
 .intranet-ustat-online-icon-box {
 	display: flex;
@@ -88,15 +106,13 @@
 	height: 32px;
 	margin-bottom: 4px;
 	transition: .2s;
-	/*overflow: hidden;*/
+	overflow: hidden;
 }
 
 .intranet-ustat-online-icon-inner {
-	position: relative;
 	display: flex;
 	align-items: center;
-	width: 100%;
-	/*flex-direction: row-reverse;*/
+	flex-direction: row-reverse;
 	transition: .2s;
 }
 
@@ -105,19 +121,17 @@
 }
 
 .intranet-ustat-online-icon {
-	position: relative;
 	display: inline-block;
-	margin-right: -7.5px;
-	width: 30px;
-	height: 30px;
-	min-width: 30px;
-	/*min-height: 26px;*/
+	margin-left: -7.5px;
+	width: 26px;
+	height: 26px;
+	min-width: 26px;
+	min-height: 26px;
 	border: 2px solid #fff;
 	border-radius: 100%;
-	transform-origin: 50% 50%;
+	transition: opacity .3s;
 	/*opacity: 0;*/
 	overflow: hidden;
-	box-sizing: border-box;
 }
 
 .intranet-ustat-online-icon:first-child {
@@ -131,8 +145,8 @@
 }
 
 .intranet-ustat-online-icon-hide {
-	animation: intranet-ustat-online-icon-hide 1.2s ease forwards;
-
+	animation: intranet-ustat-online-icon-hide 1s forwards .3s;
+	opacity: 0;
 }
 
 @keyframes intranet-ustat-online-icon-hide {
@@ -153,52 +167,13 @@
 	}
 }
 
-.intranet-ustat-online-icon-show {
-	animation: intranet-ustat-online-icon-show 1.2s ease forwards;
-}
-
-@keyframes intranet-ustat-online-icon-show {
+@keyframes intranet-ustat-online-counter-show {
 	0% {
-		width: 0;
-		min-width: 0;
 		opacity: 0;
-		transform: scale(0);
-	}
-	30% {
-		width: 30px;
-		min-width: 30px;
-		opacity: 0;
-		transform: scale(0);
-	}
-	50% {
-		width: 30px;
-		min-width: 30px;
-		opacity: 1;
-		transform: scale(1.2);
-	}
-	65% {
-		width: 30px;
-		min-width: 30px;
-		opacity: 1;
-		transform: scale(1);
-	}
-	80% {
-		width: 30px;
-		min-width: 30px;
-		opacity: 1;
-		transform: scale(1.05);
 	}
 	100% {
-		width: 30px;
-		min-width: 30px;
 		opacity: 1;
-		transform: scale(1);
 	}
-}
-
-.bx-ie .intranet-ustat-online-icon.ui-icon,
-.bx-ie .intranet-ustat-online-icon.ui-icon-md {
-	width: 30px;
 }
 
 .intranet-ustat-online-icon:last-child {
@@ -208,8 +183,8 @@
 .intranet-ustat-online-info {
 	display: flex;
 	align-items: center;
-    justify-content: space-around;
-
+	justify-content: space-between;
+	padding: 0 3px;
 	max-width: 177px;
 }
 
@@ -410,9 +385,9 @@
 }
 
 .intranet-ustat-online-hint {
-    position: absolute;
-    top: 0;
-    right: 0;
+	position: absolute;
+	top: 0;
+	right: 0;
 }
 
 .intranet-ustat-online-hint-item {
@@ -432,8 +407,8 @@
 
 .intranet-ustat-online-hint-icon {
 	display: inline-block;
-    width: 11.5px;
-    height: 11.5px;
+	width: 11.5px;
+	height: 11.5px;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2013%2013%22%3E%3Cg%20fill%3D%22none%22%20opacity%3D%22.7%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M12.48%206.49C12.48%203.183%209.8.5%206.49.5%203.183.5.5%203.182.5%206.49c0%203.31%202.682%205.99%205.99%205.99%203.31%200%205.99-2.68%205.99-5.99z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M4.06%204.842c0-.308.098-.62.296-.936.197-.316.486-.578.865-.785.38-.207.823-.31%201.33-.31.47%200%20.884.086%201.244.26.36.173.638.41.834.707.196.298.294.623.294.973%200%20.275-.056.517-.168.724-.11.208-.244.387-.398.538-.154.15-.43.404-.83.76-.11.1-.198.19-.265.266-.065.076-.114.146-.147.21-.032.062-.057.125-.075.19-.018.062-.045.173-.08.332-.062.337-.255.505-.58.505-.168%200-.31-.055-.425-.165-.115-.11-.172-.274-.172-.49%200-.273.043-.51.127-.71.084-.198.196-.373.336-.524.14-.15.327-.33.564-.537.207-.183.357-.32.45-.412.092-.093.17-.195.233-.31.063-.112.095-.236.095-.37%200-.258-.097-.477-.29-.655-.192-.178-.44-.268-.746-.268-.358%200-.62.09-.79.27-.167.18-.31.445-.427.795-.11.367-.32.55-.627.55-.182%200-.335-.064-.46-.192s-.187-.267-.187-.416zm2.372%205.33c-.197%200-.37-.064-.518-.192-.147-.128-.22-.307-.22-.537%200-.205.07-.376.213-.516s.318-.21.525-.21c.205%200%20.376.07.516.21.14.14.21.31.21.516%200%20.227-.074.405-.22.535-.146.13-.314.194-.506.194z%22/%3E%3C/g%3E%3C/svg%3E');
 	background-repeat: no-repeat;
 }

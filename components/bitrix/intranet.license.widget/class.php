@@ -80,6 +80,10 @@ class CIntranetLicenseWidgetComponent extends CBitrixComponent
 		}
 
 		$licenseScanner = Bitrix24\LicenseScanner\Manager::getInstance();
+
+		global $APPLICATION;
+		$APPLICATION->SetPageProperty('HeaderClass', 'intranet-header--with-controls');
+
 		$this->arResult['licenseType'] = \CBitrix24::getLicenseFamily();
 		$this->arResult['isFreeLicense'] = $this->arResult['licenseType'] === 'project';
 		$this->arResult['isDemoLicense'] = \CBitrix24::IsDemoLicense();
@@ -103,7 +107,13 @@ class CIntranetLicenseWidgetComponent extends CBitrixComponent
 			$daysLeft = intval(($licenseTill - $currentDate) / 60 / 60 / 24);
 		}
 
+		//todo: remove `method_exists` later
 		$this->arResult['isAlmostLocked'] = $scannerLockTill > $currentDate;
+		if (method_exists($licenseScanner, 'shouldWarnPortal'))
+		{
+			$this->arResult['isAlmostLocked'] = $licenseScanner->shouldWarnPortal();
+		}
+		//todo;
 
 		$this->arResult['isLicenseAlmostExpired'] = (
 			!$isLicenseDateUnlimited

@@ -1,20 +1,21 @@
 this.BX = this.BX || {};
 this.BX.Mobile = this.BX.Mobile || {};
 this.BX.Mobile.Field = this.BX.Mobile.Field || {};
-(function (exports,main_core) {
+(function (exports) {
 	'use strict';
 
 	var BX = window.BX,
 	    BXMobileApp = window.BXMobileApp;
 
 	var nodeSelectUser = function () {
-	  var nodeSelectUser = function nodeSelectUser(select, eventNode) {
+	  var nodeSelectUser = function nodeSelectUser(select, eventNode, useOnChangeEvent) {
 	    this.click = BX.delegate(this.click, this);
 	    this.callback = BX.delegate(this.callback, this);
 	    this.drop = BX.delegate(this.drop, this);
 	    this.select = BX(select);
 	    this.container = this.select.nextElementSibling;
 	    this.eventNode = BX(eventNode);
+	    this.useOnChangeEvent = useOnChangeEvent || false;
 	    BX.bind(this.eventNode, "click", this.click);
 	    this.multiple = select.hasAttribute("multiple");
 	    this.showDrop = !(select.hasAttribute("bx-can-drop") && select.getAttribute("bx-can-drop").toString() == "false");
@@ -22,13 +23,7 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 	      "list": BX.message('SITE_DIR') + 'mobile/index.php?mobile_action=get_user_list',
 	      "profile": BX.message("interface_form_user_url")
 	    };
-	    this.actualizeNodes(); // this.expand = BX("expand_" + this.select.getAttribute("id"));
-	    // this.visCount = BX("count_" + this.select.getAttribute("id"));
-	    // if (!this.container.parentNode.hasAttribute("bx-fastclick-bound"))
-	    // {
-	    // 	this.container.parentNode.setAttribute("bx-fastclick-bound", "Y");
-	    // 	FastClick.attach(this.container.parentNode.parentNode);
-	    // }
+	    this.actualizeNodes();
 	  };
 
 	  nodeSelectUser.prototype = {
@@ -69,23 +64,13 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 
 	      if (this.select.options.length <= 0 && !this.multiple) {
 	        this.eventNode.innerHTML = BX.message('interface_form_select');
-	      } // if (this.expand)
-	      // 	this.expand.value = this.select.options.length;
-	      // if (this.visCount)
-	      // 	this.visCount.innerHTML = this.select.options.length - 3;
+	      }
 
-
-	      BX.onCustomEvent(this, "onChange", [this, this.select]);
+	      if (this.useOnChangeEvent) {
+	        BX.onCustomEvent(this, "onChange", [this, this.select]);
+	      }
 	    },
 	    actualizeNodes: function actualizeNodes() {
-	      // if (this.expand)
-	      // {
-	      // 	this.expand.value = this.select.options.length;
-	      // }
-	      // if (this.visCount)
-	      // {
-	      // 	this.visCount.innerHTML = this.select.options.length - 3;
-	      // }
 	      for (var ii = 0; ii < this.select.options.length; ii++) {
 	        if (BX(this.select.id + '_del_' + this.select.options[ii].value)) {
 	          BX.bind(BX(this.select.id + '_del_' + this.select.options[ii].value), "click", this.drop);
@@ -111,15 +96,7 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 
 	        options += '<option value="' + user['ID'] + '" selected>' + user["NAME"] + '</option>';
 	        html += ['<div class="mobile-grid-field-select-user-item-outer">', '<div class="mobile-grid-field-select-user-item">', this.showDrop ? '<del id="' + this.select.id + '_del_' + user["ID"] + '"></del>' : '', '<div class="avatar"', user["IMAGE"] ? ' style="background-image:url(\'' + user["IMAGE"] + '\')"' : '', '></div>', '<span onclick="BXMobileApp.Events.postToComponent(\'onUserProfileOpen\', ' + [user['ID']] + ', \'communication\');">' + user["NAME"] + '</span>', '</div>', '</div>'].join('').replace(' style="background-image:url(\'\')"', '');
-	      } // if (this.expand)
-	      // {
-	      // 	this.expand.value = c;
-	      // }
-	      // if (this.visCount)
-	      // {
-	      // 	this.visCount.innerHTML = c - 3;
-	      // }
-
+	      }
 
 	      if (html !== '') {
 	        this.select.innerHTML = (this.multiple ? this.select.innerHTML : '') + options;
@@ -129,7 +106,10 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 	          this.eventNode.innerHTML = BX.message('interface_form_change');
 	        }
 
-	        BX.onCustomEvent(this, "onChange", [this, this.select]);
+	        if (this.useOnChangeEvent) {
+	          BX.onCustomEvent(this, "onChange", [this, this.select]);
+	        }
+
 	        var ij = 0,
 	            f = BX.proxy(function () {
 	          if (ij < 100) {
@@ -155,6 +135,7 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 	window.app.exec('enableCaptureKeyboard', true);
 
 	BX.Mobile.Field.SelectUser = function (params) {
+	  this.useOnChangeEvent = params['useOnChangeEvent'] || false;
 	  this.init(params);
 	};
 
@@ -164,12 +145,12 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 	    var result = null;
 
 	    if (BX(node)) {
-	      result = new nodeSelectUser(node, BX("".concat(node.id, "_select")));
+	      result = new nodeSelectUser(node, BX("".concat(node.id, "_select")), this.useOnChangeEvent);
 	    }
 
 	    return result;
 	  }
 	};
 
-}((this.BX.Mobile.Field.SelectUser = this.BX.Mobile.Field.SelectUser || {}),BX));
+}((this.BX.Mobile.Field.SelectUser = this.BX.Mobile.Field.SelectUser || {})));
 //# sourceMappingURL=mobile.js.map

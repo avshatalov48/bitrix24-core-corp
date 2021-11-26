@@ -9969,11 +9969,6 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 	};
 	BX.Crm.EntityEditorEntityTag.prototype.validate = function(result)
 	{
-		if(!(this._mode === BX.UI.EntityEditorMode.edit && this._selectorDialog))
-		{
-			throw 'BX.Crm.EntityEditorEntityTag. Invalid validation context';
-		}
-
 		if(!this.isEditable())
 		{
 			return true;

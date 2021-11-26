@@ -381,9 +381,24 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 		if ($data = $dbRes->fetch())
 		{
 			$paymentData = is_array($data) ? CCrmInvoice::PrepareSalePaymentData($data, array('PUBLIC_LINK_MODE' => 'Y')) : null;
+
+			$companyId = (int)$data['UF_COMPANY_ID'];
+			$contactId = (int)$data['UF_CONTACT_ID'];
+
+			$clientId = $data['USER_ID'];
+			if ($companyId > 0)
+			{
+				$clientId = 'C'.$companyId;
+			}
+			elseif ($contactId > 0)
+			{
+				$clientId = 'P'.$contactId;
+			}
+
 			\Bitrix\Sale\BusinessValue::redefineProviderField(
 				array(
-					'PROPERTY' => $paymentData['USER_FIELDS']
+					'PROPERTY' => $paymentData['USER_FIELDS'],
+					'ORDER' => array('USER_ID' => $clientId),
 				)
 			);
 			CSalePaySystemAction::InitParamArrays($data, $invoice->getId(), '', $paymentData, array(), array(), REGISTRY_TYPE_CRM_INVOICE);

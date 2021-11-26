@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ACCOMPLICES"] = "Participants";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ADD"] = "Add";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ADD_MORE"] = "Add more";
@@ -49,6 +49,7 @@ $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_ALLOW_CHANGE_DEADLINE"] = "Re
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_MATCH_WORK_TIME"] = "If the task's planned dates encounter weekends or holidays, task duration will be extended thus allowing for more precise terms.";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_PROPAGATE_TO_SUB_TEMPLATES"] = "When a responsible person or a workgroup change in a task that was created on this template, these changes will be propagated to all subtemplates of this template.";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_TASK_CONTROL"] = "After the task has been completed by a designated employee, it will be sent to the task's author for review. Should the author accept the task, it will be closed. Otherwise, you can resubmit the task for revision.";
+$MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_TASK_CONTROL_V2"] = "As soon as the responsible person marks the task as completed, it will be sent over to you for review. You can accept the task or return it for revision. The task will not be closed until you have accepted it.";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_TPARAM_TYPE"] = "A task will be created using this template when registering a new user";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_LOADING"] = "Loading";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_MAKE_REPLICABLE"] = "Activate";
@@ -70,6 +71,7 @@ $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_SAVED"] = "Task has been saved";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_SAVE_TASK"] = "Save changes";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_START_AFTER"] = "Start task in";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TASK_CONTROL"] = "Approve task when completed";
+$MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TASK_CONTROL_V2"] = "Check task upon completion";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TEMPLATE_CREATED"] = "Recurring execution templates has been created for the task";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TEMPLATE_WILL_BE_CREATED"] = "Attention! A new template will be derived from the task with the specified runtime parameters.";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TEMPLATE_WILL_BE_DELETED"] = "Attention! Template will be deleted if recurring execution parameters are disabled";
@@ -77,4 +79,3 @@ $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_CHECKLIST"] = "Add to checklist
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_LIST"] = "Back to list";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_VIEW_TASK"] = "View";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_WHAT_TO_BE_DONE"] = "Things to do";
-?>

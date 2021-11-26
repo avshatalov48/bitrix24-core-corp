@@ -338,7 +338,13 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 			'LAZY_LOAD' => array(
 				'GET_LIST' => '/bitrix/components/bitrix/crm.lead.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.lead.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-			)
+			),
+			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'CONFIG' => [
+				'popupColumnsCount' => 4,
+				'popupWidth' => 800,
+				'showPopupInCenter' => true,
+			],
 		),
 		$component,
 		array('HIDE_ICONS' => 'Y')

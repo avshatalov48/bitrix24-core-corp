@@ -123,7 +123,6 @@ final class FullTasksIndexer extends Stepper
 			'filter' => [
 				'>ID' => $params["last_task_id"],
 				'<ID' => $params["last_task_to_index"] + 1,
-				'ZOMBIE' => 'N'
 			],
 			'order' => ['ID' => 'ASC'],
 			'offset' => 0,
@@ -184,7 +183,6 @@ final class FullTasksIndexer extends Stepper
 		);
 		$query
 			->where('FM.ID', '>', $params["last_comment_id"])
-			->where('ZOMBIE', 'N')
 		;
 		$query->setOrder(['FM.ID' => 'ASC']);
 		$query->setOffset(0);
@@ -228,7 +226,6 @@ final class FullTasksIndexer extends Stepper
 	{
 		$tasksRes = TaskTable::getList([
 			'select' => ['ID'],
-			'filter' => ['ZOMBIE' => 'N'],
 			'order' => ['ID' => 'ASC'],
 			'count_total' => true,
 		]);
@@ -253,7 +250,6 @@ final class FullTasksIndexer extends Stepper
 					['join_type' => 'INNER']
 				)
 			);
-			$query->where('ZOMBIE', 'N');
 
 			$commentsCountRes = $query->exec();
 			if ($commentsCount = $commentsCountRes->fetch())

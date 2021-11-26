@@ -22,4 +22,21 @@ $MESS["CRM_ADD_PRESET_DIALOG_SORT_TITLE"] = "Сортировка";
 $MESS["CRM_ADD_PRESET_DIALOG_BTN_ADD_TEXT"] = "Добавить";
 $MESS["CRM_ADD_PRESET_DIALOG_BTN_EDIT_TEXT"] = "Применить";
 $MESS["CRM_ADD_PRESET_DIALOG_BTN_CANCEL_TEXT"] = "Отмена";
+$MESS["CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_TITLE"] = "Появились шаблоны реквизитов для вашей страны "
+	. "(#DST_COUNTRY_NAME#)";
+$MESS["CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_TEXT"] =
+	"Вы можете выбрать эту страну по умолчанию для реквизитов. Шаблоны создадутся автоматически.\n"
+	. "Текущая страна реквизитов: #SRC_COUNTRY_NAME#\n"
+	. "Созданные шаблоны будут использоваться по умолчанию для реквизитов контактов и компаний.\n\n"
+	. "Что произойдёт, если вы согласитесь переключиться на новые шаблоны реквизитов (#DST_COUNTRY_NAME#):\n"
+	. "1. Если есть свойства заказа, связанные с полями реквизитов, то они будут переназначены на реквизиты новой "
+	. "страны автоматически.\n"
+	. "2. Если у вас есть способы оплаты, использующие поля реквизитов, их нужно будет настроить на новые шаблоны "
+	. "реквизитов вручную.\n"
+	. "3. Существующие реквизиты компаний и контактов не будут изменены, и для них будут использоваться прежние "
+	. "шаблоны.\n"
+;
+$MESS["CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_TEXT_OK"] = "Поменять страну";
+$MESS["CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_TEXT_CANCEL"] = "Оставить всё как есть и больше не спрашивать";
+$MESS["CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_HIDE_TEXT"] = "Скрыть уведомление";
 ?>

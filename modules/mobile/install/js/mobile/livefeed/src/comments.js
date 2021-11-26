@@ -1,7 +1,7 @@
 import {Instance, PageMenuInstance, DetailPageScrollInstance} from './feed';
 import {Post} from './post';
 
-import {Event, Loc, Type, Dom, Tag} from 'main.core';
+import {Loc, Type, Dom, Tag, Runtime} from 'main.core';
 import {Ajax} from 'mobile.ajax';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 
@@ -136,7 +136,7 @@ class Comments
 			type: 'json',
 			method: 'GET',
 			url: `${Loc.getMessage('MSLPathToLogEntry').replace("#log_id#", logId)}&empty_get_comments=Y${(!Type.isNil(timestampValue) ? `&LAST_LOG_TS=${timestampValue}` : '')}`,
-			data: '',
+			data: {},
 			processData: true,
 			callback: (response) => {
 
@@ -185,7 +185,11 @@ class Comments
 
 					const contentData = BX.processHTML(response.TEXT, true);
 
-					container.innerHTML = contentData.HTML;
+					Runtime.html(container, contentData.HTML).then(() => {
+						setTimeout(() => {
+							BitrixMobile.LazyLoad.showImages();
+						}, 1000);
+					});
 					container.appendChild(Tag.render`<span id="post-comment-last-after"></span>`);
 
 					let cnt = 0;
@@ -356,8 +360,8 @@ class Comments
 
 			// repeat get comments request (after error shown)
 			this.getList({
-				ts: ts,
-				bPullDown: bPullDown,
+				ts: timestampValue,
+				bPullDown: pullDown,
 				obFocus: {
 					form: false,
 				}

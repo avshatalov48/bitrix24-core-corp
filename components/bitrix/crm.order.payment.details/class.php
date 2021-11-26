@@ -579,7 +579,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 			array(
 				'name' => 'PAY_SYSTEM_ID',
 				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_FIELD_PAY_SYSTEM'),
-				'type' => 'list',
+				'type' => 'pay_system_selector',
 				'editable' => true,
 				'data' => array(
 					'items' =>  \CCrmInstantEditorHelper::PrepareListOptions($this->entityData['PAY_SYSTEM_LIST']),
@@ -644,12 +644,12 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 				)
 			),
 			array(
-				'name' => 'EMP_RESPONSIBLE',
+				'name' => 'EMP_RESPONSIBLE_ID',
 				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_FIELD_EMP_RESPONSIBLE'),
 				'type' => 'user',
-				'editable' => true,
+				'editable' => false,
 				'data' => array(
-					'enableEditInView' => true,
+					'enableEditInView' => false,
 					'formated' => 'EMP_RESPONSIBLE_FORMATTED_NAME',
 					'position' => 'EMP_RESPONSIBLE_WORK_POSITION',
 					'photoUrl' => 'EMP_RESPONSIBLE_PHOTO_URL',
@@ -1016,6 +1016,12 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		//endregion
 
 		$this->addUserDataToEntity('RESPONSIBLE');
+
+		if ($this->entityData['EMP_RESPONSIBLE_ID'])
+		{
+			$this->addUserDataToEntity('EMP_RESPONSIBLE');
+		}
+
 		$title = Loc::getMessage(
 			'CRM_ORDER_PAYMENT_TITLE2',
 			array(

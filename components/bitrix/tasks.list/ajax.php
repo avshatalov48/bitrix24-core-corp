@@ -3,6 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Helper\Filter;
+use Bitrix\Tasks\Helper\FilterRegistry;
 use Bitrix\Tasks\Integration\CRM\UserField;
 use Bitrix\Tasks\Util\User;
 
@@ -75,7 +76,8 @@ if (check_bitrix_sessid())
 				$groupId = (array_key_exists('GROUP_ID', $_POST['filter']) ? $_POST['filter']['GROUP_ID'] : 0);
 				$subTasksMode = (array_key_exists('PARENT_ID', $_POST['filter']) && count($_POST['filter']) === 1);
 
-				$arFilter = ($subTasksMode ? [] : Filter::getInstance($userId, $groupId)->process());
+				$filterId = FilterRegistry::getId(FilterRegistry::FILTER_GANTT, $groupId);
+				$arFilter = ($subTasksMode ? [] : Filter::getInstance($userId, $groupId, $filterId)->process());
 				$arFilter['PARENT_ID'] = (int)$_POST['id'];
 				$arFilter['CHECK_PERMISSIONS'] = 'Y';
 				unset($arFilter['ONLY_ROOT_TASKS']);

@@ -192,9 +192,9 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 								foreach ($siteData as $site)
 								{
 									COption::SetOptionString($moduleId, "location_zip",
-									 	$post["location_zip"][$site["LID"]], false, $site["LID"]);
+										$post["location_zip"][$site["LID"]], false, $site["LID"]);
 									COption::SetOptionString($moduleId, "location",
-									 	$post["location"][$site["LID"]], false, $site["LID"]);
+										$post["location"][$site["LID"]], false, $site["LID"]);
 								}
 								COption::SetOptionString($moduleId, "ADDRESS_different_set", "Y");
 							}
@@ -846,23 +846,28 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 			"type" => "checkbox",
 			"value" => Option::get("sale", "tracking_check_switch", "N")
 		);
-		/* Check section */
-		$options[] = array(
-			"id" => "sale_advance_check_section",
-			"name" => Loc::getMessage("CRM_CF_BLOCK_CHECK_TITLE"),
-			"type" => "section"
-		);
-		$options[] = array(
-			"id" => $this->optionPrefix."check_type_on_pay",
-			"name" => Loc::getMessage("CRM_CHECK_TYPE_ON_PAY"),
-			"type" => "list",
-			"items" => [
-				'sell' => Loc::getMessage('CRM_CHECK_TYPE_ON_PAY_SELL'),
-				'prepayment' => Loc::getMessage('CRM_CHECK_TYPE_ON_PAY_PREPAYMENT'),
-				'advance' => Loc::getMessage('CRM_CHECK_TYPE_ON_PAY_ADVANCE')
-			],
-			"value" => Option::get("sale", "check_type_on_pay", "sell")
-		);
+
+		if (CCrmSaleHelper::isWithOrdersMode())
+		{
+			/* Check section */
+			$options[] = array(
+				"id" => "sale_advance_check_section",
+				"name" => Loc::getMessage("CRM_CF_BLOCK_CHECK_TITLE"),
+				"type" => "section"
+			);
+
+			$options[] = [
+				"id" => $this->optionPrefix."check_type_on_pay",
+				"name" => Loc::getMessage("CRM_CHECK_TYPE_ON_PAY"),
+				"type" => "list",
+				"items" => [
+					'sell' => Loc::getMessage('CRM_CHECK_TYPE_ON_PAY_SELL'),
+					'prepayment' => Loc::getMessage('CRM_CHECK_TYPE_ON_PAY_PREPAYMENT'),
+					'advance' => Loc::getMessage('CRM_CHECK_TYPE_ON_PAY_ADVANCE')
+				],
+				"value" => Option::get("sale", "check_type_on_pay", "sell")
+			];
+		}
 
 		/* Reserve section */
 		$options[] = array(

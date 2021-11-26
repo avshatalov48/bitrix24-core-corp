@@ -40,19 +40,19 @@ class EntityBankDetail
 		'RQ_BIC'
 	);
 	private static $rqFiltrableFields = null;
-	private static $rqFieldMapByCountry = array(
+	private static $rqFieldMapByCountry = [
 		// RU
-		1 => array(
+		1 => [
 			'RQ_BANK_NAME',
 			'RQ_BIK',
 			'RQ_ACC_NUM',
 			'RQ_COR_ACC_NUM',
 			'RQ_ACC_CURRENCY',
 			'RQ_BANK_ADDR',
-			'RQ_SWIFT'
-		),
+			'RQ_SWIFT',
+		],
 		// BY
-		4 => array(
+		4 => [
 			'RQ_BANK_NAME',
 			'RQ_BIK',
 			'RQ_ACC_NUM',
@@ -60,27 +60,27 @@ class EntityBankDetail
 			'RQ_BIC',
 			'RQ_ACC_CURRENCY',
 			'RQ_SWIFT',
-			'RQ_BANK_ADDR'
-		),
+			'RQ_BANK_ADDR',
+		],
 		// KZ
-		6 => array(
+		6 => [
 			'RQ_BANK_NAME',
 			'RQ_BIK',
 			'RQ_IIK',
 			'RQ_COR_ACC_NUM',
 			'RQ_ACC_CURRENCY',
 			'RQ_BANK_ADDR',
-			'RQ_SWIFT'
-		),
+			'RQ_SWIFT',
+		],
 		// UA
-		14 => array(
+		14 => [
 			'RQ_BANK_NAME',
 			'RQ_MFO',
 			'RQ_ACC_NUM',
-			'RQ_IBAN'
-		),
+			'RQ_IBAN',
+		],
 		// DE
-		46 => array(
+		46 => [
 			'RQ_BANK_NAME',
 			'RQ_BANK_ADDR',
 			'RQ_BANK_ROUTE_NUM',
@@ -88,10 +88,34 @@ class EntityBankDetail
 			'RQ_ACC_NUM',
 			'RQ_IBAN',
 			'RQ_SWIFT',
-			'RQ_BIC'
-		),
+			'RQ_BIC',
+		],
+		// CO
+		77 => [
+			'RQ_BANK_NAME',
+			'RQ_IIK',
+			//'RQ_ACC_TYPE',
+			'RQ_BANK_ADDR',
+			'RQ_BANK_ROUTE_NUM',
+			'RQ_ACC_NAME',
+			'RQ_ACC_NUM',
+			'RQ_IBAN',
+			'RQ_SWIFT',
+			'RQ_BIC',
+		],
+		// PL
+		110 => [
+			'RQ_BANK_NAME',
+			'RQ_BANK_ADDR',
+			'RQ_BANK_ROUTE_NUM',
+			'RQ_ACC_NAME',
+			'RQ_ACC_NUM',
+			'RQ_IBAN',
+			'RQ_SWIFT',
+			'RQ_BIC',
+		],
 		// US
-		122 => array(
+		122 => [
 			'RQ_BANK_NAME',
 			'RQ_BANK_ADDR',
 			'RQ_BANK_ROUTE_NUM',
@@ -99,9 +123,9 @@ class EntityBankDetail
 			'RQ_ACC_NUM',
 			'RQ_IBAN',
 			'RQ_SWIFT',
-			'RQ_BIC'
-		)
-	);
+			'RQ_BIC',
+		],
+	];
 	private static $rqFieldCountryMap = null;
 	private static $rqFieldTitleMap = null;
 
@@ -110,6 +134,8 @@ class EntityBankDetail
 	private static $requisite = null;
 
 	private static $duplicateCriterionFieldsMap = null;
+
+	private static $phrasesMap = [];
 
 	protected function getRequisite()
 	{
@@ -127,6 +153,11 @@ class EntityBankDetail
 			self::$singleInstance = new EntityBankDetail();
 
 		return self::$singleInstance;
+	}
+
+	public static function checkCountryId(int $countryId): bool
+	{
+		return in_array($countryId, static::getAllowedRqFieldCountries(), true);
 	}
 
 	public static function getFieldsInfo()
@@ -499,7 +530,7 @@ class EntityBankDetail
 
 		return $result;
 	}
-	
+
 	public function add($fields, $options = array())
 	{
 		unset($fields['ID'], $fields['DATE_MODIFY'], $fields['MODIFY_BY_ID']);
@@ -617,7 +648,7 @@ class EntityBankDetail
 
 			$id = array($entity_primary[0] => $id);
 		}
-		
+
 		// validate primary
 		if (is_array($id))
 		{
@@ -972,7 +1003,7 @@ class EntityBankDetail
 		$result = array();
 
 		$countryId = (int)$countryId;
-		if (!in_array($countryId, self::getAllowedRqFieldCountries()))
+		if (!static::checkCountryId($countryId))
 		{
 			$countryId = EntityPreset::getCurrentCountryId();
 			if ($countryId <= 0)
@@ -1098,80 +1129,112 @@ class EntityBankDetail
 		return self::$rqFieldCountryMap;
 	}
 
+	protected function loadPhrases(int $countryId): array
+	{
+		$phrases = [];
+
+		if (static::checkCountryId($countryId))
+		{
+			$countryCode = EntityPreset::getCountryCodeById($countryId);
+			$countryCodeLower = mb_strtolower($countryCode);
+			$phrasesConfig = [];
+			$filePath= Main\IO\Path::normalize(
+				Main\Application::getDocumentRoot().
+				"/bitrix/modules/crm/lib/requisite/phrases/bankdetail_$countryCodeLower.php"
+			);
+			if (file_exists($filePath))
+			{
+				include($filePath);
+			}
+			if (isset($phrasesConfig['encoding'])
+				&& is_string($phrasesConfig['encoding'])
+				&& $phrasesConfig['encoding'] !== ''
+				&& is_array($phrasesConfig['phrases'])
+				&& !empty($phrasesConfig['phrases']))
+			{
+				$phrases = $phrasesConfig['phrases'];
+				$sourceEncoding = mb_strtolower($phrasesConfig['encoding']);
+				$targetEncoding = Translation::getCurrentEncoding();
+				$needConvertEncoding = ($sourceEncoding !== $targetEncoding);
+				foreach ($phrases as $phraseId => $phrase)
+				{
+					if (is_string($phrase))
+					{
+						if ($needConvertEncoding && $phrase !== '')
+						{
+							$convertedValue = Encoding::convertEncoding(
+								$phrase,
+								$sourceEncoding,
+								$targetEncoding
+							);
+							$phrases[$phraseId] =
+								is_string($convertedValue) ? $convertedValue : $phraseId;
+						}
+					}
+					else
+					{
+						$phrases[$phraseId] = null;
+					}
+				}
+			}
+		}
+
+		return $phrases;
+	}
+
+	protected function getPhrase(string $phraseId, int $countryId): ?string
+	{
+		$phrase = null;
+
+		if ($phraseId !== '' && static::checkCountryId($countryId))
+		{
+			if (!isset(static::$phrasesMap[$countryId]))
+			{
+				static::$phrasesMap[$countryId] = static::loadPhrases($countryId);
+			}
+			if (isset(static::$phrasesMap[$countryId][$phraseId]))
+			{
+				$phrase = static::$phrasesMap[$countryId][$phraseId];
+			}
+		}
+
+		return $phrase;
+	}
+
+	public function getDefaultSectionTitle(int $countryId): string
+	{
+		$title = '';
+
+		$countryCode = EntityPreset::getCountryCodeById($countryId);
+		$title = $this->getPhrase("CRM_BANK_DETAIL_SECTION_{$countryCode}_TITLE", $countryId);
+		if ($title === null)
+		{
+			$title = '';
+		}
+
+		return $title;
+	}
+
 	public function getRqFieldTitleMap()
 	{
 		if (self::$rqFieldTitleMap === null)
 		{
 			$titleMap = array();
-			$countryIds = array();
+			$countryCodes = [];
 			foreach ($this->getRqFieldsCountryMap() as $fieldName => $fieldCountryIds)
 			{
 				if (is_array($fieldCountryIds))
 				{
 					foreach ($fieldCountryIds as $countryId)
 					{
-						$titleMap[$fieldName][$countryId] = '';
-						if (!isset($countryIds[$countryId]))
-							$countryIds[$countryId] = true;
-					}
-				}
-			}
-			$targetEncoding = Translation::getCurrentEncoding();
-			foreach (array_keys($countryIds) as $countryId)
-			{
-				$countryCode = EntityPreset::getCountryCodeById($countryId);
-				$countryCodeLower = mb_strtolower($countryCode);
-				$phrasesConfig = [];
-				$filePath= Main\IO\Path::normalize(
-					Main\Application::getDocumentRoot().
-					"/bitrix/modules/crm/lib/requisite/phrases/bankdetail_$countryCodeLower.php"
-				);
-				if (file_exists($filePath))
-				{
-					include($filePath);
-				}
-				if (isset($phrasesConfig['encoding'])
-					&& is_string($phrasesConfig['encoding'])
-					&& $phrasesConfig['encoding'] !== ''
-					&& is_array($phrasesConfig['phrases'])
-					&& !empty($phrasesConfig['phrases']))
-				{
-					$phrases = $phrasesConfig['phrases'];
-					$sourceEncoding = mb_strtolower($phrasesConfig['encoding']);
-					$needConvertEncoding = ($sourceEncoding !== $targetEncoding);
-					foreach ($titleMap as $fieldName => &$titlesByCountry)
-					{
-						if (isset($titlesByCountry[$countryId]))
+						if (!isset($countryCodes[$countryId]))
 						{
-							$phraseId = 'CRM_BANK_DETAIL_ENTITY_'.$fieldName.'_'.$countryCode.'_FIELD';
-							if (isset($phrases[$phraseId]))
-							{
-								if ($needConvertEncoding)
-								{
-									$convertedValue = Encoding::convertEncoding(
-										$phrases[$phraseId],
-										$sourceEncoding,
-										$targetEncoding
-									);
-									$titlesByCountry[$countryId] =
-										is_string($convertedValue) ? $convertedValue : $fieldName;
-								}
-								else
-								{
-									$titlesByCountry[$countryId] = $phrases[$phraseId];
-								}
-								$titlesByCountry[$countryId] = (
-								$needConvertEncoding ?
-									Encoding::convertEncoding(
-										$phrases[$phraseId],
-										$sourceEncoding,
-										$targetEncoding
-									) : $phrases[$phraseId]
-								);
-							}
+							$countryCodes[$countryId] = EntityPreset::getCountryCodeById($countryId);
 						}
+						$phraseId = "CRM_BANK_DETAIL_ENTITY_{$fieldName}_{$countryCodes[$countryId]}_FIELD";
+						$phrase = static::getPhrase($phraseId, $countryId);
+						$titleMap[$fieldName][$countryId] = ($phrase === null) ? '' : $phrase;
 					}
-					unset($titlesByCountry);
 				}
 			}
 			self::$rqFieldTitleMap = $titleMap;
@@ -1481,10 +1544,18 @@ class EntityBankDetail
 					'RQ_ACC_NUM',
 					'RQ_IBAN'
 				),
+				77 => array(      // co
+					'RQ_ACC_NUM',
+					'RQ_IBAN'
+				),
+				110 => array(      // pl
+					'RQ_ACC_NUM',
+					'RQ_IBAN'
+				),
 				122 => array(      // us
 					'RQ_ACC_NUM',
 					'RQ_IBAN'
-				)
+				),
 			);
 		}
 

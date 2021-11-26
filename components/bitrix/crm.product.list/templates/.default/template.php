@@ -338,7 +338,7 @@ if (is_array($arResult['FILTER']))
 {
 	foreach ($arResult['FILTER'] as &$filterItem)
 	{
-	    if (isset($filterItem['id']) && isset($filterItem['type']) && $filterItem['type'] === 'propertyE'
+		if (isset($filterItem['id']) && isset($filterItem['type']) && $filterItem['type'] === 'propertyE'
 			&& is_array($arResult['PROPS'][$filterItem['id']]))
 		{
 			$propID = $filterItem['id'];

@@ -30,9 +30,9 @@
 		this.setMaxValue(options.maxValue);
 		this.setStatusType(options.statusType);
 		this.setColor(options.color);
-		this.setFill(options.fill);
 		this.setTextBefore(options.textBefore);
 		this.setTextAfter(options.textAfter);
+		this.setFill(options.fill);
 	};
 
 	/**

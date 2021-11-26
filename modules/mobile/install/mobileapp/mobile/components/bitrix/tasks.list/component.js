@@ -912,13 +912,19 @@ include('InAppNotifier');
 				return;
 			}
 			Object.keys(cache).forEach((role) => {
-				Object.keys(cache[role]).forEach((counter) => {
-					const index = cache[role][counter].findIndex(cachedTask => cachedTask.id === taskId);
-					if (index !== -1)
-					{
-						cache[role][counter].splice(index, 1);
-					}
-				});
+				if (Object.values(Filter.roleType).includes(role))
+				{
+					Object.keys(cache[role]).forEach((counter) => {
+						if (Object.values(Filter.counterType).includes(counter))
+						{
+							const index = cache[role][counter].findIndex(cachedTask => cachedTask.id === taskId);
+							if (index !== -1)
+							{
+								cache[role][counter].splice(index, 1);
+							}
+						}
+					});
+				}
 			});
 			this.set(cache);
 		}
@@ -931,12 +937,17 @@ include('InAppNotifier');
 				return;
 			}
 			Object.keys(cache).forEach((role) => {
-				Object.keys(cache[role]).forEach((counter) => {
-					const pinned = cache[role][counter].filter(task => task.sectionCode === 'pinned');
-					const others = cache[role][counter].filter(task => task.sectionCode !== 'pinned');
-					cache[role][counter] = pinned.sort(TasksListCache.compare)
-						.concat(others.sort(TasksListCache.compare));
-				});
+				if (Object.values(Filter.roleType).includes(role))
+				{
+					Object.keys(cache[role]).forEach((counter) => {
+						if (Object.values(Filter.counterType).includes(counter))
+						{
+							const pinned = cache[role][counter].filter(task => task.sectionCode === 'pinned');
+							const others = cache[role][counter].filter(task => task.sectionCode !== 'pinned');
+							cache[role][counter] = pinned.sort(TasksListCache.compare).concat(others.sort(TasksListCache.compare));
+						}
+					});
+				}
 			});
 			this.set(cache);
 		}
@@ -1057,10 +1068,57 @@ include('InAppNotifier');
 			});
 		}
 
+		clear()
+		{
+			this.queue.clear();
+		}
+
 		freeQueue()
 		{
+			const commonCommands = [
+				'comment_read_all',
+				'user_efficiency_counter',
+				'user_counter',
+			];
+			this.queue = new Set([...this.queue].filter(event => commonCommands.includes(event.command)));
+
+			const clearDuplicates = (result, event) => {
+				if (
+					typeof result[event.command] === 'undefined'
+					|| event.extra.server_time_ago < result[event.command].extra.server_time_ago
+				)
+				{
+					result[event.command] = event;
+				}
+				return result;
+			};
+			this.queue = new Set(Object.values([...this.queue].reduce(clearDuplicates, {})));
+
 			const promises = [...this.queue].map(event => this.executePullEvent(event));
 			return Promise.allSettled(promises);
+		}
+
+		processTaskEvents()
+		{
+			const processedTasks = new Map();
+
+			this.queue.forEach((event) => {
+				const has = Object.prototype.hasOwnProperty;
+				const eventHandlers = this.getEventHandlers();
+				const {command, params} = event;
+
+				if (has.call(eventHandlers, command))
+				{
+					const taskId = params.TASK_ID || params.taskId || 0;
+					if (taskId)
+					{
+						processedTasks.set(Number(taskId));
+						this.queue.delete(event);
+					}
+				}
+			});
+
+			return processedTasks;
 		}
 
 		/**
@@ -1112,6 +1170,207 @@ include('InAppNotifier');
 		setCanExecute(canExecute)
 		{
 			this.canExecute = canExecute;
+		}
+	}
+
+	class Push
+	{
+		constructor(list)
+		{
+			this.list = list;
+
+			this.manager = Application.getNotificationHistory('tasks_task');
+
+			this.events = new Map();
+			this.processedTasks = new Map();
+		}
+
+		updateList()
+		{
+			const data = this.manager.get();
+			if (!data)
+			{
+				return;
+			}
+
+			const regs = [
+				new RegExp('TASKS\\|([A-Z_]+)\\|([0-9]+)\\|([0-9]+)\\|([A-Z_]+)'),
+				new RegExp('TASKS\\|([A-Z_]+)\\|([0-9]+)\\|([0-9]+)\\|([0-9]+)\\|(.+)')
+			];
+
+			Object.entries(data).forEach(([key, value]) => {
+				for (const i in regs)
+				{
+					const matches = key.match(regs[i]);
+					if (matches)
+					{
+						const [, entityType, taskId] = matches;
+						let action;
+
+						if (entityType === 'TASK')
+						{
+							action = matches[4];
+						}
+						else if (entityType === 'COMMENT')
+						{
+							action = matches[5];
+						}
+
+						this.collectEvents(value, taskId, action);
+						return;
+					}
+				}
+			});
+
+			this.processEvents();
+			this.manager.clear();
+		}
+
+		collectEvents(events, taskId, action)
+		{
+			events.forEach((event) => {
+				const time = event.extra.server_time_unix;
+				if (!this.events.has(taskId) || this.events.get(taskId).time < time)
+				{
+					this.events.set(taskId, {
+						time,
+						action,
+						data: event.data,
+					});
+				}
+			});
+		}
+
+		processEvents()
+		{
+			this.events.forEach((fields, taskId) => {
+				switch (fields.action)
+				{
+					case 'TASK_DELETE':
+						if (this.list.taskList.has(taskId))
+						{
+							this.removeTask(taskId);
+						}
+						break;
+
+					case 'TASK_ADD':
+						if (!this.list.taskList.has(taskId))
+						{
+							this.addTask(this.convertFields(fields.data));
+						}
+						break;
+
+					case 'TASK_UPDATE':
+					case 'TASK_STATUS_CHANGED_MESSAGE':
+					case 'TASK_EXPIRED_SOON':
+					case 'TASK_EXPIRED':
+					case 'TASK_PINGED_STATUS':
+					{
+						const taskData = this.convertFields(fields.data);
+
+						this.list.taskList.has(taskId)
+							? this.updateTask(taskId, taskData)
+							: this.addTask(taskData)
+						;
+						break;
+					}
+
+					default:
+						break;
+				}
+			});
+		}
+
+		addTask(taskData)
+		{
+			const task = new Task(this.list.currentUser);
+			task.setData(taskData);
+
+			if (this.list.isTaskSuitList(task))
+			{
+				this.list.addItem(task);
+				this.processedTasks.set(Number(task.id));
+			}
+		}
+
+		updateTask(taskId, taskData)
+		{
+			const task = this.list.taskList.get(taskId);
+			task.updateData(taskData);
+
+			if (this.list.isTaskSuitList(task))
+			{
+				this.list.updateItem(taskId, task);
+				this.processedTasks.set(Number(taskId));
+			}
+			else
+			{
+				this.removeTask(taskId);
+			}
+		}
+
+		removeTask(taskId)
+		{
+			this.list.search.removeTask(taskId);
+			this.list.removeItem(taskId);
+		}
+
+		convertFields(fields)
+		{
+			const map = {
+				1: 'id',
+				2: 'title',
+				3: 'deadline',
+				4: 'activityDate',
+				5: 'status',
+				6: 'newCommentsCount',
+
+				20: 'groupId',
+				21: 'group',
+				22: 'image',
+				23: 'name',
+
+				30: 'creator',
+				31: 'responsible',
+				32: 'icon',
+
+				41: 'accomplices',
+				42: 'auditors',
+			};
+			const convertRecursively = function(object) {
+				if (!object || typeof object !== 'object')
+				{
+					return object;
+				}
+
+				if (object instanceof Array)
+				{
+					return object.map(element => convertRecursively(element));
+				}
+
+				const result = {};
+				for (const field in object)
+				{
+					if (!object.hasOwnProperty(field))
+					{
+						continue;
+					}
+
+					const key = map[field] ? map[field]: field;
+					result[key] = convertRecursively(object[field]);
+				}
+
+				return result;
+			};
+
+			return convertRecursively(fields);
+		}
+
+		clear()
+		{
+			this.events.clear();
+			this.manager.clear();
+			this.processedTasks.clear();
 		}
 	}
 
@@ -1205,9 +1464,10 @@ include('InAppNotifier');
 			this.options = new Options();
 
 			this.pull = new Pull(this);
+			this.push = new Push(this);
 			this.search = new Search(this);
 
-			this.cache = TasksListCache.getInstance(`tasks.task.list_v2_${owner}`);
+			this.cache = TasksListCache.getInstance(`tasks.task.list_v3_${owner}`);
 
 			this.getTaskLimitExceeded();
 			this.getEfficiencyCounter();
@@ -1307,6 +1567,7 @@ include('InAppNotifier');
 
 		bindEvents()
 		{
+			BX.addCustomEvent('onAppActiveBefore', () => this.onAppActiveBefore());
 			BX.addCustomEvent('onAppActive', () => this.onAppActive());
 			BX.addCustomEvent('onAppPaused', () => this.onAppPaused());
 			BX.addCustomEvent('task.view.onCommentsRead', eventData => this.onCommentsRead(eventData));
@@ -1359,7 +1620,7 @@ include('InAppNotifier');
 					console.log('tasks cache is empty');
 					return;
 				}
-				this.list.setItems(cachedTasks, null, true);
+				this.list.setItems(cachedTasks, null, BX.componentParameters.get('ANIMATE_CACHE_TASKS_LOADING', true));
 			});
 		}
 
@@ -1601,29 +1862,35 @@ include('InAppNotifier');
 
 		onAppPaused()
 		{
-			this.time = new Date();
+			this.pauseTime = new Date();
+
 			this.pull.setCanExecute(false);
+			this.pull.clear();
+			this.push.clear();
+		}
+
+		onAppActiveBefore()
+		{
+			BX.onViewLoaded(() => this.push.updateList());
 		}
 
 		onAppActive()
 		{
+			this.activationTime = new Date();
 			this.canShowSwipeActions = true;
 
-			if (this.time)
+			if (this.pauseTime)
 			{
-				const now = new Date();
-				const minutesPassed = Math.abs(Math.round((now.getTime() - this.time.getTime()) / 60000));
+				const timePassed = this.activationTime.getTime() - this.pauseTime.getTime();
+				const minutesPassed = Math.abs(Math.round(timePassed / 60000));
+
 				if (minutesPassed > 30)
 				{
 					this.runOnAppActiveRepeatedActions();
 				}
 				else
 				{
-					this.updateTitle(true);
-					setTimeout(() => {
-						this.pull.setCanExecute(true);
-						this.pull.freeQueue().then(() => this.updateTitle());
-					}, 500);
+					this.updateTasksFromEvents();
 				}
 			}
 
@@ -1632,12 +1899,111 @@ include('InAppNotifier');
 			this.checkDeadlinesUpdate();
 		}
 
+		updateTasksFromEvents()
+		{
+			this.updateTitle(true);
+
+			setTimeout(() => {
+				const tasksToUpdate = new Map([
+					...this.pull.processTaskEvents(),
+					...this.push.processedTasks
+				]);
+				const taskIds = [...tasksToUpdate.keys()].map(taskId => taskId.toString());
+
+				if (taskIds.length > 30)
+				{
+					this.runOnAppActiveRepeatedActions();
+				}
+				else
+				{
+					let promises = [
+						new Promise((resolve) => {
+							this.pull.setCanExecute(true);
+							this.pull.freeQueue().then(() => resolve());
+						}),
+					];
+					if (taskIds.length)
+					{
+						promises.push(this.updateRecentUpdatedTasks(taskIds));
+					}
+					Promise.allSettled(promises).then(() => this.updateTitle());
+				}
+			}, 1000);
+		}
+
+		updateRecentUpdatedTasks(taskIds)
+		{
+			return new Promise((resolve, reject) => {
+				(new Request())
+					.call('list', {
+						select: TaskList.selectFields,
+						filter: {
+							ID: taskIds,
+						},
+						params: {
+							RETURN_ACCESS: 'Y',
+							RETURN_USER_INFO: 'Y',
+							RETURN_GROUP_INFO: 'Y',
+						},
+					})
+					.then(
+						(response) => {
+							this.onRecentUpdatedTasksDataLoaded(taskIds, response);
+							resolve();
+						},
+						(response) => {
+							console.error(response);
+							reject();
+						}
+					)
+				;
+			});
+		}
+
+		onRecentUpdatedTasksDataLoaded(taskIds, response)
+		{
+			const {tasks} = response.result;
+
+			taskIds.forEach((taskId) => {
+				const taskData = tasks.find(task => task.id === taskId);
+				if (taskData)
+				{
+					if (this.taskList.has(taskId))
+					{
+						const task = this.taskList.get(taskId);
+						task.setData(taskData);
+
+						this.isTaskSuitList(task)
+							? this.updateItem(taskId, task)
+							: this.removeItem(taskId)
+						;
+					}
+					else
+					{
+						const task = new Task(this.currentUser);
+						task.setData(taskData);
+
+						this.isTaskSuitList(task)
+							? this.addItem(task)
+							: this.removeItem(taskId)
+						;
+					}
+				}
+				else if (this.taskList.has(taskId))
+				{
+					this.removeItem(taskId);
+				}
+			});
+		}
+
 		runOnAppActiveRepeatedActions()
 		{
 			this.filter.updateCounters();
 			this.reload();
 
 			this.prepareTaskGroupList();
+
+			this.pull.setCanExecute(true);
 		}
 
 		prepareTaskGroupList()
@@ -3126,6 +3492,7 @@ include('InAppNotifier');
 				ORDER: newOrder,
 				DATA: BX.componentParameters.get('DATA', {}),
 				SHOW_COMPLETED: false,
+				ANIMATE_CACHE_TASKS_LOADING: false,
 				SITE_ID: siteId,
 				LANGUAGE_ID: languageId,
 				SITE_DIR: siteDir,
@@ -3232,6 +3599,7 @@ include('InAppNotifier');
 				ORDER: this.order.order,
 				DATA: BX.componentParameters.get('DATA', {}),
 				SHOW_COMPLETED: this.filter.showCompleted,
+				ANIMATE_CACHE_TASKS_LOADING: false,
 				SITE_ID: siteId,
 				LANGUAGE_ID: languageId,
 				SITE_DIR: siteDir,
@@ -3309,6 +3677,7 @@ include('InAppNotifier');
 				ORDER: this.order.order,
 				DATA: BX.componentParameters.get('DATA', {}),
 				SHOW_COMPLETED: this.filter.showCompleted,
+				ANIMATE_CACHE_TASKS_LOADING: false,
 				SITE_ID: siteId,
 				LANGUAGE_ID: languageId,
 				SITE_DIR: siteDir,

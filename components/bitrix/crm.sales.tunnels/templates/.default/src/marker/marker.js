@@ -414,7 +414,7 @@ export default class Marker extends Event.EventEmitter
 		{
 			if (destinationMarker && !event.isDefaultPrevented())
 			{
-				if (!this.data.column.data.canEditTunnels)
+				if (!this.data.column.data.isCategoryEditable)
 				{
 					this.emit('Marker:error', {
 						message: Loc.getMessage('CRM_ST_TUNNEL_EDIT_ACCESS_DENIED'),
@@ -835,7 +835,7 @@ export default class Marker extends Event.EventEmitter
 
 	getTunnelButton()
 	{
-		const canEdit = this.data.column.data.canEditTunnels;
+		const canEdit = this.data.column.data.isCategoryEditable;
 		return this.cache.remember('tunnelButton', () => (
 			Tag.render`
 				<div class="crm-st-tunnel-button" 
@@ -864,7 +864,11 @@ export default class Marker extends Event.EventEmitter
 	/** @private */
 	onTunnelButtonClick()
 	{
-		if (this.links.size > 1)
+		if (BX.Crm.Restriction.Bitrix24.isRestricted('automation'))
+		{
+			BX.Crm.Restriction.Bitrix24.getHandler('automation').call();
+		}
+		else if (this.links.size > 1)
 		{
 			if (this.isTunnelButtonActive())
 			{

@@ -164,6 +164,8 @@
 
 			this.creator = {};
 			this.responsible = {};
+			this.accomplices = [];
+			this.auditors = [];
 
 			this.commentsCount = 0;
 			this.newCommentsCount = 0;
@@ -171,9 +173,6 @@
 			this.isMuted = false;
 			this.isPinned = false;
 			this.notViewed = false;
-
-			this.accomplices = [];
-			this.auditors = [];
 
 			this.rawAccess = {};
 
@@ -226,6 +225,104 @@
 			)
 			{
 				this.currentUser.icon = row.responsible.icon;
+			}
+		}
+
+		updateData(row)
+		{
+			if (row.id)
+			{
+				this.id = row.id;
+			}
+			if (row.title)
+			{
+				this.title = row.title;
+			}
+			if (row.groupId)
+			{
+				this.groupId = row.groupId;
+			}
+			if (row.group)
+			{
+				this.group = (this.groupId > 0 && row.group ? row.group : {id: 0, name: '', image: ''});
+			}
+
+			if (row.status)
+			{
+				this.status = row.status;
+			}
+			if (row.subStatus)
+			{
+				this.subStatus = row.subStatus;
+			}
+
+			if (row.creator)
+			{
+				this.creator = row.creator;
+				if (
+					Number(this.currentUser.id) === Number(row.creator.id)
+					&& this.currentUser.icon !== row.creator.icon
+				)
+				{
+					this.currentUser.icon = row.creator.icon;
+				}
+			}
+			if (row.responsible)
+			{
+				this.responsible = row.responsible;
+				if (
+					Number(this.currentUser.id) === Number(row.responsible.id)
+					&& this.currentUser.icon !== row.responsible.icon
+				)
+				{
+					this.currentUser.icon = row.responsible.icon;
+				}
+			}
+			if (row.accomplices)
+			{
+				this.accomplices = row.accomplices;
+			}
+			if (row.auditors)
+			{
+				this.auditors = row.auditors;
+			}
+
+			if (row.commentsCount)
+			{
+				this.commentsCount = row.commentsCount;
+			}
+			if (row.newCommentsCount)
+			{
+				this.newCommentsCount = row.newCommentsCount;
+			}
+
+			if (row.isMuted)
+			{
+				this.isMuted = (row.isMuted === 'Y');
+			}
+			if (row.isPinned)
+			{
+				this.isPinned = (row.isPinned === 'Y');
+			}
+			if (row.notViewed)
+			{
+				this.notViewed = (row.notViewed === 'Y');
+			}
+
+			if (row.action)
+			{
+				this.rawAccess = row.action;
+			}
+
+			if (row.deadline)
+			{
+				const deadline = Date.parse(row.deadline);
+				this.deadline = (deadline > 0 ? deadline : null);
+			}
+			if (row.activityDate)
+			{
+				const activityDate = Date.parse(row.activityDate);
+				this.activityDate = (activityDate > 0 ? activityDate : null);
 			}
 		}
 

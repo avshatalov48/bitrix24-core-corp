@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["INTRANET_BITRIX24"] = "Bitrix24";
 $MESS["INTRANET_CHANGE_NOTIFY_SETTINGS"] = "Edit notification settings";
 $MESS["INTRANET_MAIL_EVENTS_UNSUBSCRIBE"] = "Unsubscribe from all";
@@ -19,7 +19,7 @@ $MESS["INTRANET_USER_JOIN_HELP2"] = "Check out our #LINK_START#Helpdesk FAQ#LINK
 $MESS["INTRANET_USER_JOIN_HELP3"] = "Register for our #LINK_START#upcoming webinars#LINK_END#.";
 $MESS["INTRANET_USER_JOIN_HELP4"] = "Get in touch with your #LINK_START#local Bitrix24 partner#LINK_END# for onboarding or implementation support.";
 $MESS["INTRANET_USER_JOIN_IMG_LINK"] = "http://www.bitrix24.com/images/mail/tutorials/tools_en.png";
-$MESS["INTRANET_USER_JOIN_INFO_TEXT"] = "#SPAN_START# Bitrix24 is a leading collaboration platform #SPAN_END# used by 6,000,000+ companies worldwide.";
+$MESS["INTRANET_USER_JOIN_INFO_TEXT"] = "#SPAN_START# Bitrix24 is a leading collaboration platform #SPAN_END# used by 9,000,000+ companies worldwide.";
 $MESS["INTRANET_USER_JOIN_INFO_TEXT3"] = "What is Bitrix24?";
 $MESS["INTRANET_USER_JOIN_MESSAGE"] = "Glad you're here - thanks for joining us! <br> Sign in to Bitrix24 with your login and password and get on board. We'll be able to keep track of our projects and tasks, manage documents and organize events and meetings.";
 $MESS["INTRANET_USER_JOIN_MESSAGE_REQUEST_MESSAGE"] = "Hang tight, the administrator has to confirm your request. This may take some time.";
@@ -35,4 +35,3 @@ $MESS["INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST"] = "Thank you for re
 $MESS["INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST_CONFIRM"] = "Your registration on #URL# has been confirmed";
 $MESS["INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST_REJECT"] = "Your registration on #URL# has been declined";
 $MESS["INTRANET_USER_JOIN_WEBINARS_LINK"] = "https://www.bitrix24.com/support/webinars.php";
-?>

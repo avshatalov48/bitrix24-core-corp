@@ -62,6 +62,7 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 			->disableBizProc()
 			->disableCheckFields()
 			->disableCheckWorkflows()
+			->disableAutomation()
 		;
 		$updateResult = $operation->launch();
 
@@ -77,6 +78,22 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 					implode(', ', $errorMessages),
 					0,
 					CBPTrackingType::Error
+				);
+			}
+			else
+			{
+				$itemBeforeSave = $operation->getItemBeforeSave();
+
+				$starter = new Crm\Automation\Starter($item->getEntityTypeId(), $item->getId());
+				$starter->setContextToBizproc()->runOnUpdate(
+					Crm\Automation\Helper::prepareCompatibleData(
+						$itemBeforeSave->getEntityTypeId(),
+						$itemBeforeSave->getCompatibleData(\Bitrix\Main\ORM\Objectify\Values::CURRENT),
+					),
+					Crm\Automation\Helper::prepareCompatibleData(
+						$itemBeforeSave->getEntityTypeId(),
+						$itemBeforeSave->getCompatibleData(\Bitrix\Main\ORM\Objectify\Values::ACTUAL),
+					)
 				);
 			}
 

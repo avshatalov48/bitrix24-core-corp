@@ -40,6 +40,10 @@ class SalesDynamicFilter extends BaseFilter
 			'TRACKING_CHANNEL_CODE',
 			'PRODUCT_ROW_PRODUCT_ID',
 			'STAGE_SEMANTIC_ID',
+			'STAGE_ID_FROM_HISTORY',
+			'STAGE_ID_FROM_SUPPOSED_HISTORY',
+			'STAGE_SEMANTIC_ID_FROM_HISTORY',
+			'COMMENTS',
 		];
 
 		foreach ($fields as $field)

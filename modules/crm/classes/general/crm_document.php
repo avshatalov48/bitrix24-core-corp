@@ -5,7 +5,7 @@ if (!CModule::IncludeModule('bizproc'))
 	return;
 }
 
-
+use Bitrix\Crm;
 use \Bitrix\Crm\Service;
 
 class CCrmDocument
@@ -254,54 +254,6 @@ class CCrmDocument
 				<input type="button" value="..." onclick="BPAShowSelector('id_<?= htmlspecialcharsbx($arFieldName['Field']) ?>_text', 'select');">
 				<?
 			}
-			/*$arUserFieldType = $USER_FIELD_MANAGER->GetUserType($sType);
-			$arUserField = array(
-				'ENTITY_ID' => 'CRM_'.$arDocumentID['TYPE'],
-				'FIELD_NAME' => $arFieldName['Field'],
-				'USER_TYPE_ID' => $sType,
-				'SORT' => 100,
-				'MULTIPLE' => $arFieldType['Multiple'] ? 'Y' : 'N',
-				'MANDATORY' => $arFieldType['Required'] ? 'Y' : 'N',
-				'EDIT_FORM_LABEL' => $arUserFieldType['DESCRIPTION'],
-				'VALUE' => $fieldValue, //
-				'USER_TYPE' => $arUserFieldType,
-				'SETTINGS' => array(
-				)
-			);
-			if (
-				$arFieldType['Type'] == 'UF:iblock_element' ||
-				$arFieldType['Type'] == 'UF:iblock_section' ||
-				$arFieldType['Type'] == 'UF:crm_status' ||
-				$arFieldType['Type'] == 'UF:boolean'
-			)
-			{
-				if ($arFieldType['Type'] == 'UF:crm_status')
-					$arUserField['SETTINGS']['ENTITY_TYPE'] = $arFieldType['Options'];
-				else
-					$arUserField['SETTINGS'] = $arFieldType['Options'];
-			}
-			elseif ($arFieldType['Type'] == 'UF:crm')
-			{
-				$arUserField['SETTINGS'] = $arFieldType['Options'];
-				if (empty($arUserField['SETTINGS']))
-					$arUserField['SETTINGS'] = array('LEAD' => 'Y', 'CONTACT' => 'Y', 'COMPANY' => 'Y', 'DEAL' => 'Y');//
-			}
-
-			$APPLICATION->IncludeComponent(
-				'bitrix:system.field.edit',
-				$sType,
-				array(
-					'arUserField' => $arUserField,
-					'bVarsFromForm' => true,
-					'form_name' => $arFieldName['Form'],
-					'FILE_MAX_HEIGHT' => 400,
-					'FILE_MAX_WIDTH' => 400,
-					'FILE_SHOW_POPUP' => true
-				),
-				false,
-				array('HIDE_ICONS' => 'Y')
-			);*/
-
 		}
 		elseif ($arFieldType['Type'] == 'user')
 		{
@@ -1332,531 +1284,40 @@ class CCrmDocument
 			throw new CBPArgumentNullException('documentId');
 		}
 
-		$arResult = null;
-		$objDocument = null;
+		$entityTypeId = CCrmOwnerType::ResolveID($arDocumentID['TYPE']);
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 
-		switch ($arDocumentID['TYPE'])
+		if (isset($factory) && ($factory->isAutomationEnabled() || $factory->isBizProcEnabled()))
 		{
-			case 'CONTACT':
-				$dbDocumentList = CCrmContact::GetListEx(
-					array(),
-					array('ID' => $arDocumentID['ID'], "CHECK_PERMISSIONS" => "N"),
-					false,
-					false,
-					array('*', 'UF_*')
-				);
-
-				break;
-			case 'COMPANY':
-				$dbDocumentList = CCrmCompany::GetListEx(
-					array(),
-					array('ID' => $arDocumentID['ID'], 'CHECK_PERMISSIONS' => 'N'),
-					false,
-					false,
-					array('*', 'UF_*')
-				);
-
-				break;
-			case 'DEAL':
-				$dbDocumentList = CCrmDeal::GetListEx(
-					array(),
-					array('ID' => $arDocumentID['ID'], "CHECK_PERMISSIONS" => "N"),
-					false,
-					false,
-					array('*', 'UF_*')
-				);
-
-				break;
-			case 'LEAD':
-				$dbDocumentList = CCrmLead::GetListEx(
-					array(),
-					array('ID' => $arDocumentID['ID'], "CHECK_PERMISSIONS" => "N"),
-					false,
-					false,
-					array('*', 'UF_*')
-				);
-
-				break;
-			default:
-				$entityTypeId = CCrmOwnerType::ResolveID($arDocumentID['TYPE']);
-				$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
-
-				if (isset($factory) && $factory->isAutomationEnabled())
-				{
-					$item = $factory->getItem((int)$arDocumentID['ID']);
-					$objDocument = isset($item) ? $item->getCompatibleData() : null;
-				}
-
-				break;
-		}
-
-		if (isset($dbDocumentList))
-		{
-			$objDocument = $dbDocumentList->Fetch();
-		}
-		if (!is_array($objDocument))
-		{
-			return null;
-		}
-
-		$objDocument = static::fillDocumentAddressFields(
-			CCrmOwnerType::ResolveID($arDocumentID['TYPE']),
-			$arDocumentID['ID'],
-			$objDocument
-		);
-
-		$assignedByID = isset($objDocument['ASSIGNED_BY_ID']) ? (int)$objDocument['ASSIGNED_BY_ID'] : 0;
-
-		if ($assignedByID > 0)
-		{
-			$dbUsers = CUser::GetList(
-				'id',
-				'asc',
-				['ID' => $assignedByID],
-				[
-					'SELECT' => [
-						'UF_SKYPE',
-						'UF_TWITTER',
-						'UF_FACEBOOK',
-						'UF_LINKEDIN',
-						'UF_XING',
-						'UF_WEB_SITES',
-						'UF_PHONE_INNER',
-					],
-					'FIELDS' => [
-						'EMAIL',
-						'WORK_PHONE',
-						'PERSONAL_MOBILE',
-						'LOGIN',
-						'ACTIVE',
-						'NAME',
-						'LAST_NAME',
-						'SECOND_NAME',
-						'WORK_POSITION',
-						'PERSONAL_WWW',
-						'PERSONAL_CITY',
-					],
-				]
-			);
-
-			$arUser = is_object($dbUsers) ? $dbUsers->Fetch() : null;
-			$objDocument['ASSIGNED_BY_EMAIL'] = is_array($arUser) ? $arUser['EMAIL'] : '';
-			$objDocument['ASSIGNED_BY_WORK_PHONE'] = is_array($arUser) ? $arUser['WORK_PHONE'] : '';
-			$objDocument['ASSIGNED_BY_PERSONAL_MOBILE'] = is_array($arUser) ? $arUser['PERSONAL_MOBILE'] : '';
-
-			$objDocument['ASSIGNED_BY.LOGIN'] = is_array($arUser) ? $arUser['LOGIN'] : '';
-			$objDocument['ASSIGNED_BY.ACTIVE'] = is_array($arUser) ? $arUser['ACTIVE'] : '';
-			$objDocument['ASSIGNED_BY.NAME'] = is_array($arUser) ? $arUser['NAME'] : '';
-			$objDocument['ASSIGNED_BY.LAST_NAME'] = is_array($arUser) ? $arUser['LAST_NAME'] : '';
-			$objDocument['ASSIGNED_BY.SECOND_NAME'] = is_array($arUser) ? $arUser['SECOND_NAME'] : '';
-			$objDocument['ASSIGNED_BY.WORK_POSITION'] = is_array($arUser) ? $arUser['WORK_POSITION'] : '';
-			$objDocument['ASSIGNED_BY.PERSONAL_WWW'] = is_array($arUser) ? $arUser['PERSONAL_WWW'] : '';
-			$objDocument['ASSIGNED_BY.PERSONAL_CITY'] = is_array($arUser) ? $arUser['PERSONAL_CITY'] : '';
-			$objDocument['ASSIGNED_BY.UF_SKYPE'] = is_array($arUser) ? $arUser['UF_SKYPE'] : '';
-			$objDocument['ASSIGNED_BY.UF_TWITTER'] = is_array($arUser) ? $arUser['UF_TWITTER'] : '';
-			$objDocument['ASSIGNED_BY.UF_FACEBOOK'] = is_array($arUser) ? $arUser['UF_FACEBOOK'] : '';
-			$objDocument['ASSIGNED_BY.UF_LINKEDIN'] = is_array($arUser) ? $arUser['UF_LINKEDIN'] : '';
-			$objDocument['ASSIGNED_BY.UF_XING'] = is_array($arUser) ? $arUser['UF_XING'] : '';
-			$objDocument['ASSIGNED_BY.UF_WEB_SITES'] = is_array($arUser) ? $arUser['UF_WEB_SITES'] : '';
-			$objDocument['ASSIGNED_BY.UF_PHONE_INNER'] = is_array($arUser) ? $arUser['UF_PHONE_INNER'] : '';
-		}
-
-		$arUserField = ['CREATED_BY', 'CREATED_BY_ID', 'MODIFY_BY', 'MODIFY_BY_ID', 'ASSIGNED_BY', 'ASSIGNED_BY_ID'];
-		foreach ($arUserField as $sField)
-		{
-			if (isset($objDocument[$sField]))
-			{
-				$objDocument[$sField] = 'user_' . $objDocument[$sField];
-			}
-		}
-
-		if(
-			$arDocumentID['TYPE'] === CCrmOwnerType::LeadName
-			|| $arDocumentID['TYPE'] === CCrmOwnerType::DealName
-			|| isset($factory) && $factory->isObserversEnabled()
-		)
-		{
-			$objDocument['OBSERVER_IDS'] = [];
-			$observerIds = \Bitrix\Crm\Observer\ObserverManager::getEntityObserverIDs(
-				CCrmOwnerType::ResolveID($arDocumentID['TYPE']),
+			return new Crm\Integration\BizProc\Document\ValueCollection\Item(
+				$entityTypeId,
 				$arDocumentID['ID']
 			);
-			if ($observerIds)
-			{
-				foreach ($observerIds as $id)
-				{
-					$objDocument['OBSERVER_IDS'][] = 'user_' . $id;
-				}
-			}
-		}
-		if (isset($item))
-		{
-			$objDocument['CONTACTS'] = [];
-			foreach ($item->getContacts() as $contact)
-			{
-				$objDocument['CONTACTS'][] = $contact->getId();
-			}
 		}
 
-		if (COption::GetOptionString('crm', 'bp_version', 2) == 2)
-		{
-			$userFieldsList = null;
-			switch ($arDocumentID['TYPE'])
-			{
-				case 'CONTACT':
-					$userFieldsList = CCrmContact::GetUserFields();
-
-					break;
-				case 'COMPANY':
-					$userFieldsList = CCrmCompany::GetUserFields();
-
-					break;
-				case 'DEAL':
-					$userFieldsList = CCrmDeal::GetUserFields();
-
-					break;
-				case 'LEAD':
-					$userFieldsList = CCrmLead::GetUserFields();
-
-					break;
-				default:
-					if (isset($factory))
-					{
-						$userFieldsList = \Bitrix\Crm\Integration\BizProc\Document\Item::GetUserFields($factory);
-					}
-
-					break;
-			}
-			if (is_array($userFieldsList))
-			{
-				foreach ($userFieldsList as $userFieldName => $userFieldParams)
-				{
-					$fieldTypeID = isset($userFieldParams['USER_TYPE']) ? $userFieldParams['USER_TYPE']['USER_TYPE_ID'] : '';
-					$isFieldMultiple = isset($userFieldParams['MULTIPLE']) && $userFieldParams['MULTIPLE'] === 'Y';
-					$fieldSettings = isset($userFieldParams['SETTINGS']) ? $userFieldParams['SETTINGS'] : array();
-
-					if (isset($objDocument[$userFieldName]))
-					{
-						$fieldValue = $objDocument[$userFieldName];
-					}
-					elseif (isset($fieldSettings['DEFAULT_VALUE']))
-					{
-						$fieldValue = $fieldSettings['DEFAULT_VALUE'];
-					}
-					else
-					{
-						$objDocument[$userFieldName] = $objDocument[$userFieldName.'_PRINTABLE'] = '';
-						continue;
-					}
-
-					if ($fieldTypeID == 'employee')
-					{
-						if(!$isFieldMultiple)
-						{
-							$objDocument[$userFieldName] = 'user_' . $fieldValue;
-						}
-						elseif(is_array($fieldValue))
-						{
-							$objDocument[$userFieldName] = array();
-							foreach($fieldValue as $value)
-							{
-								$objDocument[$userFieldName][] = 'user_'.$value;
-							}
-						}
-					}
-					elseif ($fieldTypeID == 'crm')
-					{
-						$defaultTypeName = '';
-						foreach($fieldSettings as $typeName => $flag)
-						{
-							if($flag === 'Y')
-							{
-								$defaultTypeName = $typeName;
-								break;
-							}
-						}
-
-						if(!$isFieldMultiple)
-						{
-								$objDocument[$userFieldName.'_PRINTABLE'] = static::PrepareCrmUserTypeValueView($fieldValue, $defaultTypeName);
-						}
-						elseif(is_array($fieldValue))
-						{
-							$views = array();
-							foreach($fieldValue as $value)
-							{
-								$views[] = static::PrepareCrmUserTypeValueView($value, $defaultTypeName);
-							}
-
-							$objDocument[$userFieldName . '_PRINTABLE'] = $views;
-
-						}
-					}
-					elseif ($fieldTypeID == 'enumeration')
-					{
-						static::ExternalizeEnumerationField($objDocument, $userFieldName);
-					}
-					elseif ($fieldTypeID === 'boolean')
-					{
-						$objDocument[$userFieldName] = CBPHelper::getBool($fieldValue) ? 'Y' : 'N';
-							$objDocument[$userFieldName.'_PRINTABLE'] = GetMessage($objDocument[$userFieldName] === 'Y' ? 'MAIN_YES' : 'MAIN_NO');
-					}
-					elseif ($fieldTypeID === 'resourcebooking')
-					{
-						self::prepareResourceBookingField($objDocument, $userFieldName);
-					}
-				}
-			}
-		}
-
-		$multiFields = self::getDocumentFieldMulti($objDocument, $arDocumentID['TYPE'], $arDocumentID['ID']);
-		foreach ($multiFields as $ar)
-		{
-			if (!isset($objDocument[$ar['TYPE_ID']]))
-					$objDocument[$ar['TYPE_ID']] = array();
-				$objDocument[$ar['TYPE_ID']]['n0'.$ar['ID']] = array('VALUE' => $ar['VALUE'], 'VALUE_TYPE' => $ar['VALUE_TYPE']);
-
-			if (!isset($objDocument[$ar['TYPE_ID']."_".$ar['VALUE_TYPE']]))
-				$objDocument[$ar['TYPE_ID']."_".$ar['VALUE_TYPE']] = array();
-			$objDocument[$ar['TYPE_ID']."_".$ar['VALUE_TYPE']][] = $ar['VALUE'];
-
-			if (!isset($objDocument[$ar['TYPE_ID']."_".$ar['VALUE_TYPE']."_PRINTABLE"]))
-				$objDocument[$ar['TYPE_ID']."_".$ar['VALUE_TYPE']."_PRINTABLE"] = "";
-			$objDocument[$ar['TYPE_ID']."_".$ar['VALUE_TYPE']."_PRINTABLE"] .= ($objDocument[$ar['TYPE_ID']."_".$ar['VALUE_TYPE']."_PRINTABLE"] <> '' ? ", " : "").$ar['VALUE'];
-
-			if (!isset($objDocument[$ar['TYPE_ID']."_PRINTABLE"]))
-				$objDocument[$ar['TYPE_ID']."_PRINTABLE"] = "";
-			$objDocument[$ar['TYPE_ID']."_PRINTABLE"] .= ($objDocument[$ar['TYPE_ID']."_PRINTABLE"] <> '' ? ", " : "").$ar['VALUE'];
-		}
-
-		$multiFieldTypes =  CCrmFieldMulti::GetEntityTypeList();
-		foreach ($multiFieldTypes as $typeId => $arFields)
-		{
-			if(!isset($objDocument[$typeId]))
-			{
-				$objDocument[$typeId] = array();
-			}
-
-			$printableFieldName = $typeId.'_PRINTABLE';
-			if(!isset($objDocument[$printableFieldName]))
-			{
-				$objDocument[$printableFieldName] = '';
-			}
-
-			foreach ($arFields as $valueType => $valueName)
-			{
-				$fieldName = $typeId.'_'.$valueType;
-				if(!isset($objDocument[$fieldName]))
-				{
-					$objDocument[$fieldName] = array('');
-				}
-
-				$printableFieldName = $fieldName.'_PRINTABLE';
-				if(!isset($objDocument[$printableFieldName]))
-				{
-					$objDocument[$printableFieldName] = '';
-				}
-			}
-		}
-
-		// Preparation of user names -->
-		$nameFormat = CSite::GetNameFormat(false);
-
-		if(isset($objDocument['ASSIGNED_BY_ID']))
-		{
-			$objDocument['ASSIGNED_BY_PRINTABLE'] =
-				CUser::FormatName(
-					$nameFormat,
-					array(
-						'LOGIN' => isset($objDocument['ASSIGNED_BY_LOGIN']) ? $objDocument['ASSIGNED_BY_LOGIN'] : '',
-						'NAME' => isset($objDocument['ASSIGNED_BY_NAME']) ? $objDocument['ASSIGNED_BY_NAME'] : '',
-						'LAST_NAME' => isset($objDocument['ASSIGNED_BY_LAST_NAME']) ? $objDocument['ASSIGNED_BY_LAST_NAME'] : '',
-						'SECOND_NAME' => isset($objDocument['ASSIGNED_BY_SECOND_NAME']) ? $objDocument['ASSIGNED_BY_SECOND_NAME'] : ''
-					),
-					true, false
-			);
-		}
-
-		if(isset($objDocument['CREATED_BY_ID']))
-		{
-			$objDocument['CREATED_BY_PRINTABLE'] =
-				CUser::FormatName(
-					$nameFormat,
-					array(
-						'LOGIN' => isset($objDocument['CREATED_BY_LOGIN']) ? $objDocument['CREATED_BY_LOGIN'] : '',
-						'NAME' => isset($objDocument['CREATED_BY_NAME']) ? $objDocument['CREATED_BY_NAME'] : '',
-						'LAST_NAME' => isset($objDocument['CREATED_BY_LAST_NAME']) ? $objDocument['CREATED_BY_LAST_NAME'] : '',
-						'SECOND_NAME' => isset($objDocument['CREATED_BY_SECOND_NAME']) ? $objDocument['CREATED_BY_SECOND_NAME'] : ''
-					),
-					true, false
-			);
-		}
-		// <-- Preparation of user names
-
-		//communications
-		$typeId = \CCrmOwnerType::ResolveID($arDocumentID['TYPE']);
-		$objDocument += static::getCommunicationFieldsValues($typeId, $arDocumentID['ID']);
-		\Bitrix\Crm\WebForm\Internals\BPDocument::fill($typeId, $arDocumentID['ID'], $objDocument);
-
-		$objDocument['CRM_ID'] = CCrmOwnerTypeAbbr::ResolveByTypeID($typeId) . '_' . $objDocument['ID'];
-
-		switch ($arDocumentID['TYPE'])
-		{
-			case 'DEAL':
-				CCrmDocumentDeal::PrepareDocument($objDocument);
-				break;
-			case 'LEAD':
-				CCrmDocumentLead::PrepareDocument($objDocument);
-				break;
-			case 'CONTACT':
-				CCrmDocumentContact::PrepareDocument($objDocument);
-				break;
-			case 'COMPANY':
-				CCrmDocumentCompany::PrepareDocument($objDocument);
-				break;
-		}
-
-		return $objDocument;
+		return null;
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Integration\BizProc\Document\ValueCollection\Base::loadAddressValues
+	 * @param int $entityTypeId
+	 * @param int $entityId
+	 * @param array $documentFields
+	 * @return array
+	 */
 	protected static function fillDocumentAddressFields(int $entityTypeId, int $entityId, array $documentFields): array
 	{
-		if(($entityTypeId !== CCrmOwnerType::Contact && $entityTypeId !== CCrmOwnerType::Company) || $entityId <= 0)
-		{
-			return $documentFields;
-		}
-
-		$settings = \Bitrix\Crm\EntityRequisite::getSingleInstance()->loadSettings($entityTypeId, $entityId);
-
-		$filter = [
-			'=ENTITY_TYPE_ID' => $entityTypeId,
-			'=ENTITY_ID' => $entityId
-		];
-		if(array_key_exists('REQUISITE_ID_SELECTED', $settings))
-		{
-			$filter['=ID'] = $settings['REQUISITE_ID_SELECTED'];
-		}
-
-		$requisiteId = \Bitrix\Crm\EntityRequisite::getSingleInstance()->getList([
-			'select' => ['ID'],
-			'filter' => $filter,
-			'order' => [
-				'SORT' => 'ASC',
-				'ID' => 'ASC'
-			]
-		])->fetch();
-
-		if($requisiteId === false)
-		{
-			return $documentFields;
-		}
-
-		$addressFields = \Bitrix\Crm\EntityRequisite::getAddresses($requisiteId['ID']);
-
-		$primaryAddressFields = current($addressFields);
-		foreach ($addressFields as $addressTypeId => $addressTypeFields)
-		{
-			if($entityTypeId === CCrmOwnerType::Company && $addressTypeId === \Bitrix\Crm\EntityAddressType::Registered)
-			{
-				continue;
-			}
-			if(!CBPHelper::isEmptyValue($addressTypeFields))
-			{
-				$primaryAddressFields = $addressTypeFields;
-				break;
-			}
-		}
-
-		$registeredAddressFields = $addressFields[\Bitrix\Crm\EntityAddressType::Registered];
-
-		$primaryAddressFields = [
-			'ADDRESS' => $primaryAddressFields['ADDRESS_1'],
-			'ADDRESS_2' => $primaryAddressFields['ADDRESS_2'],
-			'ADDRESS_CITY' => $primaryAddressFields['CITY'],
-			'ADDRESS_POSTAL_CODE' => $primaryAddressFields['POSTAL_CODE'],
-			'ADDRESS_REGION' => $primaryAddressFields['REGION'],
-			'ADDRESS_PROVINCE' => $primaryAddressFields['PROVINCE'],
-			'ADDRESS_COUNTRY' => $primaryAddressFields['COUNTRY'],
-			'ADDRESS_COUNTRY_CODE' => $primaryAddressFields['COUNTRY_CODE'],
-			'ADDRESS_LOC_ADDR_ID' => $primaryAddressFields['LOC_ADDR_ID'],
-			'ADDRESS_LOC_ADDR' => $primaryAddressFields['LOC_ADDR'],
-		];
-
-		$registeredAddressFields = [
-			'REG_ADDRESS' => $registeredAddressFields['ADDRESS_1'],
-			'ADDRESS_LEGAL' => $registeredAddressFields['ADDRESS_1'],
-			'REG_ADDRESS_2' => $registeredAddressFields['ADDRESS_2'],
-			'REG_ADDRESS_CITY' => $registeredAddressFields['CITY'],
-			'REG_ADDRESS_POSTAL_CODE' => $registeredAddressFields['POSTAL_CODE'],
-			'REG_ADDRESS_REGION' => $registeredAddressFields['REGION'],
-			'REG_ADDRESS_PROVINCE' => $registeredAddressFields['PROVINCE'],
-			'REG_ADDRESS_COUNTRY' => $registeredAddressFields['COUNTRY'],
-			'REG_ADDRESS_COUNTRY_CODE' => $registeredAddressFields['COUNTRY_CODE'],
-			'REG_ADDRESS_LOC_ADDR_ID' => $registeredAddressFields['LOC_ADDR_ID'],
-			'REG_ADDRESS_LOC_ADDR' => $registeredAddressFields['LOC_ADDR'],
-		];
-
-		$entityAddressFields = [$primaryAddressFields];
-		if($entityTypeId === CCrmOwnerType::Company)
-		{
-			$entityAddressFields[] = $registeredAddressFields;
-		}
-		foreach ($entityAddressFields as $addressTypeFields)
-		{
-			if (CBPHelper::isEmptyValue(array_intersect_key($documentFields, $addressTypeFields)))
-			{
-				$documentFields = array_merge($documentFields, $addressTypeFields);
-			}
-		}
-
 		return $documentFields;
 	}
 
-	private static function getDocumentFieldMulti($document, $entityType, $entityId)
-	{
-		$fields = [];
-		$entities = [[$entityType, $entityId]];
-
-		if ($entityType === CCrmOwnerType::LeadName
-			&& CCrmLead::ResolveCustomerType($document) === \Bitrix\Crm\CustomerType::RETURNING
-		)
-		{
-			$entities = [];
-			if ($document['CONTACT_ID'] > 0)
-			{
-				$entities[] = [CCrmOwnerType::ContactName, $document['CONTACT_ID']];
-			}
-			if ($document['COMPANY_ID'] > 0)
-			{
-				$entities[] = [CCrmOwnerType::CompanyName, $document['COMPANY_ID']];
-			}
-			if (!$entities)
-			{
-				$entities[] = [$entityType, $entityId];
-			}
-		}
-
-		foreach ($entities as [$type, $id])
-		{
-			$res = CCrmFieldMulti::GetList(
-				array('ID' => 'asc'),
-				array('ENTITY_ID' => $type, 'ELEMENT_ID' => $id)
-			);
-			while ($ar = $res->Fetch())
-			{
-				$fields[] = $ar;
-			}
-		}
-		return $fields;
-	}
-
-	protected static function ExternalizeEnumerationField(array &$fields, $name)
+	public static function externalizeEnumerationField(array &$fields, $name)
 	{
 		$value = isset($fields[$name]) ? $fields[$name] : null;
 		$valueInfos = array();
 		if(!empty($value))
 		{
-			$dbRes = CUserFieldEnum::GetList(array(), array('ID' => $value));
+			$dbRes = CUserFieldEnum::GetList([], ['ID' => $value]);
 			while($valueData = $dbRes->Fetch())
 			{
 				$valueInfos[] = array('NAME' => $valueData['XML_ID'], 'LABEL' => $valueData['VALUE']);
@@ -1889,6 +1350,7 @@ class CCrmDocument
 			$fields["{$name}_PRINTABLE"] = implode(', ', $labels);
 		}
 	}
+
 	protected static function InternalizeEnumerationField($entityTypeID, array &$fields, $name)
 	{
 		if(!isset($fields[$name]))
@@ -1975,96 +1437,25 @@ class CCrmDocument
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @param $documentId
+	 * @param $historyIndex
+	 * @return array
+	 */
 	public static function GetDocumentForHistory($documentId, $historyIndex)
 	{
-		global $USER_FIELD_MANAGER;
-		$arDocumentID = static::GetDocumentInfo($documentId);
-		if (empty($arDocumentID))
-			throw new CBPArgumentNullException('documentId');
-
-		$arResult = static::GetDocument($documentId);
-
-		switch ($arDocumentID['TYPE'])
-		{
-			case 'CONTACT':
-				if (!empty($arResult['PHOTO']))
-					$arResult['PHOTO'] = CBPDocument::PrepareFileForHistory(
-						array('crm', 'CCrmDocument'.ucfirst(mb_strtolower($arDocumentID['TYPE'])), $documentId),
-						$arResult['PHOTO'],
-						$historyIndex
-					);
-			break;
-			case 'COMPANY':
-				if (!empty($arResult['LOGO']))
-					$arResult['LOGO'] = CBPDocument::PrepareFileForHistory(
-						array('crm', 'CCrmDocument'.ucfirst(mb_strtolower($arDocumentID['TYPE'])), $documentId),
-						$arResult['LOGO'],
-						$historyIndex
-					);
-			break;
-		}
-
-		$arUserFields = $USER_FIELD_MANAGER->GetUserFields('CRM_'.$arDocumentID['TYPE'], $arDocumentID['ID'], LANGUAGE_ID);
-		foreach($arUserFields as $FIELD_NAME => $arUserField)
-		{
-			if ($arUserField['USER_TYPE']['BASE_TYPE'] == 'file')
-			{
-				$arFiles = !is_array($arUserField[$FIELD_NAME]) ? array($arUserField[$FIELD_NAME]) : $arUserField[$FIELD_NAME];
-				foreach ($arFiles as $sFilePath)
-				{
-					$sFilePath = CBPDocument::PrepareFileForHistory(
-						array('crm', 'CCrmDocument'.ucfirst(mb_strtolower($arDocumentID['TYPE'])), $documentId),
-						$sFilePath,
-						$historyIndex
-					);
-					if (!is_array($arUserField[$FIELD_NAME]))
-					{
-						$arResult[$FIELD_NAME] = $sFilePath;
-						break;
-					}
-					else
-						$arResult[$FIELD_NAME][] = $sFilePath;
-				}
-			}
-		}
-
-		return $arResult;
+		return [];
 	}
 
+	/**
+	 * @deprecated
+	 * @param $documentId
+	 * @param $arDocument
+	 * @return bool
+	 */
 	public static function RecoverDocumentFromHistory($documentId, $arDocument)
 	{
-		$arDocumentID = static::GetDocumentInfo($documentId);
-		if (empty($arDocumentID))
-			throw new CBPArgumentNullException('documentId');
-
-		$arFields = $arDocument['FIELDS'];
-
-		switch ($arDocumentID['TYPE'])
-		{
-			case 'CONTACT':
-				$CCrmEntity = new CCrmContact();
-				if (!empty($arFields['PHOTO']))
-					$arFields['PHOTO'] = CFile::MakeFileArray($_SERVER['DOCUMENT_ROOT'].$arFields['PHOTO']);
-			break;
-			case 'COMPANY':
-				$CCrmEntity = new CCrmCompany();
-				if (!empty($arFields['LOGO']))
-					$arFields['LOGO'] = CFile::MakeFileArray($_SERVER['DOCUMENT_ROOT'].$arFields['LOGO']);
-			break;
-			case 'DEAL':
-				$CCrmEntity = new CCrmDeal();
-			break;
-			case 'LEAD':
-				$CCrmEntity = new CCrmLead();
-			break;
-		}
-
-		$res = $CCrmEntity->Update($arDocumentID['ID'], $arFields);
-		if (intval($arFields['WF_STATUS_ID']) > 1 && intval($arFields['WF_PARENT_ELEMENT_ID']) <= 0)
-			static::UnpublishDocument($documentId);
-		if (!$res)
-			throw new Exception($CCrmEntity->LAST_ERROR);
-
 		return true;
 	}
 
@@ -2819,7 +2210,7 @@ class CCrmDocument
 		unset($arFields[$typeName]);
 	}
 
-	protected static function PrepareCrmUserTypeValueView($value, $defaultTypeName = '')
+	public static function prepareCrmUserTypeValueView($value, $defaultTypeName = '')
 	{
 		$parts = explode('_', $value);
 		if (count($parts) > 1)
@@ -3157,96 +2548,16 @@ class CCrmDocument
 		];
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Integration\BizProc\Document\ValueCollection\Base::loadCommunicationValues
+	 * @param $typeId
+	 * @param $id
+	 * @return string[]
+	 */
 	protected static function getCommunicationFieldsValues($typeId, $id)
 	{
-		$callId = Bitrix\Crm\Activity\Provider\Call::getId();
-		$emailId = Bitrix\Crm\Activity\Provider\Email::getId();
-		$olId = Bitrix\Crm\Activity\Provider\OpenLine::getId();
-		$webFormId = Bitrix\Crm\Activity\Provider\WebForm::getId();
-
-		$callDate = $emailDate = $olDate = $webFormDate = null;
-
-		$ormRes = \Bitrix\Crm\ActivityTable::getList([
-			'select' => ['END_TIME', 'PROVIDER_ID'],
-			'filter' => [
-				'=COMPLETED' => 'Y',
-				'@PROVIDER_ID' => [$callId, $emailId, $olId, $webFormId],
-				'=BINDINGS.OWNER_TYPE_ID' => $typeId,
-				'=BINDINGS.OWNER_ID' => $id,
-			],
-			'order' => ['END_TIME' => 'DESC']
-		]);
-
-		while ($row = $ormRes->fetch())
-		{
-			if ($callDate === null)
-			{
-				if ($row['PROVIDER_ID'] === $callId)
-				{
-					$callDate = $row['END_TIME'];
-				}
-			}
-			if ($emailDate === null)
-			{
-				if ($row['PROVIDER_ID'] === $emailId)
-				{
-					$emailDate = $row['END_TIME'];
-				}
-			}
-			if ($olDate === null)
-			{
-				if ($row['PROVIDER_ID'] === $olId)
-				{
-					$olDate = $row['END_TIME'];
-				}
-			}
-			if ($webFormDate === null)
-			{
-				if ($row['PROVIDER_ID'] === $webFormId)
-				{
-					$webFormDate = $row['END_TIME'];
-				}
-			}
-
-			if ($callDate !== null && $emailDate !== null && $olDate !== null && $webFormDate !== null)
-			{
-				break;
-			}
-		}
-
-		return [
-			'COMMUNICATIONS.LAST_CALL_DATE' => (string) $callDate,
-			'COMMUNICATIONS.LAST_EMAIL_DATE' => (string) $emailDate,
-			'COMMUNICATIONS.LAST_OL_DATE' => (string) $olDate,
-			'COMMUNICATIONS.LAST_FORM_DATE' => (string) $webFormDate,
-		];
-	}
-
-	private static function prepareResourceBookingField(array &$document, $fieldId)
-	{
-		if (empty($document[$fieldId]) || !\Bitrix\Main\Loader::includeModule('calendar'))
-		{
-			return;
-		}
-
-		$resourceList = \Bitrix\Calendar\UserField\ResourceBooking::getResourceEntriesList((array) $document[$fieldId]);
-
-		if ($resourceList)
-		{
-			$document[$fieldId.'.SERVICE_NAME'] = $resourceList['SERVICE_NAME'];
-			$document[$fieldId.'.DATE_FROM'] = $resourceList['DATE_FROM'];
-			$document[$fieldId.'.DATE_TO'] = $resourceList['DATE_TO'];
-			$users = [];
-
-			foreach ($resourceList['ENTRIES'] as $entry)
-			{
-				if ($entry['TYPE'] === 'user')
-				{
-					$users[] = 'user_'.$entry['RESOURCE_ID'];
-				}
-			}
-			$document[$fieldId.'.USERS'] = $users;
-		}
+		return [];
 	}
 
 	public static function isFeatureEnabled($documentType, $feature)

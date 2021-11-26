@@ -212,6 +212,10 @@ class ActivityController extends EntityController
 		$authorID = self::resolveAuthorID($currentFields);
 
 		$historyEntryID = 0;
+		if (isset($params['CURRENT_FIELDS']['SETTINGS']['MISSED_CALL']) && $params['CURRENT_FIELDS']['SETTINGS']['MISSED_CALL'] === true)
+		{
+			$created = new DateTime($params['CURRENT_FIELDS']['CREATED'], Date::convertFormatToPhp(FORMAT_DATETIME));
+		}
 		if(!$prevCompleted && $curCompleted)
 		{
 			if($typeID == \CCrmActivityType::Email)
@@ -253,7 +257,8 @@ class ActivityController extends EntityController
 						'ACTIVITY_PROVIDER_ID' => $providerID,
 						'ENTITY_ID' => $ownerID,
 						'AUTHOR_ID' => $authorID,
-						'BINDINGS' => self::mapBindings($currentBindings)
+						'BINDINGS' => self::mapBindings($currentBindings),
+						'CREATED' => $created
 					)
 				);
 			}

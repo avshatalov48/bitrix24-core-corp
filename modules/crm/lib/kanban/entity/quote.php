@@ -196,29 +196,6 @@ class Quote extends Entity
 		);
 	}
 
-	public function getAdditionalFields(bool $clearCache = false): array
-	{
-		$fields = parent::getAdditionalFields($clearCache);
-
-		// emulating crm element user field to render value properly
-		if (isset($fields[Item\Quote::FIELD_NAME_LEAD_ID]))
-		{
-			$fields[Item\Quote::FIELD_NAME_LEAD_ID]['type'] = 'crm';
-			$fields[Item\Quote::FIELD_NAME_LEAD_ID]['settings'] = [
-				'LEAD' => 'Y',
-			];
-		}
-		if (isset($fields[Item\Quote::FIELD_NAME_DEAL_ID]))
-		{
-			$fields[Item\Quote::FIELD_NAME_DEAL_ID]['type'] = 'crm';
-			$fields[Item\Quote::FIELD_NAME_DEAL_ID]['settings'] = [
-				'DEAL' => 'Y',
-			];
-		}
-
-		return $fields;
-	}
-
 	public function updateItemStage(int $id, string $stageId, array $newStateParams, array $stages): Result
 	{
 		$factory = Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);

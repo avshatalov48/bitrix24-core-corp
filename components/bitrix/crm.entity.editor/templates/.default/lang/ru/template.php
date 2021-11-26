@@ -115,6 +115,7 @@ $MESS["CRM_ENTITY_ED_SHIPMENT_DOCUMENT_TITLE"] = "Документ отгруз�
 $MESS["CRM_ENTITY_ED_SHIPMENT_ADD_DOCUMENT"] = "Добавить информацию об отгрузке";
 $MESS["CRM_ENTITY_ED_SHIPMENT_DELIVERY_ALLOWED"] = "Доставка разрешена";
 $MESS["CRM_ENTITY_ED_DELIVERY_SELECTOR_NOT_SELECTED"] = "(Служба не выбрана)";
+$MESS["CRM_ENTITY_ED_PAY_SYSTEM_SELECTOR_NOT_SELECTED"] = "(Платёжная система не выбрана)";
 $MESS["CRM_ENTITY_ED_SHIPMENT_DEDEUCTED"] = "Отгружено";
 $MESS["CRM_EDITOR_SAVE_ERROR_TITLE"] = "Ошибка сохранения";
 $MESS["CRM_EDITOR_SAVE_ERROR_CONTENT"] = "При сохранении произошла ошибка";

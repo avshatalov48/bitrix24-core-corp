@@ -314,7 +314,7 @@ class Page
 						BitrixAnimation.animate({
 							duration: 1000,
 							start: {
-								scroll: document.body.scrollTop
+								scroll: window.pageYOffset,
 							},
 							finish: {
 								scroll: 0

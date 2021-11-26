@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Entity;
 use Bitrix\Crm\Order\Matcher\FieldSynchronizer;
 use Bitrix\Crm\Order\Matcher\ResponsibleQueue;
 
@@ -133,18 +134,38 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 		return $this->personTypes;
 	}
 
-	protected function getExistingFormFields($personTypeId)
+	protected function getExistingFormFields($personTypeId, bool $withUtil = false)
 	{
 		$formFields = [];
 		$cnt = 0;
 
 		if (!empty($personTypeId))
 		{
+			$filter = [
+				'=PERSON_TYPE_ID' => $personTypeId,
+				'=ACTIVE' => 'Y',
+			];
+			if (!$withUtil)
+			{
+				$filter['=UTIL'] = 'N';
+			}
+
+			$filter[] = [
+				'LOGIC' => 'OR',
+				'!PROP_RELATION.ENTITY_TYPE' => 'L',
+				'=PROP_RELATION.ENTITY_TYPE' => null,
+			];
+
 			$personTypeProperties = \Bitrix\Crm\Order\Property::getList([
-				'filter' => [
-					'=PERSON_TYPE_ID' => $personTypeId,
-					'=ACTIVE' => 'Y',
-					'=UTIL' => 'N'
+				'filter' => $filter,
+				'runtime' => [
+					new Entity\ReferenceField(
+						'PROP_RELATION',
+						'\Bitrix\Sale\Internals\OrderPropsRelationTable',
+						[
+							'=this.ID' => 'ref.PROPERTY_ID',
+						]
+					)
 				],
 				'order' => ['SORT' => 'ASC'],
 			])->fetchAll();
@@ -330,10 +351,10 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 		return $descriptionFields;
 	}
 
-	protected function getFormFields($personTypeId)
+	protected function getFormFields($personTypeId, bool $withUtil = false)
 	{
 		$availableFields = FieldSynchronizer::getFieldsByCode($personTypeId);
-		$existingFields = $this->getExistingFormFields($personTypeId);
+		$existingFields = $this->getExistingFormFields($personTypeId, $withUtil);
 
 		return $this->getFieldsDescription($availableFields, $existingFields);
 	}
@@ -371,10 +392,17 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 		$form = [];
 		$form['FIELDS'] = $this->getFormFields($personTypeId);
 		$form['RELATIONS'] = [];
+		$allFields = $this->getFormFields($personTypeId, true);
+		$form['ALL_RELATIONS'] = [];
 
 		foreach ($form['FIELDS'] as $field)
 		{
 			$form['RELATIONS'] = array_merge($form['RELATIONS'], $this->getFormRelations($field));
+		}
+
+		foreach ($allFields as $field)
+		{
+			$form['ALL_RELATIONS'] = array_merge($form['ALL_RELATIONS'], $this->getFormRelations($field));
 		}
 
 		return $form;
@@ -476,11 +504,6 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 				'CODE' => 'P',
 				'NAME' => Loc::getMessage('CRM_ORDERFORM_RELATION_PAY_SYSTEM'),
 				'ITEMS' => array_values(FieldSynchronizer::getPaySystemRelations())
-			],
-			[
-				'CODE' => 'L',
-				'NAME' => Loc::getMessage('CRM_ORDERFORM_RELATION_LANDING'),
-				'ITEMS' => array_values(FieldSynchronizer::getLandingRelations())
 			]
 		];
 	}
@@ -745,40 +768,6 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 		return array_values(array_diff($requiredFields, $fieldCodes));
 	}
 
-	protected function getMissingFields($fieldCodes, $personTypeId)
-	{
-		$missingFields = [];
-
-		$availableFields = FieldSynchronizer::getFieldsByCode($personTypeId);
-		$orderFields = FieldSynchronizer::getFieldsTree($personTypeId, CCrmOwnerType::OrderName)['FIELDS'];
-
-		foreach ($fieldCodes as $fieldCode)
-		{
-			$fieldInfo = $availableFields[$fieldCode];
-
-			if ($fieldInfo['entity_name'] === CCrmOwnerType::OrderName)
-			{
-				continue;
-			}
-
-			foreach ($orderFields as $field)
-			{
-				if (
-					!$field['active']
-					&& ($field['entity_field_name'] === $fieldInfo['entity_field_name'])
-					&& ($field['type'] === $fieldInfo['type'])
-				)
-				{
-					continue 2;
-				}
-			}
-
-			$missingFields[] = $fieldCode;
-		}
-
-		return $missingFields;
-	}
-
 	protected function sendJsonAnswer($result)
 	{
 		global $APPLICATION;
@@ -810,8 +799,6 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 			{
 				$fieldCodes = $this->request->get('fieldCodes') ?: [];
 				$requiredFields = $this->getRequiredFields($fieldCodes, $this->arParams['PERSON_TYPE_ID']);
-
-				// ToDo remove it? $missingFields = $this->getMissingFields($fieldCodes, $personTypeId);
 			}
 		}
 

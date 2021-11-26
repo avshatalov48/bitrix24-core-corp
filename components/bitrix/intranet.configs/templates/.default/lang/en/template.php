@@ -58,6 +58,7 @@ $MESS["CONFIG_DISK_TRANSFORM_FILES_ON_OPEN"] = "Convert file as soon as it is op
 $MESS["CONFIG_DISK_VERSION_LIMIT_PER_FILE"] = "Max. entries in document history";
 $MESS["CONFIG_DISK_VIEWER_SERVICE"] = "View documents using";
 $MESS["CONFIG_EMAIL_FROM"] = "E-mail of the site administrator<br>(default sender address)";
+$MESS["CONFIG_EXAMPLE"] = "Example";
 $MESS["CONFIG_FEATURES_CRM"] = "CRM";
 $MESS["CONFIG_FEATURES_EXTRANET"] = "Extranet";
 $MESS["CONFIG_FEATURES_LISTS"] = "Lists";
@@ -84,8 +85,8 @@ $MESS["CONFIG_HEADER_SECUTIRY"] = "Security settings";
 $MESS["CONFIG_HEADER_SETTINGS"] = "Settings";
 $MESS["CONFIG_IM_CHAT_RIGHTS"] = "Allow users to send messages to General chat";
 $MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_ADMIN_RIGHTS"] = "Post administrator assigned and administrator changed notifications to General chat";
-$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_JOIN"] = "Notify about new hires in general chat";
-$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_LEAVE"] = "Notify about employee/user dismissal in general chat";
+$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_JOIN"] = "Notify about new hires in General chat";
+$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_LEAVE"] = "Notify about employee/user dismissal in General chat";
 $MESS["CONFIG_IP_HELP_TEXT2"] = "Users without admin permissions won't be able to access this Bitrix24 from any IP address that doesn't match the specified range.
 Once logged in, the user will see an error page informing them that access from their IP was denied.
 You can watch attempts to log on to Bitrix24 from any IP address in the Event log.";

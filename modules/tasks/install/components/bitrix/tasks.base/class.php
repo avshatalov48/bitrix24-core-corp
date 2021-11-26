@@ -344,11 +344,15 @@ abstract class TasksBaseComponent extends CBitrixComponent
 	{
 		if (empty(static::$calendarSettings))
 		{
-			static::$calendarSettings = $this->getCalendarSettings();
+			static::$calendarSettings = Bitrix\Tasks\Integration\Calendar::getWorkSettings();
 		}
+		static::$calendarSettings['CALENDAR_SETTINGS'] = static::$calendarSettings['WORK_SETTINGS'];
+		static::$calendarSettings['COMPANY_WORKTIME'] = static::$calendarSettings['WORK_TIME'];
 
 		$this->arResult['CALENDAR_SETTINGS'] = static::$calendarSettings['CALENDAR_SETTINGS'];
 		$this->arResult['COMPANY_WORKTIME'] = static::$calendarSettings['COMPANY_WORKTIME'];
+		$this->arResult['WORK_SETTINGS'] = static::$calendarSettings['WORK_SETTINGS'];
+		$this->arResult['WORK_TIME'] = static::$calendarSettings['WORK_TIME'];
 
 		return true;
 	}
@@ -1063,89 +1067,4 @@ abstract class TasksBaseComponent extends CBitrixComponent
             'VIEW_GANTT' =>  '',
         );
     }
-
-	private function getCalendarSettings()
-	{
-		$site = CSite::GetByID(SITE_ID)->Fetch();
-
-		$weekDay = $site['WEEK_START'];
-		$weekDaysMap = array(
-			'SU',
-			'MO',
-			'TU',
-			'WE',
-			'TH',
-			'FR',
-			'SA'
-		);
-
-		$wh = array(
-			'HOURS'      => array(
-				'START' => array('H' => 9, 'M' => 0, 'S' => 0),
-				'END'   => array('H' => 19, 'M' => 0, 'S' => 0),
-			),
-			'HOLIDAYS'   => array(),
-			'WEEKEND'    => array('SA', 'SU'),
-			'WEEK_START' => (string)$weekDay != '' && isset($weekDaysMap[$weekDay]) ? $weekDaysMap[$weekDay] : 'MO'
-		);
-
-		if (\Bitrix\Main\Loader::includeModule('calendar'))
-		{
-			$calendarSettings = \CCalendar::GetSettings(array('getDefaultForEmpty' => false));
-
-			if (is_array($calendarSettings['week_holidays']))
-			{
-				$wh['WEEKEND'] = $calendarSettings['week_holidays'];
-			}
-			if ((string)$calendarSettings['year_holidays'] != '')
-			{
-				$holidays = explode(',', $calendarSettings['year_holidays']);
-				if (is_array($holidays) && !empty($holidays))
-				{
-					foreach ($holidays as $day)
-					{
-						$day = trim($day);
-						[$day, $month] = explode('.', $day);
-						$day = intval($day);
-						$month = intval($month);
-
-						if ($day && $month)
-						{
-							$wh['HOLIDAYS'][] = array('M' => $month, 'D' => $day);
-						}
-					}
-				}
-			}
-
-			$time = explode('.', (string)$calendarSettings['work_time_start']);
-			if (intval($time[0]))
-			{
-				$wh['HOURS']['START']['H'] = intval($time[0]);
-			}
-			if (intval($time[1]))
-			{
-				$wh['HOURS']['START']['M'] = intval($time[1]);
-			}
-
-			$time = explode('.', (string)$calendarSettings['work_time_end']);
-			if (intval($time[0]))
-			{
-				$wh['HOURS']['END']['H'] = intval($time[0]);
-			}
-			if (intval($time[1]))
-			{
-				$wh['HOURS']['END']['M'] = intval($time[1]);
-			}
-		}
-
-		$deadlineTimeSettings = \CUserOptions::getOption('tasks.bx.calendar.deadline', 'time_visibility', []);
-		$wh['deadlineTimeVisibility'] = (
-			(isset($deadlineTimeSettings['visibility']) && $deadlineTimeSettings['visibility'] == 'Y') ? 'Y' : 'N'
-		);
-
-		return array(
-			'CALENDAR_SETTINGS' => $wh,
-			'COMPANY_WORKTIME'  => $wh['HOURS']
-		);
-	}
 }

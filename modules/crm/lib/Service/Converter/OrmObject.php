@@ -20,6 +20,8 @@ class OrmObject extends Converter
 			throw new ArgumentException('model should be an instance of EntityObject');
 		}
 
-		return $this->convertKeysToCamelCase($model->collectValues());
+		$data = $this->prepareData($model->collectValues());
+
+		return $this->convertKeysToCamelCase($data);
 	}
 }

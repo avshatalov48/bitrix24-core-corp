@@ -52,6 +52,15 @@ class DealStageHistoryTable extends Entity\DataManager
 			'STAGE_SEMANTIC_ID' => array('data_type' => 'string'),
 			'STAGE_ID' => array('data_type' => 'string'),
 			'IS_LOST' => array('data_type' => 'boolean', 'values' => array('N', 'Y')),
+			'HAS_SUPPOSED_HISTORY_RECORD' => array(
+				'data_type' => 'integer',
+				'expression' => array(
+					'CASE WHEN EXISTS (SELECT 1 FROM b_crm_deal_stage_history_with_supposed WHERE OWNER_ID = %s AND CREATED_TIME = %s AND STAGE_ID = %s) THEN 1 ELSE 0 END',
+					'OWNER_ID',
+					'CREATED_TIME',
+					'STAGE_ID'
+				),
+			)
 		);
 	}
 	public static function deleteByOwner($ownerID)

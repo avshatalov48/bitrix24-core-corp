@@ -176,14 +176,14 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 						foreach ($document[$type][$id] as $item)
 						{
 							?>
-							<li class="crm-doc-droplist-item">
+							<li class="crm-doc-droplist-item crm-doc-droplist-item-document">
 								<a
 									href="javascript:void(0);"
 									onclick="BX.DocumentGenerator.Document.onBeforeCreate(
 										'/bitrix/components/bitrix/crm.document.view/slider.php?documentId=<?= $item['ID'] ?>',
-										 {},
-										 '/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg'
-										 )">
+										{},
+										'/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg'
+										)">
 									<?= Loc::getMessage('CRM_ENTITY_TREE_DOCUMENT_LABEL', [
 										'#TITLE#' => htmlspecialcharsbx($item['TITLE']),
 										'#DATE#' => $item['CREATE_TIME'],

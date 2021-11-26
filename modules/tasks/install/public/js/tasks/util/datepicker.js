@@ -140,9 +140,11 @@ BX.Tasks.Util.DatePicker = BX.Tasks.Util.Widget.extend({
 
 		onTimeSelected: function(value) // value is localtime!
 		{
+			this.local = value;
+
 			var display = '';
 			var vValue = '';
-			if(value.toString().length > 0)
+			if (value.toString().length > 0)
 			{
 				display = BX.date.format(this.vars.formatDisplay, value);
 				vValue = BX.date.format(this.vars.formatValue, value);
@@ -162,7 +164,7 @@ BX.Tasks.Util.DatePicker = BX.Tasks.Util.Widget.extend({
 
 			if (this.vars.fireChangeEvent)
 			{
-				this.fireEvent('change', [ts, value, display]);
+				this.fireEvent('change', [ts, value, display, this.local]);
 			}
 		},
 

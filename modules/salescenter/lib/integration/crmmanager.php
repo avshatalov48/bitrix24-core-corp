@@ -9,7 +9,6 @@ use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\AddressTable;
 use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Binding\LeadContactTable;
-use Bitrix\Crm\Binding\OrderPaymentStageTable;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
@@ -31,6 +30,8 @@ use Bitrix\Salescenter\Analytics;
 use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Crm;
 use Bitrix\Crm\Activity;
+use Bitrix\Crm\Workflow\PaymentWorkflow;
+use Bitrix\Crm\Workflow\PaymentStage;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -274,113 +275,6 @@ class CrmManager extends Base
 		}
 
 		return false;
-	}
-
-	/**
-	 * @param $activityId
-	 * @param array $fields
-	 */
-	public static function onActivityAdd($activityId, array $fields)
-	{
-		if($fields['PROVIDER_ID'] === WebForm::PROVIDER_ID)
-		{
-			$bindings = [];
-			if(isset($fields['BINDINGS']) && is_array($fields['BINDINGS']))
-			{
-				foreach($fields['BINDINGS'] as $binding)
-				{
-					$bindings[$binding['OWNER_TYPE_ID']][$binding['OWNER_ID']] = $binding['OWNER_ID'];
-				}
-			}
-			if(empty($bindings) || empty($fields['SUBJECT']) || empty($fields['ID']) || !ImOpenLinesManager::getInstance()->isEnabled())
-			{
-				return;
-			}
-
-			if(isset($bindings[\CCrmOwnerType::Lead]))
-			{
-				$list = LeadTable::getList(['select' => ['COMPANY_ID'], 'filter' => [
-					'=ID' => $bindings[\CCrmOwnerType::Lead],
-					'!COMPANY_ID' => 0,
-				]]);
-				while($lead = $list->fetch())
-				{
-					$bindings[\CCrmOwnerType::Company][$lead['COMPANY_ID']] = $lead['COMPANY_ID'];
-				}
-				$list = LeadContactTable::getList(['select' => ['CONTACT_ID'], 'filter' => [
-					'=LEAD_ID' => $bindings[\CCrmOwnerType::Lead],
-					'!CONTACT_ID' => 0,
-				]]);
-				while($leadContact = $list->fetch())
-				{
-					$bindings[\CCrmOwnerType::Contact][$leadContact['CONTACT_ID']] = $leadContact['CONTACT_ID'];
-				}
-			}
-			if(isset($bindings[\CCrmOwnerType::Deal]))
-			{
-				$list = DealTable::getList(['select' => ['COMPANY_ID'], 'filter' => [
-					'=ID' => $bindings[\CCrmOwnerType::Deal],
-					'!COMPANY_ID' => 0,
-				]]);
-				while($deal = $list->fetch())
-				{
-					$bindings[\CCrmOwnerType::Company][$deal['COMPANY_ID']] = $deal['COMPANY_ID'];
-				}
-				$list = DealContactTable::getList(['select' => ['CONTACT_ID'], 'filter' => [
-					'=DEAL_ID' => $bindings[\CCrmOwnerType::Deal],
-					'!CONTACT_ID' => 0,
-				]]);
-				while($dealContact = $list->fetch())
-				{
-					$bindings[\CCrmOwnerType::Contact][$dealContact['CONTACT_ID']] = $dealContact['CONTACT_ID'];
-				}
-			}
-
-			$isOwnersFilterSet = false;
-			$ownersFilter = Query::filter()->logic('or');
-			foreach($bindings as $type => $ids)
-			{
-				$ownersFilter->addCondition(
-					Query::filter()
-						->logic('and')
-						->where('OWNER_TYPE_ID', '=', $type)
-						->whereIn('OWNER_ID', array_values($ids))
-				);
-				$isOwnersFilterSet = true;
-			}
-			if(!$isOwnersFilterSet)
-			{
-				return;
-			}
-
-			$activityFilter = Query::filter()
-				->logic('and')
-				->addCondition(
-					Query::filter()
-						->where('PROVIDER_ID', '=', OpenLine::ACTIVITY_PROVIDER_ID)
-						->where('COMPLETED', '=', 'N')
-						->where('ASSOCIATED_ENTITY_ID', '>', 0)
-				)
-				->addCondition($ownersFilter);
-
-			$sessionIds = [];
-			try
-			{
-				$list = ActivityTable::getList(['select' => ['ID', 'ASSOCIATED_ENTITY_ID'], 'filter' => $activityFilter]);
-				while($activity = $list->fetch())
-				{
-					$sessionIds[$activity['ASSOCIATED_ENTITY_ID']] = $activity['ASSOCIATED_ENTITY_ID'];
-				}
-			}
-			finally
-			{
-
-			}
-			foreach($sessionIds as $sessionId)
-			{
-				ImOpenLinesManager::getInstance()->sendActivityNotify($fields, $sessionId);
-			}
-		}
 	}
 
 	/**
@@ -749,7 +643,7 @@ class CrmManager extends Base
 				);
 			}
 
-			OrderPaymentStageTable::setStage($payment->getId(), Order\PaymentStage::SENT_NO_VIEWED);
+			PaymentWorkflow::createFrom($payment)->setStage(PaymentStage::SENT_NO_VIEWED);
 
 			$order = $additionalFields['ENTITIES']['ORDER'] ?? null;
 			$provider = $additionalFields['SENDER_ID'] ?? null;
@@ -1032,6 +926,7 @@ class CrmManager extends Base
 	{
 		$requisite = EntityRequisite::getSingleInstance()->getList(
 			[
+				'select' => ['ID'],
 				'filter' => [
 					'=ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
 					'=ENTITY_ID' => (int)EntityLink::getDefaultMyCompanyId()
@@ -1090,6 +985,7 @@ class CrmManager extends Base
 
 		$requisite = EntityRequisite::getSingleInstance()->getList(
 			[
+				'select' => ['ID'],
 				'filter' => [
 					'=ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
 					'=ENTITY_ID' => (int)$contact['CONTACT_ID']

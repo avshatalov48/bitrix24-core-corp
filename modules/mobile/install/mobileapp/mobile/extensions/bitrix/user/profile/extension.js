@@ -979,7 +979,7 @@
 									{
 										if(response.answer.error_description)
 										{
-											this.error(response.answer.error_description);
+											this.error(response.answer.error_description.replace("<br>",""));
 											return;
 										}
 									}

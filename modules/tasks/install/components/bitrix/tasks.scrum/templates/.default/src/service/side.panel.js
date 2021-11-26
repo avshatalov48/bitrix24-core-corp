@@ -59,6 +59,13 @@ export class SidePanel extends EventEmitter
 		return Boolean(manager.getPreviousSlider(currentSidePanel));
 	}
 
+	getTopSidePanel()
+	{
+		const topSidePanel = this.sidePanelManager.getTopSlider();
+
+		return topSidePanel ? topSidePanel : null;
+	}
+
 	reloadTopSidePanel(contentSidePanel: boolean = false)
 	{
 		const manager = contentSidePanel ? this.contentSidePanelManager : this.sidePanelManager;

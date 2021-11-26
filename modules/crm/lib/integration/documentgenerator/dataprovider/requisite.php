@@ -82,7 +82,11 @@ class Requisite extends BaseRequisite
 		{
 			if($this->source > 0)
 			{
-				$this->data = EntityRequisite::getSingleInstance()->getList(['select' => ['*', 'UF_*',], 'filter' => ['ID' => $this->source]])->fetch();
+				$resuisite = EntityRequisite::getSingleInstance();
+				$this->data = $resuisite->getList(
+					['select' => ['*', 'UF_*',], 'filter' => ['ID' => $this->source]]
+				)->fetch();
+				$this->data = array_merge($this->data, $resuisite->getRqListFieldValueTitles($this->data));
 				$this->loadAddresses();
 				$this->nameData = [
 					'NAME' => $this->data['RQ_FIRST_NAME'],

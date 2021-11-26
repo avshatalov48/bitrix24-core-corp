@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Integration\DocumentGenerator\ProductLoader;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\Item;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\Iblock\ElementTable;
@@ -438,6 +439,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		return array_merge(parent::getHiddenFields(), [
 			'CURRENCY_ID',
 			'LOCATION_ID',
+			Item::FIELD_NAME_PRODUCTS,
 		]);
 	}
 

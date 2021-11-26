@@ -526,7 +526,7 @@ class InvoiceTable extends Main\Entity\DataManager
 	{
 		if (is_array($parameters['filter']))
 		{
-		    SearchEnvironment::prepareSearchFilter(\CCrmOwnerType::Invoice, $parameters['filter']);
+			SearchEnvironment::prepareSearchFilter(\CCrmOwnerType::Invoice, $parameters['filter']);
 		}
 
 		return parent::getList($parameters);

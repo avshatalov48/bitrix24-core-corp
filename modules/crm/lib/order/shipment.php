@@ -33,17 +33,7 @@ class Shipment extends Sale\Shipment
 				$deliveryRequestHandler = $deliveryService ? $deliveryService->getDeliveryRequestHandler() : null;
 				if ($deliveryRequestHandler && $deliveryRequestHandler->hasCallbackTrackingSupport())
 				{
-					$activityId = Delivery::addActivity($this);
-					if ($activityId > 0)
-					{
-						AddEventToStatFile(
-							'sale',
-							'deliveryActivityCreation',
-							$activityId,
-							$deliveryService->getName(),
-							'delivery_service_name'
-						);
-					}
+					Delivery::addActivity($this);
 				}
 			}
 			else

@@ -72,6 +72,9 @@ BX.namespace('Tasks.Component');
 		this.initAjaxErrorHandler();
 		this.initImportantButton();
 		this.initFooterButtons();
+		this.initCommentActionController();
+
+		this.extendWatch();
 
 		var stayAtPage = parameters.componentData.EVENT_OPTIONS.STAY_AT_PAGE;
 		this.fireTaskEvent(stayAtPage);
@@ -86,6 +89,15 @@ BX.namespace('Tasks.Component');
 			BX.bind(BX("task-detail-content"), "mouseup", function(e) { window.mplCheckForQuote(e, e.currentTarget, 'TASK_' + this.taskId, 'task-detail-author-info') }.bind(this));
 		}
 	};
+
+	BX.Tasks.Component.TaskView.prototype.extendWatch = function()
+	{
+		BX.PULL.extendWatch('TASK_VIEW_' + this.taskId, true);
+
+		setTimeout(function() {
+			this.extendWatch();
+		}.bind(this), 29 * 60 * 1000);
+	}
 
 	BX.Tasks.Component.TaskView.prototype.onSliderClose = function(byEsc, event)
 	{
@@ -774,6 +786,21 @@ BX.namespace('Tasks.Component');
 
 			this.checkListChanged = false;
 			this.showCloseConfirmation = false;
+		}
+	};
+
+	BX.Tasks.Component.TaskView.prototype.initCommentActionController = function()
+	{
+		if (window.top !== window && window.BX.Tasks.CommentActionController)
+		{
+			window.top.BX.Tasks.CommentActionController = window.BX.Tasks.CommentActionController;
+		}
+		if (BX.Tasks.CommentActionController)
+		{
+			void BX.Tasks.CommentActionController.init({
+				workHours: this.parameters.workHours,
+				workSettings: this.parameters.workSettings
+			});
 		}
 	};
 

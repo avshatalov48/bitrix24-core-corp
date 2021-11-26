@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Location = this.BX.Location || {};
-(function (exports,location_osm,location_google,main_popup,ui_forms,location_core,location_widget,main_core_events,main_core) {
+(function (exports,ui_vue,location_osm,location_google,main_popup,ui_forms,location_core,location_widget,main_core_events,main_core) {
 	'use strict';
 
 	/**
@@ -17,13 +17,794 @@ this.BX.Location = this.BX.Location || {};
 	babelHelpers.defineProperty(State, "DATA_LOADING", 'DATA_LOADING');
 	babelHelpers.defineProperty(State, "DATA_LOADED", 'DATA_LOADED');
 
+	function _templateObject2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-address-container\">\n\t\t\t\t<div class=\"location-map-address-icon\"></div>\n\t\t\t\t", "\n\t\t\t</div>"]);
+
+	  _templateObject2 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"location-map-address-text\">", "</div>"]);
+
+	  _templateObject = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _address = new WeakMap();
+
+	var _element = new WeakMap();
+
+	var _stringElement = new WeakMap();
+
+	var _addressFormat = new WeakMap();
+
+	var _convertAddressToString = new WeakSet();
+
+	var AddressString = /*#__PURE__*/function () {
+	  function AddressString(props) {
+	    babelHelpers.classCallCheck(this, AddressString);
+
+	    _convertAddressToString.add(this);
+
+	    _address.set(this, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _element.set(this, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _stringElement.set(this, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _addressFormat.set(this, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    if (!(props.addressFormat instanceof location_core.Format)) {
+	      throw new Error('addressFormat must be instance of Format');
+	    }
+
+	    babelHelpers.classPrivateFieldSet(this, _addressFormat, props.addressFormat);
+	  }
+
+	  babelHelpers.createClass(AddressString, [{
+	    key: "render",
+	    value: function render(props) {
+	      babelHelpers.classPrivateFieldSet(this, _address, props.address);
+
+	      var addresStr = _classPrivateMethodGet(this, _convertAddressToString, _convertAddressToString2).call(this, babelHelpers.classPrivateFieldGet(this, _address));
+
+	      babelHelpers.classPrivateFieldSet(this, _stringElement, main_core.Tag.render(_templateObject(), addresStr));
+	      babelHelpers.classPrivateFieldSet(this, _element, main_core.Tag.render(_templateObject2(), babelHelpers.classPrivateFieldGet(this, _stringElement)));
+
+	      if (addresStr === '') {
+	        this.hide();
+	      }
+
+	      return babelHelpers.classPrivateFieldGet(this, _element);
+	    }
+	  }, {
+	    key: "show",
+	    value: function show() {
+	      if (babelHelpers.classPrivateFieldGet(this, _element)) {
+	        babelHelpers.classPrivateFieldGet(this, _element).style.display = 'block';
+	      }
+	    }
+	  }, {
+	    key: "hide",
+	    value: function hide() {
+	      if (babelHelpers.classPrivateFieldGet(this, _element)) {
+	        babelHelpers.classPrivateFieldGet(this, _element).style.display = 'none';
+	      }
+	    }
+	  }, {
+	    key: "isHidden",
+	    value: function isHidden() {
+	      return !babelHelpers.classPrivateFieldGet(this, _element) || babelHelpers.classPrivateFieldGet(this, _element).style.display === 'none';
+	    }
+	  }, {
+	    key: "address",
+	    set: function set(address) {
+	      babelHelpers.classPrivateFieldSet(this, _address, address);
+
+	      if (!babelHelpers.classPrivateFieldGet(this, _stringElement)) {
+	        return;
+	      }
+
+	      babelHelpers.classPrivateFieldGet(this, _stringElement).innerHTML = _classPrivateMethodGet(this, _convertAddressToString, _convertAddressToString2).call(this, address);
+
+	      if (!address && !this.isHidden()) {
+	        this.hide();
+	      } else if (address && this.isHidden()) {
+	        this.show();
+	      }
+	    }
+	  }]);
+	  return AddressString;
+	}();
+
+	var _convertAddressToString2 = function _convertAddressToString2(address) {
+	  var result = '';
+
+	  if (address) {
+	    result = location_core.AddressStringConverter.convertAddressToStringTemplate(address, babelHelpers.classPrivateFieldGet(this, _addressFormat).getTemplate(location_core.FormatTemplateType.DEFAULT), location_core.AddressStringConverter.CONTENT_TYPE_HTML, ', ', babelHelpers.classPrivateFieldGet(this, _addressFormat));
+	  }
+
+	  return result;
+	};
+
+	var AddressApplier = ui_vue.Vue.extend({
+	  props: {
+	    address: {
+	      required: true
+	    },
+	    addressFormat: {
+	      required: true
+	    },
+	    isHidden: {
+	      required: true
+	    }
+	  },
+	  methods: {
+	    handleApplyClick: function handleApplyClick() {
+	      this.$emit('apply', {
+	        address: this.address
+	      });
+	    },
+	    convertAddressToString: function convertAddressToString(address) {
+	      if (!address) {
+	        return '';
+	      }
+
+	      return address.toString(this.addressFormat, location_core.AddressStringConverter.STRATEGY_TYPE_TEMPLATE_COMMA);
+	    }
+	  },
+	  computed: {
+	    addressString: function addressString() {
+	      if (!this.address) {
+	        return '';
+	      }
+
+	      return this.address.toString(this.addressFormat, location_core.AddressStringConverter.STRATEGY_TYPE_TEMPLATE_COMMA);
+	    },
+	    containerStyles: function containerStyles() {
+	      return {
+	        display: this.isHidden ? 'none' : 'flex'
+	      };
+	    },
+	    containerClasses: function containerClasses() {
+	      return this.isHidden ? {
+	        hidden: true
+	      } : {};
+	    },
+	    localize: function localize() {
+	      return ui_vue.Vue.getFilteredPhrases('LOCATION_WIDGET_');
+	    }
+	  },
+	  template: "\n\t\t<div\n\t\t\t:class=\"containerClasses\"\n\t\t\t:style=\"containerStyles\"\n\t\t\tclass=\"location-map-address-changed\"\n\t\t>\n\t\t\t<div class=\"location-map-address-changed-inner\">\n\t\t\t<div class=\"location-map-address-changed-title\">\n\t\t\t\t{{localize.LOCATION_WIDGET_AUI_ADDRESS_CHANGED_NEW_ADDRESS}}\n\t\t\t</div>\n\t\t\t<div class=\"location-map-address-changed-text\">{{addressString}}</div>\n\t\t\t</div>\n\t\t\t<button @click=\"handleApplyClick\" type=\"button\" class=\"location-map-address-apply-btn\">\n\t\t\t\t{{localize.LOCATION_WIDGET_AUI_ADDRESS_APPLY}}\n\t\t\t</button>\n\t\t</div>\t\n\t"
+	});
+
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	/**
+	 * Popup window, which contains map
+	 */
+
+	var _adjustRightPosition = new WeakSet();
+
+	var Popup = /*#__PURE__*/function (_MainPopup) {
+	  babelHelpers.inherits(Popup, _MainPopup);
+
+	  function Popup() {
+	    var _babelHelpers$getProt;
+
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, Popup);
+
+	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+
+	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(Popup)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+
+	    _adjustRightPosition.add(babelHelpers.assertThisInitialized(_this));
+
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(Popup, [{
+	    key: "getBindElement",
+	    value: function getBindElement() {
+	      return this.bindElement;
+	    }
+	  }, {
+	    key: "adjustPosition",
+	    value: function adjustPosition(bindOptions) {
+	      var isCustomPosition, isCustomPositionSuccess;
+
+	      if (this.bindOptions.position && this.bindOptions.position === 'right') {
+	        isCustomPosition = true;
+	        isCustomPositionSuccess = _classPrivateMethodGet$1(this, _adjustRightPosition, _adjustRightPosition2).call(this);
+	      }
+
+	      if (!(isCustomPosition && isCustomPositionSuccess)) {
+	        babelHelpers.get(babelHelpers.getPrototypeOf(Popup.prototype), "adjustPosition", this).call(this, bindOptions);
+	      }
+	    }
+	    /**
+	     * Adjust the popup in right position
+	     * @returns {boolean} an indicator whether or not we have managed to adjust the popup successfully
+	     */
+
+	  }]);
+	  return Popup;
+	}(main_popup.Popup);
+
+	var _adjustRightPosition2 = function _adjustRightPosition2() {
+	  var bindElRect = this.bindElement.getBoundingClientRect();
+	  var popupHeight = this.getPopupContainer().offsetHeight;
+	  var popupWidth = this.getPopupContainer().offsetWidth;
+	  /**
+	   * Check if the popup fits in the viewport
+	   */
+
+	  if (bindElRect.left + bindElRect.width + popupWidth > document.documentElement.clientWidth) {
+	    return false;
+	  }
+
+	  var angleOffsetY = popupHeight / 2;
+	  var left = bindElRect.left + bindElRect.width + 10;
+	  var top = window.pageYOffset + bindElRect.top + bindElRect.height / 2 - popupHeight / 2;
+
+	  if (top < window.pageYOffset) {
+	    angleOffsetY -= window.pageYOffset - top;
+	    top = window.pageYOffset;
+	  } else if (top > window.pageYOffset + document.body.clientHeight - popupHeight) {
+	    angleOffsetY += top - (window.pageYOffset + document.body.clientHeight - popupHeight);
+	    top = window.pageYOffset + document.body.clientHeight - popupHeight;
+	  }
+
+	  this.setAngle({
+	    position: 'left',
+	    offset: angleOffsetY
+	  });
+	  main_core.Dom.adjust(this.popupContainer, {
+	    style: {
+	      top: "".concat(top, "px"),
+	      left: "".concat(left, "px"),
+	      zIndex: this.getZindex()
+	    }
+	  });
+	  return true;
+	};
+
+	function _templateObject2$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-wrapper\">\n\t\t\t\t<div class=\"location-map-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"]);
+
+	  _templateObject2$1 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"location-map-inner\"></div>"]);
+
+	  _templateObject$1 = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _map = new WeakMap();
+
+	var _mode = new WeakMap();
+
+	var _address$1 = new WeakMap();
+
+	var _popup = new WeakMap();
+
+	var _addressString = new WeakMap();
+
+	var _addressApplier = new WeakMap();
+
+	var _addressFormat$1 = new WeakMap();
+
+	var _gallery = new WeakMap();
+
+	var _locationRepository = new WeakMap();
+
+	var _isMapRendered = new WeakMap();
+
+	var _mapInnerContainer = new WeakMap();
+
+	var _geocodingService = new WeakMap();
+
+	var _contentWrapper = new WeakMap();
+
+	var _userLocationPoint = new WeakMap();
+
+	var _createAddressApplier = new WeakSet();
+
+	var _onLocationChanged = new WeakSet();
+
+	var _renderPopup = new WeakSet();
+
+	var _extractLatLon = new WeakSet();
+
+	var _convertAddressToLocation = new WeakSet();
+
+	var _setLocationInternal = new WeakSet();
+
+	var _renderMap = new WeakSet();
+
+	var MapPopup = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(MapPopup, _EventEmitter);
+
+	  function MapPopup(props) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, MapPopup);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MapPopup).call(this, props));
+
+	    _renderMap.add(babelHelpers.assertThisInitialized(_this));
+
+	    _setLocationInternal.add(babelHelpers.assertThisInitialized(_this));
+
+	    _convertAddressToLocation.add(babelHelpers.assertThisInitialized(_this));
+
+	    _extractLatLon.add(babelHelpers.assertThisInitialized(_this));
+
+	    _renderPopup.add(babelHelpers.assertThisInitialized(_this));
+
+	    _onLocationChanged.add(babelHelpers.assertThisInitialized(_this));
+
+	    _createAddressApplier.add(babelHelpers.assertThisInitialized(_this));
+
+	    _map.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _mode.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _address$1.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _popup.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _addressString.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _addressApplier.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _addressFormat$1.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _gallery.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _locationRepository.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _isMapRendered.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: false
+	    });
+
+	    _mapInnerContainer.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _geocodingService.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _contentWrapper.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _userLocationPoint.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _this.setEventNamespace('BX.Location.Widget.MapPopup');
+
+	    if (!(props.map instanceof location_core.MapBase)) {
+	      BX.debug('map must be instance of Map');
+	    }
+
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _map, props.map);
+
+	    if (props.geocodingService instanceof location_core.GeocodingServiceBase) {
+	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _geocodingService, props.geocodingService);
+	    }
+
+	    babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _map).onLocationChangedEventSubscribe(_classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onLocationChanged, _onLocationChanged2).bind(babelHelpers.assertThisInitialized(_this)));
+
+	    if (!(props.popup instanceof Popup)) {
+	      BX.debug('popup must be instance of Popup');
+	    }
+
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _popup, props.popup);
+
+	    if (!(props.addressFormat instanceof location_core.Format)) {
+	      BX.debug('addressFormat must be instance of Format');
+	    }
+
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressFormat$1, props.addressFormat);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressString, new AddressString({
+	      addressFormat: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _addressFormat$1)
+	    }));
+
+	    _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _createAddressApplier, _createAddressApplier2).call(babelHelpers.assertThisInitialized(_this));
+
+	    if (props.gallery) {
+	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _gallery, props.gallery);
+	    }
+
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository, props.locationRepository);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userLocationPoint, props.userLocationPoint);
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(MapPopup, [{
+	    key: "render",
+	    value: function render(props) {
+	      babelHelpers.classPrivateFieldSet(this, _address$1, props.address);
+	      babelHelpers.classPrivateFieldSet(this, _mode, props.mode);
+	      babelHelpers.classPrivateFieldSet(this, _isMapRendered, false);
+	      babelHelpers.classPrivateFieldSet(this, _mapInnerContainer, main_core.Tag.render(_templateObject$1()));
+
+	      _classPrivateMethodGet$2(this, _renderPopup, _renderPopup2).call(this, props.bindElement, babelHelpers.classPrivateFieldGet(this, _mapInnerContainer));
+	    }
+	  }, {
+	    key: "show",
+	    value: function show() {
+	      var _this2 = this;
+
+	      var useUserLocation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+	      _classPrivateMethodGet$2(this, _convertAddressToLocation, _convertAddressToLocation2).call(this, babelHelpers.classPrivateFieldGet(this, _address$1), useUserLocation).then(function (location) {
+	        if (!location) {
+	          return;
+	        }
+
+	        babelHelpers.classPrivateFieldGet(_this2, _popup).show();
+
+	        if (!babelHelpers.classPrivateFieldGet(_this2, _isMapRendered)) {
+	          _classPrivateMethodGet$2(_this2, _renderMap, _renderMap2).call(_this2, {
+	            location: location
+	          }).then(function () {
+	            if (babelHelpers.classPrivateFieldGet(_this2, _gallery)) {
+	              babelHelpers.classPrivateFieldGet(_this2, _gallery).location = location;
+	            }
+
+	            _this2.emit(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onShowedEvent));
+
+	            babelHelpers.classPrivateFieldGet(_this2, _map).onMapShow();
+	          });
+
+	          babelHelpers.classPrivateFieldSet(_this2, _isMapRendered, true);
+	        } else {
+	          babelHelpers.classPrivateFieldGet(_this2, _map).location = location;
+
+	          if (babelHelpers.classPrivateFieldGet(_this2, _gallery)) {
+	            babelHelpers.classPrivateFieldGet(_this2, _gallery).location = location;
+	          }
+
+	          _this2.emit(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onShowedEvent));
+
+	          babelHelpers.classPrivateFieldGet(_this2, _map).onMapShow();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "isShown",
+	    value: function isShown() {
+	      return babelHelpers.classPrivateFieldGet(this, _popup).isShown();
+	    }
+	  }, {
+	    key: "close",
+	    value: function close() {
+	      babelHelpers.classPrivateFieldGet(this, _popup).close();
+	      babelHelpers.classPrivateFieldGet(this, _addressApplier).$props.isHidden = true;
+	      this.emit(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onClosedEvent));
+	    }
+	  }, {
+	    key: "onChangedEventSubscribe",
+	    value: function onChangedEventSubscribe(listener) {
+	      this.subscribe(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onChangedEvent), listener);
+	    }
+	  }, {
+	    key: "onMouseOverSubscribe",
+	    value: function onMouseOverSubscribe(listener) {
+	      this.subscribe(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onMouseOverEvent), listener);
+	    }
+	  }, {
+	    key: "onMouseOutSubscribe",
+	    value: function onMouseOutSubscribe(listener) {
+	      this.subscribe(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onMouseOutEvent), listener);
+	    }
+	  }, {
+	    key: "subscribeOnShowedEvent",
+	    value: function subscribeOnShowedEvent(listener) {
+	      this.subscribe(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onShowedEvent), listener);
+	    }
+	  }, {
+	    key: "subscribeOnClosedEvent",
+	    value: function subscribeOnClosedEvent(listener) {
+	      this.subscribe(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onClosedEvent), listener);
+	    }
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      babelHelpers.classPrivateFieldSet(this, _map, null);
+	      babelHelpers.classPrivateFieldSet(this, _gallery, null);
+	      babelHelpers.classPrivateFieldSet(this, _addressString, null);
+	      babelHelpers.classPrivateFieldSet(this, _addressApplier, null);
+	      babelHelpers.classPrivateFieldGet(this, _popup).destroy();
+	      babelHelpers.classPrivateFieldSet(this, _popup, null);
+	      main_core.Dom.remove(babelHelpers.classPrivateFieldGet(this, _contentWrapper));
+	      babelHelpers.classPrivateFieldSet(this, _contentWrapper, null);
+	      main_core.Event.unbindAll(this);
+	    }
+	  }, {
+	    key: "bindElement",
+	    get: function get() {
+	      return babelHelpers.classPrivateFieldGet(this, _popup).getBindElement();
+	    },
+	    set: function set(bindElement) {
+	      if (main_core.Type.isDomNode(bindElement)) {
+	        babelHelpers.classPrivateFieldGet(this, _popup).setBindElement(bindElement);
+	      } else {
+	        BX.debug('bindElement must be type of dom node');
+	      }
+	    }
+	  }, {
+	    key: "address",
+	    set: function set(address) {
+	      var _this3 = this;
+
+	      babelHelpers.classPrivateFieldSet(this, _address$1, address);
+	      babelHelpers.classPrivateFieldGet(this, _addressString).address = address;
+
+	      _classPrivateMethodGet$2(this, _convertAddressToLocation, _convertAddressToLocation2).call(this, address).then(function (location) {
+	        _classPrivateMethodGet$2(_this3, _setLocationInternal, _setLocationInternal2).call(_this3, location);
+	      });
+	    }
+	  }, {
+	    key: "mode",
+	    set: function set(mode) {
+	      babelHelpers.classPrivateFieldSet(this, _mode, mode);
+	      babelHelpers.classPrivateFieldGet(this, _map).mode = mode;
+	    }
+	  }]);
+	  return MapPopup;
+	}(main_core_events.EventEmitter);
+
+	var _onChangedEvent = {
+	  writable: true,
+	  value: 'onChanged'
+	};
+	var _onMouseOverEvent = {
+	  writable: true,
+	  value: 'onMouseOver'
+	};
+	var _onMouseOutEvent = {
+	  writable: true,
+	  value: 'onMouseOut'
+	};
+	var _onShowedEvent = {
+	  writable: true,
+	  value: 'onShow'
+	};
+	var _onClosedEvent = {
+	  writable: true,
+	  value: 'onClose'
+	};
+
+	var _createAddressApplier2 = function _createAddressApplier2() {
+	  var _this4 = this;
+
+	  babelHelpers.classPrivateFieldSet(this, _addressApplier, new AddressApplier({
+	    propsData: {
+	      address: babelHelpers.classPrivateFieldGet(this, _address$1),
+	      addressFormat: babelHelpers.classPrivateFieldGet(this, _addressFormat$1),
+	      isHidden: true
+	    }
+	  }));
+	  babelHelpers.classPrivateFieldGet(this, _addressApplier).$mount();
+	  babelHelpers.classPrivateFieldGet(this, _addressApplier).$on('apply', function (event) {
+	    var prevAddress = event.address;
+	    babelHelpers.classPrivateFieldSet(_this4, _address$1, prevAddress);
+	    babelHelpers.classPrivateFieldGet(_this4, _addressString).address = prevAddress;
+	    babelHelpers.classPrivateFieldGet(_this4, _addressApplier).$props.isHidden = true;
+
+	    _this4.emit(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onChangedEvent), {
+	      address: prevAddress
+	    });
+	  });
+	};
+
+	var _onLocationChanged2 = function _onLocationChanged2(event) {
+	  var data = event.getData();
+	  var location = data.location;
+	  var address = location.toAddress();
+
+	  if (!babelHelpers.classPrivateFieldGet(this, _address$1)) {
+	    babelHelpers.classPrivateFieldSet(this, _address$1, address);
+	    babelHelpers.classPrivateFieldGet(this, _addressString).address = address;
+	    this.emit(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onChangedEvent), {
+	      address: address
+	    });
+	  } else if (address.fieldCollection.isEqual(babelHelpers.classPrivateFieldGet(this, _address$1).fieldCollection, location_core.LocationType.ADDRESS_LINE_1)) {
+	    babelHelpers.classPrivateFieldGet(this, _address$1).latitude = address.latitude;
+	    babelHelpers.classPrivateFieldGet(this, _address$1).longitude = address.longitude;
+	    babelHelpers.classPrivateFieldGet(this, _address$1).location.latitude = address.latitude;
+	    babelHelpers.classPrivateFieldGet(this, _address$1).location.longitude = address.longitude;
+	    this.emit(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onChangedEvent), {
+	      address: babelHelpers.classPrivateFieldGet(this, _address$1)
+	    });
+	    babelHelpers.classPrivateFieldGet(this, _addressApplier).$props.isHidden = true;
+	  } else {
+	    babelHelpers.classPrivateFieldGet(this, _addressString).address = address;
+	    babelHelpers.classPrivateFieldGet(this, _addressApplier).$props.address = address;
+	    babelHelpers.classPrivateFieldGet(this, _addressApplier).$props.isHidden = false;
+	  }
+
+	  if (babelHelpers.classPrivateFieldGet(this, _gallery)) {
+	    babelHelpers.classPrivateFieldGet(this, _gallery).location = location;
+	  }
+	};
+
+	var _renderPopup2 = function _renderPopup2(bindElement, mapInnerContainer) {
+	  var _this5 = this;
+
+	  var gallery = '';
+
+	  if (babelHelpers.classPrivateFieldGet(this, _gallery)) {
+	    gallery = babelHelpers.classPrivateFieldGet(this, _gallery).render();
+	  }
+
+	  babelHelpers.classPrivateFieldSet(this, _contentWrapper, main_core.Tag.render(_templateObject2$1(), mapInnerContainer, gallery, babelHelpers.classPrivateFieldGet(this, _mode) === location_core.ControlMode.edit ? babelHelpers.classPrivateFieldGet(this, _addressString).render({
+	    address: babelHelpers.classPrivateFieldGet(this, _address$1)
+	  }) : '', babelHelpers.classPrivateFieldGet(this, _mode) === location_core.ControlMode.edit ? babelHelpers.classPrivateFieldGet(this, _addressApplier).$el : ''));
+	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _contentWrapper), 'click', function (e) {
+	    return e.stopPropagation();
+	  });
+	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _contentWrapper), 'mouseover', function (e) {
+	    return _this5.emit(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onMouseOverEvent), e);
+	  });
+	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _contentWrapper), 'mouseout', function (e) {
+	    return _this5.emit(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onMouseOutEvent), e);
+	  });
+	  this.bindElement = bindElement;
+	  babelHelpers.classPrivateFieldGet(this, _popup).setContent(babelHelpers.classPrivateFieldGet(this, _contentWrapper));
+	};
+
+	var _extractLatLon2 = function _extractLatLon2(address) {
+	  var result = null;
+	  var lat;
+	  var lon;
+
+	  if (address.latitude && address.longitude) {
+	    lat = address.latitude;
+	    lon = address.longitude;
+	  } else if (address.location && address.location.latitude && address.location.longitude) {
+	    lat = address.location.latitude;
+	    lon = address.location.longitude;
+	  }
+
+	  if (lat && lat !== '0' && lon && lon !== '0') {
+	    result = [lat, lon];
+	  }
+
+	  return result;
+	};
+
+	var _convertAddressToLocation2 = function _convertAddressToLocation2(address) {
+	  var _this6 = this;
+
+	  var useUserLocation = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	  return new Promise(function (resolve) {
+	    if (useUserLocation) {
+	      resolve(babelHelpers.classPrivateFieldGet(_this6, _userLocationPoint) && babelHelpers.classPrivateFieldGet(_this6, _mode) !== location_core.ControlMode.view ? new location_core.Location({
+	        latitude: babelHelpers.classPrivateFieldGet(_this6, _userLocationPoint).latitude,
+	        longitude: babelHelpers.classPrivateFieldGet(_this6, _userLocationPoint).longitude
+	      }) : null);
+	      return;
+	    }
+
+	    if (address) {
+	      var latLon = _classPrivateMethodGet$2(_this6, _extractLatLon, _extractLatLon2).call(_this6, address);
+
+	      if (latLon) {
+	        resolve(new location_core.Location({
+	          latitude: latLon[0],
+	          longitude: latLon[1],
+	          type: address.getType()
+	        }));
+	        return;
+	      }
+	    }
+
+	    resolve(null);
+	  });
+	};
+
+	var _setLocationInternal2 = function _setLocationInternal2(location) {
+	  if (babelHelpers.classPrivateFieldGet(this, _map)) {
+	    babelHelpers.classPrivateFieldGet(this, _map).location = location;
+	  }
+
+	  if (babelHelpers.classPrivateFieldGet(this, _gallery)) {
+	    babelHelpers.classPrivateFieldGet(this, _gallery).location = location;
+	  }
+	};
+
+	var _renderMap2 = function _renderMap2(_ref) {
+	  var location = _ref.location;
+	  return babelHelpers.classPrivateFieldGet(this, _map).render({
+	    mapContainer: babelHelpers.classPrivateFieldGet(this, _mapInnerContainer),
+	    location: location,
+	    mode: babelHelpers.classPrivateFieldGet(this, _mode)
+	  });
+	};
+
 	/**
 	 * Base class for the address widget feature
 	 */
 
 	var BaseFeature = /*#__PURE__*/function () {
-	  function BaseFeature() {
+	  function BaseFeature(props) {
 	    babelHelpers.classCallCheck(this, BaseFeature);
+	    babelHelpers.defineProperty(this, "_saveResourceStrategy", false);
+	    this._saveResourceStrategy = props.saveResourceStrategy;
 	  }
 
 	  babelHelpers.createClass(BaseFeature, [{
@@ -60,18 +841,18 @@ this.BX.Location = this.BX.Location || {};
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	/**
 	 * Props for the address widget constructor
 	 */
 
-	var _mode = new WeakMap();
+	var _mode$1 = new WeakMap();
 
 	var _state = new WeakMap();
 
-	var _address = new WeakMap();
+	var _address$2 = new WeakMap();
 
-	var _addressFormat = new WeakMap();
+	var _addressFormat$2 = new WeakMap();
 
 	var _languageId = new WeakMap();
 
@@ -89,7 +870,7 @@ this.BX.Location = this.BX.Location || {};
 
 	var _needWarmBackendAfterAddressChanged = new WeakMap();
 
-	var _locationRepository = new WeakMap();
+	var _locationRepository$1 = new WeakMap();
 
 	var _addFeature = new WeakSet();
 
@@ -101,11 +882,13 @@ this.BX.Location = this.BX.Location || {};
 
 	var _onInputFocus = new WeakSet();
 
-	var _convertAddressToString = new WeakSet();
+	var _convertAddressToString$1 = new WeakSet();
 
 	var _setInputValue = new WeakSet();
 
 	var _onInputFocusOut = new WeakSet();
+
+	var _storeAsLastAddress = new WeakSet();
 
 	var _destroyFeatures = new WeakSet();
 
@@ -133,11 +916,13 @@ this.BX.Location = this.BX.Location || {};
 
 	    _destroyFeatures.add(babelHelpers.assertThisInitialized(_this));
 
+	    _storeAsLastAddress.add(babelHelpers.assertThisInitialized(_this));
+
 	    _onInputFocusOut.add(babelHelpers.assertThisInitialized(_this));
 
 	    _setInputValue.add(babelHelpers.assertThisInitialized(_this));
 
-	    _convertAddressToString.add(babelHelpers.assertThisInitialized(_this));
+	    _convertAddressToString$1.add(babelHelpers.assertThisInitialized(_this));
 
 	    _onInputFocus.add(babelHelpers.assertThisInitialized(_this));
 
@@ -149,7 +934,7 @@ this.BX.Location = this.BX.Location || {};
 
 	    _addFeature.add(babelHelpers.assertThisInitialized(_this));
 
-	    _mode.set(babelHelpers.assertThisInitialized(_this), {
+	    _mode$1.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
@@ -159,12 +944,12 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
-	    _address.set(babelHelpers.assertThisInitialized(_this), {
+	    _address$2.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _addressFormat.set(babelHelpers.assertThisInitialized(_this), {
+	    _addressFormat$2.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
@@ -209,7 +994,7 @@ this.BX.Location = this.BX.Location || {};
 	      value: true
 	    });
 
-	    _locationRepository.set(babelHelpers.assertThisInitialized(_this), {
+	    _locationRepository$1.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
@@ -220,19 +1005,19 @@ this.BX.Location = this.BX.Location || {};
 	      BX.debug('addressFormat must be instance of Format');
 	    }
 
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressFormat, props.addressFormat);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressFormat$2, props.addressFormat);
 
 	    if (props.address && !(props.address instanceof location_core.Address)) {
 	      BX.debug('address must be instance of Address');
 	    }
 
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _address, props.address || null);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _address$2, props.address || null);
 
 	    if (!location_core.ControlMode.isValid(props.mode)) {
 	      BX.debug('mode must be valid ControlMode');
 	    }
 
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _mode, props.mode);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _mode$1, props.mode);
 
 	    if (!main_core.Type.isString(props.languageId)) {
 	      throw new TypeError('props.languageId must be type of string');
@@ -246,7 +1031,7 @@ this.BX.Location = this.BX.Location || {};
 	      }
 
 	      props.features.forEach(function (feature) {
-	        _classPrivateMethodGet(babelHelpers.assertThisInitialized(_this), _addFeature, _addFeature2).call(babelHelpers.assertThisInitialized(_this), feature);
+	        _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _addFeature, _addFeature2).call(babelHelpers.assertThisInitialized(_this), feature);
 	      });
 	    }
 
@@ -255,9 +1040,9 @@ this.BX.Location = this.BX.Location || {};
 	    }
 
 	    if (props.locationRepository instanceof location_core.LocationRepository) {
-	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository, props.locationRepository);
+	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository$1, props.locationRepository);
 	    } else if (babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _needWarmBackendAfterAddressChanged)) {
-	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository, new location_core.LocationRepository());
+	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository$1, new location_core.LocationRepository());
 	    }
 
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _state, State.INITIAL);
@@ -267,6 +1052,7 @@ this.BX.Location = this.BX.Location || {};
 	   * @param {AddressEntity} address
 	   * @param {BaseFeature} sourceFeature
 	   * @param {Array} excludeFeatures
+	   * @param {Object} options
 	   * @internal
 	   */
 
@@ -275,26 +1061,32 @@ this.BX.Location = this.BX.Location || {};
 	    key: "setAddressByFeature",
 	    value: function setAddressByFeature(address, sourceFeature) {
 	      var excludeFeatures = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
-	      var addressId = babelHelpers.classPrivateFieldGet(this, _address) ? babelHelpers.classPrivateFieldGet(this, _address).id : 0;
+	      var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+	      var addressId = babelHelpers.classPrivateFieldGet(this, _address$2) ? babelHelpers.classPrivateFieldGet(this, _address$2).id : 0;
 
-	      if (address && !address.getFieldValue(location_core.AddressType.ADDRESS_LINE_1) && babelHelpers.classPrivateFieldGet(this, _addressFormat).isTemplateExists(location_core.FormatTemplateType.ADDRESS_LINE_1)) {
-	        address.setFieldValue(location_core.AddressType.ADDRESS_LINE_1, location_core.AddressStringConverter.convertAddressToStringTemplate(address, babelHelpers.classPrivateFieldGet(this, _addressFormat).getTemplate(location_core.FormatTemplateType.ADDRESS_LINE_1), location_core.AddressStringConverter.CONTENT_TYPE_TEXT, null, babelHelpers.classPrivateFieldGet(this, _addressFormat)));
+	      if (address && !address.getFieldValue(location_core.AddressType.ADDRESS_LINE_1) && babelHelpers.classPrivateFieldGet(this, _addressFormat$2).isTemplateExists(location_core.FormatTemplateType.ADDRESS_LINE_1)) {
+	        address.setFieldValue(location_core.AddressType.ADDRESS_LINE_1, location_core.AddressStringConverter.convertAddressToStringTemplate(address, babelHelpers.classPrivateFieldGet(this, _addressFormat$2).getTemplate(location_core.FormatTemplateType.ADDRESS_LINE_1), location_core.AddressStringConverter.CONTENT_TYPE_TEXT, null, babelHelpers.classPrivateFieldGet(this, _addressFormat$2)));
 	      }
 
-	      babelHelpers.classPrivateFieldSet(this, _address, address);
+	      babelHelpers.classPrivateFieldSet(this, _address$2, address);
+	      var storeAsLastAddress = options.hasOwnProperty('storeAsLastAddress') ? options.storeAsLastAddress : true;
+
+	      if (storeAsLastAddress) {
+	        _classPrivateMethodGet$3(this, _storeAsLastAddress, _storeAsLastAddress2).call(this);
+	      }
 
 	      if (addressId > 0) {
-	        babelHelpers.classPrivateFieldGet(this, _address).id = addressId;
+	        babelHelpers.classPrivateFieldGet(this, _address$2).id = addressId;
 	      }
 
 	      babelHelpers.classPrivateFieldSet(this, _isAddressChangedByFeature, true);
 
-	      _classPrivateMethodGet(this, _setInputValue, _setInputValue2).call(this, address);
+	      _classPrivateMethodGet$3(this, _setInputValue, _setInputValue2).call(this, address);
 
-	      _classPrivateMethodGet(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'setAddress', [address], sourceFeature, excludeFeatures);
+	      _classPrivateMethodGet$3(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'setAddress', [address], sourceFeature, excludeFeatures);
 
 	      if (babelHelpers.classPrivateFieldGet(this, _state) !== State.DATA_INPUTTING) {
-	        _classPrivateMethodGet(this, _emitOnAddressChanged, _emitOnAddressChanged2).call(this);
+	        _classPrivateMethodGet$3(this, _emitOnAddressChanged, _emitOnAddressChanged2).call(this);
 	      }
 	    }
 	  }, {
@@ -325,7 +1117,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "resetView",
 	    value: function resetView() {
-	      _classPrivateMethodGet(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'resetView');
+	      _classPrivateMethodGet$3(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'resetView');
 	    }
 	    /**
 	     * Render Widget
@@ -341,22 +1133,22 @@ this.BX.Location = this.BX.Location || {};
 
 	      babelHelpers.classPrivateFieldSet(this, _controlWrapper, props.controlWrapper);
 
-	      if (babelHelpers.classPrivateFieldGet(this, _mode) === location_core.ControlMode.edit) {
+	      if (babelHelpers.classPrivateFieldGet(this, _mode$1) === location_core.ControlMode.edit) {
 	        if (!main_core.Type.isDomNode(props.inputNode)) {
 	          BX.debug('props.inputNode  must be instance of Element');
 	        }
 
 	        babelHelpers.classPrivateFieldSet(this, _inputNode, props.inputNode);
 
-	        _classPrivateMethodGet(this, _setInputValue, _setInputValue2).call(this, babelHelpers.classPrivateFieldGet(this, _address));
+	        _classPrivateMethodGet$3(this, _setInputValue, _setInputValue2).call(this, babelHelpers.classPrivateFieldGet(this, _address$2));
 	      }
 
-	      _classPrivateMethodGet(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'render', [props]); // We can prevent these events in features if need
+	      _classPrivateMethodGet$3(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'render', [props]); // We can prevent these events in features if need
 
 
-	      if (babelHelpers.classPrivateFieldGet(this, _mode) === location_core.ControlMode.edit) {
-	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focus', _classPrivateMethodGet(this, _onInputFocus, _onInputFocus2).bind(this));
-	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focusout', _classPrivateMethodGet(this, _onInputFocusOut, _onInputFocusOut2).bind(this));
+	      if (babelHelpers.classPrivateFieldGet(this, _mode$1) === location_core.ControlMode.edit) {
+	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focus', _classPrivateMethodGet$3(this, _onInputFocus, _onInputFocus2).bind(this));
+	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focusout', _classPrivateMethodGet$3(this, _onInputFocusOut, _onInputFocusOut2).bind(this));
 	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'keyup', this.onInputKeyup.bind(this));
 	      }
 	    }
@@ -396,13 +1188,13 @@ this.BX.Location = this.BX.Location || {};
 	      }
 
 	      main_core.Event.unbindAll(this);
-	      main_core.Event.unbind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focus', _classPrivateMethodGet(this, _onInputFocus, _onInputFocus2));
-	      main_core.Event.unbind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focusout', _classPrivateMethodGet(this, _onInputFocusOut, _onInputFocusOut2));
+	      main_core.Event.unbind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focus', _classPrivateMethodGet$3(this, _onInputFocus, _onInputFocus2));
+	      main_core.Event.unbind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focusout', _classPrivateMethodGet$3(this, _onInputFocusOut, _onInputFocusOut2));
 	      main_core.Event.unbind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'keyup', this.onInputKeyup);
 
-	      _classPrivateMethodGet(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'destroy');
+	      _classPrivateMethodGet$3(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'destroy');
 
-	      _classPrivateMethodGet(this, _destroyFeatures, _destroyFeatures2).call(this);
+	      _classPrivateMethodGet$3(this, _destroyFeatures, _destroyFeatures2).call(this);
 
 	      babelHelpers.classPrivateFieldSet(this, _destroyed, true);
 	    }
@@ -429,35 +1221,37 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "address",
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _address);
+	      return babelHelpers.classPrivateFieldGet(this, _address$2);
 	    },
 	    set: function set(address) {
 	      if (address && !(address instanceof location_core.Address)) {
 	        BX.debug('address must be instance of Address');
 	      }
 
-	      babelHelpers.classPrivateFieldSet(this, _address, address);
+	      babelHelpers.classPrivateFieldSet(this, _address$2, address);
 
-	      _classPrivateMethodGet(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'setAddress', [address]);
+	      _classPrivateMethodGet$3(this, _storeAsLastAddress, _storeAsLastAddress2).call(this);
+
+	      _classPrivateMethodGet$3(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'setAddress', [address]);
 
 	      babelHelpers.classPrivateFieldSet(this, _isInputNodeValueUpdated, false);
 	      babelHelpers.classPrivateFieldSet(this, _isAddressChangedByFeature, false);
 
-	      _classPrivateMethodGet(this, _setInputValue, _setInputValue2).call(this, address);
+	      _classPrivateMethodGet$3(this, _setInputValue, _setInputValue2).call(this, address);
 	    }
 	  }, {
 	    key: "mode",
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _mode);
+	      return babelHelpers.classPrivateFieldGet(this, _mode$1);
 	    },
 	    set: function set(mode) {
 	      if (!location_core.ControlMode.isValid(mode)) {
 	        BX.debug('mode must be valid ControlMode');
 	      }
 
-	      babelHelpers.classPrivateFieldSet(this, _mode, mode);
+	      babelHelpers.classPrivateFieldSet(this, _mode$1, mode);
 
-	      _classPrivateMethodGet(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'setMode', [mode]);
+	      _classPrivateMethodGet$3(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'setMode', [mode]);
 	    }
 	  }, {
 	    key: "state",
@@ -467,7 +1261,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "addressFormat",
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _addressFormat);
+	      return babelHelpers.classPrivateFieldGet(this, _addressFormat$2);
 	    }
 	  }]);
 	  return Address;
@@ -533,17 +1327,17 @@ this.BX.Location = this.BX.Location || {};
 
 	var _emitOnAddressChanged2 = function _emitOnAddressChanged2() {
 	  this.emit(Address.onAddressChangedEvent, {
-	    address: babelHelpers.classPrivateFieldGet(this, _address)
+	    address: babelHelpers.classPrivateFieldGet(this, _address$2)
 	  });
 
-	  if (babelHelpers.classPrivateFieldGet(this, _address) && babelHelpers.classPrivateFieldGet(this, _needWarmBackendAfterAddressChanged)) {
-	    _classPrivateMethodGet(this, _warmBackendAfterAddressChanged, _warmBackendAfterAddressChanged2).call(this, babelHelpers.classPrivateFieldGet(this, _address));
+	  if (babelHelpers.classPrivateFieldGet(this, _address$2) && babelHelpers.classPrivateFieldGet(this, _needWarmBackendAfterAddressChanged)) {
+	    _classPrivateMethodGet$3(this, _warmBackendAfterAddressChanged, _warmBackendAfterAddressChanged2).call(this, babelHelpers.classPrivateFieldGet(this, _address$2));
 	  }
 	};
 
 	var _warmBackendAfterAddressChanged2 = function _warmBackendAfterAddressChanged2(address) {
 	  if (address.location !== null && address.location.id <= 0) {
-	    babelHelpers.classPrivateFieldGet(this, _locationRepository).findParents(address.location);
+	    babelHelpers.classPrivateFieldGet(this, _locationRepository$1).findParents(address.location);
 	  }
 	};
 
@@ -551,20 +1345,20 @@ this.BX.Location = this.BX.Location || {};
 	  var value = babelHelpers.classPrivateFieldGet(this, _inputNode).value;
 
 	  if (value.length > 0) {
-	    BX.setCaretPosition(babelHelpers.classPrivateFieldGet(this, _inputNode), value.length - 1);
+	    BX.setCaretPosition(babelHelpers.classPrivateFieldGet(this, _inputNode), value.length);
 	  }
 	};
 
-	var _convertAddressToString2 = function _convertAddressToString2(address, templateType) {
+	var _convertAddressToString2$1 = function _convertAddressToString2(address, templateType) {
 	  var result = '';
 
 	  if (address) {
-	    if (!babelHelpers.classPrivateFieldGet(this, _addressFormat).isTemplateExists(templateType)) {
-	      console.error("Address format \"".concat(babelHelpers.classPrivateFieldGet(this, _addressFormat).code, "\" does not have a template \"").concat(templateType, "\""));
+	    if (!babelHelpers.classPrivateFieldGet(this, _addressFormat$2).isTemplateExists(templateType)) {
+	      console.error("Address format \"".concat(babelHelpers.classPrivateFieldGet(this, _addressFormat$2).code, "\" does not have a template \"").concat(templateType, "\""));
 	      return '';
 	    }
 
-	    result = location_core.AddressStringConverter.convertAddressToStringTemplate(address, babelHelpers.classPrivateFieldGet(this, _addressFormat).getTemplate(templateType), location_core.AddressStringConverter.CONTENT_TYPE_TEXT, ', ', babelHelpers.classPrivateFieldGet(this, _addressFormat));
+	    result = location_core.AddressStringConverter.convertAddressToStringTemplate(address, babelHelpers.classPrivateFieldGet(this, _addressFormat$2).getTemplate(templateType), location_core.AddressStringConverter.CONTENT_TYPE_TEXT, ', ', babelHelpers.classPrivateFieldGet(this, _addressFormat$2));
 	  }
 
 	  return result;
@@ -572,9 +1366,9 @@ this.BX.Location = this.BX.Location || {};
 
 	var _setInputValue2 = function _setInputValue2(address) {
 	  if (babelHelpers.classPrivateFieldGet(this, _inputNode)) {
-	    var shortAddressString = _classPrivateMethodGet(this, _convertAddressToString, _convertAddressToString2).call(this, address, location_core.FormatTemplateType.AUTOCOMPLETE);
+	    var shortAddressString = _classPrivateMethodGet$3(this, _convertAddressToString$1, _convertAddressToString2$1).call(this, address, location_core.FormatTemplateType.AUTOCOMPLETE);
 
-	    var fullAddressString = _classPrivateMethodGet(this, _convertAddressToString, _convertAddressToString2).call(this, address, location_core.FormatTemplateType.DEFAULT);
+	    var fullAddressString = _classPrivateMethodGet$3(this, _convertAddressToString$1, _convertAddressToString2$1).call(this, address, location_core.FormatTemplateType.DEFAULT);
 
 	    babelHelpers.classPrivateFieldGet(this, _inputNode).value = shortAddressString.trim() !== '' ? shortAddressString : fullAddressString;
 	    babelHelpers.classPrivateFieldGet(this, _inputNode).title = fullAddressString;
@@ -591,14 +1385,20 @@ this.BX.Location = this.BX.Location || {};
 	    var address = new location_core.Address({
 	      languageId: babelHelpers.classPrivateFieldGet(this, _languageId)
 	    });
-	    address.setFieldValue(babelHelpers.classPrivateFieldGet(this, _addressFormat).fieldForUnRecognized, value);
+	    address.setFieldValue(babelHelpers.classPrivateFieldGet(this, _addressFormat$2).fieldForUnRecognized, value);
 	    this.address = address;
 
-	    _classPrivateMethodGet(this, _emitOnAddressChanged, _emitOnAddressChanged2).call(this);
+	    _classPrivateMethodGet$3(this, _emitOnAddressChanged, _emitOnAddressChanged2).call(this);
 	  }
 
 	  babelHelpers.classPrivateFieldSet(this, _isInputNodeValueUpdated, false);
 	  babelHelpers.classPrivateFieldSet(this, _isAddressChangedByFeature, false);
+	};
+
+	var _storeAsLastAddress2 = function _storeAsLastAddress2() {
+	  if (babelHelpers.classPrivateFieldGet(this, _address$2) && babelHelpers.classPrivateFieldGet(this, _address$2).fieldCollection && babelHelpers.classPrivateFieldGet(this, _address$2).fieldCollection.isFieldExists(location_core.AddressType.LOCALITY)) {
+	    location_core.Storage.getInstance().lastAddress = babelHelpers.classPrivateFieldGet(this, _address$2);
+	  }
 	};
 
 	var _destroyFeatures2 = function _destroyFeatures2() {
@@ -615,20 +1415,20 @@ this.BX.Location = this.BX.Location || {};
 	  return data;
 	}
 
-	function _templateObject2() {
+	function _templateObject2$2() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<div></div>"]);
 
-	  _templateObject2 = function _templateObject2() {
+	  _templateObject2$2 = function _templateObject2() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _templateObject() {
+	function _templateObject$2() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"location-map-popup-item--info-left\"></div>"]);
 
-	  _templateObject = function _templateObject() {
+	  _templateObject$2 = function _templateObject() {
 	    return data;
 	  };
 
@@ -673,8 +1473,8 @@ this.BX.Location = this.BX.Location || {};
 	  babelHelpers.createClass(MenuBottom, [{
 	    key: "render",
 	    value: function render() {
-	      babelHelpers.classPrivateFieldSet(this, _leftItemNodeContainer, main_core.Tag.render(_templateObject()));
-	      babelHelpers.classPrivateFieldSet(this, _rightItemNodeContainer, main_core.Tag.render(_templateObject2()));
+	      babelHelpers.classPrivateFieldSet(this, _leftItemNodeContainer, main_core.Tag.render(_templateObject$2()));
+	      babelHelpers.classPrivateFieldSet(this, _rightItemNodeContainer, main_core.Tag.render(_templateObject2$2()));
 	      babelHelpers.classPrivateFieldSet(this, _node, main_core.Tag.render(_templateObject3(), babelHelpers.classPrivateFieldGet(this, _leftItemNodeContainer), babelHelpers.classPrivateFieldGet(this, _rightItemNodeContainer)));
 	      return babelHelpers.classPrivateFieldGet(this, _node);
 	    }
@@ -850,7 +1650,15 @@ this.BX.Location = this.BX.Location || {};
 	  return Menu;
 	}(main_popup.Menu);
 
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+
+	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
+
+	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
+
+	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _inputNode$1 = new WeakMap();
 
@@ -862,7 +1670,7 @@ this.BX.Location = this.BX.Location || {};
 
 	var _createMenu = new WeakSet();
 
-	var _getAddressPossibleLocalities = new WeakSet();
+	var _isAddressOfSameLocation = new WeakSet();
 
 	var _createMenuItem = new WeakSet();
 
@@ -892,7 +1700,7 @@ this.BX.Location = this.BX.Location || {};
 
 	    _createMenuItem.add(babelHelpers.assertThisInitialized(_this));
 
-	    _getAddressPossibleLocalities.add(babelHelpers.assertThisInitialized(_this));
+	    _isAddressOfSameLocation.add(babelHelpers.assertThisInitialized(_this));
 
 	    _createMenu.add(babelHelpers.assertThisInitialized(_this));
 
@@ -931,7 +1739,7 @@ this.BX.Location = this.BX.Location || {};
 	    key: "getMenu",
 	    value: function getMenu() {
 	      if (!babelHelpers.classPrivateFieldGet(this, _menu) || babelHelpers.classPrivateFieldGet(this, _menu).isDestroyed()) {
-	        babelHelpers.classPrivateFieldSet(this, _menu, _classPrivateMethodGet$1(this, _createMenu, _createMenu2).call(this));
+	        babelHelpers.classPrivateFieldSet(this, _menu, _classPrivateMethodGet$4(this, _createMenu, _createMenu2).call(this));
 	      }
 
 	      return babelHelpers.classPrivateFieldGet(this, _menu);
@@ -971,24 +1779,35 @@ this.BX.Location = this.BX.Location || {};
 	      this.getMenu().clearItems();
 
 	      if (Array.isArray(locationsList)) {
-	        var isSeparatorSet = false;
 	        babelHelpers.classPrivateFieldSet(this, _locationList, locationsList.slice());
-	        locationsList.forEach(function (location, index) {
-	          if (address && address.getFieldValue(location_core.AddressType.LOCALITY)) {
-	            if (!isSeparatorSet && location && location.address && location.address.getFieldValue(location_core.AddressType.LOCALITY)) {
-	              if (!_classPrivateMethodGet$1(_this2, _getAddressPossibleLocalities, _getAddressPossibleLocalities2).call(_this2, location.address).includes(address.getFieldValue(location_core.AddressType.LOCALITY))) {
-	                isSeparatorSet = true;
+	        var showFlatList = !address || !address.getFieldValue(location_core.AddressType.LOCALITY) || !_classStaticPrivateMethodGet(Prompt, Prompt, _hasLocationWithLocality).call(Prompt, babelHelpers.classPrivateFieldGet(this, _locationList));
 
+	        if (showFlatList) {
+	          locationsList.forEach(function (location, index) {
+	            _this2.getMenu().addMenuItem(_classPrivateMethodGet$4(_this2, _createMenuItem, _createMenuItem2).call(_this2, index, location, searchPhrase));
+	          });
+	        } else {
+	          locationsList.forEach(function (location, index) {
+	            if (_classPrivateMethodGet$4(_this2, _isAddressOfSameLocation, _isAddressOfSameLocation2).call(_this2, address, location)) {
+	              _this2.getMenu().addMenuItem(_classPrivateMethodGet$4(_this2, _createMenuItem, _createMenuItem2).call(_this2, index, location, searchPhrase));
+	            }
+	          });
+	          var isSeparatorSet = false;
+	          locationsList.forEach(function (location, index) {
+	            if (!_classPrivateMethodGet$4(_this2, _isAddressOfSameLocation, _isAddressOfSameLocation2).call(_this2, address, location)) {
+	              if (!isSeparatorSet) {
 	                _this2.getMenu().addMenuItem({
 	                  html: main_core.Loc.getMessage('LOCATION_WIDGET_PROMPT_IN_OTHER_CITY'),
 	                  delimiter: true
 	                });
 	              }
-	            }
-	          }
 
-	          _this2.getMenu().addMenuItem(_classPrivateMethodGet$1(_this2, _createMenuItem, _createMenuItem2).call(_this2, index, location, searchPhrase));
-	        });
+	              _this2.getMenu().addMenuItem(_classPrivateMethodGet$4(_this2, _createMenuItem, _createMenuItem2).call(_this2, index, location, searchPhrase));
+
+	              isSeparatorSet = true;
+	            }
+	          });
+	        }
 	      }
 	    }
 	  }, {
@@ -1002,7 +1821,7 @@ this.BX.Location = this.BX.Location || {};
 	        if (item.delimiter && item.delimiter === true) {
 	          result = isRecursive ? this.getMenu().chooseNextItem() : this.choosePrevItem(true);
 	        } else {
-	          result = _classPrivateMethodGet$1(this, _getLocationFromList, _getLocationFromList2).call(this, this.getMenu().choseItemIdx);
+	          result = _classPrivateMethodGet$4(this, _getLocationFromList, _getLocationFromList2).call(this, this.getMenu().choseItemIdx);
 	        }
 	      }
 
@@ -1018,7 +1837,7 @@ this.BX.Location = this.BX.Location || {};
 	        if (item.delimiter && item.delimiter === true) {
 	          result = this.chooseNextItem();
 	        } else {
-	          result = _classPrivateMethodGet$1(this, _getLocationFromList, _getLocationFromList2).call(this, this.getMenu().choseItemIdx);
+	          result = _classPrivateMethodGet$4(this, _getLocationFromList, _getLocationFromList2).call(this, this.getMenu().choseItemIdx);
 	        }
 	      }
 
@@ -1036,7 +1855,7 @@ this.BX.Location = this.BX.Location || {};
 	      var menuItem = this.getMenu().getChosenItem();
 
 	      if (menuItem && menuItem.id) {
-	        result = _classPrivateMethodGet$1(this, _getLocationFromList, _getLocationFromList2).call(this, this.getMenu().choseItemIdx);
+	        result = _classPrivateMethodGet$4(this, _getLocationFromList, _getLocationFromList2).call(this, this.getMenu().choseItemIdx);
 	      }
 
 	      return result;
@@ -1080,18 +1899,28 @@ this.BX.Location = this.BX.Location || {};
 	  return Prompt;
 	}(main_core_events.EventEmitter);
 
-	babelHelpers.defineProperty(Prompt, "onItemSelectedEvent", 'onItemSelected');
+	var _hasLocationWithLocality = function _hasLocationWithLocality(locationsList) {
+	  var _iterator = _createForOfIteratorHelper$1(locationsList),
+	      _step;
 
-	var _createMenu2 = function _createMenu2() {
-	  return new Menu({
-	    bindElement: babelHelpers.classPrivateFieldGet(this, _menuNode) ? babelHelpers.classPrivateFieldGet(this, _menuNode) : babelHelpers.classPrivateFieldGet(this, _inputNode$1),
-	    autoHide: false,
-	    closeByEsc: true,
-	    className: 'location-widget-prompt-menu'
-	  });
+	  try {
+	    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	      var location = _step.value;
+
+	      if (location.address && location.address.getFieldValue(location_core.AddressType.LOCALITY)) {
+	        return true;
+	      }
+	    }
+	  } catch (err) {
+	    _iterator.e(err);
+	  } finally {
+	    _iterator.f();
+	  }
+
+	  return false;
 	};
 
-	var _getAddressPossibleLocalities2 = function _getAddressPossibleLocalities2(address) {
+	var _getAddressPossibleLocalities = function _getAddressPossibleLocalities(address) {
 	  var result = [];
 
 	  if (address.getFieldValue(location_core.AddressType.LOCALITY)) {
@@ -1110,6 +1939,21 @@ this.BX.Location = this.BX.Location || {};
 	  return result;
 	};
 
+	babelHelpers.defineProperty(Prompt, "onItemSelectedEvent", 'onItemSelected');
+
+	var _createMenu2 = function _createMenu2() {
+	  return new Menu({
+	    bindElement: babelHelpers.classPrivateFieldGet(this, _menuNode) ? babelHelpers.classPrivateFieldGet(this, _menuNode) : babelHelpers.classPrivateFieldGet(this, _inputNode$1),
+	    autoHide: false,
+	    closeByEsc: true,
+	    className: 'location-widget-prompt-menu'
+	  });
+	};
+
+	var _isAddressOfSameLocation2 = function _isAddressOfSameLocation2(address, location) {
+	  return address && address.getFieldValue(location_core.AddressType.LOCALITY) && location && location.address && location.address.getFieldValue(location_core.AddressType.LOCALITY) && _classStaticPrivateMethodGet(Prompt, Prompt, _getAddressPossibleLocalities).call(Prompt, location.address).includes(address.getFieldValue(location_core.AddressType.LOCALITY));
+	};
+
 	var _createMenuItem2 = function _createMenuItem2(index, location, searchPhrase) {
 	  var _this3 = this;
 
@@ -1118,7 +1962,7 @@ this.BX.Location = this.BX.Location || {};
 	    title: location.name,
 	    html: Prompt.createMenuItemText(location.name, searchPhrase, location),
 	    onclick: function onclick(event, item) {
-	      _classPrivateMethodGet$1(_this3, _onItemSelect, _onItemSelect2).call(_this3, index);
+	      _classPrivateMethodGet$4(_this3, _onItemSelect, _onItemSelect2).call(_this3, index);
 
 	      _this3.close();
 	    }
@@ -1126,7 +1970,7 @@ this.BX.Location = this.BX.Location || {};
 	};
 
 	var _onItemSelect2 = function _onItemSelect2(index) {
-	  var location = _classPrivateMethodGet$1(this, _getLocationFromList, _getLocationFromList2).call(this, index);
+	  var location = _classPrivateMethodGet$4(this, _getLocationFromList, _getLocationFromList2).call(this, index);
 
 	  if (location) {
 	    this.emit(Prompt.onItemSelectedEvent, {
@@ -1149,7 +1993,7 @@ this.BX.Location = this.BX.Location || {};
 	  return result;
 	};
 
-	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _input = new WeakMap();
 
@@ -1157,22 +2001,22 @@ this.BX.Location = this.BX.Location || {};
 
 	var _pureAddressString = new WeakMap();
 
-	var _addressFormat$1 = new WeakMap();
+	var _addressFormat$3 = new WeakMap();
 
 	var _actualizePureString = new WeakSet();
 
 	var _isPureAddressStringModified = new WeakSet();
 
-	var _convertAddressToString$1 = new WeakSet();
+	var _convertAddressToString$2 = new WeakSet();
 
-	var AddressString = /*#__PURE__*/function () {
+	var AddressString$1 = /*#__PURE__*/function () {
 	  // Input node element
 	  // Address string value
 	  // Address string as it was without custom inputs
 	  function AddressString(input, addressFormat, _address) {
 	    babelHelpers.classCallCheck(this, AddressString);
 
-	    _convertAddressToString$1.add(this);
+	    _convertAddressToString$2.add(this);
 
 	    _isPureAddressStringModified.add(this);
 
@@ -1193,7 +2037,7 @@ this.BX.Location = this.BX.Location || {};
 	      value: ''
 	    });
 
-	    _addressFormat$1.set(this, {
+	    _addressFormat$3.set(this, {
 	      writable: true,
 	      value: null
 	    });
@@ -1208,7 +2052,7 @@ this.BX.Location = this.BX.Location || {};
 	      throw new TypeError('Wrong addressFormat type');
 	    }
 
-	    babelHelpers.classPrivateFieldSet(this, _addressFormat$1, addressFormat);
+	    babelHelpers.classPrivateFieldSet(this, _addressFormat$3, addressFormat);
 
 	    if (_address && !(_address instanceof location_core.Address)) {
 	      throw new TypeError('Wrong address type');
@@ -1236,14 +2080,14 @@ this.BX.Location = this.BX.Location || {};
 	        babelHelpers.classPrivateFieldSet(this, _pureAddressString, value);
 	      }
 
-	      _classPrivateMethodGet$2(this, _actualizePureString, _actualizePureString2).call(this);
+	      _classPrivateMethodGet$5(this, _actualizePureString, _actualizePureString2).call(this);
 	    }
 	  }, {
 	    key: "actualize",
 	    value: function actualize() {
 	      babelHelpers.classPrivateFieldSet(this, _value, babelHelpers.classPrivateFieldGet(this, _input).value);
 
-	      _classPrivateMethodGet$2(this, _actualizePureString, _actualizePureString2).call(this);
+	      _classPrivateMethodGet$5(this, _actualizePureString, _actualizePureString2).call(this);
 	    }
 	  }, {
 	    key: "isChanged",
@@ -1262,10 +2106,10 @@ this.BX.Location = this.BX.Location || {};
 	      var value = '';
 
 	      if (address) {
-	        value = _classPrivateMethodGet$2(this, _convertAddressToString$1, _convertAddressToString2$1).call(this, address, location_core.FormatTemplateType.AUTOCOMPLETE);
+	        value = _classPrivateMethodGet$5(this, _convertAddressToString$2, _convertAddressToString2$2).call(this, address, location_core.FormatTemplateType.AUTOCOMPLETE);
 
 	        if (value.trim() === '') {
-	          value = _classPrivateMethodGet$2(this, _convertAddressToString$1, _convertAddressToString2$1).call(this, address, location_core.FormatTemplateType.DEFAULT);
+	          value = _classPrivateMethodGet$5(this, _convertAddressToString$2, _convertAddressToString2$2).call(this, address, location_core.FormatTemplateType.DEFAULT);
 	        }
 	      }
 
@@ -1285,7 +2129,7 @@ this.BX.Location = this.BX.Location || {};
 
 	      var result;
 
-	      if (!_classPrivateMethodGet$2(this, _isPureAddressStringModified, _isPureAddressStringModified2).call(this)) {
+	      if (!_classPrivateMethodGet$5(this, _isPureAddressStringModified, _isPureAddressStringModified2).call(this)) {
 	        result = babelHelpers.classPrivateFieldGet(this, _value).slice(babelHelpers.classPrivateFieldGet(this, _pureAddressString).length);
 	      } else {
 	        result = babelHelpers.classPrivateFieldGet(this, _value);
@@ -1298,7 +2142,7 @@ this.BX.Location = this.BX.Location || {};
 	}();
 
 	var _actualizePureString2 = function _actualizePureString2() {
-	  if (_classPrivateMethodGet$2(this, _isPureAddressStringModified, _isPureAddressStringModified2).call(this)) {
+	  if (_classPrivateMethodGet$5(this, _isPureAddressStringModified, _isPureAddressStringModified2).call(this)) {
 	    babelHelpers.classPrivateFieldSet(this, _pureAddressString, '');
 	  }
 	};
@@ -1307,69 +2151,61 @@ this.BX.Location = this.BX.Location || {};
 	  return babelHelpers.classPrivateFieldGet(this, _value) === '' || babelHelpers.classPrivateFieldGet(this, _pureAddressString) === '' || babelHelpers.classPrivateFieldGet(this, _value).indexOf(babelHelpers.classPrivateFieldGet(this, _pureAddressString)) !== 0;
 	};
 
-	var _convertAddressToString2$1 = function _convertAddressToString2(address, templateType) {
-	  if (!babelHelpers.classPrivateFieldGet(this, _addressFormat$1).isTemplateExists(templateType)) {
-	    console.error("Address format \"".concat(babelHelpers.classPrivateFieldGet(this, _addressFormat$1).code, "\" does not have a template \"").concat(templateType, "\""));
+	var _convertAddressToString2$2 = function _convertAddressToString2(address, templateType) {
+	  if (!babelHelpers.classPrivateFieldGet(this, _addressFormat$3).isTemplateExists(templateType)) {
+	    console.error("Address format \"".concat(babelHelpers.classPrivateFieldGet(this, _addressFormat$3).code, "\" does not have a template \"").concat(templateType, "\""));
 	    return '';
 	  }
 
-	  return location_core.AddressStringConverter.convertAddressToStringTemplate(address, babelHelpers.classPrivateFieldGet(this, _addressFormat$1).getTemplate(templateType), location_core.AddressStringConverter.CONTENT_TYPE_TEXT, ', ', babelHelpers.classPrivateFieldGet(this, _addressFormat$1));
+	  return location_core.AddressStringConverter.convertAddressToStringTemplate(address, babelHelpers.classPrivateFieldGet(this, _addressFormat$3).getTemplate(templateType), location_core.AddressStringConverter.CONTENT_TYPE_TEXT, ', ', babelHelpers.classPrivateFieldGet(this, _addressFormat$3));
 	};
 
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span>\t\t\t\t\n\t\t\t\t\t<span class=\"menu-popup-item-icon\"></span>\n\t\t\t\t\t<span class=\"menu-popup-item-text\">", "</span>\n\t\t\t\t</span>\t\t\n\t\t"]);
+	function _templateObject2$3() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span>\n\t\t\t\t\t<span class=\"menu-popup-item-icon\"></span>\n\t\t\t\t\t<span class=\"menu-popup-item-text\">", "</span>\n\t\t\t\t</span>\n\t\t"]);
 
-	  _templateObject2$1 = function _templateObject2() {
+	  _templateObject2$3 = function _templateObject2() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _templateObject$1() {
+	function _templateObject$3() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"location-map-popup-item--show-on-map\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t"]);
 
-	  _templateObject$1 = function _templateObject() {
+	  _templateObject$3 = function _templateObject() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
+	function _classStaticPrivateFieldSpecGet$1(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 
-	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-
-	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$6(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	/**
 	 * @mixes EventEmitter
 	 */
 
-	var _address$1 = new WeakMap();
+	var _address$3 = new WeakMap();
 
-	var _addressString = new WeakMap();
+	var _addressString$1 = new WeakMap();
 
 	var _languageId$1 = new WeakMap();
 
-	var _addressFormat$2 = new WeakMap();
+	var _addressFormat$4 = new WeakMap();
 
 	var _sourceCode = new WeakMap();
 
-	var _locationRepository$1 = new WeakMap();
+	var _locationRepository$2 = new WeakMap();
 
-	var _userLocation = new WeakMap();
+	var _userLocationPoint$1 = new WeakMap();
 
 	var _presetLocationsProvider = new WeakMap();
 
 	var _prompt = new WeakMap();
 
 	var _autocompleteService = new WeakMap();
-
-	var _minCharsCountToAutocomplete = new WeakMap();
-
-	var _promptDelay = new WeakMap();
-
-	var _maxPromptDelay = new WeakMap();
 
 	var _timerId = new WeakMap();
 
@@ -1379,21 +2215,15 @@ this.BX.Location = this.BX.Location || {};
 
 	var _state$1 = new WeakMap();
 
+	var _wasCleared = new WeakMap();
+
 	var _isDestroyed = new WeakMap();
-
-	var _prevKeyUpTime = new WeakMap();
-
-	var _avgKeyUpDelay = new WeakMap();
 
 	var _isAutocompleteRequestStarted = new WeakMap();
 
-	var _maxFirstItemUserDistanceKm = new WeakMap();
+	var _isNextAutocompleteRequestWaiting = new WeakMap();
 
 	var _onLocationSelectTimerId = new WeakMap();
-
-	var _lastSelectedLocationLocalStorageKey = new WeakMap();
-
-	var _filter = new WeakMap();
 
 	var _onInputClick = new WeakSet();
 
@@ -1409,15 +2239,11 @@ this.BX.Location = this.BX.Location || {};
 
 	var _onInputFocus$1 = new WeakSet();
 
-	var _makeAutocompleteFilter = new WeakSet();
-
 	var _makeAutocompleteServiceParams = new WeakSet();
 
 	var _onDocumentClick = new WeakSet();
 
 	var _onPromptsReceived = new WeakSet();
-
-	var _getCurrentAddress = new WeakSet();
 
 	var _getShowOnMapHandler = new WeakSet();
 
@@ -1435,19 +2261,17 @@ this.BX.Location = this.BX.Location || {};
 
 	var _onLocationSelect = new WeakSet();
 
+	var _onInputKeyDown = new WeakSet();
+
 	var _onInputKeyUp = new WeakSet();
 
-	var _createOnLocationSelectTimer = new WeakSet();
+	var _onInputPaste = new WeakSet();
 
-	var _computePromptDelay = new WeakSet();
+	var _createOnLocationSelectTimer = new WeakSet();
 
 	var _showPromptInner = new WeakSet();
 
 	var _createTimer = new WeakSet();
-
-	var _getLastSelectedLocation = new WeakSet();
-
-	var _setLastSelectedLocation = new WeakSet();
 
 	var Autocomplete = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Autocomplete, _EventEmitter);
@@ -1464,7 +2288,7 @@ this.BX.Location = this.BX.Location || {};
 
 	  /** {LocationRepository} */
 
-	  /** {Location} */
+	  /** {Point} */
 
 	  /** {Function} */
 
@@ -1472,36 +2296,26 @@ this.BX.Location = this.BX.Location || {};
 
 	  /** {AutocompleteServiceBase} */
 
-	  /** @type {number} */
-
-	  /** {number} milliseconds promptDelay before the searching will start */
-
-	  /** {number} */
-
 	  /** {number} */
 
 	  /** {Element} */
-
-	  /** {AutocompleteServiceFilter} */
 	  function Autocomplete(props) {
 	    var _this;
 
 	    babelHelpers.classCallCheck(this, Autocomplete);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Autocomplete).call(this, props));
 
-	    _setLastSelectedLocation.add(babelHelpers.assertThisInitialized(_this));
-
-	    _getLastSelectedLocation.add(babelHelpers.assertThisInitialized(_this));
-
 	    _createTimer.add(babelHelpers.assertThisInitialized(_this));
 
 	    _showPromptInner.add(babelHelpers.assertThisInitialized(_this));
 
-	    _computePromptDelay.add(babelHelpers.assertThisInitialized(_this));
-
 	    _createOnLocationSelectTimer.add(babelHelpers.assertThisInitialized(_this));
 
+	    _onInputPaste.add(babelHelpers.assertThisInitialized(_this));
+
 	    _onInputKeyUp.add(babelHelpers.assertThisInitialized(_this));
+
+	    _onInputKeyDown.add(babelHelpers.assertThisInitialized(_this));
 
 	    _onLocationSelect.add(babelHelpers.assertThisInitialized(_this));
 
@@ -1519,15 +2333,11 @@ this.BX.Location = this.BX.Location || {};
 
 	    _getShowOnMapHandler.add(babelHelpers.assertThisInitialized(_this));
 
-	    _getCurrentAddress.add(babelHelpers.assertThisInitialized(_this));
-
 	    _onPromptsReceived.add(babelHelpers.assertThisInitialized(_this));
 
 	    _onDocumentClick.add(babelHelpers.assertThisInitialized(_this));
 
 	    _makeAutocompleteServiceParams.add(babelHelpers.assertThisInitialized(_this));
-
-	    _makeAutocompleteFilter.add(babelHelpers.assertThisInitialized(_this));
 
 	    _onInputFocus$1.add(babelHelpers.assertThisInitialized(_this));
 
@@ -1543,12 +2353,12 @@ this.BX.Location = this.BX.Location || {};
 
 	    _onInputClick.add(babelHelpers.assertThisInitialized(_this));
 
-	    _address$1.set(babelHelpers.assertThisInitialized(_this), {
+	    _address$3.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _addressString.set(babelHelpers.assertThisInitialized(_this), {
+	    _addressString$1.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: null
 	    });
@@ -1558,7 +2368,7 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
-	    _addressFormat$2.set(babelHelpers.assertThisInitialized(_this), {
+	    _addressFormat$4.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1568,12 +2378,12 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
-	    _locationRepository$1.set(babelHelpers.assertThisInitialized(_this), {
+	    _locationRepository$2.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _userLocation.set(babelHelpers.assertThisInitialized(_this), {
+	    _userLocationPoint$1.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1589,21 +2399,6 @@ this.BX.Location = this.BX.Location || {};
 	    });
 
 	    _autocompleteService.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _minCharsCountToAutocomplete.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _promptDelay.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _maxPromptDelay.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1632,19 +2427,14 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
-	    _isDestroyed.set(babelHelpers.assertThisInitialized(_this), {
+	    _wasCleared.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: false
 	    });
 
-	    _prevKeyUpTime.set(babelHelpers.assertThisInitialized(_this), {
+	    _isDestroyed.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
-	      value: void 0
-	    });
-
-	    _avgKeyUpDelay.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
+	      value: false
 	    });
 
 	    _isAutocompleteRequestStarted.set(babelHelpers.assertThisInitialized(_this), {
@@ -1652,24 +2442,14 @@ this.BX.Location = this.BX.Location || {};
 	      value: false
 	    });
 
-	    _maxFirstItemUserDistanceKm.set(babelHelpers.assertThisInitialized(_this), {
+	    _isNextAutocompleteRequestWaiting.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
-	      value: 100
+	      value: false
 	    });
 
 	    _onLocationSelectTimerId.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: null
-	    });
-
-	    _lastSelectedLocationLocalStorageKey.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: "bitrixLocationLastSelectedLocation"
-	    });
-
-	    _filter.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
 	    });
 
 	    _this.setEventNamespace('BX.Location.Widget.Autocomplete');
@@ -1678,7 +2458,7 @@ this.BX.Location = this.BX.Location || {};
 	      throw new Error('props.addressFormat must be type of Format');
 	    }
 
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressFormat$2, props.addressFormat);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressFormat$4, props.addressFormat);
 
 	    if (!(props.autocompleteService instanceof location_core.AutocompleteServiceBase)) {
 	      throw new Error('props.autocompleteService must be type of AutocompleteServiceBase');
@@ -1692,18 +2472,13 @@ this.BX.Location = this.BX.Location || {};
 
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _languageId$1, props.languageId);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceCode, props.sourceCode);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _address$1, props.address);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _address$3, props.address);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _presetLocationsProvider, props.presetLocationsProvider);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository$1, props.locationRepository || new location_core.LocationRepository());
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userLocation, props.userLocation);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _promptDelay, props.promptDelay || 300);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _maxPromptDelay, props.maxPromptDelay || 500);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _minCharsCountToAutocomplete, props.minCharsCountToAutocomplete || 3);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository$2, props.locationRepository || new location_core.LocationRepository());
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userLocationPoint$1, props.userLocationPoint);
 
-	    _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setState, _setState2).call(babelHelpers.assertThisInitialized(_this), State.INITIAL);
+	    _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _setState, _setState2).call(babelHelpers.assertThisInitialized(_this), State.INITIAL);
 
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _avgKeyUpDelay, babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _promptDelay));
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _filter, new location_core.AutocompleteServiceFilter());
 	    return _this;
 	  }
 
@@ -1711,18 +2486,20 @@ this.BX.Location = this.BX.Location || {};
 	    key: "render",
 	    value: function render(props) {
 	      babelHelpers.classPrivateFieldSet(this, _inputNode$2, props.inputNode);
-	      babelHelpers.classPrivateFieldSet(this, _address$1, props.address);
-	      babelHelpers.classPrivateFieldSet(this, _addressString, new AddressString(babelHelpers.classPrivateFieldGet(this, _inputNode$2), babelHelpers.classPrivateFieldGet(this, _addressFormat$2), babelHelpers.classPrivateFieldGet(this, _address$1)));
-	      babelHelpers.classPrivateFieldGet(this, _inputNode$2).addEventListener('keyup', _classPrivateMethodGet$3(this, _onInputKeyUp, _onInputKeyUp2).bind(this));
-	      babelHelpers.classPrivateFieldGet(this, _inputNode$2).addEventListener('focus', _classPrivateMethodGet$3(this, _onInputFocus$1, _onInputFocus2$1).bind(this));
-	      babelHelpers.classPrivateFieldGet(this, _inputNode$2).addEventListener('focusout', _classPrivateMethodGet$3(this, _onInputFocusOut$1, _onInputFocusOut2$1).bind(this));
-	      babelHelpers.classPrivateFieldGet(this, _inputNode$2).addEventListener('click', _classPrivateMethodGet$3(this, _onInputClick, _onInputClick2).bind(this));
+	      babelHelpers.classPrivateFieldSet(this, _address$3, props.address);
+	      babelHelpers.classPrivateFieldSet(this, _addressString$1, new AddressString$1(babelHelpers.classPrivateFieldGet(this, _inputNode$2), babelHelpers.classPrivateFieldGet(this, _addressFormat$4), babelHelpers.classPrivateFieldGet(this, _address$3)));
+	      babelHelpers.classPrivateFieldGet(this, _inputNode$2).addEventListener('keydown', _classPrivateMethodGet$6(this, _onInputKeyDown, _onInputKeyDown2).bind(this));
+	      babelHelpers.classPrivateFieldGet(this, _inputNode$2).addEventListener('keyup', _classPrivateMethodGet$6(this, _onInputKeyUp, _onInputKeyUp2).bind(this));
+	      babelHelpers.classPrivateFieldGet(this, _inputNode$2).addEventListener('focus', _classPrivateMethodGet$6(this, _onInputFocus$1, _onInputFocus2$1).bind(this));
+	      babelHelpers.classPrivateFieldGet(this, _inputNode$2).addEventListener('focusout', _classPrivateMethodGet$6(this, _onInputFocusOut$1, _onInputFocusOut2$1).bind(this));
+	      babelHelpers.classPrivateFieldGet(this, _inputNode$2).addEventListener('click', _classPrivateMethodGet$6(this, _onInputClick, _onInputClick2).bind(this));
+	      babelHelpers.classPrivateFieldGet(this, _inputNode$2).addEventListener('paste', _classPrivateMethodGet$6(this, _onInputPaste, _onInputPaste2).bind(this));
 	      babelHelpers.classPrivateFieldSet(this, _prompt, new Prompt({
 	        inputNode: props.inputNode,
 	        menuNode: props.menuNode
 	      }));
-	      babelHelpers.classPrivateFieldGet(this, _prompt).subscribe(Prompt.onItemSelectedEvent, _classPrivateMethodGet$3(this, _onPromptItemSelected, _onPromptItemSelected2).bind(this));
-	      document.addEventListener('click', _classPrivateMethodGet$3(this, _onDocumentClick, _onDocumentClick2).bind(this));
+	      babelHelpers.classPrivateFieldGet(this, _prompt).subscribe(Prompt.onItemSelectedEvent, _classPrivateMethodGet$6(this, _onPromptItemSelected, _onPromptItemSelected2).bind(this));
+	      document.addEventListener('click', _classPrivateMethodGet$6(this, _onDocumentClick, _onDocumentClick2).bind(this));
 	    } // eslint-disable-next-line no-unused-vars
 
 	  }, {
@@ -1733,7 +2510,7 @@ this.BX.Location = this.BX.Location || {};
 	     * @param {Function} listener
 	     */
 	    value: function onAddressChangedEventSubscribe(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onAddressChangedEvent), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onAddressChangedEvent), listener);
 	    }
 	    /**
 	     * Subscribe on loading event
@@ -1743,7 +2520,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "onStateChangedEventSubscribe",
 	    value: function onStateChangedEventSubscribe(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onStateChangedEvent), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onStateChangedEvent), listener);
 	    }
 	    /**
 	     * @param {Function} listener
@@ -1752,7 +2529,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "onSearchStartedEventSubscribe",
 	    value: function onSearchStartedEventSubscribe(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onSearchStartedEvent), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onSearchStartedEvent), listener);
 	    }
 	    /**
 	     * @param {Function} listener
@@ -1761,7 +2538,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "onSearchCompletedEventSubscribe",
 	    value: function onSearchCompletedEventSubscribe(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onSearchCompletedEvent), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onSearchCompletedEvent), listener);
 	    }
 	    /**
 	     * @param {Function} listener
@@ -1770,7 +2547,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "onShowOnMapClickedEventSubscribe",
 	    value: function onShowOnMapClickedEventSubscribe(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onShowOnMapClickedEvent), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onShowOnMapClickedEvent), listener);
 	    }
 	    /**
 	     * Is called when autocompleteService returned location list
@@ -1789,12 +2566,8 @@ this.BX.Location = this.BX.Location || {};
 	      babelHelpers.classPrivateFieldGet(this, _searchPhrase).current = searchPhrase;
 	      babelHelpers.classPrivateFieldGet(this, _searchPhrase).dropped = '';
 
-	      _classPrivateMethodGet$3(this, _showPromptInner, _showPromptInner2).call(this, searchPhrase, _classPrivateMethodGet$3(this, _computePromptDelay, _computePromptDelay2).call(this));
+	      _classPrivateMethodGet$6(this, _showPromptInner, _showPromptInner2).call(this, searchPhrase);
 	    }
-	    /**
-	     * @returns {number}
-	     */
-
 	  }, {
 	    key: "closePrompt",
 	    value: function closePrompt() {
@@ -1826,13 +2599,15 @@ this.BX.Location = this.BX.Location || {};
 	      babelHelpers.classPrivateFieldSet(this, _timerId, null);
 
 	      if (babelHelpers.classPrivateFieldGet(this, _inputNode$2)) {
-	        babelHelpers.classPrivateFieldGet(this, _inputNode$2).removeEventListener('keyup', _classPrivateMethodGet$3(this, _onInputKeyUp, _onInputKeyUp2));
-	        babelHelpers.classPrivateFieldGet(this, _inputNode$2).removeEventListener('focus', _classPrivateMethodGet$3(this, _onInputFocus$1, _onInputFocus2$1));
-	        babelHelpers.classPrivateFieldGet(this, _inputNode$2).removeEventListener('focusout', _classPrivateMethodGet$3(this, _onInputFocusOut$1, _onInputFocusOut2$1));
-	        babelHelpers.classPrivateFieldGet(this, _inputNode$2).removeEventListener('click', _classPrivateMethodGet$3(this, _onInputClick, _onInputClick2));
+	        babelHelpers.classPrivateFieldGet(this, _inputNode$2).removeEventListener('keydown', _classPrivateMethodGet$6(this, _onInputKeyDown, _onInputKeyDown2));
+	        babelHelpers.classPrivateFieldGet(this, _inputNode$2).removeEventListener('keyup', _classPrivateMethodGet$6(this, _onInputKeyUp, _onInputKeyUp2));
+	        babelHelpers.classPrivateFieldGet(this, _inputNode$2).removeEventListener('focus', _classPrivateMethodGet$6(this, _onInputFocus$1, _onInputFocus2$1));
+	        babelHelpers.classPrivateFieldGet(this, _inputNode$2).removeEventListener('focusout', _classPrivateMethodGet$6(this, _onInputFocusOut$1, _onInputFocusOut2$1));
+	        babelHelpers.classPrivateFieldGet(this, _inputNode$2).removeEventListener('click', _classPrivateMethodGet$6(this, _onInputClick, _onInputClick2));
+	        babelHelpers.classPrivateFieldGet(this, _inputNode$2).removeEventListener('paste', _classPrivateMethodGet$6(this, _onInputPaste, _onInputPaste2));
 	      }
 
-	      document.removeEventListener('click', _classPrivateMethodGet$3(this, _onDocumentClick, _onDocumentClick2));
+	      document.removeEventListener('click', _classPrivateMethodGet$6(this, _onDocumentClick, _onDocumentClick2));
 	      babelHelpers.classPrivateFieldSet(this, _isDestroyed, true);
 	    }
 	  }, {
@@ -1842,15 +2617,15 @@ this.BX.Location = this.BX.Location || {};
 	     * @param address
 	     */
 	    set: function set(address) {
-	      babelHelpers.classPrivateFieldSet(this, _address$1, address);
+	      babelHelpers.classPrivateFieldSet(this, _address$3, address);
 
-	      if (babelHelpers.classPrivateFieldGet(this, _addressString)) // already rendered
+	      if (babelHelpers.classPrivateFieldGet(this, _addressString$1)) // already rendered
 	        {
-	          babelHelpers.classPrivateFieldGet(this, _addressString).setValueFromAddress(babelHelpers.classPrivateFieldGet(this, _address$1));
+	          babelHelpers.classPrivateFieldGet(this, _addressString$1).setValueFromAddress(babelHelpers.classPrivateFieldGet(this, _address$3));
 	        }
 
 	      if (!address) {
-	        babelHelpers.classPrivateFieldGet(this, _filter).reset();
+	        babelHelpers.classPrivateFieldSet(this, _wasCleared, true);
 	      }
 	    }
 	    /**
@@ -1858,7 +2633,7 @@ this.BX.Location = this.BX.Location || {};
 	     */
 	    ,
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _address$1);
+	      return babelHelpers.classPrivateFieldGet(this, _address$3);
 	    }
 	    /**
 	     * Close menu on mouse click outside
@@ -1873,23 +2648,6 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return Autocomplete;
 	}(main_core_events.EventEmitter);
-
-	var _splitPhrase = function _splitPhrase(phrase) {
-	  // eslint-disable-next-line no-param-reassign
-	  phrase = phrase.trim();
-
-	  if (phrase.length <= 0) {
-	    return ['', ''];
-	  }
-
-	  var tailPosition = phrase.lastIndexOf(' ');
-
-	  if (tailPosition <= 0) {
-	    return ['', ''];
-	  }
-
-	  return [phrase.slice(0, tailPosition), phrase.slice(tailPosition + 1)];
-	};
 
 	var _onAddressChangedEvent = {
 	  writable: true,
@@ -1913,10 +2671,10 @@ this.BX.Location = this.BX.Location || {};
 	};
 
 	var _onInputClick2 = function _onInputClick2(e) {
-	  var value = babelHelpers.classPrivateFieldGet(this, _addressString).value;
+	  var value = babelHelpers.classPrivateFieldGet(this, _addressString$1).value;
 
 	  if (value.length === 0) {
-	    _classPrivateMethodGet$3(this, _showPresetLocations, _showPresetLocations2).call(this);
+	    _classPrivateMethodGet$6(this, _showPresetLocations, _showPresetLocations2).call(this);
 	  }
 	};
 
@@ -1931,23 +2689,23 @@ this.BX.Location = this.BX.Location || {};
 	    leftBottomMenuMessage = main_core.Loc.getMessage('LOCATION_WIDGET_START_PRINTING_OR_SHOW_ON_MAP');
 	  }
 
-	  _classPrivateMethodGet$3(this, _showMenu, _showMenu2).call(this, leftBottomMenuMessage, null);
+	  _classPrivateMethodGet$6(this, _showMenu, _showMenu2).call(this, leftBottomMenuMessage, null);
 	};
 
 	var _createRightBottomMenuNode2 = function _createRightBottomMenuNode2(location) {
-	  var element = main_core.Tag.render(_templateObject$1(), main_core.Loc.getMessage('LOCATION_WIDGET_SHOW_ON_MAP'));
-	  element.addEventListener('click', _classPrivateMethodGet$3(this, _getShowOnMapHandler, _getShowOnMapHandler2).call(this, location));
+	  var element = main_core.Tag.render(_templateObject$3(), main_core.Loc.getMessage('LOCATION_WIDGET_SHOW_ON_MAP'));
+	  element.addEventListener('click', _classPrivateMethodGet$6(this, _getShowOnMapHandler, _getShowOnMapHandler2).call(this, location));
 	  return element;
 	};
 
 	var _createLeftBottomMenuNode2 = function _createLeftBottomMenuNode2(text) {
-	  return main_core.Tag.render(_templateObject2$1(), text);
+	  return main_core.Tag.render(_templateObject2$3(), text);
 	};
 
 	var _showMenu2 = function _showMenu2(leftBottomText, location) {
 	  /* Menu destroys popup after the closing, so we need to refresh it every time, we show it */
-	  babelHelpers.classPrivateFieldGet(this, _prompt).getMenu().setBottomRightItemNode(_classPrivateMethodGet$3(this, _createRightBottomMenuNode, _createRightBottomMenuNode2).call(this, location));
-	  babelHelpers.classPrivateFieldGet(this, _prompt).getMenu().setBottomLeftItemNode(_classPrivateMethodGet$3(this, _createLeftBottomMenuNode, _createLeftBottomMenuNode2).call(this, leftBottomText));
+	  babelHelpers.classPrivateFieldGet(this, _prompt).getMenu().setBottomRightItemNode(_classPrivateMethodGet$6(this, _createRightBottomMenuNode, _createRightBottomMenuNode2).call(this, location));
+	  babelHelpers.classPrivateFieldGet(this, _prompt).getMenu().setBottomLeftItemNode(_classPrivateMethodGet$6(this, _createLeftBottomMenuNode, _createLeftBottomMenuNode2).call(this, leftBottomText));
 	  babelHelpers.classPrivateFieldGet(this, _prompt).getMenu().show();
 	};
 
@@ -1957,18 +2715,26 @@ this.BX.Location = this.BX.Location || {};
 	  }
 
 	  if (babelHelpers.classPrivateFieldGet(this, _state$1) === State.DATA_INPUTTING && !(e.relatedTarget && e.relatedTarget.getAttribute('data-role') === 'location-widget-menu-item')) {
-	    _classPrivateMethodGet$3(this, _setState, _setState2).call(this, State.DATA_SUPPOSED);
+	    _classPrivateMethodGet$6(this, _setState, _setState2).call(this, State.DATA_SUPPOSED);
 
-	    if (babelHelpers.classPrivateFieldGet(this, _addressString)) {
-	      if (!babelHelpers.classPrivateFieldGet(this, _address$1) || !babelHelpers.classPrivateFieldGet(this, _addressString).hasPureAddressString()) {
-	        babelHelpers.classPrivateFieldSet(this, _address$1, _classPrivateMethodGet$3(this, _convertStringToAddress, _convertStringToAddress2).call(this, babelHelpers.classPrivateFieldGet(this, _addressString).value));
+	    var isChanged = false;
+
+	    if (babelHelpers.classPrivateFieldGet(this, _addressString$1)) {
+	      if (!babelHelpers.classPrivateFieldGet(this, _address$3) || !babelHelpers.classPrivateFieldGet(this, _addressString$1).hasPureAddressString()) {
+	        babelHelpers.classPrivateFieldSet(this, _address$3, _classPrivateMethodGet$6(this, _convertStringToAddress, _convertStringToAddress2).call(this, babelHelpers.classPrivateFieldGet(this, _addressString$1).value));
+	        isChanged = true;
 	      } // this.#addressString === null until autocompete'll be rendered
-	      else if (babelHelpers.classPrivateFieldGet(this, _addressString).customTail !== '') {
-	          babelHelpers.classPrivateFieldGet(this, _address$1).setFieldValue(babelHelpers.classPrivateFieldGet(this, _addressFormat$2).fieldForUnRecognized, babelHelpers.classPrivateFieldGet(this, _addressString).customTail);
+	      else if (babelHelpers.classPrivateFieldGet(this, _addressString$1).customTail !== '') {
+	          babelHelpers.classPrivateFieldGet(this, _address$3).setFieldValue(babelHelpers.classPrivateFieldGet(this, _addressFormat$4).fieldForUnRecognized, babelHelpers.classPrivateFieldGet(this, _addressString$1).customTail);
+	          isChanged = true;
 	        }
 	    }
 
-	    _classPrivateMethodGet$3(this, _onAddressChangedEventEmit, _onAddressChangedEventEmit2).call(this);
+	    if (isChanged) {
+	      _classPrivateMethodGet$6(this, _onAddressChangedEventEmit, _onAddressChangedEventEmit2).call(this, [], {
+	        storeAsLastAddress: false
+	      });
+	    }
 	  }
 
 	  if (babelHelpers.classPrivateFieldGet(this, _prompt)) {
@@ -1980,55 +2746,62 @@ this.BX.Location = this.BX.Location || {};
 	};
 
 	var _onInputFocus2$1 = function _onInputFocus2() {
+	  var _this2 = this;
+
 	  if (babelHelpers.classPrivateFieldGet(this, _isDestroyed)) {
 	    return;
 	  }
 
-	  if (babelHelpers.classPrivateFieldGet(this, _address$1) && (!babelHelpers.classPrivateFieldGet(this, _address$1).location || !babelHelpers.classPrivateFieldGet(this, _address$1).location.hasExternalRelation()) && babelHelpers.classPrivateFieldGet(this, _addressString).value.length > 0) {
-	    this.showPrompt(babelHelpers.classPrivateFieldGet(this, _addressString).value);
+	  if (!babelHelpers.classPrivateFieldGet(this, _address$3)) {
+	    var lastAddress = location_core.Storage.getInstance().lastAddress;
+
+	    if (lastAddress && lastAddress.fieldCollection.isFieldExists(location_core.AddressType.LOCALITY) && !babelHelpers.classPrivateFieldGet(this, _wasCleared)) {
+	      var fieldCollection = {};
+	      fieldCollection[location_core.AddressType.LOCALITY] = lastAddress.fieldCollection.getFieldValue(location_core.AddressType.LOCALITY);
+
+	      if (lastAddress.fieldCollection.isFieldExists(location_core.AddressType.COUNTRY)) {
+	        fieldCollection[location_core.AddressType.COUNTRY] = lastAddress.fieldCollection.getFieldValue(location_core.AddressType.COUNTRY);
+	      }
+
+	      if (lastAddress.fieldCollection.isFieldExists(location_core.AddressType.ADM_LEVEL_1)) {
+	        fieldCollection[location_core.AddressType.ADM_LEVEL_1] = lastAddress.fieldCollection.getFieldValue(location_core.AddressType.ADM_LEVEL_1);
+	      }
+
+	      if (['RU', 'RU_2'].includes(babelHelpers.classPrivateFieldGet(this, _addressFormat$4).code)) {
+	        fieldCollection[location_core.AddressType.ADDRESS_LINE_2] = ', ';
+	      }
+
+	      babelHelpers.classPrivateFieldSet(this, _address$3, new location_core.Address({
+	        languageId: lastAddress.languageId,
+	        fieldCollection: fieldCollection
+	      }));
+	      babelHelpers.classPrivateFieldGet(this, _addressString$1).setValueFromAddress(babelHelpers.classPrivateFieldGet(this, _address$3));
+
+	      _classPrivateMethodGet$6(this, _setState, _setState2).call(this, State.DATA_SUPPOSED);
+
+	      _classPrivateMethodGet$6(this, _onAddressChangedEventEmit, _onAddressChangedEventEmit2).call(this, [], {
+	        storeAsLastAddress: false
+	      });
+
+	      setTimeout(function () {
+	        BX.setCaretPosition(babelHelpers.classPrivateFieldGet(_this2, _inputNode$2), babelHelpers.classPrivateFieldGet(_this2, _inputNode$2).value.length);
+	      }, 0);
+	    }
+	  } else {
+	    if (babelHelpers.classPrivateFieldGet(this, _address$3) && (!babelHelpers.classPrivateFieldGet(this, _address$3).location || !babelHelpers.classPrivateFieldGet(this, _address$3).location.hasExternalRelation()) && babelHelpers.classPrivateFieldGet(this, _addressString$1).value.length > 0) {
+	      this.showPrompt(babelHelpers.classPrivateFieldGet(this, _addressString$1).value);
+	    }
 	  }
-	};
-
-	var _makeAutocompleteFilter2 = function _makeAutocompleteFilter2() {
-	  var locationForBias = _classPrivateMethodGet$3(this, _getLastSelectedLocation, _getLastSelectedLocation2).call(this);
-
-	  var result = new location_core.AutocompleteServiceFilter();
-
-	  if (!locationForBias) {
-	    return result;
-	  }
-
-	  var filterType = null;
-
-	  if (locationForBias.type === location_core.LocationType.COUNTRY) {
-	    filterType = location_core.LocationType.LOCALITY;
-	  } else if (locationForBias.type === location_core.LocationType.LOCALITY) {
-	    filterType = location_core.LocationType.STREET;
-	  } else if (locationForBias.type === location_core.LocationType.STREET) {
-	    filterType = location_core.LocationType.BUILDING;
-	  }
-
-	  if (filterType) {
-	    result.types = [filterType];
-	  }
-
-	  return result;
 	};
 
 	var _makeAutocompleteServiceParams2 = function _makeAutocompleteServiceParams2() {
-	  var locationForBias = null;
 	  var result = {};
+	  result.biasPoint = babelHelpers.classPrivateFieldGet(this, _userLocationPoint$1);
 
-	  var lastSelectedLocation = _classPrivateMethodGet$3(this, _getLastSelectedLocation, _getLastSelectedLocation2).call(this);
-
-	  if (lastSelectedLocation) {
-	    locationForBias = lastSelectedLocation;
-	  } else if (babelHelpers.classPrivateFieldGet(this, _userLocation)) {
-	    locationForBias = babelHelpers.classPrivateFieldGet(this, _userLocation);
+	  if (babelHelpers.classPrivateFieldGet(this, _address$3) && babelHelpers.classPrivateFieldGet(this, _address$3).latitude && babelHelpers.classPrivateFieldGet(this, _address$3).longitude) {
+	    result.biasPoint = new location_core.Point(babelHelpers.classPrivateFieldGet(this, _address$3).latitude, babelHelpers.classPrivateFieldGet(this, _address$3).longitude);
 	  }
 
-	  result.filter = babelHelpers.classPrivateFieldGet(this, _filter);
-	  result.locationForBias = locationForBias;
 	  return result;
 	};
 
@@ -2047,104 +2820,85 @@ this.BX.Location = this.BX.Location || {};
 	};
 
 	var _onPromptsReceived2 = function _onPromptsReceived2(locationsList, params) {
-	  var _this2 = this;
+	  var _this3 = this;
 
 	  if (Array.isArray(locationsList) && locationsList.length > 0) {
-	    if (locationsList.length === 1 && babelHelpers.classPrivateFieldGet(this, _address$1) && babelHelpers.classPrivateFieldGet(this, _address$1).location && babelHelpers.classPrivateFieldGet(this, _address$1).location.externalId && babelHelpers.classPrivateFieldGet(this, _address$1).location.externalId === locationsList[0].externalId) {
+	    if (locationsList.length === 1 && babelHelpers.classPrivateFieldGet(this, _address$3) && babelHelpers.classPrivateFieldGet(this, _address$3).location && babelHelpers.classPrivateFieldGet(this, _address$3).location.externalId && babelHelpers.classPrivateFieldGet(this, _address$3).location.externalId === locationsList[0].externalId) {
 	      this.closePrompt();
 	      return;
 	    }
 
-	    babelHelpers.classPrivateFieldGet(this, _prompt).setMenuItems(locationsList, babelHelpers.classPrivateFieldGet(this, _searchPhrase).requested, _classPrivateMethodGet$3(this, _getCurrentAddress, _getCurrentAddress2).call(this));
+	    babelHelpers.classPrivateFieldGet(this, _prompt).setMenuItems(locationsList, babelHelpers.classPrivateFieldGet(this, _searchPhrase).requested, this.address);
 
-	    _classPrivateMethodGet$3(this, _showMenu, _showMenu2).call(this, main_core.Loc.getMessage('LOCATION_WIDGET_PICK_ADDRESS_OR_SHOW_ON_MAP'), locationsList[0]);
+	    _classPrivateMethodGet$6(this, _showMenu, _showMenu2).call(this, main_core.Loc.getMessage('LOCATION_WIDGET_PICK_ADDRESS_OR_SHOW_ON_MAP'), locationsList[0]);
 	  } else {
-	    var split = _classStaticPrivateMethodGet(Autocomplete, Autocomplete, _splitPhrase).call(Autocomplete, babelHelpers.classPrivateFieldGet(this, _searchPhrase).current);
+	    babelHelpers.classPrivateFieldGet(this, _prompt).getMenu().clearItems();
+	    babelHelpers.classPrivateFieldGet(this, _prompt).getMenu().addMenuItem({
+	      id: 'notFound',
+	      html: "<span>".concat(main_core.Loc.getMessage('LOCATION_WIDGET_PROMPT_ADDRESS_NOT_FOUND'), "</span>"),
+	      // eslint-disable-next-line no-unused-vars
+	      onclick: function onclick(event, item) {
+	        babelHelpers.classPrivateFieldGet(_this3, _prompt).close();
+	      }
+	    });
 
-	    babelHelpers.classPrivateFieldGet(this, _searchPhrase).current = split[0];
-	    babelHelpers.classPrivateFieldGet(this, _searchPhrase).dropped = "".concat(split[1], " ").concat(babelHelpers.classPrivateFieldGet(this, _searchPhrase).dropped);
-
-	    if (babelHelpers.classPrivateFieldGet(this, _searchPhrase).current.length > 0) {
-	      _classPrivateMethodGet$3(this, _showPromptInner, _showPromptInner2).call(this, babelHelpers.classPrivateFieldGet(this, _searchPhrase).current, params, 1);
-	    } else {
-	      babelHelpers.classPrivateFieldGet(this, _prompt).getMenu().clearItems();
-	      babelHelpers.classPrivateFieldGet(this, _prompt).getMenu().addMenuItem({
-	        id: 'notFound',
-	        html: "<span>".concat(main_core.Loc.getMessage('LOCATION_WIDGET_PROMPT_ADDRESS_NOT_FOUND'), "</span>"),
-	        // eslint-disable-next-line no-unused-vars
-	        onclick: function onclick(event, item) {
-	          babelHelpers.classPrivateFieldGet(_this2, _prompt).close();
-	        }
-	      });
-
-	      _classPrivateMethodGet$3(this, _showMenu, _showMenu2).call(this, main_core.Loc.getMessage('LOCATION_WIDGET_CHECK_ADDRESS_OR_SHOW_ON_MAP'), null);
-	    }
+	    _classPrivateMethodGet$6(this, _showMenu, _showMenu2).call(this, main_core.Loc.getMessage('LOCATION_WIDGET_CHECK_ADDRESS_OR_SHOW_ON_MAP'), null);
 	  }
-	};
-
-	var _getCurrentAddress2 = function _getCurrentAddress2() {
-	  if (this.address && this.address.getFieldValue(location_core.AddressType.LOCALITY)) {
-	    return this.address;
-	  }
-
-	  var lastSelectedLocation = _classPrivateMethodGet$3(this, _getLastSelectedLocation, _getLastSelectedLocation2).call(this);
-
-	  if (lastSelectedLocation && lastSelectedLocation.address && lastSelectedLocation.address.getFieldValue(location_core.AddressType.LOCALITY)) {
-	    return lastSelectedLocation.address;
-	  }
-
-	  return null;
 	};
 
 	var _getShowOnMapHandler2 = function _getShowOnMapHandler2(location) {
-	  var _this3 = this;
+	  var _this4 = this;
 
 	  return function () {
-	    if (location && babelHelpers.classPrivateFieldGet(_this3, _userLocation) && location.latitude && location.longitude && babelHelpers.classPrivateFieldGet(_this3, _userLocation).latitude && babelHelpers.classPrivateFieldGet(_this3, _userLocation).longitude) {
-	      var firstItemUserDistance = location_core.DistanceCalculator.getDistanceFromLatLonInKm(location.latitude, location.longitude, babelHelpers.classPrivateFieldGet(_this3, _userLocation).latitude, babelHelpers.classPrivateFieldGet(_this3, _userLocation).longitude);
+	    if (location) {
+	      _classPrivateMethodGet$6(_this4, _fulfillSelection, _fulfillSelection2).call(_this4, location);
 
-	      if (firstItemUserDistance <= babelHelpers.classPrivateFieldGet(_this3, _maxFirstItemUserDistanceKm)) {
-	        _classPrivateMethodGet$3(_this3, _fulfillSelection, _fulfillSelection2).call(_this3, location);
+	      return;
+	    } // Otherwise this click will close just opened map popup.
 
-	        return;
-	      }
-	    }
 
 	    setTimeout(function () {
-	      _this3.emit(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onShowOnMapClickedEvent));
-	    }, 1 // Otherwise this click will close just opened map popup.
-	    );
+	      _this4.emit(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onShowOnMapClickedEvent));
+	    }, 1);
 	  };
 	};
 
 	var _onPromptItemSelected2 = function _onPromptItemSelected2(event) {
 	  if (event.data.location) {
-	    _classPrivateMethodGet$3(this, _fulfillSelection, _fulfillSelection2).call(this, event.data.location);
+	    _classPrivateMethodGet$6(this, _fulfillSelection, _fulfillSelection2).call(this, event.data.location);
 	  }
 	};
 
 	var _setState2 = function _setState2(state) {
 	  babelHelpers.classPrivateFieldSet(this, _state$1, state);
-	  this.emit(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onStateChangedEvent), {
+	  this.emit(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onStateChangedEvent), {
 	    state: babelHelpers.classPrivateFieldGet(this, _state$1)
 	  });
 	};
 
 	var _fulfillSelection2 = function _fulfillSelection2(location) {
-	  var _this4 = this;
+	  var _this5 = this;
 
 	  var result;
 
-	  _classPrivateMethodGet$3(this, _setState, _setState2).call(this, State.DATA_SELECTED);
+	  _classPrivateMethodGet$6(this, _setState, _setState2).call(this, State.DATA_SELECTED);
 
 	  if (location) {
 	    if (location.hasExternalRelation() && babelHelpers.classPrivateFieldGet(this, _sourceCode) === location.sourceCode) {
-	      result = _classPrivateMethodGet$3(this, _getLocationDetails, _getLocationDetails2).call(this, location).then(function (detailedLocation) {
+	      result = _classPrivateMethodGet$6(this, _getLocationDetails, _getLocationDetails2).call(this, location).then(function (detailedLocation) {
 	        if (location.address && location.address.getFieldValue(location_core.AddressType.ADDRESS_LINE_2)) {
-	          detailedLocation.address.setFieldValue(location_core.AddressType.ADDRESS_LINE_2, location.address.getFieldValue(location_core.AddressType.ADDRESS_LINE_2));
+	          var addressLine2 = '';
+
+	          if (detailedLocation.address.getFieldValue(location_core.AddressType.ADDRESS_LINE_2)) {
+	            addressLine2 = detailedLocation.address.getFieldValue(location_core.AddressType.ADDRESS_LINE_2);
+	            addressLine2 += ', ';
+	          }
+
+	          addressLine2 += location.address.getFieldValue(location_core.AddressType.ADDRESS_LINE_2);
+	          detailedLocation.address.setFieldValue(location_core.AddressType.ADDRESS_LINE_2, addressLine2);
 	        }
 
-	        _classPrivateMethodGet$3(_this4, _createOnLocationSelectTimer, _createOnLocationSelectTimer2).call(_this4, detailedLocation, 0);
+	        _classPrivateMethodGet$6(_this5, _createOnLocationSelectTimer, _createOnLocationSelectTimer2).call(_this5, detailedLocation, 0);
 
 	        return true;
 	      }, function (response) {
@@ -2153,7 +2907,7 @@ this.BX.Location = this.BX.Location || {};
 	    } else {
 	      result = new Promise(function (resolve) {
 	        setTimeout(function () {
-	          _classPrivateMethodGet$3(_this4, _createOnLocationSelectTimer, _createOnLocationSelectTimer2).call(_this4, location, 0);
+	          _classPrivateMethodGet$6(_this5, _createOnLocationSelectTimer, _createOnLocationSelectTimer2).call(_this5, location, 0);
 
 	          resolve();
 	        }, 0);
@@ -2162,7 +2916,7 @@ this.BX.Location = this.BX.Location || {};
 	  } else {
 	    result = new Promise(function (resolve) {
 	      setTimeout(function () {
-	        _classPrivateMethodGet$3(_this4, _createOnLocationSelectTimer, _createOnLocationSelectTimer2).call(_this4, null, 0);
+	        _classPrivateMethodGet$6(_this5, _createOnLocationSelectTimer, _createOnLocationSelectTimer2).call(_this5, null, 0);
 
 	        resolve();
 	      }, 0);
@@ -2174,19 +2928,21 @@ this.BX.Location = this.BX.Location || {};
 
 	var _onAddressChangedEventEmit2 = function _onAddressChangedEventEmit2() {
 	  var excludeSetAddressFeatures = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-	  this.emit(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onAddressChangedEvent), {
-	    address: babelHelpers.classPrivateFieldGet(this, _address$1),
-	    excludeSetAddressFeatures: excludeSetAddressFeatures
+	  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	  this.emit(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onAddressChangedEvent), {
+	    address: babelHelpers.classPrivateFieldGet(this, _address$3),
+	    excludeSetAddressFeatures: excludeSetAddressFeatures,
+	    options: options
 	  });
 	};
 
 	var _getLocationDetails2 = function _getLocationDetails2(location) {
-	  var _this5 = this;
+	  var _this6 = this;
 
-	  _classPrivateMethodGet$3(this, _setState, _setState2).call(this, State.DATA_LOADING);
+	  _classPrivateMethodGet$6(this, _setState, _setState2).call(this, State.DATA_LOADING);
 
-	  return babelHelpers.classPrivateFieldGet(this, _locationRepository$1).findByExternalId(location.externalId, location.sourceCode, location.languageId).then(function (detailedLocation) {
-	    _classPrivateMethodGet$3(_this5, _setState, _setState2).call(_this5, State.DATA_LOADED);
+	  return babelHelpers.classPrivateFieldGet(this, _locationRepository$2).findByExternalId(location.externalId, location.sourceCode, location.languageId).then(function (detailedLocation) {
+	    _classPrivateMethodGet$6(_this6, _setState, _setState2).call(_this6, State.DATA_LOADED);
 
 	    var result;
 	    /*
@@ -2211,40 +2967,38 @@ this.BX.Location = this.BX.Location || {};
 	  var result = new location_core.Address({
 	    languageId: babelHelpers.classPrivateFieldGet(this, _languageId$1)
 	  });
-	  result.setFieldValue(babelHelpers.classPrivateFieldGet(this, _addressFormat$2).fieldForUnRecognized, addressString);
+	  result.setFieldValue(babelHelpers.classPrivateFieldGet(this, _addressFormat$4).fieldForUnRecognized, addressString);
 	  return result;
 	};
 
 	var _onLocationSelect2 = function _onLocationSelect2(location) {
-	  if (location) {
-	    _classPrivateMethodGet$3(this, _setLastSelectedLocation, _setLastSelectedLocation2).call(this, location);
+	  babelHelpers.classPrivateFieldSet(this, _address$3, location ? location.toAddress() : null);
+	  babelHelpers.classPrivateFieldGet(this, _addressString$1).setValueFromAddress(babelHelpers.classPrivateFieldGet(this, _address$3));
+
+	  _classPrivateMethodGet$6(this, _onAddressChangedEventEmit, _onAddressChangedEventEmit2).call(this);
+	};
+
+	var _onInputKeyDown2 = function _onInputKeyDown2(e) {
+	  if (!(babelHelpers.classPrivateFieldGet(this, _inputNode$2) && babelHelpers.classPrivateFieldGet(this, _inputNode$2).selectionStart === 0 && babelHelpers.classPrivateFieldGet(this, _inputNode$2).selectionEnd === babelHelpers.classPrivateFieldGet(this, _inputNode$2).value.length)) {
+	    return;
 	  }
 
-	  babelHelpers.classPrivateFieldSet(this, _filter, _classPrivateMethodGet$3(this, _makeAutocompleteFilter, _makeAutocompleteFilter2).call(this));
-	  babelHelpers.classPrivateFieldSet(this, _address$1, location ? location.toAddress() : null);
-	  babelHelpers.classPrivateFieldGet(this, _addressString).setValueFromAddress(babelHelpers.classPrivateFieldGet(this, _address$1));
+	  if (e.code === 'Backspace' || e.code === 'Delete' || e.code === 'KeyV' && (e.ctrlKey || e.metaKey) || e.code === 'KeyX' && (e.ctrlKey || e.metaKey) || e.code === 'Insert' && e.shiftKey || !(e.ctrlKey || e.metaKey) && babelHelpers.toConsumableArray(e.key).length === 1) {
+	    this.address = null;
 
-	  _classPrivateMethodGet$3(this, _onAddressChangedEventEmit, _onAddressChangedEventEmit2).call(this);
+	    _classPrivateMethodGet$6(this, _onAddressChangedEventEmit, _onAddressChangedEventEmit2).call(this);
+	  }
 	};
 
 	var _onInputKeyUp2 = function _onInputKeyUp2(e) {
-	  var _this6 = this;
+	  var _this7 = this;
 
 	  if (babelHelpers.classPrivateFieldGet(this, _isDestroyed)) {
 	    return;
 	  }
 
-	  var now = Date.now();
-
-	  if (babelHelpers.classPrivateFieldGet(this, _prevKeyUpTime)) {
-	    var delta = now - babelHelpers.classPrivateFieldGet(this, _prevKeyUpTime);
-	    babelHelpers.classPrivateFieldSet(this, _avgKeyUpDelay, (babelHelpers.classPrivateFieldGet(this, _avgKeyUpDelay) + delta) / 2);
-	  }
-
-	  babelHelpers.classPrivateFieldSet(this, _prevKeyUpTime, now);
-
-	  if (babelHelpers.classPrivateFieldGet(this, _state$1) !== State.DATA_INPUTTING && babelHelpers.classPrivateFieldGet(this, _addressString).isChanged()) {
-	    _classPrivateMethodGet$3(this, _setState, _setState2).call(this, State.DATA_INPUTTING);
+	  if (babelHelpers.classPrivateFieldGet(this, _state$1) !== State.DATA_INPUTTING && babelHelpers.classPrivateFieldGet(this, _addressString$1).isChanged()) {
+	    _classPrivateMethodGet$6(this, _setState, _setState2).call(this, State.DATA_INPUTTING);
 	  }
 
 	  if (babelHelpers.classPrivateFieldGet(this, _prompt).isShown()) {
@@ -2255,8 +3009,8 @@ this.BX.Location = this.BX.Location || {};
 	      case 'NumpadEnter':
 	      case 'Enter':
 	        if (babelHelpers.classPrivateFieldGet(this, _prompt).isItemChosen()) {
-	          _classPrivateMethodGet$3(this, _fulfillSelection, _fulfillSelection2).call(this, babelHelpers.classPrivateFieldGet(this, _prompt).getChosenItem()).then(function () {
-	            babelHelpers.classPrivateFieldGet(_this6, _prompt).close();
+	          _classPrivateMethodGet$6(this, _fulfillSelection, _fulfillSelection2).call(this, babelHelpers.classPrivateFieldGet(this, _prompt).getChosenItem()).then(function () {
+	            babelHelpers.classPrivateFieldGet(_this7, _prompt).close();
 	          }, function (error) {
 	            return BX.debug(error);
 	          });
@@ -2266,9 +3020,9 @@ this.BX.Location = this.BX.Location || {};
 
 	      case 'Tab':
 	      case 'Escape':
-	        _classPrivateMethodGet$3(this, _setState, _setState2).call(this, State.DATA_SUPPOSED);
+	        _classPrivateMethodGet$6(this, _setState, _setState2).call(this, State.DATA_SUPPOSED);
 
-	        _classPrivateMethodGet$3(this, _onAddressChangedEventEmit, _onAddressChangedEventEmit2).call(this);
+	        _classPrivateMethodGet$6(this, _onAddressChangedEventEmit, _onAddressChangedEventEmit2).call(this);
 
 	        babelHelpers.classPrivateFieldGet(this, _prompt).close();
 	        return;
@@ -2277,7 +3031,7 @@ this.BX.Location = this.BX.Location || {};
 	        location = babelHelpers.classPrivateFieldGet(this, _prompt).choosePrevItem();
 
 	        if (location && location.address) {
-	          _classPrivateMethodGet$3(this, _createOnLocationSelectTimer, _createOnLocationSelectTimer2).call(this, location, onLocationSelectTimeout);
+	          _classPrivateMethodGet$6(this, _createOnLocationSelectTimer, _createOnLocationSelectTimer2).call(this, location, onLocationSelectTimeout);
 	        }
 
 	        return;
@@ -2286,530 +3040,106 @@ this.BX.Location = this.BX.Location || {};
 	        location = babelHelpers.classPrivateFieldGet(this, _prompt).chooseNextItem();
 
 	        if (location && location.address) {
-	          _classPrivateMethodGet$3(this, _createOnLocationSelectTimer, _createOnLocationSelectTimer2).call(this, location, onLocationSelectTimeout);
+	          _classPrivateMethodGet$6(this, _createOnLocationSelectTimer, _createOnLocationSelectTimer2).call(this, location, onLocationSelectTimeout);
 	        }
 
 	        return;
-
-	      case 'Backspace':
-	      case 'Delete':
-	        babelHelpers.classPrivateFieldGet(this, _filter).reset();
-	        break;
 	    }
 	  }
 
-	  if (babelHelpers.classPrivateFieldGet(this, _addressString).isChanged()) {
-	    babelHelpers.classPrivateFieldGet(this, _addressString).actualize();
-	    this.showPrompt(babelHelpers.classPrivateFieldGet(this, _addressString).value);
+	  if (babelHelpers.classPrivateFieldGet(this, _addressString$1).isChanged()) {
+	    babelHelpers.classPrivateFieldGet(this, _addressString$1).actualize();
+	    this.showPrompt(babelHelpers.classPrivateFieldGet(this, _addressString$1).value);
 	  }
 
-	  if (babelHelpers.classPrivateFieldGet(this, _addressString).value.length === 0) {
-	    _classPrivateMethodGet$3(this, _showPresetLocations, _showPresetLocations2).call(this);
+	  if (babelHelpers.classPrivateFieldGet(this, _addressString$1).value.length === 0) {
+	    _classPrivateMethodGet$6(this, _showPresetLocations, _showPresetLocations2).call(this);
 	  }
 	};
 
+	var _onInputPaste2 = function _onInputPaste2() {
+	  var _this8 = this;
+
+	  setTimeout(function () {
+	    if (babelHelpers.classPrivateFieldGet(_this8, _state$1) !== State.DATA_INPUTTING && babelHelpers.classPrivateFieldGet(_this8, _addressString$1).isChanged()) {
+	      _classPrivateMethodGet$6(_this8, _setState, _setState2).call(_this8, State.DATA_INPUTTING);
+	    }
+
+	    if (babelHelpers.classPrivateFieldGet(_this8, _addressString$1).isChanged()) {
+	      babelHelpers.classPrivateFieldGet(_this8, _addressString$1).actualize();
+
+	      _this8.showPrompt(babelHelpers.classPrivateFieldGet(_this8, _addressString$1).value);
+	    }
+	  }, 0);
+	};
+
 	var _createOnLocationSelectTimer2 = function _createOnLocationSelectTimer2(location, timeout) {
-	  var _this7 = this;
+	  var _this9 = this;
 
 	  if (babelHelpers.classPrivateFieldGet(this, _onLocationSelectTimerId) !== null) {
 	    clearTimeout(babelHelpers.classPrivateFieldGet(this, _onLocationSelectTimerId));
 	  }
 
 	  babelHelpers.classPrivateFieldSet(this, _onLocationSelectTimerId, setTimeout(function () {
-	    _classPrivateMethodGet$3(_this7, _onLocationSelect, _onLocationSelect2).call(_this7, location);
+	    _classPrivateMethodGet$6(_this9, _onLocationSelect, _onLocationSelect2).call(_this9, location);
 	  }, timeout));
 	};
 
-	var _computePromptDelay2 = function _computePromptDelay2() {
-	  var delay = babelHelpers.classPrivateFieldGet(this, _promptDelay) > babelHelpers.classPrivateFieldGet(this, _avgKeyUpDelay) ? babelHelpers.classPrivateFieldGet(this, _promptDelay) : babelHelpers.classPrivateFieldGet(this, _avgKeyUpDelay) * 1.5;
-	  return delay > babelHelpers.classPrivateFieldGet(this, _maxPromptDelay) ? babelHelpers.classPrivateFieldGet(this, _maxPromptDelay) : delay;
-	};
-
-	var _showPromptInner2 = function _showPromptInner2(searchPhrase, promptDelay) {
-	  if (searchPhrase.length <= babelHelpers.classPrivateFieldGet(this, _minCharsCountToAutocomplete)) {
-	    promptDelay *= 2;
+	var _showPromptInner2 = function _showPromptInner2(searchPhrase) {
+	  if (searchPhrase.length <= 3) {
+	    return;
 	  }
 
 	  if (babelHelpers.classPrivateFieldGet(this, _timerId) !== null) {
 	    clearTimeout(babelHelpers.classPrivateFieldGet(this, _timerId));
 	  }
 
-	  babelHelpers.classPrivateFieldSet(this, _timerId, _classPrivateMethodGet$3(this, _createTimer, _createTimer2).call(this, searchPhrase, promptDelay));
+	  babelHelpers.classPrivateFieldSet(this, _timerId, _classPrivateMethodGet$6(this, _createTimer, _createTimer2).call(this, searchPhrase));
 	};
 
-	var _createTimer2 = function _createTimer2(searchPhrase, promptDelay) {
-	  var _this8 = this;
+	var _createTimer2 = function _createTimer2(searchPhrase) {
+	  var _this10 = this;
 
 	  return setTimeout(function () {
 	    // to avoid multiple parallel requests, server responses are too slow.
-	    if (babelHelpers.classPrivateFieldGet(_this8, _isAutocompleteRequestStarted)) {
-	      clearTimeout(babelHelpers.classPrivateFieldGet(_this8, _timerId));
-	      babelHelpers.classPrivateFieldSet(_this8, _timerId, _classPrivateMethodGet$3(_this8, _createTimer, _createTimer2).call(_this8, searchPhrase, promptDelay));
+	    if (babelHelpers.classPrivateFieldGet(_this10, _isAutocompleteRequestStarted)) {
+	      clearTimeout(babelHelpers.classPrivateFieldGet(_this10, _timerId));
+	      babelHelpers.classPrivateFieldSet(_this10, _timerId, _classPrivateMethodGet$6(_this10, _createTimer, _createTimer2).call(_this10, searchPhrase));
+	      babelHelpers.classPrivateFieldSet(_this10, _isNextAutocompleteRequestWaiting, true);
 	      return;
 	    }
 
-	    _this8.emit(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onSearchStartedEvent));
+	    babelHelpers.classPrivateFieldSet(_this10, _isNextAutocompleteRequestWaiting, false);
 
-	    babelHelpers.classPrivateFieldSet(_this8, _isAutocompleteRequestStarted, true);
+	    _this10.emit(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onSearchStartedEvent));
 
-	    var params = _classPrivateMethodGet$3(_this8, _makeAutocompleteServiceParams, _makeAutocompleteServiceParams2).call(_this8);
+	    babelHelpers.classPrivateFieldSet(_this10, _isAutocompleteRequestStarted, true);
 
-	    babelHelpers.classPrivateFieldGet(_this8, _autocompleteService).autocomplete(searchPhrase, params).then(function (locationsList) {
-	      babelHelpers.classPrivateFieldSet(_this8, _timerId, null);
+	    var params = _classPrivateMethodGet$6(_this10, _makeAutocompleteServiceParams, _makeAutocompleteServiceParams2).call(_this10);
 
-	      _classPrivateMethodGet$3(_this8, _onPromptsReceived, _onPromptsReceived2).call(_this8, locationsList, params);
+	    babelHelpers.classPrivateFieldGet(_this10, _autocompleteService).autocomplete(searchPhrase, params).then(function (locationsList) {
+	      babelHelpers.classPrivateFieldSet(_this10, _timerId, null);
 
-	      _this8.emit(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onSearchCompletedEvent));
+	      if (!babelHelpers.classPrivateFieldGet(_this10, _isNextAutocompleteRequestWaiting)) {
+	        _classPrivateMethodGet$6(_this10, _onPromptsReceived, _onPromptsReceived2).call(_this10, locationsList, params);
 
-	      babelHelpers.classPrivateFieldSet(_this8, _isAutocompleteRequestStarted, false);
+	        _this10.emit(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onSearchCompletedEvent));
+	      }
+
+	      babelHelpers.classPrivateFieldSet(_this10, _isAutocompleteRequestStarted, false);
 	    }, function (error) {
-	      _this8.emit(_classStaticPrivateFieldSpecGet(Autocomplete, Autocomplete, _onSearchCompletedEvent));
+	      if (!babelHelpers.classPrivateFieldGet(_this10, _isNextAutocompleteRequestWaiting)) {
+	        _this10.emit(_classStaticPrivateFieldSpecGet$1(Autocomplete, Autocomplete, _onSearchCompletedEvent));
+	      }
 
-	      babelHelpers.classPrivateFieldSet(_this8, _isAutocompleteRequestStarted, false);
+	      babelHelpers.classPrivateFieldSet(_this10, _isAutocompleteRequestStarted, false);
 	      BX.debug(error);
 	    });
-	  }, promptDelay);
-	};
-
-	var _getLastSelectedLocation2 = function _getLastSelectedLocation2() {
-	  var lastSelectedLocation = localStorage.getItem(babelHelpers.classPrivateFieldGet(this, _lastSelectedLocationLocalStorageKey));
-
-	  if (lastSelectedLocation) {
-	    try {
-	      return location_core.LocationJsonConverter.convertJsonToLocation(JSON.parse(lastSelectedLocation));
-	    } catch (e) {}
-	  }
-
-	  return null;
-	};
-
-	var _setLastSelectedLocation2 = function _setLastSelectedLocation2(location) {
-	  var jsonLocation = location.toJson();
-	  localStorage.setItem(babelHelpers.classPrivateFieldGet(this, _lastSelectedLocationLocalStorageKey), jsonLocation);
-	  BX.userOptions.save('location', 'last_selected_location', null, jsonLocation);
-	};
-
-	function _templateObject2$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-address-container\">\n\t\t\t\t<div class=\"location-map-address-icon\"></div>\n\t\t\t\t", "\n\t\t\t</div>"]);
-
-	  _templateObject2$2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"location-map-address-text\">", "</div>"]);
-
-	  _templateObject$2 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-
-	var _address$2 = new WeakMap();
-
-	var _element = new WeakMap();
-
-	var _stringElement = new WeakMap();
-
-	var _addressFormat$3 = new WeakMap();
-
-	var _convertAddressToString$2 = new WeakSet();
-
-	var AddressString$1 = /*#__PURE__*/function () {
-	  function AddressString(props) {
-	    babelHelpers.classCallCheck(this, AddressString);
-
-	    _convertAddressToString$2.add(this);
-
-	    _address$2.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _element.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _stringElement.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _addressFormat$3.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    if (!(props.addressFormat instanceof location_core.Format)) {
-	      throw new Error('addressFormat must be instance of Format');
-	    }
-
-	    babelHelpers.classPrivateFieldSet(this, _addressFormat$3, props.addressFormat);
-	  }
-
-	  babelHelpers.createClass(AddressString, [{
-	    key: "render",
-	    value: function render(props) {
-	      babelHelpers.classPrivateFieldSet(this, _address$2, props.address);
-
-	      var addresStr = _classPrivateMethodGet$4(this, _convertAddressToString$2, _convertAddressToString2$2).call(this, babelHelpers.classPrivateFieldGet(this, _address$2));
-
-	      babelHelpers.classPrivateFieldSet(this, _stringElement, main_core.Tag.render(_templateObject$2(), addresStr));
-	      babelHelpers.classPrivateFieldSet(this, _element, main_core.Tag.render(_templateObject2$2(), babelHelpers.classPrivateFieldGet(this, _stringElement)));
-
-	      if (addresStr === '') {
-	        this.hide();
-	      }
-
-	      return babelHelpers.classPrivateFieldGet(this, _element);
-	    }
-	  }, {
-	    key: "show",
-	    value: function show() {
-	      if (babelHelpers.classPrivateFieldGet(this, _element)) {
-	        babelHelpers.classPrivateFieldGet(this, _element).style.display = 'block';
-	      }
-	    }
-	  }, {
-	    key: "hide",
-	    value: function hide() {
-	      if (babelHelpers.classPrivateFieldGet(this, _element)) {
-	        babelHelpers.classPrivateFieldGet(this, _element).style.display = 'none';
-	      }
-	    }
-	  }, {
-	    key: "isHidden",
-	    value: function isHidden() {
-	      return !babelHelpers.classPrivateFieldGet(this, _element) || babelHelpers.classPrivateFieldGet(this, _element).style.display === 'none';
-	    }
-	  }, {
-	    key: "address",
-	    set: function set(address) {
-	      babelHelpers.classPrivateFieldSet(this, _address$2, address);
-
-	      if (!babelHelpers.classPrivateFieldGet(this, _stringElement)) {
-	        return;
-	      }
-
-	      babelHelpers.classPrivateFieldGet(this, _stringElement).innerHTML = _classPrivateMethodGet$4(this, _convertAddressToString$2, _convertAddressToString2$2).call(this, address);
-
-	      if (!address && !this.isHidden()) {
-	        this.hide();
-	      } else if (address && this.isHidden()) {
-	        this.show();
-	      }
-	    }
-	  }]);
-	  return AddressString;
-	}();
-
-	var _convertAddressToString2$2 = function _convertAddressToString2(address) {
-	  var result = '';
-
-	  if (address) {
-	    result = location_core.AddressStringConverter.convertAddressToStringTemplate(address, babelHelpers.classPrivateFieldGet(this, _addressFormat$3).getTemplate(location_core.FormatTemplateType.DEFAULT), location_core.AddressStringConverter.CONTENT_TYPE_HTML, ', ', babelHelpers.classPrivateFieldGet(this, _addressFormat$3));
-	  }
-
-	  return result;
-	};
-
-	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	/**
-	 * Popup window, which contains map
-	 */
-
-	var _adjustRightPosition = new WeakSet();
-
-	var Popup = /*#__PURE__*/function (_MainPopup) {
-	  babelHelpers.inherits(Popup, _MainPopup);
-
-	  function Popup() {
-	    var _babelHelpers$getProt;
-
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, Popup);
-
-	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	      args[_key] = arguments[_key];
-	    }
-
-	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(Popup)).call.apply(_babelHelpers$getProt, [this].concat(args)));
-
-	    _adjustRightPosition.add(babelHelpers.assertThisInitialized(_this));
-
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(Popup, [{
-	    key: "getBindElement",
-	    value: function getBindElement() {
-	      return this.bindElement;
-	    }
-	  }, {
-	    key: "adjustPosition",
-	    value: function adjustPosition(bindOptions) {
-	      var isCustomPosition, isCustomPositionSuccess;
-
-	      if (this.bindOptions.position && this.bindOptions.position === 'right') {
-	        isCustomPosition = true;
-	        isCustomPositionSuccess = _classPrivateMethodGet$5(this, _adjustRightPosition, _adjustRightPosition2).call(this);
-	      }
-
-	      if (!(isCustomPosition && isCustomPositionSuccess)) {
-	        babelHelpers.get(babelHelpers.getPrototypeOf(Popup.prototype), "adjustPosition", this).call(this, bindOptions);
-	      }
-	    }
-	    /**
-	     * Adjust the popup in right position
-	     * @returns {boolean} an indicator whether or not we have managed to adjust the popup successfully
-	     */
-
-	  }]);
-	  return Popup;
-	}(main_popup.Popup);
-
-	var _adjustRightPosition2 = function _adjustRightPosition2() {
-	  var bindElRect = this.bindElement.getBoundingClientRect();
-	  var popupHeight = this.getPopupContainer().offsetHeight;
-	  var popupWidth = this.getPopupContainer().offsetWidth;
-	  /**
-	   * Check if the popup fits in the viewport
-	   */
-
-	  if (bindElRect.left + bindElRect.width + popupWidth > document.documentElement.clientWidth) {
-	    return false;
-	  }
-
-	  var angleOffsetY = popupHeight / 2;
-	  var left = bindElRect.left + bindElRect.width + 10;
-	  var top = window.pageYOffset + bindElRect.top + bindElRect.height / 2 - popupHeight / 2;
-
-	  if (top < window.pageYOffset) {
-	    angleOffsetY -= window.pageYOffset - top;
-	    top = window.pageYOffset;
-	  } else if (top > window.pageYOffset + document.body.clientHeight - popupHeight) {
-	    angleOffsetY += top - (window.pageYOffset + document.body.clientHeight - popupHeight);
-	    top = window.pageYOffset + document.body.clientHeight - popupHeight;
-	  }
-
-	  this.setAngle({
-	    position: 'left',
-	    offset: angleOffsetY
-	  });
-	  main_core.Dom.adjust(this.popupContainer, {
-	    style: {
-	      top: "".concat(top, "px"),
-	      left: "".concat(left, "px"),
-	      zIndex: this.getZindex()
-	    }
-	  });
-	  return true;
-	};
-
-	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\t\t\t\t\n\t\t\t<div class=\"location-map-address-changed hidden\">\n\t\t\t\t<div class=\"location-map-address-changed-inner\">\n\t\t\t\t\t<div class=\"location-map-address-changed-title\">\n\t\t\t\t\t\t", ":\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>"]);
-
-	  _templateObject3$1 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button type=\"button\" class=\"location-map-address-changed-btn\">\n\t\t\t\t", "\n\t\t\t</button>"]);
-
-	  _templateObject2$3 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-address-changed-text\">\n\t\t\t\t", "\n\t\t\t</div>"]);
-
-	  _templateObject$3 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _classStaticPrivateFieldSpecGet$1(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-
-	function _classPrivateMethodGet$6(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	/**
-	 * Class AddressRestorer
-	 * It is responsible for the address restoring.
-	 * If user saved the unrecognized address and then changes the marker position on the map.
-	 * The address changes.
-	 * We show the dialog where the user can restore the address entered earlier.
-	 */
-
-	var _addressFormat$4 = new WeakMap();
-
-	var _address$3 = new WeakMap();
-
-	var _element$1 = new WeakMap();
-
-	var _stringElement$1 = new WeakMap();
-
-	var _button = new WeakMap();
-
-	var _onRestoreButtonClick = new WeakSet();
-
-	var _convertAddressToString$3 = new WeakSet();
-
-	var AddressRestorer = /*#__PURE__*/function (_EventEmitter) {
-	  babelHelpers.inherits(AddressRestorer, _EventEmitter);
-
-	  /** {Format} */
-
-	  /** {Address} */
-
-	  /** {Element} */
-
-	  /** {Element} */
-
-	  /** {Element} */
-	  function AddressRestorer(props) {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, AddressRestorer);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AddressRestorer).call(this));
-
-	    _convertAddressToString$3.add(babelHelpers.assertThisInitialized(_this));
-
-	    _onRestoreButtonClick.add(babelHelpers.assertThisInitialized(_this));
-
-	    _addressFormat$4.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _address$3.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _element$1.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _stringElement$1.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _button.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _this.setEventNamespace('BX.Location.Widget.MapPopup.AddressRestorer');
-
-	    if (!(props.addressFormat instanceof location_core.Format)) {
-	      throw new Error('addressFormat must be instance of Format');
-	    }
-
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressFormat$4, props.addressFormat);
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(AddressRestorer, [{
-	    key: "render",
-	    value: function render(props) {
-	      this.address = props.address;
-	      babelHelpers.classPrivateFieldSet(this, _stringElement$1, main_core.Tag.render(_templateObject$3(), _classPrivateMethodGet$6(this, _convertAddressToString$3, _convertAddressToString2$3).call(this, babelHelpers.classPrivateFieldGet(this, _address$3))));
-	      babelHelpers.classPrivateFieldSet(this, _button, main_core.Tag.render(_templateObject2$3(), BX.message('LOCATION_WIDGET_AUI_ADDRESS_RESTORE')));
-	      babelHelpers.classPrivateFieldGet(this, _button).addEventListener('click', _classPrivateMethodGet$6(this, _onRestoreButtonClick, _onRestoreButtonClick2).bind(this));
-	      babelHelpers.classPrivateFieldSet(this, _element$1, main_core.Tag.render(_templateObject3$1(), BX.message('LOCATION_WIDGET_AUI_ADDRESS_CHANGED'), babelHelpers.classPrivateFieldGet(this, _stringElement$1), babelHelpers.classPrivateFieldGet(this, _button)));
-	      babelHelpers.classPrivateFieldGet(this, _element$1).style.display = 'none';
-	      return babelHelpers.classPrivateFieldGet(this, _element$1);
-	    } // eslint-disable-next-line no-unused-vars
-
-	  }, {
-	    key: "show",
-	    value: function show() {
-	      if (babelHelpers.classPrivateFieldGet(this, _element$1) && babelHelpers.classPrivateFieldGet(this, _address$3) && this.isHidden()) {
-	        babelHelpers.classPrivateFieldGet(this, _element$1).style.display = 'flex';
-	        babelHelpers.classPrivateFieldGet(this, _element$1).classList.remove('hidden');
-	      }
-	    }
-	  }, {
-	    key: "hide",
-	    value: function hide() {
-	      var _this2 = this;
-
-	      if (babelHelpers.classPrivateFieldGet(this, _element$1) && !this.isHidden()) {
-	        babelHelpers.classPrivateFieldGet(this, _element$1).classList.add('hidden');
-	        setTimeout(function () {
-	          babelHelpers.classPrivateFieldGet(_this2, _element$1).style.display = 'none';
-	        }, 600);
-	      }
-	    }
-	  }, {
-	    key: "isHidden",
-	    value: function isHidden() {
-	      var result = false;
-
-	      if (babelHelpers.classPrivateFieldGet(this, _element$1)) {
-	        result = babelHelpers.classPrivateFieldGet(this, _element$1).classList.contains('hidden');
-	      }
-
-	      return result;
-	    }
-	  }, {
-	    key: "onRestoreEventSubscribe",
-	    value: function onRestoreEventSubscribe(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$1(AddressRestorer, AddressRestorer, _onRestoreEvent), listener);
-	    }
-	  }, {
-	    key: "address",
-	    set: function set(address) {
-	      babelHelpers.classPrivateFieldSet(this, _address$3, address); // Not rendered yet
-
-	      if (!babelHelpers.classPrivateFieldGet(this, _stringElement$1) || !babelHelpers.classPrivateFieldGet(this, _address$3)) {
-	        return;
-	      }
-
-	      babelHelpers.classPrivateFieldGet(this, _stringElement$1).innerHTML = _classPrivateMethodGet$6(this, _convertAddressToString$3, _convertAddressToString2$3).call(this, babelHelpers.classPrivateFieldGet(this, _address$3));
-	    }
-	  }]);
-	  return AddressRestorer;
-	}(main_core_events.EventEmitter);
-
-	var _onRestoreEvent = {
-	  writable: true,
-	  value: 'onRestore'
-	};
-
-	var _onRestoreButtonClick2 = function _onRestoreButtonClick2(e) {
-	  this.emit(_classStaticPrivateFieldSpecGet$1(AddressRestorer, AddressRestorer, _onRestoreEvent), {
-	    address: babelHelpers.classPrivateFieldGet(this, _address$3)
-	  });
-	};
-
-	var _convertAddressToString2$3 = function _convertAddressToString2(address) {
-	  if (!address) {
-	    return '';
-	  }
-
-	  return address.toString(babelHelpers.classPrivateFieldGet(this, _addressFormat$4), location_core.AddressStringConverter.STRATEGY_TYPE_TEMPLATE_COMMA);
+	  }, 300);
 	};
 
 	function _templateObject2$4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-wrapper\">\n\t\t\t\t<div class=\"location-map-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-photo-item-block\">\n\t\t\t\t<span class=\"location-map-photo-item-block-image-block-inner\">\n\t\t\t\t\t", "\n\t\t\t\t\t<span \n\t\t\t\t\t\tdata-viewer data-viewer-type=\"image\" \n\t\t\t\t\t\tdata-src=\"", "\" \n\t\t\t\t\t\tdata-title=\"", "\"\n\t\t\t\t\t\tclass=\"location-map-item-photo-image\" \n\t\t\t\t\t\tdata-viewer-group-by=\"", "\"\n\t\t\t\t\t\tstyle=\"background-image: url(", ");\">\t\t\t\t\t\t\t\n\t\t\t\t\t</span>\n\t\t\t\t</span>\n\t\t\t</div>"]);
 
 	  _templateObject2$4 = function _templateObject2() {
 	    return data;
@@ -2819,523 +3149,9 @@ this.BX.Location = this.BX.Location || {};
 	}
 
 	function _templateObject$4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"location-map-inner\"></div>"]);
-
-	  _templateObject$4 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _classStaticPrivateFieldSpecGet$2(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-
-	function _classPrivateMethodGet$7(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-
-	var _map = new WeakMap();
-
-	var _mode$1 = new WeakMap();
-
-	var _address$4 = new WeakMap();
-
-	var _popup = new WeakMap();
-
-	var _addressString$1 = new WeakMap();
-
-	var _addressRestorer = new WeakMap();
-
-	var _addressFormat$5 = new WeakMap();
-
-	var _gallery = new WeakMap();
-
-	var _locationRepository$2 = new WeakMap();
-
-	var _isMapRendered = new WeakMap();
-
-	var _mapInnerContainer = new WeakMap();
-
-	var _geocodingService = new WeakMap();
-
-	var _contentWrapper = new WeakMap();
-
-	var _needRestore = new WeakMap();
-
-	var _userLocation$1 = new WeakMap();
-
-	var _onLocationChanged = new WeakSet();
-
-	var _onAddressRestore = new WeakSet();
-
-	var _renderPopup = new WeakSet();
-
-	var _extractLatLon = new WeakSet();
-
-	var _convertAddressToLocation = new WeakSet();
-
-	var _setLocationInternal = new WeakSet();
-
-	var _renderMap = new WeakSet();
-
-	var MapPopup = /*#__PURE__*/function (_EventEmitter) {
-	  babelHelpers.inherits(MapPopup, _EventEmitter);
-
-	  function MapPopup(props) {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, MapPopup);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MapPopup).call(this, props));
-
-	    _renderMap.add(babelHelpers.assertThisInitialized(_this));
-
-	    _setLocationInternal.add(babelHelpers.assertThisInitialized(_this));
-
-	    _convertAddressToLocation.add(babelHelpers.assertThisInitialized(_this));
-
-	    _extractLatLon.add(babelHelpers.assertThisInitialized(_this));
-
-	    _renderPopup.add(babelHelpers.assertThisInitialized(_this));
-
-	    _onAddressRestore.add(babelHelpers.assertThisInitialized(_this));
-
-	    _onLocationChanged.add(babelHelpers.assertThisInitialized(_this));
-
-	    _map.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _mode$1.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _address$4.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _popup.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _addressString$1.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _addressRestorer.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _addressFormat$5.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _gallery.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _locationRepository$2.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _isMapRendered.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: false
-	    });
-
-	    _mapInnerContainer.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _geocodingService.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _contentWrapper.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _needRestore.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: false
-	    });
-
-	    _userLocation$1.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _this.setEventNamespace('BX.Location.Widget.MapPopup');
-
-	    if (!(props.map instanceof location_core.MapBase)) {
-	      BX.debug('map must be instance of Map');
-	    }
-
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _map, props.map);
-
-	    if (props.geocodingService instanceof location_core.GeocodingServiceBase) {
-	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _geocodingService, props.geocodingService);
-	    }
-
-	    babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _map).onLocationChangedEventSubscribe(_classPrivateMethodGet$7(babelHelpers.assertThisInitialized(_this), _onLocationChanged, _onLocationChanged2).bind(babelHelpers.assertThisInitialized(_this)));
-
-	    if (!(props.popup instanceof Popup)) {
-	      BX.debug('popup must be instance of Popup');
-	    }
-
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _popup, props.popup);
-
-	    if (!(props.addressFormat instanceof location_core.Format)) {
-	      BX.debug('addressFormat must be instance of Format');
-	    }
-
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressFormat$5, props.addressFormat);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressString$1, new AddressString$1({
-	      addressFormat: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _addressFormat$5)
-	    }));
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressRestorer, new AddressRestorer({
-	      addressFormat: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _addressFormat$5)
-	    }));
-	    babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _addressRestorer).onRestoreEventSubscribe(_classPrivateMethodGet$7(babelHelpers.assertThisInitialized(_this), _onAddressRestore, _onAddressRestore2).bind(babelHelpers.assertThisInitialized(_this)));
-
-	    if (props.gallery) {
-	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _gallery, props.gallery);
-	    }
-
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository$2, props.locationRepository);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userLocation$1, props.userLocation);
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(MapPopup, [{
-	    key: "render",
-	    value: function render(props) {
-	      babelHelpers.classPrivateFieldSet(this, _address$4, props.address);
-	      babelHelpers.classPrivateFieldSet(this, _needRestore, true);
-	      babelHelpers.classPrivateFieldSet(this, _mode$1, props.mode);
-	      babelHelpers.classPrivateFieldSet(this, _isMapRendered, false);
-	      babelHelpers.classPrivateFieldSet(this, _mapInnerContainer, main_core.Tag.render(_templateObject$4()));
-
-	      _classPrivateMethodGet$7(this, _renderPopup, _renderPopup2).call(this, props.bindElement, babelHelpers.classPrivateFieldGet(this, _mapInnerContainer));
-	    }
-	  }, {
-	    key: "show",
-	    value: function show() {
-	      var _this2 = this;
-
-	      var useUserLocation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-	      _classPrivateMethodGet$7(this, _convertAddressToLocation, _convertAddressToLocation2).call(this, babelHelpers.classPrivateFieldGet(this, _address$4), useUserLocation).then(function (location) {
-	        if (!location) {
-	          return;
-	        }
-
-	        babelHelpers.classPrivateFieldGet(_this2, _popup).show();
-
-	        if (!babelHelpers.classPrivateFieldGet(_this2, _isMapRendered)) {
-	          _classPrivateMethodGet$7(_this2, _renderMap, _renderMap2).call(_this2, {
-	            location: location
-	          }).then(function () {
-	            if (babelHelpers.classPrivateFieldGet(_this2, _gallery)) {
-	              babelHelpers.classPrivateFieldGet(_this2, _gallery).location = location;
-	            }
-
-	            _this2.emit(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onShowedEvent));
-
-	            babelHelpers.classPrivateFieldGet(_this2, _map).onMapShow();
-	          });
-
-	          babelHelpers.classPrivateFieldSet(_this2, _isMapRendered, true);
-	        } else {
-	          babelHelpers.classPrivateFieldGet(_this2, _map).location = location;
-
-	          if (babelHelpers.classPrivateFieldGet(_this2, _gallery)) {
-	            babelHelpers.classPrivateFieldGet(_this2, _gallery).location = location;
-	          }
-
-	          _this2.emit(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onShowedEvent));
-
-	          babelHelpers.classPrivateFieldGet(_this2, _map).onMapShow();
-	        }
-	      });
-	    }
-	  }, {
-	    key: "isShown",
-	    value: function isShown() {
-	      return babelHelpers.classPrivateFieldGet(this, _popup).isShown();
-	    }
-	  }, {
-	    key: "close",
-	    value: function close() {
-	      babelHelpers.classPrivateFieldGet(this, _popup).close();
-	      babelHelpers.classPrivateFieldSet(this, _needRestore, false);
-
-	      if (!babelHelpers.classPrivateFieldGet(this, _addressRestorer).isHidden()) {
-	        babelHelpers.classPrivateFieldGet(this, _addressRestorer).hide();
-	      }
-
-	      this.emit(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onClosedEvent));
-	    }
-	  }, {
-	    key: "onChangedEventSubscribe",
-	    value: function onChangedEventSubscribe(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onChangedEvent), listener);
-	    }
-	  }, {
-	    key: "onMouseOverSubscribe",
-	    value: function onMouseOverSubscribe(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onMouseOverEvent), listener);
-	    }
-	  }, {
-	    key: "onMouseOutSubscribe",
-	    value: function onMouseOutSubscribe(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onMouseOutEvent), listener);
-	    }
-	  }, {
-	    key: "subscribeOnShowedEvent",
-	    value: function subscribeOnShowedEvent(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onShowedEvent), listener);
-	    }
-	  }, {
-	    key: "subscribeOnClosedEvent",
-	    value: function subscribeOnClosedEvent(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onClosedEvent), listener);
-	    }
-	  }, {
-	    key: "destroy",
-	    value: function destroy() {
-	      babelHelpers.classPrivateFieldSet(this, _map, null);
-	      babelHelpers.classPrivateFieldSet(this, _gallery, null);
-	      babelHelpers.classPrivateFieldSet(this, _addressString$1, null);
-	      babelHelpers.classPrivateFieldSet(this, _addressRestorer, null);
-	      babelHelpers.classPrivateFieldGet(this, _popup).destroy();
-	      babelHelpers.classPrivateFieldSet(this, _popup, null);
-	      main_core.Dom.remove(babelHelpers.classPrivateFieldGet(this, _contentWrapper));
-	      babelHelpers.classPrivateFieldSet(this, _contentWrapper, null);
-	      main_core.Event.unbindAll(this);
-	    }
-	  }, {
-	    key: "bindElement",
-	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _popup).getBindElement();
-	    },
-	    set: function set(bindElement) {
-	      if (main_core.Type.isDomNode(bindElement)) {
-	        babelHelpers.classPrivateFieldGet(this, _popup).setBindElement(bindElement);
-	      } else {
-	        BX.debug('bindElement must be type of dom node');
-	      }
-	    }
-	  }, {
-	    key: "address",
-	    set: function set(address) {
-	      var _this3 = this;
-
-	      babelHelpers.classPrivateFieldSet(this, _address$4, address);
-	      babelHelpers.classPrivateFieldSet(this, _needRestore, true);
-	      babelHelpers.classPrivateFieldGet(this, _addressString$1).address = address;
-	      babelHelpers.classPrivateFieldGet(this, _addressRestorer).address = address;
-
-	      _classPrivateMethodGet$7(this, _convertAddressToLocation, _convertAddressToLocation2).call(this, address).then(function (location) {
-	        _classPrivateMethodGet$7(_this3, _setLocationInternal, _setLocationInternal2).call(_this3, location);
-	      });
-	    }
-	  }, {
-	    key: "mode",
-	    set: function set(mode) {
-	      babelHelpers.classPrivateFieldSet(this, _mode$1, mode);
-	      babelHelpers.classPrivateFieldGet(this, _map).mode = mode;
-	    }
-	  }]);
-	  return MapPopup;
-	}(main_core_events.EventEmitter);
-
-	var _onChangedEvent = {
-	  writable: true,
-	  value: 'onChanged'
-	};
-	var _onMouseOverEvent = {
-	  writable: true,
-	  value: 'onMouseOver'
-	};
-	var _onMouseOutEvent = {
-	  writable: true,
-	  value: 'onMouseOut'
-	};
-	var _onShowedEvent = {
-	  writable: true,
-	  value: 'onShow'
-	};
-	var _onClosedEvent = {
-	  writable: true,
-	  value: 'onClose'
-	};
-
-	var _onLocationChanged2 = function _onLocationChanged2(event) {
-	  var data = event.getData();
-	  var location = data.location;
-	  var address = location.toAddress();
-	  babelHelpers.classPrivateFieldSet(this, _address$4, address);
-	  babelHelpers.classPrivateFieldGet(this, _addressString$1).address = address;
-
-	  if (babelHelpers.classPrivateFieldGet(this, _needRestore)) {
-	    if (babelHelpers.classPrivateFieldGet(this, _addressRestorer).isHidden()) {
-	      babelHelpers.classPrivateFieldGet(this, _addressRestorer).show();
-	    }
-	  }
-
-	  if (babelHelpers.classPrivateFieldGet(this, _gallery)) {
-	    babelHelpers.classPrivateFieldGet(this, _gallery).location = location;
-	  }
-
-	  this.emit(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onChangedEvent), {
-	    address: address
-	  });
-	};
-
-	var _onAddressRestore2 = function _onAddressRestore2(event) {
-	  var data = event.getData();
-	  var prevAddress = data.address;
-	  prevAddress.latitude = babelHelpers.classPrivateFieldGet(this, _address$4).latitude;
-	  prevAddress.longitude = babelHelpers.classPrivateFieldGet(this, _address$4).longitude;
-	  babelHelpers.classPrivateFieldSet(this, _address$4, prevAddress);
-	  babelHelpers.classPrivateFieldGet(this, _addressString$1).address = prevAddress;
-	  babelHelpers.classPrivateFieldGet(this, _addressRestorer).hide();
-	  this.emit(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onChangedEvent), {
-	    address: prevAddress
-	  });
-	};
-
-	var _renderPopup2 = function _renderPopup2(bindElement, mapInnerContainer) {
-	  var _this4 = this;
-
-	  var gallery = '';
-
-	  if (babelHelpers.classPrivateFieldGet(this, _gallery)) {
-	    gallery = babelHelpers.classPrivateFieldGet(this, _gallery).render();
-	  }
-
-	  babelHelpers.classPrivateFieldSet(this, _contentWrapper, main_core.Tag.render(_templateObject2$4(), mapInnerContainer, gallery, babelHelpers.classPrivateFieldGet(this, _mode$1) === location_core.ControlMode.edit ? babelHelpers.classPrivateFieldGet(this, _addressString$1).render({
-	    address: babelHelpers.classPrivateFieldGet(this, _address$4)
-	  }) : '', babelHelpers.classPrivateFieldGet(this, _mode$1) === location_core.ControlMode.edit ? babelHelpers.classPrivateFieldGet(this, _addressRestorer).render({
-	    address: babelHelpers.classPrivateFieldGet(this, _address$4)
-	  }) : ''));
-	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _contentWrapper), 'click', function (e) {
-	    return e.stopPropagation();
-	  });
-	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _contentWrapper), 'mouseover', function (e) {
-	    return _this4.emit(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onMouseOverEvent), e);
-	  });
-	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _contentWrapper), 'mouseout', function (e) {
-	    return _this4.emit(_classStaticPrivateFieldSpecGet$2(MapPopup, MapPopup, _onMouseOutEvent), e);
-	  });
-	  this.bindElement = bindElement;
-	  babelHelpers.classPrivateFieldGet(this, _popup).setContent(babelHelpers.classPrivateFieldGet(this, _contentWrapper));
-	};
-
-	var _extractLatLon2 = function _extractLatLon2(address) {
-	  var result = null;
-	  var lat;
-	  var lon;
-
-	  if (address.latitude && address.longitude) {
-	    lat = address.latitude;
-	    lon = address.longitude;
-	  } else if (address.location && address.location.latitude && address.location.longitude) {
-	    lat = address.location.latitude;
-	    lon = address.location.longitude;
-	  }
-
-	  if (lat && lat !== '0' && lon && lon !== '0') {
-	    result = [lat, lon];
-	  }
-
-	  return result;
-	};
-
-	var _convertAddressToLocation2 = function _convertAddressToLocation2(address) {
-	  var _this5 = this;
-
-	  var useUserLocation = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-	  return new Promise(function (resolve) {
-	    var location = null;
-
-	    if (useUserLocation) {
-	      location = babelHelpers.classPrivateFieldGet(_this5, _userLocation$1) && babelHelpers.classPrivateFieldGet(_this5, _mode$1) !== location_core.ControlMode.view ? babelHelpers.classPrivateFieldGet(_this5, _userLocation$1) : null;
-	    }
-
-	    if (address) {
-	      var latLon = _classPrivateMethodGet$7(_this5, _extractLatLon, _extractLatLon2).call(_this5, address);
-
-	      if (latLon) {
-	        resolve(new location_core.Location({
-	          latitude: latLon[0],
-	          longitude: latLon[1],
-	          type: address.getType()
-	        }));
-	        return;
-	      } // Try to find via geocoding by string name
-
-
-	      if (babelHelpers.classPrivateFieldGet(_this5, _geocodingService)) {
-	        var addressStr = address.toString(babelHelpers.classPrivateFieldGet(_this5, _addressFormat$5), location_core.AddressStringConverter.STRATEGY_TYPE_FIELD_TYPE, location_core.AddressStringConverter.CONTENT_TYPE_TEXT);
-	        babelHelpers.classPrivateFieldGet(_this5, _geocodingService).geocode(addressStr).then(function (locationsList) {
-	          // If we have found just one location - we probably have found the right one.
-	          if (Array.isArray(locationsList) && locationsList.length === 1) {
-	            location = locationsList[0];
-	          } // geocoded or user's location
-
-
-	          resolve(location);
-	        });
-	        return;
-	      }
-	    }
-
-	    resolve(location);
-	  });
-	};
-
-	var _setLocationInternal2 = function _setLocationInternal2(location) {
-	  babelHelpers.classPrivateFieldGet(this, _map).location = location;
-
-	  if (babelHelpers.classPrivateFieldGet(this, _gallery)) {
-	    babelHelpers.classPrivateFieldGet(this, _gallery).location = location;
-	  }
-	};
-
-	var _renderMap2 = function _renderMap2(_ref) {
-	  var location = _ref.location;
-	  return babelHelpers.classPrivateFieldGet(this, _map).render({
-	    mapContainer: babelHelpers.classPrivateFieldGet(this, _mapInnerContainer),
-	    location: location,
-	    mode: babelHelpers.classPrivateFieldGet(this, _mode$1)
-	  });
-	};
-
-	function _templateObject2$5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-photo-item-block\">\n\t\t\t\t<span class=\"location-map-photo-item-block-image-block-inner\">\n\t\t\t\t\t", "\n\t\t\t\t\t<span \n\t\t\t\t\t\tdata-viewer data-viewer-type=\"image\" \n\t\t\t\t\t\tdata-src=\"", "\" \n\t\t\t\t\t\tdata-title=\"", "\"\n\t\t\t\t\t\tclass=\"location-map-item-photo-image\" \n\t\t\t\t\t\tdata-viewer-group-by=\"", "\"\n\t\t\t\t\t\tstyle=\"background-image: url(", ");\">\t\t\t\t\t\t\t\n\t\t\t\t\t</span>\n\t\t\t\t</span>\n\t\t\t</div>"]);
-
-	  _templateObject2$5 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$5() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"location-map-item-description\">", "</span>"]);
 
-	  _templateObject$5 = function _templateObject() {
+	  _templateObject$4 = function _templateObject() {
 	    return data;
 	  };
 
@@ -3395,42 +3211,42 @@ this.BX.Location = this.BX.Location || {};
 
 	      if (babelHelpers.classPrivateFieldGet(this, _description)) {
 	        //todo: sanitize
-	        description = main_core.Tag.render(_templateObject$5(), babelHelpers.classPrivateFieldGet(this, _description));
+	        description = main_core.Tag.render(_templateObject$4(), babelHelpers.classPrivateFieldGet(this, _description));
 	      }
 
-	      return main_core.Tag.render(_templateObject2$5(), description, babelHelpers.classPrivateFieldGet(this, _link), babelHelpers.classPrivateFieldGet(this, _title), babelHelpers.classPrivateFieldGet(this, _location).externalId, babelHelpers.classPrivateFieldGet(this, _url));
+	      return main_core.Tag.render(_templateObject2$4(), description, babelHelpers.classPrivateFieldGet(this, _link), babelHelpers.classPrivateFieldGet(this, _title), babelHelpers.classPrivateFieldGet(this, _location).externalId, babelHelpers.classPrivateFieldGet(this, _url));
 	    }
 	  }]);
 	  return Photo;
 	}();
 
-	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
+	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
 
-	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-	function _templateObject2$6() {
+	function _templateObject2$5() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-photo-container\">\n\t\t\t\t", "\n\t\t\t</div>"]);
 
-	  _templateObject2$6 = function _templateObject2() {
+	  _templateObject2$5 = function _templateObject2() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _templateObject$6() {
+	function _templateObject$5() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\t\t\t\t\t\n\t\t\t\t<div class=\"location-map-photo-inner\">\t\t\t\t\t\n\t\t\t\t</div>"]);
 
-	  _templateObject$6 = function _templateObject() {
+	  _templateObject$5 = function _templateObject() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$7(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _photos = new WeakMap();
 
@@ -3519,7 +3335,7 @@ this.BX.Location = this.BX.Location || {};
 	          maxPhotoCount: babelHelpers.classPrivateFieldGet(this, _maxPhotoCount)
 	        }).then(function (photosData) {
 	          if (Array.isArray(photosData) && photosData.length > 0) {
-	            _classPrivateMethodGet$8(_this, _setPhotos, _setPhotos2).call(_this, photosData);
+	            _classPrivateMethodGet$7(_this, _setPhotos, _setPhotos2).call(_this, photosData);
 
 	            _this.show();
 	          } else {
@@ -3552,8 +3368,8 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      babelHelpers.classPrivateFieldSet(this, _photosContainer, main_core.Tag.render(_templateObject$6()));
-	      babelHelpers.classPrivateFieldSet(this, _container, main_core.Tag.render(_templateObject2$6(), babelHelpers.classPrivateFieldGet(this, _photosContainer)));
+	      babelHelpers.classPrivateFieldSet(this, _photosContainer, main_core.Tag.render(_templateObject$5()));
+	      babelHelpers.classPrivateFieldSet(this, _container, main_core.Tag.render(_templateObject2$5(), babelHelpers.classPrivateFieldGet(this, _photosContainer)));
 	      return babelHelpers.classPrivateFieldGet(this, _container);
 	    }
 	  }, {
@@ -3573,7 +3389,7 @@ this.BX.Location = this.BX.Location || {};
 
 	  var photos = [];
 
-	  var _iterator = _createForOfIteratorHelper$1(photosData),
+	  var _iterator = _createForOfIteratorHelper$2(photosData),
 	      _step;
 
 	  try {
@@ -3605,11 +3421,11 @@ this.BX.Location = this.BX.Location || {};
 	  }
 
 	  if (babelHelpers.classPrivateFieldGet(this, _photos).length > 0 && babelHelpers.classPrivateFieldGet(this, _photosContainer)) {
-	    var renderedPhotos = babelHelpers.classPrivateFieldGet(this, _photos) ? _classPrivateMethodGet$8(this, _renderPhotos, _renderPhotos2).call(this, babelHelpers.classPrivateFieldGet(this, _photos)) : '';
+	    var renderedPhotos = babelHelpers.classPrivateFieldGet(this, _photos) ? _classPrivateMethodGet$7(this, _renderPhotos, _renderPhotos2).call(this, babelHelpers.classPrivateFieldGet(this, _photos)) : '';
 	    babelHelpers.classPrivateFieldGet(this, _photosContainer).innerHTML = '';
 
 	    if (renderedPhotos.length > 0) {
-	      var _iterator2 = _createForOfIteratorHelper$1(renderedPhotos),
+	      var _iterator2 = _createForOfIteratorHelper$2(renderedPhotos),
 	          _step2;
 
 	      try {
@@ -3629,7 +3445,7 @@ this.BX.Location = this.BX.Location || {};
 	var _renderPhotos2 = function _renderPhotos2(photos) {
 	  var result = [];
 
-	  var _iterator3 = _createForOfIteratorHelper$1(photos),
+	  var _iterator3 = _createForOfIteratorHelper$2(photos),
 	      _step3;
 
 	  try {
@@ -3656,39 +3472,39 @@ this.BX.Location = this.BX.Location || {};
 	  return data;
 	}
 
-	function _templateObject3$2() {
+	function _templateObject3$1() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-entity-editor-content-block\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>"]);
 
-	  _templateObject3$2 = function _templateObject3() {
+	  _templateObject3$1 = function _templateObject3() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _templateObject2$7() {
+	function _templateObject2$6() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"text\" class=\"ui-ctl-element\" value=\"", "\">"]);
 
-	  _templateObject2$7 = function _templateObject2() {
+	  _templateObject2$6 = function _templateObject2() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _templateObject$7() {
+	function _templateObject$6() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block ui-entity-editor-field-text\">\n\t\t\t\t<div class=\"ui-entity-editor-block-title\">\n\t\t\t\t\t<label class=\"ui-entity-editor-block-title-text\">", ":</label>\t\t\t\t\n\t\t\t\t</div>\n\t\t\t</div>"]);
 
-	  _templateObject$7 = function _templateObject() {
+	  _templateObject$6 = function _templateObject() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
-	function _classStaticPrivateFieldSpecGet$3(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+	function _classStaticPrivateFieldSpecGet$2(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 
 	var _title$1 = new WeakMap();
 
@@ -3796,12 +3612,12 @@ this.BX.Location = this.BX.Location || {};
 	      }
 
 	      babelHelpers.classPrivateFieldSet(this, _mode$2, props.mode);
-	      babelHelpers.classPrivateFieldSet(this, _container$1, main_core.Tag.render(_templateObject$7(), babelHelpers.classPrivateFieldGet(this, _title$1)));
+	      babelHelpers.classPrivateFieldSet(this, _container$1, main_core.Tag.render(_templateObject$6(), babelHelpers.classPrivateFieldGet(this, _title$1)));
 
 	      if (babelHelpers.classPrivateFieldGet(this, _mode$2) === location_core.ControlMode.edit) {
-	        _classPrivateMethodGet$9(this, _renderEditMode, _renderEditMode2).call(this, babelHelpers.classPrivateFieldGet(this, _container$1));
+	        _classPrivateMethodGet$8(this, _renderEditMode, _renderEditMode2).call(this, babelHelpers.classPrivateFieldGet(this, _container$1));
 	      } else {
-	        _classPrivateMethodGet$9(this, _renderViewMode, _renderViewMode2).call(this, babelHelpers.classPrivateFieldGet(this, _container$1));
+	        _classPrivateMethodGet$8(this, _renderViewMode, _renderViewMode2).call(this, babelHelpers.classPrivateFieldGet(this, _container$1));
 	      }
 
 	      return babelHelpers.classPrivateFieldGet(this, _container$1);
@@ -3809,12 +3625,12 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "subscribeOnValueChangedEvent",
 	    value: function subscribeOnValueChangedEvent(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$3(Field, Field, _onValueChangedEvent), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$2(Field, Field, _onValueChangedEvent), listener);
 	    }
 	  }, {
 	    key: "subscribeOnStateChangedEvent",
 	    value: function subscribeOnStateChangedEvent(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$3(Field, Field, _onStateChangedEvent$1), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$2(Field, Field, _onStateChangedEvent$1), listener);
 	    }
 	  }, {
 	    key: "destroy",
@@ -3854,7 +3670,7 @@ this.BX.Location = this.BX.Location || {};
 	    set: function set(value) {
 	      babelHelpers.classPrivateFieldSet(this, _value$1, typeof value === 'string' ? value : '');
 
-	      _classPrivateMethodGet$9(this, _refreshLayout, _refreshLayout2).call(this);
+	      _classPrivateMethodGet$8(this, _refreshLayout, _refreshLayout2).call(this);
 	    },
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _value$1);
@@ -3874,7 +3690,7 @@ this.BX.Location = this.BX.Location || {};
 
 	var _setState2$1 = function _setState2(state) {
 	  babelHelpers.classPrivateFieldSet(this, _state$2, state);
-	  this.emit(_classStaticPrivateFieldSpecGet$3(Field, Field, _onStateChangedEvent$1), {
+	  this.emit(_classStaticPrivateFieldSpecGet$2(Field, Field, _onStateChangedEvent$1), {
 	    state: babelHelpers.classPrivateFieldGet(this, _state$2)
 	  });
 	};
@@ -3882,24 +3698,24 @@ this.BX.Location = this.BX.Location || {};
 	var _renderEditMode2 = function _renderEditMode2(container) {
 	  var _this2 = this;
 
-	  babelHelpers.classPrivateFieldSet(this, _input$1, main_core.Tag.render(_templateObject2$7(), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _value$1))));
+	  babelHelpers.classPrivateFieldSet(this, _input$1, main_core.Tag.render(_templateObject2$6(), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _value$1))));
 	  babelHelpers.classPrivateFieldSet(this, _viewContainer, null);
 	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _input$1), 'focus', function (e) {
-	    _classPrivateMethodGet$9(_this2, _setState$1, _setState2$1).call(_this2, State.DATA_INPUTTING);
+	    _classPrivateMethodGet$8(_this2, _setState$1, _setState2$1).call(_this2, State.DATA_INPUTTING);
 	  });
 	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _input$1), 'focusout', function (e) {
-	    _classPrivateMethodGet$9(_this2, _setState$1, _setState2$1).call(_this2, State.DATA_SELECTED);
+	    _classPrivateMethodGet$8(_this2, _setState$1, _setState2$1).call(_this2, State.DATA_SELECTED);
 	  });
 	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _input$1), 'change', function (e) {
-	    _classPrivateMethodGet$9(_this2, _setState$1, _setState2$1).call(_this2, State.DATA_SELECTED);
+	    _classPrivateMethodGet$8(_this2, _setState$1, _setState2$1).call(_this2, State.DATA_SELECTED);
 
 	    babelHelpers.classPrivateFieldSet(_this2, _value$1, babelHelpers.classPrivateFieldGet(_this2, _input$1).value);
 
-	    _this2.emit(_classStaticPrivateFieldSpecGet$3(Field, Field, _onValueChangedEvent), {
+	    _this2.emit(_classStaticPrivateFieldSpecGet$2(Field, Field, _onValueChangedEvent), {
 	      value: _this2
 	    });
 	  });
-	  container.appendChild(main_core.Tag.render(_templateObject3$2(), babelHelpers.classPrivateFieldGet(this, _input$1)));
+	  container.appendChild(main_core.Tag.render(_templateObject3$1(), babelHelpers.classPrivateFieldGet(this, _input$1)));
 	};
 
 	var _renderViewMode2 = function _renderViewMode2(container) {
@@ -3916,19 +3732,19 @@ this.BX.Location = this.BX.Location || {};
 	  }
 	};
 
-	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
+	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
 
-	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-	function _classStaticPrivateFieldSpecGet$4(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+	function _classStaticPrivateFieldSpecGet$3(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 
-	function _classPrivateMethodGet$a(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
-	var _address$5 = new WeakMap();
+	var _address$4 = new WeakMap();
 
-	var _addressFormat$6 = new WeakMap();
+	var _addressFormat$5 = new WeakMap();
 
 	var _mode$3 = new WeakMap();
 
@@ -3961,12 +3777,12 @@ this.BX.Location = this.BX.Location || {};
 
 	    _initFields.add(babelHelpers.assertThisInitialized(_this));
 
-	    _address$5.set(babelHelpers.assertThisInitialized(_this), {
+	    _address$4.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _addressFormat$6.set(babelHelpers.assertThisInitialized(_this), {
+	    _addressFormat$5.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
@@ -4002,10 +3818,10 @@ this.BX.Location = this.BX.Location || {};
 	      BX.debug('addressFormat must be instance of Format');
 	    }
 
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressFormat$6, props.addressFormat);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _addressFormat$5, props.addressFormat);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _languageId$2, props.languageId);
 
-	    _classPrivateMethodGet$a(babelHelpers.assertThisInitialized(_this), _initFields, _initFields2).call(babelHelpers.assertThisInitialized(_this));
+	    _classPrivateMethodGet$9(babelHelpers.assertThisInitialized(_this), _initFields, _initFields2).call(babelHelpers.assertThisInitialized(_this));
 
 	    return _this;
 	  }
@@ -4017,7 +3833,7 @@ this.BX.Location = this.BX.Location || {};
 	        BX.debug('props.address must be instance of Address');
 	      }
 
-	      babelHelpers.classPrivateFieldSet(this, _address$5, props.address);
+	      babelHelpers.classPrivateFieldSet(this, _address$4, props.address);
 
 	      if (!location_core.ControlMode.isValid(props.mode)) {
 	        BX.debug('props.mode must be valid ControlMode');
@@ -4031,13 +3847,13 @@ this.BX.Location = this.BX.Location || {};
 
 	      babelHelpers.classPrivateFieldSet(this, _container$2, props.container);
 
-	      var _iterator = _createForOfIteratorHelper$2(babelHelpers.classPrivateFieldGet(this, _fields)),
+	      var _iterator = _createForOfIteratorHelper$3(babelHelpers.classPrivateFieldGet(this, _fields)),
 	          _step;
 
 	      try {
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	          var field = _step.value;
-	          var value = babelHelpers.classPrivateFieldGet(this, _address$5) ? babelHelpers.classPrivateFieldGet(this, _address$5).getFieldValue(field.type) : '';
+	          var value = babelHelpers.classPrivateFieldGet(this, _address$4) ? babelHelpers.classPrivateFieldGet(this, _address$4).getFieldValue(field.type) : '';
 
 	          if (babelHelpers.classPrivateFieldGet(this, _mode$3) === location_core.ControlMode.view && !value) {
 	            continue;
@@ -4058,14 +3874,14 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "subscribeOnAddressChangedEvent",
 	    value: function subscribeOnAddressChangedEvent(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$4(Fields, Fields, _onAddressChangedEvent$1), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$3(Fields, Fields, _onAddressChangedEvent$1), listener);
 	    }
 	  }, {
 	    key: "destroy",
 	    value: function destroy() {
 	      main_core.Event.unbindAll(this);
 
-	      var _iterator2 = _createForOfIteratorHelper$2(babelHelpers.classPrivateFieldGet(this, _fields)),
+	      var _iterator2 = _createForOfIteratorHelper$3(babelHelpers.classPrivateFieldGet(this, _fields)),
 	          _step2;
 
 	      try {
@@ -4084,7 +3900,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "subscribeOnStateChangedEvent",
 	    value: function subscribeOnStateChangedEvent(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$4(Fields, Fields, _onStateChangedEvent$2), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$3(Fields, Fields, _onStateChangedEvent$2), listener);
 	    }
 	  }, {
 	    key: "address",
@@ -4093,15 +3909,15 @@ this.BX.Location = this.BX.Location || {};
 	        BX.debug('address must be instance of Address');
 	      }
 
-	      babelHelpers.classPrivateFieldSet(this, _address$5, address);
+	      babelHelpers.classPrivateFieldSet(this, _address$4, address);
 
-	      var _iterator3 = _createForOfIteratorHelper$2(babelHelpers.classPrivateFieldGet(this, _fields)),
+	      var _iterator3 = _createForOfIteratorHelper$3(babelHelpers.classPrivateFieldGet(this, _fields)),
 	          _step3;
 
 	      try {
 	        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
 	          var field = _step3.value;
-	          field.value = babelHelpers.classPrivateFieldGet(this, _address$5) ? babelHelpers.classPrivateFieldGet(this, _address$5).getFieldValue(field.type) : '';
+	          field.value = babelHelpers.classPrivateFieldGet(this, _address$4) ? babelHelpers.classPrivateFieldGet(this, _address$4).getFieldValue(field.type) : '';
 	        }
 	      } catch (err) {
 	        _iterator3.e(err);
@@ -4131,28 +3947,28 @@ this.BX.Location = this.BX.Location || {};
 	  var _this2 = this;
 
 	  var _loop = function _loop(type) {
-	    if (!babelHelpers.classPrivateFieldGet(_this2, _addressFormat$6).fieldCollection.fields.hasOwnProperty(type)) {
+	    if (!babelHelpers.classPrivateFieldGet(_this2, _addressFormat$5).fieldCollection.fields.hasOwnProperty(type)) {
 	      return "continue";
 	    }
 
-	    var formatField = babelHelpers.classPrivateFieldGet(_this2, _addressFormat$6).fieldCollection.fields[type];
+	    var formatField = babelHelpers.classPrivateFieldGet(_this2, _addressFormat$5).fieldCollection.fields[type];
 	    var field = new Field({
 	      title: formatField.name,
 	      type: formatField.type,
 	      sort: formatField.sort
 	    });
 	    field.subscribeOnValueChangedEvent(function (event) {
-	      _classPrivateMethodGet$a(_this2, _onFieldChanged, _onFieldChanged2).call(_this2, field);
+	      _classPrivateMethodGet$9(_this2, _onFieldChanged, _onFieldChanged2).call(_this2, field);
 	    });
 	    field.subscribeOnStateChangedEvent(function (event) {
 	      var data = event.getData();
 
-	      _classPrivateMethodGet$a(_this2, _setState$2, _setState2$2).call(_this2, data.state);
+	      _classPrivateMethodGet$9(_this2, _setState$2, _setState2$2).call(_this2, data.state);
 	    });
 	    babelHelpers.classPrivateFieldGet(_this2, _fields).push(field);
 	  };
 
-	  for (var type in babelHelpers.classPrivateFieldGet(this, _addressFormat$6).fieldCollection.fields) {
+	  for (var type in babelHelpers.classPrivateFieldGet(this, _addressFormat$5).fieldCollection.fields) {
 	    var _ret = _loop(type);
 
 	    if (_ret === "continue") continue;
@@ -4164,29 +3980,29 @@ this.BX.Location = this.BX.Location || {};
 	};
 
 	var _onFieldChanged2 = function _onFieldChanged2(field) {
-	  if (!babelHelpers.classPrivateFieldGet(this, _address$5)) {
-	    babelHelpers.classPrivateFieldSet(this, _address$5, new location_core.Address({
+	  if (!babelHelpers.classPrivateFieldGet(this, _address$4)) {
+	    babelHelpers.classPrivateFieldSet(this, _address$4, new location_core.Address({
 	      languageId: babelHelpers.classPrivateFieldGet(this, _languageId$2)
 	    }));
 	  }
 
-	  babelHelpers.classPrivateFieldGet(this, _address$5).setFieldValue(field.type, field.value);
+	  babelHelpers.classPrivateFieldGet(this, _address$4).setFieldValue(field.type, field.value);
 
-	  if (field.type !== babelHelpers.classPrivateFieldGet(this, _addressFormat$6).fieldForUnRecognized) {
-	    babelHelpers.classPrivateFieldGet(this, _address$5).location = null;
-	    babelHelpers.classPrivateFieldGet(this, _address$5).latitude = '';
-	    babelHelpers.classPrivateFieldGet(this, _address$5).longitude = '';
+	  if (field.type !== babelHelpers.classPrivateFieldGet(this, _addressFormat$5).fieldForUnRecognized) {
+	    babelHelpers.classPrivateFieldGet(this, _address$4).location = null;
+	    babelHelpers.classPrivateFieldGet(this, _address$4).latitude = '';
+	    babelHelpers.classPrivateFieldGet(this, _address$4).longitude = '';
 	  }
 
-	  this.emit(_classStaticPrivateFieldSpecGet$4(Fields, Fields, _onAddressChangedEvent$1), {
-	    address: babelHelpers.classPrivateFieldGet(this, _address$5),
+	  this.emit(_classStaticPrivateFieldSpecGet$3(Fields, Fields, _onAddressChangedEvent$1), {
+	    address: babelHelpers.classPrivateFieldGet(this, _address$4),
 	    changedField: field
 	  });
 	};
 
 	var _setState2$2 = function _setState2(state) {
 	  babelHelpers.classPrivateFieldSet(this, _state$3, state);
-	  this.emit(_classStaticPrivateFieldSpecGet$4(Fields, Fields, _onStateChangedEvent$2), {
+	  this.emit(_classStaticPrivateFieldSpecGet$3(Fields, Fields, _onStateChangedEvent$2), {
 	    state: babelHelpers.classPrivateFieldGet(this, _state$3)
 	  });
 	};
@@ -4208,7 +4024,7 @@ this.BX.Location = this.BX.Location || {};
 	    var _this;
 
 	    babelHelpers.classCallCheck(this, MapFeature);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MapFeature).call(this));
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MapFeature).call(this, props));
 
 	    _map$1.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
@@ -4338,7 +4154,7 @@ this.BX.Location = this.BX.Location || {};
 	    var _this;
 
 	    babelHelpers.classCallCheck(this, AutocompleteFeature);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AutocompleteFeature).call(this));
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AutocompleteFeature).call(this, props));
 
 	    _autocomplete.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
@@ -4357,7 +4173,7 @@ this.BX.Location = this.BX.Location || {};
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _autocomplete, props.autocomplete);
 	    babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _autocomplete).onAddressChangedEventSubscribe(function (event) {
 	      var data = event.getData();
-	      babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _addressWidget$1).setAddressByFeature(data.address, babelHelpers.assertThisInitialized(_this), data.excludeSetAddressFeatures);
+	      babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _addressWidget$1).setAddressByFeature(data.address, babelHelpers.assertThisInitialized(_this), data.excludeSetAddressFeatures, data.options);
 	    });
 	    babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _autocomplete).onStateChangedEventSubscribe(function (event) {
 	      var data = event.getData();
@@ -4514,7 +4330,7 @@ this.BX.Location = this.BX.Location || {};
 	  return FieldsFeature;
 	}(BaseFeature);
 
-	function _classPrivateMethodGet$b(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$a(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	/**
 	 * Map feature for the address widget with auto map opening / closing behavior
 	 */
@@ -4598,12 +4414,12 @@ this.BX.Location = this.BX.Location || {};
 	     */
 	    value: function render(props) {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(MapFeatureAuto.prototype), "render", this).call(this, props);
-	      this.addressWidget.controlWrapper.addEventListener('click', _classPrivateMethodGet$b(this, _onControlWrapperClick, _onControlWrapperClick2).bind(this));
-	      this.addressWidget.controlWrapper.addEventListener('mouseover', _classPrivateMethodGet$b(this, _processOnMouseOver, _processOnMouseOver2).bind(this));
-	      this.addressWidget.controlWrapper.addEventListener('mouseout', _classPrivateMethodGet$b(this, _processOnMouseOut, _processOnMouseOut2).bind(this));
-	      document.addEventListener('click', _classPrivateMethodGet$b(this, _onDocumentClick$1, _onDocumentClick2$1).bind(this));
-	      this.map.onMouseOverSubscribe(_classPrivateMethodGet$b(this, _processOnMouseOver, _processOnMouseOver2).bind(this));
-	      this.map.onMouseOutSubscribe(_classPrivateMethodGet$b(this, _processOnMouseOut, _processOnMouseOut2).bind(this));
+	      this.addressWidget.controlWrapper.addEventListener('click', _classPrivateMethodGet$a(this, _onControlWrapperClick, _onControlWrapperClick2).bind(this));
+	      this.addressWidget.controlWrapper.addEventListener('mouseover', _classPrivateMethodGet$a(this, _processOnMouseOver, _processOnMouseOver2).bind(this));
+	      this.addressWidget.controlWrapper.addEventListener('mouseout', _classPrivateMethodGet$a(this, _processOnMouseOut, _processOnMouseOut2).bind(this));
+	      document.addEventListener('click', _classPrivateMethodGet$a(this, _onDocumentClick$1, _onDocumentClick2$1).bind(this));
+	      this.map.onMouseOverSubscribe(_classPrivateMethodGet$a(this, _processOnMouseOver, _processOnMouseOver2).bind(this));
+	      this.map.onMouseOutSubscribe(_classPrivateMethodGet$a(this, _processOnMouseOut, _processOnMouseOut2).bind(this));
 	    } // eslint-disable-next-line no-unused-vars
 
 	  }, {
@@ -4626,12 +4442,12 @@ this.BX.Location = this.BX.Location || {};
 	        return;
 	      }
 
-	      document.removeEventListener('click', _classPrivateMethodGet$b(this, _onDocumentClick$1, _onDocumentClick2$1));
+	      document.removeEventListener('click', _classPrivateMethodGet$a(this, _onDocumentClick$1, _onDocumentClick2$1));
 
 	      if (this.addressWidget.controlWrapper) {
-	        this.addressWidget.controlWrapper.removeEventListener('click', _classPrivateMethodGet$b(this, _onControlWrapperClick, _onControlWrapperClick2));
-	        this.addressWidget.controlWrapper.removeEventListener('mouseover', _classPrivateMethodGet$b(this, _processOnMouseOver, _processOnMouseOver2));
-	        this.addressWidget.controlWrapper.removeEventListener('mouseout', _classPrivateMethodGet$b(this, _processOnMouseOut, _processOnMouseOut2));
+	        this.addressWidget.controlWrapper.removeEventListener('click', _classPrivateMethodGet$a(this, _onControlWrapperClick, _onControlWrapperClick2));
+	        this.addressWidget.controlWrapper.removeEventListener('mouseover', _classPrivateMethodGet$a(this, _processOnMouseOver, _processOnMouseOver2));
+	        this.addressWidget.controlWrapper.removeEventListener('mouseout', _classPrivateMethodGet$a(this, _processOnMouseOut, _processOnMouseOut2));
 	      }
 
 	      babelHelpers.classPrivateFieldSet(this, _showMapTimerId, null);
@@ -4653,6 +4469,10 @@ this.BX.Location = this.BX.Location || {};
 	      this.closeMap();
 	    } else {
 	      clearTimeout(babelHelpers.classPrivateFieldGet(this, _showMapTimerId));
+	    }
+	  } else if (this.addressWidget.mode === location_core.ControlMode.edit && this._saveResourceStrategy === false) {
+	    if (this.addressWidget.address && !this.map.isShown() && event.target === this.addressWidget.inputNode) {
+	      this.showMap();
 	    }
 	  }
 	};
@@ -4734,7 +4554,7 @@ this.BX.Location = this.BX.Location || {};
 	      var sourceParams = props.sourceParams || BX.message('LOCATION_WIDGET_SOURCE_PARAMS');
 	      var languageId = props.languageId || BX.message('LOCATION_WIDGET_LANGUAGE_ID');
 	      var sourceLanguageId = props.sourceLanguageId || BX.message('LOCATION_WIDGET_SOURCE_LANGUAGE_ID');
-	      var userLocation = new location_core.Location(JSON.parse(BX.message('LOCATION_WIDGET_USER_LOCATION')));
+	      var userLocationPoint = new location_core.Location(JSON.parse(BX.message('LOCATION_WIDGET_USER_LOCATION_POINT')));
 	      var addressFormat = props.addressFormat || new location_core.Format(JSON.parse(BX.message('LOCATION_WIDGET_DEFAULT_FORMAT')));
 	      var presetLocationsProvider = props.presetLocationsProvider ? props.presetLocationsProvider : function () {
 	        return props.presetLocationList ? props.presetLocationList : [];
@@ -4770,7 +4590,7 @@ this.BX.Location = this.BX.Location || {};
 	            languageId: languageId,
 	            addressFormat: addressFormat,
 	            source: source,
-	            userLocation: userLocation,
+	            userLocationPoint: userLocationPoint,
 	            presetLocationsProvider: presetLocationsProvider
 	          }));
 	        }
@@ -4792,7 +4612,7 @@ this.BX.Location = this.BX.Location || {};
 	            thumbnailWidth: props.thumbnailWidth || DEFAULT_THUMBNAIL_WIDTH,
 	            maxPhotoCount: props.maxPhotoCount || DEFAULT_MAX_PHOTO_COUNT,
 	            mapBehavior: props.mapBehavior || DEFAULT_MAP_BEHAVIOR,
-	            userLocation: userLocation
+	            userLocationPoint: userLocationPoint
 	          });
 	          features.push(mapFeature);
 	        }
@@ -4837,7 +4657,7 @@ this.BX.Location = this.BX.Location || {};
 	        languageId: props.languageId,
 	        addressFormat: props.addressFormat,
 	        autocompleteService: props.source.autocompleteService,
-	        userLocation: props.userLocation,
+	        userLocationPoint: props.userLocationPoint,
 	        presetLocationsProvider: props.presetLocationsProvider
 	      });
 	      return new AutocompleteFeature({
@@ -4873,6 +4693,7 @@ this.BX.Location = this.BX.Location || {};
 	      }
 
 	      var mapFeatureProps = {
+	        saveResourceStrategy: props.source.sourceCode === location_google.Google.code,
 	        map: new MapPopup({
 	          addressFormat: props.addressFormat,
 	          map: props.source.map,
@@ -4880,7 +4701,7 @@ this.BX.Location = this.BX.Location || {};
 	          gallery: gallery,
 	          locationRepository: new location_core.LocationRepository(),
 	          geocodingService: props.useGeocodingService ? props.source.geocodingService : null,
-	          userLocation: props.userLocation
+	          userLocationPoint: props.userLocationPoint
 	        })
 	      };
 	      var result;
@@ -4901,9 +4722,9 @@ this.BX.Location = this.BX.Location || {};
 	      params.languageId = languageId;
 	      params.sourceLanguageId = sourceLanguageId;
 
-	      if (code === 'GOOGLE') {
+	      if (code === location_google.Google.code) {
 	        source = new location_google.Google(params);
-	      } else if (code === 'OSM') {
+	      } else if (code === location_osm.OSM.code) {
 	        source = location_osm.OSMFactory.createOSMSource(params);
 	      } else {
 	        throw new RangeError('Wrong source code');
@@ -4915,19 +4736,19 @@ this.BX.Location = this.BX.Location || {};
 	  return Factory;
 	}();
 
-	function _templateObject$8() {
+	function _templateObject$7() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\t\t\t\n\t\t\t<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\">\n\t\t\t\t", "\n\t\t\t</span>"]);
 
-	  _templateObject$8 = function _templateObject() {
+	  _templateObject$7 = function _templateObject() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _classStaticPrivateFieldSpecGet$5(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+	function _classStaticPrivateFieldSpecGet$4(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 
-	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$b(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _state$4 = new WeakMap();
 
@@ -4976,11 +4797,11 @@ this.BX.Location = this.BX.Location || {};
 	    value: function render(mode) {
 	      var _this2 = this;
 
-	      babelHelpers.classPrivateFieldSet(this, _titleContainer, main_core.Tag.render(_templateObject$8(), _classPrivateMethodGet$c(this, _getTitle, _getTitle2).call(this)));
+	      babelHelpers.classPrivateFieldSet(this, _titleContainer, main_core.Tag.render(_templateObject$7(), _classPrivateMethodGet$b(this, _getTitle, _getTitle2).call(this)));
 	      babelHelpers.classPrivateFieldGet(this, _titleContainer).addEventListener('click', function (event) {
 	        _this2.state = babelHelpers.classPrivateFieldGet(_this2, _state$4) === Switch.STATE_OFF ? Switch.STATE_ON : Switch.STATE_OFF;
 
-	        _this2.emit(_classStaticPrivateFieldSpecGet$5(Switch, Switch, _onToggleEvent), {
+	        _this2.emit(_classStaticPrivateFieldSpecGet$4(Switch, Switch, _onToggleEvent), {
 	          state: babelHelpers.classPrivateFieldGet(_this2, _state$4)
 	        });
 
@@ -4995,7 +4816,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "subscribeOnToggleEventSubscribe",
 	    value: function subscribeOnToggleEventSubscribe(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$5(Switch, Switch, _onToggleEvent), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$4(Switch, Switch, _onToggleEvent), listener);
 	    }
 	  }, {
 	    key: "state",
@@ -5003,7 +4824,7 @@ this.BX.Location = this.BX.Location || {};
 	      babelHelpers.classPrivateFieldSet(this, _state$4, state);
 
 	      if (babelHelpers.classPrivateFieldGet(this, _titleContainer)) {
-	        babelHelpers.classPrivateFieldGet(this, _titleContainer).innerHTML = _classPrivateMethodGet$c(this, _getTitle, _getTitle2).call(this);
+	        babelHelpers.classPrivateFieldGet(this, _titleContainer).innerHTML = _classPrivateMethodGet$b(this, _getTitle, _getTitle2).call(this);
 	      }
 	    },
 	    get: function get() {
@@ -5024,19 +4845,19 @@ this.BX.Location = this.BX.Location || {};
 	  return babelHelpers.classPrivateFieldGet(this, _titles)[babelHelpers.classPrivateFieldGet(this, _state$4)];
 	};
 
-	function _templateObject$9() {
+	function _templateObject$8() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\"></div>"]);
 
-	  _templateObject$9 = function _templateObject() {
+	  _templateObject$8 = function _templateObject() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _classStaticPrivateFieldSpecGet$6(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+	function _classStaticPrivateFieldSpecGet$5(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 
-	function _classPrivateMethodGet$d(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _type$1 = new WeakMap();
 
@@ -5076,16 +4897,16 @@ this.BX.Location = this.BX.Location || {};
 	      var _this2 = this;
 
 	      babelHelpers.classPrivateFieldSet(this, _type$1, props.type);
-	      babelHelpers.classPrivateFieldSet(this, _domNode, main_core.Tag.render(_templateObject$9(), _classPrivateMethodGet$d(this, _getClassByType, _getClassByType2).call(this, babelHelpers.classPrivateFieldGet(this, _type$1))));
+	      babelHelpers.classPrivateFieldSet(this, _domNode, main_core.Tag.render(_templateObject$8(), _classPrivateMethodGet$c(this, _getClassByType, _getClassByType2).call(this, babelHelpers.classPrivateFieldGet(this, _type$1))));
 	      babelHelpers.classPrivateFieldGet(this, _domNode).addEventListener('click', function (e) {
-	        _this2.emit(_classStaticPrivateFieldSpecGet$6(Icon, Icon, _onClickEvent));
+	        _this2.emit(_classStaticPrivateFieldSpecGet$5(Icon, Icon, _onClickEvent));
 	      });
 	      return babelHelpers.classPrivateFieldGet(this, _domNode);
 	    }
 	  }, {
 	    key: "subscribeOnClickEvent",
 	    value: function subscribeOnClickEvent(listener) {
-	      this.subscribe(_classStaticPrivateFieldSpecGet$6(Icon, Icon, _onClickEvent), listener);
+	      this.subscribe(_classStaticPrivateFieldSpecGet$5(Icon, Icon, _onClickEvent), listener);
 	    }
 	  }, {
 	    key: "type",
@@ -5093,7 +4914,7 @@ this.BX.Location = this.BX.Location || {};
 	      babelHelpers.classPrivateFieldSet(this, _type$1, type);
 
 	      if (babelHelpers.classPrivateFieldGet(this, _domNode)) {
-	        babelHelpers.classPrivateFieldGet(this, _domNode).className = _classPrivateMethodGet$d(this, _getClassByType, _getClassByType2).call(this, babelHelpers.classPrivateFieldGet(this, _type$1));
+	        babelHelpers.classPrivateFieldGet(this, _domNode).className = _classPrivateMethodGet$c(this, _getClassByType, _getClassByType2).call(this, babelHelpers.classPrivateFieldGet(this, _type$1));
 	      }
 	    }
 	  }]);
@@ -5184,30 +5005,30 @@ this.BX.Location = this.BX.Location || {};
 	  return data;
 	}
 
-	function _templateObject3$3() {
+	function _templateObject3$2() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon\">", "", "", "</div>"]);
 
-	  _templateObject3$3 = function _templateObject3() {
+	  _templateObject3$2 = function _templateObject3() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _templateObject2$8() {
+	function _templateObject2$7() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<input value='", "' type=\"hidden\" name=\"", "\">"]);
 
-	  _templateObject2$8 = function _templateObject2() {
+	  _templateObject2$7 = function _templateObject2() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _templateObject$a() {
+	function _templateObject$9() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<input class=\"ui-ctl-element ui-ctl-textbox\" value=\"\" type=\"text\" autocomplete=\"off\" name=\"", "\">"]);
 
-	  _templateObject$a = function _templateObject() {
+	  _templateObject$9 = function _templateObject() {
 	    return data;
 	  };
 
@@ -5216,7 +5037,7 @@ this.BX.Location = this.BX.Location || {};
 
 	function _classStaticPrivateMethodGet$1(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
 
-	function _classPrivateMethodGet$e(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$d(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	/**
 	 * Address field widget for the ui.entity-editor
 	 */
@@ -5233,7 +5054,7 @@ this.BX.Location = this.BX.Location || {};
 
 	var _onAddressChanged = new WeakSet();
 
-	var _convertAddressToString$4 = new WeakSet();
+	var _convertAddressToString$3 = new WeakSet();
 
 	var _getAddress = new WeakSet();
 
@@ -5248,7 +5069,7 @@ this.BX.Location = this.BX.Location || {};
 
 	    _getAddress.add(babelHelpers.assertThisInitialized(_this));
 
-	    _convertAddressToString$4.add(babelHelpers.assertThisInitialized(_this));
+	    _convertAddressToString$3.add(babelHelpers.assertThisInitialized(_this));
 
 	    _onAddressChanged.add(babelHelpers.assertThisInitialized(_this));
 
@@ -5296,16 +5117,16 @@ this.BX.Location = this.BX.Location || {};
 	        }
 	      });
 
-	      this._addressWidget.subscribeOnStateChangedEvent(_classPrivateMethodGet$e(this, _onAddressWidgetChangedState, _onAddressWidgetChangedState2).bind(this));
+	      this._addressWidget.subscribeOnStateChangedEvent(_classPrivateMethodGet$d(this, _onAddressWidgetChangedState, _onAddressWidgetChangedState2).bind(this));
 
-	      this._addressWidget.subscribeOnAddressChangedEvent(_classPrivateMethodGet$e(this, _onAddressChanged, _onAddressChanged2).bind(this));
+	      this._addressWidget.subscribeOnAddressChangedEvent(_classPrivateMethodGet$d(this, _onAddressChanged, _onAddressChanged2).bind(this));
 
 	      this._fieldsSwitch = new Switch({
 	        state: Switch.STATE_OFF,
 	        titles: [BX.message('LOCATION_WIDGET_AUI_MORE'), BX.message('LOCATION_WIDGET_AUI_BRIEFLY')]
 	      });
 
-	      this._fieldsSwitch.subscribeOnToggleEventSubscribe(_classPrivateMethodGet$e(this, _onFieldsSwitchToggle, _onFieldsSwitchToggle2).bind(this));
+	      this._fieldsSwitch.subscribeOnToggleEventSubscribe(_classPrivateMethodGet$d(this, _onFieldsSwitchToggle, _onFieldsSwitchToggle2).bind(this));
 	    }
 	  }, {
 	    key: "focus",
@@ -5347,7 +5168,7 @@ this.BX.Location = this.BX.Location || {};
 	        return;
 	      }
 
-	      var address = _classPrivateMethodGet$e(this, _getAddress, _getAddress2).call(this);
+	      var address = _classPrivateMethodGet$d(this, _getAddress, _getAddress2).call(this);
 
 	      this._model.setField(this.getName(), address ? address.toJson() : '');
 
@@ -5409,7 +5230,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "getRuntimeValue",
 	    value: function getRuntimeValue() {
-	      return this._mode === BX.UI.EntityEditorMode.edit ? _classPrivateMethodGet$e(this, _getAddress, _getAddress2).call(this) : null;
+	      return this._mode === BX.UI.EntityEditorMode.edit ? _classPrivateMethodGet$d(this, _getAddress, _getAddress2).call(this) : null;
 	    }
 	  }, {
 	    key: "layout",
@@ -5433,17 +5254,17 @@ this.BX.Location = this.BX.Location || {};
 	      if (this._mode === BX.UI.EntityEditorMode.edit) {
 	        this._wrapper.appendChild(this.createTitleNode(title));
 
-	        this._input = main_core.Tag.render(_templateObject$a(), "".concat(this.getName(), "_STRING"));
-	        this._hiddenInput = main_core.Tag.render(_templateObject2$8(), this.getValue(), this.getName());
+	        this._input = main_core.Tag.render(_templateObject$9(), "".concat(this.getName(), "_STRING"));
+	        this._hiddenInput = main_core.Tag.render(_templateObject2$7(), this.getValue(), this.getName());
 	        this._inputIcon = new Icon();
 
-	        this._inputIcon.subscribeOnClickEvent(_classPrivateMethodGet$e(this, _onIconClick, _onIconClick2).bind(this));
+	        this._inputIcon.subscribeOnClickEvent(_classPrivateMethodGet$d(this, _onIconClick, _onIconClick2).bind(this));
 
 	        var inputIconNode = this._inputIcon.render({
-	          type: _classStaticPrivateMethodGet$1(UIAddress, UIAddress, _chooseInputIconTypeByAddress).call(UIAddress, _classPrivateMethodGet$e(this, _getAddress, _getAddress2).call(this))
+	          type: _classStaticPrivateMethodGet$1(UIAddress, UIAddress, _chooseInputIconTypeByAddress).call(UIAddress, _classPrivateMethodGet$d(this, _getAddress, _getAddress2).call(this))
 	        });
 
-	        this._inputContainer = main_core.Tag.render(_templateObject3$3(), inputIconNode, this._input, this._hiddenInput);
+	        this._inputContainer = main_core.Tag.render(_templateObject3$2(), inputIconNode, this._input, this._hiddenInput);
 
 	        this._titleWrapper.appendChild(main_core.Tag.render(_templateObject4$1(), this._fieldsSwitch.render(this._mode)));
 
@@ -5466,7 +5287,7 @@ this.BX.Location = this.BX.Location || {};
 	          var addressStringNode;
 
 	          if (this.hasContentToDisplay()) {
-	            var addressString = _classPrivateMethodGet$e(this, _convertAddressToString$4, _convertAddressToString2$4).call(this, _classPrivateMethodGet$e(this, _getAddress, _getAddress2).call(this));
+	            var addressString = _classPrivateMethodGet$d(this, _convertAddressToString$3, _convertAddressToString2$3).call(this, _classPrivateMethodGet$d(this, _getAddress, _getAddress2).call(this));
 
 	            addressStringNode = main_core.Tag.render(_templateObject7(), addressString);
 	            this._innerWrapper = main_core.Tag.render(_templateObject8(), addressStringNode);
@@ -5596,9 +5417,9 @@ this.BX.Location = this.BX.Location || {};
 	  var state = data.state;
 
 	  if (state === Switch.STATE_OFF) {
-	    _classPrivateMethodGet$e(this, _hideFields, _hideFields2).call(this);
+	    _classPrivateMethodGet$d(this, _hideFields, _hideFields2).call(this);
 	  } else {
-	    _classPrivateMethodGet$e(this, _showFields, _showFields2).call(this);
+	    _classPrivateMethodGet$d(this, _showFields, _showFields2).call(this);
 	  }
 
 	  this._addressWidget.resetView();
@@ -5628,7 +5449,7 @@ this.BX.Location = this.BX.Location || {};
 	      this.markAsChanged();
 	    }
 
-	    iconType = _classStaticPrivateMethodGet$1(UIAddress, UIAddress, _chooseInputIconTypeByAddress).call(UIAddress, _classPrivateMethodGet$e(this, _getAddress, _getAddress2).call(this));
+	    iconType = _classStaticPrivateMethodGet$1(UIAddress, UIAddress, _chooseInputIconTypeByAddress).call(UIAddress, _classPrivateMethodGet$d(this, _getAddress, _getAddress2).call(this));
 	  }
 
 	  this._inputIcon.type = iconType;
@@ -5648,7 +5469,7 @@ this.BX.Location = this.BX.Location || {};
 	  }
 	};
 
-	var _convertAddressToString2$4 = function _convertAddressToString2(address) {
+	var _convertAddressToString2$3 = function _convertAddressToString2(address) {
 	  if (!address) {
 	    return '';
 	  }
@@ -5671,5 +5492,5 @@ this.BX.Location = this.BX.Location || {};
 	exports.State = State;
 	exports.UIAddress = UIAddress;
 
-}((this.BX.Location.Widget = this.BX.Location.Widget || {}),BX.Location.OSM,BX.Location.Google,BX.Main,BX,BX.Location.Core,BX.Location.Widget,BX.Event,BX));
+}((this.BX.Location.Widget = this.BX.Location.Widget || {}),BX,BX.Location.OSM,BX.Location.Google,BX.Main,BX,BX.Location.Core,BX.Location.Widget,BX.Event,BX));
 //# sourceMappingURL=widget.bundle.js.map

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_COLUMN_ID"] = "ID";
 $MESS["TASKS_COLUMN_TITLE"] = "Название";
 $MESS["TASKS_COLUMN_ORIGINATOR_NAME"] = "Постановщик";
@@ -72,6 +72,7 @@ $MESS["TASKS_LIST_GROUP_ACTION_ADD_ACCOMPLICE"] = "Добавить соиспо
 $MESS["TASKS_LIST_GROUP_ACTION_SET_DEADLINE"] = "Указать крайний срок";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_GROUP"] = "Указать группу";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL"] = "Принять работу после завершения задачи";
+$MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_V2"] = "Отключить контроль после завершения";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_YES"] = "Да";
 $MESS["TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_NO"] = "Нет";
 $MESS["TASKS_LIST_GROUP_ACTION_DAYS_PLURAL_0"] = "день";
@@ -116,10 +117,7 @@ $MESS["TASKS_ADD_TASK_TO_TIMEMAN"] = "Добавить в план рабоче�
 $MESS["TASKS_ADD_TASK_TO_TIMEMAN_EX"] = "Добавить в план рабочего дня";
 $MESS["TASKS_CLOSE_PAGE_CONFIRM"] = "Возможно, внесенные изменения не сохранятся.";
 $MESS["TASKS_LIST_ADD_TAG_FOOTER_LABEL"] = "Добавить тег:";
-
 $MESS["TASKS_DELETE_SUCCESS"] = "Задача успешно удалена";
 $MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = 'Пинг-уведомление отправлено';
-
 $MESS["TASKS_ROW_COUNT_TITLE"] = "Всего";
 $MESS["TASKS_SHOW_ROW_COUNT"] = "Показать количество";
-?>

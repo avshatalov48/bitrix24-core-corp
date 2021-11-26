@@ -202,6 +202,11 @@ class LeftMenu
 
 		BX.addCustomEvent("BX.Main.InterfaceButtons:onBeforeCreateEditMenu", function (contextMenu, dataItem, topMenu)
 		{
+			if (!BX.type.isNotEmptyString(dataItem.URL))
+			{
+				return;
+			}
+
 			var isItemInLeftMenu = BX.type.isDomNode(BX("bx_left_menu_" + dataItem.DATA_ID));
 			contextMenu.addMenuItem({
 				text: BX.message(isItemInLeftMenu ? "MENU_DELETE_FROM_LEFT_MENU" : "MENU_ADD_TO_LEFT_MENU"),

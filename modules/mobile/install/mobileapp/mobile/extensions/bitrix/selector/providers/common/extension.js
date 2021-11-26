@@ -261,7 +261,8 @@
 						title: title,
 						shortTitle: item.shortTitle,
 						params: item.params,
-						imageUrl: item.imageUrl
+						imageUrl: item.imageUrl,
+						defaultImage:item.imageUrl.includes(getImage(entityId))
 					});
 				}
 

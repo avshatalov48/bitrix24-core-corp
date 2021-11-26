@@ -20,9 +20,11 @@ return [
 		'ui.entity-editor',
 		'ui.common',
 		'ui.viewer',
+		'ui.vue',
 		'location.core',
 		'location.google',
-		'location.osm'
+		'location.osm',
+		'ls'
 	],
 	'skip_core' => false,
 	'oninit' => static function()
@@ -35,8 +37,6 @@ return [
 		$sourceCode = '';
 		$sourceParams = [];
 		$sourceLanguageId = LANGUAGE_ID;
-
-		$autocompleteReplacements = [];
 
 		if($source = Service\SourceService::getInstance()->getSource())
 		{
@@ -56,7 +56,7 @@ return [
 		 * Here it could be a performance problem due to custom handlers.
 		 * Make an option, or receive via ajax request.
 		 */
-		$userLocation = \Bitrix\Location\Infrastructure\UserLocation::findUserLocation();
+		$userLocationPoint = \Bitrix\Location\Infrastructure\UserLocation::getPoint();
 
 		return [
 			'lang_additional' => [
@@ -65,7 +65,7 @@ return [
 				'LOCATION_WIDGET_DEFAULT_FORMAT' => $format,
 				'LOCATION_WIDGET_LANGUAGE_ID' => LANGUAGE_ID,
 				'LOCATION_WIDGET_SOURCE_LANGUAGE_ID' => $sourceLanguageId,
-				'LOCATION_WIDGET_USER_LOCATION' => $userLocation->toJson()
+				'LOCATION_WIDGET_USER_LOCATION_POINT' => $userLocationPoint->toJson()
 			]
 		];
 	}

@@ -53,8 +53,10 @@ class Category extends Field
 			return $result;
 		}
 
-		$userPermissions = Container::getInstance()->getUserPermissions();
-		$userPermissions->deleteItemAttributes($itemBeforeSave);
+		$permissionEntityType = \Bitrix\Crm\Service\UserPermissions::getItemPermissionEntityType($itemBeforeSave);
+		\Bitrix\Crm\Security\Manager::resolveController($permissionEntityType)
+			->unregister($permissionEntityType, $item->getId())
+		;
 
 		// todo reset counters
 

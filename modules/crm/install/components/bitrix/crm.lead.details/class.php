@@ -6,15 +6,12 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
-use Bitrix\Crm\Attribute\FieldAttributePhaseGroupType;
-use Bitrix\Crm\Attribute\FieldAttributeType;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\Conversion\LeadConversionScheme;
 use Bitrix\Crm\Tracking;
 use Bitrix\Currency;
 use Bitrix\Catalog;
-use Bitrix\Main\Component\ParameterSigner;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -49,6 +46,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	private $userFieldDispatcher = null;
 	/** @var int */
 	private $entityID = 0;
+	/** @var array|null */
+	private $entityFieldInfos = null;
 	/** @var array|null */
 	private $entityData = null;
 	/** @var array|null */
@@ -107,7 +106,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		$useNewProductList =
 			Main\Loader::includeModule('catalog')
-			&& \Bitrix\Catalog\Config\Feature::isCommonProductProcessingEnabled()
+			&& Catalog\Config\Feature::isCommonProductProcessingEnabled()
 		;
 
 		$this->isLocationModuleIncluded = Main\Loader::includeModule('location');
@@ -141,7 +140,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			$APPLICATION->GetCurPage().'?product_id=#product_id#&edit'
 		);
 
-		if ($useNewProductList && \Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+		if ($useNewProductList && Catalog\Config\State::isProductCardSliderEnabled())
 		{
 			$catalogId = CCrmCatalog::EnsureDefaultExists();
 			$this->arResult['PATH_TO_PRODUCT_SHOW'] = "/shop/catalog/{$catalogId}/product/#product_id#/";
@@ -307,9 +306,11 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		$this->initializeData();
 
+		$this->arResult['ENTITY_FIELDS'] = $this->prepareFieldInfos();
+
 		//region GUID & Editor Config ID
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
-			? $this->arParams['GUID'] : $this->getDefaultGuid();
+		$this->arResult['GUID'] = $this->arParams['GUID'] ?? $this->getDefaultGuid();
+		$this->guid = $this->arResult['GUID'];
 
 		$this->arResult['EDITOR_CONFIG_ID'] = isset($this->arParams['EDITOR_CONFIG_ID'])
 			? $this->arParams['EDITOR_CONFIG_ID'] : $this->getDefaultConfigID();
@@ -319,7 +320,10 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			? \CCrmLead::GetStatusSemantics($this->entityData['STATUS_ID']) : '';
 		$this->arResult['PROGRESS_SEMANTICS'] = $progressSemantics;
 
-		$this->arResult['ENTITY_ATTRIBUTE_SCOPE'] = "";
+		$this->arResult['ENTITY_ATTRIBUTE_SCOPE'] = FieldAttributeManager::resolveEntityScope(
+			CCrmOwnerType::Lead,
+			$this->entityID
+		);
 
 		//region Entity Info
 		$this->arResult['ENTITY_INFO'] = array(
@@ -904,9 +908,9 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	}
 	public function prepareFieldInfos()
 	{
-		if(isset($this->arResult['ENTITY_FIELDS']))
+		if(isset($this->entityFieldInfos))
 		{
-			return $this->arResult['ENTITY_FIELDS'];
+			return $this->entityFieldInfos;
 		}
 
 		$prohibitedStatusIDs = array();
@@ -931,7 +935,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		}
 
 		$fakeValue = '';
-		$this->arResult['ENTITY_FIELDS'] = array(
+		$this->entityFieldInfos = array(
 			array(
 				'name' => 'ID',
 				'title' => Loc::getMessage('CRM_LEAD_FIELD_ID'),
@@ -1087,8 +1091,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		if($this->customerType === CustomerType::GENERAL)
 		{
-			$this->arResult['ENTITY_FIELDS'] = array_merge(
-				$this->arResult['ENTITY_FIELDS'],
+			$this->entityFieldInfos = array_merge(
+				$this->entityFieldInfos,
 				array(
 					array(
 						'name' => 'HONORIFIC',
@@ -1188,8 +1192,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					)
 				);
 			}
-			$this->arResult['ENTITY_FIELDS'] = array_merge(
-				$this->arResult['ENTITY_FIELDS'],
+			$this->entityFieldInfos = array_merge(
+				$this->entityFieldInfos,
 				[$addressField]
 			);
 
@@ -1217,7 +1221,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					$data['duplicateControl'] = array('groupId' => 'email');
 				}
 
-				$this->arResult['ENTITY_FIELDS'][] = array(
+				$this->entityFieldInfos[] = array(
 					'name' => $typeName,
 					'title' => $typeInfo['NAME'],
 					'type' => 'multifield',
@@ -1229,7 +1233,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		//region Client
 
-		$this->arResult['ENTITY_FIELDS'][] = array(
+		$this->entityFieldInfos[] = array(
 			'name' => 'CLIENT',
 			'title' => Loc::getMessage('CRM_LEAD_FIELD_CLIENT'),
 			'type' => 'client_light',
@@ -1276,8 +1280,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		);
 		//endregion
 
-		Tracking\UI\Details::appendEntityFields($this->arResult['ENTITY_FIELDS']);
-		$this->arResult['ENTITY_FIELDS'][] = array(
+		Tracking\UI\Details::appendEntityFields($this->entityFieldInfos);
+		$this->entityFieldInfos[] = array(
 			'name' => 'UTM',
 			'title' => Loc::getMessage('CRM_LEAD_FIELD_UTM'),
 			'type' => 'custom',
@@ -1286,105 +1290,50 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			'enableAttributes' => false
 		);
 
-		$this->arResult['ENTITY_FIELDS'] = array_merge(
-			$this->arResult['ENTITY_FIELDS'],
+		$this->entityFieldInfos = array_merge(
+			$this->entityFieldInfos,
 			array_values($this->userFieldInfos)
 		);
 
-		$isEntityDataModified = false;
-		$attrConfigs = $this->prepareEntityFieldAttributeConfigs();
-		for($i = 0, $length = count($this->arResult['ENTITY_FIELDS']); $i < $length; $i++)
+		return $this->entityFieldInfos;
+	}
+	public function prepareEntityFieldAttributes()
+	{
+		if($this->entityFieldInfos === null)
 		{
-			$isPhaseDependent = FieldAttributeManager::isPhaseDependent();
-			if (!$isPhaseDependent)
-			{
-				if (!is_array($this->arResult['ENTITY_FIELDS'][$i]['data']))
-				{
-					$this->arResult['ENTITY_FIELDS'][$i]['data'] = [];
-				}
-				$this->arResult['ENTITY_FIELDS'][$i]['data']['isPhaseDependent'] = false;
-			}
-
-			$fieldName = $this->arResult['ENTITY_FIELDS'][$i]['name'];
-			if(!isset($attrConfigs[$fieldName]))
-			{
-				continue;
-			}
-
-			if(!isset($this->arResult['ENTITY_FIELDS'][$i]['data']))
-			{
-				$this->arResult['ENTITY_FIELDS'][$i]['data'] = array();
-			}
-
-			$this->arResult['ENTITY_FIELDS'][$i]['data']['attrConfigs'] = $attrConfigs[$fieldName];
-
-			if (is_array($attrConfigs[$fieldName]) && !empty($attrConfigs[$fieldName]))
-			{
-				$isRequiredByAttribute = false;
-				$ready = false;
-				$attrConfig = $attrConfigs[$fieldName];
-				foreach ($attrConfig as $item)
-				{
-					if (is_array($item) && isset($item['typeId'])
-						&& $item['typeId'] === FieldAttributeType::REQUIRED)
-					{
-						if ($isPhaseDependent)
-						{
-							if (is_array($item['groups']))
-							{
-								foreach ($item['groups'] as $group)
-								{
-									if (is_array($group) && isset($group['phaseGroupTypeId'])
-										&& $group['phaseGroupTypeId'] === FieldAttributePhaseGroupType::ALL)
-									{
-										$isRequiredByAttribute = true;
-										$ready = true;
-										break;
-									}
-								}
-							}
-						}
-						else
-						{
-							$isRequiredByAttribute = true;
-							$ready = true;
-						}
-						if ($ready)
-						{
-							break;
-						}
-					}
-				}
-				if ($isRequiredByAttribute)
-				{
-					if (!is_array($this->arResult['ENTITY_FIELDS'][$i]['data']))
-					{
-						$this->arResult['ENTITY_FIELDS'][$i]['data'] = [];
-					}
-					$this->arResult['ENTITY_FIELDS'][$i]['data']['isRequiredByAttribute'] = true;
-
-					// This block allows in the component crm.entity.editor to determine the presence of mandatory
-					// standard entity fields with empty values.
-					if (is_array($this->entityData)
-						&& $this->isEntityFieldHasEmpyValue($this->arResult['ENTITY_FIELDS'][$i]))
-					{
-						if (!is_array($this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP']))
-						{
-							$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'] = [];
-						}
-						$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'][$fieldName] = true;
-						$isEntityDataModified = true;
-					}
-				}
-			}
+			return;
 		}
 
-		if ($isEntityDataModified)
-		{
-			$this->arResult['ENTITY_DATA'] = $this->entityData;
-		}
+		$requiredByAttributesFieldNames = FieldAttributeManager::prepareEditorFieldInfosWithAttributes(
+			$this->prepareEntityFieldAttributeConfigs(),
+			$this->entityFieldInfos
+		);
 
-		return $this->arResult['ENTITY_FIELDS'];
+		//region Update entity data
+		// This block allows in the component crm.entity.editor to determine the presence of mandatory
+		if (!empty($requiredByAttributesFieldNames))
+		{
+			$entityFieldInfoMap = [];
+			for($i = 0, $length = count($this->entityFieldInfos); $i < $length; $i++)
+			{
+				$entityFieldInfoMap[$this->entityFieldInfos[$i]['name']] = $i;
+			}
+
+			$isEntityDataModified = false;
+			foreach ($requiredByAttributesFieldNames as $fieldName)
+			{
+				if ($this->isEntityFieldHasEmpyValue($this->entityFieldInfos[$entityFieldInfoMap[$fieldName]]))
+				{
+					$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'][$fieldName] = true;
+					$isEntityDataModified = true;
+				}
+			}
+
+			if ($isEntityDataModified)
+			{
+				$this->arResult['ENTITY_DATA'] = $this->entityData;
+			}
+		}
 	}
 	protected function isEntityFieldHasEmpyValue($fieldInfo)
 	{
@@ -1768,9 +1717,9 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	{
 		if(!$this->entityFieldAttributeConfig)
 		{
-			$this->entityFieldAttributeConfig = Crm\Attribute\FieldAttributeManager::getEntityConfigurations(
+			$this->entityFieldAttributeConfig = FieldAttributeManager::getEntityConfigurations(
 				CCrmOwnerType::Lead,
-				Crm\Attribute\FieldAttributeManager::resolveEntityScope(
+				FieldAttributeManager::resolveEntityScope(
 					CCrmOwnerType::Lead,
 					$this->entityID
 				)
@@ -1817,8 +1766,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		if($this->entityID <= 0)
 		{
-			$requiredFields = Crm\Attribute\FieldAttributeManager::isEnabled()
-				? Crm\Attribute\FieldAttributeManager::getRequiredFields(
+			$requiredFields = FieldAttributeManager::isEnabled()
+				? FieldAttributeManager::getRequiredFields(
 					CCrmOwnerType::Lead,
 					$this->entityID,
 					['SOURCE_ID', 'HONORIFIC', Tracking\UI\Details::SourceId],
@@ -2599,6 +2548,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	{
 		$this->prepareEntityData();
 		$this->prepareFieldInfos();
+		$this->prepareEntityFieldAttributes();
 	}
 
 	public function getEntityEditorData(): array

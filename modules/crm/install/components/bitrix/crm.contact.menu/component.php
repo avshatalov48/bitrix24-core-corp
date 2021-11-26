@@ -47,7 +47,9 @@ if($arParams['ELEMENT_ID'] > 0)
 }
 $arResult['TOOLBAR_ID'] = $toolbarID;
 
-$arResult['BUTTONS'] = array();
+$arResult['BUTTONS'] = [];
+
+$isInSlider = ($arParams['IN_SLIDER'] === 'Y');
 
 if ($arParams['TYPE'] == 'list')
 {
@@ -189,7 +191,7 @@ if($arParams['TYPE'] === 'list')
 		);
 	}
 
-	if ($bImport)
+	if ($bImport && !$isInSlider)
 	{
 		$arResult['BUTTONS'][] = array(
 			'HTML' => GetMessage('CRM_CONTACT_IMPORT_VCARD'),
@@ -270,7 +272,7 @@ if($arParams['TYPE'] === 'list')
 		);
 	}
 
-	if ($bExport)
+	if ($bExport && !$isInSlider)
 	{
 		if($bImport)
 		{
@@ -395,7 +397,7 @@ if($arParams['TYPE'] === 'list')
 		}
 	}
 
-	if ($bDedupe)
+	if ($bDedupe && !$isInSlider)
 	{
 		$restriction = RestrictionManager::getDuplicateControlRestriction();
 		if($restriction->hasPermission())
@@ -449,6 +451,7 @@ if($arParams['TYPE'] === 'list')
 		\Bitrix\Main\Loader::includeModule('rest')
 		&& is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl')
 		&& $bAdd
+		&& !$isInSlider
 	)
 	{
 		$url = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl('crm_contact', 'setting_list');

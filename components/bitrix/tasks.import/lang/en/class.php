@@ -40,5 +40,6 @@ $MESS["TASKS_IMPORT_HEADERS_RESPONSIBLE"] = "Responsible person";
 $MESS["TASKS_IMPORT_HEADERS_START_DATE_PLAN"] = "Start task on";
 $MESS["TASKS_IMPORT_HEADERS_TAGS"] = "Tags";
 $MESS["TASKS_IMPORT_HEADERS_TASK_CONTROL"] = "Approve task when completed";
+$MESS["TASKS_IMPORT_HEADERS_TASK_CONTROL_V2"] = "Check task upon completion";
 $MESS["TASKS_IMPORT_HEADERS_TIME_ESTIMATE"] = "Task completion time, seconds";
 $MESS["TASKS_IMPORT_HEADERS_TITLE"] = "Name";

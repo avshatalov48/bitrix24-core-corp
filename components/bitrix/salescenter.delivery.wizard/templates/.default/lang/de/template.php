@@ -3,6 +3,7 @@ $MESS["DELIVERY_SERVICE_DELETE_CONFIRM"] = "Möchten Sie diesen Lieferservice wi
 $MESS["DELIVERY_SERVICE_NAME"] = "Name";
 $MESS["DELIVERY_SERVICE_NAME_PLACEHOLDER"] = "Namen eingeben";
 $MESS["DELIVERY_SERVICE_SETTINGS"] = "Konfigurieren";
+$MESS["DELIVERY_SERVICE_YANDEX_TAXI_ACCOUNT_BALANCE_NOTICE"] = "positives Guthaben im Yandex Go Account ist erforderlich";
 $MESS["DELIVERY_SERVICE_YANDEX_TAXI_ARTICLE_LINK"] = "Artikelseite";
 $MESS["DELIVERY_SERVICE_YANDEX_TAXI_CONNECT_TEXT"] = "Die Lieferung geht ganz einfach: nur ein paar Klicks, und schon wird ein Lieferfahrzeug bestellt - direkt aus CRM heraus. Auch mit Verfolgen.";
 $MESS["DELIVERY_SERVICE_YANDEX_TAXI_CONNECT_TEXT_MORE"] = "Mehr über Yandex.Go delivery";

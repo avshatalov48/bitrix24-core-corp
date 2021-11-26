@@ -50,12 +50,9 @@ export class Category extends Event.EventEmitter
 		this.cache = new Cache.MemoryCache();
 		this.drawed = false;
 		this.allowWrite = Boolean(options.allowWrite);
-		this.canEditTunnels = Boolean(options.canEditTunnels);
+		this.isCategoryEditable = Boolean(options.isCategoryEditable);
+		this.areStagesEditable =  Boolean(options.areStagesEditable);
 		this.isAvailableGenerator = options.isAvailableGenerator;
-		this.showGeneratorRestrictionPopup = options.showGeneratorRestrictionPopup;
-		this.isAvailableRobots = options.isAvailableRobots;
-		this.showRobotsRestrictionPopup = options.showRobotsRestrictionPopup;
-		this.isSenderSupported = options.isSenderSupported;
 		this.isAutomationEnabled = options.isAutomationEnabled;
 		this.isStagesEnabled = options.isStagesEnabled;
 
@@ -116,7 +113,10 @@ export class Category extends Event.EventEmitter
 					});
 				}, 500);
 			});
-
+		if (!this.isCategoryEditable)
+		{
+			Dom.addClass(this.getContainer(), 'crm-st-category-editing-disabled');
+		}
 		if (!this.isAutomationEnabled)
 		{
 			Dom.addClass(this.getContainer(), 'crm-st-category-automation-disabled');
@@ -129,7 +129,7 @@ export class Category extends Event.EventEmitter
 		{
 			Dom.addClass(this.getContainer(), 'crm-st-category-stages-stub');
 		}
-		if (!this.isSenderSupported)
+		if (!this.isAvailableGenerator)
 		{
 			Dom.addClass(this.getContainer(), 'crm-st-category-generator-disabled');
 		}
@@ -412,7 +412,7 @@ export class Category extends Event.EventEmitter
 		return this.cache.remember('progressKanban', () => (
 			Category.createGrid({
 				renderTo: this.getProgressStagesContainer(),
-				editable: this.canEditTunnels,
+				editable: this.areStagesEditable,
 				columns: this.stages.P.map(stage => (
 					new Column({
 						id: stage.STATUS_ID,
@@ -456,7 +456,7 @@ export class Category extends Event.EventEmitter
 		return this.cache.remember('successKanban', () => (
 			Category.createGrid({
 				renderTo: this.getSuccessStagesContainer(),
-				editable: this.canEditTunnels,
+				editable: this.areStagesEditable,
 				columns: this.stages.S.map(stage => (
 					new Column({
 						id: stage.STATUS_ID,
@@ -502,7 +502,7 @@ export class Category extends Event.EventEmitter
 		return this.cache.remember('failKanban', () => (
 			Category.createGrid({
 				renderTo: this.getFailStagesContainer(),
-				editable: this.canEditTunnels,
+				editable: this.areStagesEditable,
 				columns: this.stages.F.map(stage => (
 					new Column({
 						id: stage.STATUS_ID,
@@ -569,7 +569,8 @@ export class Category extends Event.EventEmitter
 			},
 			currentStageGroup: this.getFailContainer(),
 			categoryName: this.getTitle().innerText,
-			canEditTunnels: this.canEditTunnels,
+			isCategoryEditable: this.isCategoryEditable,
+			areStagesEditable: this.areStagesEditable,
 		};
 	}
 
@@ -596,10 +597,16 @@ export class Category extends Event.EventEmitter
 	getRobotsLink(): HTMLSpanElement
 	{
 		return this.cache.remember('robotsLink', () => {
-			const onClick = this.onRobotsLinkClick.bind(this);
+			if (!this.isAutomationEnabled)
+			{
+				return '<span></span>';
+			}
+
+			const isRestricted = BX.Crm.Restriction.Bitrix24.isRestricted('automation');
+			const onClick = isRestricted ? BX.Crm.Restriction.Bitrix24.getHandler('automation') : this.onRobotsLinkClick.bind(this);
 
 			return Tag.render`
-				${!this.isAvailableRobots ? ' <span class="tariff-lock"></span>' : ''}
+				${isRestricted ? '<span class="tariff-lock"></span>' : ''}
 				<span class="crm-st-category-info-links-link crm-st-robots-link crm-st-automation" onclick="${onClick}">
 					${Loc.getMessage('CRM_ST_ROBOT_SETTINGS_LINK_LABEL')}
 				</span>
@@ -611,41 +618,42 @@ export class Category extends Event.EventEmitter
 	onRobotsLinkClick(event)
 	{
 		event.preventDefault();
-
-		if (!this.isAvailableRobots)
-		{
-			this.showRobotsRestrictionPopup();
-		}
-		else
-		{
-			// eslint-disable-next-line
-			BX.SidePanel.Instance.open(
-				this.robotsSettingsLink,
-				{
-					cacheable: false,
-					events: {
-						onClose: () => {
-							this.emit('Category:slider:close');
-							this.emit('Category:slider:robots:close');
-						},
+		// eslint-disable-next-line
+		BX.SidePanel.Instance.open(
+			this.robotsSettingsLink,
+			{
+				cacheable: false,
+				events: {
+					onClose: () => {
+						this.emit('Category:slider:close');
+						this.emit('Category:slider:robots:close');
 					},
 				},
-			);
-		}
+			},
+		);
 	}
 
 	getGeneratorLink(): HTMLSpanElement
 	{
 		return this.cache.remember('generatorLink', () => {
-			const onClick = this.onGeneratorLinkClick.bind(this);
+			if (!this.isAvailableGenerator)
+			{
+				return '<span></span>';
+			}
+
+			const isRestricted = BX.Crm.Restriction.Bitrix24.isRestricted('generator');
+			const onClick = isRestricted ? BX.Crm.Restriction.Bitrix24.getHandler('generator') : this.onGeneratorLinkClick.bind(this);
 
 			return Tag.render`
-				${!this.isAvailableGenerator ? ' <span class="tariff-lock"></span>' : ''}
+				${isRestricted ? '<span class="tariff-lock"></span>' : ''}
 				<span class="crm-st-category-info-links-link crm-st-generator-link crm-st-generator" onclick="${onClick}">
 					${Loc.getMessage('CRM_ST_GENERATOR_SETTINGS_LINK_LABEL')}
 				</span>
 			`;
 		});
+
+
+
 	}
 
 	/** @private */
@@ -653,26 +661,19 @@ export class Category extends Event.EventEmitter
 	{
 		event.preventDefault();
 
-		if (!this.isAvailableGenerator)
-		{
-			this.showGeneratorRestrictionPopup();
-		}
-		else
-		{
-			// eslint-disable-next-line
-			BX.SidePanel.Instance.open(
-				this.generatorSettingsLink,
-				{
-					cacheable: false,
-					events: {
-						onClose: () => {
-							this.emit('Category:slider:close');
-							this.emit('Category:slider:generator:close', {category: this});
-						},
+		// eslint-disable-next-line
+		BX.SidePanel.Instance.open(
+			this.generatorSettingsLink,
+			{
+				cacheable: false,
+				events: {
+					onClose: () => {
+						this.emit('Category:slider:close');
+						this.emit('Category:slider:generator:close', {category: this});
 					},
 				},
-			);
-		}
+			},
+		);
 	}
 
 	getEditButton(): HTMLSpanElement
@@ -1132,9 +1133,9 @@ export class Category extends Event.EventEmitter
 		return this.cache.remember('getActionsButtons', () => (
 			Tag.render`
 				<div class="crm-st-category-action-buttons">
-					${this.canEditTunnels ? this.getEditButton() : ''}
-					${this.canEditTunnels ? this.getOptionButton() : ''}
-					${this.canEditTunnels ? this.getRemoveButton() : ''}
+					${this.isCategoryEditable ? this.getEditButton() : ''}
+					${this.isCategoryEditable ? this.getOptionButton() : ''}
+					${this.isCategoryEditable ? this.getRemoveButton() : ''}
 				</div>
 			`
 		));

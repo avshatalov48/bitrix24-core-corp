@@ -1286,7 +1286,20 @@
 				gridData.rights.canAddColumn
 			)
 			{
-				BX.Kanban.Column.prototype.handleAddColumnButtonClick.apply(this, arguments);
+				this.getGrid().getColumns().forEach(function(column){
+					column.getAddColumnButton().style.visibility = 'hidden';
+				});
+
+				var newColumn = this.getGrid().addColumn({
+					id: "kanban-new-column-" + BX.util.getRandomString(5),
+					type: "BX.CRM.Kanban.DraftColumn",
+					canSort: false,
+					canAddItem: false,
+					droppable: false,
+					targetId: this.getGrid().getNextColumnSibling(this)
+				});
+
+				newColumn.switchToEditMode();
 			}
 			else if (typeof BX.Intranet !== "undefined")
 			{
@@ -1391,4 +1404,20 @@
 		},
 	};
 
+	BX.CRM.Kanban.DraftColumn = function(options)
+	{
+		BX.Kanban.DraftColumn.apply(this, arguments);
+	};
+
+	BX.CRM.Kanban.DraftColumn.prototype = {
+		__proto__: BX.Kanban.DraftColumn.prototype,
+		constructor: BX.CRM.Kanban.DraftColumn,
+		handleRemoveButtonClick: function(event)
+		{
+			this.getGrid().getColumns().forEach(function(column){
+				column.getAddColumnButton().style.visibility = null;
+			});
+			BX.Kanban.DraftColumn.prototype.handleRemoveButtonClick.apply(this, arguments);
+		},
+	}
 })();

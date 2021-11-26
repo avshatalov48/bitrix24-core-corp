@@ -188,7 +188,7 @@ class CrmTypeDetailComponent extends Base
 		{
 			$relation = $relationManager->getRelation(new RelationIdentifier($typeId, $entityTypeId));
 			$parent[] = [
-				'title' => htmlspecialcharsbx($type['title']),
+				'title' => $type['title'],
 				'entityTypeId' => $typeId,
 				'isChecked' => $relation ? true : false,
 				'isChildrenListEnabled' => $relation ? $relation->isChildrenListEnabled() : false,
@@ -199,7 +199,7 @@ class CrmTypeDetailComponent extends Base
 		{
 			$relation = $relationManager->getRelation(new RelationIdentifier($entityTypeId, $typeId));
 			$child[] = [
-				'title' => htmlspecialcharsbx($type['title']),
+				'title' => $type['title'],
 				'entityTypeId' => $typeId,
 				'isChecked' => $relation ? true : false,
 				'isChildrenListEnabled' => $relation ? $relation->isChildrenListEnabled() : false,

@@ -2,10 +2,10 @@
 /**
  * Class implements all further interactions with "rest" module considering "elapsed item" entity.
  * This class is for REST-only purposes. When working with API directly, use \Bitrix\Tasks\ElapsedTimeTable or CTaskElapsedItem instead.
- * 
+ *
  * This class is for internal use only, not a part of public API.
  * It can be changed at any time without notification.
- * 
+ *
  * @access private
  */
 
@@ -39,13 +39,13 @@ final class ElapsedTimeTable extends \Bitrix\Tasks\ElapsedTimeTable
 {
 	/**
 	 * Prepares "parameters" argument for self::getList() according to the purposes of a REST interface
-	 * 
+	 *
 	 * @param mixed[] Initial parameters
 	 * @param mixed[] Behaviour flags
-	 * 
+	 *
 	 * 	<li> USER_ID integer Current user id, mandatory.
 	 * 	<li> ROW_LIMIT integer Row limit on each rest query, optional
-	 * 
+	 *
 	 * @return QueryResult
 	 */
 	public static function getList(array $parameters = array(), $behaviour = array())
@@ -66,8 +66,6 @@ final class ElapsedTimeTable extends \Bitrix\Tasks\ElapsedTimeTable
 		{
 			static::parseOutSimpleAggregations(array_keys($parameters['order']), $runtime);
 		}
-
-		$parameters['filter']['=TASK.ZOMBIE'] = 'N';
 
 		if(is_array($parameters['select']) && !empty($parameters['select']))
 		{

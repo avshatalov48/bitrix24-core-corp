@@ -2,12 +2,26 @@
 
 namespace Bitrix\SalesCenter\Controller;
 
+use Bitrix\Intranet\ActionFilter;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Loader;
 use Bitrix\SalesCenter\Model\Page;
 use Bitrix\SalesCenter\Model\PageTable;
 
 abstract class Base extends Controller
 {
+	protected function getDefaultPreFilters()
+	{
+		$preFilters = parent::getDefaultPreFilters();
+
+		if (Loader::includeModule('intranet'))
+		{
+			$preFilters[] = new ActionFilter\IntranetUser();
+		}
+
+		return $preFilters;
+	}
+
 	/**
 	 * @return array|\Bitrix\Main\Engine\AutoWire\Parameter[]
 	 */

@@ -14,6 +14,8 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Localization\Translation;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Location\Entity\Address;
+use CCrmFieldInfoAttr;
+use CCrmInstantEditorHelper;
 
 Loc::loadMessages(__FILE__);
 
@@ -62,7 +64,7 @@ class EntityRequisite
 	private static $fixedPresetList = null;
 	private static $FIELD_INFOS = null;
 
-	private static $allowedRqFieldCountryIds = array(1, 4, 6, 14, 46, 122);
+	private static $allowedRqFieldCountryIds = array(1, 4, 6, 14, 46, 77, 110, 122);
 	private static $rqFieldCountryMap = null;
 	private static $rqFieldTitleMap = null;
 	private static $userFieldTitles = null;
@@ -70,6 +72,10 @@ class EntityRequisite
 	private static $rqFieldValidationMap = null;
 
 	private static $duplicateCriterionFieldsMap = null;
+
+	private static $phrasesMap = [];
+
+	private static $rqListFieldItemsMap = [];
 
 	protected static $presetsWithAddressMap = null;
 
@@ -317,6 +323,7 @@ class EntityRequisite
 				'RQ_EMAIL' => [['type' => 'length', 'params' => ['min' => null, 'max' => 255]]],
 				'RQ_PHONE' => [['type' => 'length', 'params' => ['min' => null, 'max' => 30]]],
 				'RQ_FAX' => [['type' => 'length', 'params' => ['min' => null, 'max' => 30]]],
+				'RQ_IDENT_TYPE' => [['type' => 'length', 'params' => ['min' => null, 'max' => 50]]],
 				'RQ_IDENT_DOC' => [['type' => 'length', 'params' => ['min' => null, 'max' => 255]]],
 				'RQ_IDENT_DOC_SER' => [['type' => 'length', 'params' => ['min' => null, 'max' => 25]]],
 				'RQ_IDENT_DOC_NUM' => [['type' => 'length', 'params' => ['min' => null, 'max' => 25]]],
@@ -346,7 +353,10 @@ class EntityRequisite
 				'RQ_VAT_CERT_NUM' => [['type' => 'length', 'params' => ['min' => null, 'max' => 15]]],
 				'RQ_VAT_CERT_DATE' => [['type' => 'length', 'params' => ['min' => null, 'max' => 30]]],
 				'RQ_RESIDENCE_COUNTRY' => [['type' => 'length', 'params' => ['min' => null, 'max' => 128]]],
-				'RQ_BASE_DOC' => [['type' => 'length', 'params' => ['min' => null, 'max' => 255]]]
+				'RQ_BASE_DOC' => [['type' => 'length', 'params' => ['min' => null, 'max' => 255]]],
+				'RQ_REGON' => [['type' => 'length', 'params' => ['min' => null, 'max' => 9]]],
+				'RQ_KRS' => [['type' => 'length', 'params' => ['min' => null, 'max' => 10]]],
+				'RQ_PESEL' => [['type' => 'length', 'params' => ['min' => null, 'max' => 11]]],
 			];
 		}
 
@@ -919,7 +929,13 @@ class EntityRequisite
 	public function update($id, $fields, $options = array())
 	{
 		$id = intval($id);
-		$requisite = $this->getById($id);
+		$requisite = $this->getList(
+			array(
+				'filter' => ['=ID' => $id],
+				'select' => ['ADDRESS_ONLY'],
+				'limit' => 1
+			)
+		)->fetch();
 		if(!is_array($requisite))
 		{
 			$result = new Main\Result();
@@ -1301,103 +1317,131 @@ class EntityRequisite
 		);
 	}
 
+	public function checkCountryId(int $countryId): bool
+	{
+		return in_array($countryId, self::$allowedRqFieldCountryIds, true);
+	}
+
+	public function checkRqFieldCountryId(string $fieldName, int $countryId): bool
+	{
+		$rqFieldsCountryMap = $this->getRqFieldsCountryMap();
+		if (is_array($rqFieldsCountryMap[$fieldName]) && in_array($countryId, $rqFieldsCountryMap[$fieldName], true))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	public static function getFieldsInfo()
 	{
 		if(!self::$FIELD_INFOS)
 		{
-			self::$FIELD_INFOS = array(
-				'ID' => array(
+			$requisite = static::getSingleInstance();
+
+			self::$FIELD_INFOS = [
+				'ID' => [
 					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
-				'ENTITY_TYPE_ID' => array(
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+				],
+				'ENTITY_TYPE_ID' => [
 					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(
-								\CCrmFieldInfoAttr::Required,
-								\CCrmFieldInfoAttr::Immutable)
-				),
-				'ENTITY_ID' => array(
+					'ATTRIBUTES' => [
+						CCrmFieldInfoAttr::Required,
+						CCrmFieldInfoAttr::Immutable
+					]
+				],
+				'ENTITY_ID' => [
 					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(
-							\CCrmFieldInfoAttr::Required,
-							\CCrmFieldInfoAttr::Immutable)
-				),
-				'PRESET_ID' => array(
+					'ATTRIBUTES' => [
+						CCrmFieldInfoAttr::Required,
+						CCrmFieldInfoAttr::Immutable
+					]
+				],
+				'PRESET_ID' => [
 					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(
-							\CCrmFieldInfoAttr::Required,
-							\CCrmFieldInfoAttr::Immutable)
-				),
-				'DATE_CREATE' => array(
-						'TYPE' => 'datetime',
-						'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
-				'DATE_MODIFY' => array(
-						'TYPE' => 'datetime',
-						'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
-				'CREATED_BY_ID' => array(
-						'TYPE' => 'user',
-						'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
-				'MODIFY_BY_ID' => array(
-						'TYPE' => 'user',
-						'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
-				'NAME' => array('TYPE' => 'string'),
-				'CODE' => array('TYPE' => 'string'),
-				'XML_ID' => array('TYPE' => 'string'),
-				'ORIGINATOR_ID' => array('TYPE' => 'string'),
-				'ACTIVE' => array('TYPE' => 'char'),
-				'ADDRESS_ONLY' => array('TYPE' => 'char'),
-				'SORT' => array('TYPE' => 'integer'),
-				'RQ_NAME' => array('TYPE' => 'string'),
-				'RQ_FIRST_NAME' => array('TYPE' => 'string'),
-				'RQ_LAST_NAME' => array('TYPE' => 'string'),
-				'RQ_SECOND_NAME' => array('TYPE' => 'string'),
-				'RQ_COMPANY_NAME' => array('TYPE' => 'string'),
-				'RQ_COMPANY_FULL_NAME' => array('TYPE' => 'string'),
-				'RQ_COMPANY_REG_DATE' => array('TYPE' => 'string'),
-				'RQ_DIRECTOR' => array('TYPE' => 'string'),
-				'RQ_ACCOUNTANT' => array('TYPE' => 'string'),
-				'RQ_CEO_NAME' => array('TYPE' => 'string'),
-				'RQ_CEO_WORK_POS' => array('TYPE' => 'string'),
-				'RQ_CONTACT' => array('TYPE' => 'string'),
-				'RQ_EMAIL' => array('TYPE' => 'string'),
-				'RQ_PHONE' => array('TYPE' => 'string'),
-				'RQ_FAX' => array('TYPE' => 'string'),
-				'RQ_IDENT_DOC' => array('TYPE' => 'string'),
-				'RQ_IDENT_DOC_SER' => array('TYPE' => 'string'),
-				'RQ_IDENT_DOC_NUM' => array('TYPE' => 'string'),
-				'RQ_IDENT_DOC_PERS_NUM' => array('TYPE' => 'string'),
-				'RQ_IDENT_DOC_DATE' => array('TYPE' => 'string'),
-				'RQ_IDENT_DOC_ISSUED_BY' => array('TYPE' => 'string'),
-				'RQ_IDENT_DOC_DEP_CODE' => array('TYPE' => 'string'),
-				'RQ_INN' => array('TYPE' => 'string'),
-				'RQ_KPP' => array('TYPE' => 'string'),
-				'RQ_USRLE' => array('TYPE' => 'string'),
-				'RQ_IFNS' =>array('TYPE' => 'string'),
-				'RQ_OGRN' =>array('TYPE' => 'string'),
-				'RQ_OGRNIP' => array('TYPE' => 'string'),
-				'RQ_OKPO' => array('TYPE' => 'string'),
-				'RQ_OKTMO' => array('TYPE' => 'string'),
-				'RQ_OKVED' => array('TYPE' => 'string'),
-				'RQ_EDRPOU' => array('TYPE' => 'string'),
-				'RQ_DRFO' => array('TYPE' => 'string'),
-				'RQ_KBE' => array('TYPE' => 'string'),
-				'RQ_IIN' => array('TYPE' => 'string'),
-				'RQ_BIN' => array('TYPE' => 'string'),
-				'RQ_ST_CERT_SER' => array('TYPE' => 'string'),
-				'RQ_ST_CERT_NUM' => array('TYPE' => 'string'),
-				'RQ_ST_CERT_DATE' => array('TYPE' => 'string'),
-				'RQ_VAT_PAYER' => array('TYPE' => 'char'),
-				'RQ_VAT_ID' => array('TYPE' => 'string'),
-				'RQ_VAT_CERT_SER' => array('TYPE' => 'string'),
-				'RQ_VAT_CERT_NUM' => array('TYPE' => 'string'),
-				'RQ_VAT_CERT_DATE' => array('TYPE' => 'string'),
-				'RQ_RESIDENCE_COUNTRY' => array('TYPE' => 'string'),
-				'RQ_BASE_DOC' => array('TYPE' => 'string')
-			);
+					'ATTRIBUTES' => [
+						CCrmFieldInfoAttr::Required,
+						CCrmFieldInfoAttr::Immutable
+					]
+				],
+				'DATE_CREATE' => [
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+				],
+				'DATE_MODIFY' => [
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+				],
+				'CREATED_BY_ID' => [
+					'TYPE' => 'user',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+				],
+				'MODIFY_BY_ID' => [
+					'TYPE' => 'user',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+				],
+				'NAME' => ['TYPE' => 'string'],
+				'CODE' => ['TYPE' => 'string'],
+				'XML_ID' => ['TYPE' => 'string'],
+				'ORIGINATOR_ID' => ['TYPE' => 'string'],
+				'ACTIVE' => ['TYPE' => 'char'],
+				'ADDRESS_ONLY' => ['TYPE' => 'char'],
+				'SORT' => ['TYPE' => 'integer'],
+				'RQ_NAME' => ['TYPE' => 'string'],
+				'RQ_FIRST_NAME' => ['TYPE' => 'string'],
+				'RQ_LAST_NAME' => ['TYPE' => 'string'],
+				'RQ_SECOND_NAME' => ['TYPE' => 'string'],
+				'RQ_COMPANY_NAME' => ['TYPE' => 'string'],
+				'RQ_COMPANY_FULL_NAME' => ['TYPE' => 'string'],
+				'RQ_COMPANY_REG_DATE' => ['TYPE' => 'string'],
+				'RQ_DIRECTOR' => ['TYPE' => 'string'],
+				'RQ_ACCOUNTANT' => ['TYPE' => 'string'],
+				'RQ_CEO_NAME' => ['TYPE' => 'string'],
+				'RQ_CEO_WORK_POS' => ['TYPE' => 'string'],
+				'RQ_CONTACT' => ['TYPE' => 'string'],
+				'RQ_EMAIL' => ['TYPE' => 'string'],
+				'RQ_PHONE' => ['TYPE' => 'string'],
+				'RQ_FAX' => ['TYPE' => 'string'],
+				'RQ_IDENT_TYPE' => [
+					'TYPE' => 'crm_status',
+					'CRM_STATUS_TYPE' => $requisite->getAllowedRqListFieldsStatusEntitities('RQ_IDENT_TYPE')
+				],
+				'RQ_IDENT_DOC' => ['TYPE' => 'string'],
+				'RQ_IDENT_DOC_SER' => ['TYPE' => 'string'],
+				'RQ_IDENT_DOC_NUM' => ['TYPE' => 'string'],
+				'RQ_IDENT_DOC_PERS_NUM' => ['TYPE' => 'string'],
+				'RQ_IDENT_DOC_DATE' => ['TYPE' => 'string'],
+				'RQ_IDENT_DOC_ISSUED_BY' => ['TYPE' => 'string'],
+				'RQ_IDENT_DOC_DEP_CODE' => ['TYPE' => 'string'],
+				'RQ_INN' => ['TYPE' => 'string'],
+				'RQ_KPP' => ['TYPE' => 'string'],
+				'RQ_USRLE' => ['TYPE' => 'string'],
+				'RQ_IFNS' => ['TYPE' => 'string'],
+				'RQ_OGRN' => ['TYPE' => 'string'],
+				'RQ_OGRNIP' => ['TYPE' => 'string'],
+				'RQ_OKPO' => ['TYPE' => 'string'],
+				'RQ_OKTMO' => ['TYPE' => 'string'],
+				'RQ_OKVED' => ['TYPE' => 'string'],
+				'RQ_EDRPOU' => ['TYPE' => 'string'],
+				'RQ_DRFO' => ['TYPE' => 'string'],
+				'RQ_KBE' => ['TYPE' => 'string'],
+				'RQ_IIN' => ['TYPE' => 'string'],
+				'RQ_BIN' => ['TYPE' => 'string'],
+				'RQ_ST_CERT_SER' => ['TYPE' => 'string'],
+				'RQ_ST_CERT_NUM' => ['TYPE' => 'string'],
+				'RQ_ST_CERT_DATE' => ['TYPE' => 'string'],
+				'RQ_VAT_PAYER' => ['TYPE' => 'char'],
+				'RQ_VAT_ID' => ['TYPE' => 'string'],
+				'RQ_VAT_CERT_SER' => ['TYPE' => 'string'],
+				'RQ_VAT_CERT_NUM' => ['TYPE' => 'string'],
+				'RQ_VAT_CERT_DATE' => ['TYPE' => 'string'],
+				'RQ_RESIDENCE_COUNTRY' => ['TYPE' => 'string'],
+				'RQ_BASE_DOC' => ['TYPE' => 'string'],
+				'RQ_REGON' => ['TYPE' => 'string'],
+				'RQ_KRS' => ['TYPE' => 'string'],
+				'RQ_PESEL' => ['TYPE' => 'string'],
+			];
 		}
 		return self::$FIELD_INFOS;
 	}
@@ -1462,7 +1506,7 @@ class EntityRequisite
 		return $result;
 	}
 
-	private static $rqFields = array(
+	private static $rqFields = [
 		'RQ_NAME',
 		'RQ_FIRST_NAME',
 		'RQ_LAST_NAME',
@@ -1479,6 +1523,7 @@ class EntityRequisite
 		'RQ_EMAIL',
 		'RQ_PHONE',
 		'RQ_FAX',
+		'RQ_IDENT_TYPE',
 		'RQ_IDENT_DOC',
 		'RQ_IDENT_DOC_SER',
 		'RQ_IDENT_DOC_NUM',
@@ -1509,8 +1554,15 @@ class EntityRequisite
 		'RQ_VAT_CERT_NUM',
 		'RQ_VAT_CERT_DATE',
 		'RQ_RESIDENCE_COUNTRY',
-		'RQ_BASE_DOC'
-	);
+		'RQ_BASE_DOC',
+		'RQ_REGON',
+		'RQ_KRS',
+		'RQ_PESEL',
+	];
+
+	private static $rqlistFields = [
+		'RQ_IDENT_TYPE',
+	];
 
 	private static $rqFiltrableFields = null;
 
@@ -1519,11 +1571,42 @@ class EntityRequisite
 		return self::$rqFields;
 	}
 
+	public function getRqListFields(): array
+	{
+		return self::$rqlistFields;
+	}
+
+	public function isRqListField(string $fieldName): bool
+	{
+		return in_array($fieldName, $this->getRqListFields(), true);
+	}
+
+	public function getAllowedRqListFieldsStatusEntitities(string $fieldName = ''): array
+	{
+		$result = [];
+
+		$rqFieldsCountryMap = $this->getRqFieldsCountryMap();
+		$rqListFields = ($fieldName !== '') ? [$fieldName] : $this->getRqListFields();
+		foreach ($rqListFields as $fieldName)
+		{
+			if (is_array($rqFieldsCountryMap[$fieldName]))
+			{
+				foreach ($rqFieldsCountryMap[$fieldName] as $countryId)
+				{
+					$countryCode = EntityPreset::getCountryCodeById($countryId);
+					$result[] = "{$fieldName}_{$countryCode}";
+				}
+			}
+		}
+
+		return $result;
+	}
+
 	public function getRqFiltrableFields()
 	{
 		if (self::$rqFiltrableFields === null)
 		{
-			self::$rqFiltrableFields = array(
+			self::$rqFiltrableFields = [
 				'RQ_NAME',
 				'RQ_FIRST_NAME',
 				'RQ_LAST_NAME',
@@ -1535,6 +1618,7 @@ class EntityRequisite
 				'RQ_EMAIL',
 				'RQ_PHONE',
 				'RQ_FAX',
+				'RQ_IDENT_TYPE',
 				'RQ_IDENT_DOC_SER',
 				'RQ_IDENT_DOC_NUM',
 				'RQ_IDENT_DOC_PERS_NUM',
@@ -1551,8 +1635,11 @@ class EntityRequisite
 				'RQ_VAT_ID',
 				'RQ_VAT_PAYER',
 				'RQ_VAT_CERT_SER',
-				'RQ_VAT_CERT_NUM'
-			);
+				'RQ_VAT_CERT_NUM',
+				'RQ_REGON',
+				'RQ_KRS',
+				'RQ_PESEL',
+			];
 		}
 
 		return self::$rqFiltrableFields;
@@ -1598,12 +1685,12 @@ class EntityRequisite
 
 	public function resolveAddressTypeByFieldName($fieldName)
 	{
-		return $fieldName === 'RQ_ADDR' ? RequisiteAddress::Primary : RequisiteAddress::Undefined;
+		return $fieldName === 'RQ_ADDR' ? EntityAddressType::Primary : EntityAddressType::Undefined;
 	}
 
 	public function resolveFieldNameByAddressType($addrType)
 	{
-		return $addrType === RequisiteAddress::Primary ? 'RQ_ADDR' : '';
+		return $addrType === EntityAddressType::Primary ? 'RQ_ADDR' : '';
 	}
 
 	public function getUserFields()
@@ -1719,7 +1806,6 @@ class EntityRequisite
 
 	public function getFieldsTitles($countryId = 0)
 	{
-		global $USER_FIELD_MANAGER;
 		$result = array();
 
 		$countryId = (int)$countryId;
@@ -1758,7 +1844,11 @@ class EntityRequisite
 			}
 			else
 			{
-				$fieldTitle = (isset($fieldInfo['title']) && !empty($fieldInfo['title'])) ? $fieldInfo['title'] : GetMessage('CRM_REQUISITE_ENTITY_'.$fieldName.'_FIELD');
+				$fieldTitle =
+					(isset($fieldInfo['title']) && !empty($fieldInfo['title']))
+					? $fieldInfo['title']
+					: GetMessage('CRM_REQUISITE_ENTITY_'.$fieldName.'_FIELD')
+				;
 				$result[$fieldName] = is_string($fieldTitle) ? $fieldTitle : '';
 			}
 		}
@@ -1772,59 +1862,285 @@ class EntityRequisite
 	{
 		if (self::$rqFieldCountryMap === null)
 		{
-			// ru - 1, by - 4, kz - 6, ua - 14, de - 46, us - 122
-			self::$rqFieldCountryMap = array(
-				'RQ_NAME' => array(1, 4, 6, 14, 46, 122),
-				'RQ_FIRST_NAME' => array(1, 46, 122),
-				'RQ_LAST_NAME' => array(1, 46, 122),
-				'RQ_SECOND_NAME' => array(1),
-				'RQ_COMPANY_NAME' => array(1, 4, 6, 14, 46, 122),
-				'RQ_COMPANY_FULL_NAME' => array(1, 4, 6),
-				'RQ_COMPANY_REG_DATE' => array(1, 4),
-				'RQ_DIRECTOR' => array(1, 4, 14),
-				'RQ_ACCOUNTANT' => array(1, 4, 14),
-				'RQ_CEO_NAME' => array(6),
-				'RQ_CEO_WORK_POS' => array(6),
-				'RQ_ADDR' => array(1, 4, 6, 14, 46, 122),
-				'RQ_CONTACT' => array(1, 4, 6, 14, 46, 122),
-				'RQ_EMAIL' => array(1, 4, 6, 14, 46, 122),
-				'RQ_PHONE' => array(1, 4, 6, 14, 46, 122),
-				'RQ_FAX' => array(1, 4, 6, 14, 46, 122),
-				'RQ_IDENT_DOC' => array(1, 4),
-				'RQ_IDENT_DOC_SER' => array(1, 4),
-				'RQ_IDENT_DOC_NUM' => array(1, 4),
-				'RQ_IDENT_DOC_PERS_NUM' => array(4),
-				'RQ_IDENT_DOC_DATE' => array(1, 4),
-				'RQ_IDENT_DOC_ISSUED_BY' => array(1, 4),
-				'RQ_IDENT_DOC_DEP_CODE' => array(1),
-				'RQ_INN' => array(1, 4, 6, 14, 46),
-				'RQ_KPP' => array(1),
-				'RQ_USRLE' => array(46),
-				'RQ_IFNS' => array(1),
-				'RQ_OGRN' => array(1),
-				'RQ_OGRNIP' => array(1),
-				'RQ_OKPO' => array(1, 4, 6),
-				'RQ_OKTMO' => array(1),
-				'RQ_OKVED' => array(1),
-				'RQ_EDRPOU' => array(14),
-				'RQ_DRFO' => array(14),
-				'RQ_KBE' => array(6),
-				'RQ_IIN' => array(6),
-				'RQ_BIN' => array(6),
-				'RQ_ST_CERT_SER' => array(1),
-				'RQ_ST_CERT_NUM' => array(1, 4),
-				'RQ_ST_CERT_DATE' => array(1, 4),
-				'RQ_VAT_PAYER' => array(14),
-				'RQ_VAT_ID' => array(46,122),
-				'RQ_VAT_CERT_SER' => array(6),
-				'RQ_VAT_CERT_NUM' => array(6, 14),
-				'RQ_VAT_CERT_DATE' => array(6),
-				'RQ_RESIDENCE_COUNTRY' => array(6),
-				'RQ_BASE_DOC' => array(4)
-			);
+			// ru - 1, by - 4, kz - 6, ua - 14, de - 46, 77 - co, pl - 110, us - 122
+			self::$rqFieldCountryMap = [
+				'RQ_NAME' => [1, 4, 6, 14, 46, 122],
+				'RQ_FIRST_NAME' => [1, 46, 77, 110, 122],
+				'RQ_LAST_NAME' => [1, 46, 77, 110, 122],
+				'RQ_SECOND_NAME' => [1],
+				'RQ_COMPANY_NAME' => [1, 4, 6, 14, 46, 77, 110, 122],
+				'RQ_COMPANY_FULL_NAME' => [1, 4, 6, 77, 110],
+				'RQ_COMPANY_REG_DATE' => [1, 4],
+				'RQ_DIRECTOR' => [1, 4, 14],
+				'RQ_ACCOUNTANT' => [1, 4, 14],
+				'RQ_CEO_NAME' => [6],
+				'RQ_CEO_WORK_POS' => [6],
+				'RQ_ADDR' => [1, 4, 6, 14, 46, 77, 110, 122],
+				'RQ_CONTACT' => [1, 4, 6, 14, 46, 122],
+				'RQ_EMAIL' => [1, 4, 6, 14, 46, 122],
+				'RQ_PHONE' => [1, 4, 6, 14, 46, 122],
+				'RQ_FAX' => [1, 4, 6, 14, 46, 122],
+				'RQ_IDENT_TYPE' => [77],
+				'RQ_IDENT_DOC' => [1, 4, 77],
+				'RQ_IDENT_DOC_SER' => [1, 4],
+				'RQ_IDENT_DOC_NUM' => [1, 4, 77],
+				'RQ_IDENT_DOC_PERS_NUM' => [4],
+				'RQ_IDENT_DOC_DATE' => [1, 4],
+				'RQ_IDENT_DOC_ISSUED_BY' => [1, 4],
+				'RQ_IDENT_DOC_DEP_CODE' => [1],
+				'RQ_INN' => [1, 4, 6, 14, 46, 77, 110],
+				'RQ_KPP' => [1],
+				'RQ_USRLE' => [46],
+				'RQ_IFNS' => [1],
+				'RQ_OGRN' => [1],
+				'RQ_OGRNIP' => [1],
+				'RQ_OKPO' => [1, 4, 6],
+				'RQ_OKTMO' => [1],
+				'RQ_OKVED' => [1],
+				'RQ_EDRPOU' => [14],
+				'RQ_DRFO' => [14],
+				'RQ_KBE' => [6],
+				'RQ_IIN' => [6],
+				'RQ_BIN' => [6],
+				'RQ_ST_CERT_SER' => [1],
+				'RQ_ST_CERT_NUM' => [1, 4],
+				'RQ_ST_CERT_DATE' => [1, 4],
+				'RQ_VAT_PAYER' => [14],
+				'RQ_VAT_ID' => [46, 110, 122],
+				'RQ_VAT_CERT_SER' => [6],
+				'RQ_VAT_CERT_NUM' => [6, 14],
+				'RQ_VAT_CERT_DATE' => [6],
+				'RQ_RESIDENCE_COUNTRY' => [6],
+				'RQ_BASE_DOC' => [4],
+				'RQ_REGON' => [110],
+				'RQ_KRS' => [110],
+				'RQ_PESEL' => [110],
+			];
 		}
 
 		return self::$rqFieldCountryMap;
+	}
+
+	protected function loadPhrases(int $countryId): array
+	{
+		$phrases = [];
+
+		if ($this->checkCountryId($countryId))
+		{
+			$countryCode = EntityPreset::getCountryCodeById($countryId);
+			$countryCodeLower = mb_strtolower($countryCode);
+			$phrasesConfig = [];
+			$filePath= Main\IO\Path::normalize(
+				Main\Application::getDocumentRoot().
+				"/bitrix/modules/crm/lib/requisite/phrases/requisite_$countryCodeLower.php"
+			);
+			if (file_exists($filePath))
+			{
+				include($filePath);
+			}
+			if (isset($phrasesConfig['encoding'])
+				&& is_string($phrasesConfig['encoding'])
+				&& $phrasesConfig['encoding'] !== ''
+				&& is_array($phrasesConfig['phrases'])
+				&& !empty($phrasesConfig['phrases']))
+			{
+				$phrases = $phrasesConfig['phrases'];
+				$sourceEncoding = mb_strtolower($phrasesConfig['encoding']);
+				$targetEncoding = Translation::getCurrentEncoding();
+				$needConvertEncoding = ($sourceEncoding !== $targetEncoding);
+				foreach ($phrases as $phraseId => $phrase)
+				{
+					if (is_string($phrase))
+					{
+						if ($needConvertEncoding && $phrase !== '')
+						{
+							$convertedValue = Encoding::convertEncoding(
+								$phrase,
+								$sourceEncoding,
+								$targetEncoding
+							);
+							$phrases[$phraseId] =
+								is_string($convertedValue) ? $convertedValue : $phraseId;
+						}
+					}
+					else
+					{
+						$phrases[$phraseId] = null;
+					}
+				}
+			}
+		}
+
+		return $phrases;
+	}
+
+	protected function getPhrase(string $phraseId, int $countryId): ?string
+	{
+		$phrase = null;
+
+		if ($phraseId !== '' && $this->checkCountryId($countryId))
+		{
+			if (!isset(static::$phrasesMap[$countryId]))
+			{
+				static::$phrasesMap[$countryId] = static::loadPhrases($countryId);
+			}
+			if (isset(static::$phrasesMap[$countryId][$phraseId]))
+			{
+				$phrase = static::$phrasesMap[$countryId][$phraseId];
+			}
+		}
+
+		return $phrase;
+	}
+
+	protected function getDefaultListFieldItems(string $statusEntityId): array
+	{
+		$result = [];
+
+		if (is_string($statusEntityId) && $statusEntityId !== '')
+		{
+			if (!isset(static::$rqListFieldItemsMap[$statusEntityId]))
+			{
+				$matches = [];
+				if (preg_match('/^(RQ_[A-Z0-9_]+)_([A-Z]{2})$/', $statusEntityId, $matches))
+				{
+					$fieldName = $matches[1];
+					$countryCode = $matches[2];
+					$countryId = GetCountryIdByCode($countryCode);
+					if ($countryId > 0)
+					{
+						if (
+							$this->isRqListField($fieldName)
+							&& $this->checkRqFieldCountryId($fieldName, $countryId)
+						)
+						{
+							if ($fieldName === 'RQ_IDENT_TYPE')
+							{
+								$statusIds = [
+									'CIVILREG',
+									'IDCARD',
+									'CITIZENCARD',
+									'IMMCARD',
+									'FOREIGNERID',
+									'NIT',
+									'PASSPORT',
+									'FOREIGNIDDOC',
+									'EXTNIT',
+									'NUIP',
+								];
+							}
+							else
+							{
+								$statusIds = [];
+							}
+
+							$sort = 0;
+							$sortStep = 10;
+							$phrasePrefix = 'CRM_REQUISITE_ENTITY';
+							$phraseSuffix = 'ENUM';
+							foreach ($statusIds as $statusId)
+							{
+								$sort += $sortStep;
+								static::$rqListFieldItemsMap[$statusEntityId][] = [
+									'ENTITY_ID' => $statusEntityId,
+									'STATUS_ID' => $statusId,
+									'NAME' => $this->getPhrase(
+										"{$phrasePrefix}_{$fieldName}_{$statusId}_{$countryCode}_{$phraseSuffix}",
+										$countryId
+									),
+									'SORT' => $sort,
+								];
+							}
+						}
+					}
+				}
+			}
+
+			if (isset(static::$rqListFieldItemsMap[$statusEntityId]))
+			{
+				$result = static::$rqListFieldItemsMap[$statusEntityId];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Creation of list fields elements by default on the event of changing the settings of preset
+	 *
+	 * @param array $presetFields
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	protected function processPresetSettingsChange(array $presetFields): void
+	{
+		if (
+			is_array($presetFields['SETTINGS'])
+			&& is_array($presetFields['SETTINGS']['FIELDS'])
+			&& isset($presetFields['COUNTRY_ID'])
+			&& $presetFields['COUNTRY_ID'] > 0
+		)
+		{
+			$listFieldMap = array_fill_keys($this->getRqListFields(), true);
+			$statusEntityMap = [];
+
+			$fields = $presetFields['SETTINGS']['FIELDS'];
+			$presetCountryId = (int)$presetFields['COUNTRY_ID'];
+			foreach ($fields as $field)
+			{
+				if (
+					isset($field['FIELD_NAME'])
+					&& is_string($field['FIELD_NAME'])
+					&& $field['FIELD_NAME'] !== ''
+					&& isset($listFieldMap[$field['FIELD_NAME']])
+					&& $this->checkRqFieldCountryId($field['FIELD_NAME'], $presetCountryId)
+				)
+				{
+					$countryCode = EntityPreset::getCountryCodeById($presetCountryId);
+					if (is_string($countryCode) && $countryCode !== '')
+					{
+						$statusEntityMap[$field['FIELD_NAME'] . '_' . $countryCode] = true;
+					}
+				}
+			}
+
+			if (!empty($statusEntityMap))
+			{
+				$res = StatusTable::getList(
+					[
+						'select' => ['ENTITY_ID'],
+						'filter' => ['@ENTITY_ID' => array_keys($statusEntityMap)],
+						'group' => ['ENTITY_ID'],
+					]
+				);
+				while ($row = $res->fetch())
+				{
+					if (isset($statusEntityMap[$row['ENTITY_ID']]))
+					{
+						unset($statusEntityMap[$row['ENTITY_ID']]);
+					}
+				}
+			}
+
+			if (!empty($statusEntityMap))
+			{
+				foreach (array_keys($statusEntityMap) as $statusEntityId)
+				{
+					$this->installDefaultListFieldItems($statusEntityId);
+				}
+			}
+		}
+	}
+
+	public function installDefaultListFieldItems(string $statusEntityId): void
+	{
+		$items = $this->getDefaultListFieldItems($statusEntityId);
+
+		if (!empty($items))
+		{
+			\CCrmStatus::BulkCreate($statusEntityId, $items);
+		}
 	}
 
 	public function getRqFieldTitleMap()
@@ -1832,67 +2148,21 @@ class EntityRequisite
 		if (self::$rqFieldTitleMap === null)
 		{
 			$titleMap = array();
-			$countryIds = array();
+			$countryCodes = [];
 			foreach ($this->getRqFieldsCountryMap() as $fieldName => $fieldCountryIds)
 			{
 				if (is_array($fieldCountryIds))
 				{
 					foreach ($fieldCountryIds as $countryId)
 					{
-						$titleMap[$fieldName][$countryId] = '';
-						if (!isset($countryIds[$countryId]))
-							$countryIds[$countryId] = true;
-					}
-				}
-			}
-			$targetEncoding = Translation::getCurrentEncoding();
-			foreach (array_keys($countryIds) as $countryId)
-			{
-				$countryCode = EntityPreset::getCountryCodeById($countryId);
-				$countryCodeLower = mb_strtolower($countryCode);
-				$phrasesConfig = [];
-				$filePath= Main\IO\Path::normalize(
-					Main\Application::getDocumentRoot().
-					"/bitrix/modules/crm/lib/requisite/phrases/requisite_$countryCodeLower.php"
-				);
-				if (file_exists($filePath))
-				{
-					include($filePath);
-				}
-				if (isset($phrasesConfig['encoding'])
-					&& is_string($phrasesConfig['encoding'])
-					&& $phrasesConfig['encoding'] !== ''
-					&& is_array($phrasesConfig['phrases'])
-					&& !empty($phrasesConfig['phrases']))
-				{
-					$phrases = $phrasesConfig['phrases'];
-					$sourceEncoding = mb_strtolower($phrasesConfig['encoding']);
-					$needConvertEncoding = ($sourceEncoding !== $targetEncoding);
-					foreach ($titleMap as $fieldName => &$titlesByCountry)
-					{
-						if (isset($titlesByCountry[$countryId]))
+						if (!isset($countryCodes[$countryId]))
 						{
-							$phraseId = 'CRM_REQUISITE_ENTITY_'.$fieldName.'_'.$countryCode.'_FIELD';
-							if (isset($phrases[$phraseId]))
-							{
-								if ($needConvertEncoding)
-								{
-									$convertedValue = Encoding::convertEncoding(
-										$phrases[$phraseId],
-										$sourceEncoding,
-										$targetEncoding
-									);
-									$titlesByCountry[$countryId] =
-										is_string($convertedValue) ? $convertedValue : $fieldName;
-								}
-								else
-								{
-									$titlesByCountry[$countryId] = $phrases[$phraseId];
-								}
-							}
+							$countryCodes[$countryId] = EntityPreset::getCountryCodeById($countryId);
 						}
+						$phraseId = "CRM_REQUISITE_ENTITY_{$fieldName}_{$countryCodes[$countryId]}_FIELD";
+						$phrase = static::getPhrase($phraseId, $countryId);
+						$titleMap[$fieldName][$countryId] = ($phrase === null) ? '' : $phrase;
 					}
-					unset($titlesByCountry);
 				}
 			}
 			self::$rqFieldTitleMap = $titleMap;
@@ -1903,9 +2173,10 @@ class EntityRequisite
 
 	public function getFormFieldsTypes()
 	{
-		return array(
-			'RQ_VAT_PAYER' => 'checkbox'
-		);
+		return [
+			'RQ_VAT_PAYER' => 'checkbox',
+			'RQ_IDENT_TYPE' => 'crm_status',
+		];
 	}
 
 	public function getFormFieldsInfo($countryId = 0)
@@ -1966,6 +2237,93 @@ class EntityRequisite
 		}
 
 		return $result;
+	}
+
+	public function getRqListFieldItems(string $listFieldName, int $countryId): array
+	{
+		$countryCode = EntityPreset::getCountryCodeById($countryId);
+		$statusEntityId = "{$listFieldName}_{$countryCode}";
+		$fakeTitlePhraseId = "CRM_REQUISITE_ENTITY_{$statusEntityId}_ENUM_FAKE_TITLE";
+		$fakeValue = '';
+		return CCrmInstantEditorHelper::PrepareListOptions(
+			StatusTable::getStatusesList($statusEntityId),
+			[
+				'NOT_SELECTED' => $this->getPhrase($fakeTitlePhraseId, $countryId),
+				'NOT_SELECTED_VALUE' => $fakeValue
+			]
+		);
+	}
+
+	public function getRqListFieldValueTitles(array $requisiteFields, int $countryId = 0): array
+	{
+		$result = [];
+
+		$requisite = EntityRequisite::getSingleInstance();
+
+		if ($countryId <= 0)
+		{
+			$countryId = 0;
+			if (isset($requisiteFields['PRESET_ID']) && $requisiteFields['PRESET_ID'] > 0)
+			{
+				$presetId = (int)$requisiteFields['PRESET_ID'];
+				$countryId = $requisite->getCountryIdByPresetId($presetId);
+			}
+		}
+
+		if ($countryId > 0)
+		{
+			foreach ($this->getRqListFields() as $fieldName)
+			{
+				if (
+					isset($requisiteFields[$fieldName])
+					&& $this->checkRqFieldCountryId($fieldName, $countryId)
+				)
+				{
+					$result[$fieldName] = $requisite->getRqListFieldValueTitle(
+						$fieldName,
+						$countryId,
+						$requisiteFields[$fieldName]
+					);
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	public function getRqListFieldValueTitle(string $listFieldName, int $countryId, string $listFieldValue): string
+	{
+		$result = '';
+
+		$items = $this->getRqListFieldItems($listFieldName, $countryId);
+
+		foreach ($items as $itemInfo)
+		{
+			if ($listFieldValue === (string)$itemInfo['VALUE'])
+			{
+				$result = $itemInfo['NAME'];
+				break;
+			}
+		}
+
+		return $result;
+	}
+
+	public function getRqListFieldFormData(string $listFieldName, int $countryId): array
+	{
+		$countryCode = EntityPreset::getCountryCodeById($countryId);
+		$statusEntityId = "{$listFieldName}_{$countryCode}";
+
+		return [
+			'items' => $this->getRqListFieldItems($listFieldName, $countryId),
+			'defaultValue' => null,
+			'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+				'crm_status',
+				'crm.status.setItems',
+				$statusEntityId,
+				['']
+			),
+		];
 	}
 
 	protected function removeNonAddressFields($fields)
@@ -2107,7 +2465,7 @@ class EntityRequisite
 
 	public function checkUpdatePermission($id)
 	{
-		$r = $this->getById($id);
+		$r = static::getOwnerEntityById($id);
 		if(is_array($r))
 			return self::checkUpdatePermissionOwnerEntity($r['ENTITY_TYPE_ID'], $r['ENTITY_ID']);
 		else
@@ -2121,7 +2479,7 @@ class EntityRequisite
 			return self::checkReadPermissionOwnerEntity();
 		}
 
-		$r = $this->getById($id);
+		$r = static::getOwnerEntityById($id);
 		if(is_array($r))
 			return self::checkReadPermissionOwnerEntity($r['ENTITY_TYPE_ID'], $r['ENTITY_ID']);
 		else
@@ -2241,7 +2599,7 @@ class EntityRequisite
 			$presetInfo = $preset->getById($presetId);
 			if (is_array($presetInfo) && is_array($presetInfo['SETTINGS']))
 			{
-				$presetCountryId = $presetInfo['COUNTRY_ID'];
+				$presetCountryId = ($presetInfo['COUNTRY_ID'] > 0) ? $presetInfo['COUNTRY_ID'] : $currentCountryId;
 				$presetFieldsInfo = $preset->settingsGetFields($presetInfo['SETTINGS']);
 				foreach ($presetFieldsInfo as $fieldInfo)
 				{
@@ -2355,13 +2713,27 @@ class EntityRequisite
 						{
 							$textValue = strval($fieldValue);
 
-							if ($textValue == '')
+							if ($fieldInfo['formType'] === 'crm_status')
+							{
+								$valueTitle = $this->getRqListFieldValueTitle(
+									$fieldName,
+									$presetCountryId,
+									$textValue
+								);
+								if ($valueTitle !== '')
+								{
+									$textValue = $valueTitle;
+								}
+								unset($valueTitle);
+							}
+
+							if ($textValue === '')
 							{
 								$skip = true;
 							}
 						}
 
-						if ($fieldInfo['title'] == '')
+						if ($fieldInfo['title'] === '')
 						{
 							$skip = true;
 						}
@@ -2569,9 +2941,7 @@ class EntityRequisite
 
 				if ($entityTypeId > 0 && $entityId > 0)
 				{
-					if ($entityTypeId === \CCrmOwnerType::Deal
-						|| $entityTypeId === \CCrmOwnerType::Quote
-						|| $entityTypeId === \CCrmOwnerType::Invoice)
+					if (isset(EntityLink::getAvailableEntityTypeIds()[$entityTypeId]))
 					{
 						if ($row = EntityLink::getList(
 							array(
@@ -2684,9 +3054,7 @@ class EntityRequisite
 
 				if ($entityTypeId > 0 && $entityId > 0)
 				{
-					if ($entityTypeId === \CCrmOwnerType::Deal
-						|| $entityTypeId === \CCrmOwnerType::Quote
-						|| $entityTypeId === \CCrmOwnerType::Invoice)
+					if (isset(EntityLink::getAvailableEntityTypeIds()[$entityTypeId]))
 					{
 						if ($row = EntityLink::getList(
 							array(
@@ -2865,8 +3233,7 @@ class EntityRequisite
 			if (is_array($fields[$addressFieldName]))
 			{
 				$allowedRqAddrTypeMap = array_fill_keys(EntityAddressType::getAllIDs(), true);
-				foreach ($fields[$addressFieldName] as
-				         $addressTypeId => $addressJson)
+				foreach ($fields[$addressFieldName] as $addressTypeId => $addressJson)
 				{
 					$addressTypeId = (int)$addressTypeId;
 					$addressSuccess = false;
@@ -3164,996 +3531,1217 @@ class EntityRequisite
 
 	public static function getFixedPresetList()
 	{
+		$requisite = static::getSingleInstance();
+
 		if (self::$fixedPresetList === null)
 		{
-			self::$fixedPresetList = array(
+			self::$fixedPresetList = [
 				// ru
-				0 => array(
+				0 => [
 					'ID' => 1,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '1',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_COMPANY'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_COMPANY_RU_TITLE', 1),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_RU_COMPANY#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_INN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_COMPANY_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_COMPANY_FULL_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_OGRN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_KPP',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 550
-							),
-							5 => array(
+							],
+							5 => [
 								'ID' => 6,
 								'FIELD_NAME' => 'RQ_COMPANY_REG_DATE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
-							),
-							6 => array(
+							],
+							6 => [
 								'ID' => 7,
 								'FIELD_NAME' => 'RQ_OKPO',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 570
-							),
-							7 => array(
+							],
+							7 => [
 								'ID' => 8,
 								'FIELD_NAME' => 'RQ_OKTMO',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 580
-							),
-							8 => array(
+							],
+							8 => [
 								'ID' => 9,
 								'FIELD_NAME' => 'RQ_DIRECTOR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 590
-							),
-							9 => array(
+							],
+							9 => [
 								'ID' => 10,
 								'FIELD_NAME' => 'RQ_ACCOUNTANT',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 600
-							),
-							10 => array(
+							],
+							10 => [
 								'ID' => 11,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 610
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 11
-					)
-				),
-				1 => array(
+					]
+				],
+				1 => [
 					'ID' => 2,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '1',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_INDIVIDUAL'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_INDIVIDUAL_RU_TITLE', 1),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_RU_INDIVIDUAL#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_COMPANY_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_COMPANY_FULL_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_LAST_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_FIRST_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_SECOND_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 550
-							),
-							5 => array(
+							],
+							5 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_INN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 560
-							),
-							6 => array(
+							],
+							6 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_OGRNIP',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 570
-							),
-							7 => array(
+							],
+							7 => [
 								'ID' => 6,
 								'FIELD_NAME' => 'RQ_OKPO',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 580
-							),
-							8 => array(
+							],
+							8 => [
 								'ID' => 7,
 								'FIELD_NAME' => 'RQ_OKVED',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 590
-							),
-							9 => array(
+							],
+							9 => [
 								'ID' => 8,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 600
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 8
-					)
-				),
-				2 => array(
+					]
+				],
+				2 => [
 					'ID' => 3,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '1',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_PERSON'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_PERSON_RU_TITLE', 1),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_RU_PERSON#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_LAST_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_FIRST_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_SECOND_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_IDENT_DOC',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_IDENT_DOC_SER',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 550
-							),
-							5 => array(
+							],
+							5 => [
 								'ID' => 6,
 								'FIELD_NAME' => 'RQ_IDENT_DOC_NUM',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
-							),
-							6 => array(
+							],
+							6 => [
 								'ID' => 7,
 								'FIELD_NAME' => 'RQ_IDENT_DOC_ISSUED_BY',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 570
-							),
-							7 => array(
+							],
+							7 => [
 								'ID' => 8,
 								'FIELD_NAME' => 'RQ_IDENT_DOC_DATE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 580
-							),
-							8 => array(
+							],
+							8 => [
 								'ID' => 9,
 								'FIELD_NAME' => 'RQ_IDENT_DOC_DEP_CODE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 590
-							),
-							9 => array(
+							],
+							9 => [
 								'ID' => 10,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 600
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 10
-					)
-				),
+					]
+				],
 				// by
-				3 => array(
+				3 => [
 					'ID' => 4,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '4',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_COMPANY'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_COMPANY_BY_TITLE', 4),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_BY_LEGALENTITY#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_COMPANY_FULL_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_COMPANY_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_INN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_COMPANY_REG_DATE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_OKPO',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 550
-							),
-							5 => array(
+							],
+							5 => [
 								'ID' => 6,
 								'FIELD_NAME' => 'RQ_DIRECTOR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
-							),
-							6 => array(
+							],
+							6 => [
 								'ID' => 7,
 								'FIELD_NAME' => 'RQ_BASE_DOC',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 570
-							),
-							7 => array(
+							],
+							7 => [
 								'ID' => 8,
 								'FIELD_NAME' => 'RQ_ACCOUNTANT',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 580
-							),
-							8 => array(
+							],
+							8 => [
 								'ID' => 9,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 590
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 9
-					)
-				),
-				4 => array(
+					]
+				],
+				4 => [
 					'ID' => 5,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '4',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_PERSON'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_PERSON_BY_TITLE', 4),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_BY_PERSON#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_IDENT_DOC',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_IDENT_DOC_SER',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_IDENT_DOC_NUM',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_IDENT_DOC_PERS_NUM',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 550
-							),
-							5 => array(
+							],
+							5 => [
 								'ID' => 6,
 								'FIELD_NAME' => 'RQ_IDENT_DOC_ISSUED_BY',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
-							),
-							6 => array(
+							],
+							6 => [
 								'ID' => 7,
 								'FIELD_NAME' => 'RQ_IDENT_DOC_DATE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 570
-							),
-							7 => array(
+							],
+							7 => [
 								'ID' => 8,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 580
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 8
-					)
-				),
-				5 => array(
+					]
+				],
+				5 => [
 					'ID' => 6,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '4',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_INDIVIDUAL'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_INDIVIDUAL_BY_TITLE', 4),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_BY_INDIVIDUAL#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_COMPANY_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_ST_CERT_NUM',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_ST_CERT_DATE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_INN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 550
-							),
-							5 => array(
+							],
+							5 => [
 								'ID' => 6,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 6
-					)
-				),
+					]
+				],
 				// kz
-				6 => array(
+				6 => [
 					'ID' => 7,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '6',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_INDIVIDUAL'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_INDIVIDUAL_KZ_TITLE', 6),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_KZ_INDIVIDUAL#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_COMPANY_FULL_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_OKPO',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_KBE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_INN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 550
-							),
-							5 => array(
+							],
+							5 => [
 								'ID' => 6,
 								'FIELD_NAME' => 'RQ_VAT_CERT_SER',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
-							),
-							6 => array(
+							],
+							6 => [
 								'ID' => 7,
 								'FIELD_NAME' => 'RQ_VAT_CERT_NUM',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 570
-							),
-							7 => array(
+							],
+							7 => [
 								'ID' => 8,
 								'FIELD_NAME' => 'RQ_VAT_CERT_DATE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 580
-							),
-							8 => array(
+							],
+							8 => [
 								'ID' => 9,
 								'FIELD_NAME' => 'RQ_RESIDENCE_COUNTRY',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 590
-							),
-							9 => array(
+							],
+							9 => [
 								'ID' => 10,
 								'FIELD_NAME' => 'RQ_CEO_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 600
-							),
-							10 => array(
+							],
+							10 => [
 								'ID' => 11,
 								'FIELD_NAME' => 'RQ_CEO_WORK_POS',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 610
-							),
-							11 => array(
+							],
+							11 => [
 								'ID' => 12,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 620
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 12
-					)
-				),
-				7 => array(
+					]
+				],
+				7 => [
 					'ID' => 8,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '6',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_LEGALENTITY'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_LEGALENTITY_KZ_TITLE', 6),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_KZ_LEGALENTITY#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_COMPANY_FULL_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_COMPANY_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_OKPO',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_KBE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_IIN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 550
-							),
-							5 => array(
+							],
+							5 => [
 								'ID' => 6,
 								'FIELD_NAME' => 'RQ_BIN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 560
-							),
-							6 => array(
+							],
+							6 => [
 								'ID' => 7,
 								'FIELD_NAME' => 'RQ_VAT_CERT_SER',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 570
-							),
-							7 => array(
+							],
+							7 => [
 								'ID' => 8,
 								'FIELD_NAME' => 'RQ_VAT_CERT_NUM',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 580
-							),
-							8 => array(
+							],
+							8 => [
 								'ID' => 9,
 								'FIELD_NAME' => 'RQ_VAT_CERT_DATE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 590
-							),
-							9 => array(
+							],
+							9 => [
 								'ID' => 10,
 								'FIELD_NAME' => 'RQ_RESIDENCE_COUNTRY',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 600
-							),
-							10 => array(
+							],
+							10 => [
 								'ID' => 11,
 								'FIELD_NAME' => 'RQ_CEO_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 610
-							),
-							11 => array(
+							],
+							11 => [
 								'ID' => 12,
 								'FIELD_NAME' => 'RQ_CEO_WORK_POS',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 620
-							),
-							12 => array(
+							],
+							12 => [
 								'ID' => 13,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 630
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 13
-					)
-				),
-				8 => array(
+					]
+				],
+				8 => [
 					'ID' => 9,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '6',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_PERSON'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_PERSON_KZ_TITLE', 6),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_KZ_PERSON#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_INN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 3
-					)
-				),
+					]
+				],
 				// ua
-				9 => array(
+				9 => [
 					'ID' => 10,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '14',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_LEGALENTITY'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_LEGALENTITY_UA_TITLE', 14),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_UA_LEGALENTITY#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_COMPANY_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_INN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_EDRPOU',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_VAT_PAYER',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_VAT_CERT_NUM',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 550
-							),
-							5 => array(
+							],
+							5 => [
 								'ID' => 6,
 								'FIELD_NAME' => 'RQ_DIRECTOR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
-							),
-							6 => array(
+							],
+							6 => [
 								'ID' => 7,
 								'FIELD_NAME' => 'RQ_ACCOUNTANT',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 570
-							),
-							7 => array(
+							],
+							7 => [
 								'ID' => 8,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 580
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 8
-					)
-				),
-				10 => array(
+					]
+				],
+				10 => [
 					'ID' => 11,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '14',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_PERSON'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_PERSON_UA_TITLE', 14),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_UA_PERSON#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_DRFO',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_VAT_PAYER',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_INN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_VAT_CERT_NUM',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 550
-							),
-							5 => array(
+							],
+							5 => [
 								'ID' => 6,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 6
-					)
-				),
+					]
+				],
 				// de
-				11 => array(
+				11 => [
 					'ID' => 12,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '46',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_LEGALENTITY'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_LEGALENTITY_DE_TITLE', 46),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_DE_LEGALENTITY#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_COMPANY_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_VAT_ID',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_USRLE',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							),
-							3 => array(
+							],
+							3 => [
 								'ID' => 4,
 								'FIELD_NAME' => 'RQ_INN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 540
-							),
-							4 => array(
+							],
+							4 => [
 								'ID' => 5,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 550
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 5
-					)
-				),
-				12 => array(
+					]
+				],
+				12 => [
 					'ID' => 13,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '46',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_PERSON'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_PERSON_DE_TITLE', 46),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_DE_PERSON#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_LAST_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_FIRST_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 3
-					)
-				),
-				// us
-				13 => array(
+					]
+				],
+				// co
+				13 => [
 					'ID' => 14,
 					'ENTITY_TYPE_ID' => '8',
+					'COUNTRY_ID' => '77',
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_LEGALENTITY_CO_TITLE', 77),
+					'ACTIVE' => 'Y',
+					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_CO_LEGALENTITY#',
+					'SORT' => 500,
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
+								'ID' => 1,
+								'FIELD_NAME' => 'RQ_COMPANY_NAME',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 510
+							],
+							1 => [
+								'ID' => 2,
+								'FIELD_NAME' => 'RQ_COMPANY_FULL_NAME',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 520
+							],
+							2 => [
+								'ID' => 3,
+								'FIELD_NAME' => 'RQ_INN',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 530
+							],
+							3 => [
+								'ID' => 4,
+								'FIELD_NAME' => 'RQ_IDENT_TYPE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 540
+							],
+							4 => [
+								'ID' => 5,
+								'FIELD_NAME' => 'RQ_IDENT_DOC_NUM',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 550
+							],
+							5 => [
+								'ID' => 6,
+								'FIELD_NAME' => 'RQ_ADDR',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 560
+							],
+						],
+						'LAST_FIELD_ID' => 6
+					]
+				],
+				14 => [
+					'ID' => 15,
+					'ENTITY_TYPE_ID' => '8',
+					'COUNTRY_ID' => '77',
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_PERSON_CO_TITLE', 77),
+					'ACTIVE' => 'Y',
+					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_CO_PERSON#',
+					'SORT' => 500,
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
+								'ID' => 1,
+								'FIELD_NAME' => 'RQ_FIRST_NAME',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 510
+							],
+							1 => [
+								'ID' => 2,
+								'FIELD_NAME' => 'RQ_LAST_NAME',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 520
+							],
+							2 => [
+								'ID' => 3,
+								'FIELD_NAME' => 'RQ_INN',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 530
+							],
+							3 => [
+								'ID' => 4,
+								'FIELD_NAME' => 'RQ_IDENT_TYPE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 540
+							],
+							4 => [
+								'ID' => 5,
+								'FIELD_NAME' => 'RQ_IDENT_DOC_NUM',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 550
+							],
+							5 => [
+								'ID' => 6,
+								'FIELD_NAME' => 'RQ_ADDR',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 560
+							],
+						],
+						'LAST_FIELD_ID' => 6
+					]
+				],
+				// us
+				15 => [
+					'ID' => 16,
+					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '122',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_LEGALENTITY'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_LEGALENTITY_US_TITLE', 122),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_US_LEGALENTITY#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_COMPANY_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_VAT_ID',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 3
-					)
-				),
-				14 => array(
-					'ID' => 15,
+					]
+				],
+				16 => [
+					'ID' => 17,
 					'ENTITY_TYPE_ID' => '8',
 					'COUNTRY_ID' => '122',
-					'NAME' => GetMessage('CRM_REQUISITE_FIXED_PRESET_PERSON'),
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_PERSON_US_TITLE', 122),
 					'ACTIVE' => 'Y',
 					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_US_PERSON#',
 					'SORT' => 500,
-					'SETTINGS' => array(
-						'FIELDS' => array(
-							0 => array(
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
 								'ID' => 1,
 								'FIELD_NAME' => 'RQ_FIRST_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
-							),
-							1 => array(
+							],
+							1 => [
 								'ID' => 2,
 								'FIELD_NAME' => 'RQ_LAST_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 520
-							),
-							2 => array(
+							],
+							2 => [
 								'ID' => 3,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							)
-						),
+							]
+						],
 						'LAST_FIELD_ID' => 3
-					)
-				)
-			);
+					]
+				],
+				// pl
+				17 => [
+					'ID' => 18,
+					'ENTITY_TYPE_ID' => '8',
+					'COUNTRY_ID' => '110',
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_LEGALENTITY_PL_TITLE', 110),
+					'ACTIVE' => 'Y',
+					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_PL_LEGALENTITY#',
+					'SORT' => 500,
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
+								'ID' => 1,
+								'FIELD_NAME' => 'RQ_COMPANY_NAME',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 510
+							],
+							1 => [
+								'ID' => 2,
+								'FIELD_NAME' => 'RQ_COMPANY_FULL_NAME',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 520
+							],
+							2 => [
+								'ID' => 3,
+								'FIELD_NAME' => 'RQ_INN',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 530
+							],
+							3 => [
+								'ID' => 4,
+								'FIELD_NAME' => 'RQ_VAT_ID',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 540
+							],
+							4 => [
+								'ID' => 5,
+								'FIELD_NAME' => 'RQ_REGON',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 550
+							],
+							5 => [
+								'ID' => 6,
+								'FIELD_NAME' => 'RQ_KRS',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 560
+							],
+							6 => [
+								'ID' => 7,
+								'FIELD_NAME' => 'RQ_ADDR',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 570
+							],
+						],
+						'LAST_FIELD_ID' => 3,
+					]
+				],
+				18 => [
+					'ID' => 19,
+					'ENTITY_TYPE_ID' => '8',
+					'COUNTRY_ID' => '110',
+					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_PERSON_PL_TITLE', 110),
+					'ACTIVE' => 'Y',
+					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_PL_PERSON#',
+					'SORT' => 500,
+					'SETTINGS' => [
+						'FIELDS' => [
+							0 => [
+								'ID' => 1,
+								'FIELD_NAME' => 'RQ_FIRST_NAME',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 510
+							],
+							1 => [
+								'ID' => 2,
+								'FIELD_NAME' => 'RQ_LAST_NAME',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 520
+							],
+							2 => [
+								'ID' => 3,
+								'FIELD_NAME' => 'RQ_PESEL',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 530
+							],
+							3 => [
+								'ID' => 4,
+								'FIELD_NAME' => 'RQ_ADDR',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 540
+							],
+						],
+						'LAST_FIELD_ID' => 3
+					]
+				],
+			];
 		}
 
 		return self::$fixedPresetList;
@@ -4280,6 +4868,12 @@ class EntityRequisite
 			case 'by':
 				$countryCode = 'BY';
 				break;
+			case 'pl':
+				$countryCode = 'PL';
+				break;
+			case 'co':
+				$countryCode = 'CO';
+				break;
 			default:
 				$countryCode = 'US';
 				break;
@@ -4300,27 +4894,30 @@ class EntityRequisite
 			)->fetch();
 			if (!is_array($row))
 			{
+				$requisite = EntityRequisite::getSingleInstance();
 				$fixedPresetList = self::getFixedPresetList();
 				$sort = 500;
-				$datetimeEntity = new Main\DB\SqlExpression(Main\Application::getConnection()->getSqlHelper()->getCurrentDateTimeFunction());
+				$datetimeEntity = new Main\DB\SqlExpression(
+					Main\Application::getConnection()->getSqlHelper()->getCurrentDateTimeFunction()
+				);
 				foreach ($fixedPresetList as $presetData)
 				{
 					if ($countryId === intval($presetData['COUNTRY_ID']))
 					{
 						$sort += 10;
-						PresetTable::add(
-							array(
-								'ENTITY_TYPE_ID' => EntityPreset::Requisite,
-								'COUNTRY_ID' => $countryId,
-								'DATE_CREATE' => $datetimeEntity,
-								'CREATED_BY_ID' => 0,
-								'NAME' => $presetData['NAME'],
-								'ACTIVE' => $presetData['ACTIVE'],
-								'SORT' => $sort,
-								'XML_ID' => $presetData['XML_ID'],
-								'SETTINGS' => $presetData['SETTINGS']
-							)
-						);
+						$presetFields = [
+							'ENTITY_TYPE_ID' => EntityPreset::Requisite,
+							'COUNTRY_ID' => $countryId,
+							'DATE_CREATE' => $datetimeEntity,
+							'CREATED_BY_ID' => 0,
+							'NAME' => $presetData['NAME'],
+							'ACTIVE' => $presetData['ACTIVE'],
+							'SORT' => $sort,
+							'XML_ID' => $presetData['XML_ID'],
+							'SETTINGS' => $presetData['SETTINGS']
+						];
+						PresetTable::add($presetFields);
+						$requisite->processPresetSettingsChange($presetFields);
 					}
 				}
 			}
@@ -4331,6 +4928,7 @@ class EntityRequisite
 	{
 		$allowedCountries = self::getAllowedRqFieldCountries();
 		$preset = EntityPreset::getSingleInstance();
+		$requisite = EntityRequisite::getSingleInstance();
 		$fieldList = $preset->getSettingsFieldsOfPresets(
 			\Bitrix\Crm\EntityPreset::Requisite,
 			'active',
@@ -4384,8 +4982,10 @@ class EntityRequisite
 							$addressTypeId = RequisiteAddress::Undefined;
 							$addressTypeName = $fieldTitleMap[$fieldName][$countryId];
 							$addressLabels = RequisiteAddress::getShortLabels(RequisiteAddress::Primary);
-							foreach (array_keys(EntityRequisite::getAddressFieldMap(RequisiteAddress::Primary))
-							    as $addrFieldKey)
+							foreach (
+								array_keys(EntityRequisite::getAddressFieldMap(RequisiteAddress::Primary))
+								as $addrFieldKey
+							)
 							{
 								if ($addrFieldKey === 'ADDRESS_2'
 									|| $addrFieldKey === 'COUNTRY_CODE'
@@ -4405,7 +5005,16 @@ class EntityRequisite
 						}
 						else
 						{
-							$formType = isset($fieldsFormTypes[$fieldName]) ? $fieldsFormTypes[$fieldName] : 'text';
+							$isListField = false;
+							if ($requisite->isRqListField($fieldName))
+							{
+								$formType = 'list';
+								$isListField = true;
+							}
+							else
+							{
+								$formType = isset($fieldsFormTypes[$fieldName]) ? $fieldsFormTypes[$fieldName] : 'text';
+							}
 							$filterFields[] = array(
 								'id' => "$fieldName|$countryId",
 								'name' => GetMessage('CRM_REQUISITE_FILTER_PREFIX').
@@ -4413,6 +5022,15 @@ class EntityRequisite
 									$fieldTitleMap[$fieldName][$countryId],
 								'type' => $formType
 							);
+							if ($isListField)
+							{
+								$items = [];
+								foreach ($requisite->getRqListFieldItems($fieldName, $countryId) as $item)
+								{
+									$items[$item['VALUE']] = $item['NAME'];
+								}
+								$filterFields['items'] = $items;
+							}
 						}
 					}
 				}
@@ -4423,10 +5041,6 @@ class EntityRequisite
 	public function prepareEntityListFilter(array &$filter)
 	{
 		$rqFilter = array();
-
-		$rqFieldCountryMap = $this->getRqFieldsCountryMap();
-		if (!is_array($rqFieldCountryMap) || empty($rqFieldCountryMap))
-			return;
 
 		$rqFieldFormTypes = $this->getFormFieldsTypes();
 
@@ -4446,19 +5060,21 @@ class EntityRequisite
 				$addressTypeId = (int)$matches[3];
 				$addressFieldName = $matches[4];
 
-				$fieldParsed = (is_array($rqFieldCountryMap[$fieldName])
-					&& in_array($countryId, $rqFieldCountryMap[$fieldName], true)
-					&& (EntityAddressType::isDefined($addressTypeId)
-						|| $addressTypeId === EntityAddressType::Undefined)
-					&& in_array($addressFieldName, EntityRequisite::getAddressFiltrableFields(), true));
+				$fieldParsed =
+					$this->checkRqFieldCountryId($fieldName, $countryId)
+					&& (
+						EntityAddressType::isDefined($addressTypeId)
+						|| $addressTypeId === EntityAddressType::Undefined
+					)
+					&& in_array($addressFieldName, EntityRequisite::getAddressFiltrableFields(), true)
+				;
 			}
 			else if (preg_match('/^(RQ_\w+)\|(\d+)$/'.BX_UTF_PCRE_MODIFIER, $filterFieldId, $matches))
 			{
 				$fieldName = $matches[1];
 				$countryId = (int)$matches[2];
 
-				$fieldParsed = (is_array($rqFieldCountryMap[$fieldName])
-					&& in_array($countryId, $rqFieldCountryMap[$fieldName], true));
+				$fieldParsed = $this->checkRqFieldCountryId($fieldName, $countryId);
 			}
 
 			if ($fieldParsed)
@@ -4479,7 +5095,7 @@ class EntityRequisite
 				else
 				{
 					$fieldFormType = isset($rqFieldFormTypes[$fieldName]) ? $rqFieldFormTypes[$fieldName] : 'text';
-					if ($fieldFormType === 'checkbox')
+					if ($fieldFormType === 'checkbox' || $fieldFormType === 'crm_status')
 					{
 						$operation = '=';
 					}
@@ -4920,7 +5536,6 @@ class EntityRequisite
 			$prefix = (is_array($options) && isset($options['PREFIX']) && is_string($options['PREFIX'])) ?
 				$options['PREFIX'] : 'RQ_';
 
-			$rqFieldCountryMap = $this->getRqFieldsCountryMap();
 			$userFields = array_fill_keys($this->getUserFields(), true);
 
 			// parse fields
@@ -4949,13 +5564,11 @@ class EntityRequisite
 					$fieldPrefix = $matches[2];
 					$countryId = (int)$matches[3];
 
-					$fieldParsed = (
-						$fieldPrefix === 'RQ_' ?
-							(is_array($rqFieldCountryMap[$fieldName])
-								&& in_array($countryId, $rqFieldCountryMap[$fieldName], true))
-							: (isset($userFields[$fieldName])
-								&& in_array($countryId, EntityRequisite::getAllowedRqFieldCountries(), true))
-					);
+					$fieldParsed =
+						$fieldPrefix === 'RQ_'
+							? $this->checkRqFieldCountryId($fieldName, $countryId)
+							: (isset($userFields[$fieldName]) && $this->checkCountryId($countryId))
+					;
 				}
 				if ($fieldParsed)
 				{
@@ -5001,10 +5614,11 @@ class EntityRequisite
 					)
 				);
 
-				$rqFieldTypeInfo = array();
-				$resultData = array();
-				$addressRelations = array();
-				$requisiteCountries = array();
+				$rqFieldTypeInfo = [];
+				$resultData = [];
+				$addressRelations = [];
+				$requisiteCountries = [];
+				$rqListFieldMap = [];
 				while ($row = $res->fetch())
 				{
 					$requisiteId = (int)$row['ID'];
@@ -5030,6 +5644,24 @@ class EntityRequisite
 								if ($countryId === $fieldCountryId)
 								{
 									$value = isset($row[$fieldName]) ? $row[$fieldName] : null;
+									if ($this->isRqListField($fieldName))
+									{
+										if (!is_array($rqListFieldMap[$fieldName][$countryId]))
+										{
+											$rqListFieldMap[$fieldName][$countryId] = [];
+											foreach ($this->getRqListFieldItems($fieldName, $countryId) as $item)
+											{
+												if (!isset($rqListFieldMap[$fieldName][$countryId][$item['VALUE']]))
+												{
+													$rqListFieldMap[$fieldName][$countryId][$item['VALUE']] =
+														$item['NAME']
+													;
+												}
+											}
+											unset($item);
+										}
+										$value = $rqListFieldMap[$fieldName][$countryId][$value] ?? "";
+									}
 									if ($fieldName === EntityRequisite::ADDRESS)
 									{
 										$resultData[$entityId][$fieldString][$requisiteId] = array();
@@ -5046,6 +5678,7 @@ class EntityRequisite
 						}
 					}
 				}
+				unset($rqListFieldMap);
 
 				// collect addresses
 				if (!empty($addressRelations))
@@ -5530,6 +6163,7 @@ class EntityRequisite
 			// load requisites
 			if (is_array($entityIds) && !empty($entityIds))
 			{
+				$rqListFieldMap = [];
 				$res = $this->getList(
 					array(
 						'order' => array('SORT', 'ID'),
@@ -5596,6 +6230,24 @@ class EntityRequisite
 								else
 								{
 									$value = $row[$fieldName];
+									if ($this->isRqListField($fieldName))
+									{
+										if (!is_array($rqListFieldMap[$fieldName][$countryId]))
+										{
+											$rqListFieldMap[$fieldName][$countryId] = [];
+											foreach ($this->getRqListFieldItems($fieldName, $countryId) as $item)
+											{
+												if (!isset($rqListFieldMap[$fieldName][$countryId][$item['VALUE']]))
+												{
+													$rqListFieldMap[$fieldName][$countryId][$item['VALUE']] =
+														$item['NAME']
+													;
+												}
+											}
+											unset($item);
+										}
+										$value = $rqListFieldMap[$fieldName][$countryId][$value] ?? "";
+									}
 									$fieldType = '';
 									$isUF = false;
 									if (is_array($rqFieldInfo[$countryId][$fieldName]))
@@ -5623,6 +6275,7 @@ class EntityRequisite
 						}
 					}
 				}
+				unset($rqListFieldMap);
 			}
 
 			// load bank details
@@ -5833,17 +6486,17 @@ class EntityRequisite
 					foreach ($requisiteFields[EntityRequisite::ADDRESS] as $addressTypeId => $address)
 					{
 						// format full address
-                        $formatter = AddressFormatter::getSingleInstance();
-                        $formatId = RequisiteAddressFormatter::getFormatByCountryId($countryId);
-                        if ($exportType === 'excel')
-                        {
-                            $fullAddressValue = $formatter->formatTextMultilineSpecialchar($address, $formatId);
-                        }
-                        else
-                        {
-                            $fullAddressValue = $formatter->formatTextMultiline($address, $formatId);
-                        }
-                        unset($formatter, $formatId);
+						$formatter = AddressFormatter::getSingleInstance();
+						$formatId = RequisiteAddressFormatter::getFormatByCountryId($countryId);
+						if ($exportType === 'excel')
+						{
+							$fullAddressValue = $formatter->formatTextMultilineSpecialchar($address, $formatId);
+						}
+						else
+						{
+							$fullAddressValue = $formatter->formatTextMultiline($address, $formatId);
+						}
+						unset($formatter, $formatId);
 						$element = array(
 							EntityRequisite::ADDRESS.'_TYPE' => isset($addressTypes[$addressTypeId]) ?
 								$addressTypes[$addressTypeId] : $addressTypeId,
@@ -6384,30 +7037,37 @@ class EntityRequisite
 	{
 		if (self::$duplicateCriterionFieldsMap === null)
 		{
-			self::$duplicateCriterionFieldsMap = array(
-				1 => array(      // ru
+			self::$duplicateCriterionFieldsMap = [
+				1 => [      // ru
 					'RQ_INN',
 					'RQ_OGRN',
-					'RQ_OGRNIP'
-				),
-				4 => array(      // by
-					'RQ_INN'
-				),
-				6 => array(      // kz
+					'RQ_OGRNIP',
+				],
+				4 => [      // by
 					'RQ_INN',
-					'RQ_BIN'
-				),
-				14 => array(     // ua
+				],
+				6 => [      // kz
+					'RQ_INN',
+					'RQ_BIN',
+				],
+				14 => [     // ua
 					'RQ_INN',
 					'RQ_EDRPOU',
-				),
-				46 => array(     // de
-					'RQ_INN'
-				),
-				122 => array(    // us
-					'RQ_VAT_ID'
-				)
-			);
+				],
+				46 => [     // de
+					'RQ_INN',
+				],
+				77 => [     // co
+					'RQ_INN',
+				],
+				110 => [    // pl
+					'RQ_INN',
+					'RQ_VAT_ID',
+				],
+				122 => [    // us
+					'RQ_VAT_ID',
+				],
+			];
 		}
 
 		return self::$duplicateCriterionFieldsMap;
@@ -6798,7 +7458,9 @@ class EntityRequisite
 				6 => 'kz',
 				14 => 'ua',
 				46 => 'de',
-				122 => 'en'
+				77 => 'co',
+				110 => 'pl',
+				122 => 'en',
 			];
 		}
 
@@ -6816,5 +7478,31 @@ class EntityRequisite
 		}
 
 		return $result;
+	}
+
+	public static function onAfterPresetAdd(\Bitrix\Main\ORM\Event $event): void
+	{
+		$params = is_object($event) ? $event->getParameters() : [];
+		if (is_array($params) && is_array($params['fields']))
+		{
+			$requisite = EntityRequisite::getSingleInstance();
+			$requisite->processPresetSettingsChange($params['fields']);
+		}
+	}
+
+	public static function onAfterPresetUpdate(\Bitrix\Main\ORM\Event $event): void
+	{
+		$params = is_object($event) ? $event->getParameters() : [];
+		if (is_array($params) && is_array($params['fields']))
+		{
+			$requisite = EntityRequisite::getSingleInstance();
+			$requisite->processPresetSettingsChange($params['fields']);
+		}
+	}
+
+	public static function onAfterPresetDelete(\Bitrix\Main\ORM\Event $event): void
+	{
+		// No need to do anything yet
+		// it is possible to delete list field items in the future
 	}
 }

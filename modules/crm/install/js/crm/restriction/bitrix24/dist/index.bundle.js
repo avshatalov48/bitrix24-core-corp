@@ -4,23 +4,23 @@ this.BX.Crm = this.BX.Crm || {};
 	'use strict';
 
 	var Bitrix24 = {
-	  settings: null,
-	  getSettings: function getSettings(entityId) {
-	    if (this.settings === null) {
-	      this.settings = main_core.Extension.getSettings('crm.restriction.bitrix24');
+	  data: null,
+	  getData: function getData(entityId) {
+	    if (this.data === null) {
+	      this.data = main_core.Extension.getSettings('crm.restriction.bitrix24');
 	    }
 
 	    if (main_core.Type.isStringFilled(entityId)) {
-	      return this.settings.get(entityId);
+	      return this.data.get(entityId);
 	    }
 
-	    return this.settings;
+	    return this.data;
 	  },
 	  isRestricted: function isRestricted(entityId) {
-	    return !!this.getSettings(entityId);
+	    return !!this.getData(entityId);
 	  },
 	  getHandler: function getHandler(entityId) {
-	    var restrictions = this.getSettings(entityId);
+	    var restrictions = this.getData(entityId);
 
 	    if (restrictions) {
 	      return function (e) {

@@ -181,14 +181,14 @@ export default class PullManager
 		 */
 		const delay = (this.queue.has(params.item.id) ? 5000 : 0);
 
-		setTimeout(() => {
+		setTimeout(function() {
 			this.queue.delete(params.item.id);
 			this.grid.removeItem(params.item.id);
 
 			const column = this.grid.getColumn(params.item.data.columnId);
 			column.decPrice(params.item.data.price);
 			column.renderSubTitle();
-		}, delay);
+		}.bind(this), delay);
 	}
 
 	onPullStageAdded(params)

@@ -9,6 +9,7 @@ use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\Entity\ScalarField;
+use Bitrix\Main\Error;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\FieldTypeMask;
@@ -125,6 +126,26 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	public const FIELD_NAME_OBSERVERS = 'OBSERVERS';
 	public const FIELD_NAME_WEBFORM_ID = 'WEBFORM_ID';
 	public const FIELD_NAME_LOCATION_ID = 'LOCATION_ID';
+	public const FIELD_NAME_COMMENTS = 'COMMENTS';
+	public const FIELD_NAME_HONORIFIC = 'HONORIFIC';
+	public const FIELD_NAME_NAME = 'NAME';
+	public const FIELD_NAME_SECOND_NAME = 'SECOND_NAME';
+	public const FIELD_NAME_LAST_NAME = 'LAST_NAME';
+	public const FIELD_NAME_FULL_NAME = 'FULL_NAME';
+	public const FIELD_NAME_BIRTHDATE = 'BIRTHDATE';
+	public const FIELD_NAME_BIRTHDATE_SORT = 'BIRTHDATE_SORT';
+	public const FIELD_NAME_COMPANY_TITLE = 'COMPANY_TITLE';
+	public const FIELD_NAME_ORIGINATOR_ID = 'ORIGINATOR_ID';
+	public const FIELD_NAME_ORIGIN_ID = 'ORIGIN_ID';
+	public const FIELD_NAME_ORIGIN_VERSION = 'ORIGIN_VERSION';
+	public const FIELD_NAME_FACE_ID = 'FACE_ID';
+	public const FIELD_NAME_TYPE_ID = 'TYPE_ID';
+	public const FIELD_NAME_STATUS_SEMANTIC_ID = 'STATUS_SEMANTIC_ID';
+	public const FIELD_NAME_IS_RECURRING = 'IS_RECURRING';
+	public const FIELD_NAME_IS_RETURN_CUSTOMER = 'IS_RETURN_CUSTOMER';
+	public const FIELD_NAME_QUOTE_ID = 'QUOTE_ID';
+	public const FIELD_NAME_LEAD_ID = 'LEAD_ID';
+	public const FIELD_NAME_ADDITIONAL_INFO = 'ADDITIONAL_INFO';
 
 	protected const SORT_OFFSET = 10;
 
@@ -848,17 +869,25 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	protected function getContactBindingsCollection(): ?Collection
 	{
-		return $this->entityObject->get(static::FIELD_NAME_CONTACT_BINDINGS);
+		return $this->entityObject->get(
+			$this->getEntityFieldNameByMap(static::FIELD_NAME_CONTACT_BINDINGS)
+		);
 	}
 
 	protected function addToContactBindingsCollection(EntityObject $contactBinding): void
 	{
-		$this->entityObject->addTo(static::FIELD_NAME_CONTACT_BINDINGS, $contactBinding);
+		$this->entityObject->addTo(
+			$this->getEntityFieldNameByMap(static::FIELD_NAME_CONTACT_BINDINGS),
+			$contactBinding
+		);
 	}
 
 	protected function removeFromContactBindingsCollection(EntityObject $contactBinding): void
 	{
-		$this->entityObject->removeFrom(static::FIELD_NAME_CONTACT_BINDINGS, $contactBinding);
+		$this->entityObject->removeFrom(
+			$this->getEntityFieldNameByMap(static::FIELD_NAME_CONTACT_BINDINGS),
+			$contactBinding
+		);
 	}
 
 	protected function remindActualContactBindingsCollection(): ?Collection
@@ -1129,6 +1158,43 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		if ($normalizationResult->isSuccess())
 		{
 			$this->addToProductsCollection($product);
+		}
+
+		return $normalizationResult;
+	}
+
+	/**
+	 * Update fields of a product that is already bound to this item.
+	 * If the provided product is new and not bound, error will be returned.
+	 *
+	 * @param int $productRowId - id of a ProductRow that is being updated
+	 * @param array $productRowArray - array of field values that need to change. If some value for some field is not
+	 * provided, it's considered not changed and previous value remains
+	 *
+	 * @return Result
+	 */
+	public function updateProductRow(int $productRowId, array $productRowArray): Result
+	{
+		$originalProduct = $this->getProductRows() ? $this->getProductRows()->getByPrimary($productRowId) : null;
+		if (!$originalProduct)
+		{
+			return (new Result())
+				->addError(new Error('The provided product is not bound to the item'))
+			;
+		}
+
+		foreach ($productRowArray as $fieldName => $value)
+		{
+			if ($originalProduct->entity->hasField($fieldName))
+			{
+				$originalProduct->set($fieldName, $value);
+			}
+		}
+
+		$normalizationResult = $this->normalizeProduct($originalProduct);
+		if (!$normalizationResult->isSuccess())
+		{
+			$originalProduct->resetAll();
 		}
 
 		return $normalizationResult;
@@ -1539,6 +1605,10 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		{
 			$this->setProductRowsFromArrays((array)$value);
 		}
+		elseif ($fieldName === static::FIELD_NAME_OBSERVERS)
+		{
+			$this->setObservers((array)$value);
+		}
 
 		return $this;
 	}
@@ -1643,7 +1713,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	 */
 	public function getEntityEventName(string $eventName): string
 	{
-		return $this->entityObject->sysGetEntity()->getNamespace() . $this->entityObject->sysGetEntity()->getName() . '::';
+		return $this->entityObject->sysGetEntity()->getNamespace() . $this->entityObject->sysGetEntity()->getName() . '::' . $eventName;
 	}
 
 	protected function clearEmptyMultipleValues(array $values): array

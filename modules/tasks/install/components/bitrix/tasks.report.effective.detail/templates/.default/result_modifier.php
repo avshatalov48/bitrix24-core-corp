@@ -1,4 +1,8 @@
 <?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Util\User;
@@ -101,7 +105,16 @@ if ($arResult['VIOLATION_LIST'])
 
 		$item['GROUP'] = '<a href="'.$groupLink.'">'.htmlspecialcharsbx($item['GROUP_NAME']).'</a>';
 		$item['TASK'] = '<a href="'.$taskLink.'">'.htmlspecialcharsbx($item['TASK_TITLE']).'</a> '
-			.($item['TASK_ZOMBIE'] === 'Y' ? '<em>'.Loc::getMessage('TASKS_EFFECTIVE_DETAIL_DELETED').'</em>' : '');
+			.($item['TASK_ZOMBIE'] ? '<em>'.Loc::getMessage('TASKS_EFFECTIVE_DETAIL_DELETED').'</em>' : '');
+
+		if ($item['TASK_ZOMBIE'])
+		{
+			$item['TASK'] = htmlspecialcharsbx($item['TASK_TITLE']) . ' <em>'.Loc::getMessage('TASKS_EFFECTIVE_DETAIL_DELETED').'</em>';
+		}
+		else
+		{
+			$item['TASK'] = '<a href="'.$taskLink.'">'.htmlspecialcharsbx($item['TASK_TITLE']).'</a>';
+		}
 
 		$rows[] = $item;
 	}

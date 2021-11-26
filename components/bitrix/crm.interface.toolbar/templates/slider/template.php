@@ -67,13 +67,13 @@ if (preg_match($bindingMenuMask, $arParams['TOOLBAR_ID'], $bindingMenuMatches) &
 	$APPLICATION->includeComponent(
 		'bitrix:intranet.binding.menu',
 		'',
-		array(
-			'SECTION_CODE' => 'crm_detail',
+		[
+			'SECTION_CODE' => \Bitrix\Crm\Integration\Intranet\BindingMenu\SectionCode::DETAIL,
 			'MENU_CODE' => $bindingMenuMatches[1],
 			'CONTEXT' => [
-				'ID' => $bindingMenuMatches[2]
-			]
-		)
+				'ID' => $bindingMenuMatches[2],
+			],
+		]
 	);
 }
 

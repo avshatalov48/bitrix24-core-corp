@@ -76,6 +76,7 @@ class TypePreset
 					'isObserversEnabled' => true,
 					'isRecyclebinEnabled' => true,
 					'isAutomationEnabled' => true,
+					'isBizProcEnabled' => true,
 					'isSetOpenPermissions' => true,
 				],
 			],

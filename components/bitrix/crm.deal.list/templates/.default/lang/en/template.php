@@ -83,6 +83,7 @@ $MESS["CRM_DEAL_REBUILD_ACCESS_ATTRS"] = "The updated access permissions require
 $MESS["CRM_DEAL_REBUILD_SEARCH_CONTENT"] = "To use Quick Search, you have to <a id=\"#ID#\" href=\"#URL#\">recreate deal search index</a>.";
 $MESS["CRM_DEAL_REBUILD_SEARCH_CONTENT_DLG_SUMMARY"] = "This will rebuild deal search index. This operation may take a while.";
 $MESS["CRM_DEAL_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Recreating Deal Search Index";
+$MESS["CRM_DEAL_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Updating access permissions";
 $MESS["CRM_DEAL_REBUILD_SEMANTICS"] = "Reports require that you <a id=\"#ID#\" href=\"#URL#\">update</a> service deal fields to run correctly (this will not affect any user data).";
 $MESS["CRM_DEAL_REBUILD_SEMANTICS_DLG_SUMMARY"] = "Service deal fields will now be updated. This may take some time.";
 $MESS["CRM_DEAL_REBUILD_SEMANTICS_DLG_TITLE"] = "Update service deal fields";

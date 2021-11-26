@@ -18,6 +18,7 @@ use Bitrix\Crm\Entity\Identificator\ComplexCollection;
 class Sign
 {
 	const uriParameterName = 'b24form_user';
+	const uriDataParameterName = 'b24form_data';
 	const signSalt = 'site.form.hash';
 	const signTime = '+14 day';
 	const delimiterDataItem = '.';
@@ -28,12 +29,28 @@ class Sign
 	/** @var ComplexCollection */
 	protected $entities;
 
+	/** @var array */
+	protected $properties = [];
+
 	/**
 	 * Hash constructor.
 	 */
 	public function __construct()
 	{
 		$this->entities = new ComplexCollection();
+	}
+
+	/**
+	 * Append url parameter.
+	 *
+	 * @param Main\Web\Uri $uri Uri.
+	 * @return $this
+	 */
+	public function appendUriParameter(Main\Web\Uri $uri)
+	{
+		$name = $this->getProperties() ? self::uriDataParameterName : self::uriParameterName;
+		$uri->addParams([$name => $this->pack()]);
+		return $this;
 	}
 
 	/**
@@ -72,6 +89,37 @@ class Sign
 	}
 
 	/**
+	 * Get properties.
+	 *
+	 * @return array
+	 */
+	public function getProperties()
+	{
+		return $this->properties;
+	}
+
+	/**
+	 * Set property.
+	 *
+	 * @param string $key Key.
+	 * @param string $value Value.
+	 * @return $this
+	 */
+	public function setProperty($key, $value)
+	{
+		if ($value === '' || $value === null)
+		{
+			unset($this->properties[$key]);
+		}
+		else
+		{
+			$this->properties[$key] = (string)$value;
+		}
+
+		return $this;
+	}
+
+	/**
 	 * Unpack hash.
 	 * @param string $hash Hash.
 	 * @return bool
@@ -93,7 +141,7 @@ class Sign
 		}
 
 		$data = explode(self::delimiterData, $data);
-		$entities = $data[0];
+		$entities = $data[0] ?? [];
 		if ($entities)
 		{
 			foreach (explode(self::delimiterDataList, $entities) as $item)
@@ -102,6 +150,20 @@ class Sign
 				if ($item[0] && $item[1])
 				{
 					$this->entities->addIdentificator($item[0], $item[1]);
+				}
+			}
+		}
+
+		$properties = $data[1] ?? [];
+		if ($properties)
+		{
+			foreach (explode(self::delimiterDataList, $properties) as $item)
+			{
+				$item = urldecode($item);
+				$item = explode(self::delimiterDataItem, $item);
+				if ($item[0] && $item[1])
+				{
+					$this->setProperty($item[0], $item[1]);
 				}
 			}
 		}
@@ -132,7 +194,19 @@ class Sign
 				$this->entities->toSimpleArray()
 			)
 		);
+		$data[] = implode(
+			self::delimiterDataList,
+			array_map(
+				function ($key, $value)
+				{
+					return urlencode($key . self::delimiterDataItem . $value);
+				},
+				array_keys($this->properties),
+				array_values($this->properties)
+			)
+		);
 		$data = implode(self::delimiterData, $data);
+		$data = rtrim($data, ';');
 
 		return $this->getSigner()->sign($data, self::signTime, self::signSalt);
 	}

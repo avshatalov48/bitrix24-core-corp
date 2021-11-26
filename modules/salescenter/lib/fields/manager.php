@@ -171,42 +171,42 @@ class Manager
 		return $result;
 	}
 
-	public function getUrlWithParameters(Page $page): string
+	public function getUrlWithParameters(Page $page, array $additionalParams = []): string
 	{
 		$urlParameters = [];
 		$parameters = $page->getParams();
-		if(!empty($this->ids))
+		if (!empty($this->ids) && !empty($parameters))
 		{
-			if(!empty($parameters))
+			foreach($parameters as $parameter)
 			{
-				foreach($parameters as $parameter)
+				$value = $this->getValue($parameter['FIELD']);
+				if ($value)
 				{
-					$value = $this->getValue($parameter['FIELD']);
-					if($value)
-					{
-						$urlParameters[mb_strtolower($parameter['FIELD'])] = $value;
-					}
+					$urlParameters[mb_strtolower($parameter['FIELD'])] = $value;
 				}
 			}
-			if($page->isWebform() && class_exists('\Bitrix\Crm\WebForm\Embed\Sign'))
+		}
+
+		// add properties for webform link to handle it on openlines side
+		if (
+			isset($additionalParams['USER_CODE'], $additionalParams['EVENT_POSTFIX'])
+			&& $page->isWebform()
+			&& class_exists('\Bitrix\Crm\WebForm\Embed\Sign')
+		)
+		{
+			$sign = new Sign();
+			$sign->setProperty('eventNamePostfix', $additionalParams['EVENT_POSTFIX']);
+			$sign->setProperty('openlinesCode', $additionalParams['USER_CODE']);
+			foreach ($this->ids as $entityName => $entityId)
 			{
-				$isParameterFilled = false;
-				$sign = new Sign();
-				foreach($this->ids as $entityName => $entityId)
+				$entityType = \CCrmOwnerType::ResolveID($entityName);
+				$entityId = (int)$entityId;
+				if ($entityId > 0 && $entityType > 0)
 				{
-					$entityType = \CCrmOwnerType::ResolveID($entityName);
-					$entityId = (int) $entityId;
-					if($entityId > 0 && $entityType > 0)
-					{
-						$sign->addEntity($entityType, $entityId);
-						$isParameterFilled = true;
-					}
-				}
-				if($isParameterFilled)
-				{
-					$urlParameters[$sign::uriParameterName] = $sign->pack();
+					$sign->addEntity($entityType, $entityId);
 				}
 			}
+			$urlParameters[$sign::uriDataParameterName] = $sign->pack();
 		}
 
 		$uri = new Uri($page->getUrl());

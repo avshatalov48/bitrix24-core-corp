@@ -48,9 +48,9 @@ class Type extends UserField\Internal\Type implements \JsonSerializable
 {
 	public static $dataClass = TypeTable::class;
 
-	public function jsonSerialize(): array
+	public function jsonSerialize(?bool $allData = true): array
 	{
-		return Container::getInstance()->getTypeConverter()->toJson($this);
+		return Container::getInstance()->getTypeConverter()->toJson($this, $allData);
 	}
 
 	/**

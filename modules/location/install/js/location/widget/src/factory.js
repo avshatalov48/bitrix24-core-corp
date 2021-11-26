@@ -3,6 +3,7 @@ import {BaseSource, LocationRepository, SourceCreationError, Format, Location} f
 import {OSMFactory} from 'location.osm';
 
 import {Google} from 'location.google';
+import {OSM} from 'location.osm';
 
 import Address from './address/address';
 import Autocomplete from './autocomplete/autocomplete';
@@ -78,7 +79,7 @@ export default class Factory
 		const sourceParams = props.sourceParams || BX.message('LOCATION_WIDGET_SOURCE_PARAMS');
 		const languageId = props.languageId || BX.message('LOCATION_WIDGET_LANGUAGE_ID');
 		const sourceLanguageId = props.sourceLanguageId || BX.message('LOCATION_WIDGET_SOURCE_LANGUAGE_ID');
-		const userLocation = new Location(JSON.parse(BX.message('LOCATION_WIDGET_USER_LOCATION')));
+		const userLocationPoint = new Location(JSON.parse(BX.message('LOCATION_WIDGET_USER_LOCATION_POINT')));
 
 		const addressFormat = props.addressFormat || new Format(
 			JSON.parse(
@@ -131,7 +132,7 @@ export default class Factory
 						languageId,
 						addressFormat,
 						source,
-						userLocation: userLocation,
+						userLocationPoint: userLocationPoint,
 						presetLocationsProvider
 					}));
 			}
@@ -155,7 +156,7 @@ export default class Factory
 					thumbnailWidth: props.thumbnailWidth || DEFAULT_THUMBNAIL_WIDTH,
 					maxPhotoCount: props.maxPhotoCount || DEFAULT_MAX_PHOTO_COUNT,
 					mapBehavior: props.mapBehavior || DEFAULT_MAP_BEHAVIOR,
-					userLocation: userLocation
+					userLocationPoint: userLocationPoint
 				});
 
 				features.push(mapFeature);
@@ -206,7 +207,7 @@ export default class Factory
 			languageId: props.languageId,
 			addressFormat: props.addressFormat,
 			autocompleteService: props.source.autocompleteService,
-			userLocation: props.userLocation,
+			userLocationPoint: props.userLocationPoint,
 			presetLocationsProvider: props.presetLocationsProvider,
 		});
 
@@ -244,6 +245,7 @@ export default class Factory
 		}
 
 		const mapFeatureProps = {
+			saveResourceStrategy: props.source.sourceCode === Google.code,
 			map: new MapPopup({
 				addressFormat: props.addressFormat,
 				map: props.source.map,
@@ -251,7 +253,7 @@ export default class Factory
 				gallery: gallery,
 				locationRepository: new LocationRepository(),
 				geocodingService: props.useGeocodingService ? props.source.geocodingService : null,
-				userLocation: props.userLocation
+				userLocationPoint: props.userLocationPoint
 			})
 		};
 
@@ -277,11 +279,11 @@ export default class Factory
 		params.languageId = languageId;
 		params.sourceLanguageId = sourceLanguageId;
 
-		if(code === 'GOOGLE')
+		if(code === Google.code)
 		{
 			source = new Google(params);
 		}
-		else if(code === 'OSM')
+		else if(code === OSM.code)
 		{
 			source = OSMFactory.createOSMSource(params);
 		}

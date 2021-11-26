@@ -7,6 +7,8 @@
  * @copyright 2001-2019 Bitrix
  */
 
+import { BitrixVue } from "ui.vue";
+import { Vuex } from "ui.vue.vuex";
 import './message.css';
 import 'im.view.message';
 import { EventEmitter } from "main.core.events";
@@ -26,52 +28,18 @@ const VoteType = Object.freeze({
 	dislike: 'dislike',
 });
 
-BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
+BitrixVue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 {
 	methods:
 	{
-		checkFormShow()
+		checkMessageParamsForForm()
 		{
-			if (
-				!this.message.params
-				|| !this.message.params.IMOL_FORM
-			)
+			if (!this.message.params || !this.message.params.IMOL_FORM)
 			{
 				return true;
 			}
 
-			if (this.message.params.IMOL_FORM === 'welcome')
-			{
-				if (
-					!this.widget.dialog.sessionClose
-					&& (
-						!this.widget.user.name
-						&& !this.widget.user.lastName
-						&& !this.widget.user.email
-						&& !this.widget.user.phone
-					)
-				)
-				{
-					EventEmitter.emit(WidgetEventType.requestShowForm, {
-						type: FormType.welcome,
-						delayed: true
-					});
-				}
-			}
-			else if (this.message.params.IMOL_FORM === 'offline')
-			{
-				if (
-					!this.widget.dialog.sessionClose
-					&& (!this.widget.user.email)
-				)
-				{
-					EventEmitter.emit(WidgetEventType.requestShowForm, {
-						type: FormType.offline,
-						delayed: true
-					});
-				}
-			}
-			else if (this.message.params.IMOL_FORM === 'history-delay')
+			if (this.message.params.IMOL_FORM === FormType.like)
 			{
 				if (
 					parseInt(this.message.params.IMOL_VOTE) === this.widget.dialog.sessionId
@@ -88,7 +56,7 @@ BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 	},
 	created()
 	{
-		this.checkFormShow();
+		this.checkMessageParamsForForm();
 	},
 	computed:
 	{
@@ -115,7 +83,7 @@ BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 
 			if (
 				this.message.params.IMOL_FORM &&
-				this.message.params.IMOL_FORM === 'history-delay' // TODO change after release to vote
+				this.message.params.IMOL_FORM === 'like'
 			)
 			{
 				return false;
@@ -123,8 +91,7 @@ BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 
 			return true;
 		},
-
-		...BX.Vuex.mapState({
+		...Vuex.mapState({
 			widget: state => state.widget,
 		})
 	},

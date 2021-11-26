@@ -955,7 +955,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 								'url' => '/bitrix/components/bitrix/crm.order.details/ajax.php?'.bitrix_sessid_get()
 							)
 						)
-					)
+					),
+					'clientEditorFieldsParams' => $this->prepareClientEditorFieldsParams(),
 				)
 			)
 		);
@@ -1175,7 +1176,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$statusList = $this->getStatusList(EntityPermissionType::CREATE);
 			if(!empty($statusList))
 			{
-				$requestStatusId = $this->request->get('status_id');
+				$requestStatusId = $this->request->get('stage_id');
 				if(isset($statusList[$requestStatusId]))
 				{
 					$this->entityData['STATUS_ID'] = $requestStatusId;
@@ -1383,6 +1384,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		}
 
 		$clientInfo['CONTACT_DATA'] = array();
+		$iteration= 0;
 		foreach($contactIDs as $contactID)
 		{
 			self::prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'PHONE', $multiFieldData);
@@ -1396,11 +1398,13 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'ENTITY_EDITOR_FORMAT' => true,
 					'IS_HIDDEN' => !$isEntityReadPermitted,
 					'REQUIRE_REQUISITE_DATA' => true,
+					'REQUIRE_EDIT_REQUISITE_DATA' => ($iteration === 0), // load full requisite data for first item only (due to performance optimisation)
 					'REQUIRE_MULTIFIELDS' => true,
 					'REQUIRE_BINDINGS' => true,
 					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
 				)
 			);
+			$iteration++;
 		}
 		$this->entityData['CLIENT_INFO'] = $clientInfo;
 
@@ -1663,10 +1667,10 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				}
 			}
 
-			$delivery = $shipment->getDelivery();
-			$deliveryServiceName = '';
-			$logoPath = '';
+			$deliveryServiceName = $shipment->getDeliveryName();
+			$logoPath = $this->getPath().'/images/delivery_logo.png';
 
+			$delivery = $shipment->getDelivery();
 			if($delivery)
 			{
 				$logoFileId = (int)$delivery->getLogotip();
@@ -2081,7 +2085,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		{
 			$errors = [];
 			$paySystemName = $payment->getPaymentSystemName();
-			$paySystemLogoPath = '';
+			$paySystemLogoPath = $this->getPaySystemLogoPath("", "");
 			$currency = !empty($payment->getField('CURRENCY')) ? $payment->getField('CURRENCY') : $this->order->getCurrency();
 			$currencyName = $this->getCurrencyNameShort($currency);
 
@@ -2395,5 +2399,24 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'elements' => []
 		];
 		return $scheme;
+	}
+
+	protected function prepareClientEditorFieldsParams(): array
+	{
+		$result = [
+			CCrmOwnerType::ContactName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite')
+			],
+			CCrmOwnerType::CompanyName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite')
+			]
+		];
+		if (Main\Loader::includeModule('location'))
+		{
+			$result[CCrmOwnerType::ContactName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address');
+			$result[CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address');
+		}
+
+		return $result;
 	}
 }

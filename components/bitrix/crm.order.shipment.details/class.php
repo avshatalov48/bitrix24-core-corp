@@ -551,7 +551,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 				'name' => 'DISCOUNT_PRICE_WITH_CURRENCY',
 				'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_DISCOUNT_PRICE_WITH_CURRENCY'),
 				'type' => 'money',
-				'editable' => true,
+				'editable' => false,
 				'data' => array(
 					'affectedFields' => array('CURRENCY', 'DISCOUNT_PRICE'),
 					'currency' => array(
@@ -867,9 +867,11 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		$currentDeliveryService = null;
 		$logo = '/bitrix/images/sale/logo-default-d.gif';
 
-		if((int)$this->entityData['DELIVERY_ID'] > 0)
+		if (
+			(int)$this->entityData['DELIVERY_ID'] > 0
+			&& $currentDeliveryService = \Bitrix\Sale\Delivery\Services\Manager::getObjectById($this->entityData['DELIVERY_ID'])
+		)
 		{
-			$currentDeliveryService = \Bitrix\Sale\Delivery\Services\Manager::getObjectById($this->entityData['DELIVERY_ID']);
 			$this->entityData['DELIVERY_SERVICE_NAME'] = htmlspecialcharsbx($currentDeliveryService->getNameWithParent());
 			$logoFileId = $currentDeliveryService->getLogotip();
 

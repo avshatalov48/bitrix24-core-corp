@@ -378,7 +378,7 @@ export default class Grid extends Kanban.Grid
 		{
 			errors.forEach((error) =>
 			{
-				message += error.message + "\n";
+				message += Text.encode(error.message) + "\n";
 			});
 		}
 		else

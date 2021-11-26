@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Filter;
 class DealSettings extends EntitySettings
 {
 	const FLAG_RECURRING = 1;
+	public const FLAG_ENABLE_CLIENT_FIELDS = 2;
 
 	/** @var int */
 	protected $categoryID = -1;

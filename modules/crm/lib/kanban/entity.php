@@ -24,6 +24,10 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\UI\Filter\FieldAdapter;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\UI\Form\EntityEditorConfiguration;
+use Bitrix\Crm\Component\EntityList\ClientDataProvider\KanbanDataProvider;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Observer\Entity\ObserverTable;
+use Bitrix\Crm\Service\Display\Field;
 
 abstract class Entity
 {
@@ -42,18 +46,19 @@ abstract class Entity
 	protected $entityEditorConfiguration;
 	protected $userFields;
 	protected $loadedItems = [];
+	protected $displayedFields;
 
 	protected $dateFormats = [
 		'short' => [
 			'en' => 'F j',
 			'de' => 'j. F',
-			'ru' => 'j F'
+			'ru' => 'j F',
 		],
 		'full' => [
 			'en' => 'F j, Y',
 			'de' => 'j. F Y',
-			'ru' => 'j F Y'
-		]
+			'ru' => 'j F Y',
+		],
 	];
 
 	protected static $instances = [];
@@ -64,8 +69,13 @@ abstract class Entity
 		'#company_id#',
 		'#deal_id#',
 		'#quote_id#',
-		'#invoice_id#'
+		'#invoice_id#',
 	];
+
+	/** @var $contactDataProvider KanbanDataProvider */
+	protected $contactDataProvider;
+	/** @var $companyDataProvider KanbanDataProvider */
+	protected $companyDataProvider;
 
 	public function __construct()
 	{
@@ -285,6 +295,16 @@ abstract class Entity
 	}
 
 	/**
+	 * Returns true if this entity supports clients fields.
+	 *
+	 * @return bool
+	 */
+	public function hasClientFields(): bool
+	{
+		return true;
+	}
+
+	/**
 	 * Returns true if this entity has counters.
 	 *
 	 * @return bool
@@ -449,7 +469,7 @@ abstract class Entity
 			'TITLE' => '',
 			'OPPORTUNITY' => '',
 			'DATE_CREATE' => '',
-			'CLIENT' => ''
+			'CLIENT' => '',
 		];
 	}
 
@@ -603,7 +623,7 @@ abstract class Entity
 		$component->initComponent($componentName);
 		$component->arResult = [
 			'READ_ONLY' => false,
-			'PATH_TO_USER_PROFILE' => ''
+			'PATH_TO_USER_PROFILE' => '',
 		];
 		$component->setEntityID(0);
 
@@ -634,12 +654,12 @@ abstract class Entity
 					{
 						$configurationSection['elements']['OPPORTUNITY'] = [
 							'name' => 'OPPORTUNITY',
-							'title' => ''
+							'title' => '',
 						];
 					}
 					$configurationSection['elements'][$item['name']] = [
 						'name' => $item['name'],
-						'title' => $item['title']
+						'title' => $item['title'],
 					];
 				}
 
@@ -672,7 +692,7 @@ abstract class Entity
 		$component = $this->getDetailComponent();
 		if(!$component)
 		{
-			 return $result;
+			return $result;
 		}
 		$result['userFields'] = $this->getUserFields();
 		$fieldInfos = $component->prepareFieldInfos();
@@ -694,6 +714,11 @@ abstract class Entity
 		unset($result['schemeFields']['TITLE']['visibilityPolicy'], $result['schemeFields']['TITLE']['isHeading']);
 
 		return $result;
+	}
+
+	public function getBaseFields(): array
+	{
+		return Container::getInstance()->getFactory($this->getTypeId())->getFieldsInfo();
 	}
 
 	/**
@@ -764,7 +789,7 @@ abstract class Entity
 					$this->getTypeId(),
 					0,
 					[
-						$this->getStageFieldName() => $stage['STATUS_ID']
+						$this->getStageFieldName() => $stage['STATUS_ID'],
 					]
 				);
 				foreach ($stageRequiredFields as $requiredFieldsBlock)
@@ -872,9 +897,9 @@ abstract class Entity
 						'UF_FIELDS' => [
 							$fieldSum => [
 								'FIELD' => $fieldSum,
-								'TYPE' => 'double'
-							]
-						]
+								'TYPE' => 'double',
+							],
+						],
 					];
 				}
 				else
@@ -1020,7 +1045,7 @@ abstract class Entity
 				'QUERY_OPTIONS' => [
 					'LIMIT' => $parameters['limit'],
 					'OFFSET' => $parameters['offset'],
-				]
+				],
 			];
 		}
 
@@ -1070,16 +1095,41 @@ abstract class Entity
 			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['PRICE'], $currency);
 		}
 
-		if ($item['DATE'] instanceof Date)
-		{
-			$item['DATE_UNIX'] = $item['DATE']->getTimestamp();
-		}
-		else
-		{
-			$item['DATE_UNIX'] = \MakeTimeStamp($item['DATE']);
-		}
+		$item['OPPORTUNITY'] = \CCrmCurrency::MoneyToString(
+			$item['OPPORTUNITY'],
+			$item['CURRENCY_ID']
+		);
+
+		$item['OPENED'] = in_array($item['OPENED'], ['Y', '1', 1, true], true) ? 'Y' : 'N';
+		$item['DATE_FORMATTED'] = $this->getFormattedDate($item['DATE'], (bool)$item['FORMAT_TIME']);
 
 		return $item;
+	}
+
+	public function appendRelatedEntitiesValues(array $items, array $selectedFields): array
+	{
+		if (in_array('OBSERVER', $selectedFields))
+		{
+			$observers = $this->loadObserversByEntityIds(array_keys($items));
+			foreach ($items as $itemId => $item)
+			{
+				$items[$itemId]['OBSERVER'] = $observers[$itemId] ?? [];
+			}
+		}
+
+		$factory = Container::getInstance()->getFactory($this->getTypeId());
+		if ($factory && $factory->isCrmTrackingEnabled() && in_array('TRACKING_SOURCE_ID', $selectedFields))
+		{
+			$traces = $this->loadTracesByEntityIds(array_keys($items));
+			foreach ($items as $itemId => $item)
+			{
+				$items[$itemId]['TRACKING_SOURCE_ID'] = $traces[$itemId] ?? '';
+			}
+		}
+
+		$this->appendClientData($items, $selectedFields);
+
+		return $items;
 	}
 
 	/**
@@ -1187,7 +1237,7 @@ abstract class Entity
 				continue;
 			}
 			$fields = [
-				$fieldName => $assignedId
+				$fieldName => $assignedId,
 			];
 			$entity->update($id, $fields);
 			if (!empty($entity->LAST_ERROR))
@@ -1337,17 +1387,17 @@ abstract class Entity
 			{
 				$res = $provider::$method(
 					array(
-						'ID' => 'DESC'
+						'ID' => 'DESC',
 					),
 					array(
 						//
 					),
 					false,
 					array(
-						'nTopCount' => 1
+						'nTopCount' => 1,
 					),
 					array(
-						'ID'
+						'ID',
 					)
 				);
 				if ($row = $res->fetch())
@@ -1455,7 +1505,7 @@ abstract class Entity
 
 		return [
 			'GET_LIST' => $path . '&action=list',
-			'GET_FIELD' => $path . '&action=field'
+			'GET_FIELD' => $path . '&action=field',
 		];
 	}
 
@@ -1494,13 +1544,13 @@ abstract class Entity
 			'OBSERVER' => [
 				'ID' => 'field_OBSERVER',
 				'NAME' => 'OBSERVER',
-				'LABEL' => Loc::getMessage('CRM_KANBAN_FIELD_OBSERVER')
+				'LABEL' => Loc::getMessage('CRM_KANBAN_FIELD_OBSERVER'),
 			],
 			'SOURCE_DESCRIPTION' => [
 				'ID' => 'field_SOURCE_DESCRIPTION',
 				'NAME' => 'SOURCE_DESCRIPTION',
-				'LABEL' => Loc::getMessage('CRM_KANBAN_FIELD_SOURCE_DESCRIPTION')
-			]
+				'LABEL' => Loc::getMessage('CRM_KANBAN_FIELD_SOURCE_DESCRIPTION'),
+			],
 		];
 	}
 
@@ -1538,7 +1588,7 @@ abstract class Entity
 		$result = [];
 
 		$labelCodes = [
-			'LIST_FILTER_LABEL', 'LIST_COLUMN_LABEL', 'EDIT_FORM_LABEL'
+			'LIST_FILTER_LABEL', 'LIST_COLUMN_LABEL', 'EDIT_FORM_LABEL',
 		];
 		foreach($this->getUserFields() as $fieldName => $userField)
 		{
@@ -1567,7 +1617,7 @@ abstract class Entity
 			$result[$fieldName] =  [
 				'ID' => 'field_' . $fieldName,
 				'NAME' => $fieldName,
-				'LABEL' => $fieldLabel
+				'LABEL' => $fieldLabel,
 			];
 			if ($userField['USER_TYPE_ID'] === 'resourcebooking')
 			{
@@ -1612,7 +1662,7 @@ abstract class Entity
 	protected function getPopupHiddenFields(): array
 	{
 		return [
-			'STAGE_ID', 'STATUS', 'STATUS_ID'
+			'STAGE_ID', 'STATUS', 'STATUS_ID',
 		];
 	}
 
@@ -1646,12 +1696,20 @@ abstract class Entity
 			else
 			{
 				$typeId = \CCrmOwnerType::ResolveID($entityTypeName);
-				if($typeId !== \CCrmOwnerType::Undefined && \CCrmOwnerType::isPossibleDynamicTypeId($typeId))
+				if ($typeId !== \CCrmOwnerType::Undefined && \CCrmOwnerType::isPossibleDynamicTypeId($typeId))
 				{
 					$factory = Service\Container::getInstance()->getFactory($typeId);
-					if($factory)
+					if ($factory)
 					{
-						return ServiceLocator::getInstance()->get('crm.kanban.entity.dynamic')->setFactory($factory);
+						if (ServiceLocator::getInstance()->has('crm.kanban.entity.dynamic'))
+						{
+							$instance = clone ServiceLocator::getInstance()->get('crm.kanban.entity.dynamic');
+						}
+						else
+						{
+							$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.dynamic');
+						}
+						$instance->setFactory($factory);
 					}
 				}
 			}
@@ -1665,9 +1723,15 @@ abstract class Entity
 	 * @param string|null $type
 	 * @return array|mixed
 	 */
-	public function getDateFormats(?string $type)
+	public function getDateFormat(?string $type)
 	{
-		return ($type === null ? $this->dateFormats : $this->dateFormats[$type]);
+		$lang = 'ru';
+		if (LANGUAGE_ID === 'de' || LANGUAGE_ID === 'en')
+		{
+			$lang = LANGUAGE_ID;
+		}
+
+		return ($type === null ? $this->dateFormats : $this->dateFormats[$type][$lang]);
 	}
 
 	/**
@@ -1677,15 +1741,7 @@ abstract class Entity
 	 */
 	public function createPullItem(?array $data = null, ?array $params = null): array
 	{
-		$timeOffset = \CTimeZone::GetOffset();
-		$timeFull = time() + $timeOffset;
 		$data = $this->prepareItemCommonFields($data);
-		$dateFormats = $this->getDateFormats(
-			date('Y') === date('Y', $data['DATE_UNIX'])
-				? 'short'
-				: 'full'
-		);
-		$dateFormat = $dateFormats[LANGUAGE_ID];
 
 		return [
 			'id'=> $data['ID'],
@@ -1696,14 +1752,7 @@ abstract class Entity
 				'columnId' => $this->getColumnId($data),
 				'price' => $data['PRICE'],
 				'price_formatted' => $data['PRICE_FORMATTED'],
-				'date' => (
-				!$data['FORMAT_TIME']
-					? \FormatDate($dateFormat, $data['DATE_UNIX'], $timeFull)
-					: (
-				(time() - $data['DATE_UNIX']) / 3600 > 48
-					? \FormatDate($dateFormat, $data['DATE_UNIX'], $timeFull)
-					: \FormatDate('x', $data['DATE_UNIX'], $timeFull)
-				)),
+				'date' => $data['DATE_FORMATTED'],
 				'categoryId' => $data['CATEGORY_ID'] ?? null,
 			],
 			'rawData' => $data // @todo get only visible values for current user
@@ -1761,86 +1810,105 @@ abstract class Entity
 			'sort' => ($fields['SORT'] ?? ''),
 			'name' => ($fields['NAME'] ?? ''),
 			'name_init' => ($fields['NAME_INIT'] ?? ''),
-			'color' => ($fields['COLOR'] ?? '')
+			'color' => ($fields['COLOR'] ?? ''),
 		];
 	}
 
 	/**
-	 * @param bool $clearCache Clear static cache.
-	 * @return array
+	 * @param bool $clearCache  Clear static cache.
+	 * @return \Bitrix\Crm\Service\Display\Field[]
 	 */
-	public function getAdditionalFields(bool $clearCache = false): array
+	public function getDisplayedFieldsList(bool $clearCache = false): array
 	{
-		static $additional = null;
-
-		if ($clearCache)
+		if (is_array($this->displayedFields) && !$clearCache)
 		{
-			$additional = null;
+			return $this->displayedFields;
 		}
 
-		if ($additional === null)
-		{
-			$additional = [];
-			$ufExist = false;
-			$exist = $this->getAdditionalSelectFields();
+		$this->displayedFields = [];
 
-			//base fields
-			foreach ($exist as $key => $title)
+		$visibleFields = $this->getAdditionalSelectFields();
+		$baseFields = $this->getBaseFields();
+		$userFields = $this->getUserFields();
+		$extraFields = $this->getExtraDisplayedFields();
+
+		foreach ($visibleFields as $fieldId => $title)
+		{
+			if (isset($extraFields[$fieldId]) && $extraFields[$fieldId] instanceof Service\Display\Field)
 			{
-				if (mb_strpos($key, 'UF_') === 0)
-				{
-					$ufExist = true;
-				}
-				else
-				{
-					$additional[$key] = array(
-						'title' => HtmlFilter::encode($title),
-						'type' => 'string',
-						'code' => $key
-					);
-				}
+				$this->displayedFields[$fieldId] = $extraFields[$fieldId];
+			}
+			elseif (isset($baseFields[$fieldId]))
+			{
+				$this->displayedFields[$fieldId] = Service\Display\Field::createFromBaseField($fieldId, $baseFields[$fieldId]);
+			}
+			elseif (isset($userFields[$fieldId]))
+			{
+				$this->displayedFields[$fieldId] = Service\Display\Field::createFromUserField($fieldId, $userFields[$fieldId]);
+			}
+			else
+			{
+				$this->displayedFields[$fieldId] =
+					(new Service\Display\Field($fieldId))
+						->setTitle($title)
+				;
 			}
 
-			//user fields
-			if ($ufExist)
+			if ($title !== '')
 			{
-				$enumerations = [];
-				$userFields = $this->getUserFields();
-				foreach ($userFields as $row)
-				{
-					if (isset($exist[$row['FIELD_NAME']]))
-					{
-						$additional[$row['FIELD_NAME']] = [
-							'title' => HtmlFilter::encode($row['EDIT_FORM_LABEL']),
-							'new' => (!in_array($row['FIELD_NAME'], $exist) ? 1 : 0),
-							'type' => $row['USER_TYPE_ID'],
-							'code' => $row['FIELD_NAME'],
-							'settings' => $row['SETTINGS'],
-							'enumerations' => [],
-						];
-						if ($row['USER_TYPE_ID'] === 'enumeration')
-						{
-							$enumerations[$row['ID']] = $row['FIELD_NAME'];
-						}
-					}
-				}
-
-				if (!empty($enumerations))
-				{
-					$enumUF = new \CUserFieldEnum;
-					$resEnum = $enumUF->getList(
-						[],
-						['USER_FIELD_ID' => array_keys($enumerations)]
-					);
-					while ($rowEnum = $resEnum->fetch())
-					{
-						$additional[$enumerations[$rowEnum['USER_FIELD_ID']]]['enumerations'][$rowEnum['ID']] = $rowEnum['VALUE'];
-					}
-				}
+				$this->displayedFields[$fieldId]->setTitle($title);
+			}
+			if (in_array($this->displayedFields[$fieldId]->getType(), ['date', 'datetime']))
+			{
+				$this->displayedFields[$fieldId]->setDisplayParams([
+					'DATETIME_FORMAT' => $this->getDateFormat('full'),
+				]);
+			}
+			if ($fieldId === $this->getAssignedByFieldName())
+			{
+				$this->displayedFields[$fieldId]->addDisplayParam('AS_ARRAY', true);
 			}
 		}
 
-		return $additional;
+		return $this->displayedFields;
+	}
+
+	/**
+	 * @return \Bitrix\Crm\Service\Display\Field[]
+	 */
+	protected function getExtraDisplayedFields()
+	{
+		$result = [];
+		if ($this->hasClientFields())
+		{
+			$contactDataProvider = $this->getContactDataProvider();
+			$companyDataProvider = $this->getCompanyDataProvider();
+
+			$result = array_merge(
+				$result,
+				$contactDataProvider->getDisplayFields(),
+				$companyDataProvider->getDisplayFields(),
+			);
+		}
+
+		$factory = Container::getInstance()->getFactory($this->getTypeId());
+		if ($factory && $factory->isObserversEnabled())
+		{
+			$result['OBSERVER'] =
+				(new Field('OBSERVER'))
+					->setType('user')
+					->setIsMultiple(true)
+			;
+		}
+		if ($factory && $factory->isCrmTrackingEnabled())
+		{
+			$result['TRACKING_SOURCE_ID'] =
+				(new Field('TRACKING_SOURCE_ID'))
+					->setType('string')
+			;
+		}
+
+		return $result;
 	}
 
 	/**
@@ -1880,5 +1948,357 @@ abstract class Entity
 			'defaultQuickFormFields' => ['TITLE', 'OPPORTUNITY_WITH_CURRENCY', 'CLIENT'],
 			'kanbanItemClassName' => 'crm-kanban-item',
 		];
+	}
+
+	public function appendClientData(array &$items, array $visibleFields): void
+	{
+		if (!$this->hasClientFields())
+		{
+			return;
+		}
+
+		$contactDataProvider = $this->getContactDataProvider();
+		$contactDataProvider->addFieldsToSelect([
+			'NAME',
+			'LAST_NAME',
+			'SECOND_NAME',
+			'HONORIFIC',
+		]);
+		$contactDataProvider->appendResult($items, $visibleFields);
+
+		$companyDataProvider = $this->getCompanyDataProvider();
+		$companyDataProvider->addFieldsToSelect([
+			'TITLE',
+		]);
+		$companyDataProvider->appendResult($items, $visibleFields);
+	}
+
+	public function appendMultiFieldData(array &$items, array $allowedTypes): void
+	{
+		if ($this->hasOwnMultiFields())
+		{
+			$multifieldValues = $this->loadMultiFields(
+				array_keys($items),
+				mb_strtoupper($this->getOwnMultiFieldsClientType()),
+				$allowedTypes
+			);
+
+			$items = $this->addMultiFieldValues($items, $multifieldValues);
+		}
+		if ($this->hasClientFields())
+		{
+			$contacts = [];
+			$companies = [];
+			foreach ($items as $itemId => $item)
+			{
+				if (isset($item['contactId']) && $item['contactId'] > 0)
+				{
+					$contacts[$itemId] = $item['contactId'];
+				}
+				if (isset($item['companyId']) && $item['companyId'] > 0)
+				{
+					$companies[$itemId] = $item['companyId'];
+				}
+			}
+			$items = $this->addClientMultiFieldValues($items, $allowedTypes, $contacts, \CCrmOwnerType::Contact);
+			$items = $this->addClientMultiFieldValues($items, $allowedTypes, $companies, \CCrmOwnerType::Company);
+		}
+	}
+
+	public function getClientFieldsRestrictions(): ?array
+	{
+		return null;
+	}
+
+	protected function getContactDataProvider()
+	{
+		if (!$this->contactDataProvider)
+		{
+			$this->contactDataProvider = new KanbanDataProvider(\CCrmOwnerType::Contact);
+			$this->contactDataProvider->setGridId($this->getGridId());
+		}
+
+		return $this->contactDataProvider;
+	}
+
+	protected function getCompanyDataProvider()
+	{
+		if (!$this->companyDataProvider)
+		{
+			$this->companyDataProvider = new KanbanDataProvider(\CCrmOwnerType::Company);
+			$this->companyDataProvider->setGridId($this->getGridId());
+		}
+
+		return $this->companyDataProvider;
+	}
+
+	protected function loadMultiFields(array $elementIds, string $entityTypeName, array $allowedTypes): array
+	{
+		$result = [];
+
+		if (empty($elementIds) || empty($allowedTypes))
+		{
+			return $result;
+		}
+
+		$items = \CCrmFieldMulti::GetListEx([], [
+			'=ENTITY_ID' => $entityTypeName,
+			'@ELEMENT_ID' => $elementIds,
+			'@TYPE_ID' => array_map( 'strtoupper', $allowedTypes),
+		]);
+
+		while ($multifield = $items->fetch())
+		{
+			$value = $multifield['VALUE'];
+			$elementId = $multifield['ELEMENT_ID'];
+			$complexId = $multifield['COMPLEX_ID'];
+			$typeId = mb_strtolower($multifield['TYPE_ID']);
+
+			if (!isset($result[$elementId]))
+			{
+				$result[$elementId] = [];
+			}
+			if (!isset($result[$elementId][$typeId]))
+			{
+				$result[$elementId][$typeId] = [];
+			}
+			$result[$elementId][$typeId][] = [
+				'value' => htmlspecialcharsbx($value),
+				'title' => \CCrmFieldMulti::GetEntityNameByComplex($complexId, false),
+			];
+		}
+
+		return $result;
+	}
+
+	protected function addMultiFieldValues(array $items, array $multifieldValues, int $entityTypeId = null): array
+	{
+		$isOpenLinesInstalled = \Bitrix\Main\ModuleManager::isModuleInstalled('imopenlines');
+		$clientType = $entityTypeId ? mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId)) : '';
+
+		foreach ($items as $itemId => $item)
+		{
+			$itemMultifieldValues = $multifieldValues[$itemId] ?? [];
+			foreach ($itemMultifieldValues as $code => $values)
+			{
+				if ($code === 'im') // we need only chat for im
+				{
+					if ($isOpenLinesInstalled)
+					{
+						foreach ($values as $val)
+						{
+							$val = $val['value'];
+							if ((mb_strpos($val, 'imol|') === 0))
+							{
+								$item[$code] = $val;
+								break;
+							}
+						}
+					}
+				}
+				elseif($clientType)
+				{
+					$item[$code][$clientType] = $values;
+				}
+				else
+				{
+					$item[$code] = $values;
+				}
+				$item['required_fm'][mb_strtoupper($code)] = false;
+			}
+
+			$items[$itemId] = $item;
+		}
+
+		return $items;
+	}
+
+	protected function addClientMultiFieldValues(
+		array $items,
+		array $allowedTypes,
+		array $clientIds,
+		int $clientEntityTypeId
+	): array
+	{
+		$clientsMultiFields = $this->loadMultiFields(
+			array_values($clientIds),
+			\CCrmOwnerType::ResolveName($clientEntityTypeId),
+			$allowedTypes
+		);
+		$adaptedMultiFields = [];
+		foreach ($clientIds as $itemId => $contactId)
+		{
+			$adaptedMultiFields[$itemId] = $clientsMultiFields[$contactId] ?? [];
+		}
+
+		return $this->addMultiFieldValues($items, $adaptedMultiFields, $clientEntityTypeId);
+	}
+
+	protected function loadObserversByEntityIds(array $entityIds): array
+	{
+		if (empty($entityIds))
+		{
+			return [];
+		}
+		$items = ObserverTable::getList([
+			'select' => [
+				'USER_ID', 'ENTITY_ID'
+			],
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $this->getTypeId(),
+				'=ENTITY_ID' => $entityIds,
+			],
+			'order' => [
+				'SORT' => 'ASC'
+			]
+		]);
+		$observers = [];
+		while ($item = $items->fetch())
+		{
+			if (!isset($observers[$item['ENTITY_ID']]))
+			{
+				$observers[$item['ENTITY_ID']] = [];
+			}
+			$observers[$item['ENTITY_ID']][] = $item['USER_ID'];
+		}
+
+		return $observers;
+	}
+
+	protected function loadTracesByEntityIds(array $entityIds): array
+	{
+		if (empty($entityIds))
+		{
+			return [];
+		}
+
+		$traces = [];
+		$traceEntities = [];
+
+		$actualSources = \Bitrix\Crm\Tracking\Provider::getActualSources();
+		$actualSources = array_combine(
+			array_column($actualSources, 'ID'),
+			array_values($actualSources)
+		);
+
+		$channelNames = \Bitrix\Crm\Tracking\Channel\Factory::getNames();
+
+		// get traces by entity
+		$res = \Bitrix\Crm\Tracking\Internals\TraceEntityTable::getList([
+			'select' => [
+				'ENTITY_ID', 'TRACE_ID',
+			],
+			'filter' => [
+				'ENTITY_TYPE_ID' => $this->getTypeId(),
+				'ENTITY_ID' => $entityIds,
+			],
+		]);
+		while ($row = $res->fetch())
+		{
+			$traces[$row['ENTITY_ID']] = $row;
+			$traceEntities[$row['TRACE_ID']] = [];
+		}
+
+		if (!$traceEntities)
+		{
+			return [];
+		}
+
+		// fill paths for traces
+		$res = \Bitrix\Crm\Tracking\Internals\TraceTable::getList([
+			'select' => [
+				'ID', 'SOURCE_ID',
+			],
+			'filter' => [
+				'=ID' => array_keys($traceEntities),
+			],
+		]);
+		while ($row = $res->fetch())
+		{
+			if (
+				$row['SOURCE_ID'] &&
+				isset($actualSources[$row['SOURCE_ID']])
+			)
+			{
+				$source = $actualSources[$row['SOURCE_ID']];
+				$traceEntities[$row['ID']] = [
+					'NAME' => $source['NAME'],
+					'DESC' => $source['DESCRIPTION'],
+					'ICON' => $source['ICON_CLASS'],
+					'ICON_COLOR' => $source['ICON_COLOR'],
+					'IS_SOURCE' => true,
+				];
+			}
+		}
+
+		// additional filling
+		$res = \Bitrix\Crm\Tracking\Internals\TraceChannelTable::getList([
+			'select' => [
+				'TRACE_ID', 'CODE',
+			],
+			'filter' => [
+				'TRACE_ID' => array_keys($traceEntities),
+			],
+		]);
+		while ($row = $res->fetch())
+		{
+			$traceEntities[$row['TRACE_ID']] = [
+				'NAME' => $channelNames[$row['CODE']] ?? \Bitrix\Crm\Tracking\Channel\Base::getNameByCode($row['CODE']),
+				'DESC' => '',
+				'ICON' => '',
+				'ICON_COLOR' => '',
+				'IS_SOURCE' => true,
+			];
+		}
+
+		// fill entities by full path
+		foreach ($traces as $id => $trace)
+		{
+			if (isset($traceEntities[$trace['TRACE_ID']]))
+			{
+				$traces[$id] = $traceEntities[$trace['TRACE_ID']]['NAME'];
+			}
+			else
+			{
+				unset($traces[$id]);
+			}
+		}
+
+		return $traces;
+	}
+
+	protected function getFormattedDate($date, bool $formatTime): string
+	{
+		if ($date instanceof Date || $date instanceof \DateTime)
+		{
+			$timestamp = $date->getTimestamp();
+		}
+		elseif ($date === '')
+		{
+			return '';
+		}
+		else
+		{
+
+
+			$timestamp = \MakeTimeStamp($date);
+		}
+
+		$now = time() + \CTimeZone::GetOffset();
+		$dateFormat = $this->getDateFormat(
+			date('Y') === date('Y', $timestamp)
+				? 'short'
+				: 'full'
+		);
+
+		return (
+			!$formatTime
+			? \FormatDate($dateFormat, $timestamp, $now)
+			: (
+				($now - $timestamp) / 3600 > 48
+				? \FormatDate($dateFormat, $timestamp, $now)
+				: \FormatDate('x', $timestamp, $now)
+			)
+		);
 	}
 }

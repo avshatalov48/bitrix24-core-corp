@@ -40,6 +40,12 @@ Loc::loadMessages(__FILE__);
 class StatusTable extends Entity\DataManager
 {
 	public const ENTITY_ID_SOURCE = 'SOURCE';
+	public const ENTITY_ID_HONORIFIC = 'HONORIFIC';
+	public const ENTITY_ID_DEAL_TYPE = 'DEAL_TYPE';
+	public const ENTITY_ID_COMPANY_TYPE = 'COMPANY_TYPE';
+	public const ENTITY_ID_CONTACT_TYPE = 'CONTACT_TYPE';
+	public const ENTITY_ID_INDUSTRY = 'INDUSTRY';
+	public const ENTITY_ID_EMPLOYEES = 'EMPLOYEES';
 
 	public const DEFAULT_SUCCESS_COLOR = '#DBF199';
 	public const DEFAULT_FAILURE_COLOR = '#FFBEBD';
@@ -120,6 +126,35 @@ class StatusTable extends Entity\DataManager
 		/** @var EO_Status $status */
 		$status = $event->getParameter('object');
 		static::removeStatusesFromCache($status->fillEntityId());
+
+		$data = $event->getParameter('fields');
+		$entity = [];
+		$entityId = '';
+		$entityTypeId = \CCrmOwnerType::Undefined;
+		if (isset($data['ENTITY_ID']))
+		{
+			$entityId = $data['ENTITY_ID'];
+			$entityTypes = \CCrmStatus::GetEntityTypes();
+			if (isset($entityTypes[$entityId]))
+			{
+				$entity = $entityTypes[$entityId];
+			}
+		}
+		if (isset($entity['ENTITY_TYPE_ID']))
+		{
+			$entityTypeId = (int)$entity['ENTITY_TYPE_ID'];
+		}
+		if (\CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			$entityScope = $entity['FIELD_ATTRIBUTE_SCOPE'] ?? '';
+
+			FieldAttributeManager::processPhaseCreation(
+				$data['STATUS_ID'],
+				$entityTypeId,
+				$entityScope,
+				static::getStatusesByEntityId($entityId)
+			);
+		}
 	}
 
 	public static function onBeforeUpdate(Event $event): ORM\EventResult
@@ -193,7 +228,7 @@ class StatusTable extends Entity\DataManager
 			$data['STATUS_ID'],
 			$entityTypeId,
 			$entityScope,
-			\CCrmStatus::GetStatus('STATUS')
+			static::getStatusesByEntityId($entityId)
 		);
 
 		return $result;
@@ -242,7 +277,14 @@ class StatusTable extends Entity\DataManager
 			return $result;
 		}
 
-		$factory = static::getFactoryByStagesEntityId($data['ENTITY_ID']);
+		$entityId = $data['ENTITY_ID'];
+		$entity = \CCrmStatus::GetEntityTypes()[$entityId] ?? null;
+		if (!$entity)
+		{
+			return $result;
+		}
+
+		$factory = static::getFactoryByStagesEntityId($entityId);
 		if (!$factory)
 		{
 			return $result;
@@ -255,6 +297,17 @@ class StatusTable extends Entity\DataManager
 		if ($itemsOnStageCount > 0)
 		{
 			$result->addError(new ORM\EntityError(Loc::getMessage('CRM_STATUS_STAGE_WITH_ITEMS_ERROR')));
+		}
+
+		$entityTypeId = $entity['ENTITY_TYPE_ID'] ?? null;
+		if ($entityTypeId)
+		{
+			FieldAttributeManager::processPhaseDeletion(
+				$data['STATUS_ID'],
+				$entityTypeId,
+				$entity['FIELD_ATTRIBUTE_SCOPE'] ?? '',
+				static::getStatusesByEntityId($entityId)
+			);
 		}
 
 		return $result;
@@ -301,14 +354,7 @@ class StatusTable extends Entity\DataManager
 		{
 			return $result;
 		}
-		$entityTypeId = $entity['ENTITY_TYPE_ID'] ?? null;
-		if (!$entityTypeId)
-		{
-			return $result;
-		}
-		$entityScope = $entity['FIELD_ATTRIBUTE_SCOPE'] ?? '';
 
-		FieldAttributeTable::deleteByPhase($data['STATUS_ID'], $entityTypeId, $entityScope);
 		static::removeStatusesFromCache($entityId);
 
 		return $result;
@@ -343,7 +389,7 @@ class StatusTable extends Entity\DataManager
 	 */
 	public static function getStatusesByEntityId(string $entityId): array
 	{
-		if (CACHED_b_crm_status === false)
+		if (!defined('CACHED_b_crm_status') || CACHED_b_crm_status === false)
 		{
 			return static::loadStatusesByEntityId($entityId);
 		}

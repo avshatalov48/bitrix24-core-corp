@@ -341,6 +341,9 @@ if ($USER->IsAdmin()
 	$allowTellAbout = true;
 }
 
+// forced disabling
+$allowTellAbout = false;
+
 // test
 if (array_key_exists('utest', $_REQUEST))
 {

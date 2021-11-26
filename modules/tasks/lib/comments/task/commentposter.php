@@ -2,13 +2,19 @@
 namespace Bitrix\Tasks\Comments\Task;
 
 use Bitrix\Main;
+use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\StringHelper;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Comments\Internals\Comment;
 use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Disk;
 use Bitrix\Tasks\Integration\Forum;
 use Bitrix\Tasks\Integration\Mail;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
@@ -468,6 +474,8 @@ class CommentPoster
 
 		foreach ($changes as $field => $values)
 		{
+			$liveParams = [];
+
 			switch ($field)
 			{
 				case 'UF_TASK_WEBDAV_FILES':
@@ -477,6 +485,10 @@ class CommentPoster
 				case 'UF_CRM_TASK':
 					$appendCrmFields = true;
 					continue 2;
+
+				case 'DEADLINE':
+					$liveParams = $this->prepareChangeCommentLiveParams(array_merge($oldFields, $newFields));
+					break;
 
 				default:
 					if (mb_strpos($field, 'UF_') === 0)
@@ -493,10 +505,13 @@ class CommentPoster
 				continue;
 			}
 
-			$fieldKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_'.$field;
+			$fieldKey = "COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_{$field}";
 			$fieldKey = $this->getLastVersionedMessageKey($fieldKey);
-			$fieldReplaces = ['#OLD_VALUE#' => $values['OLD'], '#NEW_VALUE#' => $values['NEW']];
-			$changeComment->appendPartData('changes', [$fieldKey, $fieldReplaces]);
+			$fieldReplaces = [
+				'#OLD_VALUE#' => $values['OLD'],
+				'#NEW_VALUE#' => $values['NEW'],
+			];
+			$changeComment->appendPartData('changes', [$fieldKey, array_merge($fieldReplaces, $liveParams)]);
 
 			$field = (Loc::getMessage($fieldKey, $fieldReplaces) ?: $field);
 			$changeComment->appendPartText('changes', $field."\n");
@@ -522,7 +537,8 @@ class CommentPoster
 			$partName = 'deadline';
 			$deadlineMessageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_DEADLINE';
 			$deadlineMessageKey = $this->getLastVersionedMessageKey($deadlineMessageKey);
-			$changeComment->addPart($partName, Loc::getMessage($deadlineMessageKey), [[$deadlineMessageKey, []]]);
+			$liveParams = $this->prepareChangeCommentLiveParams(array_merge($oldFields, $newFields));
+			$changeComment->addPart($partName, Loc::getMessage($deadlineMessageKey), [[$deadlineMessageKey, $liveParams]]);
 		}
 
 		return $changeComments;
@@ -597,8 +613,6 @@ class CommentPoster
 				break;
 
 			case 'DEADLINE':
-			case 'START_DATE_PLAN':
-			case 'END_DATE_PLAN':
 				$old = ($old ? "#DEADLINE_START#{$old}#DEADLINE_END#" : $noValue);
 				$new = ($new ? "#DEADLINE_START#{$new}#DEADLINE_END#" : $noValue);
 				break;
@@ -622,6 +636,12 @@ class CommentPoster
 				$old = $this->prepareTimeEstimate(($old ?: 0));
 				$new = $this->prepareTimeEstimate(($new ?: 0));
 				break;
+
+			case 'START_DATE_PLAN':
+			case 'END_DATE_PLAN':
+				$old = ($old ?: $noValue);
+				$new = ($new ?: $noValue);
+			break;
 
 			case 'FILES':
 			case 'UF_TASK_WEBDAV_FILES':
@@ -676,6 +696,34 @@ class CommentPoster
 		return $duration;
 	}
 
+	private function prepareChangeCommentLiveParams(array $taskData): array
+	{
+		$taskId = (int)$taskData['ID'];
+		$culture = Context::getCurrent()->getCulture();
+		$deadline = (TaskRegistry::getInstance())->get($taskId)['DEADLINE'];
+		$users = array_unique(
+			array_merge(
+				$this->getTaskMembers($taskData),
+				$this->getTaskWatchers($taskId)
+			)
+		);
+
+		return [
+			'LIVE_DATA' => [
+				'TASK_ID' => $taskId,
+				'DATE_FORMAT' => "{$culture->getDayMonthFormat()}, {$culture->getShortTimeFormat()}",
+				'DEADLINE' => ($deadline ? $deadline->getTimestamp() : null),
+				'RIGHTS' => [
+					'DEADLINE_CHANGE' => $this->getTaskUsersRight(
+						$taskId,
+						$users,
+						Access\ActionDictionary::ACTION_TASK_DEADLINE
+					),
+				],
+			],
+		];
+	}
+
 	/**
 	 * @param array $oldFields
 	 * @param array $newFields
@@ -708,6 +756,7 @@ class CommentPoster
 		};
 		$messageKey = "COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_{$newStatus}";
 		$replace = ['#CREATOR#' => $userToLinkFunction($creatorId)];
+		$liveParams = $this->prepareStatusCommentLiveParams(array_merge($oldFields, $newFields));
 
 		if ($newStatus === \CTasks::STATE_PENDING)
 		{
@@ -746,11 +795,54 @@ class CommentPoster
 			$messageKey = "{$messageKey}_APPROVE";
 		}
 		$messageKey = $this->getLastVersionedMessageKey($messageKey);
-		$message = Loc::getMessage($messageKey, $replace);
-		$commentType = Comment::TYPE_STATUS;
-		$statusComments[] = new Comment($message, $this->authorId, $commentType, [[$messageKey, $replace]]);
+
+		$statusComments[] = new Comment(
+			Loc::getMessage($messageKey, $replace),
+			$this->authorId,
+			Comment::TYPE_STATUS,
+			[[$messageKey, array_merge($replace, $liveParams)]]
+		);
 
 		return $statusComments;
+	}
+
+	private function prepareStatusCommentLiveParams(array $taskData): array
+	{
+		$liveParams = [];
+
+		$newStatus = (int)$taskData['STATUS'];
+		$newStatus = ($newStatus === \CTasks::STATE_NEW ? \CTasks::STATE_PENDING : $newStatus);
+
+		if ($newStatus === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+		{
+			$taskId = (int)$taskData['ID'];
+			$users = array_unique(
+				array_merge(
+					$this->getTaskMembers($taskData),
+					$this->getTaskWatchers($taskId)
+				)
+			);
+
+			$liveParams = [
+				'LIVE_DATA' => [
+					'TASK_ID' => $taskId,
+					'RIGHTS' => [
+						'TASK_APPROVE' => $this->getTaskUsersRight(
+							$taskId,
+							$users,
+							Access\ActionDictionary::ACTION_TASK_APPROVE
+						),
+						'TASK_DISAPPROVE' => $this->getTaskUsersRight(
+							$taskId,
+							$users,
+							Access\ActionDictionary::ACTION_TASK_DISAPPROVE
+						),
+					],
+				],
+			];
+		}
+
+		return $liveParams;
 	}
 
 	/**
@@ -782,11 +874,21 @@ class CommentPoster
 			$messageKey = $this->getLastVersionedMessageKey($messageKey);
 			$replace = ['#MEMBERS#' => implode(', ', array_map($userToLinkFunction, $members))];
 		}
-		$message = Loc::getMessage($messageKey, $replace);
-		$commentType = Comment::TYPE_EXPIRED_SOON;
-		$expiredSoonComments[] = new Comment($message, $this->authorId, $commentType, [[$messageKey, $replace]]);
+
+		$liveParams = $this->prepareTaskExpiredSoonCommentLiveParams($taskData);
+		$expiredSoonComments[] = new Comment(
+			Loc::getMessage($messageKey, $replace),
+			$this->authorId,
+			Comment::TYPE_EXPIRED_SOON,
+			[[$messageKey, array_merge($replace, $liveParams)]]
+		);
 
 		return $expiredSoonComments;
+	}
+
+	private function prepareTaskExpiredSoonCommentLiveParams(array $taskData): array
+	{
+		return $this->prepareTaskExpiredCommentLiveParams($taskData);
 	}
 
 	/**
@@ -816,13 +918,52 @@ class CommentPoster
 			};
 			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED';
 			$messageKey = $this->getLastVersionedMessageKey($messageKey);
-			$replace = ['#MEMBERS#' => implode(', ', array_map($userToLinkFunction, $members))];
+			$replace = [
+				'#MEMBERS#' => implode(', ', array_map($userToLinkFunction, $members)),
+			];
 		}
-		$message = Loc::getMessage($messageKey, $replace);
-		$commentType = Comment::TYPE_EXPIRED;
-		$expiredComments[] = new Comment($message, $this->authorId, $commentType, [[$messageKey, $replace]]);
+
+		$liveParams = $this->prepareTaskExpiredCommentLiveParams($taskData);
+		$expiredComments[] = new Comment(
+			Loc::getMessage($messageKey, $replace),
+			$this->authorId,
+			Comment::TYPE_EXPIRED,
+			[[$messageKey, array_merge($replace, $liveParams)]]
+		);
 
 		return $expiredComments;
+	}
+
+	private function prepareTaskExpiredCommentLiveParams(array $taskData): array
+	{
+		$taskId = (int)$taskData['ID'];
+		$deadline = (TaskRegistry::getInstance())->get($taskId)['DEADLINE'];
+		$users = array_unique(
+			array_merge(
+				$this->getTaskMembers($taskData),
+				$this->getTaskWatchers($taskId)
+			)
+		);
+
+		return [
+			'LIVE_DATA' => [
+				'TASK_ID' => $taskId,
+				'EFFICIENCY_MEMBERS' => $this->getMembersForExpiredMessages($taskData),
+				'DEADLINE' => ($deadline ? $deadline->getTimestamp() : null),
+				'RIGHTS' => [
+					'TASK_COMPLETE' => $this->getTaskUsersRight(
+						$taskId,
+						$users,
+						Access\ActionDictionary::ACTION_TASK_COMPLETE
+					),
+					'DEADLINE_CHANGE' => $this->getTaskUsersRight(
+						$taskId,
+						$users,
+						Access\ActionDictionary::ACTION_TASK_DEADLINE
+					),
+				],
+			],
+		];
 	}
 
 	/**
@@ -1030,6 +1171,13 @@ class CommentPoster
 
 	private static function parseReplaces(string $message, array $params): string
 	{
+		$userId = User::getId();
+		$entityTypes = ['TK', 'TASK'];
+		if (isset($params['entityType']) && in_array($params['entityType'], $entityTypes, true))
+		{
+			$taskId = ($params['entityId'] ?? 0);
+		}
+
 		$replaces = [
 			'EFFICIENCY',
 			'DEADLINE',
@@ -1038,21 +1186,30 @@ class CommentPoster
 			'TASK_DISAPPROVE',
 			'TASK_COMPLETE',
 		];
-		$mobileContext = (isset($params['mobile']) && $params['mobile'] === true);
 		foreach ($replaces as $key)
 		{
 			$start = "#{$key}_START#";
 			$end = "#{$key}_END#";
-			$userId = User::getId();
+
+			if (
+				mb_strpos($message, $start) === false
+				&& mb_strpos($message, $end) === false
+			)
+			{
+				continue;
+			}
 
 			switch ($key)
 			{
 				case 'EFFICIENCY':
-					$message = str_replace(
-						[$start, $end],
-						[ ($mobileContext ? "" : "[URL=/company/personal/user/{$userId}/tasks/effective/]"), ($mobileContext ? "" : "[/URL]") ],
-						$message
-					);
+					preg_match_all('/(?<=\[USER=)\d+(?=])/', $message, $userIds);
+					$userIds = array_map('intval', $userIds[0]);
+					$replaces =
+						in_array($userId, $userIds, true)
+							? ["[URL=/company/personal/user/{$userId}/tasks/effective/]", "[/URL]"]
+							: ""
+					;
+					$message = str_replace([$start, $end], $replaces, $message);
 					break;
 
 				case 'DEADLINE':
@@ -1061,10 +1218,29 @@ class CommentPoster
 					{
 						break;
 					}
-					$currentTimeFormat = str_replace(FORMAT_DATE.' ', '', FORMAT_DATETIME);
-					$format = 'j F, '.(mb_strtoupper($currentTimeFormat) === 'HH:MI:SS' ? 'G:i' : 'g:i a');
+					$culture = Context::getCurrent()->getCulture();
+					$format = "{$culture->getDayMonthFormat()}, {$culture->getShortTimeFormat()}";
 					$deadline = FormatDate($format, MakeTimeStamp(DateTime::createFromTimestamp($timestamp)));
 					$message = str_replace([$timestamp, $start, $end], [$deadline, '', ''], $message);
+					break;
+
+				case 'DEADLINE_CHANGE':
+				case 'TASK_APPROVE':
+				case 'TASK_DISAPPROVE':
+				case 'TASK_COMPLETE':
+					$actionMap = [
+						'DEADLINE_CHANGE' => Access\ActionDictionary::ACTION_TASK_DEADLINE,
+						'TASK_APPROVE' => Access\ActionDictionary::ACTION_TASK_APPROVE,
+						'TASK_DISAPPROVE' => Access\ActionDictionary::ACTION_TASK_DISAPPROVE,
+						'TASK_COMPLETE' => Access\ActionDictionary::ACTION_TASK_COMPLETE,
+					];
+					$replace = '';
+					if (isset($taskId) && Access\TaskAccessController::can($userId, $actionMap[$key], $taskId))
+					{
+						$actionUrl = static::getCommentActionUrl($userId, $taskId, $key);
+						$replace = ["[URL={$actionUrl}]", "[/URL]"];
+					}
+					$message = str_replace([$start, $end], $replace, $message);
 					break;
 
 				default:
@@ -1086,6 +1262,26 @@ class CommentPoster
 		return $message;
 	}
 
+	private static function getCommentActionUrl(int $userId, int $taskId, string $action): string
+	{
+		$url = new Uri("/company/personal/user/{$userId}/tasks/task/view/{$taskId}/");
+		$url->addParams([
+			'commentAction' => lcfirst(StringHelper::snake2camel($action)),
+		]);
+
+		if (
+			$action === 'DEADLINE_CHANGE'
+			&& ($deadline = (TaskRegistry::getInstance())->get($taskId)['DEADLINE'])
+		)
+		{
+			$url->addParams([
+				'deadline' => $deadline->getTimestamp(),
+			]);
+		}
+
+		return $url->getUri();
+	}
+
 	/**
 	 * Posts comments from collection.
 	 */
@@ -1093,13 +1289,49 @@ class CommentPoster
 	{
 		foreach ($this->comments as $comment)
 		{
+			$auxData = $comment->getData();
+
+			$hasLiveData = false;
+			if (is_array($auxData))
+			{
+				foreach ($auxData as $value)
+				{
+					if (!is_array($value))
+					{
+						continue;
+					}
+
+					foreach ($value as $commentData)
+					{
+						if (
+							!is_array($commentData)
+							|| !is_array($commentData[1])
+							|| empty($commentData[1]['LIVE_DATA'])
+							|| !is_array($commentData[1]['LIVE_DATA'])
+						)
+						{
+							continue;
+						}
+
+						$hasLiveData = true;
+						break;
+					}
+
+					if ($hasLiveData)
+					{
+						break;
+					}
+				}
+			}
+
 			/** @var Comment $comment */
 			Forum\Task\Comment::add($this->taskId, [
 				'AUTHOR_ID' => $comment->getAuthorId(),
 				'POST_MESSAGE' => $comment->getText(),
 				'UF_TASK_COMMENT_TYPE' => $comment->getType(),
 				'AUX' => 'Y',
-				'AUX_DATA' => $comment->getData()
+				'AUX_DATA' => $auxData,
+				'AUX_LIVE_PARAMS' => ($hasLiveData ? [ 'JSON' => Main\Web\Json::encode($auxData) ] : []),
 			]);
 		}
 	}
@@ -1232,5 +1464,38 @@ class CommentPoster
 		}
 
 		return $resultKey;
+	}
+
+	private function getTaskUsersRight(int $taskId, array $userIds, string $right): array
+	{
+		$rights = [];
+
+		foreach ($userIds as $userId)
+		{
+			$rights[$userId] = Access\TaskAccessController::can($userId, $right, $taskId);
+		}
+
+		return $rights;
+	}
+
+	private function getTaskMembers(array $taskData): array
+	{
+		$creator = (int)$taskData['CREATED_BY'];
+		$responsible = (int)$taskData['RESPONSIBLE_ID'];
+
+		$accomplices = ($taskData['ACCOMPLICES'] ?? []);
+		$accomplices = (is_array($accomplices) ? $accomplices : $accomplices->export());
+		$accomplices = array_map('intval', $accomplices);
+
+		$auditors = ($taskData['AUDITORS'] ?? []);
+		$auditors = (is_array($auditors) ? $auditors : $auditors->export());
+		$auditors = array_map('intval', $auditors);
+
+		return array_unique(array_merge([$creator, $responsible], $accomplices, $auditors));
+	}
+
+	private function getTaskWatchers(int $taskId): array
+	{
+		return array_map('intval', \CPullWatch::GetUserList("TASK_VIEW_{$taskId}"));
 	}
 }

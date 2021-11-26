@@ -85,7 +85,6 @@ export const RestMethod = Object.freeze({
 	widgetUserGet: 'imopenlines.widget.user.get',
 	widgetUserConsentApply: 'imopenlines.widget.user.consent.apply',
 	widgetVoteSend: 'imopenlines.widget.vote.send',
-	widgetFormSend: 'imopenlines.widget.form.send',
 	widgetActionSend: 'imopenlines.widget.action.send',
 	pullServerTime: 'server.time',
 	pullConfigGet: 'pull.config.get',

@@ -402,6 +402,18 @@ if(typeof(BX.AutorunProcessManager) === "undefined")
 		this.items[self.getId()] = self;
 		return self;
 	};
+	BX.AutorunProcessManager.createIfNotExists = function(id, settings)
+	{
+		if(this.items.hasOwnProperty(id))
+		{
+			return this.items[id];
+		}
+
+		var self = new BX.AutorunProcessManager();
+		self.initialize(id, settings);
+		this.items[self.getId()] = self;
+		return self;
+	};
 }
 
 if(typeof(BX.AutorunProcessPanel) === "undefined")

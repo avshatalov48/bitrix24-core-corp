@@ -5,13 +5,17 @@ if(!defined('CACHED_b_crm_status')) define('CACHED_b_crm_status', 360000);
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Main\SystemException;
 
 class CCrmStatus
 {
 	protected const PREFIX_SEPARATOR = ':';
+
+	public const PREFIX_USER_CREATED = 'UC';
 
 	protected $entityId = '';
 	private static $FIELD_INFOS;
@@ -217,16 +221,20 @@ class CCrmStatus
 
 		if ($result === null)
 		{
-			$result = [
-				'SOURCE',
-				'CONTACT_TYPE',
-				'COMPANY_TYPE',
-				'EMPLOYEES',
-				'INDUSTRY',
-				'DEAL_TYPE',
-				'HONORIFIC',
-				'EVENT_TYPE',
-			];
+			$requisite = EntityRequisite::getSingleInstance();
+			$result = array_merge(
+				[
+					'SOURCE',
+					'CONTACT_TYPE',
+					'COMPANY_TYPE',
+					'EMPLOYEES',
+					'INDUSTRY',
+					'DEAL_TYPE',
+					'HONORIFIC',
+					'EVENT_TYPE',
+				],
+				$requisite->getAllowedRqListFieldsStatusEntitities()
+			);
 		}
 
 		return $result;
@@ -332,7 +340,7 @@ class CCrmStatus
 		$statusID = $arFields['STATUS_ID'];
 		if(empty($statusID))
 		{
-			$statusID = $this->GetNextStatusId();
+			$statusID = $this->getUniqueRandomStatusId();
 		}
 
 		$statusID = $this->addPrefixToStatusId($statusID);
@@ -665,6 +673,7 @@ class CCrmStatus
 
 	/**
 	 * Returns next available integer for STATUS_ID.
+	 * @deprecated
 	 *
 	 * @return int
 	 */
@@ -687,6 +696,38 @@ class CCrmStatus
 		$fields = is_object($res) ? $res->Fetch() : array();
 
 		return (isset($fields['MAX_STATUS_ID']) ? intval($fields['MAX_STATUS_ID']) : 0) + 1;
+	}
+
+	public function getRandomStatusId(): string
+	{
+		$statusId = static::PREFIX_USER_CREATED . '_' .  mb_strtoupper(\Bitrix\Main\Security\Random::getString(6));
+		$prefix = $this->getStatusPrefix();
+		if (!empty($prefix))
+		{
+			$statusId = static::addKnownPrefixToStatusId($statusId, $prefix);
+		}
+
+		return $statusId;
+	}
+
+	public function getUniqueRandomStatusId(int $triesLeft = 5): string
+	{
+		if ($triesLeft <= 0)
+		{
+			throw new SystemException('Could not generate unique random status id');
+		}
+		$triesLeft--;
+
+		$statusId = $this->getRandomStatusId();
+
+		if (StatusTable::getCount([
+			'=STATUS_ID' => $statusId,
+		]) > 0)
+		{
+			return static::getUniqueRandomStatusId($triesLeft);
+		}
+
+		return $statusId;
 	}
 
 	/**

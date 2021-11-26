@@ -1820,10 +1820,41 @@ elseif($action == 'SAVE_EMAIL')
 	$cc  = array_unique($cc);
 	$bcc = array_unique($bcc);
 
-	if (empty($to))
-		__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD')));
-	else if (!empty($arErrors))
-		__CrmActivityEditorEndResponse(array('ERROR' => $arErrors));
+	$blackListed =
+		Mail\Internal\BlacklistTable::query()
+		->setSelect(["CODE"])
+		->whereIn("CODE",$array = array_merge_recursive($to,$cc,$bcc))
+		->exec()
+		->fetchAll()
+	;
+
+	if (!empty($blackListed = array_column($blackListed,"CODE")))
+	{
+		__CrmActivityEditorEndResponse(
+			array(
+				"ERROR_HTML" => \Bitrix\Main\Localization\Loc::getMessage(
+					"CRM_ACTIVITY_EMAIL_BLACKLISTED",
+					array(
+						"%link_start%" => "<a href=\"/settings/configs/mail_blacklist.php\">",
+						"%link_end%" => "</a>",
+						"%emails%" => implode("; ",$blackListed),
+					)
+				)
+			)
+		);
+	}
+	elseif (empty($to))
+	{
+		__CrmActivityEditorEndResponse(
+			array('ERROR' => getMessage('CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD'))
+		);
+	}
+	elseif (!empty($arErrors))
+	{
+		__CrmActivityEditorEndResponse(
+			array('ERROR' => $arErrors)
+		);
+	}
 
 	$ownerTypeName = isset($data['ownerType'])? mb_strtoupper(strval($data['ownerType'])) : '';
 	$ownerTypeID = !empty($ownerTypeName) ? \CCrmOwnerType::resolveId($ownerTypeName) : 0;

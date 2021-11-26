@@ -58,25 +58,90 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 
 		$result =  array(
 			'ID' => $this->createField('ID'),
-			'TITLE' => $this->createField('TITLE'),
+			'TITLE' => $this->createField(
+				'TITLE',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'SOURCE_ID' => $this->createField(
 				'SOURCE_ID',
 				array('type' => 'list', 'default' => true, 'partial' => true)
 			),
-			'NAME' => $this->createField('NAME'),
-			'SECOND_NAME' => $this->createField('SECOND_NAME'),
-			'LAST_NAME' => $this->createField('LAST_NAME'),
+			'NAME' => $this->createField(
+				'NAME',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'SECOND_NAME' => $this->createField(
+				'SECOND_NAME',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'LAST_NAME' => $this->createField(
+				'LAST_NAME',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'BIRTHDATE' => $this->createField(
 				'BIRTHDATE',
-				array('type' => 'date')
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'DATE_CREATE' => $this->createField(
 				'DATE_CREATE',
-				array('type' => 'date', 'default' => true)
+				[
+					'type' => 'date',
+					'default' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'DATE_MODIFY' => $this->createField(
 				'DATE_MODIFY',
-				array('type' => 'date')
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'STATUS_ID' => $this->createField(
 				'STATUS_ID',
@@ -92,7 +157,15 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 			),
 			'OPPORTUNITY' => $this->createField(
 				'OPPORTUNITY',
-				array('type' => 'number')
+				[
+					'type' => 'number',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'CURRENCY_ID' => $this->createField(
 				'CURRENCY_ID',
@@ -100,15 +173,25 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 			),
 			'ASSIGNED_BY_ID' => $this->createField(
 				'ASSIGNED_BY_ID',
-				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'default' => true,
+					'partial' => true,
+				]
 			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
 			),
 			'MODIFY_BY_ID' => $this->createField(
 				'MODIFY_BY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
 			),
 			'IS_RETURN_CUSTOMER' => $this->createField(
 				'IS_RETURN_CUSTOMER',
@@ -142,37 +225,123 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 				'COMPANY_ID',
 				array('type' => 'dest_selector', 'partial' => true)
 			),
-			'COMPANY_TITLE' => $this->createField('COMPANY_TITLE'),
-			'POST' => $this->createField('POST'),
+			'COMPANY_TITLE' => $this->createField(
+				'COMPANY_TITLE',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
+			'POST' => $this->createField(
+				'POST',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'ADDRESS' => $this->createField(
 				'ADDRESS',
-				array('name' => $addressLabels['ADDRESS'])
+				[
+					'name' => $addressLabels['ADDRESS'],
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'ADDRESS_2' => $this->createField(
 				'ADDRESS_2',
-				array('name' => $addressLabels['ADDRESS_2'])
+				[
+					'name' => $addressLabels['ADDRESS_2'],
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'ADDRESS_CITY' => $this->createField(
 				'ADDRESS_CITY',
-				array('name' => $addressLabels['CITY'])
+				[
+					'name' => $addressLabels['CITY'],
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'ADDRESS_REGION' => $this->createField(
 				'ADDRESS_REGION',
-				array('name' => $addressLabels['REGION'])
+				[
+					'name' => $addressLabels['REGION'],
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'ADDRESS_PROVINCE' => $this->createField(
 				'ADDRESS_PROVINCE',
-				array('name' => $addressLabels['PROVINCE'])
+				[
+					'name' => $addressLabels['PROVINCE'],
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'ADDRESS_POSTAL_CODE' => $this->createField(
 				'ADDRESS_POSTAL_CODE',
-				array('name' => $addressLabels['POSTAL_CODE'])
+				[
+					'name' => $addressLabels['POSTAL_CODE'],
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
 			'ADDRESS_COUNTRY' => $this->createField(
 				'ADDRESS_COUNTRY',
-				array('name' => $addressLabels['COUNTRY'])
+				[
+					'name' => $addressLabels['COUNTRY'],
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
 			),
-			'COMMENTS' => $this->createField('COMMENTS'),
+			'COMMENTS' => $this->createField(
+				'COMMENTS',
+				[
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'PRODUCT_ROW_PRODUCT_ID' => $this->createField(
 				'PRODUCT_ROW_PRODUCT_ID',
 				[
@@ -191,16 +360,33 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 		//region UTM
 		foreach (Crm\UtmTable::getCodeNames() as $code => $name)
 		{
-			$result[$code] = $this->createField($code, array('name' => $name));
+			$result[$code] = $this->createField(
+				$code,
+				[
+					'name' => $name,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			);
 		}
 		//endregion
 
 		$result['ACTIVE_TIME_PERIOD'] = $this->createField(
 			'ACTIVE_TIME_PERIOD',
-			array(
+			[
+				'type' => 'date',
 				'name' => Loc::getMessage('CRM_LEAD_FILTER_ACTIVE_TIME_PERIOD'),
-				'type' => 'date'
-			)
+				'data' => [
+					'additionalFilter' => [
+						'isEmpty',
+						'hasAnyValue',
+					],
+				],
+			]
 		);
 
 		$result['STATUS_ID_FROM_HISTORY'] = $this->createField(
@@ -258,58 +444,17 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 				'items' => \CCrmCurrencyHelper::PrepareListItems()
 			);
 		}
-		elseif($fieldID === 'ASSIGNED_BY_ID')
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID'], true))
 		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_LEAD_FILTER_ASSIGNED_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
-				)
-			);
-		}
-		elseif($fieldID === 'CREATED_BY_ID')
-		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_LEAD_FILTER_CREATED_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
-				)
-			);
-		}
-		elseif($fieldID === 'MODIFY_BY_ID')
-		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_LEAD_FILTER_MODIFY_BY_ID',
-					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
-				)
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
+			$referenceClass = ($factory ? $factory->getDataClass() : null);
+
+			return $this->getUserEntitySelectorParams(
+				strtolower('crm_lead_filter_' . $fieldID),
+				[
+					'fieldName' => $fieldID,
+					'referenceClass' => $referenceClass,
+				]
 			);
 		}
 		elseif($fieldID === 'CONTACT_ID')

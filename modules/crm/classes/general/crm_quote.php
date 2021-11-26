@@ -213,7 +213,7 @@ class CAllCrmQuote
 			{
 				$arEntityAttr = self::BuildEntityAttr($iUserId, $arAttr);
 				$userPerms =  $iUserId == CCrmPerms::GetCurrentUserID() ? $this->cPerms : CCrmPerms::GetUserPermissions($iUserId);
-				$sEntityPerm = $userPerms->GetPermType('QUOTE', $sPermission, $arEntityAttr);
+				$sEntityPerm = $userPerms->GetPermType(self::$TYPE_NAME, $sPermission, $arEntityAttr);
 				if ($sEntityPerm == BX_CRM_PERM_NONE)
 				{
 					$this->LAST_ERROR = GetMessage('CRM_PERMISSION_DENIED');
@@ -235,7 +235,7 @@ class CAllCrmQuote
 			$assignedByID = intval($arFields['ASSIGNED_BY_ID']);
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
 			$userPerms =  $assignedByID == CCrmPerms::GetCurrentUserID() ? $this->cPerms : CCrmPerms::GetUserPermissions($assignedByID);
-			$sEntityPerm = $userPerms->GetPermType('QUOTE', $sPermission, $arEntityAttr);
+			$sEntityPerm = $userPerms->GetPermType(self::$TYPE_NAME, $sPermission, $arEntityAttr);
 			$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
 
 			$arFields = array_merge($arFields, \CCrmAccountingHelper::calculateAccountingData($arFields, [], true));
@@ -332,7 +332,13 @@ class CAllCrmQuote
 
 			CCrmEntityHelper::NormalizeUserFields($arFields, self::$sUFEntityID, $GLOBALS['USER_FIELD_MANAGER'], array('IS_NEW' => true));
 			$GLOBALS['USER_FIELD_MANAGER']->Update(self::$sUFEntityID, $ID, $arFields);
-			CCrmPerms::UpdateEntityAttr('QUOTE', $ID, $arEntityAttr);
+
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Quote)
+				->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
+			;
 
 			if(is_array($storageElementIDs))
 			{
@@ -524,7 +530,12 @@ class CAllCrmQuote
 			$arResult[] = "STATUS_ID{$statusID}";
 		}
 
-		$arUserAttr = CCrmPerms::BuildUserEntityAttr($userID);
+		$arUserAttr = Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($userID)
+			->getAttributesProvider()
+			->getEntityAttributes()
+		;
+
 		return array_merge($arResult, $arUserAttr['INTRANET']);
 	}
 	static public function RebuildEntityAccessAttrs($IDs)
@@ -556,7 +567,7 @@ class CAllCrmQuote
 				continue;
 			}
 
-			$attrs = array();
+			$attrs = [];
 			if(isset($fields['OPENED']))
 			{
 				$attrs['OPENED'] = $fields['OPENED'];
@@ -568,7 +579,13 @@ class CAllCrmQuote
 			}
 
 			$entityAttrs = self::BuildEntityAttr($assignedByID, $attrs);
-			CCrmPerms::UpdateEntityAttr('QUOTE', $ID, $entityAttrs);
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+				->setEntityFields($fields)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Quote)
+				->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
+			;
 		}
 	}
 	private function PrepareEntityAttrs(&$arEntityAttr, $entityPermType)
@@ -715,7 +732,7 @@ class CAllCrmQuote
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
 			if($this->bCheckPermission)
 			{
-				$sEntityPerm = $this->cPerms->GetPermType('QUOTE', 'WRITE', $arEntityAttr);
+				$sEntityPerm = $this->cPerms->GetPermType(self::$TYPE_NAME, 'WRITE', $arEntityAttr);
 				//HACK: Ensure that entity accessible for user restricted by BX_CRM_PERM_OPEN
 				$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
 				//HACK: Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
@@ -912,7 +929,12 @@ class CAllCrmQuote
 				}
 			}
 
-			CCrmPerms::UpdateEntityAttr('QUOTE', $ID, $arEntityAttr);
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Quote)
+				->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
+			;
 
 			//region Save contacts
 			if(!empty($removedContactBindings))
@@ -1040,8 +1062,8 @@ class CAllCrmQuote
 		$sWherePerm = '';
 		if ($this->bCheckPermission)
 		{
-			$arEntityAttr = $this->cPerms->GetEntityAttr('QUOTE', $ID);
-			$sEntityPerm = $this->cPerms->GetPermType('QUOTE', 'DELETE', $arEntityAttr[$ID]);
+			$arEntityAttr = $this->cPerms->GetEntityAttr(self::$TYPE_NAME, $ID);
+			$sEntityPerm = $this->cPerms->GetPermType(self::$TYPE_NAME, 'DELETE', $arEntityAttr[$ID]);
 			if ($sEntityPerm == BX_CRM_PERM_NONE)
 				return false;
 			else if ($sEntityPerm == BX_CRM_PERM_SELF)
@@ -1082,7 +1104,9 @@ class CAllCrmQuote
 		{
 			Bitrix\Crm\Kanban\SortTable::clearEntity($ID, \CCrmOwnerType::QuoteName);
 
-			$DB->Query("DELETE FROM b_crm_entity_perms WHERE ENTITY='QUOTE' AND ENTITY_ID = $ID", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Quote)
+				->unregister(self::$TYPE_NAME, $ID)
+			;
 
 			QuoteContactTable::unbindAllContacts($ID);
 
@@ -1996,7 +2020,8 @@ class CAllCrmQuote
 						'TYPE' => 'char'
 					),
 					'COMMENTS' => array(
-						'TYPE' => 'string'
+						'TYPE' => 'string',
+						'VALUE_TYPE' => 'html',
 					),
 					'CONTENT' => array(
 						'TYPE' => 'string'
@@ -2424,9 +2449,26 @@ class CAllCrmQuote
 		return $lb->Prepare($arOrder, $arFilter, $arGroupBy, $arNavStartParams, $arSelectFields, $arOptions);
 	}
 
-	static public function BuildPermSql($sAliasPrefix = self::TABLE_ALIAS, $mPermType = 'READ', $arOptions = array())
+	static public function BuildPermSql($sAliasPrefix = self::TABLE_ALIAS, $mPermType = 'READ', $arOptions = [])
 	{
-		return CCrmPerms::BuildSql('QUOTE', $sAliasPrefix, $mPermType, $arOptions);
+		$userId = null;
+		if (isset($arOptions['PERMS']) && is_object($arOptions['PERMS']))
+		{
+			/** @var \CCrmPerms $arOptions['PERMS'] */
+			$userId = $arOptions['PERMS']->GetUserID();
+		}
+		$builderOptions =
+			Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
+				->setOperations((array)$mPermType)
+				->setAliasPrefix((string)$sAliasPrefix)
+		;
+
+		$queryBuilder = Crm\Service\Container::getInstance()
+			->getUserPermissions($userId)
+			->createListQueryBuilder(self::$TYPE_NAME, $builderOptions)
+		;
+
+		return $queryBuilder->buildCompatible();
 	}
 
 	public static function LocalComponentCausedUpdater()
@@ -3151,7 +3193,9 @@ class CAllCrmQuote
 			)
 		);
 
-		$_arAttr = CCrmPerms::GetEntityAttr($sEntityType, $arQuote['ID']);
+		$_arAttr = \Bitrix\Crm\Security\Manager::resolveController($sEntityType)
+			->getPermissionAttributes($sEntityType, [$arQuote['ID']])
+		;
 
 		if (empty($arSite))
 		{
@@ -3730,6 +3774,16 @@ class CAllCrmQuote
 									$requisiteValues[$fieldName.'|'.$presetCountryId] = $fieldValue ?
 										GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
 								}
+								elseif ($requisite->isRqListField($fieldName))
+								{
+									$requisiteValues[$fieldName.'|'.$presetCountryId] =
+										$requisite->getRqListFieldValueTitle(
+											$fieldName,
+											$presetCountryId,
+											$fieldValue
+										)
+									;
+								}
 								else
 								{
 									$requisiteValues[$fieldName.'|'.$presetCountryId] = $fieldValue;
@@ -4024,6 +4078,16 @@ class CAllCrmQuote
 								{
 									$mcRequisiteValues[$fieldName.'|'.$mcPresetCountryId] = $fieldValue ?
 										GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+								}
+								elseif ($requisite->isRqListField($fieldName))
+								{
+									$mcRequisiteValues[$fieldName.'|'.$mcPresetCountryId] =
+										$requisite->getRqListFieldValueTitle(
+											$fieldName,
+											$mcPresetCountryId,
+											$fieldValue
+										)
+									;
 								}
 								else
 								{

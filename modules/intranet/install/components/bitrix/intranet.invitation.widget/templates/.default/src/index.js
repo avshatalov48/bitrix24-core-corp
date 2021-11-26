@@ -27,6 +27,15 @@ class InvitationWidget
 		Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:stopPopupMouseOut', (event) => {
 			this.stopMouseLeave = true;
 		});
+
+		Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:showPopupMenu', () => {
+			this.popup.setAutoHide(false);
+		});
+
+		Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:closePopupMenu', () => {
+			this.popup.setAutoHide(true);
+			this.stopMouseLeave = false;
+		});
 	}
 
 	renderButton()
@@ -54,7 +63,7 @@ class InvitationWidget
 						{
 							InvitationWidgetInstance.enterTimeout = null;
 							InvitationWidgetInstance.initPopup(e.target);
-						}, 500
+						}, 750
 					);
 				},
 				onMouseOut()
@@ -103,6 +112,11 @@ class InvitationWidget
 
 	initPopup(bindElement)
 	{
+		if (this.popup)
+		{
+			this.popup.destroy();
+		}
+
 		this.popup = new B24.PopupBlur({
 			autoHide: true,
 			closeByEsc: true,

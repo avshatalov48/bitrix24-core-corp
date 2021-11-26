@@ -17,6 +17,13 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 {
 	public const DEFAULT_SORT = 1000;
 
+	protected static $isCheckUserFields = true;
+
+	public static function disableUserFieldsCheck(): void
+	{
+		static::$isCheckUserFields = false;
+	}
+
 	/**
 	 * Returns entity map definition.
 	 *
@@ -220,6 +227,75 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 				static::updateFullTextIndex($item);
 			}
 		}
+
+		return $result;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected static function modifyValuesBeforeSave($id, array $data, array $options = []): ORM\EventResult
+	{
+		$userFieldManager = UserFieldHelper::getInstance()->getManager();
+		$isUpdate = (isset($options['isUpdate']) && $options['isUpdate'] === true);
+
+		$result = new Main\ORM\EventResult();
+		if (!$userFieldManager)
+		{
+			static::$isCheckUserFields = true;
+			return $result;
+		}
+
+		if($isUpdate)
+		{
+			$oldData = static::getByPrimary($id)->fetch();
+			static::getTemporaryStorage()->saveData($id, $oldData);
+			if (
+				static::$isCheckUserFields
+				&& !$userFieldManager->checkFieldsWithOldData(
+					static::getItemUserFieldEntityId(),
+					$oldData,
+					$data
+				)
+			)
+			{
+				$result->addError(static::getErrorFromException());
+			}
+
+			$fields = $userFieldManager->getUserFieldsWithReadyData(
+				static::getItemUserFieldEntityId(),
+				$oldData,
+				LANGUAGE_ID,
+				false,
+				'ID'
+			);
+		}
+		else
+		{
+			$fields = $userFieldManager->getUserFields(static::getItemUserFieldEntityId());
+
+			if(
+				static::$isCheckUserFields
+				&& !$userFieldManager->checkFields(
+					static::getItemUserFieldEntityId(),
+					null,
+					$data,
+					false,
+					true
+				)
+			)
+			{
+				$result->addError(static::getErrorFromException());
+			}
+		}
+
+		if(!$result->getErrors())
+		{
+			$data = static::convertValuesBeforeSave($data, $fields);
+			$result->modifyFields($data);
+		}
+
+		static::$isCheckUserFields = true;
 
 		return $result;
 	}

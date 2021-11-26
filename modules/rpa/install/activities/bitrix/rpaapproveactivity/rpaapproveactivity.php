@@ -279,7 +279,7 @@ class CBPRpaApproveActivity
 
 		$arEventParameters['USER_ID'] = intval($arEventParameters['USER_ID']);
 		$arEventParameters['REAL_USER_ID'] = intval($arEventParameters['REAL_USER_ID']);
-		if (!in_array($arEventParameters['USER_ID'], $taskUserIds))
+		if (!in_array($arEventParameters['REAL_USER_ID'], $taskUserIds))
 		{
 			return;
 		}

@@ -7,6 +7,7 @@ use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Entity\ExpressionField;
@@ -216,6 +217,13 @@ class Dynamic extends Kanban\Entity
 		});
 
 		$filter = $parameters['filter'] ?? [];
+		if (isset($filter['SEARCH_CONTENT']))
+		{
+			SearchEnvironment::prepareSearchFilter($this->getTypeId(), $filter, [
+				'ENABLE_PHONE_DETECTION' => false,
+			]);
+			unset($filter['SEARCH_CONTENT']);
+		}
 		if($this->factory->isStagesEnabled())
 		{
 			ItemDataProvider::processStageSemanticFilter($filter, $filter);

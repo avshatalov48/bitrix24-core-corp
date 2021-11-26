@@ -482,7 +482,6 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 
 		$cashbox = Cashbox\Manager::getList([
 			'filter' => [
-				'=ACTIVE' => 'Y',
 				'=HANDLER' => $cashboxHandler,
 				'=KKM_ID' => $kkmId,
 			],

@@ -237,7 +237,6 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 					),
 				)
 			),
-			'!=ZOMBIE' => 'Y', // todo: remove zombie mechanism
 		);
 
 		// plan dates not empty

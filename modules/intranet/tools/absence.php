@@ -6,6 +6,8 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 
 IncludeModuleLangFile(__FILE__);
 
+\Bitrix\Main\UI\Extension::load("ui.hint");
+
 $arParams = $_REQUEST['arParams'];
 
 $iblockID = isset($_REQUEST['IBLOCK_ID'])
@@ -323,7 +325,10 @@ endif;
 			</tr>
 			<tr valign="bottom">
 				<td>
-					<div style="font-size:14px;font-weight:bold;padding-bottom:8px"><label for="NAME"><?=GetMessage("INTR_ABSENCE_NAME")?></label></div>
+					<div id="intr-absence-name" style="font-size:14px;font-weight:bold;padding-bottom:8px">
+						<label for="NAME"><?=GetMessage("INTR_ABSENCE_NAME")?></label>
+						<span style="position: relative;top: 2px;" data-hint="<?=GetMessage('INTR_ABSENCE_NAME_HINT')?>"></span>
+					</div>
 					<input type="text" value="<?if (isset($_POST['NAME'])) echo htmlspecialcharsbx($_POST['NAME']); elseif (isset($arElement["NAME"])) echo htmlspecialcharsbx($arElement["NAME"]);?>" name="NAME" id="NAME" style="width:100%;font-size:14px;border:1px #c8c8c8 solid;">
 				</td>
 			</tr>
@@ -415,6 +420,10 @@ endif;
 		myPopup = null;
 		myButton = null;
 		myBX = null;
+
+		BX.ready(function() {
+			BX.UI.Hint.init(BX('intr-absence-name'));
+		})
 	</script>
 </div>
 <?

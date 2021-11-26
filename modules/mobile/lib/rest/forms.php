@@ -74,14 +74,6 @@ class Forms extends \IRestService
 					'title' => Loc::getMessage('PERSONAL_MOBILE'),
 					'params'=>["openScheme"=>"tel"]
 				],
-			'PERSONAL_PHONE' =>
-				[
-					'sectionCode' => 'extra',
-					'id' => 'PERSONAL_PHONE',
-					'type' => 'input',
-					'title' => Loc::getMessage('PERSONAL_PHONE'),
-					'params'=>["openScheme"=>"tel"]
-				],
 			'PERSONAL_BIRTHDAY' =>
 				[
 					'sectionCode' => 'extra',

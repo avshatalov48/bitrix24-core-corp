@@ -3,6 +3,7 @@ $MESS["DELIVERY_SERVICE_DELETE_CONFIRM"] = "Are you sure you want to delete this
 $MESS["DELIVERY_SERVICE_NAME"] = "Name";
 $MESS["DELIVERY_SERVICE_NAME_PLACEHOLDER"] = "Enter name";
 $MESS["DELIVERY_SERVICE_SETTINGS"] = "Configure";
+$MESS["DELIVERY_SERVICE_YANDEX_TAXI_ACCOUNT_BALANCE_NOTICE"] = "positive Yandex Go account balance is required";
 $MESS["DELIVERY_SERVICE_YANDEX_TAXI_ARTICLE_LINK"] = "Article page";
 $MESS["DELIVERY_SERVICE_YANDEX_TAXI_CONNECT_TEXT"] = "Delivery has never been simpler! Just a couple of clicks to hire a delivery car right in the deal info pane. Fully tracked.";
 $MESS["DELIVERY_SERVICE_YANDEX_TAXI_CONNECT_TEXT_MORE"] = "Learn more about Yandex.Go delivery";

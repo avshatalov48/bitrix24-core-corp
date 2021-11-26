@@ -1397,28 +1397,7 @@ class CCrmPaySystem
 
 	public static function getDefaultSiteId(): string
 	{
-
-		$siteId = '';
-
-		if (defined('SITE_ID'))
-		{
-			$siteId = SITE_ID;
-		}
-
-		if (defined("ADMIN_SECTION"))
-		{
-			$siteIterator = Bitrix\Main\SiteTable::getList(array(
-				'select' => array('LID', 'LANGUAGE_ID'),
-				'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
-			));
-			if ($defaultSite = $siteIterator->fetch())
-			{
-				$siteId = $defaultSite['LID'];
-			}
-			unset($defaultSite, $siteIterator);
-		}
-
-		return $siteId;
+		return \Bitrix\Crm\Integration\Main\Site::getPortalSiteId();
 	}
 
 	public static function getPersonTypeIDs(?string $siteId = null)

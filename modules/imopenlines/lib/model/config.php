@@ -118,10 +118,6 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_QUEUE_TIME_FIELD_NEW'),
 				'default_value' => '60',
 			]),
-//			new IntegerField('CRM_FORM_TO_USE', [
-//				'title' => 'Which CRM-form to use',
-//				'default_value' => '0',
-//			]),
 			new IntegerField('NO_ANSWER_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_TIME_FIELD'),
 				'default_value' => '60',
@@ -430,6 +426,19 @@ class ConfigTable extends Main\Entity\DataManager
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_SEND_NOTIFICATION_EMPTY_QUEUE'),
 				'default_value' => 'N',
+			]),
+			new BooleanField('USE_WELCOME_FORM', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_USE_WELCOME_FORM'),
+				'default_value' => 'Y',
+			]),
+			new IntegerField('WELCOME_FORM_ID', [
+				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_FORM_ID')
+			]),
+			new BooleanField('WELCOME_FORM_DELAY', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_FORM_DELAY'),
+				'default_value' => 'Y',
 			])
 		];
 	}

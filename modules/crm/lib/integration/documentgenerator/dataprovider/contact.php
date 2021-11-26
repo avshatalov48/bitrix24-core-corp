@@ -117,20 +117,23 @@ class Contact extends CrmEntityDataProvider
 			$this->fields['EMAIL']['FORMAT'] = ['mfirst' => true,];
 			$this->fields['EMAIL']['VALUE'] = [$this, 'getClientEmail'];
 
-			$this->fields['COMPANIES'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_COMPANIES_TITLE'),
-				'PROVIDER' => ArrayDataProvider::class,
-				'OPTIONS' => [
-					'ITEM_PROVIDER' => Company::class,
-					'ITEM_NAME' => 'COMPANY',
-					'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_COMPANY_TITLE'),
-					'ITEM_OPTIONS' => [
-						'DISABLE_MY_COMPANY' => true,
-						'isLightMode' => true,
+			if (!$this->isLightMode())
+			{
+				$this->fields['COMPANIES'] = [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_COMPANIES_TITLE'),
+					'PROVIDER' => ArrayDataProvider::class,
+					'OPTIONS' => [
+						'ITEM_PROVIDER' => Company::class,
+						'ITEM_NAME' => 'COMPANY',
+						'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_COMPANY_TITLE'),
+						'ITEM_OPTIONS' => [
+							'DISABLE_MY_COMPANY' => true,
+							'isLightMode' => true,
+						],
 					],
-				],
-				'VALUE' => [$this, 'getCompanies'],
-			];
+					'VALUE' => [$this, 'getCompanies'],
+				];
+			}
 			$this->fields['BIRTHDATE']['TITLE'] = GetMessage('CRM_DOCGEN_DATAPROVIDER_BIRTHDATE_TITLE');
 
 			if(isset($this->getOptions()['DISABLE_MY_COMPANY']))

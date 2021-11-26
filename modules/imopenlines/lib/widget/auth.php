@@ -35,8 +35,8 @@ class Auth
 		'imopenlines.widget.operator.get',
 		'imopenlines.widget.user.consent.apply',
 		'imopenlines.widget.vote.send',
-		'imopenlines.widget.form.send',
 		'imopenlines.widget.action.send',
+		'imopenlines.widget.crm.bindings.get',
 
 		// pull
 		'server.time',

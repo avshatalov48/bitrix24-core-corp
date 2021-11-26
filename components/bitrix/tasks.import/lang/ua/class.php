@@ -40,5 +40,6 @@ $MESS["TASKS_IMPORT_HEADERS_RESPONSIBLE"] = "Відповідальний";
 $MESS["TASKS_IMPORT_HEADERS_START_DATE_PLAN"] = "Почати завдання з";
 $MESS["TASKS_IMPORT_HEADERS_TAGS"] = "Теги";
 $MESS["TASKS_IMPORT_HEADERS_TASK_CONTROL"] = "Прийняти роботу після завершення завдання";
+$MESS["TASKS_IMPORT_HEADERS_TASK_CONTROL_V2"] = "Проконтролювати завдання після завершення";
 $MESS["TASKS_IMPORT_HEADERS_TIME_ESTIMATE"] = "Час на виконання завдання в секундах";
 $MESS["TASKS_IMPORT_HEADERS_TITLE"] = "Назва";

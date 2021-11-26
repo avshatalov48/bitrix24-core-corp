@@ -1,5 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Crm\Integration;
 
 /**
  * @var array $arParams
@@ -24,13 +27,13 @@ if (!empty($arResult['BUTTONS']))
 		$APPLICATION->includeComponent(
 			'bitrix:intranet.binding.menu',
 			'',
-			array(
-				'SECTION_CODE' => 'crm_detail',
-				'MENU_CODE' => 'invoice',
+			[
+				'SECTION_CODE' => Integration\Intranet\BindingMenu\SectionCode::DETAIL,
+				'MENU_CODE' => Integration\Intranet\BindingMenu\CodeBuilder::getMenuCode(\CCrmOwnerType::Invoice),
 				'CONTEXT' => [
-					'ENTITY_ID' => $arParams['ELEMENT_ID']
-				]
-			)
+					'ENTITY_ID' => $arParams['ELEMENT_ID'],
+				],
+			]
 		);
 
 		?><script type="text/javascript">

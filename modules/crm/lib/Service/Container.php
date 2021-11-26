@@ -3,13 +3,13 @@
 namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Filter;
+use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\Timeline;
-use Bitrix\Crm\UserField;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\InvalidOperationException;
@@ -256,6 +256,16 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.converter.type');
 	}
 
+	public function getProductRowConverter(): Converter\ProductRow
+	{
+		return ServiceLocator::getInstance()->get('crm.service.converter.productRow');
+	}
+
+	public function getCategoryConverter(): Converter\Category
+	{
+		return ServiceLocator::getInstance()->get('crm.service.converter.category');
+	}
+
 	public function getUserBroker(): Broker\User
 	{
 		return ServiceLocator::getInstance()->get('crm.service.broker.user');
@@ -353,5 +363,10 @@ class Container
 	public function getTimelineHistoryDataModelMaker(): Timeline\HistoryDataModel\Maker
 	{
 		return ServiceLocator::getInstance()->get('crm.timeline.historyDataModel.maker');
+	}
+
+	public function getRestEventManager(): Integration\Rest\EventManager
+	{
+		return ServiceLocator::getInstance()->get('crm.integration.rest.eventManager');
 	}
 }

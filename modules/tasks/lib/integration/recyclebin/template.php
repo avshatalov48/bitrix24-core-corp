@@ -181,7 +181,7 @@ if (Loader::includeModule('recyclebin'))
 			return [
 				'LIMIT_DATA' => [
 					'RESTORE' => [
-						'DISABLE' => TaskLimit::isLimitExceeded(),
+						'DISABLE' => TaskLimit::isLimitExceeded() || !\Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASKS_RECYCLEBIN),
 						'SLIDER_CODE' => 'limit_tasks_recycle_bin_restore',
 					],
 				],

@@ -1,56 +1,56 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Integration\Socialnetwork\Livefeed;
 
-use \Bitrix\Socialnetwork\Livefeed\Provider;
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Socialnetwork\LogTable;
+use Bitrix\Socialnetwork\Livefeed\Provider;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\LogTable;
 
 Loc::loadMessages(__FILE__);
 
 class CrmEntity extends Provider
 {
-	const PROVIDER_ID = 'CRM_ENTITY';
-	const CONTENT_TYPE_ID = 'CRM_ENTITY';
+	public const PROVIDER_ID = 'CRM_ENTITY';
+	public const CONTENT_TYPE_ID = 'CRM_ENTITY';
 
-	public static function getId()
+	public static function getId(): string
 	{
 		return static::PROVIDER_ID;
 	}
 
-	public function getEventId()
+	public function getEventId(): array
 	{
 		return [];
 	}
 
-	public function getType()
+	public function getType(): string
 	{
 		return Provider::TYPE_POST;
 	}
 
-	public function getCommentProvider()
+	public function getCommentProvider(): Provider
 	{
-		$provider = new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmEntityComment();
-		return $provider;
+		return new CrmEntityComment();
 	}
 
-	public function getCurrentEntityFields()
+	public function getCurrentEntityFields(): array
 	{
 		return [];
 	}
 
-	public function getLogEntityType()
+	public function getLogEntityType(): string
 	{
 		return '';
 	}
 
-	public function getLogCommentEventId()
+	public function getLogCommentEventId(): string
 	{
 		return '';
 	}
 
-	public function setCrmEntitySourceTitle(array $entityFields = [])
+	public function setCrmEntitySourceTitle(array $entityFields = []): void
 	{
-		return true;
+
 	}
 
 	public function initSourceFields()
@@ -58,14 +58,14 @@ class CrmEntity extends Provider
 		$entityId = $this->getEntityId();
 		$logId = $this->getLogId();
 
-		$fields = $entity = $logEntry = array();
+		$fields = [];
 
 		if ($entityId > 0)
 		{
-			$fields = array(
+			$fields = [
 				'ID' => $entityId,
-				'CURRENT_ENTITY' => $this->getCurrentEntityFields()
-			);
+				'CURRENT_ENTITY' => $this->getCurrentEntityFields(),
+			];
 		}
 
 		if ($logId > 0)
@@ -101,24 +101,24 @@ class CrmEntity extends Provider
 					}
 				}
 			}
-			elseif ($logEntry['EVENT_ID'] == $this->getLogCommentEventId())
+			elseif ($logEntry['EVENT_ID'] === $this->getLogCommentEventId())
 			{
 				$this->setSourceDescription($logEntry['MESSAGE']);
-				$this->setSourceTitle(truncateText(($logEntry['TITLE'] != '__EMPTY__' ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
+				$this->setSourceTitle(truncateText(($logEntry['TITLE'] !== '__EMPTY__' ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
 			}
 		}
 
 		$this->setSourceFields($fields);
 	}
 
-	public function getLiveFeedUrl()
+	public function getLiveFeedUrl(): string
 	{
 		$result = '';
 		$logId = $this->getLogId();
 
 		if ($logId > 0)
 		{
-			$result = "/crm/stream/?log_id=".$logId;
+			$result = '/crm/stream/?log_id=' . $logId;
 		}
 
 		return $result;

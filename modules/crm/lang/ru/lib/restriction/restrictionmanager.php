@@ -11,9 +11,9 @@ $MESS["CRM_RESTR_MGR_DUP_CTRL_MSG_CONTENT_2"] = "<div class=\"crm-duplicate-tab-
 		Добавьте эти и другие полезные возможности в свой Битрикс24! Расширенная CRM + Расширенная Телефония и другие полезные возможности, начиная с тарифа \"Проект+\" за #TF_PRICE#.
 		<a target=\"_blank\" href=\"https://www.bitrix24.ru/pro/crm.php\">Узнать подробнее</a>
 	</div>
-	<div class=\"crm-history-tab-buttons\">
-		<span class=\"webform-button webform-button-create\" onclick=\"#LICENSE_LIST_SCRIPT#\">Перейти на расширенный тариф</span>
-		<span class=\"webform-button webform-button-transparent\" onclick=\"#DEMO_LICENSE_SCRIPT#\">Бесплатно на 30 дней</span>
+	<div class=\"ui-btn-container ui-btn-container-center\">
+		<span class=\"ui-btn ui-btn-lg ui-btn-success\" onclick=\"#LICENSE_LIST_SCRIPT#\">Перейти на расширенный тариф</span>
+		<span class=\"ui-btn ui-btn-lg ui-btn-light-border\" onclick=\"#DEMO_LICENSE_SCRIPT#\">Бесплатно на 30 дней</span>
 	</div>
 </div>";
 $MESS["CRM_RESTR_MGR_HX_VIEW_MSG_CONTENT_2"] = "<div class=\"crm-history-tab-content\">
@@ -27,9 +27,9 @@ $MESS["CRM_RESTR_MGR_HX_VIEW_MSG_CONTENT_2"] = "<div class=\"crm-history-tab-con
 		Добавьте историю и другие полезные возможности в свой Битрикс24! Расширенная CRM + Расширенная Телефония и другие полезные возможности доступны, начиная с тарифа \"Проект+\" за #TF_PRICE#.
 		<a target=\"_blank\" href=\"https://www.bitrix24.ru/pro/crm.php\">Узнать подробнее</a>
 	</div>
-	<div class=\"crm-history-tab-buttons\">
-		<span class=\"webform-button webform-button-create\" onclick=\"#LICENSE_LIST_SCRIPT#\">Перейти на расширенный тариф</span>
-		<span class=\"webform-button webform-button-transparent\" onclick=\"#DEMO_LICENSE_SCRIPT#\">Бесплатно на 30 дней</span>
+	<div class=\"ui-btn-container ui-btn-container-center\">
+		<span class=\"ui-btn ui-btn-lg ui-btn-success\" onclick=\"#LICENSE_LIST_SCRIPT#\">Перейти на расширенный тариф</span>
+		<span class=\"ui-btn ui-btn-lg ui-btn-light-border\" onclick=\"#DEMO_LICENSE_SCRIPT#\">Бесплатно на 30 дней</span>
 	</div>
 </div>";
 $MESS["CRM_RESTR_MGR_POPUP_TITLE"] = "Доступно только в расширенной CRM \"Битрикс24\"";
@@ -52,7 +52,7 @@ $MESS["CRM_RESTR_MGR_DEAL_CATEGORY_POPUP_TITLE"] = "Мультиворонки �
 $MESS["CRM_RESTR_MGR_DEAL_CATEGORY_POPUP_CONTENT_2"] = "<div class=\"crm-deal-category-tab-content\">
 	<div class=\"crm-deal-category-tab-text\">
 		На вашем тарифном плане есть ограничение по количеству мультиворонок. Чтобы создать воронки по разным продуктам с разным типом продаж (для анализа разных направлений бизнеса), перейдите на другой тарифный план.
-        В тарифе \"Команда\" максимальное число мультиворонок: #TEAM_CRM_FUNNEL#. В верхнем тарифе \"Компания\" число мультиворонок не ограничено.
+		В тарифе \"Команда\" максимальное число мультиворонок: #TEAM_CRM_FUNNEL#. В верхнем тарифе \"Компания\" число мультиворонок не ограничено.
 	</div>
 </div>";
 $MESS["CRM_RESTR_MGR_CONDITIONALLY_REQUIRED_FIELD_POPUP_CONTENT_2"] = "<div class=\"crm-conditionally-required-field-tab-content\">

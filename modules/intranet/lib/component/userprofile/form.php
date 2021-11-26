@@ -746,6 +746,27 @@ class Form
 			}
 		}
 
+		if (!$result["Permissions"]['edit'] && !empty($result['SettingsFieldsView']))
+		{
+			$filterFields = array_column($result['SettingsFieldsView'], 'VALUE');
+			foreach ($data as $key => $value)
+			{
+				if (!in_array($key, $filterFields))
+				{
+					if (is_array($value) && isset($value['VALUE']))
+					{
+						unset($value['VALUE']);
+					}
+					else
+					{
+						$value = '';
+					}
+					
+					$data[$key] = $value;
+				}
+			}
+		}
+
 		return $data;
 	}
 

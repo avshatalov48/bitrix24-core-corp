@@ -1,4 +1,4 @@
-(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_uploader,im_lib_logger,im_mixin,main_md5,main_core_events,im_const,main_core_minimal,ui_icons,ui_forms,ui_vue_vuex,im_lib_utils,ui_vue) {
+(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,ui_vue_components_crm_form,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_uploader,im_lib_utils,im_lib_logger,im_mixin,main_md5,main_core_events,im_const,main_core_minimal,ui_vue_vuex,ui_vue) {
 	'use strict';
 
 	/**
@@ -80,7 +80,6 @@
 	  widgetUserGet: 'imopenlines.widget.user.get',
 	  widgetUserConsentApply: 'imopenlines.widget.user.consent.apply',
 	  widgetVoteSend: 'imopenlines.widget.vote.send',
-	  widgetFormSend: 'imopenlines.widget.form.send',
 	  widgetActionSend: 'imopenlines.widget.action.send',
 	  pullServerTime: 'server.time',
 	  pullConfigGet: 'pull.config.get'
@@ -174,7 +173,16 @@
 	          consentUrl: '',
 	          dialogStart: false,
 	          watchTyping: false,
-	          showSessionId: false
+	          showSessionId: false,
+	          crmFormsSettings: {
+	            useWelcomeForm: false,
+	            welcomeFormId: 0,
+	            welcomeFormSec: '',
+	            welcomeFormDelay: false,
+	            welcomeFormFilled: false,
+	            successText: '',
+	            errorText: ''
+	          }
 	        },
 	        dialog: {
 	          sessionId: 0,
@@ -355,6 +363,32 @@
 	              state.common.widgetHeight = 0;
 	              state.common.widgetWidth = 0;
 	              state.common.location = payload.location;
+	            }
+	          }
+
+	          if (im_lib_utils.Utils.types.isPlainObject(payload.crmFormsSettings)) {
+	            if (typeof payload.crmFormsSettings.useWelcomeForm === 'string') {
+	              state.common.crmFormsSettings.useWelcomeForm = payload.crmFormsSettings.useWelcomeForm === 'Y';
+	            }
+
+	            if (typeof payload.crmFormsSettings.welcomeFormId === 'string') {
+	              state.common.crmFormsSettings.welcomeFormId = payload.crmFormsSettings.welcomeFormId;
+	            }
+
+	            if (typeof payload.crmFormsSettings.welcomeFormSec === 'string') {
+	              state.common.crmFormsSettings.welcomeFormSec = payload.crmFormsSettings.welcomeFormSec;
+	            }
+
+	            if (typeof payload.crmFormsSettings.welcomeFormDelay === 'string') {
+	              state.common.crmFormsSettings.welcomeFormDelay = payload.crmFormsSettings.welcomeFormDelay === 'Y';
+	            }
+
+	            if (typeof payload.crmFormsSettings.successText === 'string' && payload.crmFormsSettings.successText !== '') {
+	              state.common.crmFormsSettings.successText = payload.crmFormsSettings.successText;
+	            }
+
+	            if (typeof payload.crmFormsSettings.errorText === 'string' && payload.crmFormsSettings.errorText !== '') {
+	              state.common.crmFormsSettings.errorText = payload.crmFormsSettings.errorText;
 	            }
 	          }
 
@@ -743,7 +777,8 @@
 	        consentUrl: data.consentUrl,
 	        connectors: data.connectors || [],
 	        watchTyping: data.watchTyping,
-	        showSessionId: data.showSessionId
+	        showSessionId: data.showSessionId,
+	        crmFormsSettings: data.crmFormsSettings
 	      });
 	      this.store.commit('application/set', {
 	        disk: data.disk
@@ -2404,51 +2439,6 @@
 	      });
 	    }
 	  }, {
-	    key: "sendForm",
-	    value: function sendForm(type, fields) {
-	      var _query3,
-	          _this18 = this;
-
-	      im_lib_logger.Logger.info('LiveChatWidgetPrivate.sendForm:', type, fields);
-	      var query = (_query3 = {}, babelHelpers.defineProperty(_query3, RestMethod.widgetFormSend, [RestMethod.widgetFormSend, {
-	        'CHAT_ID': this.getChatId(),
-	        'FORM': type.toUpperCase(),
-	        'FIELDS': fields
-	      }]), babelHelpers.defineProperty(_query3, RestMethod.widgetUserGet, [RestMethod.widgetUserGet, {}]), _query3);
-	      this.controller.restClient.callBatch(query, function (response) {
-	        if (!response) {
-	          _this18.requestDataSend = false;
-
-	          _this18.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
-
-	          return false;
-	        }
-
-	        var userGetResult = response[RestMethod.widgetUserGet];
-
-	        if (userGetResult.error()) {
-	          _this18.requestDataSend = false;
-
-	          _this18.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
-
-	          return false;
-	        }
-
-	        _this18.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
-
-	        _this18.sendEvent({
-	          type: SubscriptionType.userForm,
-	          data: {
-	            form: type,
-	            fields: fields
-	          }
-	        });
-	      }, false, false, im_lib_utils.Utils.getLogTrackingParams({
-	        name: RestMethod.widgetUserGet,
-	        dialog: this.getDialogData()
-	      }));
-	    }
-	  }, {
 	    key: "getHtmlHistory",
 	    value: function getHtmlHistory() {
 	      var chatId = this.getChatId();
@@ -3225,7 +3215,8 @@
 	      textareaHeight: 100,
 	      textareaMinimumHeight: 100,
 	      textareaMaximumHeight: im_lib_utils.Utils.device.isMobile() ? 200 : 300,
-	      zIndexStackInstance: null
+	      zIndexStackInstance: null,
+	      welcomeFormFilled: false
 	    };
 	  },
 	  created: function created() {
@@ -3240,6 +3231,10 @@
 	    main_core_events.EventEmitter.subscribe(EventType.requestShowForm, this.onRequestShowForm);
 	  },
 	  mounted: function mounted() {
+	    if (this.widget.user.id > 0) {
+	      this.welcomeFormFilled = true;
+	    }
+
 	    this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
 
 	    if (this.zIndexStackInstance && !!this.$refs.widgetWrapper) {
@@ -3273,7 +3268,25 @@
 	    EventType: function EventType$$1() {
 	      return im_const.EventType;
 	    },
-	    textareaHeightStyle: function textareaHeightStyle(state) {
+	    showTextarea: function showTextarea() {
+	      var crmFormsSettings = this.widget.common.crmFormsSettings; // show if we dont use welcome form
+
+	      if (!crmFormsSettings.useWelcomeForm || !crmFormsSettings.welcomeFormId) {
+	        return true;
+	      } else {
+	        // show if we use welcome form with delay
+	        if (crmFormsSettings.welcomeFormDelay) {
+	          return true;
+	        } else {
+	          return this.welcomeFormFilled;
+	        }
+	      }
+	    },
+	    showWelcomeForm: function showWelcomeForm() {
+	      //we are using welcome form, it has delay and it was not already filled
+	      return this.widget.common.crmFormsSettings.useWelcomeForm && !this.widget.common.crmFormsSettings.welcomeFormDelay && this.widget.common.crmFormsSettings.welcomeFormId && !this.welcomeFormFilled;
+	    },
+	    textareaHeightStyle: function textareaHeightStyle() {
 	      return {
 	        flex: '0 0 ' + this.textareaHeight + 'px'
 	      };
@@ -3503,27 +3516,6 @@
 	        showForm: FormType.like
 	      });
 	    },
-	    showWelcomeForm: function showWelcomeForm() {
-	      clearTimeout(this.showFormTimeout);
-	      this.$store.commit('widget/common', {
-	        showForm: FormType.welcome
-	      });
-	    },
-	    showOfflineForm: function showOfflineForm() {
-	      clearTimeout(this.showFormTimeout);
-
-	      if (this.widget.dialog.showForm !== FormType.welcome) {
-	        this.$store.commit('widget/common', {
-	          showForm: FormType.offline
-	        });
-	      }
-	    },
-	    showHistoryForm: function showHistoryForm() {
-	      clearTimeout(this.showFormTimeout);
-	      this.$store.commit('widget/common', {
-	        showForm: FormType.history
-	      });
-	    },
 	    onOpenMenu: function onOpenMenu(event) {
 	      this.getApplication().getHtmlHistory();
 	    },
@@ -3695,23 +3687,7 @@
 	      var event = _ref2.data;
 	      clearTimeout(this.showFormTimeout);
 
-	      if (event.type === FormType.welcome) {
-	        if (event.delayed) {
-	          this.showFormTimeout = setTimeout(function () {
-	            _this2.showWelcomeForm();
-	          }, 5000);
-	        } else {
-	          this.showWelcomeForm();
-	        }
-	      } else if (event.type === FormType.offline) {
-	        if (event.delayed) {
-	          this.showFormTimeout = setTimeout(function () {
-	            _this2.showOfflineForm();
-	          }, 3000);
-	        } else {
-	          this.showOfflineForm();
-	        }
-	      } else if (event.type === FormType.like) {
+	      if (event.type === FormType.like) {
 	        if (event.delayed) {
 	          this.showFormTimeout = setTimeout(function () {
 	            _this2.showLikeForm();
@@ -4035,10 +4011,17 @@
 	      this.onWindowScrollTimeout = setTimeout(function () {
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setBlur, true);
 	      }, 50);
+	    },
+	    onWelcomeFormSendSuccess: function onWelcomeFormSendSuccess() {
+	      this.welcomeFormFilled = true;
+	    },
+	    onWelcomeFormSendError: function onWelcomeFormSendError(error) {
+	      console.error('onWelcomeFormSendError', error);
+	      this.welcomeFormFilled = true;
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @openMenu=\"onOpenMenu\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\t\t\t\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<template v-if=\"!widget.common.dialogStart\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"welcome-body\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\" \n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\t \n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\t\n\t\t\t\t\t\t<div class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\t\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
+	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @openMenu=\"onOpenMenu\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div v-show=\"!widget.common.dialogStart\" class=\"bx-livechat-body\" :class=\"{'bx-livechat-body-with-scroll': showWelcomeForm}\" key=\"welcome-body\">\n\t\t\t\t\t\t\t<bx-imopenlines-form\n\t\t\t\t\t\t\t  v-show=\"showWelcomeForm\"\n\t\t\t\t\t\t\t  @formSendSuccess=\"onWelcomeFormSendSuccess\"\n\t\t\t\t\t\t\t  @formSendError=\"onWelcomeFormSendError\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<template v-if=\"!showWelcomeForm\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<template v-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<div v-if=\"showTextarea\" class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	});
 
 	/**
@@ -4303,138 +4286,6 @@
 
 	/**
 	 * Bitrix OpenLines widget
-	 * Form history component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
-	ui_vue.BitrixVue.component('bx-livechat-form-history', {
-	  data: function data() {
-	    return {
-	      fieldEmail: ''
-	    };
-	  },
-	  watch: {
-	    fieldEmail: function fieldEmail(value) {
-	      clearTimeout(this.fieldEmailTimeout);
-	      this.fieldEmailTimeout = setTimeout(this.checkEmailField, 300);
-	    }
-	  },
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.Vuex.mapState({
-	    widget: function widget(state) {
-	      return state.widget;
-	    }
-	  })),
-	  created: function created() {
-	    this.fieldEmail = '' + this.widget.user.email;
-	  },
-	  methods: {
-	    formShowed: function formShowed() {
-	      if (!im_lib_utils.Utils.platform.isMobile()) {
-	        this.$refs.emailInput.focus();
-	      }
-	    },
-	    sendForm: function sendForm() {
-	      var email = this.checkEmailField() ? this.fieldEmail : '';
-
-	      if (email) {
-	        this.$Bitrix.Application.get().sendForm(FormType.history, {
-	          email: email
-	        });
-	      }
-
-	      this.hideForm();
-	    },
-	    hideForm: function hideForm(event) {
-	      clearTimeout(this.fieldEmailTimeout);
-	      this.$parent.hideForm();
-	    },
-	    onFieldEnterPress: function onFieldEnterPress(event) {
-	      this.sendForm();
-	      event.preventDefault();
-	    },
-	    checkEmailField: function checkEmailField() {
-	      if (this.fieldEmail.match(/^(.*)@(.*)\.[a-zA-Z]{2,}$/)) {
-	        if (this.$refs.email) {
-	          this.$refs.email.classList.remove('ui-ctl-danger');
-	        }
-
-	        return true;
-	      } else {
-	        if (document.activeElement !== this.$refs.emailInput) {
-	          if (this.$refs.email) {
-	            this.$refs.email.classList.add('ui-ctl-danger');
-	          }
-	        }
-
-	        return false;
-	      }
-	    }
-	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\" @after-enter=\"formShowed\">\n\t\t\t<div v-if=\"false\" class=\"bx-livechat-alert-box bx-livechat-form-show\" key=\"welcome\">\t\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-form-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-sm\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_MAIL_TITLE_NEW')}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"email\">\n\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-mail bx-livechat-form-icon\" :title=\"$Bitrix.Loc.getMessage('BX_LIVECHAT_FIELD_MAIL_TOOLTIP')\"></div>\n\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"$Bitrix.Loc.getMessage('BX_LIVECHAT_FIELD_MAIL')\" v-model=\"fieldEmail\" ref=\"emailInput\" @blur=\"checkEmailField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" @click=\"sendForm\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_MAIL_BUTTON_NEW')}}</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\n\t\t</transition>\t\n\t"
-	});
-
-	/**
-	 * Bitrix OpenLines widget
-	 * Form offline component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
-	ui_vue.Vue.cloneComponent('bx-livechat-form-offline', 'bx-livechat-form-welcome', {
-	  methods: {
-	    formShowed: function formShowed() {
-	      if (!im_lib_utils.Utils.platform.isMobile()) {
-	        this.$refs.emailInput.focus();
-	      }
-	    },
-	    sendForm: function sendForm() {
-	      var name = this.fieldName;
-	      var email = this.checkEmailField() ? this.fieldEmail : '';
-	      var phone = this.checkPhoneField() ? this.fieldPhone : '';
-
-	      if (name || email || phone) {
-	        this.$Bitrix.Application.get().sendForm(FormType.offline, {
-	          name: name,
-	          email: email,
-	          phone: phone
-	        });
-	      }
-
-	      this.hideForm();
-	    },
-	    onFieldEnterPress: function onFieldEnterPress(event) {
-	      if (event.target === this.$refs.emailInput) {
-	        this.showFullForm();
-	        this.$refs.phoneInput.focus();
-	      } else if (event.target === this.$refs.phoneInput) {
-	        this.$refs.nameInput.focus();
-	      } else {
-	        this.sendForm();
-	      }
-
-	      event.preventDefault();
-	    }
-	  },
-	  watch: {
-	    fieldName: function fieldName() {
-	      clearTimeout(this.fieldNameTimeout);
-	      this.fieldNameTimeout = setTimeout(this.checkNameField, 300);
-	    },
-	    fieldEmail: function fieldEmail() {
-	      clearTimeout(this.showFormTimeout);
-	      this.showFormTimeout = setTimeout(this.showFullForm, 1000);
-	      clearTimeout(this.fieldEmailTimeout);
-	      this.fieldEmailTimeout = setTimeout(this.checkEmailField, 300);
-	    }
-	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\" @after-enter=\"formShowed\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-show\" key=\"welcome\">\t\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-form-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-sm\">{{localize.BX_LIVECHAT_OFFLINE_TITLE}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"email\">\n\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-mail bx-livechat-form-icon\" :title=\"localize.BX_LIVECHAT_FIELD_MAIL_TOOLTIP\"></div>\n\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_MAIL\" v-model=\"fieldEmail\" ref=\"emailInput\" @blur=\"checkEmailField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div :class=\"['bx-livechat-form-short', {\n\t\t\t\t\t\t'bx-livechat-form-full': isFullForm,\n\t\t\t\t\t}]\">\n\t\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"phone\">\n\t\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-phone bx-livechat-form-icon\" :title=\"localize.BX_LIVECHAT_FIELD_PHONE_TOOLTIP\"></div>\n\t\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_PHONE\" v-model=\"fieldPhone\" ref=\"phoneInput\" @blur=\"checkPhoneField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-w100 ui-ctl-lg\" ref=\"name\">\n\t\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_NAME\" v-model=\"fieldName\" ref=\"nameInput\" @blur=\"checkNameField\" @keydown.enter=\"onFieldEnterPress\"  @keydown.tab=\"onFieldEnterPress\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" @click=\"sendForm\">{{localize.BX_LIVECHAT_ABOUT_SEND}}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\n\t\t</transition>\t\n\t"
-	});
-
-	/**
-	 * Bitrix OpenLines widget
 	 * Form vote component (Vue component)
 	 *
 	 * @package bitrix
@@ -4466,152 +4317,6 @@
 	    }
 	  },
 	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-rate-show\" key=\"vote\">\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-rate-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-mdl\">{{widget.common.vote.messageText}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-like\" @click=\"userVote(VoteType.like)\" :title=\"widget.common.vote.messageLike\"></button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-dislike\" @click=\"userVote(VoteType.dislike)\" :title=\"widget.common.vote.messageDislike\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\t\n\t"
-	});
-
-	/**
-	 * Bitrix OpenLines widget
-	 * Form welcome component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
-	ui_vue.BitrixVue.component('bx-livechat-form-welcome', {
-	  data: function data() {
-	    return {
-	      fieldName: '',
-	      fieldEmail: '',
-	      fieldPhone: '',
-	      isFullForm: im_lib_utils.Utils.platform.isMobile()
-	    };
-	  },
-	  watch: {
-	    fieldName: function fieldName() {
-	      clearTimeout(this.showFormTimeout);
-	      this.showFormTimeout = setTimeout(this.showFullForm, 1000);
-	      clearTimeout(this.fieldNameTimeout);
-	      this.fieldNameTimeout = setTimeout(this.checkNameField, 300);
-	    },
-	    fieldEmail: function fieldEmail(value) {
-	      clearTimeout(this.fieldEmailTimeout);
-	      this.fieldEmailTimeout = setTimeout(this.checkEmailField, 300);
-	    },
-	    fieldPhone: function fieldPhone(value) {
-	      clearTimeout(this.fieldPhoneTimeout);
-	      this.fieldPhoneTimeout = setTimeout(this.checkPhoneField, 300);
-	    }
-	  },
-	  computed: babelHelpers.objectSpread({
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    widget: function widget(state) {
-	      return state.widget;
-	    }
-	  })),
-	  created: function created() {
-	    this.fieldName = '' + this.widget.user.name;
-	    this.fieldEmail = '' + this.widget.user.email;
-	    this.fieldPhone = '' + this.widget.user.phone;
-	  },
-	  methods: {
-	    formShowed: function formShowed() {
-	      if (!im_lib_utils.Utils.platform.isMobile()) {
-	        this.$refs.nameInput.focus();
-	      }
-	    },
-	    showFullForm: function showFullForm() {
-	      clearTimeout(this.showFormTimeout);
-	      this.isFullForm = true;
-	    },
-	    sendForm: function sendForm() {
-	      var name = this.fieldName;
-	      var email = this.checkEmailField() ? this.fieldEmail : '';
-	      var phone = this.checkPhoneField() ? this.fieldPhone : '';
-
-	      if (name || email || phone) {
-	        this.$Bitrix.Application.get().sendForm(FormType.welcome, {
-	          name: name,
-	          email: email,
-	          phone: phone
-	        });
-	      }
-
-	      this.hideForm();
-	    },
-	    hideForm: function hideForm(event) {
-	      clearTimeout(this.showFormTimeout);
-	      clearTimeout(this.fieldNameTimeout);
-	      clearTimeout(this.fieldEmailTimeout);
-	      clearTimeout(this.fieldPhoneTimeout);
-	      this.$parent.hideForm();
-	    },
-	    onFieldEnterPress: function onFieldEnterPress(event) {
-	      if (event.target === this.$refs.nameInput) {
-	        this.showFullForm();
-	        this.$refs.emailInput.focus();
-	      } else if (event.target === this.$refs.emailInput) {
-	        this.$refs.phoneInput.focus();
-	      } else {
-	        this.sendForm();
-	      }
-
-	      event.preventDefault();
-	    },
-	    checkNameField: function checkNameField() {
-	      if (this.fieldName.length > 0) {
-	        if (this.$refs.name) {
-	          this.$refs.name.classList.remove('ui-ctl-danger');
-	        }
-
-	        return true;
-	      } else {
-	        if (document.activeElement !== this.$refs.nameInput) {
-	          if (this.$refs.name) {
-	            this.$refs.name.classList.add('ui-ctl-danger');
-	          }
-	        }
-
-	        return false;
-	      }
-	    },
-	    checkEmailField: function checkEmailField() {
-	      if (this.fieldEmail.match(/^(.*)@(.*)\.[a-zA-Z]{2,}$/)) {
-	        if (this.$refs.email) {
-	          this.$refs.email.classList.remove('ui-ctl-danger');
-	        }
-
-	        return true;
-	      } else {
-	        if (document.activeElement !== this.$refs.emailInput) {
-	          if (this.$refs.email) {
-	            this.$refs.email.classList.add('ui-ctl-danger');
-	          }
-	        }
-
-	        return false;
-	      }
-	    },
-	    checkPhoneField: function checkPhoneField() {
-	      if (this.fieldPhone.match(/^(\s*)?(\+)?([- _():=+]?\d[- _():=+]?){10,14}(\s*)?$/)) {
-	        if (this.$refs.phone) {
-	          this.$refs.phone.classList.remove('ui-ctl-danger');
-	        }
-
-	        return true;
-	      } else {
-	        if (document.activeElement !== this.$refs.phoneInput) {
-	          if (this.$refs.phone) {
-	            this.$refs.phone.classList.add('ui-ctl-danger');
-	          }
-	        }
-
-	        return false;
-	      }
-	    }
-	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\" @after-enter=\"formShowed\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-show\" key=\"welcome\">\t\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-form-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-sm\">{{localize.BX_LIVECHAT_ABOUT_TITLE}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-w100 ui-ctl-lg\" ref=\"name\">\n\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_NAME\" v-model=\"fieldName\" ref=\"nameInput\" @blur=\"checkNameField\" @keydown.enter=\"onFieldEnterPress\"  @keydown.tab=\"onFieldEnterPress\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div :class=\"['bx-livechat-form-short', {\n\t\t\t\t\t\t'bx-livechat-form-full': isFullForm,\n\t\t\t\t\t}]\">\n\t\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"email\">\n\t\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-mail bx-livechat-form-icon\" :title=\"localize.BX_LIVECHAT_FIELD_MAIL_TOOLTIP\"></div>\n\t\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_MAIL\" v-model=\"fieldEmail\" ref=\"emailInput\" @blur=\"checkEmailField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"phone\">\n\t\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-phone bx-livechat-form-icon\" :title=\"localize.BX_LIVECHAT_FIELD_PHONE_TOOLTIP\"></div>\n\t\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_PHONE\" v-model=\"fieldPhone\" ref=\"phoneInput\" @blur=\"checkPhoneField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" @click=\"sendForm\">{{localize.BX_LIVECHAT_ABOUT_SEND}}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\n\t\t</transition>\t\n\t"
 	});
 
 	/**
@@ -4648,5 +4353,5 @@
 	  detail: {}
 	}));
 
-}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Mixin,BX,BX.Event,BX.Messenger.Const,BX,BX,BX,BX,BX.Messenger.Lib,BX));
+}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Ui.Vue.Components.Crm,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Mixin,BX,BX.Event,BX.Messenger.Const,BX,BX,BX));
 //# sourceMappingURL=widget.bundle.js.map

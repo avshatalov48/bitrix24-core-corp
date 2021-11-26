@@ -33,6 +33,77 @@ use \Bitrix\Main\Localization\Loc; ?>
 			</div>
 		</div>
 	</div>
+
+	<!--	Welcome form block	-->
+	<?if (isset($arResult['CRM_INSTALLED'])):?>
+	<div class="imopenlines-form-settings-block">
+		<div class="imopenlines-control-checkbox-container">
+			<label class="imopenlines-control-checkbox-label">
+				<input type="checkbox"
+					   class="imopenlines-control-checkbox"
+					   id="imol_form_welcome"
+					   name="CONFIG[USE_WELCOME_FORM]"
+					   value="Y"
+					   <? if ($arResult['CONFIG']['USE_WELCOME_FORM'] == 'Y') { ?>checked<? } ?>>
+				<?=Loc::getMessage('IMOL_CONFIG_EDIT_FORM_WELCOME_CHECKBOX')?>
+				<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_FORM_WELCOME_TIP'))?>"></span>
+			</label>
+		</div>
+		<div id="imol_form_welcome_block" <? if ($arResult['CONFIG']['USE_WELCOME_FORM'] !== 'Y') { ?>class="invisible" <? } ?>>
+			<div class="imopenlines-control-container imopenlines-control-select">
+				<div class="imopenlines-control-subtitle">
+					<?=Loc::getMessage("IMOL_CONFIG_EDIT_FORM_WELCOME_SELECT")?>
+				</div>
+				<div class="imopenlines-control-inner">
+					<select name="CONFIG[WELCOME_FORM_ID]" class="imopenlines-control-input">
+						<?
+						if (is_array($arResult["CRM_FORMS_LIST"]) && !empty($arResult["CRM_FORMS_LIST"]))
+						{
+							foreach($arResult["CRM_FORMS_LIST"] as $form)
+							{
+								?>
+								<option value="<?=$form['ID']?>"<?=($arResult["CONFIG"]["WELCOME_FORM_ID"] == $form['ID']? ' selected="selected"' : '')?>>
+									<?=htmlspecialcharsbx($form['NAME'])?>
+								</option>
+								<?
+							}
+						}
+						?>
+					</select>
+				</div>
+				<div>
+					<a href="<?=$arResult['CRM_FORMS_CREATE_LINK']?>" target="_blank" class="imopenlines-form-welcome-create-link">
+						<?=Loc::getMessage("IMOL_CONFIG_EDIT_FORM_WELCOME_CREATE")?>
+					</a>
+				</div>
+			</div>
+			<div class="imopenlines-control-container imopenlines-control-select">
+				<div class="imopenlines-control-subtitle">
+					<?=Loc::getMessage("IMOL_CONFIG_EDIT_FORM_WELCOME_DELAY_SELECT")?>
+				</div>
+				<div class="imopenlines-control-inner">
+					<select name="CONFIG[WELCOME_FORM_DELAY]" id="imol_form_welcome_delay" class="imopenlines-control-input">
+						<option value="N"<?=($arResult["CONFIG"]["WELCOME_FORM_DELAY"] === 'N'? ' selected="selected"' : '')?>>
+							<?=Loc::getMessage("IMOL_CONFIG_EDIT_FORM_WELCOME_DELAY_SELECT_N")?>
+						</option>
+						<option value="Y"<?=($arResult["CONFIG"]["WELCOME_FORM_DELAY"] === 'Y'? ' selected="selected"' : '')?>>
+							<?=Loc::getMessage("IMOL_CONFIG_EDIT_FORM_WELCOME_DELAY_SELECT_Y")?>
+						</option>
+					</select>
+				</div>
+				<div id="imol_form_welcome_delay_description">
+					<div id="imol_form_no_delay_description" class="imopenlines-control-subtitle <? if ($arResult['CONFIG']['WELCOME_FORM_DELAY'] === 'Y') { ?>invisible<? } ?>">
+						<?=Loc::getMessage("IMOL_CONFIG_EDIT_FORM_WELCOME_DELAY_DESCRIPTION_N")?>
+					</div>
+					<div id="imol_form_delay_description" class="imopenlines-control-subtitle <? if ($arResult['CONFIG']['WELCOME_FORM_DELAY'] === 'N') { ?>invisible<? } ?>">
+						<?=Loc::getMessage("IMOL_CONFIG_EDIT_FORM_WELCOME_DELAY_DESCRIPTION_Y")?>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<?endif;?>
+
 	<?if(isset($arResult['AUTOMATIC_MESSAGE'])):?>
 	<div class="imopenlines-form-settings-block">
 		<div class="imopenlines-control-checkbox-container">

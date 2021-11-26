@@ -359,17 +359,22 @@ abstract class Operation
 		}
 
 		$requiredFields = [];
+		$notDisplayedFields = [];
 
 		foreach ($this->fieldsCollection as $field)
 		{
+			$fieldName = $field->getName();
 			if ($field->isRequired())
 			{
-				$fieldName = $field->getName();
 				if ($field->isUserField() && !$this->isCheckRequiredUserFields())
 				{
 					continue;
 				}
 				$requiredFields[] = $fieldName;
+			}
+			if (!$field->isDisplayed())
+			{
+				$notDisplayedFields[] = $fieldName;
 			}
 		}
 
@@ -400,6 +405,8 @@ abstract class Operation
 
 			$requiredFields = array_diff($requiredFields, $notChangedFields);
 		}
+
+		$requiredFields = array_diff($requiredFields, $notDisplayedFields);
 
 		$result = $this->checkRequiredFields($requiredFields, $factory);
 
@@ -847,7 +854,18 @@ abstract class Operation
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
 
-		$userPermissions->updateItemAttributes($this->item);
+		$permissionEntityType = \Bitrix\Crm\Service\UserPermissions::getItemPermissionEntityType($this->item);
+		$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+			->setEntityAttributes($userPermissions->prepareItemPermissionAttributes($this->item))
+		;
+
+		\Bitrix\Crm\Security\Manager::resolveController($permissionEntityType)
+			->register(
+				$permissionEntityType,
+				$this->item->getId(),
+				$securityRegisterOptions
+			)
+		;
 	}
 
 	protected function updateSearchIndexes(): void

@@ -1,4 +1,4 @@
 <?php
 return [
-	"version" => "2.0.16"
+	"version" => "2.0.20"
 ];

@@ -119,8 +119,10 @@ $event = $arResult['EVENT'];
 			if (!window.oViewEventManager)
 				window.oViewEventManager = {};
 
+			<? $culture = \Bitrix\Main\Context::getCurrent()->getCulture(); ?>
+
 			window.oViewEventManager[('<?= $event['ID']?>' || 0)] = new window.ViewEventManager(<?=CUtil::PhpToJSObject(
-				array(
+				[
 					"id" => $id,
 					"eventId" => $event['ID'],
 					"EVENT" => $event,
@@ -130,10 +132,15 @@ $event = $arResult['EVENT'];
 					"EC_JS_DEL_EVENT_CONFIRM" => GetMessageJS('EC_JS_DEL_EVENT_CONFIRM'),
 					"ECLFV_INVITE_ATTENDEES_ACC" => GetMessageJS('ECLFV_INVITE_ATTENDEES_ACC'),
 					"ECLFV_INVITE_ATTENDEES_DEC" => GetMessageJS('ECLFV_INVITE_ATTENDEES_DEC'),
-					"AJAX_PARAMS" => array(
+					"AJAX_PARAMS" => [
 						"MOBILE" => "Y"
-					)
-				));?>
+					],
+					"culture" => [
+						"time_format" => $culture->getShortTimeFormat(),
+						"date_format" => $culture->getFullDateFormat(),
+					],
+				]
+				);?>
 			);
 		}
 	});

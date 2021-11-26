@@ -123,11 +123,23 @@ abstract class EntityStepwiseAgent extends AgentBase
 		$instance->process($itemIDs);
 
 		$processedItemQty += $itemQty;
-		$totalItemQty = $instance->getTotalEntityCount();
 
 		$progressData['LAST_ITEM_ID'] = $itemIDs[$itemQty - 1];
+		if (is_array($progressData['LAST_ITEM_ID']) && isset($progressData['LAST_ITEM_ID']['ID']))
+		{
+			$progressData['LAST_ITEM_ID'] = $progressData['LAST_ITEM_ID']['ID'];
+		}
 		$progressData['PROCESSED_ITEMS'] = $processedItemQty;
-		$progressData['TOTAL_ITEMS'] = $totalItemQty;
+
+		if (!isset($progressData['TOTAL_ITEMS']) || !isset($progressData['TOTAL_ITEMS_CALCULATED']))
+		{
+			$progressData['TOTAL_ITEMS'] = $instance->getTotalEntityCount(); // calculate total can be complicated, so do it once
+			$progressData['TOTAL_ITEMS_CALCULATED'] = true;
+		}
+		if ($progressData['TOTAL_ITEMS'] < $progressData['PROCESSED_ITEMS'])
+		{
+			$progressData['TOTAL_ITEMS'] = $progressData['PROCESSED_ITEMS'];
+		}
 
 		$instance->setProgressData($progressData);
 		return true;

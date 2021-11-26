@@ -679,6 +679,11 @@ if(!empty($htmlEditorConfigs))
 				deliveryProfile: "<?=GetMessageJS('CRM_ENTITY_ED_SHIPMENT_DELIVERY_PROFILE')?>",
 			};
 
+			BX.Crm.EntityEditorPaySystemSelector.messages =
+			{
+				notSelected: "<?=GetMessageJS('CRM_ENTITY_ED_PAY_SYSTEM_SELECTOR_NOT_SELECTED')?>",
+			};
+
 			BX.Crm.EntityEditorOrderPropertySubsection.messages =
 			{
 				linkToSettings: "<?=GetMessageJS('CRM_ENTITY_ED_CHILD_ENTITY_MENU_SETTINGS_LINK')?>"

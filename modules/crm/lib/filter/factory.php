@@ -121,7 +121,25 @@ class Factory
 	{
 		return new RequisiteDataProvider($settings);
 	}
-	
+
+	public function getClientDataProviders(EntitySettings $settings): array
+	{
+		$dataProviders = [];
+		$firstClientEntityId = \Bitrix\Crm\Component\EntityList\ClientDataProvider::getPriorityEntityTypeId();
+		$secondClientEntityId =
+			($firstClientEntityId === \CCrmOwnerType::Contact)
+				? \CCrmOwnerType::Company
+				: \CCrmOwnerType::Contact
+		;
+
+		$dataProviders[] = new ClientDataProvider($firstClientEntityId, $settings);
+		$dataProviders[] = new ClientUserFieldDataProvider($firstClientEntityId, $settings);
+		$dataProviders[] = new ClientDataProvider($secondClientEntityId, $settings);
+		$dataProviders[] = new ClientUserFieldDataProvider($secondClientEntityId, $settings);
+
+		return $dataProviders;
+	}
+
 	public function getFilter(EntitySettings $settings, ?array $parameters = []): ?Filter
 	{
 		$filterId = $settings->getID();
@@ -139,6 +157,14 @@ class Factory
 		if ($settings instanceof ContactSettings || $settings instanceof CompanySettings)
 		{
 			$additionalProviders[] = $this->getRequisiteDataProvider($settings);
+		}
+		if (
+			$settings instanceof DealSettings
+			&& !$settings->checkFlag(DealSettings::FLAG_RECURRING)
+			&& $settings->checkFlag(DealSettings::FLAG_ENABLE_CLIENT_FIELDS)
+		)
+		{
+			$additionalProviders = array_merge($additionalProviders, $this->getClientDataProviders($settings));
 		}
 
 		return $this->createFilter($filterId, $provider, $additionalProviders, $parameters);

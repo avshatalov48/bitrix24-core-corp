@@ -2,7 +2,9 @@
 
 namespace Bitrix\Rpa;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Rpa\Model\EO_Timeline;
 use Bitrix\Rpa\Model\Item;
 use Bitrix\Rpa\Model\PermissionTable;
 use Bitrix\Main\Engine\CurrentUser;
@@ -32,6 +34,7 @@ class UserPermissions
 	public const ACCESS_CODE_ALL_USERS = 'UA';
 
 	protected $isAdmin;
+	protected $isExtranet;
 	protected $userId;
 	protected $permissions;
 	protected $accessCodes;
@@ -50,6 +53,10 @@ class UserPermissions
 
 	public function canViewType(int $typeId): bool
 	{
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
 		if(static::canViewAnyType())
 		{
 			return true;
@@ -60,6 +67,11 @@ class UserPermissions
 
 	public function canCreateType(): bool
 	{
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
+
 		return true;
 	}
 
@@ -75,6 +87,10 @@ class UserPermissions
 
 	public function canViewItemsInStage(Type $type, int $stageId): bool
 	{
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
 		if(static::canViewOnAnyStage())
 		{
 			return true;
@@ -85,6 +101,10 @@ class UserPermissions
 
 	public function canModifyItemsInStage(Type $type, int $stageId): bool
 	{
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
 		if(static::canEditItemOnAnyStage())
 		{
 			return $this->canAddItemsToType($type->getId());
@@ -108,6 +128,10 @@ class UserPermissions
 
 	public function canViewItem(Item $item): bool
 	{
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
 		if($item->getCreatedBy() === $this->userId)
 		{
 			return true;
@@ -130,6 +154,10 @@ class UserPermissions
 
 	public function canMoveFromStage(Type $type, int $stageId): bool
 	{
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
 		if(static::canMoveAnywhere())
 		{
 			return true;
@@ -158,6 +186,11 @@ class UserPermissions
 	{
 		$result = false;
 
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
+
 		if(static::canMoveAnywhere())
 		{
 			return true;
@@ -185,6 +218,10 @@ class UserPermissions
 
 	public function canDeleteItem(Item $item): bool
 	{
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
 		if($item->getCreatedBy() === $this->getUserId())
 		{
 			return true;
@@ -206,13 +243,36 @@ class UserPermissions
 		);
 	}
 
+	public function canViewComment(?Item $item = null, ?EO_Timeline $timelineRecord = null): bool
+	{
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
+		if ($timelineRecord && $timelineRecord->getUserId() === $this->getUserId())
+		{
+			return true;
+		}
+
+		if ($item)
+		{
+			return $this->canModifyItemsInStage($item->getType(), $item->remindActualStageId());
+		}
+
+		return $this->hasAdminAccess();
+	}
+
 	public function canAddComment(Item $item): bool
 	{
-		return $this->canViewItem($item);
+		return $this->canModifyItemsInStage($item->getType(), $item->remindActualStageId());
 	}
 
 	public function canUpdateComment(Timeline $timeline): bool
 	{
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
 		if($this->hasAdminAccess())
 		{
 			return true;
@@ -269,6 +329,10 @@ class UserPermissions
 	 */
 	public function canMoveToStage(Stage $stageTo): bool
 	{
+		if ($this->isAccessDeniedToEverything())
+		{
+			return false;
+		}
 		if(static::canMoveAnywhere())
 		{
 			return true;
@@ -503,6 +567,10 @@ class UserPermissions
 		{
 			return;
 		}
+		if ($this->isExtranetUser())
+		{
+			return;
+		}
 
 		$permissions = PermissionTable::getList(['filter' => [
 			'@ACCESS_CODE' => $userAccessCodes
@@ -519,6 +587,11 @@ class UserPermissions
 				$this->permissions[$entityCode][$permission['ACTION']] = $permission['PERMISSION'];
 			}
 		}
+	}
+
+	public function isAdmin(): bool
+	{
+		return $this->hasAdminAccess();
 	}
 
 	protected function hasAdminAccess(): bool
@@ -556,6 +629,34 @@ class UserPermissions
 			isset($this->permissions[$entityCode][$action]) &&
 			$this->permissions[$entityCode][$action] > self::PERMISSION_NONE
 		);
+	}
+
+	protected function isAccessDeniedToEverything(): bool
+	{
+		if ($this->hasAdminAccess())
+		{
+			return false;
+		}
+
+		return $this->isExtranetUser();
+	}
+
+	protected function isExtranetUser(): bool
+	{
+		if ($this->isExtranet === null)
+		{
+			$this->isExtranet = false;
+			if (
+				Loader::includeModule('intranet')
+				&& Loader::includeModule('extranet')
+				&& !\CExtranet::IsIntranetUser(SITE_ID, $this->getUserId())
+			)
+			{
+				$this->isExtranet = true;
+			}
+		}
+
+		return $this->isExtranet;
 	}
 
 	// region rules

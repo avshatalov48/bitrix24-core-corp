@@ -98,9 +98,9 @@
 	    value: function handleTypeDelete(event) {
 	      var _this2 = this;
 
-	      var entityTypeId = main_core.Text.toInteger(event.data.entityTypeId);
+	      var id = main_core.Text.toInteger(event.data.id);
 
-	      if (!entityTypeId) {
+	      if (!id) {
 	        this.showErrors([main_core.Loc.getMessage('CRM_TYPE_TYPE_NOT_FOUND')]);
 	        return;
 	      }
@@ -114,7 +114,7 @@
 	          main_core.ajax.runAction('crm.controller.type.delete', {
 	            analyticsLabel: 'crmTypeListDeleteType',
 	            data: {
-	              entityTypeId: entityTypeId
+	              id: id
 	            }
 	          }).then(function (response) {
 	            var isUrlChanged = main_core.Type.isObject(response.data) && response.data.isUrlChanged === true;

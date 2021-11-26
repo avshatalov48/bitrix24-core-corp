@@ -84,7 +84,6 @@ $arParams['PATH_TO_SEARCH_PAGE'] = (isset($arParams['PATH_TO_SEARCH_PAGE']) && $
 $arParams['PATH_TO_PRODUCT_MARKETPLACE'] = (isset($arParams['PATH_TO_PRODUCT_MARKETPLACE']) && $arParams['PATH_TO_PRODUCT_MARKETPLACE'] !== '') ? $arParams['PATH_TO_PRODUCT_MARKETPLACE'] : '#SITE_DIR#marketplace/category/crm/';
 $arParams['PATH_TO_WEBFORM'] = (isset($arParams['PATH_TO_WEBFORM']) && $arParams['PATH_TO_WEBFORM'] !== '') ? $arParams['PATH_TO_WEBFORM'] : '#SITE_DIR#crm/webform/';
 $arParams['PATH_TO_BUTTON'] = (isset($arParams['PATH_TO_BUTTON']) && $arParams['PATH_TO_BUTTON'] !== '') ? $arParams['PATH_TO_BUTTON'] : '#SITE_DIR#crm/button/';
-$arParams['PATH_TO_CRMPLUS'] = (isset($arParams['PATH_TO_CRMPLUS']) && $arParams['PATH_TO_CRMPLUS'] !== '') ? $arParams['PATH_TO_CRMPLUS'] : '#SITE_DIR#crm/crmplus/';
 $arParams['PATH_TO_RECYCLE_BIN'] = CrmCheckPath('PATH_TO_RECYCLE_BIN', isset($arParams['PATH_TO_RECYCLE_BIN']) ? $arParams['PATH_TO_RECYCLE_BIN'] : '', '#SITE_DIR#crm/recyclebin/');
 
 $currentCategoryID = CUserOptions::GetOption('crm', 'current_deal_category', -1);
@@ -232,8 +231,9 @@ if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_LEAD'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_LEAD_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
-			 isset($arParams['PATH_TO_LEAD_INDEX']) && $arParams['PATH_TO_LEAD_INDEX'] !== ''
-				 ? $arParams['PATH_TO_LEAD_INDEX'] : $arParams['PATH_TO_LEAD_LIST']
+			(isset($arParams['PATH_TO_LEAD_INDEX']) && $arParams['PATH_TO_LEAD_INDEX'] !== '')
+				? $arParams['PATH_TO_LEAD_INDEX']
+				: $arParams['PATH_TO_LEAD_LIST']
 		),
 		'ICON' => 'lead',
 		'COUNTER' => $counter->getValue(),
@@ -487,8 +487,9 @@ if (
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_ORDER'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_ORDER'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
-			 isset($arParams['PATH_TO_ORDER_INDEX']) && $arParams['PATH_TO_ORDER_INDEX'] !== ''
-				 ? $arParams['PATH_TO_ORDER_INDEX'] : $arParams['PATH_TO_ORDER_LIST']
+			(isset($arParams['PATH_TO_ORDER_INDEX']) && $arParams['PATH_TO_ORDER_INDEX'] !== '')
+			? $arParams['PATH_TO_ORDER_INDEX']
+			: $arParams['PATH_TO_ORDER_LIST']
 		),
 		'COUNTER' => $counter->getValue(),
 		'COUNTER_ID' => $counter->getCode(),

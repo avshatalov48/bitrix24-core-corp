@@ -596,7 +596,7 @@
 	                id: commentId
 	              }
 	            }).then(function (response) {
-	              if (response.data && main_core.Type.isString(response.data.comment) && response.data.comment.length > 0) {
+	              if (response.data && response.data.comment) {
 	                event.getData().comment = response.data.comment;
 	                resolve();
 	              } else {

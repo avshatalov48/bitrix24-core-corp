@@ -25,6 +25,7 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 		this._succeededItemCount = 0;
 		this._failedItemCount = 0;
 		this._isRunning = false;
+		this._messages = null;
 
 		this._progressChangeHandler = BX.delegate(this.onProgress, this);
 		this._documentUnloadHandler = BX.delegate(this.onDocumentUnload, this);
@@ -114,6 +115,11 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 		},
 		getMessage: function(name)
 		{
+			if (this._messages && BX.prop.getString(this._messages, name, null))
+			{
+				return  BX.prop.getString(this._messages, name, name);
+			}
+
 			var messages = BX.prop.getObject(this._settings, "messages", BX.Crm.BatchConversionManager.messages);
 			return BX.prop.getString(messages, name, name);
 		},
@@ -190,6 +196,16 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 
 			var status = BX.prop.getString(data, "STATUS", '');
 			this._config = BX.prop.getObject(data, "CONFIG", {});
+
+			if (data.hasOwnProperty('messages') && BX.Type.isPlainObject(data.messages))
+			{
+				this._messages = data.messages;
+				if (!BX.CrmLeadConverter.messages)
+				{
+					BX.CrmLeadConverter.messages = {};
+				}
+				BX.CrmLeadConverter.messages = Object.assign(BX.CrmLeadConverter.messages, data.messages);
+			}
 
 			if(status === "ERROR")
 			{

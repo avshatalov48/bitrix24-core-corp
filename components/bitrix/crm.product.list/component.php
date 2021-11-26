@@ -1469,7 +1469,7 @@ while($arElement = $obRes->GetNext())
 								if (CCrmProductPropsHelper::isTypeSupportingUrlTemplate($propertyInfo))
 								{
 									$controlSettings['DETAIL_URL'] =
-										 CComponentEngine::MakePathFromTemplate(
+										CComponentEngine::MakePathFromTemplate(
 											$arParams['PATH_TO_PRODUCT_SHOW'],
 											[
 												'product_id' => $arProperty['VALUE'],

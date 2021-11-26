@@ -22,22 +22,21 @@ class DealStageHistoryWithSupposedEntry
 
 	private static function getHistoriesToAdd($dealId)
 	{
-		$lastSavedStageChanging = self::getDealLastChangingFromSupposed($dealId);
+		$lastSavedStageModification = self::getDealLastModificationFromSupposed($dealId);
 
-		if ($lastSavedStageChanging)
+		if ($lastSavedStageModification)
 		{
-			$lastChangeDate = $lastSavedStageChanging['CREATED_TIME'];
-			$existingHistoryToWrite = self::getDealNewHistoryChangingsById($dealId, $lastChangeDate);
+			$existingHistoryToWrite = self::getDealNewHistoryModificationsById($dealId, $lastSavedStageModification['CREATED_TIME']);
 			if ($existingHistoryToWrite)
 			{
-				$firstChangingToWrite = $existingHistoryToWrite[0];
-				/** @var DateTime $firstChangingDate */
-				$firstChangingDate = $firstChangingToWrite['HISTORY_CREATED_TIME'];
-				/** @var DateTime $lastSavedChangingDate */
-				$lastSavedChangingDate = $lastSavedStageChanging['CREATED_TIME'];
-				$spentTime = $firstChangingDate->getTimestamp() - $lastSavedChangingDate->getTimestamp();
+				$firstModificationToWrite = $existingHistoryToWrite[0];
+				/** @var DateTime $firstModificationDate */
+				$firstModificationDate = $firstModificationToWrite['HISTORY_CREATED_TIME'];
+				/** @var DateTime $lastSavedModificationDate */
+				$lastSavedModificationDate = $lastSavedStageModification['CREATED_TIME'];
+				$spentTime = $firstModificationDate->getTimestamp() - $lastSavedModificationDate->getTimestamp();
 				DealStageHistoryWithSupposedTable::update(
-					$lastSavedStageChanging['ID'],
+					$lastSavedStageModification['ID'],
 					[
 						'SPENT_TIME' => $spentTime
 					]
@@ -46,12 +45,12 @@ class DealStageHistoryWithSupposedEntry
 		}
 		else
 		{
-			$existingHistoryToWrite = self::getDealNewHistoryChangingsById($dealId);
+			$existingHistoryToWrite = self::getDealNewHistoryModificationsById($dealId);
 		}
 
 		$prepared = self::prepareHistoriesFromExistHistory($existingHistoryToWrite);
 		$historiesToAdd = [];
-		if (!$lastSavedStageChanging)
+		if (!$lastSavedStageModification)
 		{
 			foreach ($prepared as $stageId => $history)
 			{
@@ -65,7 +64,7 @@ class DealStageHistoryWithSupposedEntry
 		{
 			foreach ($prepared as $stageId => $history)
 			{
-				if ($stageId === $lastSavedStageChanging['STAGE_ID'])
+				if ((string)$stageId === (string)$lastSavedStageModification['STAGE_ID'])
 				{
 					break;
 				}
@@ -97,7 +96,7 @@ class DealStageHistoryWithSupposedEntry
 		}
 	}
 
-	private static function getDealLastChangingFromSupposed($dealId)
+	private static function getDealLastModificationFromSupposed($dealId)
 	{
 		$query = DealStageHistoryWithSupposedTable::query();
 		$query->addSelect('ID');
@@ -113,7 +112,7 @@ class DealStageHistoryWithSupposedEntry
 		return !empty($result) ? $result[0] : null;
 	}
 
-	private static function getDealNewHistoryChangingsById($dealId, $fromDate = null)
+	private static function getDealNewHistoryModificationsById($dealId, $fromDate = null)
 	{
 		$dealHistoryQuery = DealTable::query();
 		$dealHistoryQuery->addSelect('HISTORY.OWNER_ID', 'DEAL_ID');
@@ -128,11 +127,10 @@ class DealStageHistoryWithSupposedEntry
 		if (!is_null($fromDate))
 		{
 			$dealHistoryQuery->where('HISTORY.CREATED_TIME', '>=', $fromDate);
+			$dealHistoryQuery->where('HISTORY.HAS_SUPPOSED_HISTORY_RECORD', '=', 0);
 		}
 
-		$dealHistory = $dealHistoryQuery->exec()->fetchAll();
-
-		return $dealHistory;
+		return $dealHistoryQuery->exec()->fetchAll();
 	}
 
 	private static function prepareHistoriesFromExistHistory($existHistory)

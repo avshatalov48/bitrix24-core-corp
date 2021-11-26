@@ -1,42 +1,38 @@
 <?php
+
 namespace Bitrix\Location\Infrastructure;
 
-use Bitrix\Location\Entity\Location;
-use Bitrix\Main\ArgumentException;
+use Bitrix\Location\Common\Point;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Service\GeoIp;
-use Bitrix\Main\Text\Encoding;
-use Bitrix\Main\Web\Json;
 
 /**
- * Class UserPoint
+ * Class UserLocation
+ *
  * @package Bitrix\Location\Infrastructure
- * @internal
  */
 final class UserLocation
 {
 	/**
-	 * Try to find user's point as precise as possible
-	 * @return Location
+	 * @return Point
 	 */
-	public static function findUserLocation(): Location
+	public static function getPoint(): Point
 	{
-		$location = self::findLocationByOption();
+		$location = self::getPointByIp();
 
 		if(!$location)
 		{
-			$location = self::findLocationByIp();
-		}
-
-		if(!$location)
-		{
-			$location = self::findLocationByPortalRegion();
+			$location = self::getPointByPortalRegion();
 		}
 
 		return $location;
 	}
 
-	private static function findLocationByIp(string $ipAddress = ''): ?Location
+	/**
+	 * @param string $ipAddress
+	 * @return Point|null
+	 */
+	private static function getPointByIp(string $ipAddress = ''): ?Point
 	{
 		$coordinates = GeoIp\Manager::getGeoPosition($ipAddress);
 		if (
@@ -48,13 +44,13 @@ final class UserLocation
 			return null;
 		}
 
-		return (new Location())
-			->setLatitude($coordinates['latitude'])
-			->setLongitude($coordinates['longitude'])
-			->setType(Location\Type::LOCALITY);
+		return new Point($coordinates['latitude'], $coordinates['longitude']);
 	}
 
-	private static function findLocationByPortalRegion(): Location
+	/**
+	 * @return Point
+	 */
+	private static function getPointByPortalRegion(): Point
 	{
 		$region = self::getCurrentRegion();
 
@@ -81,12 +77,12 @@ final class UserLocation
 
 		$coordinates = $map[$region] ?? [51.509865, -0.118092];
 
-		return (new Location())
-			->setLatitude($coordinates[0])
-			->setLongitude($coordinates[1])
-			->setType(Location\Type::LOCALITY);
+		return (new Point($coordinates[0], $coordinates[1]));
 	}
 
+	/**
+	 * @return string
+	 */
 	private static function getCurrentRegion(): string
 	{
 		$result = null;
@@ -114,27 +110,5 @@ final class UserLocation
 		}
 
 		return $result;
-	}
-
-	/**
-	 * @return Location|null
-	 */
-	private static function findLocationByOption(): ?Location
-	{
-		$lastLocationOptionValue = \CUserOptions::GetOption('location', 'last_selected_location');
-		if ($lastLocationOptionValue)
-		{
-			try
-			{
-				return Location::fromArray(
-					Json::decode(
-						Encoding::convertEncoding($lastLocationOptionValue, SITE_CHARSET, 'UTF-8')
-					)
-				);
-			}
-			catch (ArgumentException $exception) {}
-		}
-
-		return null;
 	}
 }

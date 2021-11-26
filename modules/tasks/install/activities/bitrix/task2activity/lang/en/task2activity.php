@@ -14,6 +14,7 @@ $MESS["BPTA1A_ADD_TO_REPORT_2"] = "Include task in efficiency report";
 $MESS["BPTA1A_ALLOW_TIME_TRACKING"] = "Enable time tracking for task";
 $MESS["BPTA1A_CHANGE_DEADLINE"] = "Responsible person may change deadline";
 $MESS["BPTA1A_CHECK_RESULT"] = "Task requires approval to be closed";
+$MESS["BPTA1A_CHECK_RESULT_V2"] = "Check task upon completion";
 $MESS["BPTA1A_MAKE_SUBTASK"] = "Subtask of";
 $MESS["BPTA1A_TASKACCOMPLICES"] = "Participants";
 $MESS["BPTA1A_TASKACTIVEFROM"] = "Start";

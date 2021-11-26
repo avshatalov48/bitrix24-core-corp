@@ -1,8 +1,15 @@
 import {Type, Event} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {
-	Address as AddressEntity, ControlMode, Format, AddressStringConverter,
-	LocationRepository, ErrorPublisher, FormatTemplateType, AddressType
+	Address as AddressEntity,
+	ControlMode,
+	Format,
+	AddressStringConverter,
+	LocationRepository,
+	ErrorPublisher,
+	FormatTemplateType,
+	AddressType,
+	Storage
 } from 'location.core';
 import State from '../state';
 import BaseFeature from './features/basefeature';
@@ -136,12 +143,14 @@ export default class Address extends EventEmitter
 	 * @param {AddressEntity} address
 	 * @param {BaseFeature} sourceFeature
 	 * @param {Array} excludeFeatures
+	 * @param {Object} options
 	 * @internal
 	 */
 	setAddressByFeature(
 		address: AddressEntity,
 		sourceFeature: BaseFeature,
-		excludeFeatures: Array = []
+		excludeFeatures: Array = [],
+		options: Object = {}
 	): void
 	{
 		const addressId = this.#address ? this.#address.id : 0;
@@ -165,6 +174,14 @@ export default class Address extends EventEmitter
 		}
 
 		this.#address = address;
+
+		const storeAsLastAddress = options.hasOwnProperty('storeAsLastAddress')
+			? options.storeAsLastAddress
+			: true;
+		if (storeAsLastAddress)
+		{
+			this.#storeAsLastAddress();
+		}
 
 		if (addressId > 0)
 		{
@@ -268,7 +285,7 @@ export default class Address extends EventEmitter
 
 		if (value.length > 0)
 		{
-			BX.setCaretPosition(this.#inputNode, value.length - 1);
+			BX.setCaretPosition(this.#inputNode, value.length);
 		}
 	}
 
@@ -408,6 +425,7 @@ export default class Address extends EventEmitter
 		}
 
 		this.#address = address;
+		this.#storeAsLastAddress();
 		this.#executeFeatureMethod('setAddress', [address]);
 		this.#isInputNodeValueUpdated = false;
 		this.#isAddressChangedByFeature = false;
@@ -469,6 +487,18 @@ export default class Address extends EventEmitter
 	subscribeOnErrorEvent(listener: Function): void
 	{
 		ErrorPublisher.getInstance().subscribe(listener);
+	}
+
+	#storeAsLastAddress()
+	{
+		if (
+			this.#address
+			&& this.#address.fieldCollection
+			&& this.#address.fieldCollection.isFieldExists(AddressType.LOCALITY)
+		)
+		{
+			Storage.getInstance().lastAddress = this.#address;
+		}
 	}
 
 	destroy()

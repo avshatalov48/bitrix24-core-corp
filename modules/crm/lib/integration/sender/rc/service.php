@@ -178,4 +178,22 @@ class Service
 		}
 		return $uri->getLocator();
 	}
+
+	public static function getLeadWorkerUrl()
+	{
+		if (!self::canUse())
+		{
+			return null;
+		}
+
+		$uri = new Uri('/marketing/rc/');
+		$uri->addParams([
+			'apply_filter' => 'Y',
+			'REITERATE' => 'Y',
+			'STATE' => Sender\Dispatch\Semantics::getWorkStates(),
+			'MESSAGE_CODE' => 'rc_lead',
+		]);
+
+		return $uri->getLocator();
+	}
 }

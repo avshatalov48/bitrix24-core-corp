@@ -46,6 +46,15 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 		$filterParams['NAVIGATION_BAR'] = $this->arParams['NAVIGATION_BAR'] ?: [];
 		$filterParams['LAZY_LOAD'] = $entity->getFilterLazyLoadParams() ?: false;
 
+		$filterSections = $this->getFilterSections();
+		$filterParams['ENABLE_FIELDS_SEARCH'] = 'Y';
+		$filterParams['HEADERS_SECTIONS'] = $filterSections;
+		$filterParams['CONFIG'] = [
+			'popupColumnsCount' => 4,
+			'popupWidth' => 800,
+			'showPopupInCenter' => true,
+		];
+
 		$this->arResult['filterParams'] = $filterParams;
 
 		return true;
@@ -62,5 +71,17 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 		}
 
 		$this->IncludeComponentTemplate();
+	}
+
+	protected function getFilterSections(): array
+	{
+		$result = [];
+		switch ($this->arParams['ENTITY_TYPE'])
+		{
+			case CCrmOwnerType::DealName:
+				$result =\Bitrix\Crm\Component\EntityList\ClientDataProvider\KanbanDataProvider::getHeadersSections();
+				break;
+		}
+		return $result;
 	}
 }

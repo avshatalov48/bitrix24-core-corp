@@ -40,5 +40,6 @@ $MESS["TASKS_IMPORT_HEADERS_RESPONSIBLE"] = "Verantwortliche Person";
 $MESS["TASKS_IMPORT_HEADERS_START_DATE_PLAN"] = "Aufgabe starten am";
 $MESS["TASKS_IMPORT_HEADERS_TAGS"] = "Tags";
 $MESS["TASKS_IMPORT_HEADERS_TASK_CONTROL"] = "Aufgabenergebnis kontrollieren";
+$MESS["TASKS_IMPORT_HEADERS_TASK_CONTROL_V2"] = "Aufgabe nach Erledigung kontrollieren";
 $MESS["TASKS_IMPORT_HEADERS_TIME_ESTIMATE"] = "Zeitaufwand für Aufgabe, in Sekunden";
 $MESS["TASKS_IMPORT_HEADERS_TITLE"] = "Name";

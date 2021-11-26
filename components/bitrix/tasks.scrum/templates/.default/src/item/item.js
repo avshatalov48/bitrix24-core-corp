@@ -159,7 +159,12 @@ export class Item extends EventEmitter
 
 	setName(name: string)
 	{
-		this.name = (Type.isString(name) ? name : 'Name');
+		this.name = ((Type.isString(name) && name) ? name : '');
+
+		if (!this.name)
+		{
+			throw new Error(Loc.getMessage('TASKS_SCRUM_TASK_ADD_NAME_ERROR'));
+		}
 
 		if (this.isNodeCreated())
 		{

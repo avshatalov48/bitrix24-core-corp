@@ -116,6 +116,8 @@ $APPLICATION->IncludeComponent(
 	array(
 		'GRID_ID' => $gridID,
 		'HEADERS' => isset($arParams['~HEADERS']) ? $arParams['~HEADERS'] : array(),
+		'HEADERS_SECTIONS' => isset($arParams['~HEADERS_SECTIONS']) ? $arParams['~HEADERS_SECTIONS'] : array(),
+		'ENABLE_FIELDS_SEARCH' => isset($arParams['~ENABLE_FIELDS_SEARCH']) ? $arParams['~ENABLE_FIELDS_SEARCH'] : 'N',
 		'SORT' => isset($arParams['~SORT']) ? $arParams['~SORT'] : array(),
 		'SORT_VARS' => isset($arParams['~SORT_VARS']) ? $arParams['~SORT_VARS'] : array(),
 		'ROWS' => isset($arParams['~ROWS']) ? $arParams['~ROWS'] : array(),

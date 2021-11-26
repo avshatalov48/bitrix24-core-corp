@@ -44,7 +44,7 @@ class Bitrix24Restriction
 		}
 		else if ($cache->startDataCache())
 		{
-			$tasksCount = (int)TaskTable::getCount(['ZOMBIE' => 'N']);
+			$tasksCount = TaskTable::getCount();
 			$cache->endDataCache(['tasks_count' => $tasksCount]); // write to cache
 		}
 

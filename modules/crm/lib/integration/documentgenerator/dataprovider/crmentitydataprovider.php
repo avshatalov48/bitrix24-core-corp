@@ -289,7 +289,8 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 					'VALUES' => [
 						'REQUISITE' => $this->getMyCompanyRequisiteId(),
 						'BANK_DETAIL' => $this->getMyCompanyBankDetailId(),
-					]
+					],
+					'isLightMode' => true,
 				],
 			];
 		}
@@ -315,6 +316,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 					'REQUISITE' => $this->getRequisiteId(),
 					'BANK_DETAIL' => $this->getBankDetailId(),
 				],
+				'isLightMode' => true,
 			]
 		];
 		$fields['CONTACT'] = [
@@ -323,6 +325,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CONTACT_TITLE'),
 			'OPTIONS' => [
 				'DISABLE_MY_COMPANY' => true,
+				'isLightMode' => true,
 			],
 		];
 
@@ -366,6 +369,9 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_LEAD_TITLE'),
 				'PROVIDER' => Lead::class,
 				'VALUE' => 'LEAD_ID',
+				'OPTIONS' => [
+					'isLightMode' => true,
+				],
 			];
 		}
 
@@ -1577,6 +1583,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	{
 		return array_merge(parent::getHiddenFields(), [
 			'UTS_OBJECT',
+			'CONTACT_BINDINGS',
 		]);
 	}
 
@@ -1659,7 +1666,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	public function getLangPhrasesPath()
 	{
 		Loc::loadLanguageFile(__FILE__);
-		return Path::getDirectory(__FILE__).'/../phrases';
+		return Path::getDirectory(Path::normalize(__FILE__)).'/../phrases';
 	}
 
 	/**

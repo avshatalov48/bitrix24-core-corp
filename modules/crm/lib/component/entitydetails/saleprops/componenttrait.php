@@ -109,6 +109,7 @@ trait ComponentTrait
 			'personTypeId' => $property['PERSON_TYPE_ID'],
 			'type' => $property['TYPE']
 		);
+
 		$linked = null;
 		if ($linkInfo = $this->getPropertyLinkInfo($property))
 		{
@@ -139,6 +140,11 @@ trait ComponentTrait
 			}
 			$data['items'] = \CCrmInstantEditorHelper::PrepareListOptions($list, $options);
 		}
+		elseif ($lineCount = $this->getPropertyRowsCount($property))
+		{
+			$data['lineCount'] = (string)$lineCount;
+		}
+
 		return array(
 			'name' => $name,
 			'title' => $property['NAME'],
@@ -152,6 +158,42 @@ trait ComponentTrait
 			'optionFlags' => ($property['SHOW_ALWAYS'] === 'Y') ? 1 : 0,
 			'data' => $data
 		);
+	}
+
+	/**
+	 * Extract count of rows from property array or return default value
+	 * @param array $propertyParams
+	 * @return int|null
+	 */
+	protected function getPropertyRowsCount(array $propertyParams): ?int
+	{
+		if (
+			$propertyParams['MULTILINE'] === 'Y'
+			&& $propertyParams['TYPE'] === 'STRING'
+			&& ((int)$propertyParams['ROWS'] > 1)
+		)
+		{
+			return (int)$propertyParams['ROWS'];
+		}
+
+		if (
+			$propertyParams['MULTILINE'] === 'Y'
+			&& $propertyParams['TYPE'] === 'STRING'
+		)
+		{
+			return $this->getDefaultTextareaRowsCount();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get default count of rows in textarea input
+	 * @return int
+	 */
+	protected function getDefaultTextareaRowsCount(): int
+	{
+		return 3;
 	}
 
 	/**

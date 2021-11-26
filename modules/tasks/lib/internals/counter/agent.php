@@ -215,8 +215,7 @@ class Agent
 			SELECT ID, DEADLINE
 			FROM b_tasks 
 			WHERE 
-		  		ZOMBIE = 'N'
-		  		AND STATUS < 4
+		  		STATUS < 4
 		  		AND DEADLINE IS NOT NULL
 		  		AND DEADLINE > NOW()
 		  		AND ID > {$lastId}

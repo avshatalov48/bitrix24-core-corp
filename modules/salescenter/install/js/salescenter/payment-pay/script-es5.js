@@ -8,7 +8,6 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 		this._settings = {};
 		this._container = null;
 		this._wrapper = null;
-		this._url = '';
 		this._paysystems = [];
 		this._paySystemId = null;
 		this._allowPaymentRedirect = null;
@@ -21,7 +20,6 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 				this._settings = settings ? settings : {};
 				this._isViewMode = this.getSetting('viewMode');
 				this._container = BX(this.getSetting('containerId'));
-				this._url = this.getSetting('url') || '';
 				this._paySystemId = BX.prop.getInteger(settings, 'paySystemId', 0);
 				this._allowPaymentRedirect = BX.prop.getBoolean(settings, 'allowPaymentRedirect', true);
 				this._isAllowedSubmitting = (BX.UserConsent === undefined) || this.getSetting('isAllowedSubmitting', false);
@@ -81,6 +79,7 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 				BX.addCustomEvent('onPaySystemAjaxError', BX.proxy(this.showPaymentError, this));
 				BX.addCustomEvent('onPaySystemUpdateTemplate', BX.proxy(this.autoSubmit, this));
 			},
+
 			addReloadPageButton: function()
 			{
 				var resultDiv = BX.create('div', {
@@ -176,7 +175,7 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 				BX.onCustomEvent(this.getSetting('consentEventName'), []);
 
 				paysystemId = Number.parseInt((selected) ? selected.getId() : this._paySystemId);
-				if (!paysystemId || !this._url || !this._isAllowedSubmitting)
+				if (!paysystemId || !this._isAllowedSubmitting)
 				{
 					if (selected)
 					{
@@ -192,29 +191,23 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 				var payButton = this.getPayButton(selected);
 				this.showLoader(payButton);
 
-				var url = this._url;
-				BX.ajax(
+				BX.ajax.runComponentAction(
+					'bitrix:salescenter.payment.pay',
+					'initiatePay',
 					{
-						method: 'POST',
-						dataType: 'json',
-						url: url,
-						data:
-							{
-								sessid: BX.bitrix_sessid(),
-								paysystemId: paysystemId,
-								returnUrl: this.getSetting('returnUrl'),
-								signedParameters: this.getSetting('signedParameters'),
-							},
-						onsuccess: BX.proxy(this.onAfterPay, this)
-					}, this
-				);
+						mode: 'ajax',
+						data: {
+							paysystemId: paysystemId,
+							returnUrl: this.getSetting('returnUrl'),
+						},
+						signedParameters: this.getSetting('signedParameters'),
+					}
+				).then(BX.proxy(this.onAfterPay, this));
 			},
-
 			getPayButton: function(selected)
 			{
 				return selected._wrapper.querySelector('.order-payment-method-item-button');
 			},
-
 			onAfterPay: function(result)
 			{
 				if (!BX.type.isObject(result) || result.status === 'error')
@@ -223,8 +216,8 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 				}
 				else
 				{
-					var url = BX.type.isString(result.url) ? result.url : '',
-						html = BX.type.isString(result.html) ? result.html : '';
+					var url = BX.type.isString(result.data.url) ? result.data.url : '',
+						html = BX.type.isString(result.data.html) ? result.data.html : '';
 
 					if (url && this._allowPaymentRedirect)
 					{
@@ -235,7 +228,22 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 						if (html.length === 0)
 						{
 							this._container.innerHTML = '';
-							var fields = BX.prop.getObject(result, 'fields');
+							var fields = result.data.fields;
+							var fieldsNodes = [];
+							if (fields && fields.SUM_WITH_CURRENCY)
+							{
+								fieldsNodes.push(BX.create('div',{
+									props: {className: 'checkout-basket-personal-order-info-item'},
+									html: '<span>' + BX.message("SPP_EMPTY_TEMPLATE_SUM_WITH_CURRENCY_FIELD") + '</span> <strong>' +  BX.prop.getString(fields, 'SUM_WITH_CURRENCY') + '</strong>'
+								}));
+							}
+							if (fields && fields.PAY_SYSTEM_NAME)
+							{
+								fieldsNodes.push(BX.create('div',{
+									props: {className: 'checkout-basket-personal-order-info-item'},
+									html: '<span>' + BX.message("SPP_EMPTY_TEMPLATE_PAY_SYSTEM_NAME_FIELD") + '</span> <strong>' +  BX.prop.getString(fields, 'PAY_SYSTEM_NAME') + '</strong>'
+								}));
+							}
 							var successMessage = BX.create('div',{
 								props: {className: 'checkout-basket-section'},
 								children: [
@@ -245,17 +253,7 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 									}),
 									BX.create('div',{
 										props: {className: 'checkout-basket-personal-order-info'},
-										children: [
-											BX.create('div',{
-												props: {className: 'checkout-basket-personal-order-info-item'},
-												html: '<span>' + BX.message("SPP_EMPTY_TEMPLATE_SUM_WITH_CURRENCY_FIELD") + '</span> <strong>' +  BX.prop.getString(fields, 'SUM_WITH_CURRENCY') + '</strong>'
-											}),
-
-											BX.create('div',{
-												props: {className: 'checkout-basket-personal-order-info-item'},
-												html: '<span>' + BX.message("SPP_EMPTY_TEMPLATE_PAY_SYSTEM_NAME_FIELD") + '</span> <strong>' +  BX.prop.getString(fields, 'PAY_SYSTEM_NAME') + '</strong>'
-											}),
-										]
+										children: fieldsNodes
 									}),
 								]
 							});
@@ -276,7 +274,6 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 					}
 				}
 			},
-
 			showPaymentError: function(errors)
 			{
 				var errorsList = [
@@ -304,7 +301,6 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 
 				this.addReloadPageButton();
 			},
-
 			showLoader: function(payButton)
 			{
 				payButton.classList.add('order-payment-loader');
@@ -317,7 +313,6 @@ if(typeof(BX.SalesCenter.Component.PaymentPayBase) === "undefined")
 				// 	mode: 'inline'
 				// })).show();
 			},
-
 			createItem: function(id, settings)
 			{
 				return BX.SalesCenter.Component.PaySystemItem.create(id, settings);

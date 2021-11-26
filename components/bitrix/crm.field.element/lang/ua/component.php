@@ -1,6 +1,6 @@
 <?php
 $MESS["CRM_ELEMENT_BUTTON_SELECT"] = "Вибрати";
-$MESS["CRM_SFE_PERMISSION_DENIED"] = "Доступ заборонений";
+$MESS["CRM_SFE_ENTITY_NOT_SELECTED"] = "Не обраний жодний тип сутності в налаштуваннях поля";
 
 $MESS["CRM_ELEMENT_ORDER"] = "Замовлення";
 $MESS["CRM_ELEMENT_LEAD"] = "Ліди";

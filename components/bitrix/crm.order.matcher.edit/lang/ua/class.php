@@ -7,7 +7,6 @@ $MESS["CRM_ORDERFORM_ENTITY_SCHEME_CLIENT"] = "Клієнт";
 $MESS["CRM_ORDERFORM_ENTITY_SCHEME_CLIENT_DESC"] = "контакт чи компанія";
 $MESS["CRM_ORDERFORM_ENTITY_SCHEME_CLIENT_DESC2"] = "Покупець без прив'язки до контакту або компанії";
 $MESS["CRM_ORDERFORM_RELATION_DELIVERY"] = "Служба доставки";
-$MESS["CRM_ORDERFORM_RELATION_LANDING"] = "Лендінги";
 $MESS["CRM_ORDERFORM_RELATION_PAY_SYSTEM"] = "Платіжна система";
 $MESS["CRM_ORDERFORM_REQUIERD_FIELDS_ERROR"] = "Потрібно додати обов'язкові поля";
 $MESS["CRM_ORDERFORM_RESULT_ENTITY_DC_MERGE"] = "Об'єднувати";

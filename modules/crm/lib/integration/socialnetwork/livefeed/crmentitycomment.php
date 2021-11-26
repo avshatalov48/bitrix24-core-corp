@@ -2,14 +2,13 @@
 
 namespace Bitrix\Crm\Integration\Socialnetwork\Livefeed;
 
-use \Bitrix\Socialnetwork\Livefeed\Provider;
-use \Bitrix\Socialnetwork\LogCommentTable;
-use \Bitrix\Main\Config\Option;
+use Bitrix\Socialnetwork\Livefeed\Provider;
+use Bitrix\Socialnetwork\LogCommentTable;
 
-final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
+final class CrmEntityComment extends Provider
 {
-	const PROVIDER_ID = 'CRM_ENTITY_COMMENT';
-	const CONTENT_TYPE_ID = 'CRM_ENTITY_COMMENT';
+	public const PROVIDER_ID = 'CRM_ENTITY_COMMENT';
+	public const CONTENT_TYPE_ID = 'CRM_ENTITY_COMMENT';
 
 	protected $logEventId = null;
 	protected $logEntityType = null;
@@ -48,7 +47,7 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 		];
 	}
 
-	public function getType()
+	public function getType(): string
 	{
 		return Provider::TYPE_COMMENT;
 	}
@@ -114,6 +113,15 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 
 	protected function getAttachedDiskObjects($clone = false)
 	{
+		if (method_exists($this, 'getEntityAttachedDiskObjects'))
+		{
+			return $this->getEntityAttachedDiskObjects([
+				'userFieldEntity' => 'SONET_COMMENT',
+				'userFieldCode' => 'UF_SONET_COM_DOC',
+				'clone' => $clone,
+			]);
+		}
+
 		global $USER_FIELD_MANAGER;
 		static $cache = array();
 
@@ -150,7 +158,7 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 		return $result;
 	}
 
-	public function getLiveFeedUrl()
+	public function getLiveFeedUrl(): string
 	{
 		$result = '';
 		$logId = $this->getLogId();
@@ -164,39 +172,37 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 		return $result;
 	}
 
-	public static function canRead($params)
+	public static function canRead($params): bool
 	{
 		return true;
 	}
 
-	protected function getPermissions(array $post)
+	protected function getPermissions(array $post): string
 	{
-		$result = self::PERMISSION_READ;
-
-		return $result;
+		return self::PERMISSION_READ;
 	}
 
 	public function add($params = array())
 	{
-		global $USER, $DB;
+		global $USER;
 
 		static $parser = null;
 
 		$authorId = (
 			isset($params['AUTHOR_ID'])
-			&& intval($params['AUTHOR_ID']) > 0
-				? intval($params['AUTHOR_ID'])
+			&& (int)$params['AUTHOR_ID'] > 0
+				? (int)$params['AUTHOR_ID']
 				: $USER->getId()
 		);
 
-		$message = (
+		$message = (string)(
 			isset($params['MESSAGE'])
 			&& $params['MESSAGE'] <> ''
 				? $params['MESSAGE']
 				: ''
 		);
 
-		if ($message == '')
+		if ($message === '')
 		{
 			return false;
 		}
@@ -227,7 +233,7 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 			"LOG_ID" => $logId,
 			"RATING_TYPE_ID" => "LOG_COMMENT",
 			"USER_ID" => $authorId,
-			"=LOG_DATE" => $DB->currentTimeFunction(),
+			"=LOG_DATE" => \CDatabase::CurrentTimeFunction(),
 		);
 
 		if (!empty($params['SHARE_DEST']))
@@ -245,60 +251,60 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 		return $sonetCommentId;
 	}
 
-	public function getSuffix()
+	public function getSuffix(): string
 	{
 		$logEventId = $this->getLogEventId();
 
 		if (!empty($logEventId))
 		{
 			$providerCrmLead = new CrmLead();
-			if (in_array($logEventId, $providerCrmLead->getMessageEventId()))
+			if (in_array($logEventId, $providerCrmLead->getMessageEventId(), true))
 			{
 				return 'LEAD_MESSAGE';
 			}
-			if (in_array($logEventId, $providerCrmLead->getEventId()))
+			if (in_array($logEventId, $providerCrmLead->getEventId(), true))
 			{
 				return 'LEAD';
 			}
 
 			$providerCrmContact = new CrmContact();
-			if (in_array($logEventId, $providerCrmContact->getMessageEventId()))
+			if (in_array($logEventId, $providerCrmContact->getMessageEventId(), true))
 			{
 				return 'CONTACT_MESSAGE';
 			}
-			if (in_array($logEventId, $providerCrmContact->getEventId()))
+			if (in_array($logEventId, $providerCrmContact->getEventId(), true))
 			{
 				return 'CONTACT';
 			}
 
 			$providerCrmCompany = new CrmCompany();
-			if(in_array($logEventId, $providerCrmCompany->getMessageEventId()))
+			if(in_array($logEventId, $providerCrmCompany->getMessageEventId(), true))
 			{
 				return 'COMPANY_MESSAGE';
 			}
-			if (in_array($logEventId, $providerCrmCompany->getEventId()))
+			if (in_array($logEventId, $providerCrmCompany->getEventId(), true))
 			{
 				return 'COMPANY';
 			}
 
 			$providerCrmDeal = new CrmDeal();
-			if (in_array($logEventId, $providerCrmDeal->getMessageEventId()))
+			if (in_array($logEventId, $providerCrmDeal->getMessageEventId(), true))
 			{
 				return 'DEAL_MESSAGE';
 			}
-			if (in_array($logEventId, $providerCrmDeal->getEventId()))
+			if (in_array($logEventId, $providerCrmDeal->getEventId(), true))
 			{
 				return 'DEAL';
 			}
 
 			$providerCrmInvoice = new CrmInvoice();
-			if (in_array($logEventId, $providerCrmInvoice->getEventId()))
+			if (in_array($logEventId, $providerCrmInvoice->getEventId(), true))
 			{
 				return 'INVOICE';
 			}
 
 			$providerCrmActivity = new CrmActivity();
-			if (in_array($logEventId, $providerCrmActivity->getEventId()))
+			if (in_array($logEventId, $providerCrmActivity->getEventId(), true))
 			{
 				return 'ACTIVITY';
 			}

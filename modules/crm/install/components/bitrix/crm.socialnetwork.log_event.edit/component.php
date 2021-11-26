@@ -1,5 +1,12 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Text\Emoji;
+
 /** @var CBitrixComponent $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -103,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	{
 		$res = CCrmLiveFeedComponent::ProcessLogEventEditPOST($_POST, $entityTypeID, $entityID, $arResult, $arParams["POST_PROPERTY"]);
 		if(
-			!is_array($res) 
+			!is_array($res)
 			&& intval($res) > 0
 		)
 		{
@@ -211,7 +218,7 @@ if(!empty($hiddenGroups))
 	);
 	while($arGroup = $rsGroup->Fetch())
 	{
-		$arResult['FEED_DESTINATION']['HIDDEN_GROUPS'][$arGroup['ID']] = array('ID' => $arGroup['ID'], 'NAME' => $arGroup['NAME']);
+		$arResult['FEED_DESTINATION']['HIDDEN_GROUPS'][$arGroup['ID']] = array('ID' => $arGroup['ID'], 'NAME' => Emoji::decode($arGroup['NAME']));
 	}
 
 	if(!CSocNetUser::IsCurrentUserModuleAdmin() && $userID > 0)

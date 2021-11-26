@@ -54,6 +54,10 @@ class SalesFunnelFilter extends Base
 				'TRACKING_SOURCE_ID',
 				'TRACKING_CHANNEL_CODE',
 				'PRODUCT_ROW_PRODUCT_ID',
+				'STATUS_ID_FROM_HISTORY',
+				'STATUS_ID_FROM_SUPPOSED_HISTORY',
+				'STATUS_SEMANTIC_ID_FROM_HISTORY',
+				'COMMENTS',
 			];
 
 			$fields = $leadFilter->getFields();
@@ -67,9 +71,11 @@ class SalesFunnelFilter extends Base
 				}
 
 				$field['id'] = 'FROM_LEAD_'.$field['id'];
-				$field['name'] = $field['name'].
-								 ' '.
-								 Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BOARD_FILTER_LEAD_FIELDS_POSTFIX');
+				$field['name'] =
+					$field['name']
+					. ' '
+					. Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BOARD_FILTER_LEAD_FIELDS_POSTFIX')
+				;
 				if (isset($field['type']) && $field['type'] === 'custom_entity')
 				{
 					$field['html'] = str_replace(
@@ -108,6 +114,10 @@ class SalesFunnelFilter extends Base
 			'TRACKING_CHANNEL_CODE',
 			'PRODUCT_ROW_PRODUCT_ID',
 			'STAGE_SEMANTIC_ID',
+			'STAGE_ID_FROM_HISTORY',
+			'STAGE_ID_FROM_SUPPOSED_HISTORY',
+			'STAGE_SEMANTIC_ID_FROM_HISTORY',
+			'COMMENTS',
 		];
 
 		$fields = $dealFilter->getFields();

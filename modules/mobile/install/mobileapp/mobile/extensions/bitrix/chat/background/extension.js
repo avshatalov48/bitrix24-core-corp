@@ -24,6 +24,14 @@
 			{
 				this.actionReactMessage(taskId, params, extra, delay);
 			}
+			else if (type === 'readNotification')
+			{
+				this.actionReadNotification(taskId, params, extra, delay);
+			}
+			else if (type === 'readNotificationList')
+			{
+				this.actionReadNotificationList(taskId, params, extra, delay);
+			}
 		}
 
 		actionReadMessage(taskId, params, extra = false, delay = null)
@@ -44,6 +52,22 @@
 			ChatBackgroundTasks.addTask(taskId, ['im.dialog.read', {
 				'DIALOG_ID': params.dialogId,
 				'MESSAGE_ID': params.lastId
+			}], extra);
+		}
+
+		actionReadNotification(taskId, params, extra = false)
+		{
+			ChatBackgroundTasks.addTask(taskId, ['im.notify.read', {
+				'ID': params.id,
+				'ACTION': params.action
+			}], extra);
+		}
+
+		actionReadNotificationList(taskId, params, extra = false)
+		{
+			ChatBackgroundTasks.addTask(taskId, ['im.notify.read.list', {
+				'IDS': params.ids,
+				'ACTION': params.action
 			}], extra);
 		}
 

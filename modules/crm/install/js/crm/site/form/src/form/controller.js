@@ -193,10 +193,17 @@ class Controller extends Event
 			return false;
 		}
 
-		this.emit(Type.EventTypes.submit);
+		this.loading = true;
+		let promise = Promise.resolve();
+		const eventData = {
+			promise
+		};
+		this.emit(Type.EventTypes.submit, eventData);
+		promise = eventData.promise || promise;
 
 		if (!this.provider.submit)
 		{
+			this.loading = false;
 			return true;
 		}
 
@@ -205,19 +212,15 @@ class Controller extends Event
 			return acc;
 		}, {});
 
-		this.loading = true;
-
-
 		let formData = new FormData();
 		formData.set('values', JSON.stringify(this.values()));
 		formData.set('properties', JSON.stringify(this.#properties));
 		formData.set('consents', JSON.stringify(consents));
 		formData.set('recaptcha', this.recaptcha.getResponse());
 
-		let promise;
 		if (typeof this.provider.submit === 'string')
 		{
-			promise = window.fetch(this.provider.submit, {
+			promise = promise.then(() => window.fetch(this.provider.submit, {
 				method: 'POST',
 				mode: 'cors',
 				cache: 'no-cache',
@@ -225,11 +228,16 @@ class Controller extends Event
 					'Origin': window.location.origin,
 				},
 				body: formData
-			})
+			}));
+
+
 		}
 		else if (typeof this.provider.submit === 'function')
 		{
-			promise = this.provider.submit(this, formData);
+			promise = promise.then(() => {
+				formData.set('properties', JSON.stringify(this.#properties));
+				return this.provider.submit(this, formData);
+			});
 		}
 
 		promise.then((data: Type.SubmitResponse) => {
@@ -557,6 +565,10 @@ class Controller extends Event
 		if (!key || typeof key !== 'string')
 		{
 			return;
+		}
+		if (value && value.toString)
+		{
+			value = value.toString();
 		}
 		if (typeof value !== 'string')
 		{

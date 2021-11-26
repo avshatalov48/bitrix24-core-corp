@@ -6,3 +6,5 @@ $MESS["TASKS_SCRUM_DOD_INFO_TEXT"] = "Для завершения задачи �
 $MESS["TASKS_SCRUM_DOD_CONFIRM_TEXT_COMPLETE"] = "Вы хотите завершить задачу или сохранить Definition of Done?";
 $MESS["TASKS_SCRUM_DOD_CONFIRM_COMPLETE_BUTTON_TEXT"] = "Завершить";
 $MESS["TASKS_SCRUM_DOD_CONFIRM_SAVE_BUTTON_TEXT"] = "Сохранить";
+$MESS["TASKS_SCRUM_DOD_CONFIRM_CLOSE_BUTTON_TEXT"] = "Закрыть";
+$MESS["TASKS_SCRUM_DOD_LABEL_EMPTY"] = "Необходимо настроить Definition of Done";

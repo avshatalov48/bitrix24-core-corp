@@ -198,10 +198,12 @@ abstract class ItemDetail extends Base implements Controllerable
 			foreach($userFields as $userField)
 			{
 				$fieldName = $userField->getName();
+				$itemId = (int)$this->item->getId();
+
 				$fieldInfo = [
 					'USER_TYPE_ID' => $userField->getUserTypeId(),
 					'ENTITY_ID' => $this->type->getItemUserFieldsEntityId(),
-					'ENTITY_VALUE_ID' => $this->item->getId(),
+					'ENTITY_VALUE_ID' => $itemId,
 					'FIELD' => $fieldName,
 					'MULTIPLE' => $userField['MULTIPLE'],
 					'MANDATORY' => $userField['MANDATORY'],
@@ -211,6 +213,14 @@ abstract class ItemDetail extends Base implements Controllerable
 				if($userField['USER_TYPE_ID'] === 'enumeration')
 				{
 					$enumerationFields[$fieldName] = $userField;
+				}
+
+				if($userField['USER_TYPE_ID'] === 'file')
+				{
+					$urlTemplate = Driver::getInstance()
+						->getUrlManager()
+						->getFileUrlTemplate($this->type->getId(), $itemId, $fieldName);
+					$fieldInfo['ADDITIONAL']['URL_TEMPLATE'] = $urlTemplate;
 				}
 
 				$formFields[$fieldName] = [
@@ -228,7 +238,7 @@ abstract class ItemDetail extends Base implements Controllerable
 				$enumInfos = $this->prepareEnumerationInfos($enumerationFields);
 				foreach($enumInfos as $fieldName => $enums)
 				{
-					if(isset($this->userFieldInfos[$fieldName]['data']['fieldInfo']))
+					if(isset($formFields[$fieldName]['data']['fieldInfo']))
 					{
 						$formFields[$fieldName]['data']['fieldInfo']['ENUM'] = $enums;
 					}
@@ -504,7 +514,8 @@ abstract class ItemDetail extends Base implements Controllerable
 
 	protected function processData(array $data): void
 	{
-		foreach($this->prepareDataToSet($data) as $name => $value)
+		$prepareDataToSet = $this->prepareDataToSet($data);
+		foreach($prepareDataToSet as $name => $value)
 		{
 			$this->item->set($name, $value);
 		}
@@ -521,6 +532,16 @@ abstract class ItemDetail extends Base implements Controllerable
 			$userField = $userFields->getByName($name);
 			if($userField)
 			{
+				$currentValue = $this->item->get($userField->getName());
+				$isValueEmpty = $userField->isValueEmpty($value);
+				if ($userField->isValueEmpty($currentValue) && $isValueEmpty)
+				{
+					continue;
+				}
+				if ($isValueEmpty)
+				{
+					$value = $userField->prepareNullValue($value);
+				}
 				$deletedFieldName = $name . '_del';
 				if(isset($data[$deletedFieldName]) && $userField->isBaseTypeFile())
 				{
@@ -533,13 +554,14 @@ abstract class ItemDetail extends Base implements Controllerable
 						$value = null;
 					}
 				}
-				if($userField->getUserTypeId() === DoubleType::USER_TYPE_ID)
+				if(is_string($value) && $userField->getUserTypeId() === DoubleType::USER_TYPE_ID)
 				{
 					$value = str_replace(',', '.', $value);
 				}
 				$setData[$name] = $value;
 			}
 		}
+
 		return $setData;
 	}
 

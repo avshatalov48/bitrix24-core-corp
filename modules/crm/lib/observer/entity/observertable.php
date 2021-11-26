@@ -1,10 +1,14 @@
 <?php
 namespace Bitrix\Crm\Observer\Entity;
 
+use Bitrix\Crm\DealTable;
+use Bitrix\Crm\LeadTable;
 use Bitrix\Main;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
+use Bitrix\Main\ORM\Query\Join;
 
 /**
  * Class ObserverTable
@@ -53,6 +57,18 @@ class ObserverTable extends DataManager
 				->configureRequired(),
 			(new DatetimeField('LAST_UPDATED_TIME'))
 				->configureRequired(),
+			(new Main\ORM\Fields\Relations\Reference(
+				'DEAL',
+				DealTable::class,
+				Join::on('this.ENTITY_ID', 'ref.ID')
+					->where('this.ENTITY_TYPE_ID', \CCrmOwnerType::Deal)
+			)),
+			(new Main\ORM\Fields\Relations\Reference(
+				'LEAD',
+				LeadTable::class,
+				Join::on('this.ENTITY_ID', 'ref.ID')
+					->where('this.ENTITY_TYPE_ID', \CCrmOwnerType::Lead)
+			)),
 		];
 	}
 

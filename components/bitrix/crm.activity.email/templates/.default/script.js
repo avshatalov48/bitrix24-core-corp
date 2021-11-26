@@ -32,13 +32,13 @@
 			this.__log = {'a': 0, 'b': 0};
 
 			var details = BX('crm-activity-email-details-'+this.options.activityId);
-	
+
 			var moreA = BX.findChildByClassName(details.parentNode, 'crm-task-list-mail-more-a', true);
 			BX.bind(moreA, 'click', this.handleLogClick.bind(this, 'a'));
 
 			var moreB = BX.findChildByClassName(details.parentNode, 'crm-task-list-mail-more-b', true);
 			BX.bind(moreB, 'click', this.handleLogClick.bind(this, 'b'));
-	
+
 			var items = BX.findChildrenByClassName(details.parentNode, 'crm-task-list-mail-item', true);
 			for (var i in items)
 			{
@@ -621,16 +621,23 @@
 
 	BXCrmActivityEmail.handleFormSubmitSuccess = function (form, data)
 	{
-		if (data.ERROR && data.ERROR.length > 0)
+		if (data.ERROR && data.ERROR.length > 0 || data.ERROR_HTML && data.ERROR_HTML.length > 0)
 		{
-			var errorNode = document.createElement('DIV');
+			data.ERROR = !data.ERROR? [] : data.ERROR;
+			data.ERROR = !BX.type.isArray(data.ERROR)? [data.ERROR]  : data.ERROR;
 
-			if (!BX.type.isArray(data.ERROR))
-				data.ERROR = [data.ERROR];
+			var errorNode = document.createElement('DIV');
 			for (var i = 0; i < data.ERROR.length; i++)
 			{
 				errorNode.appendChild(document.createTextNode(data.ERROR[i]));
 				errorNode.appendChild(document.createElement('BR'));
+			}
+
+			data.ERROR_HTML = !data.ERROR_HTML? [] : data.ERROR_HTML;
+			data.ERROR_HTML = !BX.type.isArray(data.ERROR_HTML)? [data.ERROR_HTML]  : data.ERROR_HTML;
+			for (var j = 0; j < data.ERROR_HTML.length; ++j)
+			{
+				errorNode.innerHTML += data.ERROR_HTML[i] + "<br>";
 			}
 
 			form.showError(errorNode.innerHTML);

@@ -834,7 +834,6 @@ class CTaskTemplates
 	 */
 	private static function doSafeDelete($templateId)
 	{
-		// set ZOMBIE = 'Y'
 		$connection = Application::getConnection();
 		$connection->queryExecute('UPDATE b_tasks_template SET ZOMBIE = \'Y\' WHERE ID = ' . $templateId);
 

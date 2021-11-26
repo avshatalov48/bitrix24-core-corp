@@ -62,6 +62,8 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		'VOTE_BEFORE_FINISH',
 		'VOTE_CLOSING_DELAY',
 		'VOTE_ENABLE_TIME_LIMIT',
+		'USE_WELCOME_FORM',
+		'WELCOME_FORM_DELAY',
 
 		'CATEGORY_ENABLE'
 	];
@@ -473,13 +475,16 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 			$result['queueUsers'] = $this->getQueueUsers($this->arResult['CONFIG']['QUEUE']);
 
-			foreach ($this->arResult['CONFIG']['QUEUE_USERS_FIELDS'] as $key => $userFields)
+			if (!empty($this->arResult['CONFIG']['QUEUE_USERS_FIELDS']))
 			{
-				if (empty($userFields['USER_AVATAR']))
+				foreach ($this->arResult['CONFIG']['QUEUE_USERS_FIELDS'] as $key => $userFields)
 				{
-					$userFields['USER_AVATAR'] = Im\User::getInstance($key)->getAvatar();
+					if (empty($userFields['USER_AVATAR']))
+					{
+						$userFields['USER_AVATAR'] = Im\User::getInstance($key)->getAvatar();
+					}
+					$result['queueUsersFields'][$key] = $userFields;
 				}
-				$result['queueUsersFields'][$key] = $userFields;
 			}
 
 			//TODO ui 20.400.0
@@ -1134,29 +1139,32 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 		$usersId = [];
 
-		foreach ($post['CONFIG']['QUEUE'] as $queue)
+		if (!empty($post['CONFIG']['QUEUE']))
 		{
-			$this->arResult['CONFIG']['configQueue'][] = [
-				'ENTITY_TYPE' => $queue['type'],
-				'ENTITY_ID' => $queue['id']
-			];
-
-			if($queue['type'] === 'user')
+			foreach ($post['CONFIG']['QUEUE'] as $queue)
 			{
-				if(in_array($queue['id'], $usersId, false) === false)
-				{
-					$usersId[] = $queue['id'];
-				}
+				$this->arResult['CONFIG']['configQueue'][] = [
+					'ENTITY_TYPE' => $queue['type'],
+					'ENTITY_ID' => $queue['id']
+				];
 
-			}
-			elseif($queue['type'] === 'department')
-			{
-				$usersDepartment = QueueManager::getUsersDepartment($queue['id']);
-				while ($userId = $usersDepartment->fetch()['ID'])
+				if($queue['type'] === 'user')
 				{
-					if(in_array($userId, $usersId, false) === false)
+					if(in_array($queue['id'], $usersId, false) === false)
 					{
-						$usersId[] = $userId;
+						$usersId[] = $queue['id'];
+					}
+
+				}
+				elseif($queue['type'] === 'department')
+				{
+					$usersDepartment = QueueManager::getUsersDepartment($queue['id']);
+					while ($userId = $usersDepartment->fetch()['ID'])
+					{
+						if(in_array($userId, $usersId, false) === false)
+						{
+							$usersId[] = $userId;
+						}
 					}
 				}
 			}
@@ -1269,6 +1277,12 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			$this->userPermissions = Permissions::createWithCurrentUser();
 
 			$this->arResult['PATH_TO_LIST'] = Common::getContactCenterPublicFolder();
+			if (Loader::includeModule('crm'))
+			{
+				$this->arResult['CRM_INSTALLED'] = true;
+				$this->arResult['CRM_FORMS_LIST'] = \Bitrix\Crm\WebForm\Manager::getActiveForms();
+				$this->arResult['CRM_FORMS_CREATE_LINK'] = \Bitrix\Crm\WebForm\Manager::getEditUrl();
+			}
 
 			if(
 				$this->request->getQuery('action') === 'imopenlines_create_qa_list'

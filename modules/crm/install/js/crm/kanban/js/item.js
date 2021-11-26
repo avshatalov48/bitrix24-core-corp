@@ -329,6 +329,7 @@ BX.CRM.Kanban.Item.prototype = {
 			{
 				// don't show main fields
 				var code = this.data.fields[i].code;
+				var type = this.data.fields[i].hasOwnProperty('type') ? this.data.fields[i].type : 'string';
 				if (code === "TITLE")
 				{
 					this.switchVisible(this.link, true);
@@ -353,84 +354,52 @@ BX.CRM.Kanban.Item.prototype = {
 					continue;
 				}
 
-				var userPic = null;
-
-				if ((code === "ASSIGNED_BY_ID" || code === "RESPONSIBLE_ID") && this.data.fields[i].value.picture)
-				{
-					userPic = " style=\"background-image: url(" + encodeURI(this.data.fields[i].value.picture) + ")\"";
-				}
-
 				var params = {
 					props: {
-					className: "crm-kanban-item-fields-item-value"
+						className: "crm-kanban-item-fields-item-value"
 					}
 				};
 
-				if (code === "ASSIGNED_BY_ID" || code === "RESPONSIBLE_ID")
+				if (type === 'user')
 				{
 					if (this.data.fields[i].html === true)
 					{
-						var itemUserPic = '';
-						var itemUserName = '';
-
-						if (this.data.fields[i].value.link === '')
+						if (BX.Type.isPlainObject(this.data.fields[i].value))
 						{
-							itemUserPic = "<span class=\"crm-kanban-item-fields-item-value-userpic\"></span>";
-							itemUserName = "<span class=\"crm-kanban-item-fields-item-value-name\">" + this.data.fields[i].value.title + "</span>";
+							var itemUserPic = '';
+							var itemUserName = '';
+
+							if (this.data.fields[i].value.link === '')
+							{
+								itemUserPic = "<span class=\"crm-kanban-item-fields-item-value-userpic\"></span>";
+								itemUserName = "<span class=\"crm-kanban-item-fields-item-value-name\">" + this.data.fields[i].value.title + "</span>";
+							}
+							else
+							{
+								var userPic = '';
+								if (this.data.fields[i].value.picture)
+								{
+									userPic = " style=\"background-image: url(" + encodeURI(this.data.fields[i].value.picture) + ")\"";
+								}
+								itemUserPic = "<a class=\"crm-kanban-item-fields-item-value-userpic\" href=\"" + this.data.fields[i].value.link + "\"" + userPic + "></a>";
+								itemUserName = "<a class=\"crm-kanban-item-fields-item-value-name\" href=\"" + this.data.fields[i].value.link + "\">" + this.data.fields[i].value.title + "</a>";
+							}
+							params['html'] = "<div class=\"crm-kanban-item-fields-item-value-user\">"
+								+ itemUserPic
+								+ itemUserName
+								+ "</div>";
 						}
 						else
 						{
-							itemUserPic = "<a class=\"crm-kanban-item-fields-item-value-userpic\" href=\"" + this.data.fields[i].value.link + "\"" + userPic + "></a>";
-							itemUserName = "<a class=\"crm-kanban-item-fields-item-value-name\" href=\"" + this.data.fields[i].value.link + "\">" + this.data.fields[i].value.title + "</a>";
+							params['html'] = BX.Type.isArray(this.data.fields[i].value)
+								? this.data.fields[i].value.join(', ')
+								: this.data.fields[i].value
+							;
 						}
-						params['html'] = "<div class=\"crm-kanban-item-fields-item-value-user\">"
-							+ itemUserPic
-							+ itemUserName
-							+ "</div>";
 					}
 					else
 					{
 						params['text'] = this.getMessage('noname');
-					}
-				}
-				else if(code === 'ORDER_STAGE')
-				{
-					var cssPostfix = '';
-					if (this.data.fields[i].value.code === 'PAID')
-					{
-						cssPostfix = 'paid';
-					}
-					else if (this.data.fields[i].value.code === 'SENT_NO_VIEWED')
-					{
-						cssPostfix = 'send';
-					}
-					else if (this.data.fields[i].value.code === 'VIEWED_NO_PAID')
-					{
-						cssPostfix = 'seen';
-					}
-					else if (this.data.fields[i].value.code === 'PAYMENT_CANCEL')
-					{
-						cssPostfix = 'cancel';
-					}
-					else if (this.data.fields[i].value.code === 'REFUND')
-					{
-						cssPostfix = 'refund';
-					}
-
-					params['html'] = '<div class="crm-kanban-item-status crm-kanban-item-status-'+cssPostfix+'">'+this.data.fields[i].value.title+'</div>'
-				}
-				else if(code === 'DELIVERY_STAGE')
-				{
-					try
-					{
-						var title = this.data.fields[i].value.STAGE.TITLE;
-						var code = this.data.fields[i].value.STAGE.CODE;
-						var cssPostfix = (code === 'SHIPPED') ? 'shipped' : 'no-shipped';
-						params['html'] = '<div class="crm-kanban-item-status crm-kanban-item-status-' + cssPostfix + '">' + title + '</div>';
-					}
-					catch (err)
-					{
-						//
 					}
 				}
 				else if(
@@ -438,13 +407,56 @@ BX.CRM.Kanban.Item.prototype = {
 					|| this.data.fields[i].html === true
 				)
 				{
-					params['html'] = this.data.fields[i].value;
+					var delimiter = this.data.fields[i].valueDelimiter ? this.data.fields[i].valueDelimiter : '<br>';
+					params['html'] = BX.Type.isArray(this.data.fields[i].value)
+						? this.data.fields[i].value.join(delimiter)
+						: this.data.fields[i].value
+					;
 				}
 				else
 				{
-					params['text'] = this.data.fields[i].value;
+					params['text'] = BX.Type.isArray(this.data.fields[i].value)
+						? this.data.fields[i].value.join(', ')
+						: this.data.fields[i].value
+					;
 				}
 
+				var titleNodes = [];
+				if (this.data.fields[i].icon && this.data.fields[i].icon.url && this.data.fields[i].icon.url.length)
+				{
+					titleNodes.push(
+						BX.create(
+							'div',
+							{
+								props: {
+									className: 'crm-kanban-item-fields-item-title-icon'
+								},
+								children: [
+									BX.create(
+										'img',
+										{
+											props: {
+												src: this.data.fields[i].icon.url,
+												title: this.data.fields[i].icon.title ? this.data.fields[i].icon.title : ''
+											}
+										}
+									)
+								]
+							}
+						)
+					);
+				}
+				titleNodes.push(
+					BX.create(
+						'div',
+						{
+							props: {
+								className: 'crm-kanban-item-fields-item-title-text'
+							},
+							html: this.data.fields[i].title
+						}
+					)
+				);
 				this.fieldsWrapper.appendChild(BX.create("div", {
 					props: {
 						className: "crm-kanban-item-fields-item"
@@ -454,7 +466,7 @@ BX.CRM.Kanban.Item.prototype = {
 							props: {
 								className: "crm-kanban-item-fields-item-title"
 							},
-							html: this.data.fields[i].title
+							children: titleNodes
 						}),
 						BX.create("div", params)
 					]
@@ -1172,10 +1184,29 @@ BX.CRM.Kanban.Item.prototype = {
 		var type = BX.data(BX.proxy_context, "type");
 		var contactInfo = this.getContactInfo(type);
 
-		if (
-			typeof contactInfo === 'object'
-			&& Object.keys(contactInfo).length > 1
-		)
+		var totalContactsCount = 0;
+		if (typeof contactInfo === 'object')
+		{
+			if (Array.isArray(contactInfo))
+			{
+				totalContactsCount = contactInfo.length;
+			}
+			else
+			{
+				totalContactsCount =
+					Object
+						.values(contactInfo)
+						.reduce(
+							function(count, item) {
+								return count + (Array.isArray(item) ? item.length : 0);
+							},
+							0
+						)
+				;
+			}
+		}
+
+		if (totalContactsCount > 1)
 		{
 			this.showManyContacts(contactInfo, type);
 		}
@@ -1797,7 +1828,17 @@ BX.CRM.Kanban.Item.prototype = {
 	isChangedInPullRequest: function()
 	{
 		return (this.changedInPullRequest === true);
-	}
+	},
+
+	/**
+	 * @returns {boolean}
+	 */
+	isItemMoveDisabled: function()
+	{
+		var itemColumnData = this.getColumn().getData();
+		var grid = this.getGrid();
+		return (grid.getTypeInfoParam('disableMoveToWin') && itemColumnData.type === "WIN");
+	},
 }
 
 })();

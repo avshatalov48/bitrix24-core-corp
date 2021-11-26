@@ -10,9 +10,9 @@ class Deeplink
 	private const iosBundleID = "com.bitrixsoft.cpmobile";
 	private const iosID = "561683423";
 
-	public static function getAuthLink($intent)
+	public static function getAuthLink($intent, int $userId = null)
 	{
-		$hash = Auth::getOneTimeAuthHash();
+		$hash = Auth::getOneTimeAuthHash($userId);
 		$request = Context::getCurrent()->getRequest();
 		$server = Context::getCurrent()->getServer();
 		$host = defined('BX24_HOST_NAME') ? BX24_HOST_NAME : $server->getHttpHost();

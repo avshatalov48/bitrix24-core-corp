@@ -1,9 +1,14 @@
-<?
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\UI;
 use \Bitrix\Tasks\Util\Type;
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -16,8 +21,6 @@ $taskData = $arResult["DATA"]["TASK"];
 $can = $arResult["CAN"]["TASK"]["ACTION"];
 
 \Bitrix\Main\UI\Extension::load("ui.notification");
-
-
 
 if (!intval($arParams['ID']))
 {
@@ -433,23 +436,43 @@ $arResult["LIKE_TEMPLATE"] = (
 		: $arParams["RATING_TYPE"]
 );
 
-
-if (
-	!$arParams["PUBLIC_MODE"]
-	&& $arResult["LIKE_TEMPLATE"] == 'like_react'
-	&& empty($arResult['TOP_RATING_DATA'])
-)
+if (!$arParams["PUBLIC_MODE"])
 {
-	$ratingData = \CRatings::getEntityRatingData(array(
-		'entityTypeId' => 'TASK',
-		'entityId' => array($arResult["DATA"]["TASK"]["ID"]),
-	));
-
 	if (
-		!empty($ratingData)
-		&& !empty($ratingData[$arResult["DATA"]["TASK"]["ID"]])
+		$arResult["LIKE_TEMPLATE"] == 'like_react'
+		&& empty($arResult['TOP_RATING_DATA'])
 	)
 	{
-		$arResult['TOP_RATING_DATA'] = $ratingData[$arResult["DATA"]["TASK"]["ID"]];
+		$ratingData = \CRatings::getEntityRatingData(array(
+			'entityTypeId' => 'TASK',
+			'entityId' => array($arResult["DATA"]["TASK"]["ID"]),
+		));
+
+		if (
+			!empty($ratingData)
+			&& !empty($ratingData[$arResult["DATA"]["TASK"]["ID"]])
+		)
+		{
+			$arResult['TOP_RATING_DATA'] = $ratingData[$arResult["DATA"]["TASK"]["ID"]];
+		}
+	}
+
+	if (Bitrix\Main\Loader::includeModule('socialnetwork'))
+	{
+		$arResult['CONTENT_ID'] = 'TASK-' . $arResult['DATA']['TASK']['ID'];
+
+		if (
+			($contentViewData = \Bitrix\Socialnetwork\Item\UserContentView::getViewData([
+				'contentId' => [ $arResult['CONTENT_ID'] ],
+			]))
+			&& !empty($contentViewData[$arResult['CONTENT_ID']])
+		)
+		{
+			$arResult['CONTENT_VIEW_CNT'] = (int)$contentViewData[$arResult['CONTENT_ID']]['CNT'];
+		}
+		else
+		{
+			$arResult['CONTENT_VIEW_CNT'] = 0;
+		}
 	}
 }

@@ -1,19 +1,22 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2015 Bitrix
+ * @copyright 2001-2021 Bitrix
  */
+
 namespace Bitrix\Main\Config;
 
 use Bitrix\Main;
 
 class Option
 {
-	const CACHE_DIR = "b_option";
+	protected const CACHE_DIR = "b_option";
 
-	protected static $options = array();
+	protected static $options = [];
+	protected static $loading = [];
 
 	/**
 	 * Returns a value of an option.
@@ -23,31 +26,14 @@ class Option
 	 * @param string $default The default value to return, if a value doesn't exist.
 	 * @param bool|string $siteId The site ID, if the option differs for sites.
 	 * @return string
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
 	 */
 	public static function get($moduleId, $name, $default = "", $siteId = false)
 	{
-		if ($moduleId == '')
-			throw new Main\ArgumentNullException("moduleId");
-		if ($name == '')
-			throw new Main\ArgumentNullException("name");
+		$value = static::getRealValue($moduleId, $name, $siteId);
 
-		if (!isset(self::$options[$moduleId]))
+		if ($value !== null)
 		{
-			static::load($moduleId);
-		}
-
-		if ($siteId === false)
-		{
-			$siteId = static::getDefaultSite();
-		}
-
-		$siteKey = ($siteId == ""? "-" : $siteId);
-
-		if (isset(self::$options[$moduleId][$siteKey][$name]))
-		{
-			return self::$options[$moduleId][$siteKey][$name];
+			return $value;
 		}
 
 		if (isset(self::$options[$moduleId]["-"][$name]))
@@ -79,9 +65,18 @@ class Option
 	public static function getRealValue($moduleId, $name, $siteId = false)
 	{
 		if ($moduleId == '')
+		{
 			throw new Main\ArgumentNullException("moduleId");
+		}
 		if ($name == '')
+		{
 			throw new Main\ArgumentNullException("name");
+		}
+
+		if (isset(self::$loading[$moduleId]))
+		{
+			trigger_error("Options are already in the process of loading for the module {$moduleId}. Default value will be used for the option {$name}.", E_USER_WARNING);
+		}
 
 		if (!isset(self::$options[$moduleId]))
 		{
@@ -112,25 +107,38 @@ class Option
 	 */
 	public static function getDefaults($moduleId)
 	{
-		static $defaultsCache = array();
+		static $defaultsCache = [];
+
 		if (isset($defaultsCache[$moduleId]))
+		{
 			return $defaultsCache[$moduleId];
+		}
 
 		if (preg_match("#[^a-zA-Z0-9._]#", $moduleId))
+		{
 			throw new Main\ArgumentOutOfRangeException("moduleId");
+		}
 
 		$path = Main\Loader::getLocal("modules/".$moduleId."/default_option.php");
 		if ($path === false)
-			return $defaultsCache[$moduleId] = array();
+		{
+			$defaultsCache[$moduleId] = [];
+			return $defaultsCache[$moduleId];
+		}
 
 		include($path);
 
 		$varName = str_replace(".", "_", $moduleId)."_default_option";
 		if (isset(${$varName}) && is_array(${$varName}))
-			return $defaultsCache[$moduleId] = ${$varName};
+		{
+			$defaultsCache[$moduleId] = ${$varName};
+			return $defaultsCache[$moduleId];
+		}
 
-		return $defaultsCache[$moduleId] = array();
+		$defaultsCache[$moduleId] = [];
+		return $defaultsCache[$moduleId];
 	}
+
 	/**
 	 * Returns an array of set options array(name => value).
 	 *
@@ -142,7 +150,9 @@ class Option
 	public static function getForModule($moduleId, $siteId = false)
 	{
 		if ($moduleId == '')
+		{
 			throw new Main\ArgumentNullException("moduleId");
+		}
 
 		if (!isset(self::$options[$moduleId]))
 		{
@@ -182,9 +192,12 @@ class Option
 
 		if($loadFromDb)
 		{
+			self::$loading[$moduleId] = true;
+
 			$con = Main\Application::getConnection();
 			$sqlHelper = $con->getSqlHelper();
 
+			// prevents recursion and cache miss
 			self::$options[$moduleId] = ["-" => []];
 
 			$query = "
@@ -221,9 +234,11 @@ class Option
 			{
 				$cache->set("b_option:{$moduleId}", self::$options[$moduleId]);
 			}
+
+			unset(self::$loading[$moduleId]);
 		}
 
-		/*ZDUyZmZNzYxZDQ1NWY0MTM5ODcxNjBiMzdjNjkxNzZhNGFkMTA=*/$GLOBALS['____2142636339']= array(base64_decode('ZXhwbG9kZ'.'Q=='),base64_decode(''.'cGFjaw'.'=='),base64_decode(''.'bW'.'Q1'),base64_decode('Y29uc3R'.'hb'.'nQ'.'='),base64_decode('a'.'GFzaF9o'.'bWFj'),base64_decode('c'.'3RyY21'.'w'),base64_decode('aX'.'Nfb2J'.'qZWN0'),base64_decode('Y2F'.'sbF'.'91c2V'.'yX'.'2'.'Z1bm'.'M'.'='),base64_decode(''.'Y'.'2'.'Fsb'.'F91c2'.'VyX2Z1bmM'.'='),base64_decode('Y2FsbF91c2'.'Vy'.'X2'.'Z1bm'.'M='),base64_decode(''.'Y2F'.'s'.'b'.'F91c2Vy'.'X'.'2Z'.'1bm'.'M'.'='),base64_decode('Y2FsbF9'.'1c2Vy'.'X'.'2'.'Z1bmM='));if(!function_exists(__NAMESPACE__.'\\___2009289932')){function ___2009289932($_2106552608){static $_770571296= false; if($_770571296 == false) $_770571296=array('LQ==','bWFpbg'.'='.'=','bW'.'F'.'pbg==','L'.'Q==','b'.'W'.'Fpbg==','fl'.'BBUkFNX01BWF9VU0VS'.'Uw==','LQ==','bWFpbg==','fl'.'B'.'B'.'UkFNX01'.'B'.'WF9VU0V'.'SUw'.'==','Lg='.'=',''.'S'.'Co=','Yml0'.'c'.'m'.'l4','T'.'ElDR'.'U5TR'.'V9LR'.'Vk'.'=','c2hhMjU2','LQ==','bW'.'F'.'pbg==',''.'f'.'lBBU'.'kFNX01B'.'W'.'F9VU0'.'VSUw==','LQ'.'==','bWFpb'.'g==',''.'UEFSQ'.'U1fTUFYX1VT'.'RV'.'J'.'T','VVNF'.'Ug==',''.'VV'.'NFUg==','V'.'VNFUg'.'='.'=','SXNBdXRo'.'b3Jpe'.'m'.'Vk',''.'VVNFUg==','SXNBZG1pbg==','Q'.'VB'.'QTElD'.'QVRJT'.'04=',''.'UmVzdG'.'Fy'.'dEJ1Z'.'mZlcg==','T'.'G'.'9jY'.'WxSZWRpcmV'.'jdA==','L2xp'.'Y2Vuc2Vfc'.'mVzdHJpY'.'3Rpb24u'.'c'.'Gh'.'w',''.'LQ='.'=','bWFpbg'.'==','fl'.'BBUkFN'.'X0'.'1BW'.'F9'.'VU0VSU'.'w==',''.'LQ'.'==','bWFpbg'.'==','U'.'E'.'F'.'SQU1fTUFY'.'X1VTRVJT',''.'XEJpdHJpe'.'F'.'x'.'NY'.'WluXE'.'N'.'vbmZ'.'p'.'Z1'.'x'.'PcHR'.'p'.'b24'.'6On'.'Nld'.'A==','bWFpb'.'g==','UE'.'FS'.'QU1f'.'TUF'.'YX'.'1VTRVJT');return base64_decode($_770571296[$_2106552608]);}};if(isset(self::$options[___2009289932(0)][___2009289932(1)]) && $moduleId === ___2009289932(2)){ if(isset(self::$options[___2009289932(3)][___2009289932(4)][___2009289932(5)])){ $_1460709446= self::$options[___2009289932(6)][___2009289932(7)][___2009289932(8)]; list($_321977917, $_1413118974)= $GLOBALS['____2142636339'][0](___2009289932(9), $_1460709446); $_1827924133= $GLOBALS['____2142636339'][1](___2009289932(10), $_321977917); $_1572652787= ___2009289932(11).$GLOBALS['____2142636339'][2]($GLOBALS['____2142636339'][3](___2009289932(12))); $_957622741= $GLOBALS['____2142636339'][4](___2009289932(13), $_1413118974, $_1572652787, true); self::$options[___2009289932(14)][___2009289932(15)][___2009289932(16)]= $_1413118974; self::$options[___2009289932(17)][___2009289932(18)][___2009289932(19)]= $_1413118974; if($GLOBALS['____2142636339'][5]($_957622741, $_1827924133) !==(1372/2-686)){ if(isset($GLOBALS[___2009289932(20)]) && $GLOBALS['____2142636339'][6]($GLOBALS[___2009289932(21)]) && $GLOBALS['____2142636339'][7](array($GLOBALS[___2009289932(22)], ___2009289932(23))) &&!$GLOBALS['____2142636339'][8](array($GLOBALS[___2009289932(24)], ___2009289932(25)))){ $GLOBALS['____2142636339'][9](array($GLOBALS[___2009289932(26)], ___2009289932(27))); $GLOBALS['____2142636339'][10](___2009289932(28), ___2009289932(29), true);} return;}} else{ self::$options[___2009289932(30)][___2009289932(31)][___2009289932(32)]= round(0+4+4+4); self::$options[___2009289932(33)][___2009289932(34)][___2009289932(35)]= round(0+4+4+4); $GLOBALS['____2142636339'][11](___2009289932(36), ___2009289932(37), ___2009289932(38), round(0+12)); return;}}/**/
+		/*patchvalidationoptions4*/
 	}
 
 	/**
@@ -238,9 +253,18 @@ class Option
 	public static function set($moduleId, $name, $value = "", $siteId = "")
 	{
 		if ($moduleId == '')
+		{
 			throw new Main\ArgumentNullException("moduleId");
+		}
 		if ($name == '')
+		{
 			throw new Main\ArgumentNullException("name");
+		}
+
+		if (mb_strlen($name) > 100)
+		{
+			trigger_error("Option name {$name} will be truncated on saving.", E_USER_WARNING);
+		}
 
 		if ($siteId === false)
 		{
@@ -308,18 +332,25 @@ class Option
 
 	protected static function loadTriggers($moduleId)
 	{
-		static $triggersCache = array();
+		static $triggersCache = [];
+
 		if (isset($triggersCache[$moduleId]))
+		{
 			return;
+		}
 
 		if (preg_match("#[^a-zA-Z0-9._]#", $moduleId))
+		{
 			throw new Main\ArgumentOutOfRangeException("moduleId");
+		}
 
 		$triggersCache[$moduleId] = true;
 
 		$path = Main\Loader::getLocal("modules/".$moduleId."/option_triggers.php");
 		if ($path === false)
+		{
 			return;
+		}
 
 		include($path);
 	}
@@ -331,14 +362,7 @@ class Option
 		if($cacheTtl === null)
 		{
 			$cacheFlags = Configuration::getValue("cache_flags");
-			if (isset($cacheFlags["config_options"]))
-			{
-				$cacheTtl = $cacheFlags["config_options"];
-			}
-			else
-			{
-				$cacheTtl = 0;
-			}
+			$cacheTtl = $cacheFlags["config_options"] ?? 0;
 		}
 		return $cacheTtl;
 	}
@@ -355,7 +379,9 @@ class Option
 	public static function delete($moduleId, array $filter = array())
 	{
 		if ($moduleId == '')
+		{
 			throw new Main\ArgumentNullException("moduleId");
+		}
 
 		$con = Main\Application::getConnection();
 		$sqlHelper = $con->getSqlHelper();

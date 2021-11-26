@@ -21,7 +21,6 @@ export default class LocationType
 	static FLOOR = 420;
 	static ROOM = 430;
 
-	static TMP_DISTANCE = 5000;
 	static TMP_TYPE_HINT = 5010;
 	static TMP_TYPE_CLARIFICATION = 5020;
 }

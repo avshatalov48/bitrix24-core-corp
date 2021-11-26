@@ -1,6 +1,9 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
@@ -9,6 +12,7 @@ use Bitrix\Crm\UserField\Types\ElementType;
 /**
  * @var ElementCrmUfComponent $component
  * @var array $arResult
+ * @var array $arParams
  */
 $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === true);
 $fieldName = HtmlFilter::encode($arResult['userField']['FIELD_NAME']);
@@ -60,7 +64,7 @@ $fieldName = HtmlFilter::encode($arResult['userField']['FIELD_NAME']);
 				<?php
 				if($publicMode)
 				{
-					print $entity['ENTITY_TITLE'];
+					print HtmlFilter::encode($entity['ENTITY_TITLE']);
 				}
 				else
 				{
@@ -73,13 +77,13 @@ $fieldName = HtmlFilter::encode($arResult['userField']['FIELD_NAME']);
 							href="<?= $entity['ENTITY_LINK'] ?>"
 							data-id="<?= ($entity['ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?? $entityId) ?>"
 						>
-						<?= $entity['ENTITY_TITLE'] ?>
-					</a>
+							<?= HtmlFilter::encode($entity['ENTITY_TITLE']) ?>
+						</a>
 						<?php
 					}
 					else
 					{
-						print $entity['ENTITY_TITLE'];
+						print HtmlFilter::encode($entity['ENTITY_TITLE']);
 					}
 				}
 				?>

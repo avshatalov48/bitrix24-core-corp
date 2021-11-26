@@ -94,6 +94,7 @@ $MESS["CRM_LEAD_REBUILD_DUP_INDEX_DLG_TITLE"] = "Leaddubletten neu indexiren.";
 $MESS["CRM_LEAD_REBUILD_SEARCH_CONTENT"] = "Um die Schnellsuche zu nutzen, müssen Sie <a id=\"#ID#\" href=\"#URL#\">Suchindex für Leads aktualisieren</a>.";
 $MESS["CRM_LEAD_REBUILD_SEARCH_CONTENT_DLG_SUMMARY"] = "Der Suchindex für Leads wird jetzt aktualisiert. Dieser Vorgang kann einige Zeit dauern.";
 $MESS["CRM_LEAD_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Index der Leadsuche wird neu erstellt";
+$MESS["CRM_LEAD_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Zugriffsrechte werden aktualisiert";
 $MESS["CRM_LEAD_REBUILD_SEMANTICS"] = "Berichte erfordern, dass Sie <a id=\"#ID#\" href=\"#URL#\">Service-Felder der Leads aktualisieren</a> (dies wird keine Nutzerdaten beeinflussen).";
 $MESS["CRM_LEAD_REBUILD_SEMANTICS_DLG_SUMMARY"] = "Service-Felder der Leads werden jetzt aktualisiert. Das kann einige Zeit in Anspruch nehmen.";
 $MESS["CRM_LEAD_REBUILD_SEMANTICS_DLG_TITLE"] = "Service-Felder der Leads aktualisieren";

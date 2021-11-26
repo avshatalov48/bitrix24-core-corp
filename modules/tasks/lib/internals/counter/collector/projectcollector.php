@@ -100,8 +100,6 @@ class ProjectCollector
 		$filter[] = "T.DEADLINE < '". $expiredTime ."'";
 		$filter[] = 'T.STATUS IN ('. implode(',', [\CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS]) .')';
 
-		$filter[] = "ZOMBIE = 'N'";
-
 		$filter = implode(' AND ', $filter);
 		$joinFilter = implode(' AND ', $joinFilter);
 
@@ -175,20 +173,19 @@ class ProjectCollector
 			$filter[] = 'T.ID IN ('. implode(',', $taskIds) .')';
 		}
 
-		$filter[] = "T.ZOMBIE = 'N'";
 		$filter[] = "(
 			(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
 			OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)
 		)";
 		$filter[] = "(
 			FM.POST_DATE >= SU.DATE_CREATE
+			OR TM.USER_ID IS NOT NULL
 		)";
 		$filter[] = "(
 			(
 				FM.AUTHOR_ID <> SU.USER_ID
 				AND (
-				   (BUF.UF_TASK_COMMENT_TYPE IS NULL OR BUF.UF_TASK_COMMENT_TYPE = ". Comment::TYPE_DEFAULT .")
-				   OR BUF.UF_TASK_COMMENT_TYPE <> ". Comment::TYPE_EXPIRED ."
+				   BUF.UF_TASK_COMMENT_TYPE IS NULL OR BUF.UF_TASK_COMMENT_TYPE <> ". Comment::TYPE_EXPIRED ."
 				)
 			)
 			OR
@@ -222,6 +219,8 @@ class ProjectCollector
 					ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
 				LEFT JOIN b_uts_forum_message BUF
 					ON BUF.VALUE_ID = FM.ID
+				LEFT JOIN b_tasks_member TM
+					ON TM.TASK_ID = T.ID AND TM.USER_ID = SU.USER_ID
 			WHERE
 				{$filter}
 			GROUP BY T.ID, SU.USER_ID

@@ -11,6 +11,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
 
+UI\Extension::load('tasks.comment-action-controller');
+
 if ($arResult["LIKE_TEMPLATE"] == 'like_react')
 {
 	UI\Extension::load("main.rating");
@@ -203,24 +205,58 @@ if (
 
 			?><div class="task-detail-extra"><?
 
-				if ($arResult["LIKE_TEMPLATE"] == 'like_react')
-				{
-					?><div class="task-detail-like"><?
+				?><div class="task-detail-extra-right"><?php
 
-						$voteId = "TASK".'_'.$taskData["ID"].'-'.(time()+rand(0, 1000));
-						$emotion = (!empty($templateData["RATING"]["USER_REACTION"])? mb_strtoupper($templateData["RATING"]["USER_REACTION"]) : 'LIKE');
+					if ($arResult["LIKE_TEMPLATE"] == 'like_react')
+					{
+						?><div class="task-detail-like"><?
 
-						?><span id="bx-ilike-button-<?=htmlspecialcharsbx($voteId)?>" class="feed-inform-ilike feed-new-like"><?
-							?><span class="bx-ilike-left-wrap<?=(isset($templateData["RATING"]) && isset($templateData["RATING"]["USER_HAS_VOTED"]) && $templateData["RATING"]["USER_HAS_VOTED"] == "Y" ? ' bx-you-like-button' : '')?>"><a href="#like" class="bx-ilike-text"><?=\CRatingsComponentsMain::getRatingLikeMessage($emotion)?></a></span><?
-						?></span><?
-					?></div><?
+							$voteId = "TASK".'_'.$taskData["ID"].'-'.(time()+rand(0, 1000));
+							$emotion = (!empty($templateData["RATING"]["USER_REACTION"])? mb_strtoupper($templateData["RATING"]["USER_REACTION"]) : 'LIKE');
 
-					?><div class="feed-post-emoji-top-panel-outer"><?
-						?><div id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>" class="feed-post-emoji-top-panel-box <?=(intval($templateData["RATING"]["TOTAL_POSITIVE_VOTES"]) > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"><?
+							?><span id="bx-ilike-button-<?=htmlspecialcharsbx($voteId)?>" class="feed-inform-ilike feed-new-like"><?
+								?><span class="bx-ilike-left-wrap<?=(isset($templateData["RATING"]) && isset($templateData["RATING"]["USER_HAS_VOTED"]) && $templateData["RATING"]["USER_HAS_VOTED"] == "Y" ? ' bx-you-like-button' : '')?>"><a href="#like" class="bx-ilike-text"><?=\CRatingsComponentsMain::getRatingLikeMessage($emotion)?></a></span><?
+							?></span><?
+						?></div><?
 
+						?><div class="feed-post-emoji-top-panel-outer"><?
+
+							?><div id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>" class="feed-post-emoji-top-panel-box <?=(intval($templateData["RATING"]["TOTAL_POSITIVE_VOTES"]) > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"><?
+
+							$APPLICATION->IncludeComponent(
+								"bitrix:rating.vote",
+								"like_react",
+								array(
+									"ENTITY_TYPE_ID" => "TASK",
+									"ENTITY_ID" => $taskData["ID"],
+									"OWNER_ID" => $taskData["CREATED_BY"],
+									"USER_VOTE" => $templateData["RATING"]["USER_VOTE"],
+									"USER_HAS_VOTED" => $templateData["RATING"]["USER_HAS_VOTED"],
+									"TOTAL_VOTES" => $templateData["RATING"]["TOTAL_VOTES"],
+									"TOTAL_POSITIVE_VOTES" => $templateData["RATING"]["TOTAL_POSITIVE_VOTES"],
+									"TOTAL_NEGATIVE_VOTES" => $templateData["RATING"]["TOTAL_NEGATIVE_VOTES"],
+									"TOTAL_VALUE" => $templateData["RATING"]["TOTAL_VALUE"],
+									"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER_PROFILE"],
+									"PUBLIC_MODE" => $arParams["PUBLIC_MODE"],
+									"LIKE_TEMPLATE" => "light_no_anim",
+									"TOP_DATA" => (!empty($arResult['TOP_RATING_DATA']) ? $arResult['TOP_RATING_DATA'] : false),
+									"REACTIONS_LIST" => $templateData["RATING"]["REACTIONS_LIST"],
+									"VOTE_ID" => $voteId
+								),
+								$component,
+								array("HIDE_ICONS" => "Y")
+							);
+
+							?></div><?
+
+						?></div><?
+					}
+					else
+					{
+						?><div class="task-detail-like"><?
 						$APPLICATION->IncludeComponent(
 							"bitrix:rating.vote",
-							"like_react",
+							$arParams["RATING_TYPE"],
 							array(
 								"ENTITY_TYPE_ID" => "TASK",
 								"ENTITY_ID" => $taskData["ID"],
@@ -234,42 +270,33 @@ if (
 								"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER_PROFILE"],
 								"PUBLIC_MODE" => $arParams["PUBLIC_MODE"],
 								"LIKE_TEMPLATE" => "light_no_anim",
-								"TOP_DATA" => (!empty($arResult['TOP_RATING_DATA']) ? $arResult['TOP_RATING_DATA'] : false),
-								"REACTIONS_LIST" => $templateData["RATING"]["REACTIONS_LIST"],
-								"VOTE_ID" => $voteId
 							),
 							$component,
 							array("HIDE_ICONS" => "Y")
 						);
-
 						?></div><?
-					?></div><?
-				}
-				else
-				{
-					?><div class="task-detail-like"><?
-					$APPLICATION->IncludeComponent(
-						"bitrix:rating.vote",
-						$arParams["RATING_TYPE"],
-						array(
-							"ENTITY_TYPE_ID" => "TASK",
-							"ENTITY_ID" => $taskData["ID"],
-							"OWNER_ID" => $taskData["CREATED_BY"],
-							"USER_VOTE" => $templateData["RATING"]["USER_VOTE"],
-							"USER_HAS_VOTED" => $templateData["RATING"]["USER_HAS_VOTED"],
-							"TOTAL_VOTES" => $templateData["RATING"]["TOTAL_VOTES"],
-							"TOTAL_POSITIVE_VOTES" => $templateData["RATING"]["TOTAL_POSITIVE_VOTES"],
-							"TOTAL_NEGATIVE_VOTES" => $templateData["RATING"]["TOTAL_NEGATIVE_VOTES"],
-							"TOTAL_VALUE" => $templateData["RATING"]["TOTAL_VALUE"],
-							"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER_PROFILE"],
-							"PUBLIC_MODE" => $arParams["PUBLIC_MODE"],
-							"LIKE_TEMPLATE" => "light_no_anim",
-						),
-						$component,
-						array("HIDE_ICONS" => "Y")
-					);
-					?></div><?
-				}
+					}
+
+					if (!empty($arResult['CONTENT_ID']))
+					{
+						?><div class="task-detail-contentview"><?php
+
+						$APPLICATION->IncludeComponent(
+							'bitrix:socialnetwork.contentview.count',
+							'',
+							[
+								'CONTENT_ID' => $arResult['CONTENT_ID'],
+								'CONTENT_VIEW_CNT' => $arResult['CONTENT_VIEW_CNT'],
+								'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
+							],
+							$component,
+							[ 'HIDE_ICONS' => 'Y' ]
+						);
+
+						?></div><?php
+					}
+
+				?></div><?php
 
 				if($can["EDIT"] || !empty($templateData["GROUP"])):?>
 					<div class="task-detail-group">
@@ -575,6 +602,7 @@ if (
 							"MESSAGE_COUNT" => 3,
 							"PUBLIC_MODE" => $arParams["PUBLIC_MODE"],
 							"ALLOW_MENTION" => $arParams["PUBLIC_MODE"] ? "N" : "Y",
+							'ALLOW_MENTION_EMAIL_USER' => 'Y',
 							"USER_FIELDS_SETTINGS" =>
 								$arParams["PUBLIC_MODE"]
 								? array(
@@ -808,8 +836,21 @@ $this->EndViewTarget();
 			EVENT_OPTIONS: <?=CUtil::PhpToJsObject($arResult["COMPONENT_DATA"]["EVENT_OPTIONS"])?>,
 			OPEN_TIME: <?=CUtil::PhpToJsObject($arResult["COMPONENT_DATA"]["OPEN_TIME"])?>
 		},
-		can: {TASK: <?=CUtil::PhpToJsObject($arResult['CAN']['TASK'])?>},
-		paramsToLazyLoadTabs: <?=\Bitrix\Main\Web\Json::encode($arResult['PARAMS_TO_LAZY_LOAD_TABS'])?>
+		can: {
+			TASK: <?= CUtil::PhpToJsObject($arResult['CAN']['TASK']) ?>
+		},
+		paramsToLazyLoadTabs: <?= \Bitrix\Main\Web\Json::encode($arResult['PARAMS_TO_LAZY_LOAD_TABS']) ?>,
+		workHours: {
+			start: {
+				hours: <?= (int)$arResult['WORK_TIME']['START']['H'] ?>,
+				minutes: <?= (int)$arResult['WORK_TIME']['START']['M'] ?>
+			},
+			end: {
+				hours: <?= (int)$arResult['WORK_TIME']['END']['H'] ?>,
+				minutes: <?= (int)$arResult['WORK_TIME']['END']['M'] ?>
+			}
+		},
+		workSettings: <?= CUtil::PhpToJSObject($arResult['WORK_SETTINGS']) ?>
 	});
 
 	if (window.B24) {

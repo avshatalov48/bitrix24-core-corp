@@ -83,6 +83,7 @@ $MESS["CRM_DEAL_REBUILD_ACCESS_ATTRS"] = "Sie müssen aktuelle Eigenschaften der
 $MESS["CRM_DEAL_REBUILD_SEARCH_CONTENT"] = "Um die Schnellsuche zu nutzen, müssen Sie <a id=\"#ID#\" href=\"#URL#\">Suchindex für Aufträge aktualisieren</a>.";
 $MESS["CRM_DEAL_REBUILD_SEARCH_CONTENT_DLG_SUMMARY"] = "Der Suchindex für Aufträge wird jetzt aktualisiert. Dieser Vorgang kann einige Zeit dauern.";
 $MESS["CRM_DEAL_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Index der Auftragssuche wird neu erstellt";
+$MESS["CRM_DEAL_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Zugriffsrechte werden aktualisiert";
 $MESS["CRM_DEAL_REBUILD_SEMANTICS"] = "Berichte erfordern, dass Sie die Servicefelder der Aufträge <a id=\"#ID#\" href=\"#URL#\">aktualisieren</a>, damit sie korrekt funktionieren (Nutzerdaten werden dadurch nicht betroffen).";
 $MESS["CRM_DEAL_REBUILD_SEMANTICS_DLG_SUMMARY"] = "Servicefelder der Aufträge werden jetzt aktualisiert. Das kann einige Zeit in Anspruch nehmen.";
 $MESS["CRM_DEAL_REBUILD_SEMANTICS_DLG_TITLE"] = "Servicefelder der Aufträge aktualisieren";

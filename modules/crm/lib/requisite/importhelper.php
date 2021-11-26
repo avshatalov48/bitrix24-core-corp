@@ -62,8 +62,9 @@ class ImportHelper
 	private $bankDetailKeyFields;
 
 	private $rqFieldPrefix;
-	private $addrFieldPrefix;
 	private $bdFieldPrefix;
+
+	private $rqListFieldMap;
 
 	private $requisiteList;
 
@@ -831,8 +832,9 @@ class ImportHelper
 		$this->bankDetailKeyFields = array('ID', 'NAME');
 
 		$this->rqFieldPrefix = 'RQ_';
-		$this->addrFieldPrefix = EntityRequisite::ADDRESS.'_';
 		$this->bdFieldPrefix = 'BD_';
+		
+		$this->rqListFieldMap = [];
 
 		$this->entityKeyValue = '';
 		$this->searchNextEntityMode = false;
@@ -2331,6 +2333,7 @@ class ImportHelper
 		$result = new Main\Result();
 
 		$requisiteFields = array();
+		$requisite = EntityRequisite::getSingleInstance();
 
 		$countryId = $presetInfo['COUNTRY_ID'];
 		$skipFieldsMap = array(
@@ -2396,6 +2399,36 @@ class ImportHelper
 				else if ($fieldType === 'Address')
 				{
 					$value = array();
+				}
+				else if ($fieldCountryId > 0 && $requisite->isRqListField($fieldName))
+				{
+					if (!is_array($this->rqListFieldMap[$fieldName][$fieldCountryId]))
+					{
+						$this->rqListFieldMap[$fieldName][$fieldCountryId] = [];
+						foreach ($requisite->getRqListFieldItems($fieldName, $fieldCountryId) as $item)
+						{
+							if (!isset($this->rqListFieldMap[$fieldName][$fieldCountryId][$item['VALUE']]))
+							{
+								$this->rqListFieldMap[$fieldName][$fieldCountryId][$item['VALUE']] = $item['NAME'];
+							}
+						}
+						unset($item);
+					}
+
+					if(isset($this->rqListFieldMap[$fieldName][$fieldCountryId][$value]))
+					{
+						// 1. Try to interpret value as STATUS_ID
+						$value = $this->rqListFieldMap[$fieldName][$fieldCountryId][$value];
+					}
+					else
+					{
+						// 2. Try to interpret value as TITLE. If not found leave value as is
+						$statusId = array_search($value, $this->rqListFieldMap[$fieldName][$fieldCountryId]);
+						if ($statusId !== false)
+						{
+							$value = $statusId;
+						}
+					}
 				}
 
 				$requisiteFields[$fieldName] = $value;

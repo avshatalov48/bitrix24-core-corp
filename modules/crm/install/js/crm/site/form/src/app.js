@@ -127,13 +127,17 @@ class Application
 	getUserProvider24(b24options: B24Options): Promise|Object
 	{
 		let signTtl = 3600 * 24;
-		let sign = b24form.util.url.parameter.get('b24form_user');
-		if (sign)
+		let sign = b24form.util.url.parameter.get('b24form_data');
+		if (!sign)
 		{
-			b24options.sign = sign;
-			if (b24form.util.ls.getItem('b24-form-sign', sign, signTtl))
+			sign = b24form.util.url.parameter.get('b24form_user');
+			if (sign)
 			{
-				sign = null;
+				b24options.sign = sign;
+				if (b24form.util.ls.getItem('b24-form-sign', signTtl))
+				{
+					sign = null;
+				}
 			}
 		}
 
@@ -170,12 +174,13 @@ class Application
 			return null;
 		}
 
+		b24options.sign = sign;
 		b24form.util.ls.setItem('b24-form-sign', sign, signTtl);
 
 		let formData = new FormData();
-		formData.set('security_sign', sign);
 		formData.set('id', b24options.id);
 		formData.set('sec', b24options.sec);
+		formData.set('security_sign', b24options.sign);
 
 		this.#userProviderPromise = this.post(
 			b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.user.get',
@@ -188,12 +193,24 @@ class Application
 				throw new Error(data.error_description || data.error);
 			}
 
-			let user = data.result;
-			user = user && typeof user === 'object' ? user : {};
-			user.fields = user && typeof user.fields === 'object' ? user.fields : {};
+			data = data.result;
+			data = data && typeof data === 'object' ? data : {};
+			data.fields = data && typeof data.fields === 'object' ? data.fields : {};
 
-			b24form.util.ls.setItem('b24-form-user', user, ttl);
-			return user.fields;
+			let properties = data.properties || {};
+			delete data.properties;
+
+			this.list()
+				.filter(form => form.identification.id === b24options.id)
+				.forEach(form => {
+					Object
+						.keys(properties)
+						.forEach(key => form.setProperty(key, properties[key]))
+				})
+			;
+
+			b24form.util.ls.setItem('b24-form-user', data, ttl);
+			return data.fields;
 		});
 
 		return this.#userProviderPromise;
@@ -207,12 +224,20 @@ class Application
 				? BX.SiteButton.getTrace()
 				: (window.b24Tracker && b24Tracker.guest) ? b24Tracker.guest.getTrace() : null;
 
+			const eventData = {
+				id: b24options.id,
+				sec: b24options.sec,
+				language: b24options.language,
+				sign: b24options.sign,
+			};
+			form.emit('submit:post:before', eventData);
+
 			formData.set('id', b24options.id);
 			formData.set('sec', b24options.sec);
 			formData.set('lang', form.language);
 			formData.set('trace', trace);
 			formData.set('entities', JSON.stringify(b24options.entities || []));
-			formData.set('security_sign', b24options.sign);
+			formData.set('security_sign', eventData.sign || b24options.sign);
 
 			return this.post(
 				b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.form.fill',

@@ -1204,7 +1204,7 @@ class Session
 								'IMOL_DATE_CLOSE_VOTE' => (string)$paramsDateCloseVote,
 								'IMOL_TIME_LIMIT_VOTE' => (string)$this->config['VOTE_TIME_LIMIT'],
 								'CLASS' => 'bx-messenger-content-item-ol-output bx-messenger-content-item-vote',
-								'IMOL_FORM' => 'history-delay',
+								'IMOL_FORM' => 'like',
 								'TYPE' => 'lines',
 								'COMPONENT_ID' => 'bx-imopenlines-message',
 							]
@@ -2332,7 +2332,7 @@ class Session
 					'CLASS' => 'bx-messenger-content-item-ol-output',
 					'IMOL_FORM' => 'offline',
 					'TYPE' => 'lines',
-					'COMPONENT_ID' => 'bx-imopenlines-message',
+					'COMPONENT_ID' => 'bx-imopenlines-form-offline',
 				],
 				'KEYBOARD' => $operatorKeyboard,
 			]);

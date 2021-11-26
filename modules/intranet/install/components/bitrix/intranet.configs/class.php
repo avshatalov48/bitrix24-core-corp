@@ -8,6 +8,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Location\Repository\SourceRepository;
 use Bitrix\Location;
 use Bitrix\Main\Config\Option;
+use Bitrix\Intranet\Integration\Main\Culture;
 
 final class IntranetConfigsComponent extends CBitrixComponent
 {
@@ -331,22 +332,6 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			else
 				$activateError = GetMessage("CONFIG_EMAIL_ERROR");
 
-			if (\CBitrix24::IsNetworkAllowed() && in_array($this->arResult["LICENSE_PREFIX"], array("ru", "ua", "kz", "by")))
-			{
-				if (CModule::IncludeModule('socialservices'))
-				{
-					$socnetObj = new \Bitrix\Socialservices\Network();
-					if ($_POST["network_avaiable"] <> '')
-					{
-						$socnetObj->setEnable(true);
-					}
-					else
-					{
-						$socnetObj->setEnable(false);
-					}
-				}
-			}
-
 			//self register
 			if (Loader::includeModule("socialservices"))
 			{
@@ -379,48 +364,43 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			COption::SetOptionString("main", "rating_text_like_n", htmlspecialcharsbx($_POST["rating_text_like_n"]));*/
 
 		//date/time format, week start
-		if (
-			$_POST["date_format"] <> ''
-			|| $_POST["time_format"] <> ''
-			|| $_POST["WEEK_START"] <> ''
-		)
+		if (isset($_POST["cultureId"]) && !empty($_POST["cultureId"]))
 		{
-			$arFields = array();
-			if (in_array($_POST["date_format"], $this->arResult["DATE_FORMATS"]))
-			{
-				$arFields["FORMAT_DATE"] = $_POST["date_format"];
+			Culture::updateCurrentSiteCulture($_POST["cultureId"]);
+		}
 
-				if (in_array($_POST["time_format"], $this->arResult["TIME_FORMATS"]))
-				{
-					$arFields["FORMAT_DATETIME"] = $_POST["date_format"]." ".$_POST["time_format"];
-				}
+		$cultureFields = [];
+
+		if (isset($_POST["time_format"]) && in_array($_POST["time_format"], [12, 24]))
+		{
+			$cultureFields['TIME_FORMAT_TYPE'] = $_POST["time_format"];
+		}
+
+		if (isset($_POST["WEEK_START"]))
+		{
+			$cultureFields["WEEK_START"] = $_POST["WEEK_START"];
+		}
+
+		if (isset($_POST["FORMAT_NAME"]))
+		{
+			if (!preg_match('/^(?:#TITLE#|#NAME#|#LAST_NAME#|#SECOND_NAME#|#NAME_SHORT#|#LAST_NAME_SHORT#|#SECOND_NAME_SHORT#|#EMAIL#|#ID#|\s|,)+$/D', $_POST["FORMAT_NAME"]))
+			{
+				$this->arResult["ERROR"] = GetMessage("CONFIG_FORMAT_NAME_ERROR");
 			}
-
-			if (isset($_POST["WEEK_START"]))
+			else
 			{
-				$arFields["WEEK_START"] = $_POST["WEEK_START"];
+				$cultureFields["FORMAT_NAME"] = $_POST["FORMAT_NAME"];
 			}
-			if (isset($_POST["FORMAT_NAME"]))
-			{
-				if (!preg_match('/^(?:#TITLE#|#NAME#|#LAST_NAME#|#SECOND_NAME#|#NAME_SHORT#|#LAST_NAME_SHORT#|#SECOND_NAME_SHORT#|#EMAIL#|#ID#|\s|,)+$/D', $_POST["FORMAT_NAME"]))
-				{
-					$this->arResult["ERROR"] = GetMessage("CONFIG_FORMAT_NAME_ERROR");
-				}
-				else
-				{
-					$arFields["FORMAT_NAME"] = $_POST["FORMAT_NAME"];
-				}
-			}
+		}
 
-			if(!empty($arFields))
-			{
-				$result = CultureTable::update($this->arResult["CULTURE_ID"] , $arFields);
+		if(!empty($cultureFields))
+		{
+			Culture::updateCulture($cultureFields);
 
-				if(defined("BX_COMP_MANAGED_CACHE"))
-				{
-					global $CACHE_MANAGER;
-					$CACHE_MANAGER->ClearByTag('sonet_group');
-				}
+			if(defined("BX_COMP_MANAGED_CACHE"))
+			{
+				global $CACHE_MANAGER;
+				$CACHE_MANAGER->ClearByTag('sonet_group');
 			}
 		}
 
@@ -1063,20 +1043,18 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		$this->arResult['SHOW_YANDEX_MAP_KEY_FIELD'] = ($portalPrefix !== 'ua');
 
-		$this->arResult["DATE_FORMATS"] = array("DD.MM.YYYY", "DD/MM/YYYY", "MM.DD.YYYY", "MM/DD/YYYY", "YYYY/MM/DD", "YYYY-MM-DD");
-		$this->arResult["TIME_FORMATS"] = array("HH:MI:SS", "H:MI:SS T");
+		$this->arResult['CULTURES'] = Culture::getCultures();
+
+		$currentSite = Culture::getCurrentSite();
+		$this->arResult['CURRENT_CULTURE_ID'] = $currentSite['CULTURE_ID'];
+		$this->arResult["CUR_DATE_FORMAT"] = $currentSite["FORMAT_DATE"];
+		$this->arResult["CUR_TIME_FORMAT"] = str_replace($this->arResult["CUR_DATE_FORMAT"]." ", "", $currentSite["FORMAT_DATETIME"]);
+		$this->arResult["TIME_FORMAT_TYPE"] = ($this->arResult["CUR_TIME_FORMAT"] === 'HH:MI:SS' ? 24 : 12);
+		$this->arResult["WEEK_START"] = $currentSite["WEEK_START"];
+		$this->arResult["CUR_NAME_FORMAT"] = $currentSite["FORMAT_NAME"];
+
 		$this->arResult["NAME_FORMATS"] = CSite::GetNameTemplates();
 		$this->arResult["ORGANIZATION_TYPE"] = COption::GetOptionString("intranet", "organization_type", "");
-
-		$rsSite = CSite::GetByID(SITE_ID);
-		if ($arSite = $rsSite->Fetch())
-		{
-			$this->arResult["CUR_DATE_FORMAT"] = $arSite["FORMAT_DATE"];
-			$this->arResult["CUR_TIME_FORMAT"] = str_replace($this->arResult["CUR_DATE_FORMAT"]." ", "", $arSite["FORMAT_DATETIME"]);
-			$this->arResult["WEEK_START"] = $arSite["WEEK_START"];
-			$this->arResult["CULTURE_ID"] = $arSite["CULTURE_ID"];
-			$this->arResult["CUR_NAME_FORMAT"] = $arSite["FORMAT_NAME"];
-		}
 
 		if (Loader::includeModule("calendar"))
 		{

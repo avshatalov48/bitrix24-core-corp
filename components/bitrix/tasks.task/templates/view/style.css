@@ -441,6 +441,12 @@ input.task-detail-field-add {
 	/*border-top: 1px solid #e7e6d6;*/
 }
 
+.task-detail-extra-right {
+	float: right;
+	display: flex;
+	align-items: center;
+}
+
 .task-detail-extra .feed-post-emoji-top-panel-outer {
 	float: right;
 	clear: right;
@@ -568,8 +574,8 @@ input.task-detail-field-add {
 }
 
 .task-detail-like {
-	float: right;
-	height: 27px;
+/*	float: right;
+	height: 27px;*/
 }
 
 .task-detail-like .feed-inform-ilike a {
@@ -608,6 +614,14 @@ input.task-detail-field-add {
 	text-decoration: none;
 	font-size: 13px;
 	line-height: 14px;
+}
+
+.task-detail-like .bx-ilike-left-wrap {
+	line-height: 24px;
+}
+
+.task-detail-contentview {
+	padding-left: 10px;
 }
 
 .task-detail-buttons {

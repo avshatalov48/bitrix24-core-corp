@@ -4,9 +4,16 @@
 namespace Bitrix\Tasks\Internals\Registry;
 
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Entity\Query\Join;
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Loader;
+use Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable;
+use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
+use Bitrix\Tasks\Integration\Recyclebin\Manager;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\TaskObject;
+use Bitrix\Tasks\Util\Type\DateTime;
 
 class TaskRegistry
 {
@@ -127,7 +134,7 @@ class TaskRegistry
 			$taskIds = [$taskIds];
 		}
 
-		$taskIds = array_diff($taskIds, array_keys($this->storage));
+		$taskIds = array_diff(array_unique($taskIds), array_keys($this->storage));
 		if (empty($taskIds))
 		{
 			return $this;
@@ -145,7 +152,6 @@ class TaskRegistry
 			->addSelect('STATUS')
 			->addSelect('ALLOW_CHANGE_DEADLINE')
 			->addSelect('ALLOW_TIME_TRACKING')
-			->addSelect('ZOMBIE')
 			->addSelect('DEADLINE')
 			->whereIn('ID', $taskIds)
 			->exec();
@@ -153,8 +159,15 @@ class TaskRegistry
 		$foundIds = [];
 		while ($row = $res->fetch())
 		{
+			$row['ZOMBIE'] = 'N';
 			$foundIds[] = $row['ID'];
 			$this->storage[$row['ID']] = $row;
+		}
+
+		if (count($taskIds) > count($foundIds))
+		{
+			$deletedIds = array_diff($taskIds, $foundIds);
+			$this->loadDeleted($deletedIds);
 		}
 
 		if (empty($foundIds))
@@ -172,6 +185,78 @@ class TaskRegistry
 		}
 
 		return $this;
+	}
+
+	/**
+	 * @param array $deletedIds
+	 */
+	private function loadDeleted(array $deletedIds): void
+	{
+		if (!Loader::includeModule('recyclebin'))
+		{
+			return;
+		}
+
+		$res = RecyclebinTable::query()
+			->setSelect([
+				'TASK_ID' => 'ENTITY_ID',
+				'DATA' => 'RD.DATA'
+			])
+			->registerRuntimeField(
+				'RD',
+				new ReferenceField(
+					'RD',
+					RecyclebinDataTable::getEntity(),
+					Join::on('this.ID', 'ref.RECYCLEBIN_ID')->where('ref.ACTION', 'TASK'),
+					['join_type' => 'inner']
+				)
+			)
+			->where('ENTITY_TYPE', '=', Manager::TASKS_RECYCLEBIN_ENTITY)
+			->whereIn('ENTITY_ID', $deletedIds)
+			->exec();
+
+		while ($row = $res->fetch())
+		{
+			$taskData = $this->unserializeData($row['DATA']);
+			$taskData['ZOMBIE'] = 'Y';
+
+			$this->storage[$row['TASK_ID']] = $taskData;
+		}
+	}
+
+	/**
+	 * @param string $data
+	 * @return array
+	 */
+	private function unserializeData(string $data): array
+	{
+		$data = unserialize($data, ['allowed_classes' => false]);
+
+		$fields = [
+			'ID',
+			'TITLE',
+			'GROUP_ID',
+			'STATUS',
+			'ALLOW_CHANGE_DEADLINE',
+			'ALLOW_TIME_TRACKING',
+			'DEADLINE',
+		];
+
+		foreach ($data as $field => $value)
+		{
+			if (!in_array($field, $fields))
+			{
+				unset($data[$field]);
+				continue;
+			}
+
+			if ($field === 'DEADLINE')
+			{
+				$data[$field] = DateTime::createFromTimestampGmt($value);
+			}
+		}
+
+		return $data;
 	}
 
 	/**
