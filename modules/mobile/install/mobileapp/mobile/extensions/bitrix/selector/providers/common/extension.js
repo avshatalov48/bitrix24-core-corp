@@ -80,7 +80,7 @@
 		}
 
 		cacheId() {
-			return CommonUtils.md5({id: this.providerId, options: this.options})
+			return CommonUtils.md5({id: this.providerId, context: this.context})
 		}
 
 		getAjaxDialog()
@@ -168,8 +168,7 @@
 		{
 			if (justLoad === false)
 			{
-				this.cache.get("recent", true)
-				this.listener.onRecentResult(this.cache.get("recent", true));
+				this.listener.onRecentResult(this.cache.get("recent", true), true);
 				if (this.recentLoaded === true)
 				{
 					return;
@@ -186,7 +185,7 @@
 				this.cache.save(items, "recent", {saveDisk: true});
 				if(justLoad === false)
 				{
-					this.listener.onRecentResult(items, this);
+					this.listener.onRecentResult(items, false);
 					this.recentLoaded = true;
 				}
 
@@ -361,6 +360,8 @@
 				item.imageUrl = getImage(entity.entityId)
 			}
 
+			if (this.isSingleChoose())
+				item.type = "info";
 			return item;
 		}
 	}

@@ -20,6 +20,7 @@ export type EditorOptions = {
 	documentSession: DocumentSession,
 	linkToEdit: string,
 	linkToView: string,
+	linkToDownload: string,
 	object: BaseObject,
 	attachedObject: AttachedObject,
 	editorJson: any,

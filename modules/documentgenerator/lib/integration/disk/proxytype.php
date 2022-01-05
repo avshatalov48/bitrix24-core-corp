@@ -3,7 +3,7 @@
 namespace Bitrix\DocumentGenerator\Integration\Disk;
 
 use Bitrix\Disk\ProxyType\Base;
-use Bitrix\Disk\Security\FakeSecurityContext;
+use Bitrix\Disk\Security\DiskSecurityContext;
 use Bitrix\Disk\Security\SecurityContext;
 
 class ProxyType extends Base
@@ -16,7 +16,7 @@ class ProxyType extends Base
 	 */
 	public function getSecurityContextByUser($user)
 	{
-		return new FakeSecurityContext(null);
+		return new DiskSecurityContext($user);
 	}
 
 	/**

@@ -24,15 +24,17 @@ class CDavRequest
 		$this->arRequestParameters = $arRequestParameters;
 
 		if (!isset($this->arRequestParameters['PATH_INFO']) && isset($this->arRequestParameters['ORIG_PATH_INFO']))
+		{
 			$this->arRequestParameters['PATH_INFO'] = $this->arRequestParameters['ORIG_PATH_INFO'];
+		}
 
-		static $arAgentsMap = array(
+		static $arAgentsMap = [
 			'iphone'            => 'iphone',		// Apple iPhone iCal
 			'davkit'            => 'davkit',		// Apple iCal
 			'mac os'            => 'davkit',		// Apple iCal (Mac Os X > 10.8)
-			'macos'            => 'davkit',         // Apple iCal (Mac Os > 11)
-			'mac_os_x'            => 'davkit',		// Apple iCal (Mac Os X > 10.8)
-			'mac+os+x'            => 'davkit',		// Apple iCal (Mac Os X > 10.10)
+			'macos'             => 'davkit',         // Apple iCal (Mac Os > 11)
+			'mac_os_x'          => 'davkit',		// Apple iCal (Mac Os X > 10.8)
+			'mac+os+x'          => 'davkit',		// Apple iCal (Mac Os X > 10.10)
 			'dataaccess'        => 'dataaccess',	// Apple addressbook iPhone
 			'cfnetwork'         => 'cfnetwork',		// Apple Addressbook
 			'bionicmessage.net' => 'funambol',		// funambol GroupDAV connector from bionicmessage.net
@@ -58,7 +60,7 @@ class CDavRequest
 			'carddavbitrix24'   => 'dataaccess',
 			'caldavbitrix24'    => 'dataaccess',
 			'coredav'           => 'davkit',    //
-		);
+		];
 
 		$httpUserAgent = mb_strtolower($this->arRequestParameters['HTTP_USER_AGENT']);
 		foreach ($arAgentsMap as $pattern => $name)
@@ -70,12 +72,18 @@ class CDavRequest
 			}
 		}
 
-		$this->isUrlRequired = ($this->agent == 'kde');
+		$this->isUrlRequired = ($this->agent === 'kde');
 		$this->isRedundantNamespaceDeclarationsRequired = in_array($this->agent, array('cfnetwork', 'dataaccess', 'davkit', 'neon', 'iphone'));
 
 		$uri = "";
 		if ($this->isUrlRequired)
-			$uri = ($this->GetParameter("HTTPS") === "on" ? "https" : "http").'://'.$this->GetParameter('HTTP_HOST');
+		{
+			$scheme = $this->GetParameter("HTTPS") === "on"
+				? "https"
+				: "http"
+			;
+			$uri = $scheme . '://' . $this->GetParameter('HTTP_HOST');
+		}
 
 		$requestUri = $this->GetParameter('REQUEST_URI');
 		$requestUri = preg_replace("/%0D|%0A/i", "", $requestUri);
@@ -86,11 +94,16 @@ class CDavRequest
 
 		$p = $this->GetParameter("PATH_INFO");
 		if (!empty($p))
+		{
 			$uri = mb_substr($uri, 0, -mb_strlen($p));
+		}
 
 		$pathInfo = empty($p) ? "/" : $p;
 
-if (mb_substr($pathInfo, -mb_strlen("/index.php")) == "/index.php") $pathInfo = mb_substr($pathInfo, 0, -mb_strlen("/index.php"));
+		if (mb_substr($pathInfo, -mb_strlen("/index.php")) === "/index.php")
+		{
+			$pathInfo = mb_substr($pathInfo, 0, -mb_strlen("/index.php"));
+		}
 
 		$this->baseUri = $uri;
 		$this->uri = str_replace("//", "/", $uri.$pathInfo);
@@ -98,42 +111,50 @@ if (mb_substr($pathInfo, -mb_strlen("/index.php")) == "/index.php") $pathInfo = 
 
 		if (empty($this->path))
 		{
-			if ($this->GetParameter("REQUEST_METHOD") == "GET")
+			if ($this->GetParameter("REQUEST_METHOD") === "GET")
 			{
 				header("Location: ".$this->baseUri."/");
 				die();
 			}
-			else
-			{
-				$this->path = "/";
-			}
+
+			$this->path = "/";
 		}
 
 		if (ini_get("magic_quotes_gpc"))
+		{
 			$this->path = stripslashes($this->path);
+		}
 
 
 		if ($this->GetParameter('HTTP_DEPTH') !== null)
 		{
 			$this->depth = $this->GetParameter('HTTP_DEPTH');
 		}
+		elseif (in_array($this->GetParameter('REQUEST_METHOD'), ['PROPFIND', 'DELETE', 'MOVE', 'COPY', 'LOCK']))
+		{
+			$this->depth = 'infinity';
+		}
+		elseif ($this->GetParameter('REQUEST_METHOD') === "GET")
+		{
+			$this->depth = 1;
+		}
 		else
 		{
-			if (in_array($this->GetParameter('REQUEST_METHOD'), array('PROPFIND', 'DELETE', 'MOVE', 'COPY', 'LOCK')))
-				$this->depth = 'infinity';
-			elseif ($this->GetParameter('REQUEST_METHOD') == "GET")
-				$this->depth = 1;
-			else
-				$this->depth = 0;
+			$this->depth = 0;
 		}
-		if ($this->depth != 'infinity')
+
+		if ($this->depth !== 'infinity')
+		{
 			$this->depth = intval($this->depth);
+		}
 	}
 
 	public function GetPrincipal()
 	{
 		if (is_null($this->principal))
+		{
 			$this->principal = new CDavPrincipal("current");
+		}
 
 		return $this->principal;
 	}
@@ -147,11 +168,15 @@ if (mb_substr($pathInfo, -mb_strlen("/index.php")) == "/index.php") $pathInfo = 
 	public function GetParameter($parameterName)
 	{
 		$parameterName = trim($parameterName);
-		if ($parameterName == '')
+		if ($parameterName === '')
+		{
 			throw new Exception("parameterName");
+		}
 
 		if (array_key_exists($parameterName, $this->arRequestParameters))
+		{
 			return $this->arRequestParameters[$parameterName];
+		}
 
 		return null;
 	}

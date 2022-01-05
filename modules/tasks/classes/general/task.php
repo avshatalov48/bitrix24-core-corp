@@ -693,7 +693,7 @@ class CTasks
 			}
 		}
 
-		if ((!isset($arFields['CREATED_BY'])) || (!$arFields['CREATED_BY']))
+		if (!isset($arFields['CREATED_BY']) || !$arFields['CREATED_BY'])
 		{
 			$arFields['CREATED_BY'] = $effectiveUserId;
 		}
@@ -715,23 +715,29 @@ class CTasks
 			{
 				$nowDateTimeString = \Bitrix\Tasks\UI::formatDateTime(User::getTime());
 
-				if (!isset($arFields["CREATED_DATE"])) // created date was not set manually
+				if (!isset($arFields['CREATED_DATE']))
 				{
-					$arFields["CREATED_DATE"] = $nowDateTimeString;
+					$arFields['CREATED_DATE'] = $nowDateTimeString;
 				}
-
-				if (!isset($arFields["CHANGED_BY"]))
+				if (!isset($arFields['CHANGED_BY']))
 				{
-					$arFields["STATUS_CHANGED_BY"]
-						= $arFields["CHANGED_BY"]
-						= $arFields["CREATED_BY"]
-					;
-					$arFields["STATUS_CHANGED_DATE"]
-						= $arFields["CHANGED_DATE"]
-						= $arFields["CREATED_DATE"]
-						= $arFields["ACTIVITY_DATE"]
-						= $nowDateTimeString
-					;
+					$arFields['CHANGED_BY'] = $arFields['CREATED_BY'];
+
+					if (!isset($arFields['STATUS_CHANGED_BY']))
+					{
+						$arFields['STATUS_CHANGED_BY'] = $arFields['CREATED_BY'];
+					}
+
+					if (!isset($arFields['CHANGED_DATE']))
+					{
+						$arFields['CHANGED_DATE'] = $nowDateTimeString;
+					}
+					if (!isset($arFields['STATUS_CHANGED_DATE']))
+					{
+						$arFields['STATUS_CHANGED_DATE'] = $nowDateTimeString;
+					}
+
+					$arFields['ACTIVITY_DATE'] = $nowDateTimeString;
 				}
 
 				if (isset($arFields['DEADLINE']) &&
@@ -1304,8 +1310,14 @@ class CTasks
 
 					$time = \Bitrix\Tasks\UI::formatDateTime(User::getTime());
 
-					$arFields['CHANGED_BY'] = $userID;
-					$arFields['CHANGED_DATE'] = $time;
+					if (!isset($arFields['CHANGED_BY']))
+					{
+						$arFields['CHANGED_BY'] = $userID;
+					}
+					if (!isset($arFields['CHANGED_DATE']))
+					{
+						$arFields['CHANGED_DATE'] = $time;
+					}
 
 					if (!($occurAsUserId = CTasksTools::getOccurAsUserId()))
 					{
@@ -1323,8 +1335,14 @@ class CTasks
 					{
 						$newStatus = (int)$arFields['STATUS'];
 
-						$arFields['STATUS_CHANGED_BY'] = $userID;
-						$arFields['STATUS_CHANGED_DATE'] = $time;
+						if (!isset($arFields['STATUS_CHANGED_BY']))
+						{
+							$arFields['STATUS_CHANGED_BY'] = $userID;
+						}
+						if (!isset($arFields['STATUS_CHANGED_DATE']))
+						{
+							$arFields['STATUS_CHANGED_DATE'] = $time;
+						}
 
 						if ($newStatus === self::STATE_COMPLETED || $newStatus === self::STATE_SUPPOSEDLY_COMPLETED)
 						{
@@ -3273,7 +3291,7 @@ class CTasks
 								{$sAliasPrefix}FM.AUTHOR_ID != {$targetUserId}
 								AND (
 									{$sAliasPrefix}BUF_FM.UF_TASK_COMMENT_TYPE IS NULL
-									OR {$sAliasPrefix}BUF_FM.UF_TASK_COMMENT_TYPE != {$expiredCommentType} 
+									OR {$sAliasPrefix}BUF_FM.UF_TASK_COMMENT_TYPE != {$expiredCommentType}
 								)
 							)
 							OR {$sAliasPrefix}BUF_FM.UF_TASK_COMMENT_TYPE = {$expiredSoonCommentType}
@@ -5301,7 +5319,7 @@ class CTasks
 					{
 						$scrumEntityTableName = EntityTable::getTableName();
 						$activeSprintStatus = EntityTable::SPRINT_ACTIVE;
-						$relatedJoins[$join] = "LEFT JOIN {$scrumEntityTableName} {$joinAlias}TSE 
+						$relatedJoins[$join] = "LEFT JOIN {$scrumEntityTableName} {$joinAlias}TSE
 							ON {$joinAlias}TSE.GROUP_ID = {$sourceAlias}.GROUP_ID
 							AND {$joinAlias}TSE.STATUS = '{$activeSprintStatus}'
 						";
@@ -7436,7 +7454,7 @@ class CTasks
 				SELECT R.ENTITY_ID AS TASK_ID
 				FROM b_recyclebin R
 					INNER JOIN b_recyclebin_data RD ON RD.RECYCLEBIN_ID = R.ID
-				WHERE R.ENTITY_TYPE = '{$entityType}' 
+				WHERE R.ENTITY_TYPE = '{$entityType}'
 					AND RD.ACTION = 'MEMBERS'
 					AND RD.DATA like '%s:7:\"USER_ID\";s:1:\"{$userId}\"%'
 			");
@@ -7929,11 +7947,11 @@ class CTasks
 			'CREATED_BY_NAME' => 			array(1, 0, 0, 0, 0),
 			'CREATED_BY_LAST_NAME' => 		array(1, 0, 0, 0, 0),
 			'CREATED_BY_SECOND_NAME' => 	array(1, 0, 0, 0, 0),
-			'CREATED_DATE' => 				array(1, 0, 1, 1, 1),
+			'CREATED_DATE' => 				array(1, 1, 1, 1, 1),
 			'CHANGED_BY' => 				array(1, 1, 0, 1, 0),
 			'CHANGED_DATE' => 				array(1, 1, 1, 1, 1),
-			'STATUS_CHANGED_BY' => 			array(1, 0, 0, 1, 0),
-			'STATUS_CHANGED_DATE' => 		array(1, 0, 0, 0, 1),
+			'STATUS_CHANGED_BY' => 			array(1, 1, 0, 1, 0),
+			'STATUS_CHANGED_DATE' => 		array(1, 1, 0, 0, 1),
 			'CLOSED_BY' =>					array(1, 0, 0, 0, 0),
 			'CLOSED_DATE' => 				array(1, 0, 1, 1, 1),
 			'ACTIVITY_DATE' => 				array(1, 0, 1, 1, 1),

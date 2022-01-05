@@ -188,8 +188,13 @@ BX.namespace('Tasks.Component');
 				this.initDialog();
 			},
 
-			initDialog: function()
+			getDialog: function()
 			{
+				if (this.dialog)
+				{
+					return this.dialog;
+				}
+
 				this.dialog = new BX.UI.EntitySelector.Dialog({
 					enableSearch: true,
 					multiple: this.option('max') > 1,
@@ -246,6 +251,11 @@ BX.namespace('Tasks.Component');
 					}
 				});
 
+				return this.dialog;
+			},
+
+			initDialog: function()
+			{
 				var targetNodes = this.scope().getElementsByClassName('js-id-tdp-mem-sel-is-control');
 
 				for (var i = 0; i < targetNodes.length; i++)
@@ -261,8 +271,8 @@ BX.namespace('Tasks.Component');
 							return;
 						}
 
-						this.dialog.setTargetNode(node);
-						this.dialog.show();
+						this.getDialog().setTargetNode(node);
+						this.getDialog().show();
 					}.bind(this));
 				}
 			},
@@ -474,8 +484,8 @@ BX.namespace('Tasks.Component');
 						)
 						{
 							this.forceDeleteFirst();
-							this.dialog.setTargetNode(this.scope());
-							this.dialog.show();
+							this.getDialog().setTargetNode(this.scope());
+							this.getDialog().show();
 						}
 					}
 
@@ -523,7 +533,7 @@ BX.namespace('Tasks.Component');
 
 			unselectDialogItem: function(value)
 			{
-				if (!this.dialog)
+				if (!this.getDialog())
 				{
 					return;
 				}
@@ -535,7 +545,7 @@ BX.namespace('Tasks.Component');
 					value = value.data();
 				}
 
-				var item = this.dialog.getItem(this.prepareItemData(value));
+				var item = this.getDialog().getItem(this.prepareItemData(value));
 				item && item.deselect();
 
 				this.dialogCallback = true;
@@ -543,14 +553,14 @@ BX.namespace('Tasks.Component');
 
 			selectDialogItem: function(value)
 			{
-				if (!this.dialog)
+				if (!this.getDialog())
 				{
 					return;
 				}
 
 				this.dialogCallback = false;
 
-				var item = this.dialog.getItem(this.prepareItemData(value));
+				var item = this.getDialog().getItem(this.prepareItemData(value));
 				item && item.select(true);
 
 				this.dialogCallback = true;

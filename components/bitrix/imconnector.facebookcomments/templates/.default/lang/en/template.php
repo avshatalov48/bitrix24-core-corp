@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_AUTHORIZATION"] = "Authentication";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_AUTHORIZE"] = "Log in";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_CHANGE_ANY_TIME"] = "Can be edited or turned off any time";
@@ -23,7 +23,13 @@ $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_DESCRIPTION"] = "<p class=\"im-co
 ";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_EXPIRED_ACCOUNT_TOKEN"] = "Log in using your Facebook account to make amends.";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_EXPIRED_ACCOUNT_TOKEN_WARNING"] = "Notice that the page will be disconnected from Bitrix24 if you log in using account that is not linked to this page.";
-$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_INDEX_DESCRIPTION"] = "Connect your company's Facebook page to Open Channel to manage comments that are left to posts, photos and videos from your Bitrix24. To connect, you need to own an existing Facebook page or create one. You have to be an administrator of that page.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_INDEX_ADDITIONAL_DESCRIPTION"] = "You will have to create a public Facebook page or connect the one you already have. Only the page administrator can connect it to Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_INDEX_LIST_ITEM_1"] = "Save contacts and communication history to the CRM";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_INDEX_LIST_ITEM_2"] = "Guide the customer through the sales funnel in the CRM";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_INDEX_LIST_ITEM_3"] = "Reply to your customers when and where they prefer";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_INDEX_LIST_ITEM_4"] = "Customer inquiries are distributed among the sales agents as per queue rules";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_INDEX_SUBTITLE"] = "Connect your public Facebook page to your Bitrix24 to manage comments and posts without leaving your Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_INDEX_TITLE"] = "Manage your public Facebook page from Bitrix24";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_INFO"] = "Information";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_LOG_IN_UNDER_AN_ADMINISTRATOR_ACCOUNT_PAGE"] = "Log in using the Facebook page admin account to manage comments directly from Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_NO_SPECIFIC_PAGE"] = "Missing a required page? Find possible reason in #A#this article#A_END#.";
@@ -33,4 +39,3 @@ $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_THERE_IS_NO_PAGE_WHERE_THE_ADMINI
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_TITLE"] = "Manage your Facebook page from Bitrix24";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_TO_CREATE_A_PAGE"] = "Create";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_USER"] = "Account";
-?>

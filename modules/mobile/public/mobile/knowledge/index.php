@@ -10,7 +10,8 @@ require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 	array(
 		'NOT_CHECK_DOMAIN' => 'Y',
 		'SITE_TYPE' => 'KNOWLEDGE',
-		'DRAFT_MODE' => 'Y'
+		'DRAFT_MODE' => 'Y',
+		'CHECK_PERMISSIONS' => 'Y'
 	),
 	null,
 	array(

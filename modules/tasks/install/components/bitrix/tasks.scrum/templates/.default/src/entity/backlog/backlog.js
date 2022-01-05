@@ -1,10 +1,11 @@
-import {Dom, Tag} from 'main.core';
+import {Event, Dom, Tag} from 'main.core';
 import {BaseEvent} from 'main.core.events';
-import {Entity} from '../entity';
+
 import {Header} from './header';
-import {EpicCreationButton} from './epic.creation.button';
-import {GroupActionsButton} from '../group.actions.button';
-import {ListItems} from '../list.items';
+import {Blank} from '../blank';
+import {Dropzone} from '../dropzone';
+
+import {Entity} from '../entity';
 import {Item} from '../../item/item';
 
 import type {ItemParams} from '../../item/item';
@@ -27,38 +28,61 @@ export class Backlog extends Entity
 		this.setBacklogParams(params);
 
 		this.header = null;
-		this.epicCreationButton = null;
 	}
 
 	setBacklogParams(params: BacklogParams)
 	{
 		params.items.forEach((itemData) => {
-			const item = new Item(itemData);
-			this.items.set(item.itemId, item);
+			const item = Item.buildItem(itemData);
+			item.setShortView(this.getShortView());
+			this.items.set(item.getId(), item);
 		});
 	}
 
 	static buildBacklog(backlogData: BacklogParams): Backlog
 	{
 		const backlog = new Backlog(backlogData);
-		backlog.addHeader(new Header(backlog));
-		backlog.addEpicCreationButton(new EpicCreationButton());
-		backlog.addGroupActionsButton(new GroupActionsButton());
-		backlog.addListItems(new ListItems(backlog));
+
+		backlog.setHeader(backlog);
+		backlog.setBlank(backlog);
+		backlog.setDropzone(backlog);
+		backlog.setListItems(backlog);
+
 		return backlog;
 	}
 
-	addHeader(header: Header)
+	setHeader(backlog: Backlog)
 	{
-		this.header = header;
-		this.header.subscribe('openListEpicGrid', () => this.emit('openListEpicGrid'));
-		this.header.subscribe('openDefinitionOfDone', () => this.emit('openDefinitionOfDone'));
+		this.header = new Header(backlog);
+
+		this.header.subscribe(
+			'epicClick',
+			(baseEvent: BaseEvent) => this.emit('openAddEpicForm', baseEvent.getData())
+		);
+
+		this.header.subscribe('taskClick', () => this.emit('showInput'));
 	}
 
-	addEpicCreationButton(epicCreationButton: EpicCreationButton)
+	setBlank(backlog: Backlog)
 	{
-		this.epicCreationButton = epicCreationButton;
-		this.epicCreationButton.subscribe('openAddEpicForm', () => this.emit('openAddEpicForm'));
+		this.blank = new Blank(backlog);
+	}
+
+	setDropzone(backlog: Backlog)
+	{
+		this.dropzone = new Dropzone(backlog);
+
+		this.dropzone.subscribe('createTask', () => this.emit('showInput'));
+	}
+
+	setNumberTasks(numberTasks: number)
+	{
+		super.setNumberTasks(numberTasks);
+
+		if (this.header)
+		{
+			this.header.updateTaskCounter(this.getNumberTasks());
+		}
 	}
 
 	getEntityType()
@@ -74,58 +98,53 @@ export class Backlog extends Entity
 	render(): HTMLElement
 	{
 		this.node = Tag.render`
-			<div class="tasks-scrum-backlog">
-				<div class="tasks-scrum-backlog-header">
+			<div class="tasks-scrum__backlog">
+				<div class="tasks-scrum__content --with-header --open">
 					${this.header ? this.header.render() : ''}
-				</div>
-				<div class="tasks-scrum-backlog-actions">
-					${this.epicCreationButton ? this.epicCreationButton.render() : ''}
-					${this.groupActionsButton ? this.groupActionsButton.render() : ''}
-				</div>
-				<div class="tasks-scrum-backlog-items">
+					${this.blank ? this.blank.render() : ''}
+					${this.dropzone ? this.dropzone.render() : ''}
 					${this.listItems ? this.listItems.render() : ''}
 				</div>
-				<div class="tasks-scrum-entity-items-loader"></div>
 			</div>
 		`;
 
-		this.itemsLoaderNode = this.node.querySelector('.tasks-scrum-entity-items-loader');
-		this.bindItemsLoader(this.itemsLoaderNode);
+		Event.bind(this.node.querySelector('.tasks-scrum__content-items'), 'scroll', this.onItemsScroll.bind(this));
 
 		return this.node;
 	}
 
-	setNumberTasks(numberTasks: number)
+	setItem(newItem: Item)
 	{
-		super.setNumberTasks(numberTasks);
+		super.setItem(newItem);
 
-		if (this.header)
+		if (newItem.getNode())
 		{
-			this.header.updateNumberTasks();
+			Dom.addClass(newItem.getNode(), '--item-backlog');
 		}
 	}
 
-	onActivateGroupMode(baseEvent: BaseEvent)
+	removeItem(item: Item)
 	{
-		super.onActivateGroupMode(baseEvent);
+		super.removeItem(item);
 
-		Dom.addClass(this.node.querySelector('.tasks-scrum-backlog-items'), 'tasks-scrum-backlog-items-group-mode');
-	}
-
-	onDeactivateGroupMode(baseEvent: BaseEvent)
-	{
-		super.onDeactivateGroupMode(baseEvent);
-
-		Dom.removeClass(this.node.querySelector('.tasks-scrum-backlog-items'), 'tasks-scrum-backlog-items-group-mode');
-	}
-
-	updateStoryPointsNode()
-	{
-		super.updateStoryPointsNode();
-
-		if (this.header)
+		if (this.isEmpty())
 		{
-			this.header.setStoryPoints(this.getStoryPoints().getPoints());
+			this.emit('showBlank');
 		}
+	}
+
+	onAfterAppend()
+	{
+		super.onAfterAppend();
+
+		if (this.isEmpty())
+		{
+			this.emit('showBlank');
+		}
+	}
+
+	onItemsScroll()
+	{
+		this.emit('itemsScroll');
 	}
 }

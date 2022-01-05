@@ -1,6 +1,6 @@
 <?php
 
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\AbsenceTable:timeman/lib/model/absence.php:0bb03b62e57208981fd61f9ce9276b06 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\AbsenceTable:timeman\lib\model\absence.php:74f535f8bcd846aad809435a4696a675 */
 namespace Bitrix\Timeman\Model {
 	/**
 	 * EO_Absence
@@ -320,7 +320,7 @@ namespace Bitrix\Timeman\Model {
 	 */
 	class EO_Absence_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\EntriesTable:timeman/lib/model/entries.php:7b6325df2139e2c3e2018e3cb964d8eb */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\EntriesTable:timeman\lib\model\entries.php:48e0eef0323edd844afb604136e9013f */
 namespace Bitrix\Timeman\Model {
 	/**
 	 * EO_Entries
@@ -677,7 +677,7 @@ namespace Bitrix\Timeman\Model {
 	 */
 	class EO_Entries_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorAbsenceTable:timeman/lib/model/monitor/monitorabsencetable.php:19e4e42c1501aa4ece32a198c426a417 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorAbsenceTable:timeman\lib\model\monitor\monitorabsencetable.php:e026dbf97d02a9e8bfea38a53cacfae1 */
 namespace Bitrix\Timeman\Model\Monitor {
 	/**
 	 * EO_MonitorAbsence
@@ -829,7 +829,7 @@ namespace Bitrix\Timeman\Model\Monitor {
 	 */
 	class EO_MonitorAbsence_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorCommentTable:timeman/lib/model/monitor/monitorcommenttable.php:8e7085bf73fbd7f40e79c457d3bb8f96 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorCommentTable:timeman\lib\model\monitor\monitorcommenttable.php:f0ff3f6ae2e4fca4bf70057da0bd336a */
 namespace Bitrix\Timeman\Model\Monitor {
 	/**
 	 * EO_MonitorComment
@@ -981,7 +981,7 @@ namespace Bitrix\Timeman\Model\Monitor {
 	 */
 	class EO_MonitorComment_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorEntityTable:timeman/lib/model/monitor/monitorentitytable.php:029579795cd530f781fad77142ce8895 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorEntityTable:timeman\lib\model\monitor\monitorentitytable.php:ef7c7861a3cca14bf4c6496fd19bfbab */
 namespace Bitrix\Timeman\Model\Monitor {
 	/**
 	 * EO_MonitorEntity
@@ -1133,7 +1133,7 @@ namespace Bitrix\Timeman\Model\Monitor {
 	 */
 	class EO_MonitorEntity_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorReportCommentTable:timeman/lib/model/monitor/monitorreportcommenttable.php:f7f261df06d0d6c86b15b50c739fd40b */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorReportCommentTable:timeman\lib\model\monitor\monitorreportcommenttable.php:0666c0e4f347b7b5ab16cab188b1bb48 */
 namespace Bitrix\Timeman\Model\Monitor {
 	/**
 	 * EO_MonitorReportComment
@@ -1297,7 +1297,7 @@ namespace Bitrix\Timeman\Model\Monitor {
 	 */
 	class EO_MonitorReportComment_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorUserChartTable:timeman/lib/model/monitor/monitorusercharttable.php:bfe97655a4940c1f9624135ffb5b65c9 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorUserChartTable:timeman\lib\model\monitor\monitorusercharttable.php:b03c9cc95748f7e3e9313656bd4e0fa6 */
 namespace Bitrix\Timeman\Model\Monitor {
 	/**
 	 * EO_MonitorUserChart
@@ -1485,7 +1485,7 @@ namespace Bitrix\Timeman\Model\Monitor {
 	 */
 	class EO_MonitorUserChart_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorUserLogTable:timeman/lib/model/monitor/monitoruserlogtable.php:933fff7346161a30184ea6eb977bf5cc */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorUserLogTable:timeman\lib\model\monitor\monitoruserlogtable.php:ec95826efdb72b7e661f06c33796ec13 */
 namespace Bitrix\Timeman\Model\Monitor {
 	/**
 	 * EO_MonitorUserLog
@@ -1673,7 +1673,7 @@ namespace Bitrix\Timeman\Model\Monitor {
 	 */
 	class EO_MonitorUserLog_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartmentTable:timeman/lib/model/schedule/assignment/department/scheduledepartmenttable.php:cbfcdf1768d89572a458aa49ff584d92 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartmentTable:timeman\lib\model\schedule\assignment\department\scheduledepartmenttable.php:370963363e9ad7a615590f6396c8cdd3 */
 namespace Bitrix\Timeman\Model\Schedule\Assignment\Department {
 	/**
 	 * ScheduleDepartment
@@ -1833,7 +1833,7 @@ namespace Bitrix\Timeman\Model\Schedule\Assignment\Department {
 	 */
 	class EO_ScheduleDepartment_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUserTable:timeman/lib/model/schedule/assignment/user/scheduleusertable.php:aeb6cc842338d7cfbb92b9f42fe340c1 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUserTable:timeman\lib\model\schedule\assignment\user\scheduleusertable.php:d06afbb05b4e26b464feeafa17bb967a */
 namespace Bitrix\Timeman\Model\Schedule\Assignment\User {
 	/**
 	 * ScheduleUser
@@ -1993,7 +1993,7 @@ namespace Bitrix\Timeman\Model\Schedule\Assignment\User {
 	 */
 	class EO_ScheduleUser_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Calendar\CalendarTable:timeman/lib/model/schedule/calendar/calendartable.php:64bf4bd36f3e2875f1dbdbd461d7f364 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Calendar\CalendarTable:timeman\lib\model\schedule\calendar\calendartable.php:474aefa893118b2751b96ec2b0d217f7 */
 namespace Bitrix\Timeman\Model\Schedule\Calendar {
 	/**
 	 * Calendar
@@ -2172,7 +2172,7 @@ namespace Bitrix\Timeman\Model\Schedule\Calendar {
 	 */
 	class EO_Calendar_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Calendar\CalendarExclusionTable:timeman/lib/model/schedule/calendar/calendarexclusiontable.php:acf95aef1f8d77876a32d41258e76fac */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Calendar\CalendarExclusionTable:timeman\lib\model\schedule\calendar\calendarexclusiontable.php:1e7d5a19e8095dc3629267935b15400f */
 namespace Bitrix\Timeman\Model\Schedule\Calendar {
 	/**
 	 * CalendarExclusion
@@ -2319,7 +2319,7 @@ namespace Bitrix\Timeman\Model\Schedule\Calendar {
 	 */
 	class EO_CalendarExclusion_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\ScheduleTable:timeman/lib/model/schedule/scheduletable.php:8edcd06fe3fa47068f0c350e8bf60fec */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\ScheduleTable:timeman\lib\model\schedule\scheduletable.php:f89b09cf29b7bc8e823d0a1abcbe8ed4 */
 namespace Bitrix\Timeman\Model\Schedule {
 	/**
 	 * Schedule
@@ -2697,7 +2697,7 @@ namespace Bitrix\Timeman\Model\Schedule {
 	 */
 	class EO_Schedule_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Shift\ShiftTable:timeman/lib/model/schedule/shift/shifttable.php:24480fdbf8857594e927fe0045c15003 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Shift\ShiftTable:timeman\lib\model\schedule\shift\shifttable.php:87ff8911b7bc994a4cab62e9f981332e */
 namespace Bitrix\Timeman\Model\Schedule\Shift {
 	/**
 	 * Shift
@@ -2923,7 +2923,7 @@ namespace Bitrix\Timeman\Model\Schedule\Shift {
 	 */
 	class EO_Shift_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable:timeman/lib/model/schedule/shiftplan/shiftplantable.php:e1a3c2a2db79887683e12631f0147ebf */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable:timeman\lib\model\schedule\shiftplan\shiftplantable.php:c4d0a90692bfe8293fc827884910f164 */
 namespace Bitrix\Timeman\Model\Schedule\ShiftPlan {
 	/**
 	 * ShiftPlan
@@ -3136,7 +3136,7 @@ namespace Bitrix\Timeman\Model\Schedule\ShiftPlan {
 	 */
 	class EO_ShiftPlan_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable:timeman/lib/model/schedule/violation/violationrulestable.php:09beaf6a6745db157de269e53fbb54e4 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable:timeman\lib\model\schedule\violation\violationrulestable.php:43315f226036e8ccd3e0003c29ce42d6 */
 namespace Bitrix\Timeman\Model\Schedule\Violation {
 	/**
 	 * ViolationRules
@@ -3456,7 +3456,7 @@ namespace Bitrix\Timeman\Model\Schedule\Violation {
 	 */
 	class EO_ViolationRules_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Security\TaskAccessCodeTable:timeman/lib/model/security/taskaccesscodetable.php:522a098d52547027f7980c57781f8208 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Security\TaskAccessCodeTable:timeman\lib\model\security\taskaccesscodetable.php:4fedce21534d0b676950a07c541a6f05 */
 namespace Bitrix\Timeman\Model\Security {
 	/**
 	 * TaskAccessCode
@@ -3604,7 +3604,7 @@ namespace Bitrix\Timeman\Model\Security {
 	 */
 	class EO_TaskAccessCode_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\User\UserTable:timeman/lib/model/user/usertable.php:6c52760cd4899266e3219699f70da70a */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\User\UserTable:timeman\lib\model\user\usertable.php:63d8402d774159475fe7a50fcacfed09 */
 namespace Bitrix\Timeman\Model\User {
 	/**
 	 * User
@@ -4213,16 +4213,6 @@ namespace Bitrix\Timeman\Model\User {
 	 * @method bool isIndexFilled()
 	 * @method bool isIndexChanged()
 	 * @method \Bitrix\Main\EO_UserIndex fillIndex()
-	 * @method \Bitrix\Main\EO_UserIndexSelector getIndexSelector()
-	 * @method \Bitrix\Main\EO_UserIndexSelector remindActualIndexSelector()
-	 * @method \Bitrix\Main\EO_UserIndexSelector requireIndexSelector()
-	 * @method \Bitrix\Timeman\Model\User\User setIndexSelector(\Bitrix\Main\EO_UserIndexSelector $object)
-	 * @method \Bitrix\Timeman\Model\User\User resetIndexSelector()
-	 * @method \Bitrix\Timeman\Model\User\User unsetIndexSelector()
-	 * @method bool hasIndexSelector()
-	 * @method bool isIndexSelectorFilled()
-	 * @method bool isIndexSelectorChanged()
-	 * @method \Bitrix\Main\EO_UserIndexSelector fillIndexSelector()
 	 * @method \Bitrix\Main\EO_UserCounter getCounter()
 	 * @method \Bitrix\Main\EO_UserCounter remindActualCounter()
 	 * @method \Bitrix\Main\EO_UserCounter requireCounter()
@@ -4463,9 +4453,6 @@ namespace Bitrix\Timeman\Model\User {
 	 * @method \Bitrix\Main\EO_UserIndex[] getIndexList()
 	 * @method \Bitrix\Timeman\Model\User\UserCollection getIndexCollection()
 	 * @method \Bitrix\Main\EO_UserIndex_Collection fillIndex()
-	 * @method \Bitrix\Main\EO_UserIndexSelector[] getIndexSelectorList()
-	 * @method \Bitrix\Timeman\Model\User\UserCollection getIndexSelectorCollection()
-	 * @method \Bitrix\Main\EO_UserIndexSelector_Collection fillIndexSelector()
 	 * @method \Bitrix\Main\EO_UserCounter[] getCounterList()
 	 * @method \Bitrix\Timeman\Model\User\UserCollection getCounterCollection()
 	 * @method \Bitrix\Main\EO_UserCounter_Collection fillCounter()
@@ -4544,7 +4531,7 @@ namespace Bitrix\Timeman\Model\User {
 	 */
 	class EO_User_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable:timeman/lib/model/worktime/eventlog/worktimeeventtable.php:c29bbf9d4f1fb2f5223c1e26939906c2 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable:timeman\lib\model\worktime\eventlog\worktimeeventtable.php:f00db95b82b060a7704c45294dcf2bbb */
 namespace Bitrix\Timeman\Model\Worktime\EventLog {
 	/**
 	 * WorktimeEvent
@@ -4769,7 +4756,7 @@ namespace Bitrix\Timeman\Model\Worktime\EventLog {
 	 */
 	class EO_WorktimeEvent_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable:timeman/lib/model/worktime/record/worktimerecordtable.php:4a5eae47fb81220b501ee83c00e3dba7 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable:timeman\lib\model\worktime\record\worktimerecordtable.php:844b112ef7b32d51b95e6034840b05e9 */
 namespace Bitrix\Timeman\Model\Worktime\Record {
 	/**
 	 * WorktimeRecord
@@ -5308,7 +5295,7 @@ namespace Bitrix\Timeman\Model\Worktime\Record {
 	 */
 	class EO_WorktimeRecord_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Worktime\Report\WorktimeReportTable:timeman/lib/model/worktime/report/worktimereporttable.php:4c8cf88f0fde7afa37b4737a270b8f66 */
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Worktime\Report\WorktimeReportTable:timeman\lib\model\worktime\report\worktimereporttable.php:f3c1298889c747348d7be808bc0d2981 */
 namespace Bitrix\Timeman\Model\Worktime\Report {
 	/**
 	 * WorktimeReport

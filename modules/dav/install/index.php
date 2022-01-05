@@ -28,15 +28,11 @@ Class dav extends CModule
 
 	function InstallDB($install_wizard = true)
 	{
-		global $DB, $DBType, $APPLICATION;
-
-		$arCurPhpVer = Explode(".", PhpVersion());
-		if (intval($arCurPhpVer[0]) < 5)
-			return true;
+		global $DB, $APPLICATION;
 
 		$errors = null;
 		if (!$DB->Query("SELECT 'x' FROM b_dav_locks", true))
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/db/".$DBType."/install.sql");
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/db/mysql/install.sql");
 
 		if (!empty($errors))
 		{
@@ -85,12 +81,12 @@ Class dav extends CModule
 
 	function UnInstallDB($arParams = Array())
 	{
-		global $DB, $DBType, $APPLICATION;
+		global $DB, $APPLICATION;
 
 		$errors = null;
 		if(array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y")
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/db/".$DBType."/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/db/mysql/uninstall.sql");
 
 			if (!empty($errors))
 			{
@@ -113,11 +109,6 @@ Class dav extends CModule
 
 	function InstallEvents()
 	{
-		$arCurPhpVer = Explode(".", PhpVersion());
-		if (intval($arCurPhpVer[0]) < 5)
-			return true;
-
-		return true;
 	}
 
 	function UnInstallEvents()
@@ -127,10 +118,6 @@ Class dav extends CModule
 
 	function InstallFiles()
 	{
-		$arCurPhpVer = Explode(".", PhpVersion());
-		if (intval($arCurPhpVer[0]) < 5)
-			return true;
-
 		if($_ENV["COMPUTERNAME"]!='BX')
 		{
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/bitrix",  $_SERVER["DOCUMENT_ROOT"]."/bitrix", true, True);
@@ -142,9 +129,6 @@ Class dav extends CModule
 
 	function InstallPublic()
 	{
-		$arCurPhpVer = Explode(".", PhpVersion());
-		if (intval($arCurPhpVer[0]) < 5)
-			return true;
 	}
 
 	function UnInstallFiles()
@@ -158,13 +142,7 @@ Class dav extends CModule
 
 		$this->errors = null;
 
-		$curPhpVer = PhpVersion();
-		$arCurPhpVer = Explode(".", $curPhpVer);
-		if (intval($arCurPhpVer[0]) < 5)
-		{
-			$this->errors = array(Loc::getMessage("DAV_PHP_L439", array("#VERS#" => $curPhpVer)));
-		}
-		elseif (!CBXFeatures::IsFeatureEditable("DAV"))
+		if (!CBXFeatures::IsFeatureEditable("DAV"))
 		{
 			$this->errors = array(Loc::getMessage("DAV_ERROR_EDITABLE"));
 		}

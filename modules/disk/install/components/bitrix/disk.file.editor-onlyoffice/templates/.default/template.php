@@ -43,6 +43,7 @@ Extension::load([
 	'disk.viewer.actions',
 	'disk.users',
 	'disk.sharing-legacy-popup',
+	'disk.onlyoffice-promo-popup',
 	'disk.external-link',
 	'ui.forms',
 	'ui.alerts',
@@ -206,7 +207,7 @@ if (Context::getCurrent()->getLanguage() !== 'ru')
 			</div>
 		</div>
 	</div>
-	<div data-id="<?= $containerId ?>">
+	<div data-id="<?= $containerId ?>" style="height: calc(100vh - 70px);">
 		<div id="<?= $containerId ?>-editor" data-id="<?= $containerId ?>-editor"></div>
 	</div>
 </div>
@@ -228,6 +229,7 @@ if (Context::getCurrent()->getLanguage() !== 'ru')
 		publicChannel: '<?= $arResult['PUBLIC_CHANNEL'] ?>',
         linkToEdit: '<?= $arResult['EDITOR']['ALLOW_EDIT']? $arResult['LINK_TO_EDIT'] : '' ?>',
         linkToView: '<?= $arResult['LINK_OPEN_NEW_WINDOW'] ?>',
+        linkToDownload: '<?= $arResult['LINK_TO_DOWNLOAD'] ?>',
 		documentSession: {
 			id: <?= $arResult['DOCUMENT_SESSION']['ID'] ?>,
 			hash: '<?= $arResult['DOCUMENT_SESSION']['HASH'] ?>',

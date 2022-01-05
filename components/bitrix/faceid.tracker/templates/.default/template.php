@@ -53,7 +53,7 @@ foreach ($jsMessagesCodes as $code)
     {
 		BX.ready(function(){
 			BXFaceIdStart(<?=\Bitrix\Main\Web\Json::encode(array(
-				'socnet_enabled' => \Bitrix\Main\Config\Option::get('faceid', 'ftracker_socnet_enabled', 'Y') == 'Y'
+				'socnet_enabled' => false
 			))?>);
 		});
     }
@@ -71,7 +71,6 @@ foreach ($jsMessagesCodes as $code)
 		<div class="faceid-tracker-header-description-inner">
 			<div class="faceid-tracker-header-description-list">
 				<div class="faceid-tracker-header-description-list-item"><?=Loc::getMessage('FACEID_TRACKER_CMP_DESCR_P1_NEW')?></div>
-				<div class="faceid-tracker-header-description-list-item"><?=Loc::getMessage('FACEID_TRACKER_CMP_DESCR_P2_NEW')?></div>
 			</div>
 		</div>
 		<div class="faceid-tracker-header-description-close" id="faceid-tracker-header-description-close">

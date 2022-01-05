@@ -2,9 +2,8 @@
 return [
 	'notify',
 	'reload/listeners',
+	'selector/recipient',
 	'task',
 	'task/checklist',
-	'task/grouplist',
-	'task/userlist',
 	'user/list',
 ];

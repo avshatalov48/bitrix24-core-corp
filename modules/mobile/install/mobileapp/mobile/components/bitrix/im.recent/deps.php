@@ -15,4 +15,6 @@ return [
 	'user/profile',
 	'pull/client/events',
 	'intranet/invite',
+	'selector/chat',
+	'list/selector',
 ];

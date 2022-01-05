@@ -260,18 +260,6 @@ namespace Bitrix\DocumentGenerator\Model {
 }
 namespace Bitrix\DocumentGenerator\Model {
 	/**
-	 * @method static EO_Document_Query query()
-	 * @method static EO_Document_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Document_Result getById($id)
-	 * @method static EO_Document_Result getList(array $parameters = array())
-	 * @method static EO_Document_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Document createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Document_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Document wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Document_Collection wakeUpCollection($rows)
-	 */
-	class DocumentTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -297,7 +285,7 @@ namespace Bitrix\DocumentGenerator\Model {
 	 */
 	class EO_Document_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\DocumentGenerator\Model\ExternalLinkTable:documentgenerator/lib/model/externallink.php:51bd4db2a4593a7cd2111ec9e6d0666a */
+/* ORMENTITYANNOTATION:Bitrix\DocumentGenerator\Model\ExternalLinkTable:documentgenerator/lib/model/externallinktable.php:7bc113332199d027f5b9a82216eb938b */
 namespace Bitrix\DocumentGenerator\Model {
 	/**
 	 * EO_ExternalLink
@@ -341,6 +329,16 @@ namespace Bitrix\DocumentGenerator\Model {
 	 * @method bool isDocumentFilled()
 	 * @method bool isDocumentChanged()
 	 * @method \Bitrix\DocumentGenerator\Model\EO_Document fillDocument()
+	 * @method \Bitrix\Main\Type\DateTime getViewedTime()
+	 * @method \Bitrix\DocumentGenerator\Model\EO_ExternalLink setViewedTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $viewedTime)
+	 * @method bool hasViewedTime()
+	 * @method bool isViewedTimeFilled()
+	 * @method bool isViewedTimeChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualViewedTime()
+	 * @method \Bitrix\Main\Type\DateTime requireViewedTime()
+	 * @method \Bitrix\DocumentGenerator\Model\EO_ExternalLink resetViewedTime()
+	 * @method \Bitrix\DocumentGenerator\Model\EO_ExternalLink unsetViewedTime()
+	 * @method \Bitrix\Main\Type\DateTime fillViewedTime()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -392,6 +390,8 @@ namespace Bitrix\DocumentGenerator\Model {
 	 * @method \Bitrix\DocumentGenerator\Model\EO_Document[] getDocumentList()
 	 * @method \Bitrix\DocumentGenerator\Model\EO_ExternalLink_Collection getDocumentCollection()
 	 * @method \Bitrix\DocumentGenerator\Model\EO_Document_Collection fillDocument()
+	 * @method \Bitrix\Main\Type\DateTime[] getViewedTimeList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillViewedTime()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -424,18 +424,6 @@ namespace Bitrix\DocumentGenerator\Model {
 	}
 }
 namespace Bitrix\DocumentGenerator\Model {
-	/**
-	 * @method static EO_ExternalLink_Query query()
-	 * @method static EO_ExternalLink_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ExternalLink_Result getById($id)
-	 * @method static EO_ExternalLink_Result getList(array $parameters = array())
-	 * @method static EO_ExternalLink_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_ExternalLink createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_ExternalLink_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_ExternalLink wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_ExternalLink_Collection wakeUpCollection($rows)
-	 */
-	class ExternalLinkTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -709,18 +697,6 @@ namespace Bitrix\DocumentGenerator\Model {
 }
 namespace Bitrix\DocumentGenerator\Model {
 	/**
-	 * @method static EO_Field_Query query()
-	 * @method static EO_Field_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Field_Result getById($id)
-	 * @method static EO_Field_Result getList(array $parameters = array())
-	 * @method static EO_Field_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Field createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Field_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Field wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Field_Collection wakeUpCollection($rows)
-	 */
-	class FieldTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -860,18 +836,6 @@ namespace Bitrix\DocumentGenerator\Model {
 	}
 }
 namespace Bitrix\DocumentGenerator\Model {
-	/**
-	 * @method static EO_File_Query query()
-	 * @method static EO_File_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_File_Result getById($id)
-	 * @method static EO_File_Result getList(array $parameters = array())
-	 * @method static EO_File_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_File createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_File_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_File wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_File_Collection wakeUpCollection($rows)
-	 */
-	class FileTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1071,18 +1035,6 @@ namespace Bitrix\DocumentGenerator\Model {
 }
 namespace Bitrix\DocumentGenerator\Model {
 	/**
-	 * @method static EO_Region_Query query()
-	 * @method static EO_Region_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Region_Result getById($id)
-	 * @method static EO_Region_Result getList(array $parameters = array())
-	 * @method static EO_Region_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Region createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Region_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Region wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Region_Collection wakeUpCollection($rows)
-	 */
-	class RegionTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1248,18 +1200,6 @@ namespace Bitrix\DocumentGenerator\Model {
 }
 namespace Bitrix\DocumentGenerator\Model {
 	/**
-	 * @method static EO_RegionPhrase_Query query()
-	 * @method static EO_RegionPhrase_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_RegionPhrase_Result getById($id)
-	 * @method static EO_RegionPhrase_Result getList(array $parameters = array())
-	 * @method static EO_RegionPhrase_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RegionPhrase createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RegionPhrase_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RegionPhrase wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RegionPhrase_Collection wakeUpCollection($rows)
-	 */
-	class RegionPhraseTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1399,18 +1339,6 @@ namespace Bitrix\DocumentGenerator\Model {
 	}
 }
 namespace Bitrix\DocumentGenerator\Model {
-	/**
-	 * @method static EO_Role_Query query()
-	 * @method static EO_Role_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Role_Result getById($id)
-	 * @method static EO_Role_Result getList(array $parameters = array())
-	 * @method static EO_Role_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\Role createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Role_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\Role wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Role_Collection wakeUpCollection($rows)
-	 */
-	class RoleTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1564,18 +1492,6 @@ namespace Bitrix\DocumentGenerator\Model {
 	}
 }
 namespace Bitrix\DocumentGenerator\Model {
-	/**
-	 * @method static EO_RoleAccess_Query query()
-	 * @method static EO_RoleAccess_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_RoleAccess_Result getById($id)
-	 * @method static EO_RoleAccess_Result getList(array $parameters = array())
-	 * @method static EO_RoleAccess_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RoleAccess createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RoleAccess_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RoleAccess wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RoleAccess_Collection wakeUpCollection($rows)
-	 */
-	class RoleAccessTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1767,18 +1683,6 @@ namespace Bitrix\DocumentGenerator\Model {
 }
 namespace Bitrix\DocumentGenerator\Model {
 	/**
-	 * @method static EO_RolePermission_Query query()
-	 * @method static EO_RolePermission_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_RolePermission_Result getById($id)
-	 * @method static EO_RolePermission_Result getList(array $parameters = array())
-	 * @method static EO_RolePermission_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RolePermission createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RolePermission_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RolePermission wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_RolePermission_Collection wakeUpCollection($rows)
-	 */
-	class RolePermissionTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1966,18 +1870,6 @@ namespace Bitrix\DocumentGenerator\Model {
 	}
 }
 namespace Bitrix\DocumentGenerator\Model {
-	/**
-	 * @method static EO_Spreadsheet_Query query()
-	 * @method static EO_Spreadsheet_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Spreadsheet_Result getById($id)
-	 * @method static EO_Spreadsheet_Result getList(array $parameters = array())
-	 * @method static EO_Spreadsheet_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Spreadsheet createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Spreadsheet_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Spreadsheet wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Spreadsheet_Collection wakeUpCollection($rows)
-	 */
-	class SpreadsheetTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -2301,18 +2193,6 @@ namespace Bitrix\DocumentGenerator\Model {
 }
 namespace Bitrix\DocumentGenerator\Model {
 	/**
-	 * @method static EO_Template_Query query()
-	 * @method static EO_Template_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Template_Result getById($id)
-	 * @method static EO_Template_Result getList(array $parameters = array())
-	 * @method static EO_Template_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Template createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Template_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Template wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_Template_Collection wakeUpCollection($rows)
-	 */
-	class TemplateTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -2338,7 +2218,7 @@ namespace Bitrix\DocumentGenerator\Model {
 	 */
 	class EO_Template_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\DocumentGenerator\Model\TemplateProviderTable:documentgenerator/lib/model/templateprovider.php:167da7af4771d3e30f83b70e05c1df65 */
+/* ORMENTITYANNOTATION:Bitrix\DocumentGenerator\Model\TemplateProviderTable:documentgenerator/lib/model/templateprovider.php:6e3bb49fa38f0dfb9e1c179537d6ae75 */
 namespace Bitrix\DocumentGenerator\Model {
 	/**
 	 * EO_TemplateProvider
@@ -2447,18 +2327,6 @@ namespace Bitrix\DocumentGenerator\Model {
 	}
 }
 namespace Bitrix\DocumentGenerator\Model {
-	/**
-	 * @method static EO_TemplateProvider_Query query()
-	 * @method static EO_TemplateProvider_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_TemplateProvider_Result getById($id)
-	 * @method static EO_TemplateProvider_Result getList(array $parameters = array())
-	 * @method static EO_TemplateProvider_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateProvider createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateProvider_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateProvider wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateProvider_Collection wakeUpCollection($rows)
-	 */
-	class TemplateProviderTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -2600,18 +2468,6 @@ namespace Bitrix\DocumentGenerator\Model {
 	}
 }
 namespace Bitrix\DocumentGenerator\Model {
-	/**
-	 * @method static EO_TemplateUser_Query query()
-	 * @method static EO_TemplateUser_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_TemplateUser_Result getById($id)
-	 * @method static EO_TemplateUser_Result getList(array $parameters = array())
-	 * @method static EO_TemplateUser_Entity getEntity()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateUser createObject($setDefaultValues = true)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateUser_Collection createCollection()
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateUser wakeUpObject($row)
-	 * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateUser_Collection wakeUpCollection($rows)
-	 */
-	class TemplateUserTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

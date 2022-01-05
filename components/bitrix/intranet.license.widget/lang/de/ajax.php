@@ -1,2 +1,0 @@
-<?php
-$MESS["INTRANET_LICENSE_TILL"] = "Gültig bis #LICENSETILL#";

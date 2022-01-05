@@ -269,9 +269,9 @@ BX.namespace('Tasks.Component');
 
 			showTaskPopup: function()
 			{
-				if(BX.Tasks.Singletons.iframePopup)
+				if (top.BX.Tasks.Singletons.iframePopup)
 				{
-					BX.Tasks.Singletons.iframePopup.view(this.config.entityId);
+					top.BX.Tasks.Singletons.iframePopup.view(this.config.entityId);
 				}
 			},
 

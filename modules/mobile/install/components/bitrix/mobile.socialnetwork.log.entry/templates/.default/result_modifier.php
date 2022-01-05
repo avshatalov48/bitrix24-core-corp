@@ -31,9 +31,12 @@ if (
 
 	if (is_array($arEvent["COMMENTS"]))
 	{
-		$commentData = $commentInlineDiskData = $inlineDiskObjectIdList = $inlineDiskAttachedObjectIdList = [];
+		$commentData = [];
+		$commentInlineDiskData = [];
+		$inlineDiskObjectIdList = [];
+		$inlineDiskAttachedObjectIdList = [];
 
-		foreach($arEvent["COMMENTS"] as $comment)
+		foreach ($arEvent["COMMENTS"] as $comment)
 		{
 			$commentId = (
 				isset($comment["EVENT"]["SOURCE_ID"])
@@ -42,7 +45,7 @@ if (
 					: $comment["EVENT"]["ID"]
 			);
 
-			if ($ufData = MSLEUFProcessor::getDataByText($comment['EVENT']['MESSAGE']))
+			if ($ufData = \Bitrix\Mobile\Livefeed\Helper::getDiskDataByCommentText($comment['EVENT']['MESSAGE']))
 			{
 				$commentInlineDiskData[$commentId] = $ufData;
 				$inlineDiskObjectIdList = array_merge($inlineDiskObjectIdList, $ufData['OBJECT_ID']);
@@ -52,14 +55,15 @@ if (
 			$commentData[$comment['EVENT']['ID']] = $comment;
 		}
 
-		$inlineDiskAttachedObjectIdImageList = $entityAttachedObjectIdList = array();
-		if ($ufData = \MSLEUFProcessor::getUFData($inlineDiskObjectIdList, $inlineDiskAttachedObjectIdList))
+		$inlineDiskAttachedObjectIdImageList = [];
+		$entityAttachedObjectIdList = [];
+		if ($ufData = \Bitrix\Mobile\Livefeed\Helper::getDiskUFDataForComments($inlineDiskObjectIdList, $inlineDiskAttachedObjectIdList))
 		{
 			$inlineDiskAttachedObjectIdImageList = $ufData['ATTACHED_OBJECT_DATA'];
 			$entityAttachedObjectIdList = $ufData['ENTITIES_DATA'];
 		}
 
-		foreach($commentData as $comment)
+		foreach ($commentData as $comment)
 		{
 			$commentId = (
 				isset($comment["EVENT"]["SOURCE_ID"])
@@ -121,7 +125,7 @@ if (
 			if (
 				$originalComment["EVENT"]["RATING_TYPE_ID"] <> ''
 				&& $originalComment["EVENT"]["RATING_ENTITY_ID"] > 0
-				&& $arParams["SHOW_RATING"] == "Y"
+				&& $arParams["SHOW_RATING"] === "Y"
 			)
 			{
 				$voteId = $originalComment["EVENT"]["RATING_TYPE_ID"].'_'.$originalComment["EVENT"]["RATING_ENTITY_ID"].'-'.(time()+rand(0, 1000));
@@ -131,29 +135,17 @@ if (
 				$arResult["RECORDS"][$commentId]["RATING_USER_REACTION"] = $arResult["RATING_COMMENTS"][$originalComment["EVENT"]["RATING_ENTITY_ID"]]["USER_REACTION"];
 			}
 
-			// find all inline images and remove them from UF
 			if (
 				!empty($inlineDiskAttachedObjectIdImageList)
 				&& isset($commentInlineDiskData[$commentId])
 			)
 			{
-				$inlineAttachedImagesId = array();
-				if (!empty($commentInlineDiskData[$commentId]['OBJECT_ID']))
-				{
-					foreach($commentInlineDiskData[$commentId]['OBJECT_ID'] as $val)
-					{
-						$inlineAttachedImagesId = array_merge($inlineAttachedImagesId, array_keys($inlineDiskAttachedObjectIdImageList, $val));
-					}
-				}
-				if (!empty($commentInlineDiskData[$commentId]['ATTACHED_OBJECT_ID']))
-				{
-					$inlineAttachedImagesId = array_merge($inlineAttachedImagesId, array_intersect($commentInlineDiskData[$commentId]['ATTACHED_OBJECT_ID'], array_keys($inlineDiskAttachedObjectIdImageList)));
-				}
-
-				if (is_array($entityAttachedObjectIdList[$commentId]))
-				{
-					$inlineAttachedImagesId = array_intersect($inlineAttachedImagesId, $entityAttachedObjectIdList[$commentId]);
-				}
+				$inlineAttachedImagesId = \Bitrix\Mobile\Livefeed\Helper::getCommentInlineAttachedImagesId([
+					'commentId' => $commentId,
+					'inlineDiskAttachedObjectIdImageList' => $inlineDiskAttachedObjectIdImageList,
+					'commentInlineDiskData' => $commentInlineDiskData[$commentId],
+					'entityAttachedObjectIdList' => $entityAttachedObjectIdList[$commentId],
+				]);
 
 				if (
 					!empty($arResult["RECORDS"][$commentId]["UF"])

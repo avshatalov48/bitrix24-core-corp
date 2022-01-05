@@ -163,6 +163,25 @@ include('InAppNotifier');
 			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
 		}
 
+		static getItemDataFromUser(user)
+		{
+			return {
+				id: user.id,
+				name: user.title,
+				icon: (user.defaultImage ? '' : user.imageUrl),
+				link: '',
+			};
+		}
+
+		static getItemDataFromGroup(group)
+		{
+			return {
+				id: group.id,
+				name: group.title,
+				image: (group.defaultImage ? '' : group.imageUrl),
+			};
+		}
+
 		constructor(taskcard, userId)
 		{
 			this.init(taskcard, userId);
@@ -221,9 +240,6 @@ include('InAppNotifier');
 				this.taskLimitExceeded = response.result || false;
 				this.redrawTaskPopupMenu();
 			});
-
-			TaskGroupList.loadLastActiveProjects();
-			TaskGroupList.validateLastSearchedProjects();
 		}
 
 		onMobileGridFormDataChange(eventData)
@@ -668,29 +684,43 @@ include('InAppNotifier');
 
 		onChangeResponsibleAction()
 		{
-			new TaskUserList({}, {
-				onSelect: (user) => {
-					this.updateTask({
-						responsible: {
-							id: user.id,
-							name: user.title,
-							icon: (user.imageUrl.search('default_avatar.png') < 0 ? user.imageUrl : ''),
-							link: '',
-						},
-						activityDate: Date.now(),
-					});
+			(new RecipientSelector('TASKS_MEMBER_SELECTOR_EDIT_responsible', ['user']))
+				.setSingleChoose(true)
+				.setTitle(BX.message('TASKS_TASK_DETAIL_TITLE_RESPONSIBLE'))
+				.setSelected({
+					user: [{
+						id: this.task.responsible.id,
+						title: this.task.responsible.name,
+						imageUrl: this.task.responsible.icon,
+					}],
+				})
+				.open()
+				.then((recipients) => {
+					if (recipients.user && recipients.user.length > 0)
+					{
+						const user = recipients.user[0];
 
-					console.log('tasks.view.native::onItemAction::changeResponsible');
-					BX.postWebEvent('tasks.view.native::onItemAction', {
-						taskId: this.task.id,
-						taskGuid: this.guid,
-						name: 'responsible',
-						values: {
-							user: this.task.responsible,
-						},
-					});
-				},
-			});
+						if (Number(this.task.responsible.id) === Number(user.id))
+						{
+							return;
+						}
+						this.updateTask({
+							responsible: TaskCard.getItemDataFromUser(user),
+							activityDate: Date.now(),
+						});
+
+						console.log('tasks.view.native::onItemAction::changeResponsible');
+						BX.postWebEvent('tasks.view.native::onItemAction', {
+							taskId: this.task.id,
+							taskGuid: this.guid,
+							name: 'responsible',
+							values: {
+								user: this.task.responsible,
+							},
+						});
+					}
+				})
+			;
 		}
 
 		onDelegateAction()
@@ -700,32 +730,46 @@ include('InAppNotifier');
 
 		onChangeGroupAction()
 		{
-			new TaskGroupList({
-				onSelect: (group) => {
-					if (Number(this.task.groupId) === Number(group.id))
+			const selected = [];
+			if (this.task.group.id > 0)
+			{
+				selected.push({
+					id: this.task.group.id,
+					title: this.task.group.name,
+					imageUrl: this.task.group.image,
+				});
+			}
+
+			(new RecipientSelector('TASKS_PROJECT', ['project']))
+				.setSingleChoose(true)
+				.setTitle(BX.message('TASKS_LIST_POPUP_PROJECT'))
+				.setSelected({project: selected})
+				.open()
+				.then((recipients) => {
+					if (recipients.project && recipients.project.length)
 					{
-						return;
+						const group = recipients.project[0];
+
+						if (Number(this.task.groupId) === Number(group.id))
+						{
+							return;
+						}
+						this.task.groupId = Number(group.id);
+						this.task.group = TaskCard.getItemDataFromGroup(group);
+						this.updateTask({});
+
+						console.log('tasks.view.native::onItemAction::changeGroup');
+						BX.postWebEvent('tasks.view.native::onItemAction', {
+							taskId: this.task.id,
+							taskGuid: this.guid,
+							name: 'group',
+							values: {
+								group: this.task.group,
+							},
+						});
 					}
-
-					this.task.groupId = Number(group.id);
-					this.task.group = {
-						id: group.id,
-						name: group.title,
-						image: group.imageUrl,
-					};
-					this.updateTask({});
-
-					console.log('tasks.view.native::onItemAction::changeGroup');
-					BX.postWebEvent('tasks.view.native::onItemAction', {
-						taskId: this.task.id,
-						taskGuid: this.guid,
-						name: 'group',
-						values: {
-							group: this.task.group,
-						},
-					});
-				},
-			});
+				})
+			;
 		}
 
 		onMuteAction()
@@ -1084,23 +1128,37 @@ include('InAppNotifier');
 
 		delegate()
 		{
-			new TaskUserList({}, {
-				onSelect: (user) => {
-					this.updateTask({
-						responsible: {
-							id: user.id,
-							name: user.title,
-							icon: user.imageUrl,
-							link: '',
-						},
-						activityDate: Date.now(),
-					});
-					this.task.delegate().then(() => BX.postWebEvent('tasks.view.native::onTaskUpdate', {
-						taskId: this.task.id,
-						responsible: true,
-					}, true));
-				},
-			});
+			(new RecipientSelector('TASKS_MEMBER_SELECTOR_EDIT_responsible', ['user']))
+				.setSingleChoose(true)
+				.setTitle(BX.message('TASKS_TASK_DETAIL_TITLE_RESPONSIBLE'))
+				.setSelected({
+					user: [{
+						id: this.task.responsible.id,
+						title: this.task.responsible.name,
+						imageUrl: this.task.responsible.icon,
+					}],
+				})
+				.open()
+				.then((recipients) => {
+					if (recipients.user && recipients.user.length > 0)
+					{
+						const user = recipients.user[0];
+
+						if (Number(this.task.responsible.id) === Number(user.id))
+						{
+							return;
+						}
+						this.updateTask({
+							responsible: TaskCard.getItemDataFromUser(user),
+							activityDate: Date.now(),
+						});
+						this.task.delegate().then(() => BX.postWebEvent('tasks.view.native::onTaskUpdate', {
+							taskId: this.task.id,
+							responsible: true,
+						}, true));
+					}
+				})
+			;
 		}
 
 		onRemoveAction()

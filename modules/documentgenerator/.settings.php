@@ -11,5 +11,14 @@ return array(
 			],
 		),
 		'readonly' => true,
-	)
+	),
+
+	'services' => [
+		'value' => [
+			'documentgenerator.integration.intranet.binding.codeBuilder' => [
+				'className' => '\\Bitrix\\DocumentGenerator\\Integration\\Intranet\\Binding\\CodeBuilder',
+			],
+		],
+		'readonly' => true,
+	],
 );

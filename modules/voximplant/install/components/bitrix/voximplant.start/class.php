@@ -60,7 +60,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 			$this->account->UpdateAccountInfo($accountInfo);
 			$sip = new CVoxImplantSip();
 
-			$sip->updateSipRegisrations([
+			$sip->updateSipRegistrations([
 				'sipRegistrations' => $accountInfo->sip_status->result
 			]);
 

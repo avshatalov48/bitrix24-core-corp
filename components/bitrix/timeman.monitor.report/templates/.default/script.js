@@ -28,7 +28,7 @@
 	{
 		return new Promise(function (resolve)
 		{
-			BX.ajax.runComponentAction('bitrix:timeman.pwt.report', 'getRowsCount', {
+			BX.ajax.runComponentAction('bitrix:timeman.monitor.report', 'getRowsCount', {
 				mode: 'class'
 			})
 				.then(function(response)

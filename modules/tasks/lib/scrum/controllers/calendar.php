@@ -1,0 +1,489 @@
+<?php
+
+namespace Bitrix\Tasks\Scrum\Controllers;
+
+use Bitrix\Main\Application;
+use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Request;
+use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Scrum\Service\BacklogService;
+use Bitrix\Tasks\Scrum\Service\UserService;
+use Bitrix\Tasks\Util\User;
+
+class Calendar extends Controller
+{
+	public function __construct(Request $request = null)
+	{
+		parent::__construct($request);
+
+		$this->errorCollection = new ErrorCollection;
+	}
+
+	public function getMeetingsAction()
+	{
+		if (!$this->checkModules())
+		{
+			return null;
+		}
+
+		if (!Loader::includeModule('im'))
+		{
+			return null;
+		}
+
+		$post = $this->request->getPostList()->toArray();
+
+		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
+
+		$userId = User::getId();
+
+		if (!$this->canReadGroupTasks($userId, $groupId))
+		{
+			return null;
+		}
+
+		$backlogService = new BacklogService();
+
+		$backlog = $backlogService->getBacklogByGroupId($groupId);
+
+		$info = $backlog->getInfo();
+
+		$mapCreatedEvents = $this->getMapCreatedEventsByTemplate($info->getEvents());
+
+		$listEvents = $this->getUpcomingEventsForThisProject($userId, $groupId);
+
+		$chats = $this->getEventChats($listEvents);
+
+		[$listEvents, $todayEvent] = $this->getEventForToday($listEvents);
+
+		return [
+			'mapCreatedEvents' => $mapCreatedEvents,
+			'todayEvent' => (empty($todayEvent) ? null : $todayEvent),
+			'listEvents' => array_values($listEvents),
+			'isTemplatesClosed' => $info->isTemplatesClosed(),
+			'chats' => $chats,
+		];
+	}
+
+	public function getChatAction()
+	{
+		if (!$this->checkModules())
+		{
+			return null;
+		}
+
+		if (!Loader::includeModule('im'))
+		{
+			return null;
+		}
+
+		$post = $this->request->getPostList()->toArray();
+
+		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
+		$chatId = (is_numeric($post['chatId']) ? (int) $post['chatId'] : 0);
+
+		$userId = User::getId();
+
+		if (!$this->canReadGroupTasks($userId, $groupId))
+		{
+			return null;
+		}
+
+		if ($chatId > 0)
+		{
+			$chatData = \CIMChat::getChatData(['ID' => $chatId]);
+			if ($chatData)
+			{
+				$userIds = $chatData['userInChat'][$chatId];
+
+				if (!in_array($userId, $userIds))
+				{
+					$chat = new \CIMChat(0);
+					$chat->addUser($chatId, $userId);
+				}
+			}
+		}
+
+		return $chatId;
+	}
+
+	public function saveEventInfoAction()
+	{
+		if (!$this->checkModules())
+		{
+			return null;
+		}
+
+		$post = $this->request->getPostList()->toArray();
+
+		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
+
+		$userId = User::getId();
+
+		if (!$this->canReadGroupTasks($userId, $groupId))
+		{
+			return null;
+		}
+
+		$templateId = (is_string($post['templateId'] ) ? $post['templateId'] : '');
+		$eventId = (is_numeric($post['eventId']) ? (int) $post['eventId'] : 0);
+
+		$eventData = $this->getEventData($userId, $eventId);
+		if (empty($eventData['ID']))
+		{
+			return null;
+		}
+
+		$backlogService = new BacklogService();
+
+		$backlog = $backlogService->getBacklogByGroupId($groupId);
+
+		$backlog->getInfo()->setEvents([$templateId => $eventId]);
+
+		$backlogService->changeBacklog($backlog);
+
+		$chatId = $this->createChat($userId, $eventId, $eventData);
+
+		return [
+			'chatId' => $chatId
+		];
+	}
+
+	public function closeTemplatesAction()
+	{
+		if (!$this->checkModules())
+		{
+			return null;
+		}
+
+		$post = $this->request->getPostList()->toArray();
+
+		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
+
+		$userId = User::getId();
+
+		if (!$this->canReadGroupTasks($userId, $groupId))
+		{
+			return null;
+		}
+
+		$backlogService = new BacklogService();
+
+		$backlog = $backlogService->getBacklogByGroupId($groupId);
+
+		$backlog->getInfo()->setTemplatesClosed('Y');
+
+		$backlogService->changeBacklog($backlog);
+
+		return '';
+	}
+
+	private function checkModules(): bool
+	{
+		return (
+			Loader::includeModule('tasks')
+			&& Loader::includeModule('socialnetwork')
+			&& Loader::includeModule('calendar')
+		);
+	}
+
+	private function canReadGroupTasks(int $userId, int $groupId): bool
+	{
+		return Group::canReadGroupTasks($userId, $groupId);
+	}
+
+	private function getMapCreatedEventsByTemplate(array $events): array
+	{
+		$map = [];
+
+		foreach ($events as $templateId => $eventId)
+		{
+			if (\CCalendarEvent::getById($eventId))
+			{
+				$map[$templateId] = $eventId;
+			}
+		}
+
+		return $map;
+	}
+
+	private function getUpcomingEventsForThisProject(int $userId, int $groupId): array
+	{
+		$oneWeek = \DateInterval::createFromDateString('1 week')->format('%d') * 86400;
+		$twoWeek = \DateInterval::createFromDateString('2 weeks')->format('%d') * 86400;
+
+		$defaultSprintDuration = $twoWeek;
+		$group = Workgroup::getById($groupId);
+		if ($group)
+		{
+			$defaultSprintDuration = $oneWeek + $group->getDefaultSprintDuration();
+		}
+
+		$listEvents = [];
+
+		$sections = \CCalendarSect::getList([
+			'arFilter' => [
+				'OWNER_ID'=> $groupId,
+				'ACTIVE' => 'Y',
+				'CALL_TYPE' => 'group',
+			],
+			'checkPermissions' => true
+		]);
+		foreach ($sections as $section)
+		{
+			$events = \CCalendarEvent::getList(
+				[
+					'arFilter' => [
+						'SECTION_ID' => $section['ID'],
+						'OWNER_ID' => $groupId,
+						'CAL_TYPE' => 'group',
+						'DELETED' => 'N',
+						'FROM_LIMIT' => \CCalendar::date(time(), false),
+						'TO_LIMIT' => \CCalendar::date(time() + $defaultSprintDuration, false),
+					],
+					'parseRecursion' => true,
+					'preciseLimits' => true,
+					'fetchAttendees' => true,
+					'checkPermissions' => true,
+					'setDefaultLimit' => false
+				]
+			);
+			foreach ($events as $event)
+			{
+				$fromTs = \CCalendar::timestamp($event['DATE_FROM']);
+				$toTs = \CCalendar::timestamp($event['DATE_TO']);
+
+				//$fromTs += \CCalendar::getTimezoneOffset($event['TZ_FROM'], $fromTs);
+				//$toTs += \CCalendar::getTimezoneOffset($event['TZ_TO'], $toTs);
+
+				$fromTs = $fromTs + date('Z', $fromTs);
+				$toTs = $toTs + date('Z', $toTs);
+
+				$currentTs = time();
+
+				if ($fromTs > $currentTs)
+				{
+					if (!isset($listEvents[$event['ID']]))
+					{
+						$listEvents[$event['ID']] = [
+							'id' => $event['ID'],
+							'name' => $event['NAME'],
+							'from' => $fromTs,
+							'to' => $toTs,
+							'color' => $event['COLOR'],
+						];
+					}
+				}
+			}
+		}
+
+		return array_values($listEvents);
+	}
+
+	private function getEventForToday(array $listEvents): array
+	{
+		$todayEvent = [];
+
+		foreach ($listEvents as $key => $event)
+		{
+			$endCurrentDayTs = (strtotime('tomorrow', time()) - 1);
+			if ($event['from'] < $endCurrentDayTs)
+			{
+				$todayEvent = $event;
+				unset($listEvents[$key]);
+				break;
+			}
+		}
+
+		return [$listEvents, $todayEvent];
+	}
+
+	private function getEventData(int $userId, int $entityId): array
+	{
+		$data = [];
+
+		$event = \CCalendarEvent::getEventForViewInterface($entityId);
+		if (!$event)
+		{
+			return $data;
+		}
+
+		$pathToCalendar = \CCalendar::getPathForCalendarEx($userId);
+		$pathToEvent = \CHTTP::urlAddParams($pathToCalendar, ['EVENT_ID' => $event['ID']]);
+
+		$data = [
+			'ID' => $event['ID'],
+			'TITLE' => $event['NAME'],
+			'DESCRIPTION' => $event['DESCRIPTION'],
+			'CREATED_BY' => $event['CREATED_BY'],
+			'MEETING' => $event['MEETING'],
+			'DATE_FROM' => $event['DATE_FROM'],
+			'DT_SKIP_TIME' => $event['DT_SKIP_TIME'],
+			'LINK' => $pathToEvent,
+			'URL' => $pathToEvent,
+			'USER_IDS' => [],
+		];
+
+		foreach($event['ATTENDEE_LIST'] as $user)
+		{
+			if ((int)$user['id'] > 0)
+			{
+				$data['USER_IDS'][] = $user['id'];
+			}
+		}
+
+		if (empty($data['USER_IDS']))
+		{
+			$data['USER_IDS'][] = $event['CREATED_BY'];
+		}
+
+		$data['USER_IDS'] = $this->checkUsers($data['USER_IDS']);
+
+		return $data;
+	}
+
+	private function checkUsers($userIds): array
+	{
+		$newUserIds = [];
+
+		$externalUserTypes = \Bitrix\Main\UserTable::getExternalUserTypes();
+
+		$result = \Bitrix\Main\UserTable::getList([
+			'select' => ['ID', 'EXTERNAL_AUTH_ID'],
+			'filter' => ['=ID' => $userIds],
+		]);
+		while ($user = $result->fetch())
+		{
+			if (!in_array($user['EXTERNAL_AUTH_ID'], $externalUserTypes, true))
+			{
+				$newUserIds[] = $user['ID'];
+			}
+		}
+
+		return $newUserIds;
+	}
+
+	private function createChat(int $userId, int $eventId, array $eventData): int
+	{
+		$lockName = 'chat_create_calendar_event_' . $eventId;
+
+		if (!Application::getConnection()->lock($lockName))
+		{
+			return 0;
+		}
+
+		$chatId = $this->createCalendarChat($eventData, $userId);
+
+		Application::getConnection()->unlock($lockName);
+
+		return $chatId;
+	}
+
+	private function createCalendarChat(array $eventData, int $userId): int
+	{
+		if (!Loader::includeModule('im'))
+		{
+			return 0;
+		}
+
+		$chat = new \CIMChat(0);
+
+		$chatFields = [
+			'TITLE' => $eventData['TITLE'],
+			'TYPE' => IM_MESSAGE_CHAT,
+			'ENTITY_TYPE' => \CCalendar::CALENDAR_CHAT_ENTITY_TYPE,
+			'ENTITY_ID' => $eventData['ID'],
+			'SKIP_ADD_MESSAGE' => 'Y',
+			'AUTHOR_ID' => $userId,
+			'USERS' => $eventData['USER_IDS']
+		];
+
+		$chatId = $chat->add($chatFields);
+
+		if ($chatId)
+		{
+			$pathToCalendar = \CCalendar::getPathForCalendarEx($userId);
+
+			$pathToEvent = \CHTTP::urlAddParams($pathToCalendar, ['EVENT_ID' => $eventData['ID']]);
+
+			$chatMessageFields = [
+				'FROM_USER_ID' => $userId,
+				'MESSAGE' => Loc::getMessage(
+					'TSC_CHAT_MESSAGE',
+					[
+						'#EVENT_TITLE#' => '[url=' . $pathToEvent . ']' . $eventData['TITLE'] . '[/url]',
+						'#DATETIME_FROM#' => \CCalendar::Date(
+							\CCalendar::Timestamp($eventData['DATE_FROM']),
+							$eventData['DT_SKIP_TIME'] === 'N',
+							true, true
+						)
+					]
+				),
+				'SYSTEM' => 'Y',
+				'INCREMENT_COUNTER' => 'N',
+				'PUSH' => 'Y',
+				'TO_CHAT_ID' => $chatId,
+				'SKIP_USER_CHECK' => 'Y',
+				'SKIP_COMMAND' => 'Y'
+			];
+
+			\CIMChat::addMessage($chatMessageFields);
+
+			$eventData['MEETING']['CHAT_ID'] = $chatId;
+
+			\CCalendar::SaveEvent([
+				'arFields' => [
+					'ID' => $eventData['ID'],
+					'MEETING' => $eventData['MEETING']
+				],
+				'checkPermission' => false,
+				'userId' => $eventData['CREATED_BY']
+			]);
+
+			\CCalendar::clearCache('event_list');
+		}
+
+		return $chatId;
+	}
+
+	private function getEventChats(array $listEvents): array
+	{
+		$userService = new UserService();
+
+		$chats = [];
+
+		foreach ($listEvents as $event)
+		{
+			$chatId = \CIMChat::getEntityChat('CALENDAR', $event['id']);
+			if ($chatId === false)
+			{
+				continue;
+			}
+
+			$chatData = \CIMChat::getChatData(['ID' => $chatId, 'PHOTO_SIZE' => 32]);
+
+			if ($chatData['chat'][$chatId]['avatar'] === '/bitrix/js/im/images/blank.gif')
+			{
+				$chatData['chat'][$chatId]['avatar'] = '';
+			}
+
+			$userIds = $chatData['userInChat'][$chatId];
+			$usersInfo = $userService->getInfoAboutUsers($userIds);
+			$users = (count($userIds) > 1 ? array_values($usersInfo) : [$usersInfo]);
+
+			$chats[] = [
+				'id' => $chatData['chat'][$chatId]['id'],
+				'type' => $chatData['chat'][$chatId]['type'],
+				'icon' => $chatData['chat'][$chatId]['avatar'],
+				'name' => $chatData['chat'][$chatId]['name'],
+				'users' => $users,
+			];
+		}
+
+		return $chats;
+	}
+}

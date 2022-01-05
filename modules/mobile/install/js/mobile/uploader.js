@@ -270,7 +270,7 @@
 		addTasks: function (tasks)
 		{
 			this.registerTaskLoaders(tasks);
-			BXMobileApp.onCustomEvent("onFileUploadTaskReceived", {files: tasks}, true);
+			BXMobileApp.Events.postToComponent("onFileUploadTaskReceived", [{files: tasks}], 'background');
 		},
 		init: function ()
 		{

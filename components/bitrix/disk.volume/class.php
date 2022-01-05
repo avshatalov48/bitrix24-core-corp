@@ -2920,6 +2920,7 @@ class CDiskVolumeComponent extends BaseComponent
 			'filter' => array(
 				'ENTITY_TYPE' => \Bitrix\Disk\ProxyType\User::className(),
 				'ENTITY_ID' => $this->getUser()->getId(),
+				'MODULE_ID' => 'disk',
 			),
 			'select' => array('ID')
 		));

@@ -122,6 +122,37 @@ Class location extends CModule
 				 );
 			"
 		);
+
+		$DB->query("
+			INSERT IGNORE INTO b_location_source (
+				CODE,
+				NAME,
+				CONFIG
+			)
+			VALUES
+			(
+				'OSM',
+				'OpenStreetMap',
+				'" . $DB->ForSQL(serialize(
+				[
+					[
+						'code' => 'SERVICE_URL',
+						'type' => 'string',
+						'sort' => 10,
+						'value' => '',
+						'is_visible' => true,
+					],
+					[
+						'code' => 'TOKEN',
+						'type' => 'string',
+						'sort' => 20,
+						'value' => null,
+						'is_visible' => false,
+					],
+				]
+			)) . "'
+			)
+		");
 	}
 
 	public function DoUninstall()

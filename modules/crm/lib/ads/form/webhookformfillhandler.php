@@ -122,7 +122,7 @@ class WebHookFormFillHandler
 			$this->addError("Linked crm-forms by ads-form-id `$adsFormId` not found.");
 		}
 
-		$adsForm = LeadAdsService::getForm($type);
+		$adsForm = LeadAdsService::getInstance()->getForm($type);
 		$adsResult = $adsForm->getResult($item);
 		if (!$adsResult->isSuccess())
 		{

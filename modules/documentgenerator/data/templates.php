@@ -12,6 +12,7 @@ $allProviders = [
 	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Company',
 	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Contact',
 	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Order',
+	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\SmartInvoice',
 ];
 return [
 	[

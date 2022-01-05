@@ -1,15 +1,15 @@
 <?php
 namespace Bitrix\ImOpenLines\Session;
 
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
 
-use \Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\ImOpenLines\Model\SessionTable;
 
 Loc::loadMessages(__FILE__);
 
 class Common
 {
-	const URL_IM_HISTORY = '/online/?IM_HISTORY=imol|#ID#';
+	public const URL_IM_HISTORY = '/online/?IM_HISTORY=imol|#ID#';
 
 	/**
 	 * Parses custom code to the components of the data.
@@ -17,17 +17,17 @@ class Common
 	 * @param string $userCode
 	 * @return array
 	 */
-	public static function parseUserCode($userCode)
+	public static function parseUserCode(string $userCode): array
 	{
 		//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId
-		list($connectorId, $configId, $externalChatId, $connectorUserId) = explode('|', $userCode);
+		[$connectorId, $configId, $externalChatId, $connectorUserId] = explode('|', $userCode);
 
-		return array(
+		return [
 			'CONNECTOR_ID' => $connectorId,
 			'CONFIG_ID' => $configId,
 			'EXTERNAL_CHAT_ID' => $externalChatId,
 			'CONNECTOR_USER_ID' => $connectorUserId,
-		);
+		];
 	}
 
 	/**
@@ -36,7 +36,7 @@ class Common
 	 * @param array $userCode
 	 * @return string
 	 */
-	public static function combineUserCode(array $userCode)
+	public static function combineUserCode(array $userCode): string
 	{
 		return $userCode['CONNECTOR_ID'] . '|' . $userCode['CONFIG_ID'] . '|' . $userCode['EXTERNAL_CHAT_ID'] . '|' . $userCode['CONNECTOR_USER_ID'];
 	}
@@ -44,14 +44,14 @@ class Common
 	/**
 	 * @return array
 	 */
-	public static function getAgreementFields()
+	public static function getAgreementFields(): array
 	{
-		return Array(
+		return [
 			Loc::getMessage('IMOL_SESSION_AGREEMENT_MESSAGE_NAME'),
 			Loc::getMessage('IMOL_SESSION_AGREEMENT_MESSAGE_EMAIL'),
 			Loc::getMessage('IMOL_SESSION_AGREEMENT_MESSAGE_PHONE'),
 			Loc::getMessage('IMOL_SESSION_AGREEMENT_MESSAGE_PHOTO'),
-		);
+		];
 	}
 
 	/**
@@ -59,9 +59,6 @@ class Common
 	 *
 	 * @param int $chatId
 	 * @return int|bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getConfigIdByChatId($chatId)
 	{

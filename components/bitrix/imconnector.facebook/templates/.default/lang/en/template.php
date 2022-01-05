@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_AUTHORIZATION"] = "Log in";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_AUTHORIZE"] = "Log in";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_CHANGE_ANY_TIME"] = "Can be edited or turned off any time";
@@ -21,7 +21,13 @@ $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_DESCRIPTION"] = "<p class=\"im-connector-s
 ";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_EXPIRED_ACCOUNT_TOKEN"] = "You need to be authorized with your Facebook account to modyfy settings";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_EXPIRED_ACCOUNT_TOKEN_WARNING"] = "Please note, when you authorize with a Facebook account that does not admin the current page it will be disconnected from yout Bitrix24 Open Channel.";
-$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_DESCRIPTION"] = "Connect your company Facebook page to a Bitrix24 Open Channel and start communicating with your clients via Bitrix24 chat. You need to create your company Facebook page or use an existing one. You have to be an administrator of that page.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_ADDITIONAL_DESCRIPTION"] = "You will have to create a public Facebook page or connect the one you already have. Only the page administrator can connect it to Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_LIST_ITEM_1"] = "Save contacts and communication history to the CRM";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_LIST_ITEM_2"] = "Guide the customer through the sales funnel in the CRM";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_LIST_ITEM_3"] = "Reply to your customers when and where they prefer";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_LIST_ITEM_4"] = "Customer inquiries are distributed among the sales agents as per queue rules";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_SUBTITLE"] = "Connect your public Facebook page to your Bitrix24 to receive inquiries your customers make on Facebook. Reply faster and improve conversion.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_TITLE"] = "Reply to your Facebook customers' questions";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INFO"] = "Information";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_LOG_IN_UNDER_AN_ADMINISTRATOR_ACCOUNT_PAGE"] = "Please authorize with the Facebook account that manages your pages to receive messages from your Bitrix24 clients";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_NO_SPECIFIC_PAGE"] = "Missing a required page? Find possible reason in #A#this article#A_END#.";
@@ -33,4 +39,3 @@ $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_THERE_IS_NO_PAGE_WHERE_THE_ADMINISTRATOR"]
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_TITLE"] = "Communicate with Facebook users via Bitrix24";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_TO_CREATE_A_PAGE"] = "Create";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_USER"] = "Account";
-?>

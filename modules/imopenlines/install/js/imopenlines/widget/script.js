@@ -14229,9 +14229,13 @@
 
 	var _Symbol$iterator;
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
-	var _searchIndexToInsert = new WeakSet();
+	var _searchIndexToInsert = /*#__PURE__*/new WeakSet();
 
 	_Symbol$iterator = Symbol.iterator;
 
@@ -14240,7 +14244,7 @@
 	    var comparator = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	    babelHelpers.classCallCheck(this, OrderedArray);
 
-	    _searchIndexToInsert.add(this);
+	    _classPrivateMethodInitSpec(this, _searchIndexToInsert);
 
 	    babelHelpers.defineProperty(this, "comparator", null);
 	    babelHelpers.defineProperty(this, "items", []);
@@ -14378,7 +14382,7 @@
 	  return OrderedArray;
 	}();
 
-	var _searchIndexToInsert2 = function _searchIndexToInsert2(value) {
+	function _searchIndexToInsert2(value) {
 	  var low = 0;
 	  var high = this.items.length;
 
@@ -14393,7 +14397,7 @@
 	  }
 
 	  return low;
-	};
+	}
 
 	var ZIndexComponent = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(ZIndexComponent, _EventEmitter);
@@ -14667,7 +14671,9 @@
 	  return ZIndexStack;
 	}();
 
-	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
+	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { _classCheckPrivateStaticAccess(receiver, classConstructor); return method; }
+
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
 
 	/**
 	 * @memberof BX
@@ -14748,7 +14754,7 @@
 	  return ZIndexManager;
 	}();
 
-	var _getParentNode = function _getParentNode(element) {
+	function _getParentNode(element) {
 	  var suppressWarnings = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
 	  if (!Type.isElementNode(element)) {
@@ -14766,7 +14772,7 @@
 	  }
 
 	  return element.parentNode;
-	};
+	}
 
 	babelHelpers.defineProperty(ZIndexManager, "stacks", new WeakMap());
 
@@ -15287,12 +15293,29 @@
 	      $Bitrix.Loc = {
 	        messages: {},
 	        getMessage: function getMessage(messageId) {
-	          if (typeof this.messages[messageId] !== 'undefined') {
-	            return this.messages[messageId];
+	          var replacements = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	          var message = '';
+
+	          if (!main_core.Type.isUndefined(this.messages[messageId])) {
+	            message = this.messages[messageId];
+	          } else {
+	            message = main_core.Loc.getMessage(messageId);
+	            this.messages[messageId] = message;
 	          }
 
-	          this.messages[messageId] = main_core.Loc.getMessage(messageId);
-	          return this.messages[messageId];
+	          if (main_core.Type.isString(message) && main_core.Type.isPlainObject(replacements)) {
+	            Object.keys(replacements).forEach(function (replacement) {
+	              var globalRegexp = new RegExp(replacement, 'gi');
+	              message = message.replace(globalRegexp, function () {
+	                return main_core.Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]);
+	              });
+	            });
+	          }
+
+	          return message;
+	        },
+	        hasMessage: function hasMessage(messageId) {
+	          return main_core.Type.isString(messageId) && !main_core.Type.isNil(this.getMessages()[messageId]);
 	        },
 	        getMessages: function getMessages() {
 	          if (typeof BX.message !== 'undefined') {
@@ -53403,7 +53426,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var result = _this2.validate(Object.assign({}, payload));
 
 	          result.params = Object.assign({}, _this2.getElementState().params, result.params);
-	          result.id = 'temporary' + new Date().getTime() + store.state.created;
+
+	          if (payload.id) {
+	            var countMessages = store.state.collection[payload.chatId].length - 1;
+
+	            for (var index = countMessages; index >= 0; index--) {
+	              var message = store.state.collection[payload.chatId][index];
+
+	              if (message.templateId === payload.id) {
+	                return;
+	              }
+	            }
+
+	            result.id = payload.id;
+	          } else {
+	            result.id = 'temporary' + new Date().getTime() + store.state.created;
+	          }
+
 	          result.templateId = result.id;
 	          result.unread = false;
 	          store.commit('add', Object.assign({}, _this2.getElementState(), result));
@@ -53880,6 +53919,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	              if (_this3.store.getters['dialogues/canSaveChat'] && _this3.store.getters['dialogues/canSaveChat'](element.chatId)) {
 	                chatsSave.push(element.chatId);
+	              } // If it is our mobile app, we delete all the temporary messages (with uuid in ID field) in set mutation,
+	              // because after Set we get data from server and restore temp messages from background tasks.
+
+
+	              if (im_lib_utils.Utils.platform.isBitrixMobile()) {
+	                state.collection[element.chatId] = state.collection[element.chatId].filter(function (message) {
+	                  return message.id.toString().length !== 36;
+	                });
 	              }
 	            };
 
@@ -56449,7 +56496,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            host: store.state.host
 	          });
 
-	          result.id = 'temporary' + new Date().getTime() + store.state.created;
+	          if (payload.id) {
+	            result.id = payload.id;
+	          } else {
+	            result.id = 'temporary' + new Date().getTime() + store.state.created;
+	          }
+
 	          result.templateId = result.id;
 	          result.init = true;
 	          store.commit('add', Object.assign({}, _this2.getElementState(), result));
@@ -71769,7 +71821,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.controller.application.stopWriting();
 	      var diskFolderId = this.getDiskFolderId();
 	      message.chatId = this.getChatId();
-	      this.uploader.senderOptions.customHeaders['Livechat-Dialog-Id'] = message.chatId;
+	      this.uploader.senderOptions.customHeaders['Livechat-Dialog-Id'] = this.getDialogId();
 	      this.uploader.senderOptions.customHeaders['Livechat-Auth-Id'] = this.getUserHash();
 	      this.uploader.addTask({
 	        taskId: message.file.id,

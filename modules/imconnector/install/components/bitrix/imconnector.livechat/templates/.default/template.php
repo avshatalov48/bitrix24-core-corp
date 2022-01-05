@@ -1,6 +1,11 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-use \Bitrix\Main\Localization\Loc;
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImConnector\Connector;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -12,33 +17,37 @@ use \Bitrix\Main\Localization\Loc;
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
-/** $arResult["CONNECTION_STATUS"]; */
-/** $arResult["REGISTER_STATUS"]; */
-/** $arResult["ERROR_STATUS"]; */
-/** $arResult["SAVE_STATUS"]; */
+/** $arResult['CONNECTION_STATUS']; */
+/** $arResult['REGISTER_STATUS']; */
+/** $arResult['ERROR_STATUS']; */
+/** $arResult['SAVE_STATUS']; */
 
 Loc::loadMessages(__FILE__);
 
 CJSCore::Init(['clipboard']);
 
-if ($arParams['INDIVIDUAL_USE'] != 'Y')
+if($arParams['INDIVIDUAL_USE'] !== 'Y')
 {
 	$this->addExternalCss('/bitrix/components/bitrix/imconnector.settings/templates/.default/style.css');
 	$this->addExternalJs('/bitrix/components/bitrix/imconnector.settings/templates/.default/script.js');
-	\Bitrix\Main\UI\Extension::load("ui.buttons");
-	\Bitrix\Main\UI\Extension::load("ui.hint");
-	\Bitrix\ImConnector\Connector::initIconCss();
+	Extension::load('ui.buttons');
+	Extension::load('ui.animations');
+	Extension::load('ui.hint');
+	Connector::initIconCss();
 }
 
-$iconCode = \Bitrix\ImConnector\Connector::getIconByConnector($arResult["CONNECTOR"]);
+$iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 ?>
-<form action="<?=$arResult["URL"]["DELETE"]?>" method="post" id="form_delete_<?=$arResult["CONNECTOR"]?>">
-	<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_form" value="true">
-	<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_del" value="Y">
+<form action="<?=$arResult['URL']['DELETE']?>" method="post" id="form_delete_<?=$arResult['CONNECTOR']?>">
+	<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
+	<input type="hidden" name="<?=$arResult['CONNECTOR']?>_del" value="Y">
 	<?=bitrix_sessid_post();?>
 </form>
 <?
-if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first time open active connector
+if(
+	empty($arResult['PAGE'])
+	&& $arResult['ACTIVE_STATUS']
+) //case when first time open active connector
 {
 	?>
 	<div class="imconnector-field-container">
@@ -54,11 +63,11 @@ if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first ti
 					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_DESCRIPTION_1')?>
 				</div>
 				<div class="ui-btn-container">
-					<a href="<?=$arResult["URL"]["SIMPLE_FORM"]?>" class="ui-btn ui-btn-primary show-preloader-button">
+					<a href="<?=$arResult['URL']['SIMPLE_FORM']?>" class="ui-btn ui-btn-primary show-preloader-button">
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_CHANGE_SETTING')?>
 					</a>
 					<button class="ui-btn ui-btn-light-border"
-							onclick="popupShow(<?=CUtil::PhpToJSObject($arResult["CONNECTOR"])?>)">
+							onclick="popupShow(<?=CUtil::PhpToJSObject($arResult['CONNECTOR'])?>)">
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_DISABLE')?>
 					</button>
 				</div>
@@ -73,19 +82,18 @@ if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first ti
 			</div>
 			<div class="imconnector-field-box">
 				<div class="imconnector-field-box-entity-row">
-
 					<?
-					if ($arResult["INFO_CONNECTION"]['URL_CODE_PUBLIC_ID'] > 0)
+					if($arResult['INFO_CONNECTION']['URL_CODE_PUBLIC_ID'] > 0)
 					{
 						?>
 						<div class="imconnector-field-box-subtitle imconnector-livechat-whitespace-text">
 							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_LINK')?>
 						</div>
 						<span class="imconnector-field-box-text-bold imconnector-livechat-whitespace-text">
-							<?=htmlspecialcharsbx($arResult["INFO_CONNECTION"]["URL_PUBLIC"])?>
+							<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['URL_PUBLIC'])?>
 						</span>
 						<span class="imconnector-field-box-entity-icon-copy-to-clipboard copy-to-clipboard"
-							  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult["INFO_CONNECTION"]["URL_PUBLIC"]))?>"></span>
+							  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['INFO_CONNECTION']['URL_PUBLIC']))?>"></span>
 						<?
 					}
 					else
@@ -104,50 +112,91 @@ if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first ti
 	</div>
 	<?
 }
-elseif (!$arResult['ACTIVE_STATUS']) //case when open not active connector
+elseif(!$arResult['ACTIVE_STATUS']) //case when open not active connector
 {
 	?>
 	<div class="imconnector-field-container">
-		<div class="imconnector-field-section imconnector-field-section-social">
+		<div class="imconnector-field-section imconnector-field-section-social imconnector-field-section-info">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
 			</div>
-			<div class="imconnector-field-box">
-				<div class="imconnector-field-main-subtitle">
-					<?= $arResult['NAME'] ?>
+			<div class="imconnector-field-box" data-role="more-info">
+				<div class="imconnector-field-main-subtitle imconnector-field-section-main-subtitle">
+					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_TITLE')?>
 				</div>
 				<div class="imconnector-field-box-content">
-					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_DESCRIPTION') ?>
+
+					<div class="imconnector-field-box-content-text-light">
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_SUBTITLE') ?>
+					</div>
+
+					<ul class="imconnector-field-box-content-text-items">
+						<li class="imconnector-field-box-content-text-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_1') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_2') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_3') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_4') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_5') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_6') ?></li>
+					</ul>
+
+					<div class="imconnector-field-box-content-btn">
+						<form action="<?=$arResult['URL']['SIMPLE_FORM']?>" method="post" class="ui-btn-container">
+							<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
+							<?=bitrix_sessid_post()?>
+							<button class="ui-btn ui-btn-lg ui-btn-success ui-btn-round"
+									type="submit"
+									name="<?=$arResult['CONNECTOR']?>_active"
+									value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>">
+								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>
+							</button>
+						</form>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
+
+	<?php /*?>
+	<script>
+		BX.ready(function() {
+			var target = document.querySelector('[data-role="more-info"]');
+
+			if (target)
+			{
+				var styleAtt = getComputedStyle(target);
+				var initialHeight = styleAtt.height;
+
+				if (parseInt(styleAtt.height) > 260)
+				{
+					var arrowNode = document.createElement('div');
+					arrowNode.className = 'imconnector-field-more-info-block';
+					arrowNode.innerHTML = '<div class="imconnector-field-more-button"></div>';
+
+					target.style.cssText = `
+						height: 259px;
+					    overflow: hidden;
+					    transition: .4s;
+					    position: relative;
+				  	`;
+
+					target.addEventListener('click', function()
+					{
+						target.style.height = initialHeight;
+						arrowNode.style.cssText = `
+							opacity: 0;
+							pointer-events: none;
+				  		`;
+					}, false);
+
+					target.appendChild(arrowNode);
+				}
+
+			}
+		});
+	</script>
+	<?php */?>
+
 	<?include 'messages.php'?>
-	<div class="imconnector-field-container">
-		<div class="imconnector-field-section">
-			<div class="imconnector-field-main-title">
-				<?= Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_CONNECT_ACTIVE') ?>
-			</div>
-			<div class="imconnector-field-box">
-				<div class="imconnector-field-box-content">
-					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_DESCRIPTION') ?>
-				</div>
-			</div>
-			<div class="imconnector-field-social-connector">
-				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?> imconnector-field-social-connector-icon"><i></i></div>
-				<form action="<?= $arResult["URL"]["SIMPLE_FORM"] ?>" method="post">
-					<input type="hidden" name="<?= $arResult["CONNECTOR"] ?>_form" value="true">
-					<?= bitrix_sessid_post(); ?>
-					<button class="ui-btn ui-btn-light-border"
-							name="<?= $arResult["CONNECTOR"] ?>_active"
-							type="submit"
-							value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>">
-						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>
-					</button>
-				</form>
-			</div>
-		</div>
-	</div>
 	<?
 }
 else
@@ -166,11 +215,11 @@ else
 		</div>
 	</div>
 	<?include 'messages.php'?>
-	<form action="<?=$arResult["URL"]["SIMPLE_FORM_EDIT"]?>" method="post" enctype="multipart/form-data">
-		<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_form" value="true">
+	<form action="<?=$arResult['URL']['SIMPLE_FORM_EDIT']?>" method="post" enctype="multipart/form-data">
+		<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
 		<?=bitrix_sessid_post();?>
 		<?
-		if ($arResult['INFO_CONNECTION']['BUTTON_INTERFACE'] == 'Y')
+		if($arResult['INFO_CONNECTION']['BUTTON_INTERFACE'] === 'Y')
 		{
 			?>
 			<div class="imconnector-field-container">
@@ -185,9 +234,9 @@ else
 								</div>
 
 								<div class="imconnector-livechat-public-link-inner">
-									<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_BUTTON_TEXT', array(
-										'#LINK#' => '<a href=" ' . $arResult["PUBLIC_TO_BUTTON_OL"] . '" target="_blank">'.Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_BUTTON_LINK').'</a>'
-									));?>
+									<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_BUTTON_TEXT', [
+										'#LINK#' => '<a href=" ' . $arResult['PUBLIC_TO_BUTTON_OL'] . '" target="_blank">'.Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_BUTTON_LINK').'</a>'
+									]);?>
 								</div>
 							</div>
 						</div>
@@ -220,7 +269,7 @@ else
 												   name="URL_CODE_PUBLIC"
 												   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['URL_CODE_PUBLIC'])?>"
 											/>
-											<?if (defined('IMOL_WIDGET_GENERATE') && IMOL_WIDGET_GENERATE):?>
+											<?if(defined('IMOL_WIDGET_GENERATE') && IMOL_WIDGET_GENERATE):?>
 												<br/>
 												Widget code: <div class="imconnector-livechat-public-link-code"><?=$arResult['INFO_CONNECTION']['URL_CODE']?></div>
 											<?endif;?>
@@ -363,12 +412,12 @@ else
 							<div class="imconnector-livechat-public-link-settings-inner-content">
 								<div class="imconnector-public-link-settings-inner-option" onchange="BX.toggleClass(BX('imconnector-add-open'), 'imconnector-livechat-public-add-open');">
 									<label for="css" class="imconnector-livechat-public-link-settings-inner-option-container">
-										<input id="css" class="imconnector-public-link-settings-inner-option-field" type="checkbox" name="CSS_ACTIVE" <?=($arResult['INFO_CONNECTION']['CSS_ACTIVE'] == "Y"? "checked": "")?>>
+										<input id="css" class="imconnector-public-link-settings-inner-option-field" type="checkbox" name="CSS_ACTIVE" <?=($arResult['INFO_CONNECTION']['CSS_ACTIVE'] == 'Y'? 'checked': '')?>>
 										<span class="imconnector-public-link-settings-inner-option-text"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_CSS_2')?></span>
 									</label><!--imconnector-public-link-settings-inner-option-->
 								</div><!--imconnector-public-link-settings-inner-option-->
 
-								<div id="imconnector-add-open" class="imconnector-livechat-public-link-settings-inner-add-wrapper <?=($arResult['INFO_CONNECTION']['CSS_ACTIVE'] == "Y"? "imconnector-livechat-public-add-open": "")?>">
+								<div id="imconnector-add-open" class="imconnector-livechat-public-link-settings-inner-add-wrapper <?=($arResult['INFO_CONNECTION']['CSS_ACTIVE'] == 'Y'? 'imconnector-livechat-public-add-open': '')?>">
 									<div class="imconnector-livechat-public-link-settings-inner-add-container">
 										<div class="imconnector-livechat-public-link-settings-inner-add-checkbox-container">
 											<div class="imconnector-livechat-public-link-settings-inner-add-item-container">
@@ -397,14 +446,14 @@ else
 							<div class="imconnector-livechat-public-link-settings-inner-content">
 								<div class="imconnector-public-link-settings-inner-option">
 									<label for="logo" class="imconnector-livechat-public-link-settings-inner-option-container">
-										<input id="logo" name="COPYRIGHT_REMOVED" class="imconnector-public-link-settings-inner-option-field" type="checkbox" <?=($arResult['INFO_CONNECTION']['COPYRIGHT_REMOVED'] == "Y"? "checked": "")?>>
-										<span class="imconnector-public-link-settings-inner-option-text <?=($arResult['INFO_CONNECTION']['CAN_REMOVE_COPYRIGHT'] == "Y"? "": "imconnector-lock-icon")?>">
+										<input id="logo" name="COPYRIGHT_REMOVED" class="imconnector-public-link-settings-inner-option-field" type="checkbox" <?=($arResult['INFO_CONNECTION']['COPYRIGHT_REMOVED'] == 'Y'? 'checked': '')?>>
+										<span class="imconnector-public-link-settings-inner-option-text <?=($arResult['INFO_CONNECTION']['CAN_REMOVE_COPYRIGHT'] == 'Y'? '': 'imconnector-lock-icon')?>">
 													<span class="imconnector-livechat-public-link-settings-normal"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_SIGN_2')?></span>
 													<span class="imconnector-livechat-public-link-settings-bold"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_SIGN_3')?></span>
 												</span>
 									</label><!--imconnector-livechat-public-link-settings-inner-option-container-->
 									<?
-									if($arResult['INFO_CONNECTION']['CAN_REMOVE_COPYRIGHT'] == "N")
+									if($arResult['INFO_CONNECTION']['CAN_REMOVE_COPYRIGHT'] == 'N')
 									{
 										?>
 										<script type="text/javascript">
@@ -439,7 +488,7 @@ else
 											name="SHOW_SESSION_ID"
 											class="imconnector-public-link-settings-inner-option-field"
 											type="checkbox"
-											<?=($arResult['INFO_CONNECTION']['SHOW_SESSION_ID'] === "Y"? "checked": "")?>
+											<?=($arResult['INFO_CONNECTION']['SHOW_SESSION_ID'] === 'Y'? 'checked': '')?>
 										>
 										<span class="imconnector-public-link-settings-inner-option-text">
 											<span class="imconnector-livechat-public-link-settings-normal"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_SHOW_SESSION_ID')?></span>
@@ -521,11 +570,10 @@ else
 				<input type="submit"
 					   class="webform-small-button webform-small-button-accept"
 					   id="livechat-small-button-save"
-					   name="<?=$arResult["CONNECTOR"]?>_save"
+					   name="<?=$arResult['CONNECTOR']?>_save"
 					   value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_SAVE')?>">
 			</div>
 		</div>
 	</form>
 	<?
 }
-?>

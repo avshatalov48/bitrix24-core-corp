@@ -381,7 +381,9 @@
 				if (errors && errors.length > 0)
 				{
 					BX.postWebEvent('Livefeed.PublicationQueue::afterPostAddError', {
-						errorText: false,
+						errorText: errors.filter(error => error.customData && error.customData.public === 'Y')
+							.map(error => error.message)
+							.join("\n"),
 						context: context,
 						key: key,
 						postData: fields,
@@ -447,7 +449,9 @@
 				if(errors && errors.length > 0)
 				{
 					BX.postWebEvent('Livefeed.PublicationQueue::afterPostUpdateError', {
-						errorText: false,
+						errorText: errors.filter(error => error.customData && error.customData.public === 'Y')
+							.map(error => error.message)
+							.join("\n"),
 						context: context,
 						key: key,
 						postId: postId,

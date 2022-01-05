@@ -8,6 +8,7 @@ $MESS["MD_MOBILE_APPLICATION"] = "Мобильное приложение";
 $MESS["MD_GENERATE_BY_MOBILE"] = "Сгенерировано приложением";
 $MESS["MD_COMPONENT_IM_RECENT"] = "Чаты";
 $MESS["MD_COMPONENT_IM_OPENLINES"] = "Открытые линии";
+$MESS["MD_COMPONENT_NOTIFY"] = "Уведомления";
 $MESS["MD_COMPONENT_MORE"] = "Меню";
 $MESS["MD_COMPONENT_TASKS_LIST"] = "Задачи";
 $MESS["TASKS_ROLE_VIEW_ALL"] = 'Все задачи';

@@ -464,7 +464,19 @@ class DataProviderManager
 		}
 		elseif(is_callable($valueDescription))
 		{
-			$value = call_user_func($valueDescription, $placeholder);
+			if (
+				(
+					is_array($valueDescription)
+					&& (
+						is_a($valueDescription[0], DataProvider::class, true)
+						|| is_object($valueDescription[0])
+					)
+				)
+				|| $valueDescription instanceof \Closure
+			)
+			{
+				$value = call_user_func($valueDescription, $placeholder);
+			}
 		}
 
 		return $value;

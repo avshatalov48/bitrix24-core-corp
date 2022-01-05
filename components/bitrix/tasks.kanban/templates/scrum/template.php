@@ -62,6 +62,7 @@ $data = $arResult['DATA'];
 		},
 		siteTemplateId: <?=(SITE_TEMPLATE_ID === 'bitrix24' ? '"transparent"' : 'null')?>,
 		sprintSelected: <?=($arParams['SPRINT_SELECTED'] == 'Y' && $arParams['SPRINT_ID'] ? 'true' : 'false')?>,
+		isActiveSprint: <?=($arParams['IS_ACTIVE_SPRINT'] == 'Y' ? 'true' : 'false')?>,
 		parentTasks: <?=\CUtil::PhpToJSObject($data['parentTasks'], false, false, true)?>
 	});
 

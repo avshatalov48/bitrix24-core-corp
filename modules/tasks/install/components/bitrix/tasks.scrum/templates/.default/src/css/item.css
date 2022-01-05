@@ -1,205 +1,706 @@
-.tasks-scrum-item {
-	margin: 10px 0 0;
-	padding: 8px 0 4px 17px;
-	background: #fff;
-	border: 1px solid rgba(82, 92, 105, 0.14);
-	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.05);
+.tasks-scrum__item {
+	box-sizing: border-box;
+	padding: 12px 0;
 	border-radius: 3px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-size: 15px;
-	color: #333;
-	transition:
-		180ms linear color,
-		180ms linear border-color,
-		180ms linear background-color;
+	margin-top: 10px;
+	color: var(--tasks_scrum-light-grey);
 	position: relative;
+	z-index: 3;
 	user-select: none;
 }
 
-.tasks-scrum-subtask-item {
-	margin: 10px 0 0 30px;
+.tasks-scrum__item.--short-view {
+	display: grid;
+	grid-gap: 0;
+	grid-template-columns: 10px calc(100% - 10px - 19% - 64px) 19% 64px;
 }
 
-.tasks-scrum-item:hover {
-	cursor: pointer;
-	border-color: rgba(82, 92, 105, 0.44);
+.tasks-scrum__item::before {
+	content: '';
+	display: block;
+	width: calc(100% - 2px);
+	height: calc(100% - 2px);
+	position: absolute;
+	left: 0;
+	top: 0;
+	border: 1px solid transparent;
+	background: var(--tasks_scrum-white);
+	box-shadow: 0 1px 1px 0 var(--tasks_scrum-black_alpha_08);
+	border-radius: 3px;
+	z-index: -1;
+	transition: .2s;
+	pointer-events: none;
 }
 
-.tasks-scrum-item.tasks-scrum-item-group-mode {
-	border: 1px solid #d1eef9;
-	background: #e2f8ff;
+.tasks-scrum__content-items .tasks-scrum__item:first-of-type {
+	margin-top: 0;
 }
 
-.tasks-scrum-item.tasks-scrum-item-group-mode:hover {
-	border: 1px solid #8cb6c6;
-}
-
-.tasks-scrum-item-group-mode-container {
+.tasks-scrum__item--substrate {
 	display: none;
-	position: relative;
-	right: 41px;
-	width: 0;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: -2;
+	transition: .2s;
+	pointer-events: none;
 }
 
-.tasks-scrum-item-group-mode-container input {
+.tasks-scrum__item.--parent-tasks .tasks-scrum__item--substrate {
+	display: block;
+}
+
+.tasks-scrum__item.--many .tasks-scrum__item--substrate::after,
+.tasks-scrum__item--substrate::before {
+	content: '';
+	display: block;
+	width: calc(100% - 4px);
+	height: 100%;
+	position: absolute;
+	top: 3px;
+	left: 1px;
+	background: var(--tasks_scrum-white);
+	box-shadow: 0 1px 1px 0 var(--tasks_scrum-black_alpha_08);
+	border: 1px solid var(--tasks_scrum-white);
+	border-radius: 3px;
+	opacity: 1;
+	z-index: -1;
+	transition: .2s;
+	pointer-events: none;
+}
+
+.tasks-scrum__item.--many .tasks-scrum__item--substrate::after {
+	top: 8px;
+	left: 2px;
+	width: calc(100% - 6px);
+	z-index: -2;
+}
+
+.tasks-scrum__sprints .tasks-scrum__item.--parent-tasks {
+	margin-bottom: 5px;
+	z-index: 0;
+}
+
+.tasks-scrum__sprints .tasks-scrum__item.--parent-tasks.--many {
+	margin-bottom: 10px;
+}
+
+.tasks-scrum__sprints .tasks-scrum__item.--parent-tasks.--open {
+	margin-bottom: 1px;
+}
+
+.tasks-scrum__sprints .tasks-scrum__item.--parent-tasks + .tasks-scrum__item {
+	margin-top: 15px;
+}
+
+.tasks-scrum__sprints .tasks-scrum__item.--parent-tasks.--many + .tasks-scrum__item {
+	margin-top: 20px;
+}
+
+.tasks-scrum__item.--open .tasks-scrum__item--substrate::after,
+.tasks-scrum__item.--open .tasks-scrum__item--substrate::before {
+	left: 10px;
+	width: calc(100% - 10px);
+	top: calc(100% + 1px);
+	opacity: 0;
+}
+
+.tasks-scrum__item.--open .tasks-scrum__item--substrate::after,
+.tasks-scrum__item.--open .tasks-scrum__item--substrate::before {
+	left: 37px;
+	width: calc(100% - 37px);
+}
+
+.tasks-scrum__item.--open .tasks-scrum__item--substrate.--many::after {
+	top: calc(200% + 2px);
+}
+
+.tasks-scrum__item.--subtasks {
+	margin-top: 1px;
+	z-index: 0;
+	transition: .3s;
+}
+
+.tasks-scrum__item.--subtasks.--full-view {
+	margin-left: 37px;
+}
+
+.tasks-scrum__item.--subtasks .tasks-scrum__item--info {
+	grid-column: 2/3;
+}
+
+.tasks-scrum__item.--subtasks .tasks-scrum__item--responsible {
+	grid-column: 3 / 5;
+	padding-right: 13px;
+	margin-right: 0;
+}
+
+.tasks-scrum__item-sub-tasks .tasks-scrum__item.--subtasks.--short-view::before {
+	left: 10px;
+	width: calc(100% - 12px);
+}
+
+.tasks-scrum__item.--open:not(.--subtasks) + .tasks-scrum__item.--subtasks + .tasks-scrum__item.--subtasks,
+.tasks-scrum__item.--open:not(.--subtasks) ~ .tasks-scrum__item.--subtasks {
+	margin-top: 1px;
+	opacity: 1;
+}
+
+.tasks-scrum__item--info {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	box-sizing: border-box;
+	grid-column: 1 / 3;
+}
+.tasks-scrum__item.--short-view .tasks-scrum__item--info{
+	margin-right: 8%;
+	padding-left: 13px;
+}
+
+.tasks-scrum__item--btn-toggle-tasks {
+	display: none;
+	width: 14px;
+	height: 14px;
+	margin-right: 11px;
+	cursor: pointer;
+	flex-shrink: 0;
+	border-radius: 50%;
+	opacity: 0.4;
+	transition: .2s;
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23525C69' fill-rule='evenodd' d='M21.0131359,22.0028525 C24.8848084,22.0028525 28.0234192,25.1414633 28.0234192,29.0131359 C28.0234192,32.8848084 24.8848084,36.0234192 21.0131359,36.0234192 C17.1414633,36.0234192 14.0028525,32.8848084 14.0028525,29.0131359 C14.0028525,25.1414633 17.1414633,22.0028525 21.0131359,22.0028525 Z M21.0131359,23.3939156 C17.9097262,23.3939156 15.3939156,25.9097262 15.3939156,29.0131359 C15.3939156,32.1165455 17.9097262,34.6323562 21.0131359,34.6323562 C24.1165455,34.6323562 26.6323562,32.1165455 26.6323562,29.0131359 C26.6323562,25.9097262 24.1165455,23.3939156 21.0131359,23.3939156 Z M21.9132205,26.0290674 L21.9130449,28.1120674 L23.9897998,28.1130512 L23.9897998,29.9132205 L21.9130449,29.9130674 L21.9132205,32.0081299 L20.1130512,32.0081299 L20.1130449,29.9130674 L18.0510449,29.9132205 L18.0510449,28.1130512 L20.1130449,28.1120674 L20.1130512,26.0290674 L21.9132205,26.0290674 Z' transform='translate(-14 -22)'/%3E%3C/svg%3E");
+}
+
+.tasks-scrum__item--btn-toggle-tasks.--visible {
+	display: block;
+}
+
+.tasks-scrum__item--btn-toggle-tasks:hover {
+	opacity: 0.6;
+}
+
+.tasks-scrum__item.--open .tasks-scrum__item--btn-toggle-tasks {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23525C69' fill-rule='evenodd' d='M21.0131359,22.0028525 C24.8848084,22.0028525 28.0234192,25.1414633 28.0234192,29.0131359 C28.0234192,32.8848084 24.8848084,36.0234192 21.0131359,36.0234192 C17.1414633,36.0234192 14.0028525,32.8848084 14.0028525,29.0131359 C14.0028525,25.1414633 17.1414633,22.0028525 21.0131359,22.0028525 Z M21.0131359,23.3939156 C17.9097262,23.3939156 15.3939156,25.9097262 15.3939156,29.0131359 C15.3939156,32.1165455 17.9097262,34.6323562 21.0131359,34.6323562 C24.1165455,34.6323562 26.6323562,32.1165455 26.6323562,29.0131359 C26.6323562,25.9097262 24.1165455,23.3939156 21.0131359,23.3939156 Z M23.9897998,28.1130512 L23.9897998,29.9132205 L18.0510449,29.9132205 L18.0510449,28.1130512 L23.9897998,28.1130512 Z' transform='translate(-14 -22)'/%3E%3C/svg%3E");
+}
+
+.tasks-scrum__item--main-info {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-height: 34px;
+	margin: -1px auto -1px 0;
+	width: 100%;
+	min-width: 15%;
+	flex-shrink: 1;
+}
+
+.tasks-scrum__item--title {
+	color: var(--tasks_scrum-light-grey);
+	line-height: 20px;
+	margin-right: auto;
+	max-width: 100%;
+}
+
+.tasks-scrum__item.--short-view .tasks-scrum__item--title {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	line-height: 17px;
+}
+
+.tasks-scrum__item--title:hover {
+	cursor: pointer;
+	color: var(--tasks_scrum-blue-4);
+}
+
+.tasks-scrum__item--title.--completed {
+	text-decoration: line-through;
+}
+
+.tasks-scrum__item--entity-content {
+	display: flex;
+	flex-shrink: 0;
+	margin: 1px 0 0 5px;
+	width: 125px;
+	justify-content: flex-end;
+}
+
+.tasks-scrum__item--counter-container {
+	display: flex;
+	flex-shrink: 0;
+	width: calc(100% - 48px);
+}
+
+.tasks-scrum__item--counter-container .ui-label {
+	display: flex;
+	align-items: center;
+	padding: 2px 7px 2px 5px;
+	height: auto;
+	margin: 0 5px 0 0;
+	border-radius: 10px;
+	font: 10px/10px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	color: var(--tasks_scrum-dark-grey);
+	border: 1px solid var(--tasks_scrum-dark-grey_alpha_17);
+	box-sizing: border-box;
+}
+
+.tasks-scrum__item--entity-content .ui-label.tasks-scrum__item--entity-tasks {
+	padding: 2px 4px 2px 6px;
+}
+
+.tasks-scrum__item--attachment-counter:hover {
 	cursor: pointer;
 }
 
-.tasks-scrum-item-inner {
-	max-width: 100%;
+.tasks-scrum__item--attachment-counter.ui-label {
+	display: none;
+}
+
+.tasks-scrum__item--attachment-counter.ui-label.--visible {
 	display: flex;
 }
 
-.tasks-scrum-item .task-title-indicators {
-	position: relative;
-	top: 7px;
+.tasks-scrum__item--attachment-counter::before {
+	content: '';
+	display: block;
+	width: 9px;
+	height: 10px;
+	margin-right: 3px;
+	opacity: 0.5;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='10' viewBox='0 0 9 10'%3E%3Cpath fill='%23525C69' fill-rule='evenodd' d='M14.7645918,6.93662326 C14.8412767,7.01188977 14.8412767,7.1339209 14.7645918,7.20918741 L14.2499949,7.71426628 C14.17331,7.78953279 14.0489793,7.78953279 13.9722944,7.71426628 L10.9419551,4.73997626 C10.0704279,3.88456894 8.64429258,3.88456894 7.77276544,4.73997626 C6.9012383,5.59538359 6.9012383,6.99514103 7.77276544,7.85054836 L11.4902413,11.4992656 C12.0367998,12.0357149 12.9244264,12.0357149 13.4709849,11.4992656 C14.0175433,10.9628163 14.0175433,10.0916073 13.4709849,9.55515805 L10.1496576,6.29526231 C9.92775099,6.07746005 9.5792669,6.07746005 9.35736025,6.29526231 C9.13545359,6.51306457 9.13545359,6.85510308 9.35736025,7.07290534 L11.9915509,9.65837384 C12.0682358,9.73364035 12.0682358,9.85567148 11.9915509,9.930938 L11.476954,10.4360169 C11.4002691,10.5112834 11.2759384,10.5112834 11.1992535,10.4360169 L8.56506284,7.85054836 C7.90739261,7.20504244 7.90739261,6.16312521 8.56506284,5.51761929 C9.22273307,4.87211337 10.2842848,4.87211337 10.9419551,5.51761929 L14.2632823,8.77751503 C15.2455726,9.74163685 15.2455726,11.3127868 14.2632823,12.2769086 C13.2809919,13.2410305 11.6802343,13.2410305 10.6979439,12.2769086 L6.98046804,8.62819138 C5.67317732,7.34508039 5.67317732,5.24544423 6.98046804,3.96233324 C8.28775875,2.67922225 10.4269617,2.67922225 11.7342525,3.96233324 L14.7645918,6.93662326 Z' transform='matrix(1 0 0 -1 -6 13)'/%3E%3C/svg%3E");
+	transition: .2s;
 }
 
-/*.tasks-scrum-item-edit-mode .tasks-scrum-dragndrop {display: none;}*/
+.tasks-scrum__item--comment-counter {
+	display: none;
+	margin-right: 16px;
+}
 
-.tasks-scrum-item:hover .tasks-scrum-dragndrop { opacity: .5; }
+.tasks-scrum__item--comment-counter:hover {
+	cursor: pointer;
+}
 
-.tasks-scrum-item:hover .tasks-scrum-dragndrop:hover { opacity: 1; }
+.tasks-scrum__item--comment-counter.--visible {
+	display: block;
+}
 
-.tasks-scrum-item-name {
-	flex: 1;
+.tasks-scrum__item--comment-counter .ui-counter-inner {
+	padding: 0 7px;
+}
+
+.tasks-scrum__item--entity-tasks.ui-label {
+	display: none;
+}
+
+.tasks-scrum__item--entity-tasks.ui-label.--visible {
 	display: flex;
-	align-items: flex-start;
-	max-width: 100%;
-	min-width: 0;
 }
 
-/*.tasks-scrum-item-name-text {
-	text-align: left;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-size: 15px;
-	color: #333;
-	padding: 16px 14px;
-}*/
-
-.tasks-scrum-item-name-field {
-	width: auto !important;
-	min-width: 0;
-	margin-bottom: 3px;
+.tasks-scrum__item--entity-tasks:hover {
+	cursor: pointer;
 }
 
-.tasks-scrum-item-name-field div.ui-ctl-element:hover {
-	color: #2067b0;
+.tasks-scrum__item--entity-tasks::before {
+	content: '';
+	display: block;
+	width: 9px;
+	height: 8px;
+	margin-right: 4px;
+	opacity: 0.5;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='8' viewBox='0 0 9 8'%3E%3Cpath fill='%23525C69' fill-rule='evenodd' d='M12.725,4 L11.647,5.076 L8.87798933,5.0767417 C8.47014828,5.0767417 8.13358775,5.38192985 8.08422247,5.7763914 L8.07798933,5.8767417 L8.07798933,10.1234031 C8.07798933,10.5312441 8.38317748,10.8678046 8.77763903,10.9171699 L8.87798933,10.9234031 L13.1322124,10.9234031 C13.5400534,10.9234031 13.876614,10.6182149 13.9259792,10.2237534 L13.9322124,10.1234031 L13.932,9.866 L15.01,8.789 L15.0102017,10.7 C15.0102017,11.4179702 14.4281719,12 13.7102017,12 L8.3,12 C7.58202983,12 7,11.4179702 7,10.7 L7,5.30014477 C7,4.5821746 7.58202983,4.00014477 8.3,4.00014477 L12.725,4 Z M15.4998611,4.54659259 L15.8798879,4.92661942 C16.0360976,5.08282914 16.0360976,5.33609513 15.8798879,5.49230484 L11.5495371,9.82265564 C11.4128536,9.95933914 11.2018614,9.97642458 11.0466007,9.87391195 L10.9838517,9.82265564 L9.02623678,7.86504075 C8.87002706,7.70883103 8.87002706,7.45556504 9.02623678,7.29935532 L9.40504206,6.92055004 C9.56125178,6.76434032 9.81451777,6.76434032 9.97072749,6.92055004 L11.2656728,8.21502974 L14.9341756,4.54659259 C15.0903854,4.39038288 15.3436513,4.39038288 15.4998611,4.54659259 Z' transform='translate(-7 -4)'/%3E%3C/svg%3E");
 }
 
-.tasks-scrum-item-name-field div.ui-ctl-element[contenteditable] {
-	padding: 4px 4px 7px;
-	font-size: 15px;
-}
-
-.tasks-scrum-item-params {
+.tasks-scrum__item--tags {
 	display: flex;
+	margin-top: 2px;
+}
+
+.tasks-scrum__item--epic {
+	display: none;
+	align-items: center;
+	font-size: 12px;
+	line-height: 17px;
 	white-space: nowrap;
-	margin-left: auto;
-	padding-right: 6px;
+	color: var(--tasks_scrum-dark-grey);
+	margin-right: 8px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.tasks-scrum-item-responsible {
-	margin-top: 6px;
-	vertical-align: middle;
+.tasks-scrum__item--epic:hover {
+	cursor: pointer;
+}
+
+.tasks-scrum__item--epic.--visible {
+	display: flex;
+}
+
+.tasks-scrum__item--epic-point{
+	display: block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background-color: var(--tasks_scrum-blue);
+	margin: 1px 4px 0 1px;
+	flex-shrink: 0;
+}
+
+.tasks-scrum__item--responsible span,
+.tasks-scrum__item--epic span {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+
+.tasks-scrum__item--hashtag {
+	display: none;
+	font-size: 12px;
+	color: var(--tasks_scrum-blue-4);
+	line-height: 17px;
+	margin-right: 5px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+	transition: .2s;
+	font: 12px/17px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+}
+
+.tasks-scrum__item--hashtag:hover {
+	color: var(--tasks_scrum-blue-5);
+}
+
+.tasks-scrum__item--hashtag.--visible {
+	display: block;
+}
+
+.tasks-scrum__item--responsible {
+	display: flex;
+	align-items: center;
+	font-size: 13px;
+	color: var(--tasks_scrum-dark-grey);
+	line-height: 17px;
+	grid-column: 3 / 4;
+	margin: 7px 0;
+}
+
+.tasks-scrum__item--responsible-photo {
 	width: 20px;
 	height: 20px;
-	border-radius: 50%;
-	background-size: cover;
-	margin-right: 10px;
+	margin-right: 6px;
+	flex-shrink: 0;
+	cursor: pointer;
 }
 
-.tasks-scrum-item-subtasks-tick { cursor: pointer; }
-
-.tasks-scrum-item-subtasks-tick .ui-btn.ui-btn-light {
-	--ui-btn-background-hover: transparent;
-	--ui-btn-background-active: transparent;
-	--ui-btn-border-color-hover: transparent;
-}
-
-.tasks-scrum-item-subtasks-btn {
-	height: 20px;
-	padding-top: 5px;
-}
-
-.tasks-scrum-item-subtasks-btn .tasks-scrum-item-subtasks-icon {
-	background: url(images/number-task.svg) no-repeat 0 center;
-	width: 13px;
-	height: 20px;
-	display: inline-block;
-	vertical-align: top;
-}
-
-.tasks-scrum-item-subtasks-count {
-	font: 13px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: rgba(82, 92, 105, 0.9);
-	letter-spacing: 0;
-	text-align: center;
-	padding: 0 20px 0 0;
-	font-size: 14px;
-	color: #525c69;
-}
-
-.tasks-scrum-item-story-points {
-	text-align: center;
-}
-
-.tasks-scrum-item-story-points .ui-ctl {
-	width: 100%;
-	text-align: right;
-	padding: 0;
-	vertical-align: middle;
-	min-width: 40px;
-}
-
-.tasks-scrum-item-story-points .ui-ctl .ui-ctl-element {
-	text-align: center;
-	position: relative;
-}
-
-.tasks-scrum-item-story-points .ui-ctl .ui-ctl-element:after {
-	content: "";
-	position: absolute;
-	width: calc(100% - 24px);
-	border-bottom: 1px dashed rgba(82, 92, 105, 0.71);
-	bottom: 4px;
-	left: 50%;
-	transform: translateX(-50%);
-}
-
-.tasks-scrum-item-tags-container {
-	margin-left: 5px;
-	margin-right: 4px;
-	margin-bottom: 10px;
+.tasks-scrum__item--story-points {
 	display: flex;
-	flex-wrap: wrap;
-	width: 100%;
+	justify-content: flex-end;
+	box-sizing: border-box;
+	padding-right: 13px;
+	padding-left: 5px;
+	grid-column: 4 / 5;
+	transition: .4s;
+	opacity: 1;
 }
 
-.tasks-scrum-item-tags-container div {
-	margin-top: 2px;
-	margin-bottom: 2px;
-	padding-bottom: 2px;
+.tasks-scrum__item--story-points-content {
+	position: relative;
+	max-width: 100%;
 }
 
-.tasks-scrum-item-epic-label {
+.tasks-scrum__item--story-points-element {
+	background: var(--tasks_scrum-blue_alpha_20);
+	border-radius: 9.5px;
+	padding: 2px 5px;
+	min-width: 32px;
+	box-sizing: border-box;
+	font-size: 13px;
+	color: var(--tasks_scrum-dark-grey);
+	text-align: center;
+	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tasks-scrum__item--story-points.--empty .tasks-scrum__item--story-points-element {
+	background: var(--tasks_scrum-dark-grey_alpha_15);
+}
+
+.tasks-scrum__item--story-points-input-container {
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translate(0px, -48%);
+	width: 50px;
+	transition: .2s;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.tasks-scrum__item--story-points-input-container.--active {
+	opacity: 1;
+	pointer-events: all;
+}
+
+.tasks-scrum__item--story-points-input {
+	font: 13px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #525C69;
+	padding: 6px 6px;
+	box-sizing: border-box;
+	background: var(--tasks_scrum-white);
+	border: 1px solid var(--tasks_scrum-blue);
 	border-radius: 2px;
-	border: none;
+	width: 100%;
+	transition: .2s;
 }
 
-.task-title-indicators {
+.tasks-scrum__item--link {
+	display: none;
+	width: 19px;
+	height: 9px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	border-radius: 3px 0 3px 0;
+	background-color: var(--tasks_scrum-blue-2);
+	background-repeat: no-repeat;
+	background-position: 3px 1px;
+	background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg width='12px' height='6px' viewBox='0 0 12 6' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'%3E%3Cg stroke='none' stroke-width='1' fill='none' fill-rule='evenodd'%3E%3Cg transform='translate(-3.000000, -1.000000)' fill='%23FFFFFF'%3E%3Cg transform='translate(0.000000, -0.644554)'%3E%3Cg transform='translate(0.000000, 0.644554)'%3E%3Cpath d='M9.14308383,2.00927546 L9.5005482,3.24108331 C9.45784351,3.23549853 9.41428845,3.23261742 9.37006048,3.23261742 C8.85898166,3.23261742 8.43775845,3.617335 8.38019125,4.11296976 L8.37348657,4.22919133 L8.37348657,7.38274914 C8.37348657,7.93314171 8.8196679,8.37932305 9.37006048,8.37932305 C9.8811393,8.37932305 10.3023625,7.99460547 10.3599297,7.49897071 L10.3666344,7.38274914 L10.3676594,6.60779045 C10.8461617,6.42242643 11.2016336,6.10035957 11.4340749,5.64158987 L11.4329108,7.55215946 C11.4329108,8.69144025 10.5093413,9.61500981 9.37006048,9.61500981 C8.23077969,9.61500981 7.30721013,8.69144025 7.30721013,7.55215946 L7.30721013,4.059781 C7.30721013,2.99720904 8.11059707,2.12227814 9.14308383,2.00927546 Z M9.37059186,-1.64455377 C10.5098726,-1.64455377 11.4334422,-0.720984204 11.4334422,0.418296586 L11.4334422,3.91067504 C11.4334422,5.01356354 10.5679338,5.91430173 9.47908533,5.97072132 L9.10767244,4.7027905 C9.19143272,4.72564065 9.27958779,4.73783863 9.37059186,4.73783863 C9.88167067,4.73783863 10.3028939,4.35312105 10.3604611,3.85748629 L10.3671658,3.74126472 L10.3671658,0.587706908 C10.3671658,0.0373143351 9.92098443,-0.408867003 9.37059186,-0.408867003 C8.85951304,-0.408867003 8.43828983,-0.0241494206 8.38072263,0.471485337 L8.37401794,0.587706908 L8.37299292,1.37730452 C7.89449059,1.56266854 7.53901876,1.8847354 7.30657742,2.3435051 L7.3077415,0.418296586 C7.3077415,-0.720984204 8.23131106,-1.64455377 9.37059186,-1.64455377 Z' transform='translate(9.370326, 3.985228) rotate(-270.000000) translate(-9.370326, -3.985228) '%3E%3C/path%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+	cursor: pointer;
+	transition: .2s;
+}
+
+.tasks-scrum__item.--linked .tasks-scrum__item--link {
+	display: block;
+}
+
+.tasks-scrum__item--link:hover {
+	background-color: var(--tasks_scrum-blue);
+}
+
+.tasks-scrum__item--group-mode {
+	position: absolute;
+	right: 14px;
+	top: 50%;
+	transform: translate(0px, -42%);
+	opacity: 0;
+	transition: .2s;
+	pointer-events: none;
+}
+
+.tasks-scrum__item.--checked .tasks-scrum__item--group-mode {
+	opacity: 1;
+	pointer-events: all;
+}
+
+.tasks-scrum__item--group-mode-input {
+	appearance: none!important;
+	margin: 0;
+	width: 14px;
+	height: 14px;
+	background: var(--tasks_scrum-white);
+	cursor: pointer;
+	border: 1px solid #A8ADB4;
+	border-radius: 2px;
+}
+
+.tasks-scrum__item--group-mode-input:checked {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Crect width='12' height='12' fill='%2380868E' opacity='.8'/%3E%3Cpath fill='%23FFF' d='M5.12259831,9.48650006 C4.91232846,9.49066529 4.70136652,9.41431067 4.53866651,9.25719309 L2.14604886,6.94666908 C1.82464543,6.6362934 1.81355797,6.11041812 2.13111053,5.78158283 C2.450877,5.45045495 2.97020561,5.44122706 3.29600838,5.75585114 L5.08772618,7.4860929 L8.92123969,3.51637345 C9.24180875,3.18441447 9.7616073,3.17961965 10.0904426,3.49717221 C10.4215705,3.81693868 10.4289553,4.33817586 10.1120576,4.66633297 L5.70237852,9.23268937 C5.54298603,9.39774513 5.334339,9.4819177 5.12440173,9.48579919 L5.12259831,9.48650006 Z'/%3E%3C/g%3E%3C/svg%3E");
+	border: 1px solid transparent;
+}
+
+.tasks-scrum__item.--checked .tasks-scrum__item--story-points {
+	opacity: 0;
+}
+
+.tasks-scrum__sprints .tasks-scrum__item {
+	align-items: center;
+}
+
+.tasks-scrum__item.--short-view.--item-backlog.--subtasks {
+	display: none;
+}
+
+.tasks-scrum__item.--item-backlog {
+	padding: 12px 10px 12px 12px;
+	border-left: 3px solid var(--tasks_scrum-grey-3);
+}
+
+.tasks-scrum__item.--item-backlog .tasks-scrum__item--info {
+	padding: 0;
+}
+
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--info {
+	grid-column: 1 / 5;
+	margin-right: 0;
+}
+
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--tags {
+	grid-column: 1 / 5;
+	margin-right: 0;
+	margin-top: 2px;
+}
+
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--hashtag,
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--epic {
+	margin-right: 5px;
+}
+
+.tasks-scrum__item.--item-backlog .tasks-scrum__item--link {
+	left: -3px;
+}
+
+.tasks-scrum__item.--item-backlog.--parent-tasks .tasks-scrum__item--substrate,
+.tasks-scrum__item.--item-backlog .tasks-scrum__item--btn-toggle-tasks,
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--counter-container,
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--responsible,
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--story-points {
+	display: none;
+}
+
+.tasks-scrum__item.--item-backlog::before {
+	border-radius: 0 3px 3px 0;
+}
+
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--comment-counter {
+	margin: -3px 0 0 0;
+}
+
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--entity-content {
+	margin: 0 0 auto 5px;
+	width: 7%;
+}
+
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--main-info {
+	max-width: calc(100% - 36px);
+}
+
+.tasks-scrum__item.--linked-mode-current .tasks-scrum__item--substrate::before,
+.tasks-scrum__item.--linked-mode-current .tasks-scrum__item--substrate::after,
+.tasks-scrum__item.--many.--group-mode .tasks-scrum__item--substrate::after,
+.tasks-scrum__item.--group-mode .tasks-scrum__item--substrate::before,
+.tasks-scrum__item.--group-mode::before {
+	background: var(--tasks_scrum-blue-3);
+	border: 1px solid var(--tasks_scrum-blue);
+}
+
+.tasks-scrum__item.--linked-mode-current::before {
+	background: var(--tasks_scrum-blue-6);
+	border: 1px solid var(--tasks_scrum-blue-2);
+}
+
+.tasks-scrum__item-sub-tasks {
+	height: 0;
+	overflow: hidden;
+	transition: .2s;
+}
+
+.tasks-scrum__item--drop-preview {
+	margin: 10px 0 10px 0;
+}
+
+.tasks-scrum__item.--blink::before {
+	background: var(--tasks_scrum-blue-3);
+	border: 1px solid var(--tasks_scrum-blue);
+}
+
+.tasks-scrum__item.--full-view {
+	 padding: 9px 15px 3px 13px;
+ }
+
+.tasks-scrum__item.--full-view.--item-sprint {
+	padding-left: 15px;
+}
+
+.tasks-scrum__item.--full-view .tasks-scrum__item--info {
+	align-items: flex-start;
+}
+
+.tasks-scrum__item.--full-view .tasks-scrum__item--comment-counter {
+	margin: 0 0 0 16px;
+}
+
+.tasks-scrum__item.--full-view .tasks-scrum__item--main-info {
+	margin-top: 1px;
+	justify-content: flex-start;
+	max-width: calc(100% - 36px);
+}
+
+.tasks-scrum__item.--full-view .tasks-scrum__item--btn-toggle-tasks.--visible + .tasks-scrum__item--main-info {
+	max-width: calc(100% - 24px - 36px);
+}
+
+.tasks-scrum__item.--full-view .tasks-scrum__item--tags {
+	align-items: baseline;
+	flex-wrap: wrap;
+}
+
+.tasks-scrum__item.--full-view.--item-sprint .tasks-scrum__item--tags {
+	margin-top: 9px;
+}
+
+.tasks-scrum__item--epic-full-view {
+	display: none;
+	font: 12px/18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	border-radius: 14px;
+	padding: 0 10px 1px;
+	margin: 3px 9px 3px 0;
+	color: var(--tasks_scrum-light-grey);
+	border: 1px solid;
+	transition: .2s;
+	cursor: pointer;
+}
+
+.tasks-scrum__item--epic-full-view.--visible {
+	display: block;
+}
+
+.tasks-scrum__item--info-task--details {
+	margin-top: 9px;
+	border-top: 1px solid var(--tasks_scrum-dark-grey_alpha_08);
+	padding-top: 2px;
+	display: flex;
+	align-items: center;
+}
+
+.tasks-scrum__item.--full-view .tasks-scrum__item--counter-container {
+	width: auto;
+	margin-left: 10px;
+}
+
+.tasks-scrum__item.--full-view .tasks-scrum__item--story-points {
+	margin-left: auto;
+	padding-right: 0;
+}
+
+.tasks-scrum__item.--full-view .tasks-scrum__item--story-points-element {
+	min-width: 26px;
+}
+
+.tasks-scrum__item.--full-view .tasks-scrum__item--btn-toggle-tasks {
+	margin-top: 4px;
 	margin-right: 10px;
 }
 
-.task-title-indicators .ui-label {
-	margin-right: 1px;
+.tasks-scrum__item.--full-view .tasks-scrum__item--tags {
+	display: none;
 }
 
-.task-comments-counter {
-	display: inline-flex;
+.tasks-scrum__item.--full-view .tasks-scrum__item--tags.--visible {
+	display: flex;
 }
 
-.task-attachment-counter.ui-label + .task-checklist-counter.ui-label,
-.task-checklist-counter.ui-label + .task-attachment-counter.ui-label {
-	margin-left: 0;
+.tasks-scrum__item.--full-view .tasks-scrum__item--group-mode {
+	top: auto;
+	bottom: 10px;
+	transform: translate(0px, 0px);
 }

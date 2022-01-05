@@ -22,18 +22,18 @@ class VoximplantLinesAjaxController extends \Bitrix\Main\Engine\Controller
 		$viSip = new CVoxImplantSip();
 		$result = $viSip->GetSipRegistrations($registrationId);
 
+		if(!$result)
+		{
+			$this->errorCollection[] = new \Bitrix\Main\Error($viSip->GetError()->msg);
+			return null;
+		}
+
 		$viSip->updateSipRegistrationStatus([
 			'sip_registration_id' => $result->reg_id,
 			'error_message' => $result->error_message,
 			'status_code' => $result->status_code,
 			'successful' => $result->status_result === 'success'
 		]);
-
-		if(!$result)
-		{
-			$this->errorCollection[] = new \Bitrix\Main\Error($viSip->GetError()->msg);
-			return null;
-		}
 
 		return [
 			'id' => $result->reg_id,

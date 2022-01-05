@@ -78,7 +78,7 @@ Class faceid extends CModule
 
 		if (!$DB->Query("SELECT 'x' FROM b_faceid_tracking_visitors WHERE 1=0", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/faceid/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/faceid/install/db/mysql/install.sql");
 		}
 
 		RegisterModuleDependences("crm", "OnAfterCrmControlPanelBuild", "faceid", "\\Bitrix\\FaceId\\FaceId", "insertIntoCrmMenu");

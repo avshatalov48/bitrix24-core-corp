@@ -1,24 +1,28 @@
 <?php
 namespace Bitrix\ImOpenLines\Session;
 
-use	\Bitrix\ImOpenLines\Chat,
-	\Bitrix\ImOpenLines\Mail,
-	\Bitrix\ImOpenLines\Queue,
-	\Bitrix\ImOpenLines\Debug,
-	\Bitrix\ImOpenLines\Common,
-	\Bitrix\ImOpenLines\Config,
-	\Bitrix\ImOpenLines\Session,
-	\Bitrix\ImOpenLines\Log\ExecLog,
-	\Bitrix\ImOpenLines\AutomaticAction,
-	\Bitrix\ImOpenLines\Model\SessionTable,
-	\Bitrix\ImOpenLines\Model\SessionCheckTable;
+use Bitrix\ImOpenLines\Chat;
+use Bitrix\ImOpenLines\Mail;
+use Bitrix\ImOpenLines\Queue;
+use Bitrix\ImOpenLines\Debug;
+use Bitrix\ImOpenLines\Common;
+use Bitrix\ImOpenLines\Config;
+use Bitrix\ImOpenLines\Session;
+use Bitrix\ImOpenLines\Log\ExecLog;
+use Bitrix\ImOpenLines\AutomaticAction;
+use Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\ImOpenLines\Model\SessionCheckTable;
+use Bitrix\Imopenlines\Model\UserRelationTable;
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Config\Option,
-	\Bitrix\Main\Type\DateTime,
-	\Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 
-use \Bitrix\Pull;
+use Bitrix\ImConnector;
+
+use Bitrix\Pull;
 
 /**
  * Class Agent
@@ -460,6 +464,136 @@ class Agent
 		Debug::addAgent('stop ' . __METHOD__);
 
 		return $result;
+	}
+
+	/**
+	 * @param string $oldUserCode
+	 * @param string $userId
+	 * @return string
+	 */
+	protected static function convertUserCode(string $oldUserCode, string $userId): string
+	{
+		$parsedUserCode = Session\Common::parseUserCode($oldUserCode);
+		$parsedUserCode['CONNECTOR_USER_ID'] = $userId;
+		return Session\Common::combineUserCode($parsedUserCode);
+	}
+
+	/**
+	 * @param int $replaceId
+	 * @param int $searchId
+	 * @return string
+	 */
+	public static function replacementUserAgent(int $replaceId, int $searchId): string
+	{
+		$chatIds = [];
+		$oldUserCode = [];
+		$newUserCode = [];
+
+		$sessionRaw = SessionTable::getList([
+			'select' => ['ID', 'USER_CODE', 'CHAT_ID'],
+			'filter' => ['USER_ID' => $searchId],
+		]);
+
+		while ($sessionRow = $sessionRaw->fetch())
+		{
+			if (empty($newUserCode[$sessionRow['USER_CODE']]))
+			{
+				$newUserCode[$sessionRow['USER_CODE']] = self::convertUserCode($sessionRow['USER_CODE'], $replaceId);
+			}
+			$resultUpdate = SessionTable::update(
+				$sessionRow['ID'],
+				[
+					'USER_ID' => $replaceId,
+					'USER_CODE' => $newUserCode[$sessionRow['USER_CODE']],
+				]
+			);
+
+			if ($resultUpdate->isSuccess())
+			{
+				$chatIds[$sessionRow['CHAT_ID']] = $sessionRow['CHAT_ID'];
+				$oldUserCode[$sessionRow['USER_CODE']] = $sessionRow['USER_CODE'];
+			}
+		}
+
+		if (!empty($chatIds))
+		{
+			$chat = new \CIMChat(0);
+
+			foreach ($chatIds as $chatId)
+			{
+				if (!empty($chatId))
+				{
+					$chat->AddUser($chatId, $replaceId, false, true);
+					$chat->DeleteUser($chatId, $searchId, false, true);
+
+					$chatImol = new Chat($chatId);
+					if ($chatImol->isDataLoaded())
+					{
+						$entityId = $chatImol->getData('ENTITY_ID');
+
+						if(empty($newUserCode[$entityId]))
+						{
+							$newUserCode[$entityId] = self::convertUserCode($entityId, $replaceId);
+						}
+						$chatImol->updateChatLineData($newUserCode[$entityId]);
+					}
+				}
+			}
+		}
+
+		if (!empty($oldUserCode))
+		{
+			foreach ($oldUserCode as $userCode)
+			{
+				if (!empty($userCode))
+				{
+					if(empty($newUserCode[$userCode]))
+					{
+						$newUserCode[$userCode] = self::convertUserCode($userCode, $replaceId);
+					}
+
+					$relation = UserRelationTable::getByPrimary($userCode);
+
+					if ($resultUserRelation = $relation->fetch())
+					{
+						UserRelationTable::delete($userCode);
+
+						if ($resultUserRelation['CHAT_ID'])
+						{
+							$relationNew = UserRelationTable::getByPrimary($newUserCode[$userCode]);
+							if ($relationNew->fetch())
+							{
+								UserRelationTable::delete($newUserCode[$userCode]);
+							}
+
+							UserRelationTable::add(
+								[
+									'USER_CODE' => $newUserCode[$userCode],
+									'USER_ID' => $replaceId,
+									'CHAT_ID' => $resultUserRelation['CHAT_ID'],
+								]
+							);
+						}
+					}
+				}
+			}
+		}
+
+		if (Loader::includeModule('imconnector'))
+		{
+			$userRaw = Main\UserTable::getList([
+				'filter' => ['ID' => $searchId],
+				'select' => ['XML_ID'],
+			]);
+
+			if ($xmlId = $userRaw->fetch()['XML_ID'])
+			{
+				$cUser = new \CUser;
+				$cUser->Update($searchId, ['XML_ID' => 'bad' . time() . $xmlId]);
+			}
+		}
+
+		return '';
 	}
 
 	/**

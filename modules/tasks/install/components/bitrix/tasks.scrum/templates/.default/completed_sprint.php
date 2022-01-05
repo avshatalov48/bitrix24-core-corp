@@ -80,6 +80,6 @@ $APPLICATION->IncludeComponent(
 		});
 		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
 		BX.Tasks.Scrum.Entry.renderSprintStatsTo(document.getElementById('tasks-scrum-sprint-stats'));
-		BX.Tasks.Scrum.Entry.renderButtonsTo(document.getElementById('tasks-scrum-buttons-container'));
+		BX.Tasks.Scrum.Entry.renderRightElementsTo(document.getElementById('tasks-scrum-right-container'));
 	});
 </script>

@@ -1,0 +1,2 @@
+<?php
+$MESS["IMCONNECTOR_PROVIDER_MESSAGESERVICE_ERROR_DELETE_CONNECTION"] = "Ошибка отключения коннектора.";

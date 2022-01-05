@@ -1,11 +1,17 @@
 <?php
 namespace Bitrix\Tasks\Scrum\Service;
 
+use Bitrix\Main\Entity\Query\Join;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Query;
+use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
+use Bitrix\Tasks\Scrum\Internal\EO_Item_Collection;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
 
 class EntityService implements Errorable
@@ -20,9 +26,32 @@ class EntityService implements Errorable
 
 	private static $entitiesById = [];
 
-	public function __construct()
+	private $userId;
+
+	public function __construct(int $userId = 0)
 	{
+		$this->userId = $userId;
 		$this->errorCollection = new ErrorCollection;
+	}
+
+	/**
+	 * @param int $entityId
+	 * @return EO_Item_Collection
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getItems(int $entityId): EO_Item_Collection
+	{
+		$entity = EntityTable::getList([
+			'select' => ['ITEMS'],
+			'filter' => [
+				'ID' => (int) $entityId,
+				'ITEMS.ACTIVE' => 'Y',
+			],
+		])->fetchCollection();
+
+		return $entity->getItemsCollection();
 	}
 
 	/**
@@ -31,15 +60,56 @@ class EntityService implements Errorable
 	 * @param array $order
 	 * @return Query\Result|null
 	 */
-	public function getList(array $select = [], array $filter = [], array $order = []): ?Query\Result
+	public function getList(
+		PageNavigation $nav,
+		$filter = [],
+		$select = [],
+		$order = []
+	): ?Query\Result
 	{
 		try
 		{
-			return EntityTable::getList([
-				'select' => $select,
-				'filter' => $filter,
-				'order' => $order
-			]);
+			if (!Loader::includeModule('socialnetwork'))
+			{
+				$this->errorCollection->setError(
+					new Error(
+						'Unable to load socialnetwork.',
+						self::ERROR_COULD_NOT_GET_LIST_READ_ENTITY
+					)
+				);
+
+				return null;
+			}
+
+			$query = new Query\Query(EntityTable::getEntity());
+
+			if (empty($select))
+			{
+				$select = ['*'];
+			}
+			$query->setSelect($select);
+			$query->setFilter($filter);
+			$query->setOrder($order);
+
+			if ($nav)
+			{
+				$query->setOffset($nav->getOffset());
+				$query->setLimit($nav->getLimit() + 1);
+			}
+
+			$query->registerRuntimeField(
+				'UG',
+				new ReferenceField(
+					'UG',
+					UserToGroupTable::getEntity(),
+					Join::on('this.GROUP_ID', 'ref.GROUP_ID')->where('ref.USER_ID', $this->userId),
+					['join_type' => 'inner']
+				)
+			);
+
+			$queryResult = $query->exec();
+
+			return $queryResult;
 		}
 		catch (\Exception $exception)
 		{
@@ -83,81 +153,25 @@ class EntityService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ENTITY));
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_READ_ENTITY
+				)
+			);
 		}
 
 		return self::$entitiesById[$entityId];
 	}
 
-	/**
-	 * Returns all entity ids by group id.
-	 *
-	 * @param int $groupId
-	 * @return array
-	 */
-	public function getEntityIdsByGroupId(int $groupId): array
-	{
-		$entityIds = [];
-
-		try
-		{
-			$queryObject = EntityTable::getList([
-				'select' => ['ID'],
-				'filter' => [
-					'GROUP_ID' => $groupId,
-				],
-			]);
-			while ($entityData = $queryObject->fetch())
-			{
-				$entityIds[] = $entityData['ID'];
-			}
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ENTITY_IDS)
-			);
-		}
-
-		return $entityIds;
-	}
-
-	/**
-	 * Returns all task ids by group id.
-	 *
-	 * @param int $groupId
-	 * @return array
-	 */
-	public function getTaskIdsByGroupId(int $groupId): array
+	public function getCounters(
+		int $groupId,
+		int $entityId,
+		TaskService $taskService,
+		$skipCompletedTasks = true
+	): array
 	{
 		$taskIds = [];
-
-		try
-		{
-			$queryObject = EntityTable::getList([
-				'select' => ['ID', 'TASK_ID' => 'ITEMS.SOURCE_ID'],
-				'filter' => [
-					'GROUP_ID' => $groupId,
-					'ITEMS.ITEM_TYPE' => ItemTable::TASK_TYPE,
-				],
-			]);
-			while ($entityData = $queryObject->fetch())
-			{
-				$taskIds[] = $entityData['TASK_ID'];
-			}
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM_SOURCE_IDS)
-			);
-		}
-
-		return $taskIds;
-	}
-
-	public function getCounters(int $entityId, ?TaskService $taskService = null): array
-	{
 		$storyPoints = '';
 		$countTotal = 0;
 
@@ -172,7 +186,7 @@ class EntityService implements Errorable
 				],
 				'filter' => [
 					'ID' => $entityId,
-					'ITEMS.ITEM_TYPE' => ItemTable::TASK_TYPE,
+					'GROUP_ID' => $groupId,
 					'ITEMS.ACTIVE' => 'Y',
 				],
 			]);
@@ -182,25 +196,55 @@ class EntityService implements Errorable
 				$storyPointsMap[$data['SOURCE_ID']] = $data['STORY_POINTS'];
 			}
 
-			if ($taskService)
+			$taskIds = [];
+
+			$tasksInfo = [];
+
+			if ($storyPointsMap)
 			{
-				$uncompletedTaskIds = $taskService->getUncompletedTaskIds(array_keys($storyPointsMap));
+				$tasksInfo = $taskService->getTasksInfo(array_keys($storyPointsMap));
+			}
 
-				foreach ($uncompletedTaskIds as $taskId)
+			$parentIdsToCheck = [];
+			foreach ($tasksInfo as $taskId => $taskInfo)
+			{
+				$parentId = (int) $taskInfo['PARENT_ID'];
+
+				if ($parentId)
 				{
-					$countTotal++;
-
-					$storyPoints = (float) $storyPoints + (float) $storyPointsMap[$taskId];
+					$parentIdsToCheck[$taskId] = $parentId;
+				}
+				else
+				{
+					$taskIds[] = $taskId;
 				}
 			}
-			else
-			{
-				foreach ($storyPointsMap as $points)
-				{
-					$countTotal++;
 
-					$storyPoints = (float) $storyPoints + (float) $points;
+			$actualParentIds = [];
+
+			if ($parentIdsToCheck)
+			{
+				$actualParentIds = $taskService->getActualParentIds($parentIdsToCheck, $groupId);
+			}
+
+			foreach ($actualParentIds as $taskId => $parentId)
+			{
+				if (!$parentId)
+				{
+					$taskIds[] = $taskId;
 				}
+			}
+
+			if ($skipCompletedTasks)
+			{
+				$taskIds = $taskService->getUncompletedTaskIds($taskIds);
+			}
+
+			foreach ($taskIds as $taskId)
+			{
+				$countTotal++;
+
+				$storyPoints = (float) $storyPoints + (float) $storyPointsMap[$taskId];
 			}
 		}
 		catch (\Exception $exception)
@@ -214,6 +258,7 @@ class EntityService implements Errorable
 		}
 
 		return [
+			'taskIds' => $taskIds,
 			'storyPoints' => $storyPoints,
 			'countTotal' => $countTotal,
 		];

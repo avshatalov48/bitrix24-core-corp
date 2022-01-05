@@ -1,0 +1,510 @@
+.tasks-scrum__widget-meetings--scope {
+	--tasks_scrum_meetings-white: rgba(255,255,255,1);
+	--tasks_scrum_meetings-grey: rgba(51,51,51,1);
+
+	--tasks_scrum_meetings-grey-2: rgba(82,92,105,1);
+	--tasks_scrum_meetings-grey-2_alpha_08: rgba(82,92,105,.08);
+	--tasks_scrum_meetings-grey-2_alpha_70: rgba(82,92,105,.7);
+
+	--tasks_scrum_meetings-grey-3_alpha_30: rgba(224,233,241,.3);
+
+	--tasks_scrum_meetings-grey-4: rgba(130,139,149,1);
+	--tasks_scrum_meetings-grey-4_alpha_70: rgba(130,139,149,.7);
+
+	--tasks_scrum_meetings-grey-5: rgba(168,173,180,1);
+
+	--tasks_scrum_meetings-blue_alpha_30: rgba(31,130,232,.3);
+
+	--tasks_scrum_meetings-blue-2: rgba(47,198,247,1);
+
+	--tasks_scrum_meetings-blue-3: rgba(238,250,254,1);
+	--tasks_scrum_meetings-blue-4: rgba(219,245,253,1);
+
+	--tasks_scrum_meetings-green: rgba(0,180,172,1);
+}
+
+.widget-meetings__sprint-daily {
+	--border-color: rgba(47,198,246,.5);
+	--backgground-color: rgba(47,198,246,.15);
+}
+
+.widget-meetings__sprint-planning {
+	--border-color: rgba(255,87,82,.5);
+	--backgground-color: rgba(255,87,82,.15);
+}
+
+.widget-meetings__sprint-review {
+	--border-color: rgba(218,81,212,.5);
+	--backgground-color: rgba(218,81,212,.15);
+}
+
+.widget-meetings__sprint-retrospective {
+	--border-color: rgba(157,207,0,.5);
+	--backgground-color: rgba(157,207,0,.15);
+}
+
+.tasks-scrum__widget-meetings {
+	padding: 12px 8px;
+	width: 324px;
+	box-sizing: border-box;
+}
+
+.tasks-scrum__widget-meetings--header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 7px 12px 4px;
+	margin-bottom: 10px;
+	position: relative;
+}
+
+.tasks-scrum__widget-meetings--header::after {
+	content: '';
+	display: block;
+	width: 97%;
+	height: 1px;
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	transform: translate(-50%, 0);
+	background: var(--tasks_scrum_meetings-grey-2_alpha_08);
+}
+
+.tasks-scrum__widget-meetings--icon-chats,
+.tasks-scrum__widget-meetings--icon-calendar {
+	width: 26px;
+	height: 26px;
+	margin-right: 7px;
+	flex-shrink: 0;
+}
+
+.tasks-scrum__widget-meetings--icon-chats > i {
+	--ui-icon-service-bg-color: #207ede;
+}
+
+.tasks-scrum__widget-meetings--btn-create {
+	flex-shrink: 0;
+	margin-top: -3px;
+	padding-right: 23px;
+}
+
+.tasks-scrum__widget-meetings--header-title {
+	width: 100%;
+	text-align: left;
+	font-family: 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	line-height: 15px;
+	color: var(--tasks_scrum_meetings-grey);
+	letter-spacing: 0.4px;
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-main,
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-menu,
+.tasks-scrum__widget-meetings--btn-create .ui-btn-main,
+.tasks-scrum__widget-meetings--btn-create .ui-btn-menu {
+	height: 19px;
+	font: 10px/14px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: var(--tasks_scrum_meetings-grey-2);
+	border-color: var(--tasks_scrum_meetings-blue_alpha_30);
+}
+
+.tasks-scrum__widget-meetings--btn-create .ui-btn-main {
+	padding-left: 9px;
+	padding-right: 5px;
+	font-size: 10px;
+	letter-spacing: 0.5px;
+}
+
+.tasks-scrum__widget-meetings--btn-create .ui-btn-menu {
+	width: 23px;
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call.ui-btn-split {
+	padding-right: 24px;
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-menu::before,
+.tasks-scrum__widget-meetings--btn-create .ui-btn-menu::before {
+	border: none;
+	border-right: 1px solid var(--tasks_scrum_meetings-grey-2_alpha_70);
+	border-bottom: 1px solid var(--tasks_scrum_meetings-grey-2_alpha_70);
+	width: 5px;
+	height: 5px;
+	transform: rotate(45deg);
+	margin-left: -3px;
+	margin-top: -3px;
+	transition: .2s;
+}
+
+.tasks-scrum__widget-meetings--btn-create .ui-btn-menu::after {
+	top: 4px;
+	bottom: 4px;
+}
+
+.tasks-scrum__widget-meetings--btn-create:hover .ui-btn-main,
+.tasks-scrum__widget-meetings--btn-create:hover .ui-btn-menu,
+.tasks-scrum__widget-meetings--btn-create .ui-btn-main:hover,
+.tasks-scrum__widget-meetings--btn-create .ui-btn-menu:hover {
+	background-color: inherit;
+	border-color: rgba(31,130,232,.6);
+}
+
+.tasks-scrum__widget-meetings--creation-block {
+	display: none;
+	position: relative;
+	border: 1px solid var(--tasks_scrum_meetings-blue-2);
+	box-sizing: border-box;
+	border-radius: 8px;
+	padding: 9px 7px 3px;
+	color: var(--tasks_scrum_meetings-grey-2);
+	font: 11px/14px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.tasks-scrum__widget-meetings--creation-block.--visible {
+	display: block;
+}
+
+.tasks-scrum__widget-meetings--create-element-info {
+	padding: 0 5px;
+	margin-bottom: 11px;
+}
+
+.tasks-scrum__widget-meetings--creation-close-btn {
+	position: absolute;
+	width: 14px;
+	height: 13px;
+	right: 7px;
+	top: 9px;
+	opacity: 0.4;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.14965 4L7.9522 6.80255L6.80255 7.9522L4 5.14965L1.14965 8L0 6.85035L2.85035 4L0.0477991 1.19745L1.19745 0.0477991L4 2.85035L6.85035 0L8 1.14965L5.14965 4Z' fill='%23828B95'/%3E%3C/svg%3E%0A");
+	transition: .2s;
+	cursor: pointer;
+}
+
+.tasks-scrum__widget-meetings--creation-close-btn:hover {
+	opacity: 0.8;
+}
+
+.tasks-scrum__widget-meetings--create-element {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 13px 10px 11px;
+	margin: 6px 0;
+	border-radius: 3px;
+	border-left: 4px solid var(--border-color);
+	background: var(--backgground-color);
+}
+
+.tasks-scrum__widget-meetings--create-element-name {
+	font-size: 12px;
+	line-height: 15px;
+	margin-right: -3px;
+}
+
+.tasks-scrum__widget-meetings--create-element-title {
+	width: 100%;
+	display: flex;
+	align-items: center;
+}
+
+.tasks-scrum__widget-meetings--empty-name {
+	margin-bottom: 8px;
+	font-size: 15px;
+	line-height: 15px;
+	color: var(--tasks_scrum_meetings-grey-4);
+}
+
+.tasks-scrum__widget-meetings--empty-chats {
+	display: none;
+	padding: 20px 23px 14px;
+	margin: -1px 4px 2px;
+	border-radius: 5px;
+	font: 11px/15px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	background: var(--tasks_scrum_meetings-grey-3_alpha_30);
+	text-align: center;
+	color: var(--tasks_scrum_meetings-grey-4_alpha_70);
+}
+
+.tasks-scrum__widget-meetings--empty-chats.--visible {
+	display: block;
+}
+
+.tasks-scrum__widget-meetings--empty-meetings {
+	display: none;
+	padding: 11px 9px 14px;
+	border-radius: 5px;
+	font: 11px/15px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	background: var(--tasks_scrum_meetings-grey-3_alpha_30);
+	text-align: center;
+	color: var(--tasks_scrum_meetings-grey-4_alpha_70);
+}
+
+.tasks-scrum__widget-meetings--empty-meetings.--visible {
+	display: block;
+}
+
+.tasks-scrum__widget-meetings--empty-meetings .tasks-scrum__widget-meetings--empty-name {
+	margin-bottom: 4px;
+}
+
+.tasks-scrum__widget-meetings--empty-meetings .ui-qr-popupcomponentmaker__btn {
+	margin-top: 9px;
+}
+
+.tasks-scrum__widget-meetings--timetable-container{
+	display: none;
+	padding: 16px 8px 4px;
+}
+
+.tasks-scrum__widget-meetings--content.--content-hidden + .tasks-scrum__widget-meetings--timetable .tasks-scrum__widget-meetings--timetable-container{
+	padding-top: 7px;
+}
+
+.tasks-scrum__widget-meetings--timetable-container.--visible {
+	display: block;
+}
+
+.tasks-scrum__widget-meetings--timetable-content {
+	padding: 7px 10px;
+	border-left: 4px solid;
+	border-radius: 3px;
+	background: var(--backgground-color);
+	margin-top: 9px;
+	cursor: pointer;
+}
+
+.tasks-scrum__widget-meetings--timetable-content:first-of-type {
+	margin-top: 0;
+}
+
+.tasks-scrum__widget-meetings--timetable-title {
+	font: 16px/15px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: var(--tasks_scrum_meetings-grey-2);
+	margin-bottom: 10px;
+}
+
+.tasks-scrum__widget-meetings--timetable-navigation {
+	display: flex;
+	justify-content: space-between;
+}
+
+.tasks-scrum__widget-meetings--timetable-time {
+	font: 11px/15px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: var(--tasks_scrum_meetings-grey);
+}
+
+.tasks-scrum__widget-meetings--timetable-name {
+	font: 12px/15px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: var(--tasks_scrum_meetings-grey-2);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	transition: .2s;
+}
+
+.tasks-scrum__widget-meetings--timetable-name:hover {
+	color: var(--tasks_scrum_meetings-grey);
+}
+
+.tasks-scrum__widget-meetings--timetable-repetition {
+	font: 11px/15px "OpenSans-Italic", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: var(	--tasks_scrum_meetings-grey-5);
+	display: flex;
+	align-items: center;
+	margin-top: 1px;
+}
+
+.tasks-scrum__widget-meetings--timetable-repetition-icon {
+	display: inline-block;
+	width: 11px;
+	height: 11px;
+	margin: 2px 2px 0 0;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-image: url("data:image/svg+xml,%3Csvg width='11' height='11' viewBox='0 0 11 11' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.5'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.07439 3.34055C9.14278 3.27259 9.14278 3.1624 9.07439 3.09443L7.50879 1.53851C7.39847 1.42887 7.20984 1.50652 7.20984 1.66157V2.78425H3.7136C2.75162 2.78425 1.97178 3.56409 1.97178 4.52607V6.08275H2.73355V4.29231C2.73355 3.88255 3.06574 3.55036 3.47551 3.55036H7.20984V4.77342C7.20984 4.92847 7.39847 5.00612 7.50879 4.89648L9.07439 3.34055ZM2.39396 8.22063C2.32558 8.2886 2.32558 8.39879 2.39396 8.46675L4.01806 10.0808C4.12837 10.1904 4.317 10.1128 4.317 9.95775L4.317 8.74311L7.81336 8.74311C8.77534 8.74311 9.55518 7.96327 9.55518 7.00129L9.55518 5.4446H8.8066L8.8066 7.18471C8.8066 7.59448 8.47441 7.92666 8.06464 7.92666H4.317V6.72964C4.317 6.57459 4.12837 6.49694 4.01806 6.60658L2.39396 8.22063Z' fill='%23525C69'/%3E%3C/g%3E%3C/svg%3E%0A");
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-main,
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-menu {
+	border: none;
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-menu {
+	width: 15px;
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-menu::after {
+	left: -3px;
+	top: 5px;
+	bottom: 5px;
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-main {
+	padding: 0;
+	position: relative;
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-main::before {
+	content: '';
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin-right: 2px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.9165 4.66663C3.22615 4.66663 2.6665 5.22627 2.6665 5.91663V10.0833C2.6665 10.7736 3.22615 11.3333 3.9165 11.3333H9.4165C10.1069 11.3333 10.6665 10.7736 10.6665 10.0833V5.91663C10.6665 5.22627 10.1069 4.66663 9.41651 4.66663H3.9165ZM13.9998 5.33329L11.3332 6.57874V9.5706L13.9998 10.6666V5.33329Z' fill='%23525C69'/%3E%3C/svg%3E%0A");
+	opacity: 0.5;
+	transition: .2s;
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-main:hover::before {
+	opacity: 1;
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-main:hover,
+.tasks-scrum__widget-meetings--timetable-video-call .ui-btn-menu:hover {
+	background-color: transparent;
+	border-color: transparent;
+	color: var(--tasks_scrum_meetings-grey);
+}
+
+.tasks-scrum__widget-meetings--timetable-video-call:hover .ui-btn-menu::before {
+	border-right: 1px solid var(--tasks_scrum_meetings-grey-2);
+	border-bottom: 1px solid var(--tasks_scrum_meetings-grey-2);
+}
+
+.tasks-scrum__widget-meetings-btn-box-center {
+	text-align: center;
+}
+
+.tasks-scrum__widget-meetings--plan-content,
+.tasks-scrum__widget-meetings--plan {
+	pointer-events: none;
+	height: 0;
+	opacity: 0;
+	transition: .2s;
+}
+
+.tasks-scrum__widget-meetings--plan-content.--visible,
+.tasks-scrum__widget-meetings--plan.--visible {
+	pointer-events: all;
+	display: block;
+	height: auto;
+	opacity: 1;
+}
+
+.tasks-scrum__widget-meetings--plan-btn {
+	margin: 10px auto 2px;
+}
+
+.tasks-scrum__widget-meetings--header-separator {
+	position: relative;
+	text-align: center;
+	font: 10px/14px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: var(--tasks_scrum_meetings-grey-5);
+	/*margin: 15px 0 12px;*/
+	margin: 15px 0 0;
+}
+
+.tasks-scrum__widget-meetings--header-separator::after {
+	content: '';
+	display: block;
+	width: 94%;
+	height: 1px;
+	background: var(--tasks_scrum_meetings-grey-2_alpha_08);
+	position: absolute;
+	left: 50%;
+	top: 9px;
+	transform: translate(-50%, 0%);
+}
+
+.tasks-scrum__widget-meetings--header-separator span {
+	background: var(--tasks_scrum_meetings-white);
+	position: relative;
+	z-index: 1;
+	padding: 0 14px;
+}
+
+.tasks-scrum__widget-meetings--timetable-wrapper {
+	padding: 0 8px;
+	/*margin-top: 12px;*/
+	margin-top: 14px;
+}
+
+.tasks-scrum__widget-meetings--timetable-day {
+	margin-top: 19px;
+}
+
+.tasks-scrum__widget-meetings--timetable-day:first-of-type {
+	margin-top: 0;
+}
+
+.tasks-scrum__widget-meetings--chat-content {
+	display: none;
+	padding: 0 4px;
+	box-sizing: border-box;
+}
+
+.tasks-scrum__widget-meetings--chat-content.--visible {
+	display: block;
+}
+
+.tasks-scrum__widget-meetings--chat-container {
+	display: flex;
+	align-items: flex-start;
+	margin-top: 6px;
+	padding: 7px 10px 8px;
+	border-radius: 5px;
+	transition: .2s;
+	background-color: var(--tasks_scrum_meetings-blue-3);
+	cursor: pointer;
+}
+
+.tasks-scrum__widget-meetings--chat-container:first-of-type {
+	margin-top: 0;
+}
+
+.tasks-scrum__widget-meetings--chat-container:hover {
+	background-color: var(--tasks_scrum_meetings-blue-4);
+}
+
+.tasks-scrum__widget-meetings--chat-info {
+	flex: 1;
+	max-width: calc(100% - 41px);
+}
+
+.tasks-scrum__widget-meetings--chat-icon.ui-icon {
+	--ui-icon-size: 32px;
+	--ui-icon-service-bg-color: var(--tasks_scrum_meetings-green);
+	flex-shrink: 0;
+	margin: 3px 9px 0 0;
+}
+
+.tasks-scrum__widget-meetings--chat-name {
+	font: 13px/15px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	margin-bottom: 3px;
+	color: var(--tasks_scrum_meetings-grey);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.tasks-scrum__widget-meetings--chat-icon-user.ui-icon {
+	--ui-icon-size: 16px;
+	margin-right: 4px;
+}
+
+
+
+
+
+
+.tmp-class-default-hide {
+	display: none;
+}
+
+.tmp-class-default-hide.--visible {
+	display: block;
+}

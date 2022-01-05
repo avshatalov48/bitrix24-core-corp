@@ -1103,7 +1103,7 @@ export class Widget
 		const diskFolderId = this.getDiskFolderId();
 		message.chatId = this.getChatId();
 
-		this.uploader.senderOptions.customHeaders['Livechat-Dialog-Id'] = message.chatId;
+		this.uploader.senderOptions.customHeaders['Livechat-Dialog-Id'] = this.getDialogId();
 		this.uploader.senderOptions.customHeaders['Livechat-Auth-Id'] = this.getUserHash();
 
 		this.uploader.addTask({

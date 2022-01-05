@@ -411,56 +411,13 @@ class CDavWebDavServer
 		}
 
 		$fileArray = $object->getFile();
-
-		$arResult["id"] = $objectId;
-		$arResult["mimetype"] = $fileArray["CONTENT_TYPE"];
-		$arResult["mtime"] = MakeTimeStamp($fileArray["TIMESTAMP_X"]);
-		$arResult["size"] = $fileArray["FILE_SIZE"];
-		$arResult["name"] = $object->getName();
-
-		$arTmpFile = CFile::MakeFileArray($object->getFileId());
-		if (!(is_array($arTmpFile) && is_set($arTmpFile, 'tmp_name')))
+		if (!$fileArray)
 		{
-			return false;
+			return '404 Not Found';
 		}
 
-		$io = CBXVirtualIo::GetInstance();
-//		if(!empty($options['getContent']))
-//		{
-//			if(file_exists($io->GetPhysicalName($arTmpFile['tmp_name'])))
-//			{
-//				$options['content'] = $io->GetFile($io->GetPhysicalName($arTmpFile['tmp_name']))->GetContents();
-//			}
-//			elseif(file_exists($arTmpFile['tmp_name']))
-//			{
-//				$options['content'] = file_get_contents($arTmpFile['tmp_name']);
-//			}
-//			else
-//			{
-//				$options['content'] = null;
-//			}
-//		}
-//		else
-//		{
-		if (file_exists($io->GetPhysicalName($arTmpFile['tmp_name'])))
-		{
-			$arResult['stream'] = fopen($io->GetPhysicalName($arTmpFile['tmp_name']), 'rb');
-		}
-		elseif (file_exists($arTmpFile['tmp_name']))
-		{
-			$arResult['stream'] = fopen($arTmpFile['tmp_name'], 'rb');
-		}
-		else
-		{
-			return false;
-		}
-//		}
-
-		if (empty($arResult["mimetype"]) || $arResult["mimetype"] == "unknown" || $arResult["mimetype"] == "application/octet-stream")
-		{
-//			$arResult["mimetype"] = $this->get_mime_type($object->getName());
-		}
-		return true;
+		$response = \Bitrix\Main\Engine\Response\BFile::createByFileId($object->getFileId(), $object->getName());
+		\Bitrix\Main\Application::getInstance()->end(0, $response);
 	}
 
 	private function RenderPropertyValue($value)

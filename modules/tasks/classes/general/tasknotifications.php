@@ -9,6 +9,7 @@
 
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter;
@@ -2563,7 +2564,7 @@ class CTaskNotifications
 	{
 		if(intval($params['ENTITY_ID']) && $params['ENTITY_TYPE_ID'] == 'TASK')
 		{
-			list($oTaskItems, $rsData) = CTaskItem::fetchList(CTasksTools::GetCommanderInChief(), array(), array('=ID' => $params['ENTITY_ID']), array(), array('ID', 'CREATED_BY'));
+			[ $oTaskItems, $rsData ] = CTaskItem::fetchList(User::getAdminId(), [], array('=ID' => $params['ENTITY_ID']), [], [ 'ID', 'CREATED_BY' ]);
 			unset($rsData);
 
 			if($oTaskItems[0] instanceof CTaskItem)
@@ -2719,7 +2720,7 @@ class CTaskNotifications
 					$res = \CSite::getByID(SITE_ID);
 					$site = $res->fetch();
 
-					$userPage = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', $site['DIR'].'company/personal/');
+					$userPage = Option::get('socialnetwork', 'user_page', $site['DIR'] . 'company/personal/');
 					$userPath = $userPage.'user/'.$logEntry['USER_ID'].'/';
 
 					\Bitrix\Socialnetwork\ComponentHelper::addLiveComment(
@@ -2899,7 +2900,7 @@ class CTaskNotifications
 
 	private static function parseImNotificationTag($tag)
 	{
-		list($module, $entity, $id, $userId) = explode('|', $tag);
+		[ $module, $entity, $id, $userId ] = explode('|', $tag);
 
 		return array(
 			'ENTITY' => $entity,
@@ -3191,18 +3192,18 @@ class CTaskNotifications
 			}
 
 			// choose template
-			if($useGroup)
+			if ($useGroup)
 			{
 				$pathTemplate = str_replace(
 					array('#group_id#', '#GROUP_ID#'),
 					$arTask["GROUP_ID"],
 					CTasksTools::GetOptionPathTaskGroupEntry(
 						$siteID,
-						"/workgroups/group/#group_id#/tasks/task/view/#task_id#/"
+						$siteCache[$siteID]['DIR'] . "workgroups/group/#group_id#/tasks/task/view/#task_id#/"
 					)
 				);
-				$workgroupsPage = COption::GetOptionString("socialnetwork", "workgroups_page", "/workgroups/", $siteID);
-				$pathTemplate = "#GROUPS_PATH#".mb_substr($pathTemplate, mb_strlen($workgroupsPage), mb_strlen($pathTemplate) - mb_strlen($workgroupsPage));
+				$workgroupsPage = Option::get('socialnetwork', 'workgroups_page', $siteCache[$siteID]['DIR'] . 'workgroups/', $siteID);
+				$pathTemplate = '#GROUPS_PATH#' . mb_substr($pathTemplate, mb_strlen($workgroupsPage), mb_strlen($pathTemplate) - mb_strlen($workgroupsPage));
 				$processed = CSocNetLogTools::ProcessPath(array("TASK_URL" => $pathTemplate), $arUser['ID'], $siteID);
 				$pathTemplate = $processed['URLS']['TASK_URL'];
 			}
@@ -3210,7 +3211,7 @@ class CTaskNotifications
 			{
 				$pathTemplate = CTasksTools::GetOptionPathTaskUserEntry(
 					$siteID,
-					"/company/personal/user/#user_id#/tasks/task/view/#task_id#/"
+					$siteCache[$siteID]['DIR'] . ($bExtranet ? 'contacts' : 'company') . "/personal/user/#user_id#/tasks/task/view/#task_id#/"
 				);
 			}
 
@@ -3363,7 +3364,7 @@ class CTaskNotifications
 								$bitrix24Installed
 								&& $item['LID'] == 'ex'
 							)
-							|| $item['LID'] == \Bitrix\Main\Config\Option::get("extranet", "extranet_site") // extranet uninstalled with 'Save data' option
+							|| $item['LID'] === Option::get('extranet', 'extranet_site') // extranet uninstalled with 'Save data' option
 						)
 					)
 				)
@@ -3489,7 +3490,12 @@ class CTaskNotifications
 
 		if(!isset(static::$cache['TASK2GROUP'][$taskId]))
 		{
-			$item = CTasks::getList(array(), array('ID' => $taskId), array('ID', 'GROUP_ID'), array('USER_ID' => \Bitrix\Tasks\Util\User::getAdminId()))->fetch();
+			$item = CTasks::getList(
+				[],
+				[ 'ID' => $taskId ],
+				[ 'ID', 'GROUP_ID' ],
+				[ 'USER_ID' => User::getAdminId() ]
+			)->fetch();
 			if(is_array($item) && !empty($item))
 			{
 				static::$cache['TASK2GROUP'][$taskId] = $item;
@@ -3857,7 +3863,7 @@ class CTaskNotifications
 		$users = static::getUsers(array_merge(array($authorId), $message["TO_USER_IDS"]));
 		foreach($users as $i => $user)
 		{
-			$users[$i]['NAME_FORMATTED'] = \Bitrix\Tasks\Util\User::formatName($users[$i], $siteId);
+			$users[$i]['NAME_FORMATTED'] = User::formatName($users[$i], $siteId);
 		}
 
 		$receiversData = \Bitrix\Tasks\Integration\Mail\User::getData($message["TO_USER_IDS"], $siteId);
@@ -3893,7 +3899,7 @@ class CTaskNotifications
 					"TASK_PREVIOUS_FIELDS" => \Bitrix\Tasks\Util\Type::serializeArray($prevFields),
 
 					"RECIPIENT_ID" => $userId,
-					"USER_ID" => \Bitrix\Tasks\Util\User::getAdminId(),
+					"USER_ID" => User::getAdminId(),
 
 					"URL" => $pathToTask,
 					"SUBJECT" => $subjPrefix.$taskTitle

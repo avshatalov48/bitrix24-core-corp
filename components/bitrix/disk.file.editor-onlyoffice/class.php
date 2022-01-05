@@ -53,6 +53,26 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		/** @var OnlyOffice\Models\DocumentSession $documentSession */
 		$documentSession = $this->arParams['DOCUMENT_SESSION'];
 
+		$bitrix24Scenario = new OnlyOffice\Bitrix24Scenario();
+		if ($documentSession->isEdit())
+		{
+			if (!$bitrix24Scenario->canUseEdit())
+			{
+				\ShowError("There is no access to edit document by Bitrix24.Documents.");
+
+				return;
+			}
+		}
+		else
+		{
+			if (!$bitrix24Scenario->canUseView())
+			{
+				\ShowError("There is no access to view document by Bitrix24.Documents.");
+
+				return;
+			}
+		}
+
 		$documentInfo = $documentSession->getInfo();
 		if (!$documentInfo)
 		{
@@ -129,21 +149,9 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			'viewDocument',
 			['documentSessionId' => $documentSession->getId()]
 		);
-		if ($this->arParams['LINK_TO_EDIT'])
-		{
-			$this->arResult['LINK_TO_EDIT'] = $this->arParams['LINK_TO_EDIT'];
-		}
-		else
-		{
-			$this->arResult['LINK_TO_EDIT'] = (new Disk\Controller\DocumentService())->getActionUri(
-				'goToEdit',
-				[
-					'documentSessionId' => $documentSession->getId(),
-					'documentSessionHash' => $documentSession->getExternalHash(),
-					'serviceCode' => OnlyOffice\OnlyOfficeHandler::getCode(),
-				]
-			);
-		}
+
+		$this->arResult['LINK_TO_EDIT'] = $this->getLinkToEdit($documentSession);
+		$this->arResult['LINK_TO_DOWNLOAD'] = $this->getLinkToDownload($documentSession);
 
 		$infoToken = Disk\Document\Online\UserInfoToken::generateTimeLimitedToken(
 			$this->getUserIdForOnline(),
@@ -212,7 +220,48 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			$this->arResult['PUBLIC_CHANNEL'] = $publicPullConfigurator->getChannel($realObjectId)->getSignedPublicId();
 		}
 
-		$this->includeComponentTemplate();
+		if (OnlyOffice\OnlyOfficeHandler::shouldRestrictedBySize($documentSession->getObject()->getSize()))
+		{
+			$this->includeComponentTemplate('large-file');
+		}
+		else
+		{
+			$this->includeComponentTemplate();
+		}
+	}
+
+	protected function getLinkToEdit(OnlyOffice\Models\DocumentSession $documentSession)
+	{
+		if ($this->arParams['LINK_TO_EDIT'])
+		{
+			return $this->arParams['LINK_TO_EDIT'];
+		}
+
+		return (new Disk\Controller\DocumentService())->getActionUri(
+			'goToEdit',
+			[
+				'documentSessionId' => $documentSession->getId(),
+				'documentSessionHash' => $documentSession->getExternalHash(),
+				'serviceCode' => OnlyOffice\OnlyOfficeHandler::getCode(),
+			]
+		);
+	}
+
+	protected function getLinkToDownload(OnlyOffice\Models\DocumentSession $documentSession)
+	{
+		if ($this->arParams['LINK_TO_DOWNLOAD'])
+		{
+			return $this->arParams['LINK_TO_DOWNLOAD'];
+		}
+
+		/** @see \Bitrix\Disk\Controller\DocumentService::downloadDocumentAction */
+		return (new Disk\Controller\DocumentService())->getActionUri(
+			'downloadDocument',
+			[
+				'documentSessionId' => $documentSession->getId(),
+				'documentSessionHash' => $documentSession->getExternalHash(),
+			]
+		);
 	}
 
 	protected function getSharingControlType(OnlyOffice\Models\DocumentSession $documentSession): ?string

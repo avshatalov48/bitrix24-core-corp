@@ -18,11 +18,6 @@ if ($arResult["LIKE_TEMPLATE"] == 'like_react')
 	UI\Extension::load("main.rating");
 }
 
-if ($arParams['IS_SCRUM_TASK'])
-{
-	UI\Extension::load('tasks.scrum.dod');
-}
-
 $templateData = $arResult["TEMPLATE_DATA"];
 
 if (isset($templateData["ERROR"]))

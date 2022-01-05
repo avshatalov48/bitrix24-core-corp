@@ -149,7 +149,8 @@ $arResult['Group']['Type'] = \Bitrix\Socialnetwork\Item\Workgroup::getTypeByCode
 			'OPENED' => $arResult['Group']['OPENED'],
 			'VISIBLE' => $arResult['Group']['VISIBLE'],
 			'PROJECT' => $arResult['Group']['PROJECT'],
-			'EXTERNAL' => $arResult["Group"]["IS_EXTRANET_GROUP"]
+			'EXTERNAL' => $arResult["Group"]["IS_EXTRANET_GROUP"],
+			'SCRUM_PROJECT' => ($arResult['isScrumProject'] ? 'Y' : 'N'),
 		),
 		'fullMode' => true
 	)),

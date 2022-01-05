@@ -64,6 +64,7 @@ export class Filter extends EventEmitter
 	scrollToSearchContainer()
 	{
 		const filterSearchContainer = this.getSearchContainer();
+
 		if (!this.isNodeInViewport(filterSearchContainer))
 		{
 			filterSearchContainer.scrollIntoView(true);
@@ -88,7 +89,7 @@ export class Filter extends EventEmitter
 			return;
 		}
 
-		params.autoResolve = false;
+		params.autoResolve = true;
 
 		this.emit('applyFilter', {
 			promise: promise

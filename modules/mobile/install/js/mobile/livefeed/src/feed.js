@@ -118,7 +118,7 @@ class Feed
 		EventEmitter.subscribe('onFrameDataReceivedBefore', BitrixMobile.LazyLoad.clearImages);
 
 		EventEmitter.subscribe('BX.LazyLoad:ImageLoaded', () => {
-			this.setMaxScroll(document.documentElement.scrollHeight - window.innerHeight - 190);
+			this.recalcMaxScroll();
 		});
 
 		EventEmitter.subscribe('onFrameDataReceived', () => {
@@ -837,7 +837,7 @@ class Feed
 
 	recalcMaxScroll()
 	{
-		this.setMaxScroll(document.documentElement.scrollHeight - window.innerHeight - 190);
+		this.setMaxScroll(document.documentElement.scrollHeight - (2 * window.innerHeight));
 	}
 
 	onMobileBizProcRenderLogMessages()

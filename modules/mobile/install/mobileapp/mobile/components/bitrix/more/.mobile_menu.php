@@ -129,6 +129,7 @@ $favorite = [
 				qrauth.open({
 					title: this.title,
 					type:'crm',
+					showHint: false,
 					redirectUrl: '/crm/deal/'
 				})
 JS
@@ -158,17 +159,17 @@ JS
 //								version:"{$calendarComponentVersion}",
 //								componentParams:{userId: env.userId},
 //								widgetParams:{
-//									title:this.title, 
+//									title:this.title,
 //									useSearch: false,
 //									doNotHideSearchResult: false
 //								}
 //							});
-						
+
 						PageManager.openList(
 						{
 							url:"/mobile/?mobile_action=calendar&user_id="+$userId,
 							table_id:"calendar_list",
-							table_settings: 
+							table_settings:
 							{
 								showTitle:"YES",
 								name:"{$hereDocGetMessage("MB_CALENDAR_LIST")}",
@@ -187,7 +188,7 @@ JS
 								PageManager.openPage({url:"/mobile/calendar/edit_event.php", modal:true, data:{ modal:"Y"}});
 							});
 						}
-						
+
 
 JS
 			],
@@ -200,7 +201,7 @@ JS
 			"color" => "#20A1E7",
 			"attrs" => [
 				"onclick" => <<<JS
-					
+
 						if(Application.getApiVersion() >= 28)
 						{
 							ComponentHelper.openList({
@@ -209,18 +210,18 @@ JS
 								version:"{$diskComponentVersion}",
 								componentParams:{userId: env.userId},
 								widgetParams:{
-									title:"{$hereDocGetMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW")}", 
+									title:"{$hereDocGetMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW")}",
 									useSearch: true,
 									doNotHideSearchResult: true
 								}
 							});
 						}
-						else 
+						else
 						{
 							PageManager.openList(
 							{
 								url:"/mobile/?mobile_action=disk_folder_list&type=user&path=/&entityId="+$userId,
-								table_settings: 
+								table_settings:
 								{
 									showTitle:"YES",
 									name: "{$hereDocGetMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW")}",
@@ -229,7 +230,7 @@ JS
 								}
 							});
 						}
-											
+
 JS
 				, "id" => "doc_user"
 			],
@@ -270,10 +271,10 @@ JS
 					}
 
 					PageManager.openComponent(
-					"JSComponentList", 
+					"JSComponentList",
 					{
-						title:"{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}", 
-						settings: {useSearch: true}, 
+						title:"{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}",
+						settings: {useSearch: true},
 						componentCode: "users",
 						scriptPath: availableComponents["users"]["publicUrl"],
 						params:{
@@ -297,7 +298,7 @@ JS
 			"title" => Loc::getMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW"),
 			"attrs" => [
 				"onclick" => <<<JS
-					
+
 					if(Application.getApiVersion() >= 28)
 						{
 							ComponentHelper.openList({
@@ -308,12 +309,12 @@ JS
 									widgetParams:{title:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}", useSearch: true}
 							});
 						}
-						else 
+						else
 						{
 							PageManager.openList(
 							{
 								url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_"+env.siteId,
-								table_settings: 
+								table_settings:
 								{
 									name:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}",
 									showTitle:"YES",
@@ -322,7 +323,7 @@ JS
 								}
 							});
 						}
-						
+
 JS
 				, "id" => "doc_shared"
 			],
@@ -336,11 +337,11 @@ JS
 			"color" => "#b9bdc3",
 			"attrs" => [
 				"onclick" => <<<JS
-					
+
 						PageManager.openList(
 						{
 							url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_"+env.siteId,
-							table_settings: 
+							table_settings:
 							{
 								useTagsInSearch:"NO",
 								type:"files"
@@ -796,7 +797,8 @@ $menuStructure[] = [
 			'attrs'=>[
 				"onclick" => <<<JS
 				qrauth.open({
-					title: this.title
+					title: this.title,
+					showHint: false
 				})
 JS
 			]
@@ -808,7 +810,7 @@ JS
 			"imageUrl" => $imageDir . "settings/settings.png",
 			"attrs" => [
 				"onclick" => <<<JS
-						PageManager.openComponent("JSStackComponent", 
+						PageManager.openComponent("JSStackComponent",
 						{
 							scriptPath:"$settingsComponentPath",
 							componentCode: "settings.config",

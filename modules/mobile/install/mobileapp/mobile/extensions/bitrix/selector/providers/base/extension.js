@@ -83,6 +83,7 @@
 			this.items = [];
 			this.queryString = "";
 			this.cache = new BasePickerCache(this.providerId);
+			this.singleSelection = false;
 		}
 
 		getEntityWeight(id) {
@@ -104,8 +105,10 @@
 			//not implemented
 		}
 
-
-
+		isSingleChoose() {
+			return this.singleSelection ? this.singleSelection : false;
+		}
+		
 		processResult(query, items, excludeFields = [])
 		{
 			try

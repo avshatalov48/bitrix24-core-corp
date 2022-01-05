@@ -1,0 +1,96 @@
+.notifications-widget-overlay {
+	position: fixed;
+	z-index: 10000;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+}
+
+.notifications-widget-root {
+	display: flex;
+	flex-direction: column;
+	position: fixed;
+	z-index: 10001;
+
+	padding: 31px;
+	background: white;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	border-radius: 20px;
+	box-shadow: 0 22px 34px 0 #525C693F;
+	max-width: 500px;
+}
+
+.notifications-widget-title {
+	font: 600 23px/37px "Open Sans", Helvetica, Arial, sans-serif;
+	vertical-align: middle;
+	text-align: center;
+	margin: 0 auto 8px auto;
+	color: #333333;
+}
+
+.notifications-widget-goto-block {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-radius: 8px;
+	background-color: #EEF9FE;
+	border: 1px solid #C3E8FB;
+	box-sizing: border-box;
+	/*height: 93px;*/
+	padding: 15px 0;
+	margin-top: 22px;
+}
+
+.notifications-widget-goto-label {
+	font: 600 16px/25px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	text-align: left;
+	margin-left: 26px;
+	color: #333333;
+}
+
+.notifications-widget-goto-button {
+	font: 600 15px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	display: inline-block;
+	padding: 14px 40px;
+	background: #BBED21;
+	color: #333333;
+	height: 46px;
+	border: none;
+	border-radius: 100px;
+	margin: 0 25px;
+	cursor: pointer;
+}
+
+.notifications-widget-goto-button:hover {
+	background: #D2F95F;
+}
+
+.notifications-widget-disclaimer {
+	font: 13px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	text-align: center;
+	color: #999999;
+	margin-top: 31px;
+}
+
+.notifications-widget-qr-code {
+	margin: 20px auto 34px auto;
+}
+
+.notifications-widget-button-close {
+	font: 600 15px/21px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	height: 41px;
+	background: #FFFFFF;
+	border: 2px solid #E0EAED;
+	border-radius: 100px;
+	color: #333333;
+	padding: 0 40px;
+	margin: 0 auto;
+	cursor: pointer;
+}
+
+.notifications-widget-button-close:hover {
+	background: #E0EAED;
+}

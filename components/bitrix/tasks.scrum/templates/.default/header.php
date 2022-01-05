@@ -26,13 +26,12 @@ Extension::load([
 	'ui.draganddrop.draggable',
 	'ui.label',
 	'ui.entity-selector',
-	'ui.confetti',
+	'ui.short-view',
 ]);
-Extension::load('tasks.scrum.dod');
+
 Extension::load('date');
 Extension::load('sidepanel');
 Extension::load('popup');
-Extension::load(['amcharts4', 'amcharts4_theme_animated']);
 
 if (Loader::includeModule('pull'))
 {
@@ -42,6 +41,7 @@ if (Loader::includeModule('pull'))
 if (Loader::includeModule('disk'))
 {
 	Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.uf.file/templates/.default/script.js');
+
 	Extension::load([
 		'mobile_uploader',
 		'disk.document',
@@ -77,6 +77,65 @@ $APPLICATION->SetPageProperty(
 	'no-all-paddings no-background tasks-scrum-wrapper'
 );
 
+$popupMenuItems = [];
+switch ($viewName)
+{
+	case 'plan':
+		$popupMenuItems = [
+			[
+				'tabId' => 'popupMenuOptions',
+				'text' => Loc::getMessage('TASKS_SCRUM_PLAN_VIEW_BACKLOG'),
+				'className' => ($arResult['displayPriority'] == 'backlog') ?
+					'menu-popup-item-accept' : 'menu-popup-item-none',
+				'onclick' => '"BX.Tasks.Scrum.Entry.setDisplayPriority(this, \'backlog\')"'
+			],
+			[
+				'tabId' => 'popupMenuOptions',
+				'text' => Loc::getMessage('TASKS_SCRUM_PLAN_VIEW_SPRINT'),
+				'className' => ($arResult['displayPriority'] == 'sprint') ?
+					'menu-popup-item-accept' : 'menu-popup-item-none',
+				'onclick' => '"BX.Tasks.Scrum.Entry.setDisplayPriority(this, \'sprint\')"'
+			],
+		];
+		break;
+	case 'active_sprint':
+	case 'completed_sprint':
+		$popupMenuItems = [
+			[
+				'tabId' => 'popupMenuOptions',
+				'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE_MY') . '</b>'
+			],
+			[
+				'tabId' => 'popupMenuOptions',
+				'html' => Loc::getMessage('KANBAN_SORT_ACTUAL').
+					'<span class=\"menu-popup-item-sort-field-label\">'.
+					Loc::getMessage("KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL").'</span>',
+				'className' => ($arResult['orderNewTask'] == 'actual') ?
+					'menu-popup-item-accept' : 'menu-popup-item-none',
+				'onclick' => '"BX.Tasks.Scrum.Kanban.onClickSort(this, \'actual\')"'
+			],
+			[
+				'tabId' => 'popupMenuOptions',
+				'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE') . '</b>'
+			],
+			[
+				'tabId' => 'popupMenuOptions',
+				'text' => Loc::getMessage('KANBAN_SORT_DESC'),
+				'className' => ($arResult['orderNewTask'] == 'desc') ?
+					'menu-popup-item-accept' : 'menu-popup-item-none',
+				'onclick' => '"BX.Tasks.Scrum.Kanban.onClickSort(this, \'desc\')"'
+			],
+			[
+				'tabId' => 'popupMenuOptions',
+				'text' => Loc::getMessage('KANBAN_SORT_ASC'),
+				'className' => ($arResult['orderNewTask'] == 'asc') ?
+					'menu-popup-item-accept' : 'menu-popup-item-none',
+				'onclick' => '"BX.Tasks.Scrum.Kanban.onClickSort(this, \'asc\')"'
+			]
+		];
+		break;
+}
+
 $APPLICATION->includeComponent(
 	'bitrix:tasks.interface.filter',
 	'',
@@ -96,41 +155,7 @@ $APPLICATION->includeComponent(
 		'USE_GROUP_SELECTOR' => ($arParams['PROJECT_VIEW'] ? 'Y' : 'N'),
 		'USE_EXPORT' => 'N',
 		'SHOW_CREATE_TASK_BUTTON' => 'Y',
-		'POPUP_MENU_ITEMS' =>
-			($isKanban)
-				? [
-				[
-					'tabId' => 'popupMenuOptions',
-					'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE_MY') . '</b>'
-				],
-				[
-					'tabId' => 'popupMenuOptions',
-					'html' => Loc::getMessage('KANBAN_SORT_ACTUAL').
-						'<span class=\"menu-popup-item-sort-field-label\">'.
-						Loc::getMessage("KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL").'</span>',
-					'className' => ($arResult['orderNewTask'] == 'actual') ?
-						'menu-popup-item-accept' : 'menu-popup-item-none',
-					'onclick' => '"BX.Tasks.Scrum.Kanban.onClickSort(this, \'actual\')"'
-				],
-				[
-					'tabId' => 'popupMenuOptions',
-					'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE') . '</b>'
-				],
-				[
-					'tabId' => 'popupMenuOptions',
-					'text' => Loc::getMessage('KANBAN_SORT_DESC'),
-					'className' => ($arResult['orderNewTask'] == 'desc') ?
-						'menu-popup-item-accept' : 'menu-popup-item-none',
-					'onclick' => '"BX.Tasks.Scrum.Kanban.onClickSort(this, \'desc\')"'
-				],
-				[
-					'tabId' => 'popupMenuOptions',
-					'text' => Loc::getMessage('KANBAN_SORT_ASC'),
-					'className' => ($arResult['orderNewTask'] == 'asc') ?
-						'menu-popup-item-accept' : 'menu-popup-item-none',
-					'onclick' => '"BX.Tasks.Scrum.Kanban.onClickSort(this, \'asc\')"'
-				]
-			] : [],
+		'POPUP_MENU_ITEMS' => $popupMenuItems,
 	],
 	$component,
 	['HIDE_ICONS' => true]
@@ -168,8 +193,7 @@ if ($isBitrix24Template)
 	?>
 	<div id="tasks-scrum-sprint-stats" class=
 		"tasks-scrum-sprint-stats task-interface-toolbar--item --without-bg --align-right"></div>
-	<div class="task-interface-toolbar--item --without-bg --align-right">
-		<div id="tasks-scrum-buttons-container" class="task-interface-toolbar--item--scope"></div>
+	<div id="tasks-scrum-right-container" class="task-interface-toolbar--item --align-right">
 	</div>
 </div>
 

@@ -3,6 +3,7 @@ $MESS["TASKS_ADD_QUICK_TASK"] = "Create quick task";
 $MESS["TASKS_AJAX_EMPTY_TEMPLATES"] = "There are no task templates";
 $MESS["TASKS_AJAX_ERROR_LOAD_TEMPLATES"] = "Error loading template list";
 $MESS["TASKS_AJAX_LOAD_TEMPLATES"] = "Loading list...";
+$MESS["TASKS_BTN_ADD_SCRUM_TASK"] = "Create a task";
 $MESS["TASKS_BTN_ADD_TASK"] = "New task";
 $MESS["TASKS_BTN_ADD_TASK_BY_TEMPLATE"] = "New task using template";
 $MESS["TASKS_BTN_EXPORT"] = "Export list";

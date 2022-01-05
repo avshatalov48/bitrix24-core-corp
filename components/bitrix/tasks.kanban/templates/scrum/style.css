@@ -73,3 +73,7 @@
 .tasks-scrum-kanban-header-target-observer {
 	overflow: hidden;
 }
+
+.tasks-scrum-kanban-header-target-observer.--with-margin {
+	margin-bottom: 45px;
+}

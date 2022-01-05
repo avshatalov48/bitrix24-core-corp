@@ -5,17 +5,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/scrum.dod.bundle.css',
-	'js' => 'dist/scrum.dod.bundle.js',
+	'css' => 'dist/dod.bundle.css',
+	'js' => 'dist/dod.bundle.js',
 	'rel' => [
-		'main.popup',
+		'ui.sidepanel.layout',
+		'ui.layout-form',
+		'ui.forms',
+		'main.core',
+		'main.core.events',
 		'main.loader',
 		'ui.dialogs.messagebox',
 		'ui.buttons',
-		'main.core.events',
-		'main.core',
-		'ui.layout-form',
-		'ui.forms',
 	],
 	'skip_core' => false,
 ];

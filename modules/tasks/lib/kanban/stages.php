@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\Kanban;
 
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Helper\Sort;
 use Bitrix\Tasks\Internals\Task\SortingTable;
 use Bitrix\Tasks\Internals\TaskTable as Task;
 use Bitrix\Tasks\MemberTable;
@@ -644,7 +645,7 @@ class StagesTable extends Entity\DataManager
 			unset($filter['::SUBFILTER-ROLEID']['MEMBER']);
 
 			$relatedJoins['MEMBER'] = "INNER JOIN (
-				SELECT TMM.TASK_ID, TMM.USER_ID 
+				SELECT TMM.TASK_ID, TMM.USER_ID
 				FROM " . MemberTable::getTableName() . " TMM WHERE TMM.USER_ID = {$userId}
 				GROUP BY TMM.TASK_ID
 			) TM ON TM.TASK_ID = STG.TASK_ID";
@@ -821,20 +822,6 @@ class StagesTable extends Entity\DataManager
 			return;
 		}
 
-		// prepare sort/filter
-		$sort = array(
-			'SORTING' => 'ASC',
-			'STATUS_COMPLETE' => 'ASC',
-			'DEADLINE' => 'ASC,NULLS',
-			'ID' => 'ASC'
-		);
-		$filter = array(
-			'CHECK_PERMISSIONS' => 'N',
-			'ONLY_ROOT_TASKS' => 'N',
-			'GROUP_ID' => $task['GROUP_ID'],
-			'!ID' => $taskId
-		);
-
 		// get current other members
 		$res = \CTaskMembers::GetList(
 			array(),
@@ -920,27 +907,9 @@ class StagesTable extends Entity\DataManager
 			{
 				$order = 'desc';
 			}
-			if ($order == 'asc')
-			{
-				$sort = array(
-					'SORTING' => 'DESC',
-					'STATUS_COMPLETE' => 'DESC',
-					'DEADLINE' => 'DESC',
-					'ID' => 'DESC'
-				);
-			}
+
 			// set sorting
-			$res = \CTasks::getList(
-				$sort,
-				$filter,
-				array('ID', 'TITLE'),
-				array(
-					'NAV_PARAMS' => array(
-						'nTopCount' => 1
-					),
-					'SORTING_GROUP_ID' => $task['GROUP_ID']
-				)
-			);
+			$res = (new Sort())->getPosition((int) $taskId, $order, 0, (int) $task['GROUP_ID']);
 			if ($row = $res->fetch())
 			{
 				SortingTable::setSorting(
@@ -969,40 +938,9 @@ class StagesTable extends Entity\DataManager
 					'desc',
 					$userId
 				);
-				if ($order == 'asc')
-				{
-					$sort = array(
-						'SORTING' => 'DESC',
-						'STATUS_COMPLETE' => 'DESC',
-						'DEADLINE' => 'DESC',
-						'ID' => 'DESC'
-					);
-				}
-				else
-				{
-					$sort = array(
-						'SORTING' => 'ASC',
-						'STATUS_COMPLETE' => 'ASC',
-						'DEADLINE' => 'ASC,NULLS',
-						'ID' => 'ASC'
-					);
-				}
 
-				// set sorting
-				unset($filter['GROUP_ID']);
-				$filter['MEMBER'] = $userId;
+				$res = (new Sort())->getPosition((int) $taskId, $order, (int)$userId);
 
-				$res = \CTasks::getList(
-					$sort,
-					$filter,
-					['ID'],
-					[
-						'NAV_PARAMS' => [
-							'nTopCount' => 1
-						],
-						'USER_ID' => $userId
-					]
-				);
 				if ($row = $res->fetch())
 				{
 					SortingTable::setSorting(

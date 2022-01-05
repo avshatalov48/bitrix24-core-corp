@@ -1,0 +1,2 @@
+<?php
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_ADDITIONAL_DESCRIPTION2"] = "Дізнайтеся більше та підключіть WhatsApp Edna.";

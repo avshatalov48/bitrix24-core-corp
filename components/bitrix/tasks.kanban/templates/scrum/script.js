@@ -79,6 +79,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.ajaxComponentPath = params.ajaxComponentPath;
 	    this.ajaxComponentParams = params.ajaxComponentParams;
 	    this.sprintSelected = params.sprintSelected;
+	    this.isActiveSprint = params.isActiveSprint;
 	    this.kanbanHeader = null;
 	    this.kanban = null;
 	    this.kanbanGroupedByParentTasks = new Map();
@@ -207,7 +208,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (headerParams.parentTaskCompleted) {
 	        var container = kanban.getRenderToContainer().closest('.tasks-scrum-parent-task-kanban');
 	        this.downGroupingVisibility(container);
-	      }
+	      } // todo handle task complete push
+
 
 	      main_core_events.EventEmitter.subscribe(kanban, 'Kanban.Grid:onCompleteParentTask', function () {
 	        _this4.onCompleteParentTask(kanban);
@@ -423,7 +425,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "showNotSprintMessage",
 	    value: function showNotSprintMessage(renderTo) {
-	      main_core.Dom.append(main_core.Tag.render(_templateObject(), main_core.Loc.getMessage('KANBAN_NO_ACTIVE_SPRINT')), renderTo);
+	      var message = this.isActiveSprint ? main_core.Loc.getMessage('KANBAN_NO_ACTIVE_SPRINT') : main_core.Loc.getMessage('KANBAN_NO_COMPLETED_SPRINT');
+	      main_core.Dom.append(main_core.Tag.render(_templateObject(), message), renderTo);
 	    }
 	  }, {
 	    key: "isParentTaskGrouping",

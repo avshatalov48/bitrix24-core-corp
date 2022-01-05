@@ -1,6 +1,11 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-use \Bitrix\Main\Localization\Loc;
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImConnector\Connector;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -12,33 +17,33 @@ use \Bitrix\Main\Localization\Loc;
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
-/** $arResult["CONNECTION_STATUS"]; */
-/** $arResult["REGISTER_STATUS"]; */
-/** $arResult["ERROR_STATUS"]; */
-/** $arResult["SAVE_STATUS"]; */
+/** $arResult['CONNECTION_STATUS']; */
+/** $arResult['REGISTER_STATUS']; */
+/** $arResult['ERROR_STATUS']; */
+/** $arResult['SAVE_STATUS']; */
 
 Loc::loadMessages(__FILE__);
 
-CJSCore::Init(array('clipboard'));
+CJSCore::Init(['clipboard']);
 
-if ($arParams['INDIVIDUAL_USE'] != 'Y')
+if($arParams['INDIVIDUAL_USE'] !== 'Y')
 {
 	$this->addExternalCss('/bitrix/components/bitrix/imconnector.settings/templates/.default/style.css');
 	$this->addExternalJs('/bitrix/components/bitrix/imconnector.settings/templates/.default/script.js');
-	\Bitrix\Main\UI\Extension::load("ui.buttons");
-	\Bitrix\Main\UI\Extension::load("ui.hint");
-	\Bitrix\ImConnector\Connector::initIconCss();
+	Extension::load('ui.buttons');
+	Extension::load('ui.hint');
+	Connector::initIconCss();
 }
 
-$iconCode = \Bitrix\ImConnector\Connector::getIconByConnector($arResult["CONNECTOR"]);
+$iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 ?>
-<form action="<?=$arResult["URL"]["DELETE"]?>" method="post" id="form_delete_<?=$arResult["CONNECTOR"]?>">
-	<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_form" value="true">
-	<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_del" value="Y">
+<form action="<?=$arResult['URL']['DELETE']?>" method="post" id="form_delete_<?=$arResult['CONNECTOR']?>">
+	<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
+	<input type="hidden" name="<?=$arResult['CONNECTOR']?>_del" value="Y">
 	<?=bitrix_sessid_post();?>
 </form>
 <?
-if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first time open active connector
+if(empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first time open active connector
 {
 	?>
 	<div class="imconnector-field-container">
@@ -54,12 +59,12 @@ if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first ti
 					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_SIMPLE_FORM_DESCRIPTION_1')?>
 				</div>
 				<div class="ui-btn-container">
-					<a href="<?=$arResult["URL"]["SIMPLE_FORM"]?>"
+					<a href="<?=$arResult['URL']['SIMPLE_FORM']?>"
 					   class="ui-btn ui-btn-primary show-preloader-button">
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_CHANGE_SETTING')?>
 					</a>
 					<button class="ui-btn ui-btn-light-border"
-							onclick="popupShow(<?=CUtil::PhpToJSObject($arResult["CONNECTOR"])?>)">
+							onclick="popupShow(<?=CUtil::PhpToJSObject($arResult['CONNECTOR'])?>)">
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_DISABLE')?>
 					</button>
 				</div>
@@ -78,7 +83,7 @@ if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first ti
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_NAME')?>
 					</div>
 					<span class="imconnector-field-box-text-bold">
-						<?=htmlspecialcharsbx($arResult["FORM"]["NAME"])?>
+						<?=htmlspecialcharsbx($arResult['FORM']['NAME'])?>
 					</span>
 				</div>
 				<div class="imconnector-field-box-entity-row">
@@ -86,10 +91,10 @@ if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first ti
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_CODE')?>
 					</div>
 					<span class="imconnector-field-box-text-bold">
-						<?=htmlspecialcharsbx($arResult["FORM"]["CODE"])?>
+						<?=htmlspecialcharsbx($arResult['FORM']['CODE'])?>
 					</span>
 					<span class="imconnector-field-box-entity-icon-copy-to-clipboard copy-to-clipboard"
-						  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult["FORM"]["CODE"]))?>"
+						  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['FORM']['CODE']))?>"
 						  title="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_COPY')?>"></span>
 				</div>
 				<div class="imconnector-field-box-entity-row">
@@ -97,10 +102,10 @@ if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first ti
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_URL')?>
 					</div>
 					<span class="imconnector-field-box-text-bold imconnector-network-whitespace-text">
-						<?=htmlspecialcharsbx($arResult["FORM"]["URL"])?>
+						<?=htmlspecialcharsbx($arResult['FORM']['URL'])?>
 					</span>
 					<span class="imconnector-field-box-entity-icon-copy-to-clipboard copy-to-clipboard"
-						  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult["FORM"]["URL"]))?>"
+						  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['FORM']['URL']))?>"
 						  title="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_COPY')?>"></span>
 				</div>
 			</div>
@@ -108,7 +113,7 @@ if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first ti
 	</div>
 	<?
 }
-elseif ($arResult['ACTIVE_STATUS'])
+elseif($arResult['ACTIVE_STATUS'])
 {
 	?>
 	<div class="imconnector-field-container">
@@ -125,7 +130,7 @@ elseif ($arResult['ACTIVE_STATUS'])
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_NAME')?>
 					</div>
 					<span class="imconnector-field-box-text-bold">
-							<?=htmlspecialcharsbx($arResult["FORM"]["NAME"])?>
+							<?=htmlspecialcharsbx($arResult['FORM']['NAME'])?>
 						</span>
 				</div>
 				<div class="imconnector-field-box-entity-row">
@@ -133,10 +138,10 @@ elseif ($arResult['ACTIVE_STATUS'])
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_CODE')?>
 					</div>
 					<span class="imconnector-field-box-text-bold">
-						<?=htmlspecialcharsbx($arResult["FORM"]["CODE"])?>
+						<?=htmlspecialcharsbx($arResult['FORM']['CODE'])?>
 					</span>
 					<span class="imconnector-field-box-entity-icon-copy-to-clipboard copy-to-clipboard"
-						  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult["FORM"]["CODE"]))?>"
+						  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['FORM']['CODE']))?>"
 						  title="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_COPY')?>"></span>
 				</div>
 				<div class="imconnector-field-box-entity-row">
@@ -144,10 +149,10 @@ elseif ($arResult['ACTIVE_STATUS'])
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_URL')?>
 					</div>
 					<span class="imconnector-field-box-text-bold imconnector-network-whitespace-text">
-						<?=htmlspecialcharsbx($arResult["FORM"]["URL"])?>
+						<?=htmlspecialcharsbx($arResult['FORM']['URL'])?>
 					</span>
 					<span class="imconnector-field-box-entity-icon-copy-to-clipboard copy-to-clipboard"
-						  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult["FORM"]["URL"]))?>"
+						  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['FORM']['URL']))?>"
 						  title="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_COPY')?>"></span>
 				</div>
 			</div>
@@ -156,8 +161,8 @@ elseif ($arResult['ACTIVE_STATUS'])
 	<?include 'messages.php'?>
 	<div class="imconnector-field-container">
 		<div class="imconnector-field-section">
-			<form action="<?=$arResult["URL"]["SIMPLE_FORM_EDIT"]?>" method="post" enctype="multipart/form-data">
-				<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_form" value="true">
+			<form action="<?=$arResult['URL']['SIMPLE_FORM_EDIT']?>" method="post" enctype="multipart/form-data">
+				<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
 				<?=bitrix_sessid_post();?>
 				<div class="imconnector-field-section imconnector-field-section-control">
 					<div class="imconnector-field-box-content">
@@ -173,7 +178,7 @@ elseif ($arResult['ACTIVE_STATUS'])
 							<input class="imconnector-field-control-input"
 								   type="text"
 								   name="name"
-								   value="<?=htmlspecialcharsbx($arResult["FORM"]["NAME"])?>">
+								   value="<?=htmlspecialcharsbx($arResult['FORM']['NAME'])?>">
 						</div>
 					</div>
 					<div class="imconnector-field-box">
@@ -184,7 +189,7 @@ elseif ($arResult['ACTIVE_STATUS'])
 							<input class="imconnector-field-control-input"
 								   type="text"
 								   name="description"
-								   value="<?=htmlspecialcharsbx($arResult["FORM"]["DESCRIPTION"])?>">
+								   value="<?=htmlspecialcharsbx($arResult['FORM']['DESCRIPTION'])?>">
 						</div>
 					</div>
 					<div class="imconnector-field-box">
@@ -193,7 +198,7 @@ elseif ($arResult['ACTIVE_STATUS'])
 						</span>
 						<div class="imconnector-field-control-box">
 							<textarea class="imconnector-field-control-input imconnector-field-control-textbox"
-									  name="welcome_message"><?=htmlspecialcharsbx($arResult["FORM"]["WELCOME_MESSAGE"])?></textarea>
+									  name="welcome_message"><?=htmlspecialcharsbx($arResult['FORM']['WELCOME_MESSAGE'])?></textarea>
 						</div>
 					</div>
 
@@ -213,7 +218,7 @@ elseif ($arResult['ACTIVE_STATUS'])
 									</div>
 									<span id="avatar_text" class="imconnector-public-link-settings-inner-upload-info"></span>
 									<?
-									if(!empty($arResult["FORM"]["AVATAR"]))
+									if(!empty($arResult['FORM']['AVATAR']))
 									{
 										?>
 										<div class="imconnector-img-del">
@@ -236,12 +241,12 @@ elseif ($arResult['ACTIVE_STATUS'])
 					<div class="imconnector-field-box imconnector-public-link-inner-copy-inner">
 						<div class="imconnector-public-link-inner-copy-field">
 							<span class="imconnector-public-link-title imconnector-field-box-subtitle"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_FIELD_5')?>:</span>
-							<input class="imconnector-public-link-settings-inner-option-field" style="margin-top: 16px;" type="checkbox" name="searchable" value="Y"<?=($arResult["FORM"]["SEARCHABLE"]? 'checked': '')?>>
+							<input class="imconnector-public-link-settings-inner-option-field" style="margin-top: 16px;" type="checkbox" name="searchable" value="Y"<?=($arResult['FORM']['SEARCHABLE']? 'checked': '')?>>
 						</div>
 					</div>
 
 					<?
-					if ($arResult["FORM"]["CODE"] != '')
+					if($arResult['FORM']['CODE'] !== '')
 					{
 						?>
 						<div class="imconnector-field-box">
@@ -249,10 +254,10 @@ elseif ($arResult['ACTIVE_STATUS'])
 								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_FIELD_6')?>
 							</div>
 							<div class="imconnector-field-control-box">
-								<input type="text" id="network-link" class="imconnector-field-control-input" value="<?=htmlspecialcharsbx($arResult["FORM"]["CODE"])?>" readonly>
+								<input type="text" id="network-link" class="imconnector-field-control-input" value="<?=htmlspecialcharsbx($arResult['FORM']['CODE'])?>" readonly>
 								<div class="ui-btn ui-btn-success copy-to-clipboard"
 									 id="imconnector-network-link"
-									 data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult["FORM"]["CODE"]))?>">
+									 data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['FORM']['CODE']))?>">
 									<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_COPY')?>
 								</div>
 							</div>
@@ -262,15 +267,15 @@ elseif ($arResult['ACTIVE_STATUS'])
 					?>
 					<div class="imconnector-step-text">
 						<div class="imconnector-step-text imconnector-step-text-14">
-							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_REST_HELP', Array(
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_REST_HELP', [
 								'#LINK_START#' => '<a href="'.Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_REST_LINK').'" target="_blank">',
 								'#LINK_END#' => '</a>'
-							))?>
+							])?>
 						</div>
 					</div>
 					<input type="submit"
 						   class="webform-small-button webform-small-button-accept"
-						   name="<?=$arResult["CONNECTOR"]?>_save"
+						   name="<?=$arResult['CONNECTOR']?>_save"
 						   value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_SAVE')?>">
 				</div>
 			</form>
@@ -282,46 +287,43 @@ else //case when open not active connector
 {
 	?>
 	<div class="imconnector-field-container">
-		<div class="imconnector-field-section imconnector-field-section-social">
+		<div class="imconnector-field-section imconnector-field-section-social imconnector-field-section-info">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
 			</div>
-			<div class="imconnector-field-box">
-				<div class="imconnector-field-main-subtitle">
-					<?= $arResult['NAME'] ?>
+			<div class="imconnector-field-box" data-role="more-info">
+				<div class="imconnector-field-main-subtitle imconnector-field-section-main-subtitle">
+					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_TITLE')?>
 				</div>
 				<div class="imconnector-field-box-content">
-					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_DESCRIPTION') ?>
+
+					<div class="imconnector-field-box-content-text-light">
+						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_SUBTITLE') ?>
+					</div>
+
+					<ul class="imconnector-field-box-content-text-items">
+						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_LIST_ITEM_1') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_LIST_ITEM_2') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_LIST_ITEM_3') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_LIST_ITEM_4') ?></li>
+					</ul>
+
+					<div class="imconnector-field-box-content-btn">
+						<form action="<?=$arResult['URL']['SIMPLE_FORM']?>" method="post" class="ui-btn-container">
+							<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
+							<?=bitrix_sessid_post()?>
+							<button class="ui-btn ui-btn-lg ui-btn-success ui-btn-round"
+									type="submit"
+									name="<?=$arResult['CONNECTOR']?>_active"
+									value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>">
+								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>
+							</button>
+						</form>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 	<?include 'messages.php'?>
-	<div class="imconnector-field-container">
-		<div class="imconnector-field-section">
-			<div class="imconnector-field-main-title">
-				<?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_CONNECTION') ?>
-			</div>
-			<div class="imconnector-field-box">
-				<div class="imconnector-field-box-content">
-					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_DESCRIPTION') ?>
-				</div>
-			</div>
-			<div class="imconnector-field-social-connector">
-				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?> imconnector-field-social-connector-icon"><i></i></div>
-				<form action="<?= $arResult["URL"]["SIMPLE_FORM"] ?>" method="post">
-					<input type="hidden" name="<?= $arResult["CONNECTOR"] ?>_form" value="true">
-					<?= bitrix_sessid_post(); ?>
-					<button class="ui-btn ui-btn-light-border"
-							name="<?= $arResult["CONNECTOR"] ?>_active"
-							type="submit"
-							value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>">
-						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>
-					</button>
-				</form>
-			</div>
-		</div>
-	</div>
 	<?
 }
-?>

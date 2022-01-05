@@ -1,9 +1,10 @@
 import {Dialog} from 'ui.entity-selector';
 import {Loc, Tag, Text} from 'main.core';
-import {Input} from './input';
-import {EventEmitter} from 'main.core.events';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 
-import type {EpicType} from '../item/item';
+import {Input} from './input';
+
+import type {EpicType} from '../item/task/epic';
 
 export class TagSearcher extends EventEmitter
 {
@@ -22,6 +23,9 @@ export class TagSearcher extends EventEmitter
 	addTagToSearcher(tagName)
 	{
 		tagName = tagName.trim();
+
+		tagName = tagName === '' ? Text.getRandom() : tagName;
+
 		this.allTags.set('tag_' + tagName, {
 			id: tagName,
 			entityId: 'tag',
@@ -34,15 +38,19 @@ export class TagSearcher extends EventEmitter
 	addEpicToSearcher(epic: EpicType)
 	{
 		const epicName = epic.name.trim();
+
 		this.allTags.set('epic_' + epicName, {
 			id: epic.id,
 			entityId: 'epic',
 			tabs: 'recents',
-			title: epicName.trim(),
+			title: epicName,
 			avatar: '/bitrix/components/bitrix/tasks.scrum/templates/.default/images/search-hashtag-green.svg',
-			name: epicName.trim(),
+			name: epicName,
 			description: epic.description,
-			info: epic.info
+			color: epic.color,
+			groupId: epic.groupId,
+			createdBy: epic.createdBy,
+			modifiedBy: epic.modifiedBy
 		});
 	}
 
@@ -51,7 +59,7 @@ export class TagSearcher extends EventEmitter
 		return this.allTags.get(name);
 	}
 
-	removeEpicFromSearcher(epic: Object)
+	removeEpicFromSearcher(epic: EpicType)
 	{
 		this.allTags.delete('epic_' + epic.name);
 	}
@@ -76,31 +84,41 @@ export class TagSearcher extends EventEmitter
 	getEpicList(): Array
 	{
 		const epicList = [];
+
 		[...this.allTags.values()].forEach((epic) => {
 			if (epic.entityId === 'epic')
 			{
 				epicList.push(epic);
 			}
 		});
+
 		return epicList;
 	}
 
-	getEpicByName(epicName: string): EpicType|null
+	getEpicByName(epicName: string): ?EpicType
 	{
 		let epic = null;
+
 		[...this.allTags.values()].forEach((tag) => {
 			if (tag.entityId === 'epic' && tag.name === epicName)
 			{
 				epic = tag;
 			}
 		});
+
 		return epic;
+	}
+
+	getEpicById(epicId: number): ?EpicType
+	{
+		return [...this.allTags.values()]
+			.find((epic) => (epic.entityId === 'epic' && epic.id === epicId))
+		;
 	}
 
 	showTagsDialog(item: Item, targetNode: HTMLElement): Dialog
 	{
-		const actionsPanel = item.getCurrentActionsPanel();
-		const currentTags = item.getTags();
+		const currentTags = item.getTags().getValue();
 
 		const selectedItems = [];
 		currentTags.forEach((tag) => {
@@ -111,37 +129,51 @@ export class TagSearcher extends EventEmitter
 			}
 		});
 
-		const createTag = () => {
-			const tagName = this.tagDialog.getTagSelector().getTextBoxValue();
-			if (!tagName)
-			{
-				this.tagDialog.focusSearch();
-				return;
-			}
-			this.addTagToSearcher(tagName);
-			const newTag = this.getTagFromSearcher('tag_' + tagName);
-			const item = this.tagDialog.addItem(newTag);
-			item.select();
-			this.tagDialog.getTagSelector().clearTextBox();
-			this.tagDialog.focusSearch();
-			this.tagDialog.selectFirstTab();
-			const label = this.tagDialog.getContainer().querySelector('.ui-selector-footer-conjunction');
-			label.textContent = '';
-		};
-
 		let choiceWasMade = false;
 
 		this.tagDialog = new Dialog({
-			id: item.getItemId(),
+			id: item.getId(),
 			targetNode: targetNode,
 			width: 400,
 			height: 300,
 			multiple: true,
 			dropdownMode: true,
 			enableSearch: true,
+			searchOptions: {
+				allowCreateItem: true,
+				footerOptions: {
+					label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')
+				}
+			},
+			offsetTop: 12,
 			selectedItems: selectedItems,
 			items: this.getTagsList(),
 			events: {
+				'Search:onItemCreateAsync': (event) => {
+					return new Promise((resolve) => {
+
+						const { searchQuery } = event.getData();
+						const dialog = event.getTarget();
+
+						const tagName = searchQuery.getQuery();
+						if (!tagName)
+						{
+							dialog.focusSearch();
+
+							return;
+						}
+						this.addTagToSearcher(tagName);
+						const newTag = this.getTagFromSearcher('tag_' + tagName);
+						const item = dialog.addItem(newTag);
+						item.select();
+						dialog.getTagSelector().clearTextBox();
+						dialog.focusSearch();
+						dialog.selectFirstTab();
+						const label = dialog.getContainer().querySelector('.ui-selector-footer-conjunction');
+						label.textContent = '';
+						resolve();
+					});
+				},
 				'Item:onSelect': (event) => {
 					choiceWasMade = true;
 					const selectedItem = event.getData().item;
@@ -167,22 +199,12 @@ export class TagSearcher extends EventEmitter
 						}
 					},
 				}
-			},
-			footer: [
-				Tag.render`
-					<span onclick="${createTag}" class="ui-selector-footer-link ui-selector-footer-link-add">
-						${Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')}
-					</span>
-				`,
-				Tag.render`<span class="ui-selector-footer-conjunction"></span>`
-			],
+			}
 		});
 
-		actionsPanel.setBlockBlurNode(this.tagDialog.getContainer());
 		this.tagDialog.subscribe('onHide', () => {
 			if (choiceWasMade)
 			{
-				actionsPanel.destroy();
 				this.emit('hideTagDialog');
 			}
 		});
@@ -192,8 +214,7 @@ export class TagSearcher extends EventEmitter
 
 	showEpicDialog(item: Item, targetNode: HTMLElement): Dialog
 	{
-		const actionsPanel = item.getCurrentActionsPanel();
-		const currentEpic = item.getEpic();
+		const currentEpic = item.getEpic().getValue();
 
 		const selectedItems = [];
 		if (currentEpic)
@@ -207,14 +228,15 @@ export class TagSearcher extends EventEmitter
 
 		let choiceWasMade = false;
 
-		const dialog = new Dialog({
-			id: item.getItemId(),
+		this.epicDialog = new Dialog({
+			id: item.getId(),
 			targetNode: targetNode,
 			width: 400,
 			height: 300,
 			multiple: false,
 			dropdownMode: true,
 			enableSearch: true,
+			offsetTop: 12,
 			selectedItems: selectedItems,
 			items: this.getEpicList(),
 			events: {
@@ -227,10 +249,10 @@ export class TagSearcher extends EventEmitter
 				'Item:onDeselect': (event) => {
 					setTimeout(() => {
 						choiceWasMade = true;
-						if (dialog.getSelectedItems().length === 0)
+						if (this.epicDialog.getSelectedItems().length === 0)
 						{
 							this.emit('updateItemEpic', 0);
-							dialog.hide();
+							this.epicDialog.hide();
 						}
 					}, 50);
 				},
@@ -240,28 +262,38 @@ export class TagSearcher extends EventEmitter
 			}
 		});
 
-		actionsPanel.setBlockBlurNode(dialog.getContainer());
-		dialog.subscribe('onHide', () => {
+		this.epicDialog.subscribe('onHide', () => {
 			if (choiceWasMade)
 			{
-				actionsPanel.destroy();
+				this.emit('hideEpicDialog');
 			}
 		});
-		dialog.show();
+
+		this.epicDialog.show();
+	}
+
+	isEpicDialogShown(): boolean
+	{
+		return this.epicDialog && this.epicDialog.isOpen();
+	}
+
+	hasActionPanelDialog(): boolean
+	{
+		return (this.epicDialog || this.tagDialog)
 	}
 
 	showTagsSearchDialog(inputObject: Input, enteredHashTagName: string): Dialog
 	{
 		const input = inputObject.getInputNode();
 
-		if (this.tagsDialog && this.tagsDialog.getId() !== inputObject.getNodeId())
+		if (this.tagSearchDialog && this.tagSearchDialog.getId() !== inputObject.getNodeId())
 		{
-			this.tagsDialog = null;
+			this.tagSearchDialog = null;
 		}
 
-		if (!this.tagsDialog)
+		if (!this.tagSearchDialog)
 		{
-			this.tagsDialog = new Dialog({
+			this.tagSearchDialog = new Dialog({
 				id: inputObject.getNodeId(),
 				targetNode: inputObject.getNode(),
 				width: inputObject.getNode().offsetWidth,
@@ -269,7 +301,21 @@ export class TagSearcher extends EventEmitter
 				multiple: false,
 				dropdownMode: true,
 				items: this.getTagsList(),
+				searchOptions: {
+					allowCreateItem: true,
+					footerOptions: {
+						label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')
+					}
+				},
 				events: {
+					'Search:onItemCreateAsync': (event) => {
+						return new Promise((resolve) => {
+							const dialog = event.getTarget();
+							dialog.hide();
+							input.focus();
+							resolve();
+						});
+					},
 					'Item:onSelect': (event) => {
 						const selectedItem = event.getData().item;
 						const selectedHashTag = '#' + selectedItem.getTitle();
@@ -285,38 +331,43 @@ export class TagSearcher extends EventEmitter
 				}
 			});
 
-			this.tagsDialog.subscribe('onHide', () => {
+			this.tagSearchDialog.subscribe('onHide', () => {
 				inputObject.setTagsSearchMode(false);
 			});
 		}
 
 		inputObject.setTagsSearchMode(true);
 
-		this.tagsDialog.show();
+		inputObject.subscribeOnce('onMetaEnter', () => {
+			this.tagSearchDialog.hide();
+			input.focus();
+		});
 
-		this.tagsDialog.search(enteredHashTagName);
+		this.tagSearchDialog.show();
+
+		this.tagSearchDialog.search(enteredHashTagName);
 	}
 
 	closeTagsSearchDialog()
 	{
-		if (this.tagsDialog)
+		if (this.tagSearchDialog)
 		{
-			this.tagsDialog.hide();
+			this.tagSearchDialog.hide();
 		}
 	}
 
-	showEpicSearchDialog(inputObject: Input, enteredHashEpicName: String): Dialog
+	showEpicSearchDialog(inputObject: Input, enteredHashEpicName: string): Dialog
 	{
 		const input = inputObject.getInputNode();
 
-		if (this.epicDialog && this.epicDialog.getId() !== inputObject.getNodeId())
+		if (this.epicSearchDialog && this.epicSearchDialog.getId() !== inputObject.getNodeId())
 		{
-			this.epicDialog = null;
+			this.epicSearchDialog = null;
 		}
 
-		if (!this.epicDialog)
+		if (!this.epicSearchDialog)
 		{
-			this.epicDialog = new Dialog({
+			this.epicSearchDialog = new Dialog({
 				id: inputObject.getNodeId(),
 				targetNode: inputObject.getNode(),
 				width: inputObject.getNode().offsetWidth,
@@ -325,34 +376,43 @@ export class TagSearcher extends EventEmitter
 				dropdownMode: true,
 				items: this.getEpicList(),
 				events: {
-					'Item:onSelect': (event) => {
+					'Item:onSelect': (event: BaseEvent) => {
 						const selectedItem = event.getData().item;
 						const selectedHashEpic = '@' + selectedItem.getTitle();
-						input.value = input.value.replace(new RegExp(TagSearcher.epicRegExp,'g'),'');
+						input.value = input.value.replace(
+							enteredHashEpicName === '' ? '@' : new RegExp(TagSearcher.epicRegExp,'g'),
+							''
+						);
 						input.value = input.value + ' ' + selectedHashEpic
 						input.focus();
 						selectedItem.deselect();
-						inputObject.setEpicId(selectedItem.getId());
+						inputObject.setEpic(this.getEpicByName(selectedItem.getTitle()));
 					}
 				}
 			});
 
-			this.epicDialog.subscribe('onHide', () => {
+			this.epicSearchDialog.subscribe('onHide', () => {
 				inputObject.setEpicSearchMode(false);
 			});
 		}
 
 		inputObject.setEpicSearchMode(true);
 
-		this.epicDialog.show();
-		this.epicDialog.search(enteredHashEpicName);
+		inputObject.subscribeOnce('onEnter', () => {
+			this.epicSearchDialog.hide();
+			input.value = input.value.replace(new RegExp(TagSearcher.epicRegExp,'g'), '');
+			input.focus();
+		});
+
+		this.epicSearchDialog.show();
+		this.epicSearchDialog.search(enteredHashEpicName);
 	}
 
 	closeEpicSearchDialog()
 	{
-		if (this.epicDialog)
+		if (this.epicSearchDialog)
 		{
-			this.epicDialog.hide();
+			this.epicSearchDialog.hide();
 		}
 	}
 

@@ -182,22 +182,28 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 
 	private function isMyTaskList(): bool
 	{
-		return $this->arParams['USER_ID'] === $this->arParams['TARGET_USER_ID'];
+		return ($this->arParams['USER_ID'] === $this->arParams['TARGET_USER_ID']);
 	}
 
 	private function isUserTaskList(): bool
 	{
-		return count($this->arResult['COUNTERS']) <= 2;
+		$foreignCounters = [
+			CounterDictionary::COUNTER_SONET_FOREIGN_EXPIRED,
+			CounterDictionary::COUNTER_SONET_FOREIGN_COMMENTS,
+		];
+		$currentCounters = array_keys($this->arResult['COUNTERS']);
+
+		return (count(array_intersect($currentCounters, $foreignCounters)) === 0);
 	}
 
 	private function isProjectsTaskList(): bool
 	{
-		return $this->arParams['GROUP_ID'] > 0;
+		return ($this->arParams['GROUP_ID'] > 0);
 	}
 
 	private function isProjectList(): bool
 	{
-		return !$this->isUserTaskList() && !$this->isProjectsTaskList();
+		return (!$this->isUserTaskList() && !$this->isProjectsTaskList());
 	}
 
 	/**

@@ -3,6 +3,7 @@ $MESS["TASKS_ADD_QUICK_TASK"] = "Створити швидке завдання"
 $MESS["TASKS_AJAX_EMPTY_TEMPLATES"] = "Немає шаблонів завдань";
 $MESS["TASKS_AJAX_ERROR_LOAD_TEMPLATES"] = "Помилка завантаження списку";
 $MESS["TASKS_AJAX_LOAD_TEMPLATES"] = "Завантаження списку...";
+$MESS["TASKS_BTN_ADD_SCRUM_TASK"] = "Створити завдання";
 $MESS["TASKS_BTN_ADD_TASK"] = "Додати завдання";
 $MESS["TASKS_BTN_ADD_TASK_BY_TEMPLATE"] = "Додати завдання по шаблону";
 $MESS["TASKS_BTN_EXPORT"] = "Експорт списку";

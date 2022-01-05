@@ -100,7 +100,8 @@ function __MSLOnFeedInit(params)
 								[{
 									groupId: groupID,
 									groupName: BX.message('MSLLogTitle'),
-									groupImageUrl: groupImage
+									groupImageUrl: groupImage,
+									ownerId: BX.message('USER_ID')
 								}],
 								'background'
 							);
@@ -1419,7 +1420,7 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 			post_perm: (typeof data.post_perm != 'undefined' ? data.post_perm : null),
 			post_id: (typeof data.post_id != 'undefined' ? data.post_id : null),
 			post_content_type_id: (BX.type.isNotEmptyString(data.post_content_type_id) ? data.post_content_type_id : null),
-			post_content_id: (BX.type.isNotEmptyString(data.post_content_id) ? data.post_content_id : null),
+			post_content_id: (!BX.type.isUndefined(data.post_content_id) ? data.post_content_id : null),
 		},
 		TS: (typeof data.TS != 'undefined' ? data.TS : null),
 		readOnly: (data.read_only != 'undefined' ? data.read_only : 'N')

@@ -1,129 +1,146 @@
-import {Dom, Event, Loc, Tag, Text} from 'main.core';
-import {TagSearcher} from './tag.searcher';
+import {Browser, Dom, Event, Loc, Tag, Text, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
+
+import {Entity} from '../entity/entity';
+
+import {TagSearcher} from './tag.searcher';
 
 import '../css/input.css';
 
+import type {EpicType} from '../item/task/epic';
+
 export class Input extends EventEmitter
 {
-	constructor(options)
+	constructor()
 	{
-		super(options);
+		super();
 
 		this.setEventNamespace('BX.Tasks.Scrum.Input');
 
-		this.nodeId = Text.getRandom();
-		this.placeholder = Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER');
+		this.entity = null;
+		this.bindNode = null;
 
-		this.epicId = 0;
+		this.node = null;
+
+		this.value = '';
+		this.epic = null;
+		this.taskCreated = false;
+	}
+
+	setEntity(entity: Entity)
+	{
+		this.entity = entity;
+	}
+
+	getEntity(): ?Entity
+	{
+		return this.entity;
+	}
+
+	setBindNode(node: HTMLElement)
+	{
+		this.bindNode = node;
+	}
+
+	getBindNode(): ?HTMLElement
+	{
+		return this.bindNode;
+	}
+
+	cleanBindNode()
+	{
+		this.bindNode = null;
 	}
 
 	render(): HTMLElement
 	{
-		return Tag.render`
-			<div id="${Text.encode(this.nodeId)}" class="tasks-scrum-input">
-				<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox">
-					<input type="text" class="ui-ctl-element" placeholder=
-						"${Text.encode(this.placeholder)}" autocomplete="off">
+		this.nodeId = Text.getRandom();
+
+		this.node = Tag.render`
+			<div id="${Text.encode(this.nodeId)}" class="tasks-scrum__item --add-block">
+				<textarea
+					placeholder="${Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER')}"
+					class="tasks-scrum__item--textarea"
+				>${Text.encode(this.value)}</textarea>
+				<div class="tasks-scrum__item--textarea-help">
+					${Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER_HELPER')}
 				</div>
 			</div>
 		`;
-	}
-
-	disable()
-	{
-		this.node.querySelector('input').disabled = true;
-	}
-
-	unDisable()
-	{
-		this.node.querySelector('input').disabled = false;
-	}
-
-	onAfterAppend()
-	{
-		this.setNode();
 
 		Event.bind(this.getInputNode(), 'input', (event) => {
 			this.onTagSearch(event);
 			this.onEpicSearch(event);
 		});
 		Event.bind(this.getInputNode(), 'keydown', this.onKeydown.bind(this));
-	}
+		Event.bind(this.getInputNode(), 'blur', this.onBlur.bind(this));
 
-	setNode()
-	{
-		this.node = document.getElementById(this.nodeId);
-	}
+		this.emit('render');
 
-	setPlaceholder(placeholder: String)
-	{
-		this.placeholder = placeholder;
-	}
+		this.taskCreated = false;
 
-	setEpicId(parentId)
-	{
-		this.epicId = parseInt(parentId, 10);
-	}
-
-	getNode(): HTMLElement
-	{
 		return this.node;
 	}
 
-	getNodeId(): String
+	onKeydown(event: KeyboardEvent)
 	{
-		return this.nodeId;
+		if (event.isComposing || event.key === 'Escape' || event.key === 'Enter')
+		{
+			if (!this.isTagsSearchMode() && !this.isEpicSearchMode())
+			{
+				this.getInputNode().blur();
+
+				event.stopImmediatePropagation();
+			}
+
+			if (event.key === 'Enter')
+			{
+				this.emit('onEnter', { event });
+
+				if ((Browser.isMac() && event.metaKey) || event.ctrlKey)
+				{
+					this.emit('onMetaEnter', { event });
+				}
+			}
+		}
 	}
 
-	getInputNode(): HTMLElement
+	onBlur()
 	{
-		return this.node.querySelector('input');
-	}
+		if (this.isTagsSearchMode() || this.isEpicSearchMode())
+		{
+			return;
+		}
 
-	getEpicId()
-	{
-		return this.epicId;
-	}
+		this.disable();
 
-	removeYourself()
-	{
-		Dom.remove(this.node);
-	}
+		const input = this.getInputNode();
 
-	setTagsSearchMode(value: Boolean)
-	{
-		Dom.attr(this.getInputNode(), 'data-tag-disabled', value);
-	}
-
-	isTagsSearchMode(): Boolean
-	{
-		return Dom.attr(this.getInputNode(), 'data-tag-disabled');
-	}
-
-	setEpicSearchMode(value: Boolean)
-	{
-		Dom.attr(this.getInputNode(), 'data-epic-disabled', value);
-	}
-
-	isEpicSearchMode(): Boolean
-	{
-		return Dom.attr(this.getInputNode(), 'data-epic-disabled');
+		if (input.value === '')
+		{
+			this.removeYourself();
+		}
+		else
+		{
+			this.createTaskItem();
+		}
 	}
 
 	onTagSearch(event)
 	{
 		const inputNode = event.target;
 		const enteredHashTags = TagSearcher.getHashTagNamesFromText(inputNode.value);
+
 		if (event.data === '#')
 		{
 			this.setEpicSearchMode(false);
 			this.setTagsSearchMode(true);
 		}
-		if (enteredHashTags.length > 0 && this.isTagsSearchMode())
+		if (this.isTagsSearchMode())
 		{
 			const enteredHashTagName = enteredHashTags.pop();
-			this.emit('tagsSearchOpen', enteredHashTagName);
+
+			this.emit('tagsSearchOpen', Type.isUndefined(enteredHashTagName) ? '' : enteredHashTagName);
 		}
 		else
 		{
@@ -140,10 +157,10 @@ export class Input extends EventEmitter
 			this.setTagsSearchMode(false);
 			this.setEpicSearchMode(true);
 		}
-		if (enteredHashEpics.length > 0 && this.isEpicSearchMode())
+		if (this.isEpicSearchMode())
 		{
 			const enteredHashTagName = enteredHashEpics.pop();
-			this.emit('epicSearchOpen', enteredHashTagName);
+			this.emit('epicSearchOpen', Type.isUndefined(enteredHashTagName) ? '' : enteredHashTagName);
 		}
 		else
 		{
@@ -151,25 +168,101 @@ export class Input extends EventEmitter
 		}
 	}
 
-	onCreateTaskItem()
+	focus()
+	{
+		const input = this.getInputNode();
+
+		const length = input.value.length;
+
+		input.focus();
+		input.setSelectionRange(length, length);
+	}
+
+	disable()
+	{
+		Dom.addClass(this.node, '--disabled');
+
+		this.getInputNode().disabled = true;
+	}
+
+	unDisable()
+	{
+		Dom.removeClass(this.node, '--disabled');
+
+		this.getInputNode().disabled = false;
+	}
+
+	isTaskCreated(): boolean
+	{
+		return this.taskCreated;
+	}
+
+	setEpic(epic: ?EpicType)
+	{
+		this.epic = epic;
+	}
+
+	getNode(): HTMLElement
+	{
+		return this.node;
+	}
+
+	getNodeId(): String
+	{
+		return this.nodeId;
+	}
+
+	getInputNode(): HTMLTextAreaElement
+	{
+		return this.node.querySelector('textarea');
+	}
+
+	getEpic(): ?EpicType
+	{
+		return this.epic;
+	}
+
+	removeYourself()
+	{
+		Dom.remove(this.node);
+
+		this.emit('remove');
+	}
+
+	setTagsSearchMode(value: boolean)
+	{
+		Dom.attr(this.getInputNode(), 'data-tag-disabled', value);
+	}
+
+	isTagsSearchMode(): boolean
+	{
+		return Dom.attr(this.getInputNode(), 'data-tag-disabled');
+	}
+
+	setEpicSearchMode(value: boolean)
+	{
+		Dom.attr(this.getInputNode(), 'data-epic-disabled', value);
+	}
+
+	isEpicSearchMode(): boolean
+	{
+		return Dom.attr(this.getInputNode(), 'data-epic-disabled');
+	}
+
+	createTaskItem()
 	{
 		if (!this.isTagsSearchMode() && !this.isEpicSearchMode())
 		{
 			const input = this.getInputNode();
+
 			if (input.value)
 			{
 				this.emit('createTaskItem', input.value);
-				input.value = '';
-				input.focus();
-			}
-		}
-	}
 
-	onKeydown(event)
-	{
-		if (event.isComposing || event.keyCode === 13)
-		{
-			this.onCreateTaskItem();
+				this.taskCreated = true;
+
+				input.value = '';
+			}
 		}
 	}
 }

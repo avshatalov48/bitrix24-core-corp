@@ -99,7 +99,9 @@ $APPLICATION->IncludeComponent(
 						"id" => "data[DESCRIPTION]",
 						"name" => GetMessage("MB_TASKS_BASE_SETTINGS_DESCRIPTION"),
 						"placeholder" => GetMessage("MB_TASKS_BASE_SETTINGS_DESCRIPTION_PLACEHOLDER"),
-						"value" => $task["DESCRIPTION"]
+						"value" => htmlspecialcharsback(
+							htmlspecialchars_decode($task['DESCRIPTION'], ENT_QUOTES)
+						),
 					),
 					array(
 						"type" => "checkbox",

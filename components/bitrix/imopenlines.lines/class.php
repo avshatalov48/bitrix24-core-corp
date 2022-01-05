@@ -19,26 +19,6 @@ class CImOpenLinesListComponent extends \CBitrixComponent
 	{
 		global $USER;
 
-		$allowedUserIds = \Bitrix\ImOpenlines\Security\Helper::getAllowedUserIds(
-			\Bitrix\ImOpenlines\Security\Helper::getCurrentUserId(),
-			$this->userPermissions->getPermission(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_LINES, \Bitrix\ImOpenlines\Security\Permissions::ACTION_VIEW)
-		);
-
-		$limit = null;
-		if (is_array($allowedUserIds))
-		{
-			$limit = array();
-			$orm = \Bitrix\ImOpenlines\Model\QueueTable::getList([
-				'filter' => [
-					'=USER_ID' => $allowedUserIds
-				]
-			]);
-			while ($row = $orm->fetch())
-			{
-				$limit[$row['CONFIG_ID']] = $row['CONFIG_ID'];
-			}
-		}
-
 		$configManager = new \Bitrix\ImOpenLines\Config();
 		$result = $configManager->getList(Array(
 			'select' => Array(
@@ -51,21 +31,13 @@ class CImOpenLinesListComponent extends \CBitrixComponent
 			),
 			'filter' => Array('=TEMPORARY' => 'N')
 		),
-			Array(
-				'QUEUE' => 'Y'
-			));
+		Array(
+			'QUEUE' => 'Y',
+			'CHECK_PERMISSION' => \Bitrix\ImOpenlines\Security\Permissions::ACTION_VIEW,
+		));
 
 		foreach ($result as $id => $config)
 		{
-			if (!is_null($limit))
-			{
-				if (!isset($limit[$config['ID']]) && !in_array($config['MODIFY_USER_ID'], $allowedUserIds))
-				{
-					unset($result[$id]);
-					continue;
-				}
-			}
-
 			$dateCreate = $config['DATE_CREATE'];
 			$config['DATE_CREATE_DISPLAY'] = $dateCreate ? $dateCreate->format(Date::getFormat()) : '';
 

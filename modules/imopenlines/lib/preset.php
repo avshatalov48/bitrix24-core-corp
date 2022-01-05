@@ -8,8 +8,10 @@
 namespace Bitrix\ImOpenlines;
 
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\ImConnector;
+use Bitrix\Notifications;
 
 Loc::loadMessages(__FILE__);
 
@@ -51,7 +53,7 @@ class Preset
 			return true;
 		}
 
-		$result = $this->createLiveChat();
+		$result = $this->addEssentialConnectors();
 		if($result)
 		{
 			self::updateInstalledVersion();
@@ -70,46 +72,55 @@ class Preset
 	{
 	}
 
-	protected function createLiveChat()
+	public static function findActiveLineId(): ?int
 	{
-		$orm = \Bitrix\ImOpenLines\Model\LivechatTable::getList(Array(
-			'select' => Array('CNT'),
-			'runtime' => array(
-				new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
-			),
-			'filter' => Array('>CONFIG_ID' => 10)
-		));
-		$row = $orm->fetch();
-		if ($row['CNT'] > 0)
-		{
-			return true;
-		}
+		$row = \Bitrix\ImOpenLines\Model\ConfigTable::getRow([
+			'select' => ['ID'],
+			'filter' => [
+				'=ACTIVE' => 'Y'
+			],
+			'order' => [
+				'STATISTIC.IN_WORK' => 'DESC',
+				'STATISTIC.SESSION' => 'DESC'
+			],
+		]);
 
+		return $row ? (int)$row['ID'] : null;
+	}
+
+	protected function addEssentialConnectors()
+	{
 		if (!\Bitrix\Main\Loader::includeModule('imconnector'))
 		{
 			return false;
 		}
-
-		$orm = \Bitrix\ImOpenLines\Model\ConfigTable::getList(Array(
-			'select' => Array('ID'),
-			'filter' => Array('>ID' => 10)
-		));
-		if ($row = $orm->fetch())
+		$lineId = static::findActiveLineId();
+		if (!$lineId)
 		{
-			$result = \Bitrix\ImConnector\Connector::add($row['ID'], 'livechat');
-			return $result->isSuccess();
-		}
-
-		$configManager = new \Bitrix\ImOpenLines\Config();
-		$configId = $configManager->create();
-		if ($configId)
-		{
-			$result = \Bitrix\ImConnector\Connector::add($configId, 'livechat');
-			if (!$result->isSuccess())
+			$configManager = new \Bitrix\ImOpenLines\Config();
+			$lineId = $configManager->create();
+			if (!$lineId)
 			{
-				$configManager->delete($configId);
 				return false;
 			}
+		}
+
+		$result = ImConnector\Connector::add($lineId, 'livechat');
+		if (!$result->isSuccess())
+		{
+			$configManager->delete($lineId);
+			return false;
+		}
+
+		if (!Loader::includeModule('notifications'))
+		{
+			return true;
+		}
+
+		$virtualWhatsappStatus = Notifications\Settings::getScenarioAvailability(Notifications\Settings::SCENARIO_VIRTUAL_WHATSAPP);
+		if ($virtualWhatsappStatus === Notifications\FeatureStatus::AVAILABLE)
+		{
+			ImConnector\Tools\Connectors\Notifications::addToLine($lineId,Notifications\Settings::SCENARIO_VIRTUAL_WHATSAPP);
 		}
 
 		return true;

@@ -1,0 +1,99 @@
+.tasks-scrum__widget-methodology--scope {
+	--tasks_scrum_meetings-black_alpha_09: rgba(0,0,0,.09);
+
+	--tasks_scrum_meetings-white: rgba(255,255,255,1);
+	--tasks_scrum_meetings-white_alpha_85: rgba(255,255,255,.85);
+
+	--tasks_scrum_meetings-grey: rgba(82,92,105,1);
+	--tasks_scrum_meetings-grey_alpha_66: rgba(82,92,105,.66);
+	--tasks_scrum_meetings-grey_alpha_87: rgba(82,92,105,.87);
+}
+
+.tasks-scrum__widget-methodology {
+	padding: 13px 10px 9px;
+	min-width: 156px;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+}
+
+.tasks-scrum__widget-methodology--conteiner {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+}
+
+.tasks-scrum__widget-methodology--icon {
+	width: 26px;
+	height: 26px;
+	margin-right: 8px;
+	-ms-flex-negative: 0;
+	    flex-shrink: 0;
+}
+
+.tasks-scrum__widget-methodology--name {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	font: 13px/15px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: var(--tasks_scrum_meetings-grey_alpha_87);
+}
+
+.tasks-scrum__widget-methodology--content .ui-hint {
+	width: 18px;
+	height: 13px;
+	line-height: 1;
+}
+
+.tasks-scrum__widget-methodology--content .ui-hint-icon {
+	width: 12px;
+	height: 12px;
+	margin-top: 0;
+}
+
+.tasks-scrum__widget-methodology--btn-box {
+	margin-top: 6px;
+}
+
+.tasks-scrum__widget-methodology--btn-box .ui-qr-popupcomponentmaker__btn {
+	padding: 0 7px;
+}
+
+.tasks-scrum__widget-methodology--description {
+	font: 11px/15px OpenSans-Regular, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: var(--tasks_scrum_meetings-grey_alpha_66);
+	margin-bottom: 4px;
+}
+
+.tasks-scrum__widget-methodology--btn-box-center {
+	text-align: center;
+	margin-bottom: 5px;
+}
+
+.tasks-scrum__widget-methodology--image {
+	height: 118px;
+	width: 304px;
+	margin: 5px 0 6px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-image: url(/bitrix/js/tasks/scrum/methodology/images/tasks-scrum-methodology--team-speed.svg);
+	pointer-events: all;
+	cursor: pointer;
+}
+
+.tasks-scrum__widget-methodology--image.--disabled {
+	opacity: 0.15;
+	pointer-events: none;
+}
+
+/*.tasks-scrum__widget-methodology--bg {*/
+/*	border-radius: 12px;*/
+/*	background: var(--tasks_scrum_meetings-white_alpha_85);*/
+/*	box-shadow: 0 1px 3px 0 var(--tasks_scrum_meetings-black_alpha_09);*/
+/*}*/
+
+/*.tasks-scrum__widget-methodology--bg.--active {*/
+/*	background: var(--tasks_scrum_meetings-white);*/
+/*}*/

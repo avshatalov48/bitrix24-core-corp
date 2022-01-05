@@ -410,6 +410,10 @@
 		},
 		onUploadDone : function(item, result)
 		{
+			if (!this.agent.getItem(item.id))
+			{
+				return;	
+			}
 			item.__progressBar = BX(item.id + 'Progress');
 			if (item.__progressBar)
 				item.__progressBar.style.width = '100%';

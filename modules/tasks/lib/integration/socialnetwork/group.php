@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * @access private
  */
@@ -12,7 +12,7 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Main\Search\Content;
 use Bitrix\Socialnetwork\WorkgroupTable;
-use Bitrix\Tasks\Internals\Project\Event;
+use Bitrix\Socialnetwork\Helper\Workgroup;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Util\User;
 
@@ -410,5 +410,20 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		}
 
 		return $lastActivityDate;
+	}
+
+	public static function getUserPermissionsInGroup(int $groupId, int $userId = 0): array
+	{
+		if (!static::includeModule())
+		{
+			return [];
+		}
+
+		$userId = ($userId ?: User::getId());
+
+		return Workgroup::getPermissions([
+			'groupId' => $groupId,
+			'userId' => $userId,
+		]);
 	}
 }

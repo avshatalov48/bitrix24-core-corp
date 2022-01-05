@@ -14027,6 +14027,7 @@ this.BX.Location = this.BX.Location || {};
 
 	    this.serviceUrl = props.serviceUrl;
 	    this.languageId = props.languageId;
+	    this.sourceLanguageId = props.sourceLanguageId;
 	    babelHelpers.classPrivateFieldSet(this, _responseConverter, props.responseConverter);
 	    babelHelpers.classPrivateFieldSet(this, _hostName$1, props.hostName);
 	    babelHelpers.classPrivateFieldSet(this, _tokenContainer$1, props.tokenContainer);
@@ -14120,7 +14121,7 @@ this.BX.Location = this.BX.Location || {};
 	      var _params$limit;
 
 	      var limit = (_params$limit = params.limit) !== null && _params$limit !== void 0 ? _params$limit : 5;
-	      var result = "".concat(this.serviceUrl, "/?\n\t\t\taction=osmgateway.location.search\n\t\t\t&params[q]=").concat(encodeURIComponent(params.query), "\n\t\t\t&params[format]=json\n\t\t\t&params[limit]=").concat(limit, "\n\t\t\t&params[accept-language]=").concat(this.languageId);
+	      var result = "".concat(this.serviceUrl, "/?\n\t\t\taction=osmgateway.location.search\n\t\t\t&params[q]=").concat(encodeURIComponent(params.query), "\n\t\t\t&params[format]=json\n\t\t\t&params[limit]=").concat(limit, "\n\t\t\t&params[accept-language]=").concat(this.sourceLanguageId);
 
 	      if (params.viewbox) {
 	        result += "&params[viewbox]=".concat(params.viewbox);
@@ -14144,7 +14145,7 @@ this.BX.Location = this.BX.Location || {};
 	    key: "createUrl",
 	    value: function createUrl(params) {
 	      var zoom = params.zoom || 18;
-	      return "".concat(this.serviceUrl, "/?\n\t\t\taction=osmgateway.location.reverse\n\t\t\t&params[lat]=").concat(params.point.latitude, "\n\t\t\t&params[lon]=").concat(params.point.longitude, "\n\t\t\t&params[format]=json\n\t\t\t&params[zoom]=").concat(zoom, "\n\t\t\t&params[addressdetails]=0\t\t\t\n\t\t\t&params[accept-language]=").concat(this.languageId);
+	      return "".concat(this.serviceUrl, "/?\n\t\t\taction=osmgateway.location.reverse\n\t\t\t&params[lat]=").concat(params.point.latitude, "\n\t\t\t&params[lon]=").concat(params.point.longitude, "\n\t\t\t&params[format]=json\n\t\t\t&params[zoom]=").concat(zoom, "\n\t\t\t&params[addressdetails]=0\t\t\t\n\t\t\t&params[accept-language]=").concat(this.sourceLanguageId);
 	    }
 	  }]);
 	  return ReverseRequester;
@@ -14692,7 +14693,7 @@ this.BX.Location = this.BX.Location || {};
 	      var text = _classPrivateMethodGet$5(this, _processQuery, _processQuery2).call(this, params.text);
 
 	      var autocompleteServiceParams = params.autocompleteServiceParams;
-	      var result = "".concat(this.serviceUrl, "/?") + 'action=osmgateway.autocomplete.autocomplete' + "&params[q]=".concat(encodeURIComponent(text)) + "&params[limit]=".concat(babelHelpers.classPrivateFieldGet(this, _autocompletePromptsCount)) + "&params[lang]=".concat(this.languageId) + "&params[version]=2";
+	      var result = "".concat(this.serviceUrl, "/?") + 'action=osmgateway.autocomplete.autocomplete' + "&params[q]=".concat(encodeURIComponent(text)) + "&params[limit]=".concat(babelHelpers.classPrivateFieldGet(this, _autocompletePromptsCount)) + "&params[lang]=".concat(this.sourceLanguageId) + "&params[version]=2";
 
 	      if (autocompleteServiceParams.biasPoint) {
 	        var lat = autocompleteServiceParams.biasPoint.latitude;
@@ -14742,6 +14743,7 @@ this.BX.Location = this.BX.Location || {};
 	      });
 	      var searchRequester = new SearchRequester({
 	        languageId: params.languageId,
+	        sourceLanguageId: params.sourceLanguageId,
 	        tokenContainer: tokenContainer,
 	        serviceUrl: params.serviceUrl,
 	        hostName: params.hostName,
@@ -14749,6 +14751,7 @@ this.BX.Location = this.BX.Location || {};
 	      });
 	      var reverseRequester = new ReverseRequester({
 	        languageId: params.languageId,
+	        sourceLanguageId: params.sourceLanguageId,
 	        serviceUrl: params.serviceUrl,
 	        hostName: params.hostName,
 	        tokenContainer: tokenContainer,
@@ -14759,6 +14762,7 @@ this.BX.Location = this.BX.Location || {};
 	      });
 	      var autocompleteRequester = new AutocompleteRequester({
 	        languageId: params.languageId,
+	        sourceLanguageId: params.sourceLanguageId,
 	        serviceUrl: params.serviceUrl,
 	        hostName: params.hostName,
 	        tokenContainer: tokenContainer,

@@ -213,23 +213,20 @@ BX.namespace('Tasks.Component');
 
 					if (this.option('isScrumTask'))
 					{
-						if (typeof BX.Tasks.Scrum === 'undefined' || typeof BX.Tasks.Scrum.ScrumDod === 'undefined')
-						{
-							taskCompletePromise.fulfill();
-						}
-
-						this.scrumDod = new BX.Tasks.Scrum.ScrumDod({
-							groupId: this.option('groupId')
-						});
-
-						this.scrumDod.showList(this.option('taskId'))
-							.then(function() {
+						BX.loadExt('tasks.scrum.dod').then(function() {
+							if (typeof BX.Tasks.Scrum === 'undefined' || typeof BX.Tasks.Scrum.Dod === 'undefined')
+							{
 								taskCompletePromise.fulfill();
-							}.bind(this))
-							.catch(function() {
-								taskCompletePromise.reject();
-							}.bind(this))
-						;
+							}
+
+							this.scrumDod = new BX.Tasks.Scrum.Dod({
+								groupId: this.option('groupId'),
+								taskId: this.option('taskId')
+							});
+							this.scrumDod.subscribe('resolve', function() { taskCompletePromise.fulfill() });
+							this.scrumDod.subscribe('reject', function() { taskCompletePromise.reject() });
+							this.scrumDod.showList();
+						}.bind(this));
 					}
 					else
 					{

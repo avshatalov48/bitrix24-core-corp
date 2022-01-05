@@ -3,29 +3,268 @@
 	display: block;
 }
 
+.tasks-scrum-wrapper .workarea-content-paddings {
+	padding-right: 15px !important;
+}
 
-
-.tasks-scrum-wrapper .workarea-content-paddings { padding-right: 15px !important; }
-
-.tasks-scrum-wrapper .pagetitle-below { margin-right: 15px; }
+.tasks-scrum-wrapper .pagetitle-below {
+	margin-right: 15px;
+}
 
 .tasks-scrum-side-panel-padding {
 	padding: 0 35px 0 20px !important;
 }
 
-.tasks-scrum-container {
-	display: -webkit-box;
-	display: -ms-flexbox;
+.tasks-scrum__container {
 	display: flex;
-	-ms-flex-wrap: wrap;
-	flex-wrap: wrap;
-	-webkit-box-align: start;
-	-ms-flex-align: start;
-	align-items: flex-start;
-	-webkit-box-pack: justify;
-	-ms-flex-pack: justify;
 	justify-content: space-between;
+	box-sizing: border-box;
+	padding-bottom: 20px;
+	max-height: calc(100vh - 105px - 47px);
 }
+
+.tasks-scrum__container.--select-none {
+	user-select: none;
+}
+
+.tasks-scrum__scope {
+	--tasks_scrum-black_alpha_08: rgba(0,0,0,.08);
+	--tasks_scrum-black_alpha_10: rgba(0,0,0,.1);
+	--tasks_scrum-black_alpha_13: rgba(0,0,0,.13);
+
+	--tasks_scrum-white: rgba(255,255,255,1);
+	--tasks_scrum-white_alpha_10: rgba(255,255,255,.1);
+	--tasks_scrum-white_alpha_13: rgba(255,255,255,.13);
+	--tasks_scrum-white_alpha_16: rgba(255,255,255,.16);
+	--tasks_scrum-white_alpha_20: rgba(255,255,255,.2);
+	--tasks_scrum-white_alpha_22: rgba(255,255,255,.22);
+	--tasks_scrum-white_alpha_30: rgba(255,255,255,.3);
+	--tasks_scrum-white_alpha_50: rgba(255,255,255,.5);
+	--tasks_scrum-white_alpha_52: rgba(255,255,255,.52);
+	--tasks_scrum-white_alpha_60: rgba(255,255,255,.6);
+	--tasks_scrum-white_alpha_70: rgba(255,255,255,.7);
+	--tasks_scrum-white_alpha_80: rgba(255,255,255,.8);
+	--tasks_scrum-white_alpha_90: rgba(255,255,255,.9);
+	--tasks_scrum-white_alpha_95: rgba(255,255,255,.95);
+
+	--tasks_scrum-orange: rgba(247,167,0,1);
+
+	--tasks_scrum-blue: rgba(47,198,246,1);
+	--tasks_scrum-blue_alpha_20: rgba(47,198,246,.2);
+
+	--tasks_scrum-blue-2: rgba(85,208,224,1);
+	--tasks_scrum-blue-3: rgba(228,246,254,1);
+	--tasks_scrum-blue-4: rgba(32,102,176,1);
+	--tasks_scrum-blue-5: rgba(59,200,245,1);
+	--tasks_scrum-blue-6: rgba(212,243,247,1);
+
+	--tasks_scrum-green-planning: rgba(179,230,0,1);
+
+	--tasks_scrum-grey: rgba(45,45,44,1);
+	--tasks_scrum-grey_alpha_70: rgba(45,45,44,.7);
+
+	--tasks_scrum-grey-3: rgba(189, 193,198,1);
+	--tasks_scrum-grey-4: rgba(203,206,210,1);
+
+	--tasks_scrum-dark-grey: rgba(82,92,105,1);
+	--tasks_scrum-dark-grey_alpha_08: rgba(82,92,105,.08);
+	--tasks_scrum-dark-grey_alpha_10: rgba(82,92,105,.1);
+	--tasks_scrum-dark-grey_alpha_15: rgba(82,92,105,.15);
+	--tasks_scrum-dark-grey_alpha_17: rgba(82,92,105,.17);
+	--tasks_scrum-dark-grey_alpha_30: rgba(82,92,105,.3);
+	--tasks_scrum-dark-grey_alpha_50: rgba(82,92,105,.5);
+	--tasks_scrum-dark-grey_alpha_60: rgba(82,92,105,.6);
+
+	--tasks_scrum-light-grey: rgba(51,51,51,1);
+	--tasks_scrum-light-grey_alpha_03: rgba(51,51,51,.03);
+	--tasks_scrum-light-grey_alpha_30: rgba(51,51,51,.3);
+	--tasks_scrum-light-grey_alpha_50: rgba(51,51,51,.5);
+	--tasks_scrum-light-grey_alpha_60: rgba(51,51,51,.6);
+	--tasks_scrum-light-grey_alpha_70: rgba(51,51,51,.7);
+}
+
+.tasks-scrum__content {
+	display: flex;
+	flex-direction: column;
+	flex-shrink: 0;
+	border-radius: 3px;
+	box-sizing: border-box;
+	margin-bottom: 24px;
+	padding: 16px 12px;
+	position: relative;
+}
+
+.tasks-scrum__content::before {
+	content: '';
+	display: block;
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: -1;
+	background: var(--tasks_scrum-white_alpha_16);
+	backdrop-filter: blur(28px);
+	border-radius: 3px;
+}
+
+.tasks-scrum__content.--with-header::before {
+	border-radius: 0 0 3px 3px;
+}
+
+
+.bitrix24-default-theme .tasks-scrum__content,
+.bitrix24-dark-theme .tasks-scrum__content {
+	background: var(--tasks_scrum-black_alpha_08);
+}
+
+.tasks-scrum__content:last-of-type {
+	margin-bottom: 0;
+}
+
+.tasks-scrum__content.--white-bg {
+	background: var(--tasks_scrum-white_alpha_20);
+}
+
+.tasks-scrum__content.--with-header {
+	padding-top: 0;
+	border-top: 5px solid var(--tasks_scrum-blue);
+}
+
+.tasks-scrum__content-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	box-sizing: border-box;
+	color: var(--tasks_scrum-white);
+	padding: 8px 2px 11px;
+	border-bottom: 1px solid var(--tasks_scrum-white_alpha_20);
+	margin-bottom: 13px;
+	position: relative;
+	transition: .2s;
+}
+
+.tasks-scrum__name-container {
+	display: flex;
+	flex-wrap: wrap;
+	margin-right: auto;
+	max-width: 41%;
+	width: 41%;
+	flex: 1;
+}
+
+.tasks-scrum__title {
+	font: 18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	color: var(--tasks_scrum-white);
+	min-width: 40px;
+	max-width: calc(100% - 22px - 22px - 4px);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	transition: .2s;
+	flex-shrink: 5;
+	margin-right: 4px;
+}
+
+.tasks-scrum__content-empty {
+	display: none;
+	flex-direction: column;
+	align-items: center;
+	font: 14px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	border-radius: 4px;
+	box-sizing: border-box;
+	text-align: center;
+	background: var(--tasks_scrum-white_alpha_22);
+	color: var(--tasks_scrum-white);
+	padding: 26px 10px 32px;
+	border: 2px dashed var(--tasks_scrum-white_alpha_60);
+	transition: .2s;
+}
+
+.tasks-scrum__content-empty:hover {
+	background: var(--tasks_scrum-white_alpha_30);
+	border: 2px dashed var(--tasks_scrum-white_alpha_90);
+}
+
+.bitrix24-default-theme .tasks-scrum__content-empty,
+.bitrix24-dark-theme .tasks-scrum__content-empty {
+	color: var(--tasks_scrum-light-grey_alpha_50);
+	background: transparent;
+	border-color: var(--tasks_scrum-light-grey_alpha_30);
+}
+
+.bitrix24-default-theme .tasks-scrum__content-empty:hover,
+.bitrix24-dark-theme .tasks-scrum__content-empty:hover {
+	background: var(--tasks_scrum-light-grey_alpha_03);
+	border-color: var(--tasks_scrum-light-grey_alpha_60);
+}
+
+.tasks-scrum__content-empty.--open {
+	display: flex;
+}
+
+.tasks-scrum__content-empty--title {
+	font-size: 22px;
+	margin-bottom: 9px;
+}
+
+.tasks-scrum__content-empty--btn-create {
+	font: 14px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	color: var(--tasks_scrum-white);
+	border-bottom: 1px dashed var(--tasks_scrum-white_alpha_60);
+	transition: .2s;
+	cursor: pointer;
+}
+
+.tasks-scrum__content-empty--text {
+	max-width: 370px
+}
+
+.tasks-scrum__content-empty--btn-create:hover {
+	color: var(--tasks_scrum-white);
+	border-bottom: 1px dashed var(--tasks_scrum-white_alpha_90);
+}
+
+
+.bitrix24-default-theme .tasks-scrum__content-empty--btn-create,
+.bitrix24-dark-theme .tasks-scrum__content-empty--btn-create {
+	color: var(--tasks_scrum-light-grey_alpha_50);
+	border-bottom-color: var(--tasks_scrum-light-grey_alpha_30);
+}
+
+
+.bitrix24-default-theme .tasks-scrum__content-empty--btn-create:hover,
+.bitrix24-dark-theme .tasks-scrum__content-empty--btn-create:hover {
+	border-bottom-color: var(--tasks_scrum-light-grey_alpha_60);
+}
+
+.bitrix24-default-theme .tasks-scrum__title,
+.bitrix24-dark-theme .tasks-scrum__title {
+	color: var(--tasks_scrum-light-grey);
+}
+
+.tasks-scrum__entity-items-faded .tasks-scrum__item:not(.--linked-mode) {
+	opacity: 0.3;
+	pointer-events: none;
+}
+
+.tasks-scrum__entity-items-faded .tasks-scrum__item.--linked-mode + .tasks-scrum__item-sub-tasks .tasks-scrum__item {
+	opacity: 1;
+	pointer-events: all;
+}
+
+.tasks-scrum__entity-items-faded .tasks-scrum__item.--linked-mode-current {
+	opacity: 1;
+	pointer-events: all;
+}
+
+
+
+
+
+
+
+
 
 .tasks-scrum-action-epic {
 	position: relative;
@@ -43,20 +282,6 @@
 
 .tasks-scrum-group-actions-active {
 	position: relative;
-}
-
-.tasks-scrum-sprint-completed-loader {
-	overflow: hidden;
-}
-
-.tasks-scrum-sprints {
-	-webkit-box-flex: 1;
-	-ms-flex: 1;
-	flex: 1;
-	box-sizing: border-box;
-	min-width: calc(50% - 8px);
-	max-width: calc(50% - 8px);
-	/*padding: 0 0 0 8px;*/
 }
 
 .tasks-scrum-sprint-create {
@@ -111,11 +336,6 @@
 	font-size: 13px;
 	font-weight: bold;
 	margin-left: auto;
-}
-
-.tasks-scrum-entity-items-faded {
-	opacity: 0.5;
-	pointer-events: none;
 }
 
 .tasks-scrum-project-side-panel {

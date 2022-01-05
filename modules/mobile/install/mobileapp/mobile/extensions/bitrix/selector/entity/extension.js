@@ -5,25 +5,43 @@
 	 */
 	class EntitySelector
 	{
-		constructor()
+		constructor(ui = null)
 		{
 			/**
 			 * @type {JNRecipientPicker}
 			 */
-			this.ui = dialogs.createRecipientPicker()
+			this.ui = ui ? ui : dialogs.createRecipientPicker()
 			this.ui.setListener(this.onEvent.bind(this))
 			this.provider = null;
 			this.sections = [];
 			this.items = [];
 			this.selectedItems = [];
-			this.title = "";
+			this.singleSelection = false;
+ 			this.title = "";
 			this.doSearch = EntitySelector.debounce(function (text)
 			{
 				this.items = [];
 				this.provider.doSearch(text)
 			}, 100, this);
 
-			this.updateList = items => this.ui.setItems(items, null, false);
+			this.updateList = items => {
+				if (this.singleSelection === true) {
+					let modifiedItems = items.map( item => {
+						if (typeof(item.type) === 'undefined') {
+							item.type = 'info'
+						}
+
+						return item;
+					})
+
+					this.ui.setItems(modifiedItems, null, false);
+				}
+				else
+				{
+					this.ui.setItems(items, null, false);
+				}
+
+			};
 		}
 
 		setProvider(provider)
@@ -62,9 +80,9 @@
 			this.scopeFilter(this.items, cache);
 		}
 
-		onRecentResult(items) {
+		onRecentResult(items, cache = false) {
 			items.forEach(item => item.sectionCode = "recent")
-			this.scopeFilter(items);
+			this.scopeFilter(items, cache);
 		}
 
 		scopeFilter(items, cache)
@@ -135,7 +153,7 @@
 			this.singleSelection = enabled;
 			if (enabled)
 				this.ui.allowMultipleSelection(false)
-
+			this.provider.singleSelection = this.singleSelection;
 			return this;
 		}
 
@@ -192,6 +210,12 @@
 			if (this.singleSelection)
 			{
 				this.ui.close(() => this.onResult(this.provider.prepareResult(data.items)));
+			}
+		}
+
+		onItemSelected(data) {
+			if (this.singleSelection && data.item.type === 'info') {
+				this.ui.close(() => this.onResult(this.provider.prepareResult([data.item])));
 			}
 		}
 

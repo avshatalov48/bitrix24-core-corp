@@ -4,15 +4,14 @@ $MESS["PRESET_APPLY_ERROR"] = "Не удалось применить настр
 $MESS["PRESET_TITLE"] = "Готовые настройки";
 $MESS["PRESET_NAME_STREAM"] = "Офис";
 $MESS["PRESET_NAME_TASK"] = "Задачи";
-$MESS["PRESET_NAME_OL"] = "Оператор Открытых Линий";
+$MESS["PRESET_NAME_OL"] = "Оператор Открытых линий";
 $MESS["PRESET_NAME_DEFAULT"] = "По умолчанию";
 $MESS["PRESET_NAME_MANUAL"] = "Настройка пользователя";
 
-
 $MESS["TAB_NAME_TASK"] = "Задачи";
-$MESS["TAB_NAME_OL"] = "Открытые Линии";
+$MESS["TAB_NAME_OL"] = "Открытые линии";
 $MESS["TAB_NAME_CHAT"] = "Чаты";
-$MESS["TAB_NAME_STREAM"] = "Живая Лента";
+$MESS["TAB_NAME_STREAM"] = "Живая лента";
 $MESS["TAB_NAME_MENU"] = "Меню";
 $MESS["TAB_NAME_NOTIFY"] = "Уведомления";
 

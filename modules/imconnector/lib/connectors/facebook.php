@@ -32,9 +32,9 @@ class Facebook extends Base
 	protected function receivedErrorNotSendMessageChat($paramsError, string $message = ''): bool
 	{
 		if(
-			(int)$paramsError['params']['errorCode'] === 10 &&
-			(int)$paramsError['params']['errorSubCode'] === 2018278 &&
-			Loader::includeModule('ui')
+			(int)$paramsError['params']['errorCode'] === 10
+			&& (int)$paramsError['params']['errorSubCode'] === 2018278
+			&& Loader::includeModule('ui')
 		)
 		{
 			$paramsError['messageConnector'] = '';

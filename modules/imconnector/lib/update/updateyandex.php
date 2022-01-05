@@ -4,6 +4,7 @@ namespace Bitrix\Imconnector\Update;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Update\Stepper;
+use Bitrix\Main\DI\ServiceLocator;
 
 use Bitrix\ImConnector\Status;
 use Bitrix\ImConnector\Connector;
@@ -131,29 +132,12 @@ final class UpdateYandex extends Stepper
 
 	protected static function deactivateConnector(): void
 	{
-		$listConnector = explode(',', Option::get('imconnector', 'list_connector'));
-
-		foreach($listConnector as $key => $connector)
+		$serviceLocator = ServiceLocator::getInstance();
+		if($serviceLocator->has('toolsConnector'))
 		{
-			if ($connector === self::CONNECTOR_ID)
-			{
-				unset($listConnector[$key]);
-			}
-		}
-
-		Option::set('imconnector', 'list_connector', implode(',', array_unique($listConnector)));
-
-		$cursor = StatusConnectorsTable::getList([
-			'select' => ['ID', 'LINE'],
-			'filter' => [
-				'=CONNECTOR' => self::CONNECTOR_ID,
-			],
-			'order' => ['ID' => 'ASC'],
-		]);
-
-		while ($row = $cursor->fetch())
-		{
-			Status::delete(self::CONNECTOR_ID, $row['LINE']);
+			/** @var \Bitrix\ImConnector\Tools\Connector toolsConnector */
+			$toolsConnector = $serviceLocator->get('toolsConnector');
+			$toolsConnector->deactivateConnector(self::CONNECTOR_ID);
 		}
 	}
 }

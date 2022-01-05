@@ -1,15 +1,18 @@
-import {Dom, Event, Loc, Tag, Text, Type} from 'main.core';
+import {Dom, Event, Tag, Type} from 'main.core';
 import {BaseEvent} from 'main.core.events';
-import {Entity} from '../entity';
-import {Item} from '../../item/item';
-import {SprintHeader} from './sprint.header';
-import {EventsHeader} from './events.header';
-import {GroupActionsButton} from '../group.actions.button';
-import {ListItems} from '../list.items';
-import {StoryPointsHeader} from './story.points.header';
-import {StoryPoints} from '../../utility/story.points';
 
-import type {EpicType, ItemParams} from '../../item/item';
+import {Entity} from '../entity';
+import {Blank} from '../blank';
+import {Dropzone} from '../dropzone';
+
+import {Item} from '../../item/item';
+import {SubTasks} from '../../item/task/sub.tasks';
+
+import {Header} from './header/header';
+
+import {StoryPointsStorage} from '../../utility/story.points.storage';
+
+import type {ItemParams} from '../../item/item';
 import type {Views} from '../../view/view';
 
 import '../../css/sprint.css';
@@ -25,6 +28,8 @@ export type SprintParams = {
 	sort: number,
 	dateStart?: number,
 	dateEnd?: number,
+	dateStartFormatted?: string,
+	dateEndFormatted?: string,
 	weekendDaysTime?: number,
 	defaultSprintDuration: number,
 	storyPoints?: string,
@@ -47,11 +52,12 @@ export class Sprint extends Entity
 
 		this.setEventNamespace('BX.Tasks.Scrum.Sprint');
 
+		this.completedStoryPoints = new StoryPointsStorage();
+		this.uncompletedStoryPoints = new StoryPointsStorage();
+
 		this.setSprintParams(params);
 
-		this.sprintHeader = null;
-		this.eventsHeader = null;
-		this.storyPointsHeader = null;
+		this.hideCont = this.isCompleted();
 	}
 
 	setSprintParams(params: SprintParams)
@@ -61,6 +67,8 @@ export class Sprint extends Entity
 		this.setSort(params.sort);
 		this.setDateStart(params.dateStart);
 		this.setDateEnd(params.dateEnd);
+		this.setDateStartFormatted(params.dateStartFormatted);
+		this.setDateEndFormatted(params.dateEndFormatted);
 		this.setWeekendDaysTime(params.weekendDaysTime);
 		this.setDefaultSprintDuration(params.defaultSprintDuration);
 		this.setStatus(params.status);
@@ -72,48 +80,57 @@ export class Sprint extends Entity
 		this.setInfo(params.info);
 	}
 
-	static buildSprint(sprintData: SprintParams = {}): Sprint
+	static buildSprint(params: SprintParams): Sprint
 	{
-		const sprint = new Sprint(sprintData);
-		sprint.addSprintHeader(SprintHeader.buildHeader(sprint));
-		sprint.addEventsHeader(new EventsHeader());
-		sprint.addStoryPointsHeader(new StoryPointsHeader(sprint));
-		sprint.addGroupActionsButton(new GroupActionsButton());
-		sprint.addListItems(new ListItems(sprint));
+		const sprint = new Sprint(params);
+
+		sprint.setHeader(sprint);
+		if (sprint.isCompleted())
+		{
+			sprint.setBlank(sprint);
+		}
+		sprint.setDropzone(sprint);
+		sprint.setListItems(sprint);
+
 		return sprint;
 	}
 
-	addSprintHeader(sprintHeader: SprintHeader)
+	setHeader(sprint: Sprint)
 	{
-		this.sprintHeader = sprintHeader;
-		this.sprintHeader.initStyle(this);
+		const header = Header.buildHeader(sprint);
 
-		this.sprintHeader.subscribe('changeName', this.onChangeName.bind(this));
-		this.sprintHeader.subscribe('removeSprint', this.onRemoveSprint.bind(this));
-		this.sprintHeader.subscribe('completeSprint', () => this.emit('completeSprint'));
-		this.sprintHeader.subscribe('startSprint', () => this.emit('startSprint'));
-		this.sprintHeader.subscribe('changeSprintDeadline', this.onChangeSprintDeadline.bind(this));
-		this.sprintHeader.subscribe('toggleVisibilityContent', this.toggleVisibilityContent.bind(this));
-	}
-
-	addStoryPointsHeader(storyPointsHeader: StoryPointsHeader)
-	{
-		this.storyPointsHeader = storyPointsHeader;
-
-		this.storyPointsHeader.subscribe('showSprintBurnDownChart', () => this.emit('showSprintBurnDownChart'));
-	}
-
-	addEventsHeader(eventsHeader: EventsHeader)
-	{
-		this.eventsHeader = eventsHeader;
-	}
-
-	initStyle()
-	{
-		if (this.sprintHeader)
+		if (this.header)
 		{
-			this.sprintHeader.initStyle(this);
+			Dom.replace(this.header.getNode(), header.render());
 		}
+
+		this.header = header;
+
+		this.header.subscribe('changeName', this.onChangeName.bind(this));
+		this.header.subscribe('removeSprint', () => this.emit('removeSprint'));
+		this.header.subscribe('completeSprint', () => this.emit('completeSprint'));
+		this.header.subscribe('startSprint', () => this.emit('startSprint'));
+		this.header.subscribe('changeSprintDeadline', this.onChangeSprintDeadline.bind(this));
+		this.header.subscribe('toggleVisibilityContent', () => {
+			this.toggleVisibilityContent(this.getContentContainer());
+		});
+		this.header.subscribe('showBurnDownChart', () => this.emit('showSprintBurnDownChart'));
+		this.header.subscribe(
+			'showCreateMenu',
+			(baseEvent: BaseEvent) => this.emit('showSprintCreateMenu', baseEvent.getData())
+		);
+	}
+
+	setBlank(sprint: Sprint)
+	{
+		this.blank = new Blank(sprint);
+	}
+
+	setDropzone(sprint: Sprint)
+	{
+		this.dropzone = new Dropzone(sprint);
+
+		this.dropzone.subscribe('createTask', () => this.emit('showInput'));
 	}
 
 	isActive(): boolean
@@ -142,11 +159,6 @@ export class Sprint extends Entity
 		return (this.isActive() && (sprintEnd.getTime() < (new Date()).getTime()));
 	}
 
-	hasInput(): boolean
-	{
-		return !this.isDisabled();
-	}
-
 	getEntityType()
 	{
 		return 'sprint';
@@ -157,15 +169,30 @@ export class Sprint extends Entity
 		super.setItem(newItem);
 
 		newItem.setDisableStatus(this.isDisabled());
+
+		if (newItem.getNode())
+		{
+			Dom.addClass(newItem.getNode(), '--item-sprint');
+		}
+	}
+
+	removeItem(item: Item)
+	{
+		super.removeItem(item);
+
+		if (this.isEmpty())
+		{
+			this.showDropzone();
+		}
 	}
 
 	setName(name)
 	{
 		this.name = (Type.isString(name) ? name : '');
 
-		if (this.isNodeCreated() && this.sprintHeader)
+		if (this.isNodeCreated())
 		{
-			this.sprintHeader.updateNameNode(this.name);
+			this.header.setName(this);
 		}
 	}
 
@@ -187,6 +214,11 @@ export class Sprint extends Entity
 	setSort(sort)
 	{
 		this.sort = (Type.isInteger(sort) ? parseInt(sort, 10) : 1);
+
+		if (this.getNode())
+		{
+			this.getNode().dataset.sprintSort = this.sort;
+		}
 	}
 
 	getSort()
@@ -198,9 +230,9 @@ export class Sprint extends Entity
 	{
 		this.dateStart = (Type.isInteger(dateStart) ? parseInt(dateStart, 10) : 0);
 
-		if (this.isNodeCreated() && this.sprintHeader)
+		if (this.isNodeCreated())
 		{
-			this.sprintHeader.updateDateStartNode(this.dateStart);
+			this.header.setName(this);
 		}
 	}
 
@@ -213,15 +245,35 @@ export class Sprint extends Entity
 	{
 		this.dateEnd = (Type.isInteger(dateEnd) ? parseInt(dateEnd, 10) : 0);
 
-		if (this.isNodeCreated() && this.sprintHeader)
+		if (this.isNodeCreated())
 		{
-			this.sprintHeader.updateDateEndNode(this.dateEnd);
+			this.header.setName(this);
 		}
 	}
 
 	getDateEnd(): number
 	{
 		return parseInt(this.dateEnd, 10);
+	}
+
+	setDateStartFormatted(dateStart)
+	{
+		this.dateStartFormatted = (Type.isString(dateStart) ? dateStart : '');
+	}
+
+	getDateStartFormatted(): string
+	{
+		return this.dateStartFormatted;
+	}
+
+	setDateEndFormatted(dateEnd)
+	{
+		this.dateEndFormatted = (Type.isString(dateEnd) ? dateEnd : '');
+	}
+
+	getDateEndFormatted(): string
+	{
+		return this.dateEndFormatted;
 	}
 
 	setWeekendDaysTime(weekendDaysTime)
@@ -236,30 +288,36 @@ export class Sprint extends Entity
 
 	setCompletedStoryPoints(completedStoryPoints)
 	{
-		this.completedStoryPoints = new StoryPoints();
+		this.completedStoryPoints.setPoints(completedStoryPoints);
 
-		this.completedStoryPoints.addPoints(completedStoryPoints);
-
-		this.updateStoryPointsNode();
+		this.setStats();
 	}
 
-	getCompletedStoryPoints(): StoryPoints
+	getCompletedStoryPoints(): StoryPointsStorage
 	{
 		return this.completedStoryPoints;
 	}
 
 	setUncompletedStoryPoints(uncompletedStoryPoints)
 	{
-		this.uncompletedStoryPoints = new StoryPoints();
+		this.uncompletedStoryPoints.setPoints(uncompletedStoryPoints);
 
-		this.uncompletedStoryPoints.addPoints(uncompletedStoryPoints);
-
-		this.updateStoryPointsNode();
+		this.setStats();
 	}
 
-	getUncompletedStoryPoints(): StoryPoints
+	getUncompletedStoryPoints(): StoryPointsStorage
 	{
 		return this.uncompletedStoryPoints;
+	}
+
+	setStats()
+	{
+		if (this.header)
+		{
+			this.header.setStats(this);
+			this.header.setName(this);
+			this.header.setInfo(this);
+		}
 	}
 
 	setItems(items)
@@ -270,9 +328,10 @@ export class Sprint extends Entity
 		}
 
 		items.forEach((itemParams: ItemParams) => {
-			const item = new Item(itemParams);
+			const item = Item.buildItem(itemParams);
 			item.setDisableStatus(this.isDisabled());
-			this.items.set(item.itemId, item);
+			item.setShortView(this.getShortView());
+			this.items.set(item.getId(), item);
 		});
 	}
 
@@ -285,9 +344,9 @@ export class Sprint extends Entity
 	{
 		super.setNumberTasks(numberTasks);
 
-		if (this.storyPointsHeader)
+		if (this.header)
 		{
-			this.storyPointsHeader.updateNumberTasks();
+			this.header.setInfo(this);
 		}
 	}
 
@@ -326,28 +385,17 @@ export class Sprint extends Entity
 		return this.info;
 	}
 
-	getEpics(): Map<number, EpicType>
-	{
-		const epics = new Map();
-		this.items.forEach((item: Item) => {
-			//todo wtf, why did not Set work?
-			if (item.getEpic())
-			{
-				epics.set(item.getEpic().id, item.getEpic());
-			}
-		});
-		return epics;
-	}
-
 	getUncompletedItems(): Map<string, Item>
 	{
 		const items = new Map();
+
 		this.items.forEach((item: Item) => {
 			if (!item.isCompleted())
 			{
-				items.set(item.getItemId(), item);
+				items.set(item.getId(), item);
 			}
 		});
+
 		return items;
 	}
 
@@ -361,7 +409,7 @@ export class Sprint extends Entity
 
 		this.status = (availableStatus.has(status) ? status : 'planned');
 
-		this.initStyle();
+		this.setHeader(this);
 
 		this.items.forEach((item) => {
 			item.setDisableStatus(this.isDisabled());
@@ -373,16 +421,28 @@ export class Sprint extends Entity
 			{
 				this.input.removeYourself();
 			}
-			if (this.groupActionsButton)
-			{
-				this.groupActionsButton.removeYourself();
-			}
 		}
 	}
 
 	getStatus(): string
 	{
 		return this.status;
+	}
+
+	disableHeaderButton()
+	{
+		if (this.header)
+		{
+			this.header.disableButton();
+		}
+	}
+
+	unDisableHeaderButton()
+	{
+		if (this.header)
+		{
+			this.header.unDisableButton();
+		}
 	}
 
 	updateYourself(tmpSprint: Sprint)
@@ -409,89 +469,83 @@ export class Sprint extends Entity
 			this.setStatus(tmpSprint.getStatus());
 		}
 
-		if (this.node)
+		if (this.node && this.header)
 		{
-			this.addStoryPointsHeader(new StoryPointsHeader(this));
-			Dom.replace(this.node.querySelector('.tasks-scrum-sprint-header-event-params'), this.renderParams());
+			this.setHeader(this);
 		}
 	}
 
 	removeYourself()
 	{
 		Dom.remove(this.node);
+
 		this.node = null;
-		this.emit('removeSprint');
 	}
 
 	render(): HTMLElement
 	{
+		const openClass = this.isCompleted() ? '' : '--open';
+
 		this.node = Tag.render`
-			<div class="tasks-scrum-sprint" data-sprint-sort="${this.sort}" data-sprint-id="${this.getId()}">
-				${this.sprintHeader ? this.sprintHeader.render() : ''}
-				<div class="tasks-scrum-sprint-content">
-					<div class="tasks-scrum-sprint-sub-header">
-						<div class="tasks-scrum-sprint-header-event">
-							${this.eventsHeader ? '' : ''/*todo*/}
-							${this.isCompleted() ? this.renderLinkToCompletedSprint() : ''}
-						</div>
-						${this.renderParams()}
-					</div>
-					<div class="tasks-scrum-sprint-actions">
-						${this.groupActionsButton  && !this.isDisabled() ? this.groupActionsButton.render() : ''}
-					</div>
-					<div class="tasks-scrum-sprint-items">
-						${this.listItems ? this.listItems.render() : ''}
-					</div>
-					<div class="tasks-scrum-entity-items-loader"></div>
+			<div
+				class="tasks-scrum__content --with-header ${openClass}"
+				data-sprint-sort="${this.sort}"
+				data-sprint-id="${this.getId()}"
+			>
+				${this.header ? this.header.render() : ''}
+				<div class="tasks-scrum__content-container">
+					${this.blank ? this.blank.render() : ''}
+					${this.dropzone ? this.dropzone.render() : ''}
+					${this.listItems ? this.listItems.render() : ''}
 				</div>
 			</div>
 		`;
 
-		this.itemsLoaderNode = this.node.querySelector('.tasks-scrum-entity-items-loader');
-		this.bindItemsLoader(this.itemsLoaderNode);
+		Event.bind(
+			this.getContentContainer(),
+			'transitionend',
+			this.onTransitionEnd.bind(this, this.getContentContainer())
+		);
 
 		return this.node;
 	}
 
-	renderParams(): HTMLElement
-	{
-		return Tag.render`
-			<div class="tasks-scrum-sprint-header-event-params">
-				${this.storyPointsHeader ? this.storyPointsHeader.render() : ''}
-			</div>
-		`;
-	}
-
-	renderLinkToCompletedSprint(): HTMLElement
-	{
-		return Tag.render`
-			<a href="${Text.encode(this.getViews().completedSprint.url)}">
-				${Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINT_LINK')}
-			</a>
-		`;
-	}
+	// renderLinkToCompletedSprint(): HTMLElement
+	// {
+	// 	//todo remove it method
+	// 	return Tag.render`
+	// 		<a href="${Text.encode(this.getViews().completedSprint.url)}">
+	// 			${Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINT_LINK')}
+	// 		</a>
+	// 	`;
+	// }
 
 	onAfterAppend()
 	{
-		this.updateVisibility();
-
-		if (this.sprintHeader)
-		{
-			this.sprintHeader.onAfterAppend();
-		}
-
 		super.onAfterAppend();
+
+		if (this.isEmpty() && !this.isCompleted())
+		{
+			this.showDropzone();
+		}
 	}
 
 	subscribeToItem(item)
 	{
 		super.subscribeToItem(item);
 
-		item.subscribe('moveToBacklog', (baseEvent) => {
-			this.emit('moveToBacklog', {
-				sprint: this,
-				item: baseEvent.getTarget()
-			});
+		item.subscribe('showSubTasks', (baseEvent: BaseEvent) => {
+			const parentItem: Item = baseEvent.getTarget();
+			const subTasks: SubTasks = baseEvent.getData();
+
+			if (subTasks.isEmpty())
+			{
+				this.emit('getSubTasks', subTasks);
+			}
+
+			this.appendNodeAfterItem(subTasks.render(), parentItem.getNode());
+
+			subTasks.show();
 		});
 
 		item.subscribe('updateCompletedStatus', (baseEvent: BaseEvent) => {
@@ -512,73 +566,46 @@ export class Sprint extends Entity
 		})
 	}
 
-	onChangeName (baseEvent)
+	onChangeName(baseEvent: BaseEvent)
 	{
-		const createInput = (value) => {
-			return Tag.render`
-				<input type="text" class="tasks-scrum-sprint-header-name" value="${Text.encode(value)}">
-			`;
-		};
+		const header: Header = baseEvent.getTarget();
+		const input: HTMLInputElement = baseEvent.getData();
 
-		const inputNode = createInput(this.name);
-		const nameNode = baseEvent.getData().querySelector('.tasks-scrum-sprint-header-name');
+		header.activateEditMode();
 
-		Event.bind(inputNode, 'change', (event) => {
-			const newValue = event.target['value'];
-			this.emit('changeSprintName', {
-				sprintId: this.getId(),
-				name: newValue
-			});
-			this.name = newValue;
-			inputNode.blur();
-		}, true);
+		const length = input.value.length;
 
-		const blockEnterInput = (event) => {
-			if (event.isComposing || event.keyCode === 13)
-				inputNode.blur();
-		};
+		input.focus();
+		input.setSelectionRange(length, length);
 
-		Event.bind(inputNode, 'keydown', blockEnterInput);
-		Event.bindOnce(inputNode, 'blur', () => {
-			Event.unbind(inputNode, 'keydown', blockEnterInput);
-			nameNode.textContent = Text.encode(this.name);
-			Dom.replace(inputNode, nameNode);
-		}, true);
-
-		Dom.replace(nameNode, inputNode);
-
-		inputNode.focus();
-		inputNode.setSelectionRange(this.name.length, this.name.length);
-	}
-
-	onRemoveSprint()
-	{
-		[...this.items.values()].map((item) => {
-			this.emit('moveToBacklog', {
-				sprint: this,
-				item: item
-			});
-		});
-		this.removeYourself();
-	}
-
-	removeSprint()
-	{
-		[...this.items.values()].map((item) => {
-			this.emit('moveToBacklog', {
-				sprint: this,
-				item: item
-			});
+		Event.bind(input, 'keydown', (event: KeyboardEvent) => {
+			if (event.isComposing || event.key === 'Escape' || event.key === 'Enter')
+			{
+				input.blur();
+			}
 		});
 
-		Dom.remove(this.node);
-		this.node = null;
+		Event.bindOnce(input, 'blur', () => {
+			if (this.getName() !== input.value)
+			{
+				this.setName(input.value);
+
+				this.emit('changeSprintName', {
+					sprintId: this.getId(),
+					name: this.getName()
+				});
+			}
+
+			header.deactivateEditMode();
+		});
 	}
 
 	onChangeSprintDeadline(baseEvent)
 	{
 		const requestData = baseEvent.getData();
+
 		this.emit('changeSprintDeadline', requestData);
+
 		if (requestData.hasOwnProperty('dateStart'))
 		{
 			this.dateStart = parseInt(requestData.dateStart, 10);
@@ -589,155 +616,106 @@ export class Sprint extends Entity
 		}
 	}
 
-	updateDateStartNode(timestamp)
+	onTransitionEnd(node: HTMLElement)
 	{
-		if (this.sprintHeader)
+		if (node.style.height !== '0px')
 		{
-			this.sprintHeader.updateDateStartNode(timestamp);
+			node.style.height = 'auto'
 		}
+
+		this.emit('toggleVisibilityContent');
 	}
 
-	updateDateEndNode(timestamp)
+	toggleVisibilityContent(node: HTMLElement)
 	{
-		if (this.sprintHeader)
+		if (this.isHideContent())
 		{
-			this.sprintHeader.updateDateEndNode(timestamp);
-		}
-	}
+			this.showContent(node);
 
-	toggleVisibilityContent()
-	{
-		if (this.getContentNode().style.display === 'block')
-		{
-			this.hideContent();
-		}
-		else
-		{
-			this.showContent();
-			if (this.isCompleted() && this.getItems().size === 0)
+			Dom.addClass(this.node, '--open');
+
+			if (this.isCompleted())
 			{
-				this.emit('getSprintCompletedItems');
-			}
-		}
-	}
-
-	showContent()
-	{
-		if (this.getContentNode())
-		{
-			this.getContentNode().style.display = 'block';
-		}
-
-		if (this.sprintHeader)
-		{
-			this.sprintHeader.upTick();
-		}
-	}
-
-	hideContent()
-	{
-		if (this.getContentNode())
-		{
-			this.getContentNode().style.display = 'none';
-		}
-
-		if (this.sprintHeader)
-		{
-			this.sprintHeader.downTick();
-		}
-	}
-
-	updateVisibility()
-	{
-		if (this.isCompleted())
-		{
-			if (this.isEmpty())
-			{
-				this.hideContent();
-			}
-			else
-			{
-				this.showContent();
-			}
-
-			this.showSprint();
-
-			if (this.isExactSearchApplied())
-			{
-				if (this.isEmpty())
+				if (this.getItems().size === 0)
 				{
-					this.hideSprint();
+					this.emit('getSprintCompletedItems');
 				}
 			}
 		}
 		else
 		{
-			this.showContent();
+			this.hideContent(node);
 
-			if (this.isExactSearchApplied())
-			{
-				if (this.isEmpty())
-				{
-					this.hideSprint();
-				}
-				else
-				{
-					this.showSprint();
-				}
-			}
-			else
-			{
-				this.showSprint();
-			}
+			Dom.removeClass(this.node, '--open');
 		}
+	}
+
+	showContent(node: HTMLElement)
+	{
+		this.hideCont = false;
+
+		node.style.height = `${ node.scrollHeight }px`
+
+		if (this.header)
+		{
+			this.header.upTick();
+		}
+	}
+
+	hideContent(node: HTMLElement)
+	{
+		this.hideCont = true;
+
+		node.style.height = `${ node.scrollHeight }px`;
+		node.clientHeight;
+		node.style.height = '0';
+
+		if (this.header)
+		{
+			this.header.downTick();
+		}
+	}
+
+	isHideContent(): boolean
+	{
+		return this.hideCont;
 	}
 
 	showSprint()
 	{
-		this.node.style.display = 'block';
+		if (this.node)
+		{
+			this.node.style.display = 'block';
+		}
 	}
 
 	hideSprint()
 	{
-		this.node.style.display = 'none';
-	}
-
-	onActivateGroupMode(baseEvent: BaseEvent)
-	{
-		super.onActivateGroupMode(baseEvent);
-
-		Dom.addClass(this.node.querySelector('.tasks-scrum-sprint-items'), 'tasks-scrum-sprint-items-group-mode');
-	}
-
-	onDeactivateGroupMode(baseEvent: BaseEvent)
-	{
-		super.onDeactivateGroupMode(baseEvent);
-
-		Dom.removeClass(this.node.querySelector('.tasks-scrum-sprint-items'), 'tasks-scrum-sprint-items-group-mode');
-	}
-
-	getContentNode(): HTMLElement
-	{
 		if (this.node)
 		{
-			return this.node.querySelector('.tasks-scrum-sprint-content');
+			this.node.style.display = 'none';
 		}
 	}
 
-	updateStoryPointsNode()
+	getContentContainer(): HTMLElement
 	{
-		super.updateStoryPointsNode();
+		return this.node.querySelector('.tasks-scrum__content-container');
+	}
 
-		if (this.storyPointsHeader)
+	fadeOut()
+	{
+		if (!this.isCompleted())
 		{
-			this.storyPointsHeader.setStoryPoints(this.getStoryPoints().getPoints());
-			this.storyPointsHeader.setCompletedStoryPoints(this.getCompletedStoryPoints().getPoints());
-			this.storyPointsHeader.setUncompletedStoryPoints(this.getUncompletedStoryPoints().getPoints());
+			super.fadeOut();
 		}
+	}
 
-		if (this.sprintHeader)
+	fadeIn()
+	{
+		if (!this.isCompleted())
 		{
-			this.sprintHeader.updateStatsHeader();
+			super.fadeIn();
 		}
 	}
 }
+

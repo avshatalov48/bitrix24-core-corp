@@ -88,23 +88,19 @@
 				&& (!draggableItem.getColumn().isFinishType())
 			)
 			{
-				if (typeof BX.Tasks.Scrum === 'undefined' || typeof BX.Tasks.Scrum.ScrumDod === 'undefined')
-				{
-					taskCompletePromise.fulfill();
-				}
-
-				this.scrumDod = new BX.Tasks.Scrum.ScrumDod({
-					groupId: draggableItem.getData()['groupId']
-				});
-
-				this.scrumDod.showList(draggableItem.getId())
-					.then(function() {
+				BX.loadExt('tasks.scrum.dod').then(function() {
+					if (typeof BX.Tasks.Scrum === 'undefined' || typeof BX.Tasks.Scrum.Dod === 'undefined')
+					{
 						taskCompletePromise.fulfill();
-					}.bind(this))
-					.catch(function() {
-						taskCompletePromise.reject();
-					}.bind(this))
-				;
+					}
+					this.scrumDod = new BX.Tasks.Scrum.Dod({
+						groupId: draggableItem.getData()['groupId'],
+						taskId: draggableItem.getId()
+					});
+					this.scrumDod.subscribe('resolve', function() { taskCompletePromise.fulfill() });
+					this.scrumDod.subscribe('reject', function() { taskCompletePromise.reject() });
+					this.scrumDod.showList();
+				}.bind(this));
 			}
 			else
 			{

@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CMain $APPLICATION */
 
 use Bitrix\Socialnetwork\UserToGroupTable;
-use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Socialnetwork\Helper\Workgroup;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Web\Uri;
 
@@ -25,6 +25,28 @@ $firstMenuItemCode = false;
 /** @see \CMainInterfaceButtons::getUserOptions */
 $userOptions = \CUserOptions::getOption("ui", $arResult["menuId"]);
 $urlGeneralSpecific = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_GENERAL"], array("group_id" => $arResult["Group"]["ID"]));
+
+$arResult['Group']['TypeCode'] = Workgroup::getTypeCodeByParams([
+	'fields' => [
+		'OPENED' => $arResult['Group']['OPENED'],
+		'VISIBLE' => $arResult['Group']['VISIBLE'],
+		'PROJECT' => $arResult['Group']['PROJECT'],
+		'EXTERNAL' => (isset($arResult['Group']['IS_EXTRANET']) && $arResult['Group']['IS_EXTRANET'] === 'Y' ? 'Y' : 'N'),
+	],
+	'fullMode' => true,
+]);
+
+$arResult['Group']['Type'] = Workgroup::getTypeByCode([
+	'code' => $arResult['Group']['TypeCode'],
+	'fullMode' => true,
+]);
+
+$arResult['Group']['ProjectTypeCode'] = Workgroup::getProjectTypeCodeByParams([
+	'fields' => [
+		'PROJECT' => $arResult['Group']['PROJECT'],
+		'SCRUM_PROJECT' => $arResult['Group']['SCRUM'],
+	],
+]);
 
 $sampleKeysList = [
 	'general' => 0,
@@ -175,8 +197,11 @@ if ($arParams['PAGE_ID'] === 'group')
 		}
 	}
 	elseif (
-		!$arResult['CanView']['blog']
-		&& $firstKeyDefault !== 'marketplace'
+		$arResult['Group']['ProjectTypeCode'] === 'scrum'
+		|| (
+			!$arResult['CanView']['blog']
+			&& $firstKeyDefault !== 'marketplace'
+		)
 	)
 	{
 		$redirectUrl = $arResult['Urls'][$firstKeyDefault];
@@ -325,20 +350,6 @@ if (
 	$arResult["Urls"]["UserRequests"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_REQUESTS"], array("user_id" => $USER->getId()));
 }
 
-$arResult['Group']['TypeCode'] = Workgroup::getTypeCodeByParams(array(
-	'fields' => array(
-		'OPENED' => $arResult['Group']['OPENED'],
-		'VISIBLE' => $arResult['Group']['VISIBLE'],
-		'PROJECT' => $arResult['Group']['PROJECT'],
-		'EXTERNAL' => (isset($arResult['Group']['IS_EXTRANET']) && $arResult['Group']['IS_EXTRANET'] === 'Y' ? 'Y' : 'N')
-	),
-	'fullMode' => true
-));
-$arResult['Group']['Type'] = Workgroup::getTypeByCode(array(
-	'code' => $arResult['Group']['TypeCode'],
-	'fullMode' => true
-));
-
 $arResult['Group']['NUMBER_OF_REQUESTS'] = 0;
 $res = UserToGroupTable::getList(array(
 	'filter' => array(
@@ -471,3 +482,10 @@ $arResult['IS_CURRENT_PAGE_FIRST'] = \Bitrix\Socialnetwork\ComponentHelper::isCu
 	'firstMenuItemCode' => $firstMenuItemCode,
 	'canView' => $arResult['CanView'],
 ]);
+
+$arResult['projectWidgetData'] = [
+	'avatar' => (isset($arResult['Group']['IMAGE_FILE']['src']) ? $arResult['Group']['IMAGE_FILE']['src'] : ''),
+	'name' => $arResult['Group']['NAME'],
+//	'description' => $arResult['Group']['DESCRIPTION'],
+	'isProject' => ($arResult['Group']['PROJECT'] === 'Y'),
+];

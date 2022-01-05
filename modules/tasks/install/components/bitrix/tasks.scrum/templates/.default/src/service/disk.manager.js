@@ -1,4 +1,4 @@
-import {Loc, Tag, Text} from 'main.core';
+import {Loc, Tag, Text, Uri} from 'main.core';
 import {Popup} from 'main.popup';
 import {EventEmitter} from 'main.core.events';
 
@@ -31,33 +31,50 @@ export class DiskManager extends EventEmitter
 			node,
 			{
 				content: this.getAttachmentsLoaderContent(controlId),
-				autoHide: true,
+				autoHide: false,
 				closeByEsc: true,
 				angle: false,
-			});
-
-		this.popup.show();
-
-		BX.Disk.UF.add({
-			UID: controlId,
-			controlName: `[${controlId}][]`,
-			hideSelectDialog: false,
-			urlSelect: this.diskUrls.urlSelect,
-			urlRenameFile: this.diskUrls.urlRenameFile,
-			urlDeleteFile: this.diskUrls.urlDeleteFile,
-			urlUpload: this.diskUrls.urlUpload,
-		});
-
-		BX.onCustomEvent(
-			this.popup.contentContainer.querySelector('#files_chooser'),
-			'DiskLoadFormController',
-			['show']
+				offsetTop: 12,
+				offsetLeft: -32
+			}
 		);
 
-		EventEmitter.subscribe('onFinish', () => {
-			this.popup.close();
+		this.popup.subscribe('onShow', () => {
+			BX.Disk.UF.add({
+				UID: controlId,
+				controlName: `[${controlId}][]`,
+				hideSelectDialog: false,
+				urlSelect: this.diskUrls.urlSelect,
+				urlRenameFile: this.diskUrls.urlRenameFile,
+				urlDeleteFile: this.diskUrls.urlDeleteFile,
+				urlUpload: this.diskUrls.urlUpload,
+			});
+
+			const filesChooser = this.popup.contentContainer.querySelector('#files_chooser');
+
+			BX.onCustomEvent(filesChooser, 'DiskLoadFormController', ['show']);
+
+			if (BX.DiskFileDialog)
+			{
+				EventEmitter.subscribe(BX.DiskFileDialog, 'loadItemsDone', this.openDiskFileDialog.bind(this));
+			}
+		});
+
+		this.popup.subscribe('onClose', () => {
 			this.emit('onFinish', this.attachedIds);
 		});
+
+		EventEmitter.subscribe('onFinish', () => this.popup.close());
+
+		this.popup.show();
+	}
+
+	openDiskFileDialog()
+	{
+		if (BX.DiskFileDialog.popupWindow != null)
+		{
+			BX.DiskFileDialog.popupWindow.subscribe('onClose', () => this.popup.close());
+		}
 	}
 
 	getAttachmentsLoaderContent(controlId)
@@ -97,7 +114,6 @@ export class DiskManager extends EventEmitter
 		`;
 
 		BX.addCustomEvent(filesChooser, 'OnFileUploadSuccess', this.onFileUploadSuccess.bind(this));
-		//todo show loader
 
 		return filesChooser;
 	}

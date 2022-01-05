@@ -61,11 +61,6 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 			if (Utils.platform.isIos())
 			{
 				className.push('bx-mobile-ios');
-
-				if (Application.getApiVersion() >= 39)
-				{
-					className.push('bx-mobile-ios-keyboard');
-				}
 			}
 			else
 			{

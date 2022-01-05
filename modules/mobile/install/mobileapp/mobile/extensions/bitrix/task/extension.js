@@ -167,6 +167,8 @@
 			this.accomplices = [];
 			this.auditors = [];
 
+			this.files = [];
+
 			this.commentsCount = 0;
 			this.newCommentsCount = 0;
 
@@ -192,6 +194,10 @@
 
 			this.creator = row.creator;
 			this.responsible = row.responsible;
+			this.accomplices = row.accomplices || [];
+			this.auditors = row.auditors || [];
+
+			this.files = row.files || [];
 
 			this.commentsCount = row.commentsCount;
 			this.newCommentsCount = row.newCommentsCount;
@@ -199,9 +205,6 @@
 			this.isMuted = row.isMuted === 'Y';
 			this.isPinned = row.isPinned === 'Y';
 			this.notViewed = row.notViewed === 'Y';
-
-			this.accomplices = row.accomplices || [];
-			this.auditors = row.auditors || [];
 
 			this.rawAccess = row.action;
 
@@ -818,6 +821,7 @@
 								GUID: this.guid,
 								ALLOW_CHANGE_DEADLINE: 'Y',
 								GROUP_ID: this.groupId || 0,
+								UF_TASK_WEBDAV_FILES: this.files,
 							},
 							params: {
 								PLATFORM: 'mobile',

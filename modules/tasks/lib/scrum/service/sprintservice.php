@@ -8,9 +8,9 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Result;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\UI\PageNavigation;
-use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Utility\SprintRanges;
+use Bitrix\Tasks\Scrum\Utility\TimeHelper;
 use Bitrix\Tasks\Util;
 
 class SprintService implements Errorable
@@ -25,7 +25,7 @@ class SprintService implements Errorable
 	const ERROR_COULD_NOT_DETECT_ACTIVE_SPRINT = 'TASKS_SS_08';
 	const ERROR_COULD_NOT_CHANGE_SORT = 'TASKS_SS_09';
 
-	private $errorCollection;
+	protected $errorCollection;
 
 	public function __construct()
 	{
@@ -54,7 +54,12 @@ class SprintService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_SPRINT));
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_ADD_SPRINT
+				)
+			);
 		}
 
 		return $sprint;
@@ -84,7 +89,12 @@ class SprintService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_UPDATE_SPRINT));
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_UPDATE_SPRINT
+				)
+			);
 
 			return false;
 		}
@@ -194,14 +204,14 @@ class SprintService implements Errorable
 		return $sprint;
 	}
 
-	public function isActiveSprint(EntityTable $sprint): bool
+	public function isActiveSprint(int $sprintId): bool
 	{
 		try
 		{
 			$queryObject = EntityTable::getList([
 				'select' => ['ID'],
 				'filter' => [
-					'GROUP_ID'=> $sprint->getGroupId(),
+					'ID' => $sprintId,
 					'STATUS' => EntityTable::SPRINT_ACTIVE
 				]
 			]);
@@ -398,6 +408,44 @@ class SprintService implements Errorable
 	}
 
 	/**
+	 * The method returns the planned sprints of the project.
+	 *
+	 * @param int $groupId Project id.
+	 * @return EntityTable[]
+	 */
+	public function getPlannedSprints(int $groupId): array
+	{
+		$sprints = [];
+
+		try
+		{
+			$queryObject = EntityTable::getList([
+				'filter' => [
+					'GROUP_ID'=> $groupId,
+					'ENTITY_TYPE' => EntityTable::SPRINT_TYPE,
+					'=STATUS' => EntityTable::SPRINT_PLANNED,
+				],
+				'order' => [
+					'SORT' => 'ASC',
+					'DATE_END' => 'DESC',
+				]
+			]);
+			while ($sprintData = $queryObject->fetch())
+			{
+				$sprint = EntityTable::createEntityObject($sprintData);
+
+				$sprints[] = $sprint;
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_SPRINT));
+		}
+
+		return $sprints;
+	}
+
+	/**
 	 * Returns a last completed sprint by scrum group id.
 	 *
 	 * @param int $groupId Scrum group id.
@@ -460,6 +508,7 @@ class SprintService implements Errorable
 		try
 		{
 			$result = EntityTable::delete($sprint->getId());
+
 			if ($result->isSuccess())
 			{
 				if ($pushService)
@@ -658,20 +707,6 @@ class SprintService implements Errorable
 		return $mapCompletedTasks;
 	}
 
-	private function isTimeOverlapping(array $firstRange, array $secondRange): bool
-	{
-		return (
-			(
-				$firstRange['start'] <= $secondRange['end'] &&
-				$firstRange['start'] >= $secondRange['start']
-			)
-			|| (
-				$firstRange['end'] <= $secondRange['end'] &&
-				$firstRange['end'] >= $secondRange['start']
-			)
-		);
-	}
-
 	public function getCompletedStoryPointsMap(
 		float $sumStoryPoints,
 		array $mapCompletedTasks,
@@ -706,13 +741,20 @@ class SprintService implements Errorable
 	{
 		$info = $sprint->getInfo();
 
+		$timeHelper = new TimeHelper($sprint->getCreatedBy());
+
+		$dateStartTs = $sprint->getDateStart()->getTimestamp() + $timeHelper->getCurrentOffsetUTC();
+		$dateEndTs = $sprint->getDateEnd()->getTimestamp() + $timeHelper->getCurrentOffsetUTC();
+
 		return [
 			'id' => $sprint->getId(),
 			'tmpId' => $sprint->getTmpId(),
 			'name' => $sprint->getName(),
 			'sort' => $sprint->getSort(),
-			'dateStart' => $sprint->getDateStart()->getTimestamp(),
-			'dateEnd' => $sprint->getDateEnd()->getTimestamp(),
+			'dateStartFormatted' => ConvertTimeStamp($dateStartTs),
+			'dateEndFormatted' => ConvertTimeStamp($dateEndTs),
+			'dateStart' => $dateStartTs,
+			'dateEnd' => $dateEndTs,
 			'weekendDaysTime' => $this->getWeekendDaysTime($sprint),
 			'storyPoints' => '',
 			'completedStoryPoints' => '',
@@ -744,6 +786,20 @@ class SprintService implements Errorable
 			new Error(
 				implode('; ', $result->getErrorMessages()),
 				$code
+			)
+		);
+	}
+
+	private function isTimeOverlapping(array $firstRange, array $secondRange): bool
+	{
+		return (
+			(
+				$firstRange['start'] <= $secondRange['end'] &&
+				$firstRange['start'] >= $secondRange['start']
+			)
+			|| (
+				$firstRange['end'] <= $secondRange['end'] &&
+				$firstRange['end'] >= $secondRange['start']
 			)
 		);
 	}

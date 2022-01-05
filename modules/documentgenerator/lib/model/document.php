@@ -11,6 +11,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class DocumentTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Document_Query query()
+ * @method static EO_Document_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Document_Result getById($id)
+ * @method static EO_Document_Result getList(array $parameters = array())
+ * @method static EO_Document_Entity getEntity()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_Document createObject($setDefaultValues = true)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_Document_Collection createCollection()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_Document wakeUpObject($row)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_Document_Collection wakeUpCollection($rows)
+ */
 class DocumentTable extends FileModel
 {
 	protected static $fileFieldNames = [

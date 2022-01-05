@@ -19,44 +19,58 @@ if (!empty($arResult["RECORDS"]))
 		{
 
 		}
-		$record['data']["DESCRIPTION"] = preg_replace_callback(
-			'|<a href="/bitrix/tools/bizproc_show_file.php\?([^"]+)"\starget=\'_blank\'>|',
-			function($matches)
-			{
-				parse_str($matches[1], $query);
-				$filename = '';
-				if (isset($query['f']))
-				{
-					$query['hash'] = md5($query['f']);
-					$filename = $query['f'];
-					unset($query['f']);
-				}
-				$query['mobile_action'] = 'bp_show_file';
-				$query['filename'] = $filename;
 
-				return '<a href="#" data-url="'.SITE_DIR.'mobile/ajax.php?'.http_build_query($query)
-				.'" data-name="'.htmlspecialcharsbx($filename).'" onclick="BXMobileApp.UI.Document.open({url: this.getAttribute(\'data-url\'), filename: this.getAttribute(\'data-name\')}); return false;">';
-			},
-			$record['data']["DESCRIPTION"]
-		);
+		if (!empty($record['data']["DESCRIPTION"]) && method_exists('CBPViewHelper', 'prepareMobileTaskDescription'))
+		{
+			$record['data']["DESCRIPTION"] = CBPViewHelper::prepareMobileTaskDescription($record['data']["DESCRIPTION"]);
+		}
+		else
+		{
+			$record['data']["DESCRIPTION"] = preg_replace_callback(
+				'|<a href="/bitrix/tools/bizproc_show_file.php\?([^"]+)"\starget=\'_blank\'>|',
+				function ($matches) {
+					parse_str($matches[1], $query);
+					$filename = '';
+					if (isset($query['f']))
+					{
+						$query['hash'] = md5($query['f']);
+						$filename = $query['f'];
+						unset($query['f']);
+					}
+					$query['mobile_action'] = 'bp_show_file';
+					$query['filename'] = $filename;
 
+					return '<a href="#" data-url="'
+						. SITE_DIR
+						. 'mobile/ajax.php?'
+						. http_build_query($query)
+						. '" data-name="'
+						. htmlspecialcharsbx($filename)
+						. '" onclick="BXMobileApp.UI.Document.open({url: this.getAttribute(\'data-url\'), filename: this.getAttribute(\'data-name\')}); return false;">';
+				},
+				$record['data']["DESCRIPTION"]
+			);
 
-		$record['data']["DESCRIPTION"] = preg_replace_callback(
-			'|<a href="/bitrix/tools/disk/uf.php\?([^"]+)"\starget=\'_blank\'>([^<]+)|',
-			function($matches)
-			{
-				parse_str($matches[1], $query);
-				$filename = htmlspecialcharsback($matches[2]);
-				$query['mobile_action'] = 'disk_uf_view';
-				$query['filename'] = $filename;
+			$record['data']["DESCRIPTION"] = preg_replace_callback(
+				'|<a href="/bitrix/tools/disk/uf.php\?([^"]+)"\starget=\'_blank\'>([^<]+)|',
+				function ($matches) {
+					parse_str($matches[1], $query);
+					$filename = htmlspecialcharsback($matches[2]);
+					$query['mobile_action'] = 'disk_uf_view';
+					$query['filename'] = $filename;
 
-				return '<a href="#" data-url="'.SITE_DIR.'mobile/ajax.php?'.http_build_query($query)
-					.'" data-name="'.htmlspecialcharsbx($filename).'" onclick="BXMobileApp.UI.Document.open({url: this.getAttribute(\'data-url\'), filename: this.getAttribute(\'data-name\')}); return false;">'.$matches[2];
-			},
-			$record['data']["DESCRIPTION"]
-		);
-
-
+					return '<a href="#" data-url="'
+						. SITE_DIR
+						. 'mobile/ajax.php?'
+						. http_build_query($query)
+						. '" data-name="'
+						. htmlspecialcharsbx($filename)
+						. '" onclick="BXMobileApp.UI.Document.open({url: this.getAttribute(\'data-url\'), filename: this.getAttribute(\'data-name\')}); return false;">'
+						. $matches[2];
+				},
+				$record['data']["DESCRIPTION"]
+			);
+		}
 	}
 }
 $arResult["currentUserStatus"] = !empty($_GET['USER_STATUS'])? (int)$_GET['USER_STATUS'] : 0;

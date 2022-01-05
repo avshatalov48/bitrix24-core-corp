@@ -19,38 +19,17 @@ class Document extends DataProvider
 		$fields = [
 			'DOCUMENT_CREATE_TIME' => [
 				'TITLE' => Loc::getMessage('DOCGEN_DATAPROVIDER_DOCUMENT_CREATE_TIME_TITLE'),
-				'VALUE' => function()
-				{
-					if($this->isLoaded())
-					{
-						return $this->getDocument()->getCreateTime();
-					}
-					return false;
-				},
+				'VALUE' => [$this, 'getCreateTime'],
 				'TYPE' => static::FIELD_TYPE_DATE,
 			],
 			'DOCUMENT_TITLE' => [
 				'TITLE' => Loc::getMessage('DOCGEN_DATAPROVIDER_DOCUMENT_TITLE_TITLE'),
-				'VALUE' => function()
-				{
-					if($this->isLoaded())
-					{
-						return $this->getDocument()->getTitle();
-					}
-					return false;
-				},
+				'VALUE' => [$this, 'getTitle'],
 				'REQUIRED' => 'Y',
 			],
 			'DOCUMENT_NUMBER' => [
 				'TITLE' => Loc::getMessage('DOCGEN_DATAPROVIDER_DOCUMENT_NUMBER_TITLE'),
-				'VALUE' => function()
-				{
-					if($this->isLoaded())
-					{
-						return $this->getDocument()->getNumber();
-					}
-					return false;
-				},
+				'VALUE' => [$this, 'getNumber'],
 				'REQUIRED' => 'Y',
 			],
 		];
@@ -126,5 +105,35 @@ class Document extends DataProvider
 		}
 
 		return null;
+	}
+
+	public function getCreateTime()
+	{
+		if($this->isLoaded())
+		{
+			return $this->getDocument()->getCreateTime();
+		}
+
+		return false;
+	}
+
+	public function getNumber()
+	{
+		if($this->isLoaded())
+		{
+			return $this->getDocument()->getNumber();
+		}
+
+		return false;
+	}
+
+	public function getTitle()
+	{
+		if($this->isLoaded())
+		{
+			return $this->getDocument()->getTitle();
+		}
+
+		return false;
 	}
 }

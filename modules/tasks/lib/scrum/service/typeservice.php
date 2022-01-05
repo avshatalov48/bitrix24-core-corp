@@ -14,6 +14,7 @@ class TypeService implements Errorable
 	const ERROR_COULD_NOT_CREATE = 'TASKS_ITEM_TYPE_02';
 	const ERROR_COULD_NOT_CHANGE = 'TASKS_ITEM_TYPE_03';
 	const ERROR_COULD_NOT_REMOVE = 'TASKS_ITEM_TYPE_04';
+	const ERROR_COULD_NOT_READ = 'TASKS_ITEM_TYPE_05';
 
 	private $errorCollection;
 
@@ -60,9 +61,39 @@ class TypeService implements Errorable
 	 * @param array $fields Fields to create object.
 	 * @return TypeTable
 	 */
-	public function getType(array $fields = []): TypeTable
+	public function getTypeObject(array $fields = []): TypeTable
 	{
 		return TypeTable::createType($fields);
+	}
+
+	public function getType(int $typeId): TypeTable
+	{
+		$type = $this->getTypeObject();
+
+		try
+		{
+			$queryObject = TypeTable::getList([
+				'select' => ['*'],
+				'filter' => [
+					'ID' => $typeId,
+				],
+			]);
+			while ($typeData = $queryObject->fetch())
+			{
+				$type = $this->getTypeObject($typeData);
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_READ
+				)
+			);
+		}
+
+		return $type;
 	}
 
 	/**
@@ -194,7 +225,7 @@ class TypeService implements Errorable
 			]);
 			while ($typeData = $queryObject->fetch())
 			{
-				$types[] = $this->getType($typeData);
+				$types[] = $this->getTypeObject($typeData);
 			}
 		}
 		catch (\Exception $exception)

@@ -42,14 +42,14 @@ export class RequestSender
 		});
 	}
 
-	batchUpdateItem(data): Promise
+	updateItems(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'batchUpdateItem');
+		return this.sendRequestToComponent(data, 'updateItems');
 	}
 
-	batchRemoveItem(data): Promise
+	removeItems(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'batchRemoveItem');
+		return this.sendRequestToComponent(data, 'removeItems');
 	}
 
 	updateItemSort(data): Promise
@@ -85,11 +85,6 @@ export class RequestSender
 	updateItem(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'updateItem');
-	}
-
-	removeItem(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'removeItem');
 	}
 
 	changeTaskResponsible(data): Promise
@@ -132,9 +127,24 @@ export class RequestSender
 		return this.sendRequestToComponent(data, 'getCompletedSprints');
 	}
 
+	getCompletedSprintsStats(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'getCompletedSprintsStats');
+	}
+
 	getItems(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'getItems');
+	}
+
+	saveShortView(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'saveShortView');
+	}
+
+	saveDisplayPriority(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'saveDisplayPriority');
 	}
 
 	getEntityCounters(data): Promise
@@ -142,84 +152,29 @@ export class RequestSender
 		return this.sendRequestToComponent(data, 'getEntityCounters');
 	}
 
-	getEpicDescriptionEditor(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getEpicDescriptionEditor');
-	}
-
-	getEpicDescription(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getEpicDescription');
-	}
-
-	getEpicFiles(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getEpicFiles');
-	}
-
-	getAddEpicFormButtons(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getAddEpicFormButtons');
-	}
-
-	getViewEpicFormButtonsAction(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getViewEpicFormButtons');
-	}
-
-	createEpic(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'createEpic');
-	}
-
-	getEpicsList(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getEpicsList');
-	}
-
-	getEpicListUrl(): string
-	{
-		return '/bitrix/services/main/ajax.php?mode=class&c=bitrix:tasks.scrum&action=getEpicsList';
-	}
-
 	attachFilesToTask(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'attachFilesToTask');
 	}
 
-	attachTagToTask(data): Promise
+	updateTaskTags(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'attachTagToTask');
+		return this.sendRequestToComponent(data, 'updateTaskTags');
 	}
 
-	batchAttachTagToTask(data): Promise
+	removeTaskTags(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'batchAttachTagToTask');
+		return this.sendRequestToComponent(data, 'removeTaskTags');
 	}
 
-	deAttachTagToTask(data): Promise
+	updateItemEpics(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'deAttachTagToTask');
+		return this.sendRequestToComponent(data, 'updateItemEpics');
 	}
 
-	batchDeattachTagToTask(data): Promise
+	updateBorderColorToLinkedItems(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'batchDeattachTagToTask');
-	}
-
-	updateItemEpic(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'updateItemEpic');
-	}
-
-	batchUpdateItemEpic(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'batchUpdateItemEpic');
-	}
-
-	getEpic(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getEpic');
+		return this.sendRequestToComponent(data, 'updateBorderColorToLinkedItems');
 	}
 
 	editEpic(data): Promise
@@ -237,44 +192,9 @@ export class RequestSender
 		return this.sendRequestToComponent(data, 'applyFilter');
 	}
 
-	getSprintStartButtons(data): Promise
+	showLinkedTasks(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'getSprintStartButtons');
-	}
-
-	getSprintCompleteButtons(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getSprintCompleteButtons');
-	}
-
-	getBurnDownChartData(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getBurnDownChartData');
-	}
-
-	getTeamSpeedChartData(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getTeamSpeedChartData');
-	}
-
-	getDodSettings(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getDodSettings');
-	}
-
-	getDodChecklist(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'getDodChecklist');
-	}
-
-	saveDodSettings(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'saveDodSettings');
-	}
-
-	updateBorderColorToLinkedItems(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'updateBorderColorToLinkedItems');
+		return this.sendRequestToComponent(data, 'showLinkedTasks');
 	}
 
 	getAllUsedItemBorderColors(data): Promise
@@ -285,21 +205,6 @@ export class RequestSender
 	getSubTaskItems(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'getSubTaskItems');
-	}
-
-	createType(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'createType');
-	}
-
-	changeTypeName(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'changeTypeName');
-	}
-
-	removeType(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'removeType');
 	}
 
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)

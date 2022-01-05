@@ -254,6 +254,49 @@ class TaskService implements Errorable
 		}
 	}
 
+	/**
+	 * Returns the ids of the group's not completed tasks.
+	 *
+	 * @param int $groupId
+	 * @return array
+	 */
+	public function getTaskIds(int $groupId)
+	{
+		$taskIds = [];
+
+		try
+		{
+			$queryObject = \CTasks::getList(
+				['ID' => 'ASC'],
+				[
+					'GROUP_ID' => $groupId,
+					'!=STATUS' => \CTasks::STATE_COMPLETED,
+					'CHECK_PERMISSIONS' => 'N',
+				],
+				['ID']
+			);
+			while ($taskData = $queryObject->fetch())
+			{
+				$taskIds[] = $taskData['ID'];
+			}
+
+			return $taskIds;
+		}
+		catch (\Exception $exception)
+		{
+			$message = $exception->getMessage().$exception->getTraceAsString();
+
+			$this->errorCollection->setError(
+				new Error(
+					$message,
+					self::ERROR_COULD_NOT_READ_TASK
+				)
+			);
+
+			return $taskIds;
+		}
+	}
+
 	public function getTaskIdsByFilter(array $filter): array
 	{
 		$taskIds = [];
@@ -345,6 +388,42 @@ class TaskService implements Errorable
 		{
 			$message = $exception->getMessage().$exception->getTraceAsString();
 			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_READ_TAGS));
+			return [];
+		}
+	}
+
+	public function getTags($taskIds): array
+	{
+		try
+		{
+			$tags = [];
+
+			$queryObject = \CTaskTags::getList([], ['TASK_ID' => $taskIds]);
+			while ($tag = $queryObject->fetch())
+			{
+				if (in_array($tag['TASK_ID'], $taskIds))
+				{
+					if (!is_array($tags[$tag['TASK_ID']]))
+					{
+						$tags[$tag['TASK_ID']] = [];
+					}
+					$tags[$tag['TASK_ID']][] = $tag['NAME'];
+				}
+			}
+
+			return $tags;
+		}
+		catch (\Exception $exception)
+		{
+			$message = $exception->getMessage().$exception->getTraceAsString();
+
+			$this->errorCollection->setError(
+				new Error(
+					$message,
+					self::ERROR_COULD_NOT_READ_TAGS
+				)
+			);
+
 			return [];
 		}
 	}
@@ -446,13 +525,22 @@ class TaskService implements Errorable
 		try
 		{
 			$task = \CTaskItem::getInstance($taskId, $this->executiveUserId);
+
 			$task->delete();
+
+			ItemTable::deactivateBySourceId($taskId);
+
 			return true;
 		}
 		catch (\Exception $exception)
 		{
-			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_REMOVE_TASK));
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage().$exception->getTraceAsString(),
+					self::ERROR_COULD_NOT_REMOVE_TASK
+				)
+			);
+
 			return false;
 		}
 	}
@@ -481,6 +569,7 @@ class TaskService implements Errorable
 		try
 		{
 			$ufValue = $manager->getUserFieldValue('TASKS_TASK', 'UF_TASK_WEBDAV_FILES', $taskId);
+
 			if (is_array($ufValue))
 			{
 				$ufValue = array_merge($ufValue, $attachedIds);
@@ -489,13 +578,27 @@ class TaskService implements Errorable
 			{
 				$ufValue = $attachedIds;
 			}
-			$manager->update('TASKS_TASK', $taskId, ['UF_TASK_WEBDAV_FILES' => $ufValue]);
+
+			$userFields = ['UF_TASK_WEBDAV_FILES' => $ufValue];
+
+			if ($manager->checkFields('TASKS_TASK', $taskId, $userFields, $this->executiveUserId))
+			{
+				$manager->update('TASKS_TASK', $taskId, $userFields);
+			}
+
 			return $ufValue;
 		}
 		catch (\Exception $exception)
 		{
 			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_ADD_FILES_TASK));
+
+			$this->errorCollection->setError(
+				new Error(
+					$message,
+					self::ERROR_COULD_NOT_ADD_FILES_TASK
+				)
+			);
+
 			return [];
 		}
 	}
@@ -669,7 +772,14 @@ class TaskService implements Errorable
 		catch (\Exception $exception)
 		{
 			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_CONVERT_DESCRIPTION_TASK));
+
+			$this->errorCollection->setError(
+				new Error(
+					$message,
+					self::ERROR_COULD_NOT_CONVERT_DESCRIPTION_TASK
+				)
+			);
+
 			return '';
 		}
 	}
@@ -766,6 +876,7 @@ class TaskService implements Errorable
 			$itemsData[$taskId]['isLinkedTask'] = $this->isLinkedTask($taskId) ? 'Y' : 'N';
 		}
 
+		// todo
 		foreach ($this->getSubTasksInfo($taskIds) as $taskId => $subTasksInfo)
 		{
 			$subTasks = [];
@@ -792,13 +903,13 @@ class TaskService implements Errorable
 		foreach ($checkListCounts as $taskId => $checkListCount)
 		{
 			$itemsData[$taskId]['checkListComplete'] = (int) $checkListCount['complete'];
-			$itemsData[$taskId]['checkListAll'] = (int) ($checkListCounts['complete'] + $checkListCounts['progress']);
+			$itemsData[$taskId]['checkListAll'] = (int) ($checkListCount['complete'] + $checkListCount['progress']);
 		}
 
 		$tasksCounters = $this->getTasksCounters($taskIds);
-		foreach ($tasksCounters as $taskId => $taskCounters)
+		foreach ($tasksCounters as $taskId => $taskCounter)
 		{
-			$itemsData[$taskId]['taskCounters'] = $taskCounters;
+			$itemsData[$taskId]['taskCounter'] = $taskCounter;
 		}
 
 		return $itemsData;
@@ -836,6 +947,17 @@ class TaskService implements Errorable
 
 							$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 							$itemService->changeItem($parentItem, $pushService);
+						}
+					}
+
+					$hasLinks = (isset($fields['DEPENDS_ON']) && is_array($fields['DEPENDS_ON']));
+					if ($hasLinks)
+					{
+						$taskService = new TaskService(Util\User::getId());
+
+						foreach ($fields['DEPENDS_ON'] as $linkedTaskId)
+						{
+							$taskService->updateTaskLinks($linkedTaskId, $taskId);
 						}
 					}
 				}
@@ -895,6 +1017,28 @@ class TaskService implements Errorable
 				}
 			}
 
+			$hasLinks = (isset($fields['DEPENDS_ON']) && is_array($fields['DEPENDS_ON']));
+			$hasPrevLinks = (isset($previousFields['DEPENDS_ON']) && is_array($previousFields['DEPENDS_ON']));
+			if ($hasLinks)
+			{
+				$taskService = new TaskService(Util\User::getId());
+
+				foreach ($fields['DEPENDS_ON'] as $linkedTaskId)
+				{
+					$taskService->updateTaskLinks($linkedTaskId, $taskId);
+				}
+
+				if ($hasPrevLinks)
+				{
+					foreach (array_diff($previousFields['DEPENDS_ON'], $fields['DEPENDS_ON']) as $linkedTaskId)
+					{
+						$taskDependence = new \CTaskDependence();
+
+						$taskDependence->delete($linkedTaskId, $taskId);
+					}
+				}
+			}
+
 			$isScrumFieldsUpdated = (
 				(isset($fields['TITLE']) && $fields['TITLE'] !== $previousFields['TITLE'])
 				|| (isset($fields['TAGS']))
@@ -929,8 +1073,8 @@ class TaskService implements Errorable
 				$itemService = new ItemService();
 				$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
-				$parentId = (int)$fields['PARENT_ID'];
-				$oldParentId = (int)$previousFields['PARENT_ID'];
+				$parentId = (int) $fields['PARENT_ID'];
+				$oldParentId = (int) $previousFields['PARENT_ID'];
 				if ($oldParentId)
 				{
 					$parentItem = $itemService->getItemBySourceId($oldParentId);
@@ -963,7 +1107,15 @@ class TaskService implements Errorable
 			}
 			if ($isRenewAction)
 			{
-				self::moveTaskToBacklog($taskId, $currentGroupId);
+				$parentId = (int) $previousFields['PARENT_ID'];
+				if ($parentId && self::isTaskInActiveSprint($parentId, $currentGroupId))
+				{
+					self::moveTaskToActiveSprint($taskId, $currentGroupId);
+				}
+				else
+				{
+					self::moveTaskToBacklog($taskId, $currentGroupId);
+				}
 			}
 			if ($isCompleteAction)
 			{
@@ -982,7 +1134,7 @@ class TaskService implements Errorable
 		return self::$taskItemObject[$taskId];
 	}
 
-	private function getTasksInfo(array $taskIds): array
+	public function getTasksInfo(array $taskIds): array
 	{
 		try
 		{
@@ -1020,7 +1172,7 @@ class TaskService implements Errorable
 		return [];
 	}
 
-	private function getActualParentIds(array $parentIds, int $groupId): array
+	public function getActualParentIds(array $parentIds, int $groupId): array
 	{
 		[$rows, $queryObject] = $this->getList([
 			'select' => ['ID'],
@@ -1113,7 +1265,7 @@ class TaskService implements Errorable
 				$rowCounter = $taskCounter->getRowCounter($taskId);
 
 				$taskCounters[$taskId] = [
-					'color' => $colorMap[$rowCounter['COLOR']],
+					'color' => $colorMap[$rowCounter['COLOR']] ?? 'ui-counter-gray',
 					'value' => $rowCounter['VALUE'],
 				];
 			}
@@ -1242,7 +1394,8 @@ class TaskService implements Errorable
 	{
 		$isActiveSprintItem = false;
 
-		$parentTaskId = $fields['PARENT_ID'];
+		$parentTaskId = $fields['PARENT_ID'] ? $fields['PARENT_ID'] : $previousFields['PARENT_ID'];
+
 		if ($parentTaskId)
 		{
 			$sprintService = new SprintService();
@@ -1250,9 +1403,13 @@ class TaskService implements Errorable
 			$scrumItem = $itemService->getItemBySourceId($parentTaskId);
 			$sprint = $sprintService->getActiveSprintByGroupId($fields['GROUP_ID']);
 			$isActiveSprintItem = ($sprint->getId() === $scrumItem->getEntityId());
+			if ($sprint->isEmpty() || $scrumItem->isEmpty())
+			{
+				$isActiveSprintItem = false;
+			}
 			if ($isActiveSprintItem)
 			{
-				self::createItem($sprint, $taskId, $fields, $previousFields, $scrumItem->getParentId());
+				self::createItem($sprint, $taskId, $fields, $previousFields, $scrumItem->getEpicId());
 			}
 		}
 
@@ -1286,10 +1443,9 @@ class TaskService implements Errorable
 			$createdBy = ($fields['CREATED_BY'] ? $fields['CREATED_BY'] : $previousFields['CREATED_BY']);
 			$scrumItem->setCreatedBy($createdBy);
 			$scrumItem->setEntityId($entity->getId());
-			$scrumItem->setItemType(ItemTable::TASK_TYPE);
 			$scrumItem->setSourceId($taskId);
 			$scrumItem->setSort(1);
-			$scrumItem->setParentId($epicId);
+			$scrumItem->setEpicId($epicId);
 
 			$itemService->createTaskItem($scrumItem, $pushService);
 			if (!$itemService->getErrors() && $entity->isActiveSprint())
@@ -1308,6 +1464,7 @@ class TaskService implements Errorable
 		$isActiveSprintItem = false;
 
 		$parentTaskId = $fields['PARENT_ID'];
+
 		if ($parentTaskId)
 		{
 			$sprintService = new SprintService();
@@ -1315,6 +1472,10 @@ class TaskService implements Errorable
 			$scrumItem = $itemService->getItemBySourceId($parentTaskId);
 			$sprint = $sprintService->getActiveSprintByGroupId($fields['GROUP_ID']);
 			$isActiveSprintItem = ($sprint->getId() === $scrumItem->getEntityId());
+			if ($sprint->isEmpty() || $scrumItem->isEmpty())
+			{
+				$isActiveSprintItem = false;
+			}
 			if ($isActiveSprintItem)
 			{
 				self::updateItem($sprint, $taskId, $fields);
@@ -1342,7 +1503,7 @@ class TaskService implements Errorable
 
 			$scrumItem->setEntityId($entity->getId());
 			$scrumItem->setSort(1);
-			$scrumItem->setParentId(0);
+			$scrumItem->setEpicId(0);
 			$scrumItem->setModifiedBy($fields['CHANGED_BY']);
 			$itemService->changeItem($scrumItem, $pushService);
 			if (!$itemService->getErrors() && $entity->isActiveSprint())
@@ -1361,6 +1522,41 @@ class TaskService implements Errorable
 		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
 		{
 			$itemService->removeItem($scrumItem, $pushService);
+		}
+	}
+
+	private static function isTaskInActiveSprint(int $taskId, int $groupId): bool
+	{
+		$itemService = new ItemService();
+		$sprintService = new SprintService();
+		$scrumItem = $itemService->getItemBySourceId($taskId);
+		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
+		{
+			$sprint = $sprintService->getActiveSprintByGroupId($groupId);
+
+			return ($sprint->getId() === $scrumItem->getEntityId());
+		}
+
+		return false;
+	}
+
+	private static function moveTaskToActiveSprint(int $taskId, int $groupId): void
+	{
+		$itemService = new ItemService();
+		$scrumItem = $itemService->getItemBySourceId($taskId);
+		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
+		{
+			$sprintService = new SprintService();
+			$kanbanService = new KanbanService();
+
+			$sprint = $sprintService->getActiveSprintByGroupId($groupId);
+
+			$scrumItem->setEntityId($sprint->getId());
+
+			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+			$itemService->changeItem($scrumItem, $pushService);
+
+			$kanbanService->addTaskToNewStatus($sprint->getId(), $scrumItem->getSourceId());
 		}
 	}
 

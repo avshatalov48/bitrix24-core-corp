@@ -1,15 +1,14 @@
 import {Dom, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
+import {SidePanel} from '../service/side.panel';
 import {Filter} from '../service/filter';
 
 import {RequestSender} from '../utility/request.sender';
-import {Counters} from '../counters/counters';
 
 import {Tabs} from './header/tabs';
 
 import '../css/base.css';
-import {SidePanel} from "../service/side.panel";
 
 export type ViewInfo = {
 	name: string,
@@ -29,7 +28,8 @@ type Params = {
 	isOwnerCurrentUser: 'Y' | 'N',
 	userId: number,
 	groupId: number,
-	filterId: string
+	filterId: string,
+	pathToTask: string
 }
 
 export class View extends EventEmitter
@@ -57,6 +57,8 @@ export class View extends EventEmitter
 
 		this.userId = parseInt(params.userId, 10);
 		this.groupId = parseInt(params.groupId, 10);
+
+		this.pathToTask = (Type.isString(params.pathToTask) ? params.pathToTask : '');
 	}
 
 	renderTo(container: HTMLElement)
@@ -90,11 +92,24 @@ export class View extends EventEmitter
 		}
 	}
 
-	renderButtonsTo(container: HTMLElement)
+	renderRightElementsTo(container: HTMLElement)
 	{
 		if (!Type.isDomNode(container))
 		{
 			throw new Error('Scrum: HTMLElement for buttons not found');
+		}
+	}
+
+	setDisplayPriority(value: string)
+	{
+		const availableValues = new Set([
+			'backlog',
+			'sprint',
+		]);
+
+		if (!availableValues.has(value))
+		{
+			throw Error('Invalid parameter to set display priority');
 		}
 	}
 
@@ -106,5 +121,10 @@ export class View extends EventEmitter
 	getCurrentGroupId(): number
 	{
 		return this.groupId;
+	}
+
+	getPathToTask(): string
+	{
+		return this.pathToTask;
 	}
 }

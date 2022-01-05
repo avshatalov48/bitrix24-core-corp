@@ -69,7 +69,6 @@ RecentList.init = function()
 
 	this.list = [];
 	this.callList = [];
-	this.counterDetail = {};
 	this.listEmpty = true;
 	this.blocked = {};
 
@@ -92,10 +91,14 @@ RecentList.init = function()
 	this.searchMinTokenLength = BX.componentParameters.get('SEARCH_MIN_SIZE', 3);
 
 	this.messageCount = 0;
+	this.counterDetail = {};
+
+	this.linesCount = 0;
+	this.counterLinesDetail = {};
 
 	this.loadMoreAfterErrorInterval = 5000;
 	this.listRequestAfterErrorInterval = 10000;
-	this.updateCounterInterval = 1000;
+	this.updateCounterInterval = 300;
 
 	this.firstLoadFlag = false;
 	this.loadingFlag = true;
@@ -133,12 +136,10 @@ RecentList.init = function()
 
 	this.push.init();
 	this.queue.init();
-
 	this.search.init();
 	this.event.init();
 	this.cache.init();
 	this.pull.init();
-
 	this.notifier.init();
 
 	if (this.isRecent())
@@ -297,13 +298,19 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 		titleParams.imageUrl = this.imagePath + '/avatar_general_x3.png';
 	}
 
-	if (element.type == 'notification' || dialogId === 'notify')
+	if (element.type === 'notification' || dialogId === 'notify')
 	{
-		if (Application.getApiVersion() < 39 || BX.componentParameters.get('NEXT_NOTIFICATIONS', 'N') === 'N')
+		if (BX.componentParameters.get('NEXT_NAVIGATION', 'N') === 'Y')
 		{
-			let dialogParams = this.getOpenDialogParams(dialogId);
+			if (!PageManager.getNavigator().isActiveTab())
+			{
+				PageManager.getNavigator().makeTabActive();
+			}
+			BX.postComponentEvent("onTabChange", ["notifications"], "im.navigation");
+		}
+		else if (Application.getApiVersion() < 39 || BX.componentParameters.get('NEXT_NOTIFICATIONS', 'N') === 'N')
+		{
 			let pageParams = {
-				data : dialogParams,
 				unique : true,
 				cache: false,
 				url : env.siteDir+"mobile/im/notify.php"
@@ -332,6 +339,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 
 		return true;
 	}
+
 
 	if (Application.getApiVersion() >= 25 && Application.isWebComponentSupported())
 	{
@@ -398,6 +406,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 		});
 
 		let element = this.getElement(dialogId, true);
+
 		if (
 			!RecentList.isOpenlinesRecent()
 			&& Application.getApiVersion() >= 29
@@ -438,6 +447,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 				},
 				background: backgroundConfig
 			};
+			BX.postComponentEvent("onTabChange", ["chats"], "im.navigation");
 		}
 		else
 		{
@@ -459,6 +469,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 					}
 				},
 			};
+			BX.postComponentEvent("onTabChange", ["openlines"], "im.navigation");
 		}
 
 		PageManager.openWebComponent(pageParams);
@@ -629,38 +640,52 @@ RecentList.updateCounter = function(delay)
 	clearTimeout(this.updateCounterTimeout);
 	this.updateCounterTimeout = null;
 
-	this.messageCount = this.list.reduce((sum, element) =>
+	this.messageCount = 0;
+	this.linesCount = 0;
+
+	this.list.forEach(element =>
 	{
 		if (element.type === 'notification')
 		{
 			this.notify.counter = element.counter;
-			return sum;
+			return;
 		}
 
-		delete this.counterDetail[element.id];
-
-		if (element.type === 'chat')
+		if (element.lines)
 		{
-			if (!element.chat.mute_list[this.userId])
-			{
-				sum += element.counter;
-				if (!element.counter && element.unread)
-				{
-					sum += 1;
-				}
-			}
+			delete this.counterLinesDetail[element.id];
 		}
 		else
 		{
-			sum += element.counter;
-			if (!element.counter && element.unread)
-			{
-				sum += 1;
-			}
+			delete this.counterDetail[element.id];
 		}
 
-		return sum;
-	}, 0);
+		if (element.type !== 'chat' || !element.chat.mute_list[this.userId])
+		{
+			let counter = 0;
+
+			if (element.counter)
+			{
+				counter = element.counter;
+			}
+			else if (element.unread)
+			{
+				counter = 1;
+			}
+
+			if (counter)
+			{
+				if (element.lines)
+				{
+					this.linesCount += counter;
+				}
+				else
+				{
+					this.messageCount += counter;
+				}
+			}
+		}
+	});
 
 	for (let dialogId in this.counterDetail)
 	{
@@ -670,22 +695,45 @@ RecentList.updateCounter = function(delay)
 		}
 	}
 
-	if (this.isRecent())
+	for (let dialogId in this.counterLinesDetail)
 	{
-		BX.postComponentEvent("onUpdateBadges", [{
-			'messages' : this.messageCount + this.notify.counter,
-			'notifications' : this.notify.counter
-		}, true], "communication");
+		if (this.counterLinesDetail.hasOwnProperty(dialogId))
+		{
+			this.linesCount += this.counterLinesDetail[dialogId];
+		}
+	}
 
-		BX.postComponentEvent("ImRecent::counter::messages", [this.messageCount+this.notify.counter], "calls");
-	}
-	else
+	if (!this.isRecent())
 	{
-		BX.postComponentEvent("onUpdateBadges", [{
-			'openlines' : this.messageCount,
-		}, true], "communication");
+		return true;
 	}
+
+	let chatsCounter = this.messageCount;
+
+	if (
+		Application.getApiVersion() < 41
+		&& !this.isOpenlinesOperator()
+	)
+	{
+		chatsCounter += this.linesCount;
+		this.linesCount = 0;
+	}
+
+	let counters = {
+		'chats' : chatsCounter,
+		'openlines' : this.linesCount,
+		'notifications' : this.notify.counter
+	};
+
+	BX.postComponentEvent("ImRecent::counter::messages", [chatsCounter], "calls");
+	BX.postComponentEvent("ImRecent::counter::list", [counters], "communication");
+	BX.postComponentEvent("ImRecent::counter::list", [counters], "im.navigation");
 };
+
+RecentList.getTabCode = function()
+{
+	return BX.componentParameters.get('TAB_CODE', 'none');
+}
 
 RecentList.isRecent = function()
 {
@@ -741,10 +789,10 @@ RecentList.dialogOptionInit = function()
 	{
 		dialogList.setSections([
 			{title : '', id : "general", backgroundColor: "#ffffff", sortItemParams:{order: "asc"}},
-			{title : BX.message("OL_SECTION_NEW"), id : "new", backgroundColor: "#ffffff", height: 15, styles : { title: {font: {size:15, color:"#e66467", fontStyle: "medium"}}}, sortItemParams:{order: "asc"}},
+			{title : BX.message("OL_SECTION_NEW"), id : "new", backgroundColor: "#ffffff", height: 30,  styles : { title: {font: {size:16, color:"#e66467", fontStyle: "medium"}}}, sortItemParams:{order: "asc"}},
 			{title : BX.message("OL_SECTION_PIN"), id : "pinned", backgroundColor: "#f6f6f6", sortItemParams:{order: "asc"}},
-			{title : BX.message("OL_SECTION_WORK_2"), id : "work", backgroundColor: "#ffffff", height: 15, styles : { title: {font: {size:15, color:"#225be5", fontStyle: "medium"}}}, sortItemParams:{order: "asc"}},
-			{title : BX.message("OL_SECTION_ANSWERED"), id : "answered", backgroundColor: "#ffffff", height: 15, styles: { title : {font: {size:15, color:"#6EA44E", fontStyle: "medium"}}}, sortItemParams:{order: "desc"}}
+			{title : BX.message("OL_SECTION_WORK_2"), id : "work", backgroundColor: "#ffffff", height: 30, styles : { title: {font: {size:16, color:"#225be5", fontStyle: "medium"}}}, sortItemParams:{order: "asc"}},
+			{title : BX.message("OL_SECTION_ANSWERED"), id : "answered", backgroundColor: "#ffffff", height: 30, styles: { title : {font: {size:16, color:"#6EA44E", fontStyle: "medium"}}}, sortItemParams:{order: "desc"}}
 		]);
 
 		return true;
@@ -807,7 +855,6 @@ RecentList.refresh = function(params)
 	{
 		if (this.lastSyncDate)
 		{
-			recentParams['SKIP_NOTIFICATION'] = 'N';
 			recentParams['LAST_SYNC_DATE'] = this.lastSyncDate;
 		}
 		requestMethods.recent = ['im.recent.get', recentParams];
@@ -943,40 +990,36 @@ RecentList.refresh = function(params)
 			let counters = result.counters.data();
 			console.info("RecentList request: counters", counters);
 
-			if (this.isRecent())
-			{
-				this.counterDetail = counters.dialog;
+			this.counterDetail = counters.dialog;
 
-				for (let chatId in counters.chat)
-				{
-					if (counters.chat.hasOwnProperty(chatId))
-					{
-						this.counterDetail['chat'+chatId] = counters.chat[chatId];
-					}
-				}
-
-				if (!this.isOpenlinesOperator())
-				{
-					for (let chatId in counters.lines)
-					{
-						if (counters.lines.hasOwnProperty(chatId))
-						{
-							this.counterDetail['chat'+chatId] = counters.lines[chatId];
-						}
-					}
-				}
-			}
-			else
+			counters.dialogUnread.forEach(function(dialogId)
 			{
-				for (let chatId in counters.lines)
+				this.counterDetail[dialogId] = 1;
+			}.bind(this));
+
+			counters.chatUnread.forEach(function(chatId)
+			{
+				this.counterDetail['chat'+chatId] = 1;
+			}.bind(this));
+
+			for (let chatId in counters.chat)
+			{
+				if (counters.chat.hasOwnProperty(chatId))
 				{
-					if (counters.lines.hasOwnProperty(chatId))
-					{
-						this.counterDetail['chat'+chatId] = counters.lines[chatId];
-					}
+					this.counterDetail['chat'+chatId] = counters.chat[chatId];
 				}
 			}
 
+			for (let chatId in counters.lines)
+			{
+				if (counters.lines.hasOwnProperty(chatId))
+				{
+					this.counterLinesDetail['chat'+chatId] = counters.lines[chatId];
+				}
+			}
+
+			this.messageCount = counters.type.chat + counters.type.dialog;
+			this.linesCount = counters.type.lines;
 			this.notify.counter = counters.type.notify;
 
 			this.notify.refresh();
@@ -993,14 +1036,6 @@ RecentList.refresh = function(params)
 		if (result.promotion && !promotionError)
 		{
 			this.promotion.promoActive = result.promotion.data();
-		}
-
-		// last search block
-		if (this.isRecent() && result.lastSearch && !lastSearchError)
-		{
-			console.info("RecentList.refresh: update last search", result.lastSearch.data());
-
-			this.search.lastSearchList = ChatDataConverter.getListFormat(result.lastSearch.data());
 		}
 
 		// colleagues list block
@@ -1218,6 +1253,7 @@ RecentList.prepareListWithNewElements = function(newItems)
 	this.list = newList.filter(element => !currentListIndex.includes(element.id)).concat(this.list);
 
 	let listConverted = [];
+
 	this.list.forEach((element) => {
 		listConverted.push(ChatDataConverter.getElementFormat(element));
 	});
@@ -1237,7 +1273,8 @@ RecentList.drawBottomLoader = function()
 		dialogList.removeItem({"params.id" : "empty"});
 	}
 
-	dialogList.addItems(this.getLoadingElement());
+	let animate = Application.getApiVersion() >= 39;
+	dialogList.addItems(this.getLoadingElement(), animate);
 
 	return true;
 };
@@ -1253,7 +1290,8 @@ RecentList.removeBottomLoader = function()
 
 	if (this.listEmpty)
 	{
-		dialogList.addItems(this.getEmptyElement());
+		let animate = Application.getApiVersion() >= 39;
+		dialogList.addItems(this.getEmptyElement(), animate);
 	}
 
 	return true;
@@ -1270,6 +1308,8 @@ RecentList.loadMoreAfterTimeout = function()
 
 RecentList.clearAllCounters = function()
 {
+	this.counterDetail = {};
+
 	if (this.viewLoaded)
 	{
 		let newList = [...this.callList];
@@ -1292,7 +1332,6 @@ RecentList.clearAllCounters = function()
 		});
 	}
 
-	this.notify.counter = 0;
 	this.updateCounter(false);
 	this.cache.update({recent: true});
 };
@@ -1643,6 +1682,11 @@ RecentList.drawCall = function(call)
 
 RecentList.drawCallNative = function(element)
 {
+	if (!this.viewLoaded)
+	{
+		return false;
+	}
+
 	dialogList.findItem({id: element.id}, (find) =>
 	{
 		if (find)
@@ -1651,7 +1695,8 @@ RecentList.drawCallNative = function(element)
 		}
 		else
 		{
-			dialogList.addItems([element]);
+			let animate = Application.getApiVersion() >= 39;
+			dialogList.addItems([element], animate);
 		}
 	});
 }
@@ -1784,28 +1829,6 @@ RecentList.cache.init = function ()
 		this.base.redraw();
 	}
 
-	let executeTimeLastSearch = new Date();
-	this.database.table(ChatTables.lastSearch).then(table =>
-	{
-		table.get().then(items =>
-		{
-			if (items.length > 0)
-			{
-				let cacheData = JSON.parse(items[0].VALUE);
-
-				if (this.search.lastSearchList.length > 0)
-				{
-					console.info("RecentList.cache.init: cache file \"last search\" has been ignored because it was loaded a very late");
-					return false
-				}
-
-				this.search.lastSearchList = ChatDataConverter.getListFormat(cacheData.recent);
-
-				console.info("RecentList.cache.init: list items load from cache \"last search\" ("+(new Date() - executeTimeLastSearch)+'ms)', "count: "+this.search.lastSearchList.length);
-			}
-		})
-	});
-
 	let executeTimeColleaguesList = new Date();
 	this.database.table(ChatTables.colleaguesList).then(table =>
 	{
@@ -1914,19 +1937,6 @@ RecentList.cache.update = function (params)
 			});
 		}
 
-		if (params.lastSearch)
-		{
-			this.database.table(ChatTables.lastSearch).then(table =>
-			{
-				table.delete().then(() =>
-				{
-					table.add({value : {recent: this.search.lastSearchList}}).then(() =>
-					{
-						console.info("RecentList.cache.update: last search items updated ("+(new Date() - executeTimeLastSearch)+'ms)', "count: "+this.search.lastSearchList.length);
-					});
-				})
-			});
-		}
 	}, this.updateInterval);
 
 	return true;
@@ -2049,6 +2059,11 @@ RecentList.push.updateList = function()
 
 RecentList.push.updateNotificationList = function()
 {
+	if (!this.base.isRecent())
+	{
+		return false;
+	}
+
 	const pushList = this.notifyManager.get();
 	if (!pushList || pushList.length <= 0)
 	{
@@ -2194,6 +2209,10 @@ RecentList.push.actionExecute = function()
 		{
 			this.base.openDialog('chat' + chatId, null, true);
 		}
+	}
+	else if (pushParams.ACTION && pushParams.ACTION === 'IM_NOTIFY')
+	{
+		this.base.openDialog('notify');
 	}
 
 	return true;
@@ -2394,12 +2413,18 @@ RecentList.pull.eventExecute = function(data)
 		console.warn("RecentList.pull.eventExecute: receive \""+command+"\"", params);
 	}
 
-	if (command == 'message' || command == 'messageChat')
+	if (command === 'message' || command === 'messageChat')
 	{
 		if (this.base.isRecent())
 		{
-			if (command == 'messageChat' && params.chat[params.chatId].type == 'lines' && this.base.isOpenlinesOperator())
+			if (
+				command === 'messageChat'
+				&& params.lines
+				&& this.base.isOpenlinesOperator()
+			)
 			{
+				this.base.counterLinesDetail[params.dialogId] = params.counter;
+				this.base.updateCounter();
 				return false;
 			}
 
@@ -2437,6 +2462,15 @@ RecentList.pull.eventExecute = function(data)
 
 		params.message.text = ChatMessengerCommon.purifyText(params.message.text, params.message.params);
 		params.message.status = params.message.senderId == this.base.userId? 'received': '';
+
+		if (params.lines)
+		{
+			delete this.base.counterLinesDetail[params.dialogId];
+		}
+		else
+		{
+			delete this.base.counterDetail[params.dialogId];
+		}
 
 		if (command == 'message')
 		{
@@ -2609,14 +2643,14 @@ RecentList.pull.eventExecute = function(data)
 			return false;
 		}
 
-		if (
-			this.base.isRecent() && !params.lines
-			|| this.base.isRecent() && params.lines && !this.base.isOpenlinesOperator()
-			|| this.base.isOpenlinesRecent() && params.lines
-		)
+		if (params.lines)
+		{
+			this.base.counterLinesDetail[params.dialogId] = params.counter;
+			this.base.updateCounter(false);
+		}
+		else
 		{
 			this.base.counterDetail[params.dialogId] = params.muted? 0: params.counter;
-			this.base.updateCounter(false);
 		}
 
 		this.base.updateElement(params.dialogId, {
@@ -2695,11 +2729,6 @@ RecentList.pull.eventExecute = function(data)
 			title: params.name,
 			chat: { name: params.name}
 		});
-
-		this.search.updateElement('chat'+params.chatId, {
-			title: params.name,
-			chat: { name: params.name}
-		});
 	}
 	else if (command == 'chatAvatar')
 	{
@@ -2707,19 +2736,10 @@ RecentList.pull.eventExecute = function(data)
 			avatar: {url: params.avatar},
 			chat: {avatar: params.avatar}
 		});
-
-		this.search.updateElement('chat'+params.chatId, {
-			avatar: {url: params.avatar},
-			chat: {avatar: params.avatar}
-		});
 	}
 	else if (command == 'chatChangeColor')
 	{
 		this.base.updateElement('chat'+params.chatId, {
-			avatar: {color: params.color},
-			chat: {color: params.color}
-		});
-		this.search.updateElement('chat'+params.chatId, {
 			avatar: {color: params.color},
 			chat: {color: params.color}
 		});
@@ -2754,7 +2774,6 @@ RecentList.pull.eventExecute = function(data)
 		}
 
 		this.base.updateElement('chat'+params.chatId, params);
-		this.search.updateElement('chat'+params.chatId, params);
 	}
 	else if (command == 'chatMuteNotify')
 	{
@@ -2774,16 +2793,26 @@ RecentList.pull.eventExecute = function(data)
 		this.base.updateElement(params.dialogId, {
 			chat: { mute_list: muteList }
 		});
-		this.search.updateElement(params.dialogId, {
-			chat: { mute_list: muteList }
-		});
 	}
 	else if (command == 'chatHide')
 	{
+		delete this.base.counterLinesDetail[params.dialogId];
+		delete this.base.counterDetail[params.dialogId];
+
 		this.base.deleteElement(params.dialogId);
+		this.base.updateCounter();
 	}
 	else if (command == 'chatShow')
 	{
+		if (params.lines)
+		{
+			this.base.counterLinesDetail[params.dialogId] = 0;
+		}
+		else
+		{
+			this.base.counterDetail[params.dialogId] = 0;
+		}
+
 		if (this.base.isRecent())
 		{
 			if (params.lines && this.base.isOpenlinesOperator())
@@ -2821,16 +2850,16 @@ RecentList.pull.eventExecute = function(data)
 	}
 	else if (command == 'chatUnread')
 	{
-		if (
-			this.base.isRecent() && !params.lines
-			|| this.base.isRecent() && params.lines && !this.base.isOpenlinesOperator()
-			|| this.base.isOpenlinesRecent() && params.lines
-		)
+		if (params.lines)
 		{
-			this.base.counterDetail[params.dialogId] = params.muted? 0: params.counter;
-			this.base.updateCounter(false);
+			this.base.counterLinesDetail[params.dialogId] = params.muted? 0: (params.counter? params.counter: 1);
+		}
+		else
+		{
+			this.base.counterDetail[params.dialogId] = params.muted? 0: (params.counter? params.counter: 1);
 		}
 
+		this.base.updateCounter(false);
 		this.base.updateElement(params.dialogId, {
 			unread: params.active,
 		});
@@ -2842,15 +2871,18 @@ RecentList.pull.eventExecute = function(data)
 			return false;
 		}
 		this.base.deleteElement(params.botId);
-		this.search.deleteElement(params.botId);
 	}
 	else if (command == 'chatUserLeave')
 	{
 		if (params.userId == this.base.userId)
 		{
-			this.base.deleteElement('chat'+params.chatId);
-			this.search.deleteElement('chat'+params.chatId);
+			this.base.deleteElement(params.dialogId);
 		}
+
+		delete this.base.counterLinesDetail[params.dialogId];
+		delete this.base.counterDetail[params.dialogId];
+
+		this.base.updateCounter(false);
 	}
 	else if (
 		command == 'userUpdate'
@@ -2864,10 +2896,6 @@ RecentList.pull.eventExecute = function(data)
 			return false;
 		}
 		this.base.updateElement(params.user.id, this.getFormattedElement({
-			id: params.user.id,
-			user: params.user,
-		}));
-		this.search.updateElement(params.user.id, this.getFormattedElement({
 			id: params.user.id,
 			user: params.user,
 		}));
@@ -2945,50 +2973,6 @@ RecentList.pull.eventExecute = function(data)
 				const notifyStoredEvent = ChatUtils.objectClone(params);
 				this.notifyStoredEvents = this.notifyStoredEvents.filter(element => element.id !== notifyStoredEvent.id);
 				this.notifyStoredEvents.push(notifyStoredEvent);
-
-				let elem = this.base.getElement('notify');
-				if (elem)
-				{
-					this.base.updateElement('notify', {
-						counter: params.counter,
-						message: {
-							author_id: params.userId,
-							date: params.date,
-							id: params.id,
-							text: params.text_converted,
-							params: params.params
-						},
-						user: {
-							id: params.userId,
-							name: userName,
-							first_name: firstName,
-							last_name: lastName
-						},
-					});
-				}
-				else
-				{
-					this.base.setElement('notify', {
-						id: 'notify',
-						type: 'notification',
-						counter: params.counter,
-						message: {
-							author_id: params.userId,
-							date: params.date,
-							id: params.id,
-							text: params.text
-						},
-						user: {
-							id: params.userId,
-							name: userName,
-							first_name: firstName,
-							last_name: lastName
-						},
-						avatar: {
-							url: this.base.imagePath + '/avatar_notify_x3.png',
-						}
-					});
-				}
 			}
 
 			if (extra && extra.server_time_ago <= 5)
@@ -3010,9 +2994,6 @@ RecentList.pull.eventExecute = function(data)
 			{
 				this.notify.refresh();
 			}
-			this.base.updateElement('notify', {
-				counter: params.counter
-			});
 		}
 	}
 };
@@ -3151,7 +3132,8 @@ RecentList.queue.worker = function()
 			this.base.closeEmptyScreen();
 		}
 
-		dialogList.addItems(listAdd);
+		let animate = Application.getApiVersion() >= 39;
+		dialogList.addItems(listAdd, animate);
 	}
 
 	let listUpdate = [];
@@ -3446,9 +3428,9 @@ RecentList.topMenu.init = function()
 		}
 	);
 
-	dialogList.setRightButtons([{type: "search", callback: ()=> {
-		dialogList.showSearchBar()
-	}}, {type: "more", callback: ()=> {
+	dialogList.setRightButtons([{type: "search", callback: () => {
+		dialogList.showSearchBar();
+	}}, {type: "more", callback: () => {
 		topMenuInstance.show();
 	}}]);
 
@@ -3459,12 +3441,12 @@ RecentList.topMenu.onReadAll = function()
 {
 	this.base.clearAllCounters();
 
-	BX.rest.callMethod('im.dialog.readAll')
+	BX.rest.callMethod('im.dialog.read.all')
 		.then(result => {
-			console.log('im.dialog.readAll result:', result);
+			console.log('im.dialog.read.all result:', result);
 		})
 		.catch(error => {
-			console.log('im.dialog.readAll error:', error);
+			console.log('im.dialog.read.all error:', error);
 		})
 	;
 };
@@ -3769,7 +3751,12 @@ RecentList.action.inviteResend = function(elementId)
 		  userId: elementId
 	   }
 	}}).then((response) => {
-		if (response.status == 'error')
+		InAppNotifier.showNotification({
+			backgroundColor: "#E6000000",
+			message: BX.message('INVITE_RESEND_DONE')
+		});
+	}, (response) => {
+		if (response.status === 'error')
 		{
 			InAppNotifier.showNotification({
 				backgroundColor: "#E6000000",
@@ -3780,14 +3767,9 @@ RecentList.action.inviteResend = function(elementId)
 		{
 			InAppNotifier.showNotification({
 				backgroundColor: "#E6000000",
-				message: BX.message('INVITE_RESEND_DONE')
+				message: BX.message('IM_LIST_ACTION_ERROR')
 			});
 		}
-	}, (response) => {
-		InAppNotifier.showNotification({
-			backgroundColor: "#E6000000",
-			message: BX.message('IM_LIST_ACTION_ERROR')
-		});
 	});
 
 	return true;
@@ -3808,25 +3790,24 @@ RecentList.action.inviteCancel = function(elementId)
 		  userId: elementId
 	   }
 	}}).then((response) => {
+		this.base.unblockElement(elementId);
+	}, (response) => {
 		if (response.status == 'error')
 		{
 			InAppNotifier.showNotification({
 				backgroundColor: "#E6000000",
 				message: response.errors.map(element => element.message).join('. ')
 			});
-			this.base.unblockElement(elementId, true);
 		}
 		else
 		{
-			this.base.unblockElement(elementId);
+			InAppNotifier.showNotification({
+				backgroundColor: "#E6000000",
+				message: BX.message('IM_LIST_ACTION_ERROR')
+			});
 		}
-	}, (response) => {
-		this.base.unblockElement(elementId, true);
 
-		InAppNotifier.showNotification({
-			backgroundColor: "#E6000000",
-			message: BX.message('IM_LIST_ACTION_ERROR')
-		});
+		this.base.unblockElement(elementId, true);
 	});
 
 	return true;
@@ -4020,11 +4001,11 @@ RecentList.event.init = function ()
 		onItemAction : this.onItemAction,
 		onRefresh : this.onRefresh,
 		onScrollAtTheTop : this.onScrollAtTheTop,
-		onSearchShow : this.onSearchShow,
-		onSearchHide : this.onSearchHide,
-		onScopeSelected : this.onScopeSelected,
-		onUserTypeText : this.onSearchTextType,
-		onSearchItemSelected : this.onSearchItemSelected,
+		onSearchShow: this.search.onSearchShow,
+		onSearchHide: this.search.onSearchHide,
+		onScopeSelected : this.search.ui.onScopeSelected,
+		onUserTypeText : this.search.ui.onUserTypeText,
+		onSearchItemSelected : this.search.ui.onSearchItemSelected,
 		onScroll: ChatUtils.throttle(this.onScroll, 50, this),
 	};
 
@@ -4058,7 +4039,15 @@ RecentList.event.router = function(eventName, listElement)
 		{
 			console.log('RecentList.event.router: catch event - '+eventName, listElement);
 		}
-		this.handlersList[eventName].apply(this, [listElement])
+
+		if (eventName === 'onScopeSelected' || eventName === 'onUserTypeText' || eventName === 'onSearchItemSelected')
+		{
+			this.handlersList[eventName].apply(this.search.ui, [listElement]);
+		}
+		else
+		{
+			this.handlersList[eventName].apply(this, [listElement]);
+		}
 	}
 	else if (this.debug)
 	{
@@ -4099,10 +4088,7 @@ RecentList.event.onDialogCounterChange = function(event)
 
 RecentList.event.onNotificationReadAll = function(event) {
 	console.info('RecentList.event.onNotificationReadAll');
-	this.base.updateElement('notify', {
-		unread: false,
-		counter: 0
-	}, true);
+	this.notify.counter = 0;
 };
 
 RecentList.event.onReadMessage = function(taskId, result)
@@ -4226,10 +4212,6 @@ RecentList.event.onItemAction = function(listElement)
 	{
 		this.action.operatorSpam(listElement.item.params.id, false);
 	}
-	else
-	{
-		this.search.onItemAction(listElement);
-	}
 };
 
 RecentList.event.onRefresh = function()
@@ -4247,53 +4229,6 @@ RecentList.event.onScrollAtTheTop = function()
 	dialogList.toggleSearchBar();
 
 	return true;
-};
-
-RecentList.event.onSearchShow = function()
-{
-	this.search.onSearchShow();
-};
-
-RecentList.event.onSearchHide = function()
-{
-	this.search.onSearchHide();
-};
-
-RecentList.event.onSearchTextType = function(event)
-{
-	let text = event.text.trim();
-	if (!text)
-	{
-		this.search.onSearchShow();
-		this.search.onSearchHide();
-	}
-	else
-	{
-		ChatSearchScopes.find(text);
-
-		if (!this.search.isScopeSetted)
-		{
-			dialogList.setSearchScopes([
-				{ title: BX.message('IM_SCOPE_USERS'), id: ChatSearchScopes.TYPE_USER },
-				{ title: BX.message('IM_SCOPE_CHATS'), id: ChatSearchScopes.TYPE_CHAT },
-				{ title: BX.message('IM_SCOPE_DEPARTMENTS'), id: ChatSearchScopes.TYPE_DEPARTMENT }
-			]);
-			this.search.isScopeSetted = true;
-		}
-	}
-};
-
-RecentList.event.onSearchItemSelected = function(listElement)
-{
-	this.search.onSearchItemSelected(listElement);
-};
-
-RecentList.event.onScopeSelected = function(event)
-{
-	console.log('RecentList.event.onScopeSelected', event);
-	this.search.listType = event.id;
-	ChatSearchScopes.setType(event.id);
-	this.onSearchTextType({text: ChatSearchScopes.result.text})
 };
 
 RecentList.event.onScroll = function(event)
@@ -4420,20 +4355,6 @@ RecentList.chatCreate.prepareItems = function ()
 		items.push(element);
 	});
 
-	this.search.lastSearchList.map(element =>
-	{
-		if (!element || itemsIndex[element.id])
-		{
-			return false;
-		}
-
-		if (element.type == 'user')
-		{
-			items.push(element.user);
-			itemsIndex[element.id] = true;
-		}
-	});
-
 	return items;
 };
 
@@ -4442,290 +4363,85 @@ RecentList.search = {};
 
 RecentList.search.init = function ()
 {
-	this.listType = ChatSearchScopes.TYPE_USER;
-
-	this.lastSearchList = [];
-
-	this.isScopeSetted = false;
-
-	ChatSearchScopes.init({
-		listType: this.listType,
-		dataConverterInited: true,
-		minTokenLength: this.base.searchMinTokenLength,
-		onDrawSearchResult: this.drawSearchResult.bind(this)
-	});
-	ChatSearchScopes.setList([], ChatSearchScopes.TYPE_USER);
-
-	ChatSearchScopes.setExternalSearchEnable(true, ChatSearchScopes.TYPE_CHAT);
-	ChatSearchScopes.setList([], ChatSearchScopes.TYPE_CHAT);
-
-	ChatSearchScopes.setList([], ChatSearchScopes.TYPE_DEPARTMENT);
-	ChatSearchScopes.setMinTokenLength(1, ChatSearchScopes.TYPE_DEPARTMENT);
+	this.selector = null;
+	this.ui = new SelectorListAdapter(dialogList);
 };
 
-RecentList.search.prepareItems = function ()
+RecentList.search.onSearchShow = function ()
 {
-	let users = [];
-	let chats = [];
-	let usersIndex = {};
-
-	if (
-		!ChatSearchScopes.list[ChatSearchScopes.TYPE_USER].length
-		|| !ChatSearchScopes.list[ChatSearchScopes.TYPE_CHAT].length
-	)
-	{
-		if (this.base.list.length > 0)
-		{
-			this.base.list.map(element =>
-			{
-				if (!element || usersIndex[element.id])
-				{
-					return false;
-				}
-				if (element.type == 'user')
-				{
-					users.push(element.user);
-					usersIndex[element.id] = true;
-				}
-				else if (element.type == 'chat')
-				{
-					chats.push(element.chat);
-				}
-
-				return true;
-			});
+	this.selector = new ChatSelector({
+		context: 'IM_CHAT_SEARCH',
+		ui: this.search.ui,
+		providerOptions: {
+			customItems: [
+				this.search.getUserCarouselItem(),
+			]
 		}
-	}
+	});
 
-	if (!ChatSearchScopes.list[ChatSearchScopes.TYPE_USER].length)
+	this.selector
+		.setSingleChoose(true)
+		.open()
+	;
+
+	//hack to work on old android clients
+	this.selector.onResult = chat => {
+		this.selector.resolve(chat);
+		this.search.openChat(chat);
+	}
+};
+
+RecentList.search.openChat = function (chat)
+{
+	const dialogId = chat.id;
+	const dialogParams = {
+		name: chat.name,
+		avatar: chat.avatar,
+		description: chat.description,
+	};
+
+	// TODO: delete when the mobile chat learns about open lines, call chats and others.
+	if (chat.customData['imChat'])
 	{
-		this.base.colleaguesList.map(element =>
+		if (chat.customData['imChat'].TYPE === 'open')
 		{
-			if (!element || usersIndex[element.id])
-			{
-				return false;
-			}
-
-			users.push(element);
-		});
-	}
-
-	if (
-		!ChatSearchScopes.list[ChatSearchScopes.TYPE_USER].length
-		|| !ChatSearchScopes.list[ChatSearchScopes.TYPE_CHAT].length
-	)
-	{
-		this.lastSearchList.map(element =>
-		{
-			if (!element || usersIndex[element.id])
-			{
-				return false;
-			}
-
-			if (element.type == 'user')
-			{
-				users.push(element.user);
-				usersIndex[element.id] = true;
-			}
-			else if (element.type == 'chat')
-			{
-				chats.push(element.chat);
-			}
-		});
-	}
-
-	if (!ChatSearchScopes.list[ChatSearchScopes.TYPE_USER].length)
-	{
-		ChatSearchScopes.setList(users, ChatSearchScopes.TYPE_USER);
-	}
-
-	if (!ChatSearchScopes.list[ChatSearchScopes.TYPE_CHAT].length)
-	{
-		ChatSearchScopes.setList(chats, ChatSearchScopes.TYPE_CHAT);
-	}
-};
-
-RecentList.search.drawSearchResult = function (items, sections)
-{
-	console.log('RecentList.search.drawSearchResult', items);
-	dialogList.setSearchResultItems(items, sections);
-};
-
-RecentList.search.updateElement = function (dialogId, params)
-{
-	ChatSearchScopes.updateElement(dialogId, params);
-
-	let index = this.lastSearchList.findIndex((listElement) => listElement && listElement.id == dialogId);
-	if (index > -1)
-	{
-		this.lastSearchList[index] = ChatUtils.objectMerge(this.lastSearchList[index], params);
-	}
-
-	return true;
-};
-
-RecentList.search.deleteElement = function (dialogId)
-{
-	ChatSearchScopes.deleteElement(dialogId);
-
-	let index = this.lastSearchList.findIndex((listElement) => listElement && listElement.id == dialogId);
-	if (index > -1)
-	{
-		delete this.lastSearchList[index];
-	}
-
-	return true;
-};
-
-RecentList.search.lastSearchAdd = function(dialogId)
-{
-	let isExists = !this.lastSearchList.every(element => !(element.id == dialogId));
-	if (isExists)
-	{
-		return true;
-	}
-
-	let elementScope = ChatSearchScopes.listType == ChatSearchScopes.TYPE_CHAT? ChatSearchScopes.TYPE_CHAT: ChatSearchScopes.TYPE_USER;
-	let elementId = elementScope == ChatSearchScopes.TYPE_CHAT? dialogId.toString().substr(4): dialogId;
-
-	let item = ChatSearchScopes.getElement(elementId, elementScope);
-	if (item)
-	{
-		if (elementScope == ChatSearchScopes.TYPE_USER)
-		{
-			item = {
-				id: item.id,
-				type: "user",
-				avatar: {url: item.avatar, color: item.color},
-				title: item.name,
-				user: item
-			};
+			dialogParams.description = BX.message('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE');
 		}
 		else
 		{
-			item = {
-				id: item.id,
-				type: "chat",
-				avatar: {url: item.avatar, color: item.color},
-				title: item.name,
-				user: {},
-				chat: item
-			};
+			dialogParams.description = BX.message('MOBILE_EXT_CHAT_SELECTOR_GROUP_SUBTITLE');
 		}
 	}
-	else
+	else if (
+		chat.customData['imBot']
+		&& chat.customData['imUser']
+		&& typeof chat.customData['imUser'].WORK_POSITION === 'string'
+		&& chat.customData['imUser'].WORK_POSITION !== ''
+	)
 	{
-		item = this.base.getElement(dialogId, true);
-		if (!item)
-		{
-			return false;
-		}
+		dialogParams.description = chat.customData['imUser'].WORK_POSITION;
 	}
 
-	this.lastSearchList.unshift(item);
-	this.cache.update({lastSearch: true});
-
-	BX.rest.callMethod('im.search.last.add', {'DIALOG_ID': dialogId});
-
-	return true;
+	this.base.openDialog(dialogId, dialogParams);
 };
 
-RecentList.search.lastSearchDelete = function(dialogId)
-{
-	BX.rest.callMethod('im.search.last.delete', {'DIALOG_ID': dialogId}).then((result) =>
-	{
-		if (result.data())
-		{
-			this.lastSearchList.every((element, index) => {
-				if (element.id == dialogId)
-				{
-					delete this.lastSearchList[index];
-					return false;
-				}
-				return true;
-			});
-			this.cache.update({lastSearch: true});
-		}
-	});
-};
-
-RecentList.search.searchDepartmentEmployees = function (departmentId, departmentTitle)
-{
-	ChatSearchScopes.onDrawSearchResult([
-		{title : BX.message("SEARCH"), type : "loading", unselectable: true, sectionCode: ChatSearchScopes.TYPE_DEPARTMENT_USER, params: { action: 'progress'}}
-	], [{
-		title : BX.message(`SEARCH_CATEGORY_${ChatSearchScopes.TYPE_DEPARTMENT_USER}`),
-		id : ChatSearchScopes.TYPE_DEPARTMENT_USER,
-		backgroundColor : "#FFFFFF"
-	}]);
-
-	BX.rest.callMethod('im.department.employees.get', {ID: [departmentId], USER_DATA: 'Y'}, null, (xhr) => {
-		ChatRestRequest.register('search', xhr);
-	}).then(result => {
-		let items = [
-			{title : BX.message("SEARCH_BACK"), sectionCode: ChatSearchScopes.TYPE_DEPARTMENT_USER, type:"button", unselectable: true, params: { action: 'empty'}}
-		];
-		if (result.answer.result[departmentId])
-		{
-			result.answer.result[departmentId].map((element) => {
-				let item = ChatDataConverter.getListElementByUser(element);
-				item.sectionCode = ChatSearchScopes.TYPE_DEPARTMENT_USER;
-				items.push(item);
-			});
-
-			ChatSearchScopes.indexItems(result.answer.result[departmentId], ChatSearchScopes.TYPE_USER);
-		}
-		else
-		{
-			items.push(
-				{title : BX.message("SEARCH_EMPTY").replace("#TEXT#", departmentTitle), sectionCode: ChatSearchScopes.TYPE_DEPARTMENT_USER, type:"button", unselectable: true, params: { action: 'empty'}}
-			);
-		}
-
-		ChatSearchScopes.onDrawSearchResult(items, [{
-			title : BX.message(`SEARCH_CATEGORY_${ChatSearchScopes.TYPE_DEPARTMENT_USER}`),
-			id : ChatSearchScopes.TYPE_DEPARTMENT_USER,
-			backgroundColor : "#FFFFFF"
-		}]);
-	});
-};
-
-RecentList.search.stopSearchDepartmentEmployees = function()
-{
-
-};
-
-RecentList.search.onSearchShow = function()
-{
-	let items = [];
-	let sections = [];
-
-	// Temporarily add notification chat to user list in search
-	//TODO: remove
-	let employees = [
-		{
-			id: 'notify',
-			type: 'notification',
-			title: BX.message("NOTIFICATION_TITLE"),
-			imageUrl: this.base.imagePath + '/avatar_notify_x2.png',
-			params: {action: 'item', id: 'notify'}
-		}
-	];
+RecentList.search.getUserCarouselItem = function() {
+	let employees = [];
 	let employeesIndex = {};
 
 	if (this.base.list.length > 0)
 	{
-		this.base.list.map(element =>
-		{
+		this.base.list.map(element => {
 			if (!element)
 			{
 				return false;
 			}
-			if (element.type == 'user')
+
+			if (element.type === 'user')
 			{
 				let item = ChatDataConverter.getSearchElementFormat(element, true);
-				item.title = item.shortTitle;
-				item.params.action = 'item';
+				item = this.getChatProviderItem(item);
+
 				employees.push(item);
 				employeesIndex[element.id] = true;
 			}
@@ -4742,98 +4458,35 @@ RecentList.search.onSearchShow = function()
 		}
 
 		let item = ChatDataConverter.getSearchElementFormat(element);
-		item.title = item.shortTitle;
-		item.params.action = 'item';
+		item = this.getChatProviderItem(item);
+
 		employees.push(item);
 
 		return true;
 	});
 
-	employees = employees.filter((element) => element.id != this.base.userId);
+	return {
+		type: 'carousel',
+		sectionCode: 'custom',
+		childItems: employees.filter(element => element.userId != this.base.userId),
+		hideBottomLine: true,
+	};
+}
 
-	if (employees.length)
-	{
-		sections.push({title : BX.message("SEARCH_EMPLOYEES"), id : "user", backgroundColor : "#FFFFFF"});
-		items.push({type : "carousel", sectionCode : "user", childItems : employees});
-	}
-
-	if (this.lastSearchList.length)
-	{
-		let recent = [];
-		this.lastSearchList.map(element =>
-		{
-			if (!element)
-			{
-				return false;
-			}
-
-			recent.push(ChatDataConverter.getSearchElementFormat(element, true));
-		});
-
-		items = items.concat(recent);
-		sections.push({title : BX.message("SEARCH_RECENT"), id : "recent", backgroundColor : "#FFFFFF"});
-	}
-
-	this.drawSearchResult(items, sections);
-
-	this.prepareItems();
-};
-
-RecentList.search.onSearchHide = function()
+RecentList.search.getChatProviderItem = function (item)
 {
-	ChatSearchScopes.clear();
+	item.title = item.shortTitle;
+	item.userId = item.id;
+	item.id = 'custom/' + item.id;
+	item.type = 'info';
 
-	dialogList.setSearchScopes([]);
-	this.isScopeSetted = false;
+	return item;
+}
 
-	this.listType = ChatSearchScopes.TYPE_USER;
-	ChatSearchScopes.setType(ChatSearchScopes.TYPE_USER);
-};
-
-RecentList.search.onItemAction = function(listElement)
+RecentList.search.onSearchHide = function ()
 {
-	if (listElement.action.identifier === "delete")
-	{
-		this.lastSearchDelete(listElement.item.params.id)
-	}
+
 };
-
-RecentList.search.onSearchItemSelected = function(listElement)
-{
-	ChatSearchScopes.selectElement(listElement);
-
-	if (listElement.sectionCode == ChatSearchScopes.TYPE_DEPARTMENT_USER && listElement.params.action != 'item')
-	{
-		this.event.onSearchTextType({text: ChatSearchScopes.result.text})
-	}
-	else if (listElement.sectionCode == ChatSearchScopes.TYPE_DEPARTMENT)
-	{
-		if (listElement.params.action != 'item')
-			return true;
-
-		this.searchDepartmentEmployees(listElement.params.id.substr(10), listElement.subtitle);
-	}
-	else
-	{
-		if (listElement.params.action != 'item')
-			return true;
-
-		this.base.openDialog(listElement.params.id, {
-			name: listElement.title,
-			description: listElement.subtitle,
-			avatar: listElement.imageUrl
-		});
-
-		//TODO: remove
-		if (listElement.id !== 'notify')
-		{
-			this.lastSearchAdd(listElement.params.id);
-		}
-	}
-
-	return true;
-};
-
 
 /* Initialization */
 RecentList.init();

@@ -407,32 +407,7 @@ BX.namespace('BX.TimeControl');
 				number = number*-1;
 			}
 
-			var langId = BX.message('LANGUAGE_ID') || 'en';
-			var pluralForm = 0;
-
-			if (langId)
-			{
-				switch (langId)
-				{
-					case 'de':
-					case 'en':
-						pluralForm = ((number !== 1) ? 1 : 0);
-					break;
-
-					case 'ru':
-					case 'ua':
-						pluralForm = (((number%10 === 1) && (number%100 !== 11)) ? 0 : (((number%10 >= 2) && (number%10 <= 4) && ((number%100 < 10) || (number%100 >= 20))) ? 1 : 2));
-					break;
-
-					default:
-						pluralForm = 1;
-					break;
-				}
-			}
-			else
-			{
-				pluralForm = 1;
-			}
+			var pluralForm = BX.Loc.getPluralForm(number);
 
 			return BX.message((messageId.toString().replace('#FORM#', pluralForm.toString()))).replace('#NUMBER#', number);
 		},

@@ -3,6 +3,7 @@
 namespace Bitrix\Mobile;
 
 use Bitrix\Main\Authentication\ApplicationPasswordTable;
+use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
 
 class Auth
@@ -25,7 +26,7 @@ class Auth
 
 	public static function getOneTimeAuthHash(int $userId = null)
 	{
-		$path = "/mobile/";
+		$path = '/mobile/';
 
 		if (!$userId)
 		{
@@ -60,14 +61,9 @@ class Auth
 				$dbResult = $DB->Query("DELETE FROM b_user_hit_auth WHERE ${where}");
 				if ($dbResult->result && $dbResult->AffectedRowsCount())
 				{
-					if(Loader::includeModule("pull"))
-					{
-						\CPullStack::AddByUser($userId,
-							array(
-								"module_id" => "mobile",
-								"command" => "oneTimeHashRemoved"
-							)
-						);
+					$handlers = EventManager::getInstance()->findEventHandlers('mobile', 'oneTimeHashRemoved');
+					foreach ($handlers as $handler) {
+						ExecuteModuleEventEx($handler, array($userId, $hash));
 					}
 
 					return true;

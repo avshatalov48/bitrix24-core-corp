@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["KANBAN_SORT_TITLE_MY"] = "Сортировка:";
 $MESS["KANBAN_SORT_TITLE"] = "Новые задачи:";
 $MESS["KANBAN_SORT_DESC"] = "Сверху";
@@ -24,5 +24,6 @@ $MESS["KANBAN_ITEM_TITLE_PLACEHOLDER"] = "Название #тег";
 $MESS["KANBAN_COLUMN_TITLE_PLACEHOLDER"] = "Название";
 $MESS["KANBAN_SPOTLIGHT_GROUPS"] = "Выберите проект";
 $MESS["TASKS_CLOSE_PAGE_CONFIRM"] = "Возможно, внесенные изменения не сохранятся.";
-$MESS["KANBAN_NO_ACTIVE_SPRINT"] = "У вас нет ни одного активного спринта, создайте первый из планирования";
+$MESS["KANBAN_NO_ACTIVE_SPRINT"] = "У вас нет ни одного активного спринта";
+$MESS["KANBAN_NO_COMPLETED_SPRINT"] = "У вас нет ни одного завершённого спринта";
 ?>

@@ -825,8 +825,12 @@ JCTimeManReport.prototype.setReportsData = function(data)
 				if (cell)
 				{
 					cell.colSpan = data[i].FOR_JS.CELL_COUNT;
-					cell.innerHTML = '<span style="font-weight:bold;color:#FFF;">'+this.SETTINGS.LANG.TMR_REPORT+'</span>';
-					cell.innerHTML+= '<span id="report_comments_count_'+data[i].ID+'" class="tm-comment-count" style="color:#FFF;display:'+((data[i].COMMENTS_COUNT>0)?"inline-block":"none")+'">'+data[i].COMMENTS_COUNT+'</span>';
+					cell.innerHTML =
+						'<div style="display: inline-flex;align-items: center;">'
+						+ '<span style="white-space: nowrap;font-weight:bold;color:#FFF;padding-right:3px;">'+this.SETTINGS.LANG.TMR_REPORT+'</span>'
+						+ '<span id="report_comments_count_'+data[i].ID+'" class="tm-comment-count" style="color:#FFF;display:'+((data[i].COMMENTS_COUNT>0)?"inline-block":"none")+'">'+data[i].COMMENTS_COUNT+'</span>'
+						+ '</div>'
+					;
 					cell.style.textAlign = 'left';
 					cell.style.paddingRight = '0px';
 					cell.style.cursor = 'pointer';

@@ -149,7 +149,7 @@ class WorktimeRecordTable extends Main\ORM\Data\DataManager
 					return null;
 				})
 				->configureUnserializeCallback(function ($value) {
-					$res = unserialize($value);
+					$res = unserialize($value, ['allowed_classes' => false]);
 					return $res === false ? [] : $res;
 				})
 			,

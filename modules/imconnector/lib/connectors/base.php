@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImConnector\Connectors;
 
+use Bitrix\Main;
 use Bitrix\Main\Web;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
@@ -17,7 +18,11 @@ use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Connector;
 use Bitrix\ImConnector\InteractiveMessage;
 
+use Bitrix\ImOpenLines\Session;
 use Bitrix\ImOpenLines\Im\Messages;
+
+Loc::loadMessages(__FILE__);
+Library::loadMessages();
 
 /**
  * Class Connector
@@ -29,6 +34,7 @@ class Base
 	 * @var string Full (or virtual) connector id (for example "botframework.skype", NOT "botframework").
 	 */
 	protected $idConnector = '';
+	protected $userPrefix = '';
 
 	/**
 	 * Connector constructor.
@@ -37,6 +43,7 @@ class Base
 	public function __construct($idConnector)
 	{
 		$this->idConnector = $idConnector;
+		$this->userPrefix = $idConnector;
 	}
 
 	//Input
@@ -513,16 +520,12 @@ class Base
 
 	//User
 	/**
-	 * Data processing user and returns the id of the registered user of the system.
+	 * Parse full name into first name and surname.
 	 *
 	 * @param array $user An array describing the user.
-	 * @return Result
 	 */
-	protected function processingUser(array $user): Result
+	protected function getFullName(array $user): array
 	{
-		$result = new Result();
-
-		//parse full name into first name and surname
 		if (Library::isEmpty($user['last_name']))
 		{
 			$fullName = explode(' ', $user['name']);
@@ -533,8 +536,105 @@ class Base
 			}
 		}
 
-		$userFieldsResult = Connector::getUserByUserCode($user, $this->idConnector);
+		return $user;
+	}
+
+	/**
+	 * @param array $user
+	 * @return Result
+	 */
+	public function getUserByUserCode(array $user): Result
+	{
+		$result = new Result();
+
+		if (Library::isEmpty($user['id']))
+		{
+			$result->addError(new Error(Loc::getMessage(
+				'IMCONNECTOR_PROXY_NO_USER_IM'),
+				Library::ERROR_CONNECTOR_PROXY_NO_USER_IM,
+				__METHOD__,
+				$user
+			));
+		}
+		else
+		{
+			$raw = UserTable::getList([
+					'select' => [
+						'ID',
+						'MD5' => 'UF_CONNECTOR_MD5'
+					],
+					'filter' => [
+						'=EXTERNAL_AUTH_ID' => Library::NAME_EXTERNAL_USER,
+						'=XML_ID' => $this->userPrefix . '|' . $user['id']
+					],
+					'limit' => 1
+				]
+			);
+
+			if ($userFields = $raw->fetch())
+			{
+				$result->setResult($userFields);
+			}
+			else
+			{
+				//user record does not yet exist, it will be created on next step.
+				$result->addError(new Main\Error('User does not yet exist'));
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $userFields
+	 * @return int
+	 */
+	protected function addUser(array $userFields)
+	{
 		$cUser = new \CUser;
+
+		$fields = $this->preparationNewUserFields($userFields);
+
+		return $cUser->Add($fields);
+	}
+
+	/**
+	 * @param array $oldUserFields
+	 * @param array $userFields
+	 * @return int
+	 */
+	protected function updateUser(array $oldUserFields, array $userFields)
+	{
+		$cUser = new \CUser;
+
+		$userId = $userFields['ID'];
+
+		if ($userFields['MD5'] !== md5(serialize($oldUserFields)))
+		{
+			$fields = $this->preparationUserFields($oldUserFields, $userId);
+			if(!empty($fields))
+			{
+				$cUser->Update($userId, $fields);
+			}
+		}
+
+		return $userId;
+	}
+
+	/**
+	 * Data processing user and returns the id of the registered user of the system.
+	 *
+	 * @param array $user An array describing the user.
+	 * @return Result
+	 */
+	protected function processingUser(array $user): Result
+	{
+		$result = new Result();
+		$userId = 0;
+
+		$user = $this->getFullName($user);
+
+		$userFieldsResult = $this->getUserByUserCode($user);
 
 		if ($userFieldsResult->isSuccess())
 		{
@@ -542,23 +642,12 @@ class Base
 
 			if (is_array($userFields))
 			{
-				$userId = $userFields['ID'];
-
-				if ($userFields['MD5'] !== md5(serialize($user)))
-				{
-					$fields = $this->preparationUserFields($user, $userId);
-					if(!empty($fields))
-					{
-						$cUser->Update($userId, $fields);
-					}
-				}
+				$userId = $this->updateUser($user, $userFields);
 			}
 		}
 		else
 		{
-			$fields = $this->preparationNewUserFields($user);
-
-			$userId = $cUser->Add($fields);
+			$userId = $this->addUser($user);
 		}
 
 		if (empty($userId))
@@ -600,7 +689,7 @@ class Base
 		$fields['PASSWORD'] = md5($fields['LOGIN'] . '|' . rand(1000,9999) . '|' . time());
 		$fields['CONFIRM_PASSWORD'] = $fields['PASSWORD'];
 		$fields['EXTERNAL_AUTH_ID'] = Library::NAME_EXTERNAL_USER;
-		$fields['XML_ID'] =  $this->idConnector . '|' . $user['id'];
+		$fields['XML_ID'] =  $this->userPrefix . '|' . $user['id'];
 		$fields['ACTIVE'] = 'Y';
 
 		return $fields;
@@ -928,6 +1017,15 @@ class Base
 	public function deleteMessageProcessing(array $message, $line): array
 	{
 		return $message;
+	}
+
+	/**
+	 * @param Session $session
+	 * @return bool
+	 */
+	public function isEnableSendSystemMessage(Session $session): bool
+	{
+		return true;
 	}
 	//END Output
 

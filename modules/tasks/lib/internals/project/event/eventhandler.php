@@ -175,6 +175,7 @@ class EventHandler
 			'PROJECT_DATE_START',
 			'PROJECT_DATE_FINISH',
 			'IMAGE_ID',
+			'AVATAR_TYPE',
 			'OPENED',
 			'CLOSED',
 			'VISIBLE',

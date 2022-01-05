@@ -47,7 +47,11 @@ if ($arResult['TASK']['MODULE_ID'] === 'rpa')
 	$arResult["SKIP_BP"] = 'Y';
 }
 
-if (!empty($arResult["TASK"]["DESCRIPTION"]))
+if (!empty($arResult["TASK"]["DESCRIPTION"]) && method_exists('CBPViewHelper', 'prepareMobileTaskDescription'))
+{
+	$arResult["TASK"]["DESCRIPTION"] = CBPViewHelper::prepareMobileTaskDescription($arResult["TASK"]["DESCRIPTION"]);
+}
+elseif (!empty($arResult["TASK"]["DESCRIPTION"]))
 {
 	$arResult["TASK"]["DESCRIPTION"] = preg_replace_callback(
 		'|<a href="/bitrix/tools/bizproc_show_file.php\?([^"]+)"\starget=\'_blank\'>|',

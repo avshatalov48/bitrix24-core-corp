@@ -830,7 +830,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 	font-size: 13px;
 	font-weight: normal;
 	margin: 0 0 0 4px;
-	vertical-align: middle;
+	vertical-align: top;
 }
 
 .diskuf-files-entity .feed-com-files-photo {
@@ -843,9 +843,6 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 .diskuf-files-entity .feed-com-file-inline.feed-com-file-wrap,
 .diskuf-files-entity.feed-com-file-inline.feed-com-file-wrap {
 	box-sizing: border-box;
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	-ms-box-sizing: border-box;
 	border-bottom: none;
 	cursor: pointer;
 	display: inline-block;

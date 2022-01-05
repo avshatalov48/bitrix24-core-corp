@@ -4,7 +4,7 @@ return array(
 		'value' => [
 			'namespaces' => [
 				'\\Bitrix\\Tasks\\Rest\\Controllers' => 'api',
-				'\\Bitrix\\Tasks\\Scrum' => 'scrum',
+				'\\Bitrix\\Tasks\\Scrum\\Controllers' => 'scrum',
 			],
 			'defaultNamespace' => '\\Bitrix\\Tasks\\Rest\\Controllers',
 			'restIntegration' => [

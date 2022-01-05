@@ -1,6 +1,6 @@
 <?php
 return [
-	'template.php' =>
+	'*' =>
 		[
 			'languages' =>
 				[

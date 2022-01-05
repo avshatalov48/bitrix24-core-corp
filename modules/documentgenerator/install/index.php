@@ -71,7 +71,7 @@ class documentgenerator extends CModule
 
 		if (!$DB->Query("SELECT 'x' FROM b_documentgenerator_template", true))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/db/mysql/install.sql");
 		}
 
 		if($errors !== false)
@@ -140,7 +140,7 @@ class documentgenerator extends CModule
 
 		if (!isset($params['savedata']) || $params['savedata'] !== "Y")
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/mysql/uninstall.sql");
 		}
 
 		if($errors !== false)

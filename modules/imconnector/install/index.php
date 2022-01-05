@@ -31,19 +31,12 @@ Class ImConnector extends CModule
 
 	function InstallDB($arParams = array())
 	{
-		global $DB, $DBType, $APPLICATION;
+		global $DB, $APPLICATION;
 		$this->errors = false;
-
-		if($DB->type !== 'MYSQL')
-		{
-			$this->errors = array(
-				Loc::getMessage('IMCONNECTOR_DB_NOT_SUPPORTED'),
-			);
-		}
 
 		if (!$this->errors && !$DB->Query("SELECT 'x' FROM b_imconnectors_status WHERE 1=0", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imconnector/install/db/".$DBType."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imconnector/install/db/mysql/install.sql");
 		}
 		if ($this->errors !== false)
 		{
@@ -89,8 +82,8 @@ Class ImConnector extends CModule
 			'facebook',
 			'facebookcomments',
 			'fbinstagramdirect',
-			'fbinstagram',
 			'network',
+			'notifications',
 		];
 		Option::set($this->MODULE_ID, 'list_connector', implode(',', $listConnector));
 
@@ -114,12 +107,12 @@ Class ImConnector extends CModule
 
 	function UnInstallDB($arParams = array())
 	{
-		global $DB, $DBType, $APPLICATION;
+		global $DB, $APPLICATION;
 		$this->errors = false;
 
 		if(array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y")
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imconnector/install/db/".$DBType."/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imconnector/install/db/mysql/uninstall.sql");
 
 			$rsUserType = \CUserTypeEntity::GetList(
 				array(),

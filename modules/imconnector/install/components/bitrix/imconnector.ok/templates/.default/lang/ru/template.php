@@ -12,4 +12,12 @@ $MESS['IMCONNECTOR_COMPONENT_OK_INSTRUCTION_TITLE'] = '<span class="imconnector-
 $MESS['IMCONNECTOR_COMPONENT_OK_INFO'] = 'Информация';
 $MESS['IMCONNECTOR_COMPONENT_OK_CONNECT_HELP'] = '<div class="imconnector-field-button-subtitle">Я хочу</div>
 				<div class="imconnector-field-button-name"><span class="imconnector-field-box-text-bold">Подключить</span> группу Одноклассников</div>';
-?>
+
+$MESS['IMCONNECTOR_COMPONENT_OK_INDEX_TITLE'] = 'Отвечайте на вопросы клиентов из вашей группы в Одноклассниках';
+$MESS['IMCONNECTOR_COMPONENT_OK_INDEX_SUBTITLE'] = 'Подключите вашу группу к Битрикс24. Клиент задаст вопрос в Одноклассниках, вы его получите в Битрикс24. Это поможет вам отвечать быстрее и повысит конверсию в продажи.';
+$MESS['IMCONNECTOR_COMPONENT_OK_INDEX_LIST_ITEM_1'] = 'Контакты и переписка сохраняются в CRM';
+$MESS['IMCONNECTOR_COMPONENT_OK_INDEX_LIST_ITEM_2'] = 'CRM помогает вести клиента по воронке продаж';
+$MESS['IMCONNECTOR_COMPONENT_OK_INDEX_LIST_ITEM_3'] = 'Вы отвечаете клиентам быстро и там, где им удобно';
+$MESS['IMCONNECTOR_COMPONENT_OK_INDEX_LIST_ITEM_4'] = 'Вопросы от клиентов автоматически распределяются между менеджерами по правилам очереди';
+$MESS['IMCONNECTOR_COMPONENT_OK_INDEX_ADDITIONAL_DESCRIPTION'] = 'Для подключения необходимо <a href="#" onclick="top.BX.Helper.show(\'#ID#\'); return false;">получить ключ доступа</a> вашей группы в Одноклассниках. Если у вас еще нет группы, мы поможем создать ее в несколько шагов и подключить к вашему Битрикс24.';
+

@@ -5,6 +5,7 @@ use Bitrix\Main\UserTable;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\ImConnector\Chat;
+use Bitrix\ImConnector\Error;
 use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Library;
 
@@ -14,8 +15,53 @@ Loc::loadMessages(__FILE__);
  * Class FbInstagram
  * @package Bitrix\ImConnector\Connectors
  */
-class FbInstagram extends Base
+class FbInstagram extends InstagramBase
 {
+	//User
+	/**
+	 * @param array $params
+	 * @param Result $result
+	 * @return Result
+	 */
+	protected function getUserData(array $params, Result $result): Result
+	{
+		$result->setResult([
+			'ID' => $params['ID_FB_INSTAGRAM'],
+			'MD5' => $params['MD5_FB_INSTAGRAM']
+		]);
+
+		return $result;
+	}
+
+	/**
+	 * @param array $oldUserFields
+	 * @param array $userFields
+	 * @return int
+	 */
+	protected function updateUser(array $oldUserFields, array $userFields)
+	{
+		$cUser = new \CUser;
+
+		$userId = $userFields['ID'];
+
+		if (
+			$userFields['MD5'] !== md5(serialize($oldUserFields))
+			&& (
+				!Library::isEmpty($userFields['name'])
+				|| !Library::isEmpty($userFields['picture'])
+			)
+		)
+		{
+			$fields = $this->preparationUserFields($oldUserFields, $userId);
+			if(!empty($fields))
+			{
+				$cUser->Update($userId, $fields);
+			}
+		}
+
+		return $userId;
+	}
+
 	//Input
 	/**
 	 * @param $message

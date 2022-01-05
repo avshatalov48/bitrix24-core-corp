@@ -611,7 +611,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 			$paramEntityId = (int)$paramEntityId;
 			$arConnectionsFilter = ['ACCOUNT_TYPE' => [
 				'caldav',
-				Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV
+				\Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV
 			]];
 			if (!is_null($paramEntityType) && ($paramEntityId > 0))
 			{
@@ -660,7 +660,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 					$arProxy = CDav::GetProxySettings();
 					$client->SetProxy($arProxy["PROXY_SCHEME"], $arProxy["PROXY_HOST"], $arProxy["PROXY_PORT"], $arProxy["PROXY_USERNAME"], $arProxy["PROXY_PASSWORD"]);
 				}
-				if ($arConnection['ACCOUNT_TYPE'] === Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
+				if ($arConnection['ACCOUNT_TYPE'] === \Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
 				{
 					$client->setGoogleCalendarOAuth($arConnection['ENTITY_ID']);
 				}
@@ -858,7 +858,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 				$arProxy = CDav::GetProxySettings();
 				$client->SetProxy($arProxy["PROXY_SCHEME"], $arProxy["PROXY_HOST"], $arProxy["PROXY_PORT"], $arProxy["PROXY_USERNAME"], $arProxy["PROXY_PASSWORD"]);
 			}
-			if ($arConnection['ACCOUNT_TYPE'] === Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
+			if ($arConnection['ACCOUNT_TYPE'] === \Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
 			{
 				$client->setGoogleCalendarOAuth($arConnection['ENTITY_ID']);
 			}
@@ -893,7 +893,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 				$arProxy = CDav::GetProxySettings();
 				$client->SetProxy($arProxy["PROXY_SCHEME"], $arProxy["PROXY_HOST"], $arProxy["PROXY_PORT"], $arProxy["PROXY_USERNAME"], $arProxy["PROXY_PASSWORD"]);
 			}
-			if ($arConnection['ACCOUNT_TYPE'] === Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
+			if ($arConnection['ACCOUNT_TYPE'] === \Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
 			{
 				$client->setGoogleCalendarOAuth($arConnection['ENTITY_ID']);
 			}
@@ -929,7 +929,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 				$arProxy = CDav::GetProxySettings();
 				$client->SetProxy($arProxy["PROXY_SCHEME"], $arProxy["PROXY_HOST"], $arProxy["PROXY_PORT"], $arProxy["PROXY_USERNAME"], $arProxy["PROXY_PASSWORD"]);
 			}
-			if ($arConnection['ACCOUNT_TYPE'] === Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
+			if ($arConnection['ACCOUNT_TYPE'] === \Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
 			{
 				$client->setGoogleCalendarOAuth($arConnection['ENTITY_ID']);
 			}
@@ -985,7 +985,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 				$password = $arConnection["SERVER_PASSWORD"];
 				$path = $arConnection["SERVER_PATH"];
 
-				if ($arConnection['ACCOUNT_TYPE'] === Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
+				if ($arConnection['ACCOUNT_TYPE'] === \Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
 				{
 					$oauth = [
 							'type' => 'google',

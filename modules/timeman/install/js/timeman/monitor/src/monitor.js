@@ -332,6 +332,8 @@ class Monitor
 		Logger.warn(`Monitor will be turned on at ${this.getPausedUntilTime().toString()}`);
 		Debug.log(`Monitor will be turned on at ${this.getPausedUntilTime().toString()}`);
 
+		clearTimeout(this.playTimeout);
+
 		this.playTimeout = setTimeout(
 			() => this.clearPausedUntil().then(() => this.launch()),
 			this.getPausedUntilTime() - new Date()
@@ -383,6 +385,7 @@ class Monitor
 
 	play()
 	{
+		clearTimeout(this.playTimeout);
 		this.playTimeout = null;
 		this.clearPausedUntil().then(() => this.launch());
 	}

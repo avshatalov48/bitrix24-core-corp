@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImConnector;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 Library::loadMessages();
@@ -33,10 +34,7 @@ class Provider
 			[
 				'network'
 			],
-		'notifications' =>
-			[
-				Library::ID_NOTIFICATIONS_CONNECTOR
-			],
+		'messageservice' => [Library::ID_EDNA_WHATSAPP_CONNECTOR]
 	];
 
 	protected static $loadProvider;
@@ -46,6 +44,11 @@ class Provider
 		if(empty(self::$loadProvider))
 		{
 			$provider = self::PROVIDER;
+
+			if(Loader::includeModule('notifications'))
+			{
+				$provider['notifications'] = [Library::ID_NOTIFICATIONS_CONNECTOR];
+			}
 
 			$customConnectors = CustomConnectors::getListConnectorId();
 

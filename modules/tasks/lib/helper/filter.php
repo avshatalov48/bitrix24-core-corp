@@ -10,7 +10,7 @@ use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Service\BacklogService;
-use Bitrix\Tasks\Scrum\Service\ItemService;
+use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 use Bitrix\Tasks\Util\User;
 
@@ -1313,17 +1313,10 @@ class Filter extends Common
 
 	private function getEpics(): array
 	{
-		$backlogService = new BacklogService();
-		$itemService = new ItemService();
-
-		$backlog = $backlogService->getBacklogByGroupId($this->getGroupId());
-		if ($backlogService->getErrors() || $backlog->isEmpty())
-		{
-			return [];
-		}
+		$epicService = new EpicService();
 
 		$epics = [];
-		foreach ($itemService->getAllEpicTags($backlog->getId()) as $epic)
+		foreach ($epicService->getEpics($this->getGroupId()) as $epic)
 		{
 			$epics[$epic['id']] = $epic['name'];
 		}

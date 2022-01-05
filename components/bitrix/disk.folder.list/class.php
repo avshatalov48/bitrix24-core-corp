@@ -742,7 +742,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						'className' => 'disk-folder-list-context-menu-item',
 						"onclick" =>
 							$this->filterB24Feature(
-								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',
+								$isFolder? 'disk_folder_rights' : 'disk_file_rights',
 								"BX.Disk['FolderListClass_{$this->componentId}'].showRightsOnObjectDetail({
 									object: {
 										id: {$objectId},

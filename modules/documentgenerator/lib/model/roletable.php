@@ -8,6 +8,22 @@ use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 
+/**
+ * Class RoleTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Role_Query query()
+ * @method static EO_Role_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Role_Result getById($id)
+ * @method static EO_Role_Result getList(array $parameters = array())
+ * @method static EO_Role_Entity getEntity()
+ * @method static \Bitrix\DocumentGenerator\Model\Role createObject($setDefaultValues = true)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_Role_Collection createCollection()
+ * @method static \Bitrix\DocumentGenerator\Model\Role wakeUpObject($row)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_Role_Collection wakeUpCollection($rows)
+ */
 class RoleTable extends DataManager
 {
 	/**

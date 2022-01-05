@@ -1,0 +1,3 @@
+<?php
+$MESS["DISK_ONLYOFFICE_MSG_TO_GENERAL_CHAT_AFTER_DEMO_FEATURE_M"] = "#USER# включил демо-режим Битрикс24.Документы – нового инструмента для совместной работы. Успейте попробовать все возможности до #TRIAL_PERIOD_END_DATE#. [URL=#HELPDESK_LINK#]подробнее[/URL]";
+$MESS["DISK_ONLYOFFICE_MSG_TO_GENERAL_CHAT_AFTER_DEMO_FEATURE_F"] = "#USER# включила демо-режим Битрикс24.Документы – нового инструмента для совместной работы. Успейте попробовать все возможности до #TRIAL_PERIOD_END_DATE#. [URL=#HELPDESK_LINK#]подробнее[/URL]";

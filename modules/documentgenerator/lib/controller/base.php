@@ -2,11 +2,14 @@
 
 namespace Bitrix\DocumentGenerator\Controller;
 
+use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Engine\CheckScope;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Model\RoleTable;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Intranet\ActionFilter;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 
 abstract class Base extends Controller
 {
@@ -17,6 +20,14 @@ abstract class Base extends Controller
 	{
 		$preFilters = parent::getDefaultPreFilters();
 		$preFilters[] = new CheckScope();
+
+		if (
+			!Driver::getInstance()->getUserPermissions()->canModifySettings()
+			&& Loader::includeModule('intranet')
+		)
+		{
+			$preFilters[] = new ActionFilter\IntranetUser();
+		}
 
 		return $preFilters;
 	}

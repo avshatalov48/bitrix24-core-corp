@@ -1,14 +1,15 @@
+import {PlanBuilder} from '../view/plan/plan.builder';
+
+import {EntityStorage} from '../entity/entity.storage';
 import {Sprint} from '../entity/sprint/sprint';
 
 import {RequestSender} from '../utility/request.sender';
-import {DomBuilder} from '../utility/dom.builder';
-import {EntityStorage} from '../utility/entity.storage';
 
 import type {SprintParams} from '../entity/sprint/sprint';
 
 type Params = {
 	requestSender: RequestSender,
-	domBuilder: DomBuilder,
+	planBuilder: PlanBuilder,
 	entityStorage: EntityStorage,
 	groupId: number
 }
@@ -22,7 +23,7 @@ export class PullSprint
 	constructor(params: Params)
 	{
 		this.requestSender = params.requestSender;
-		this.domBuilder = params.domBuilder;
+		this.planBuilder = params.planBuilder;
 		this.entityStorage = params.entityStorage;
 		this.groupId = params.groupId;
 
@@ -61,7 +62,7 @@ export class PullSprint
 			return;
 		}
 
-		this.domBuilder.createSprintNode(sprint);
+		this.planBuilder.createSprintNode(sprint);
 	}
 
 	onSprintUpdated(params: SprintParams)
@@ -82,11 +83,11 @@ export class PullSprint
 			{
 				if (tmpSprint.getStatus() === 'active')
 				{
-					this.domBuilder.moveSprintToActiveListNode(sprint);
+					this.planBuilder.moveSprintToActiveListNode(sprint);
 				}
 				else
 				{
-					this.domBuilder.moveSprintToCompletedListNode(sprint);
+					this.planBuilder.updatePlannedSprints(this.entityStorage.getPlannedSprints(), false);
 				}
 			}
 
@@ -106,7 +107,7 @@ export class PullSprint
 		const sprint = this.entityStorage.findEntityByEntityId(params.sprintId);
 		if (sprint)
 		{
-			sprint.removeSprint();
+			sprint.removeYourself();
 			this.entityStorage.removeSprint(sprint.getId());
 		}
 	}

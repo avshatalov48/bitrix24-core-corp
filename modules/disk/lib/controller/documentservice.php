@@ -8,9 +8,11 @@ use Bitrix\Disk\Document\OnlyOffice\Filters\DocumentSessionCheck;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Engine;
+use Bitrix\Main\Context;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\ActionFilter\HttpMethod;
+use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Error;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Loader;
@@ -26,6 +28,19 @@ final class DocumentService extends Engine\Controller
 						->enableStrictCheckRight()
 					,
 					new HttpMethod([HttpMethod::METHOD_GET]),
+				],
+				'-prefilters' => [Csrf::class],
+			],
+			'downloadDocument' => [
+				'+prefilters' => [
+					(new DocumentSessionCheck())
+						->enableStrictCheckRight()
+						->enableHashCheck(function(){
+							return Context::getCurrent()->getRequest()->get('documentSessionHash');
+						})
+					,
+					new HttpMethod([HttpMethod::METHOD_GET]),
+					new CloseSession(),
 				],
 				'-prefilters' => [Csrf::class],
 			],
@@ -91,6 +106,15 @@ final class DocumentService extends Engine\Controller
 
 		$response = new HttpResponse();
 		$response->setContent($content);
+
+		return $response;
+	}
+
+	public function downloadDocumentAction(Document\OnlyOffice\Models\DocumentSession $documentSession): HttpResponse
+	{
+		$file = $documentSession->getFile();
+		$response = Response\BFile::createByFileId($file->getFileId(), $file->getName());
+		$response->setCacheTime(Disk\Configuration::DEFAULT_CACHE_TIME);
 
 		return $response;
 	}
@@ -282,7 +306,7 @@ final class DocumentService extends Engine\Controller
 	{
 		return new HttpResponse();
 	}
-	
+
 	public function setStatusWorkWithLocalDocumentAction($uidRequest, $status)
 	{
 		if (!Loader::includeModule('pull'))

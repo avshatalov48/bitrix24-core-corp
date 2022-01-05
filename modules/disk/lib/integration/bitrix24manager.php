@@ -100,6 +100,36 @@ class Bitrix24Manager
 		return true;
 	}
 
+	public static function isFeatureTrialable($feature): bool
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			return Feature::isFeatureTrialable($feature);
+		}
+
+		return false;
+	}
+
+	public static function getTrialFeatureInfo($feature): ?array
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			return Feature::getTrialFeatureInfo($feature);
+		}
+
+		return [];
+	}
+
+	public static function getTrialEditionInfo(): ?array
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			return Feature::getTrialEditionInfo('demo');
+		}
+
+		return [];
+	}
+
 	public static function getFeatureVariable($feature)
 	{
 		if (Loader::includeModule('bitrix24'))
@@ -117,6 +147,8 @@ class Bitrix24Manager
 			'disk_manual_external_folder' => 'limit_office_share_link',
 			'disk_file_sharing' => 'limit_office_files_access_permissions',
 			'disk_folder_sharing' => 'limit_office_folders_access_permissions',
+			'disk_folder_rights' => 'limit_office_disk_folders_access_rights',
+			'disk_file_rights' => 'limit_office_disk_files_access_rights',
 			'disk_common_storage' => 'limit_company_common_disk',
 		];
 
@@ -125,6 +157,14 @@ class Bitrix24Manager
 		if ($feature === 'disk_manual_external_folder')
 		{
 			$feature = 'disk_manual_external_link';
+		}
+		if ($feature === 'disk_folder_rights')
+		{
+			$feature = 'disk_folder_sharing';
+		}
+		if ($feature === 'disk_file_rights')
+		{
+			$feature = 'disk_file_sharing';
 		}
 
 		if ($skip || self::isFeatureEnabled($feature))

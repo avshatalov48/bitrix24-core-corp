@@ -69,6 +69,29 @@ abstract class Attachment
 		return $result;
 	}
 
+	public static function attach($ownerId, int $fileId, array $parameters = [])
+	{
+		global $USER_FIELD_MANAGER;
+
+		$ownerId = Assert::expectStringNotNull($ownerId, '$ownerId');
+		$parameters['USER_ID'] = Assert::expectIntegerPositive($parameters['USER_ID'], '$parameters[USER_ID]');
+		$parameters['ENTITY_ID'] = Assert::expectStringNotNull($parameters['ENTITY_ID'], '$parameters[ENTITY_ID]');
+		$parameters['FIELD_NAME'] = Assert::expectStringNotNull($parameters['FIELD_NAME'], '$parameters[FIELD_NAME]');
+
+		$currentValue = static::getValue($ownerId, $parameters['ENTITY_ID'], $parameters['FIELD_NAME']);
+		$currentValue[] = FileUserType::NEW_FILE_PREFIX . $fileId;
+		$fields = [$parameters['FIELD_NAME'] => $currentValue];
+
+		if ($USER_FIELD_MANAGER->CheckFields($parameters['ENTITY_ID'], $ownerId, $fields))
+		{
+			$USER_FIELD_MANAGER->Update($parameters['ENTITY_ID'], $ownerId, $fields, $parameters['USER_ID']);
+
+			return static::getIdByFileId($fileId, $ownerId, $parameters['ENTITY_ID'], $parameters['FIELD_NAME']);
+		}
+
+		return false;
+	}
+
 	public static function add($ownerId, array $fileParameters, array $parameters)
 	{
 		global $USER_FIELD_MANAGER;

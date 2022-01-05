@@ -400,6 +400,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 						'SUFFIX' => $provider->getSuffix(),
 						'URL' => $provider->getLiveFeedUrl(),
 						'DISK_FILES' => array_values($provider->getAttachedDiskObjectsCloned()),
+						'SONET_GROUP_ID' => $provider->getSonetGroupsAvailable(),
 					];
 				}
 		}
@@ -438,6 +439,14 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 					$result[$diskFileUFCode] = $data['DISK_FILES'];
 					$signer = new Signer;
 					$result[$diskFileUFCode . '_SIGN'] = $signer->sign(Json::encode($data['DISK_FILES']), static::SIGNATURE_SALT);
+				}
+
+				if (
+					!empty($data['SONET_GROUP_ID'])
+					&& count($data['SONET_GROUP_ID']) === 1
+				)
+				{
+					$result['GROUP_ID'] = (int)array_pop($data['SONET_GROUP_ID']);
 				}
 			}
 		}

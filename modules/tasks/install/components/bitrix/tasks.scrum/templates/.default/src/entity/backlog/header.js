@@ -1,84 +1,82 @@
-import {Event, Loc, Tag, Text} from 'main.core';
+import {Event, Loc, Tag, Dom} from 'main.core';
 import {EventEmitter} from 'main.core.events';
-import {Entity} from '../entity';
+
+import {Backlog} from './backlog';
 
 export class Header extends EventEmitter
 {
-	constructor(entity: Entity)
+	constructor(backlog: Backlog)
 	{
-		super(entity);
+		super(backlog);
 
 		this.setEventNamespace('BX.Tasks.Scrum.BacklogHeader');
 
-		this.entity = entity;
+		this.backlog = backlog;
 
-		this.element = null;
+		this.node = null;
 	}
 
 	render(): HTMLElement
 	{
-		this.element = Tag.render`
-			<div class="tasks-scrum-backlog-title">
-				${Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE')}
-			</div>
-			<div class="tasks-scrum-backlog-epics-title ui-btn ui-btn-xs ui-btn-secondary">
-				${Loc.getMessage('TASKS_SCRUM_BACKLOG_EPICS_TITLE')}
-			</div>
-			<div title="Definition of Done" class="tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-dod">
-				<span class="tasks-scrum-entity-dod-icon"></span>
-			</div>
-			<div class="tasks-scrum-backlog-title-spacer"></div>
-			<div class="tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-task">
-				<span class="tasks-scrum-entity-tasks-icon"></span>
-				<span class="tasks-scrum-entity-tasks-title">
-					${this.entity.getNumberTasks()}
-				</span>
-			</div>
-			<div class="tasks-scrum-backlog-story-point-title">
-				${Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE_STORY_POINTS')}
-			</div>
-			<div class="tasks-scrum-backlog-story-point">
-				${Text.encode(this.entity.getStoryPoints().getPoints())}
+		const uiEpicClasses = 'ui-btn ui-btn-sm ui-btn-light-border ui-btn-themes ui-btn-round ui-btn-no-caps';
+		const uiTaskClasses = 'ui-btn ui-btn-sm ui-btn-success ui-btn-round ui-btn-no-caps ';
+
+		this.node = Tag.render`
+			<div class="tasks-scrum__content-header">
+
+				<div class="tasks-scrum__name-container">
+					<div class="tasks-scrum__title">
+						${Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE')}
+					</div>
+					${this.renderTaskCounterLabel(this.backlog.getNumberTasks())}
+				</div>
+
+				<button class="tasks-scrum__backlog-btn ${uiEpicClasses} ui-btn-icon-add">
+					${Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_EPIC')}
+				</button>
+				<button class="tasks-scrum__backlog-btn ${uiTaskClasses} ui-btn-icon-add">
+					${Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_TASK')}
+				</button>
+
 			</div>
 		`;
 
-		Event.bind(this.getElementByClassName(this.element, 'tasks-scrum-backlog-epics-title'), 'click', () => {
-			this.emit('openListEpicGrid');
-		});
+		const buttons = this.node.querySelectorAll('button');
 
-		Event.bind(this.getElementByClassName(this.element, 'tasks-scrum-entity-title-btn-dod'), 'click', () => {
-			this.emit('openDefinitionOfDone');
-		});
+		Event.bind(buttons.item(0), 'click', this.onEpicClick.bind(this, buttons.item(0)));
+		Event.bind(buttons.item(1), 'click', this.onTaskClick.bind(this));
 
-		return this.element;
+		//todo use it from project scrum button
+		//this.emit('openListEpicGrid');
+		//this.emit('openDefinitionOfDone');
+
+		return this.node;
 	}
 
-	setStoryPoints(storyPoints: string)
+	updateTaskCounter(value: string)
 	{
-		this.getElementByClassName(
-			this.element,
-			'tasks-scrum-backlog-story-point'
-		).textContent = Text.encode(storyPoints);
-	}
-
-	updateNumberTasks()
-	{
-		const parentNode = this.getElementByClassName(
-			this.element,
-			'tasks-scrum-entity-title-btn-task'
+		Dom.replace(
+			this.node.querySelector('.tasks-scrum__backlog-tasks'),
+			this.renderTaskCounterLabel(value)
 		);
-		parentNode.querySelector('.tasks-scrum-entity-tasks-title').textContent = this.entity.getNumberTasks();
 	}
 
-	getElementByClassName(elements: HTMLElement[], className: string): HTMLElement
+	renderTaskCounterLabel(value: string)
 	{
-		let element = null;
-		elements.forEach((elem) => {
-			if (elem.classList.contains(className))
-			{
-				element = elem;
-			}
-		});
-		return element;
+		return Tag.render`
+			<div class="tasks-scrum__backlog-tasks">
+				${Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_TASK_COUNTER').replace('#value#', value)}
+			</div>
+		`;
+	}
+
+	onEpicClick(button: HTMLElement)
+	{
+		this.emit('epicClick', button);
+	}
+
+	onTaskClick()
+	{
+		this.emit('taskClick');
 	}
 }

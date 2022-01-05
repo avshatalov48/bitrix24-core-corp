@@ -418,7 +418,7 @@ class CBPVoximplantCallActivity extends CBPActivity
 		$documentId = $this->GetDocumentId();
 		if ($documentId[0] == 'crm' && CModule::IncludeModule('crm'))
 		{
-			list($entityTypeName, $entityId) = explode('_', $documentId[2]);
+			list($entityTypeName, $entityId) = mb_split('_(?=[^_]*$)', $documentId[2]);
 			$communications = array();
 			switch ($entityTypeName)
 			{
@@ -435,6 +435,22 @@ class CBPVoximplantCallActivity extends CBPActivity
 				case \CCrmOwnerType::OrderName:
 					$communications = $this->getOrderCommunications($entityId);
 					break;
+
+				default:
+					if (class_exists(\Bitrix\Crm\Service\Container::class))
+					{
+						$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(
+							CCrmOwnerType::ResolveID($entityTypeName)
+						);
+						if ($factory)
+						{
+							$item = $factory->getItem((int)$entityId);
+							if ($item)
+							{
+								$communications = $this->getCommunicationsFromItem($item);
+							}
+						}
+					}
 			}
 
 			$communications = array_slice($communications, 0, 1);
@@ -540,6 +556,31 @@ class CBPVoximplantCallActivity extends CBPActivity
 		if (empty($communications) && $entityCompanyID > 0)
 		{
 			$communications = $this->getPhoneFromFM(CCrmOwnerType::CompanyName, $entityCompanyID);
+		}
+
+		return $communications;
+	}
+
+	private function getCommunicationsFromItem(\Bitrix\Crm\Item $item): array
+	{
+		$contactBindings = $item->getContactBindings();
+		$communications = [];
+		foreach ($contactBindings as $binding)
+		{
+			$contactId = (int)($binding['CONTACT_ID'] ?? 0);
+			if ($contactId > 0)
+			{
+				$communications = $this->getPhoneFromFM(CCrmOwnerType::ContactName, $contactId);
+				if (!empty($communications))
+				{
+					break;
+				}
+			}
+		}
+
+		if (empty($communications) && $item->getCompanyId() > 0)
+		{
+			$communications = $this->getPhoneFromFM(CCrmOwnerType::CompanyName, $item->getCompanyId());
 		}
 
 		return $communications;

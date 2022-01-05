@@ -628,6 +628,7 @@
 			newItem.text = item.NAME;
 			newItem.delimiterAfter = item.DELIMITER_AFTER;
 			newItem.delimiterBefore = item.DELIMITER_BEFORE;
+			newItem.dataset = {id: item.ID};
 
 			if (item.IS_LINE_ACTIVE === 'Y')
 			{
@@ -640,6 +641,14 @@
 
 			if (item.URL)
 			{
+				// workaround for imconnector.notifications
+				// without it scenario code will be lost on line change
+				var scenarioCode = (new URL(document.location)).searchParams.get('scenario');
+				if (scenarioCode)
+				{
+					item.URL = BX.util.add_url_param(item.URL, {scenario: scenarioCode});
+				}
+
 				newItem.onclick = BX.delegate(
 					function (e) {
 						var isIframe = this.iframe;

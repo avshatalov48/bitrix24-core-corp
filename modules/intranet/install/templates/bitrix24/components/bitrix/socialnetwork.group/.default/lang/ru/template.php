@@ -1,10 +1,11 @@
-<?
+<?php
 $MESS["SONET_C6_TOPIC"] = "Тема";
 $MESS["SONET_C6_DESCR"] = "Описание";
 $MESS["SONET_C6_CREATED"] = "Дата создания";
 $MESS["SONET_C6_NMEM"] = "Участников";
 $MESS["SONET_C6_TYPE"] = "Тип группы";
 $MESS["SONET_C6_TYPE_PROJECT"] = "Тип проекта";
+$MESS["SONET_C6_TYPE_SCRUM"] = "Тип";
 $MESS["SONET_C6_PROJECT_DATE_START"] = "Дата начала";
 $MESS["SONET_C6_PROJECT_DATE_FINISH"] = "Дата завершения";
 $MESS["SONET_C6_DEPARTMENTS"] = "Отделы";
@@ -17,6 +18,7 @@ $MESS["SONET_C6_ACT_MODN_PROJECT"] = "Помощники руководител�
 $MESS["SONET_C6_ACT_USER1"] = "Участники";
 $MESS["SONET_C6_ACT_REQU"] = "Пригласить в группу";
 $MESS["SONET_C6_ACT_REQU_PROJECT"] = "Пригласить в проект";
+$MESS["SONET_C6_ACT_REQU_SCRUM"] = "Пригласить в команду";
 $MESS["SONET_C6_ACT_JOIN"] = "Вступить в группу";
 $MESS["SONET_C6_ACT_JOIN_PROJECT"] = "Присоединиться к проекту";
 $MESS["SONET_C6_ACT_JOIN2"] = "Отправить запрос на присоединение к группе";
@@ -36,6 +38,7 @@ $MESS["SONET_C6_TAGS"] = "Теги";
 $MESS["SONET_C6_LIVEFEED"] = "Последние изменения";
 $MESS["SONET_C6_OWNERN"] = "Владелец";
 $MESS["SONET_C6_OWNERN_PROJECT"] = "Руководитель";
+$MESS["SONET_C6_OWNERN_SCRUM"] = "Владелец продукта";
 $MESS["SONET_C6_MEMBERS_REST"] = "Остальные участники";
 $MESS["SONET_C6_MODERATORS_REST"] = "Остальные модераторы";
 $MESS["SONET_C6_HIDE_DESCRIPTION"] = "Свернуть описание";

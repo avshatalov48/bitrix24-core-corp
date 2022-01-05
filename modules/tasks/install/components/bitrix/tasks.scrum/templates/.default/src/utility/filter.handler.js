@@ -1,32 +1,27 @@
-import {Dom} from 'main.core';
-import {BaseEvent, EventEmitter} from 'main.core.events';
+import {BaseEvent} from 'main.core.events';
 
 import {Filter} from '../service/filter';
 
-import {RequestSender} from './request.sender';
-import {EntityStorage} from './entity.storage';
-import {SubTasksManager} from './subtasks.manager';
-
+import {EntityStorage} from '../entity/entity.storage';
 import {Sprint} from '../entity/sprint/sprint';
-import {Item} from '../item/item';
+
+import {RequestSender} from './request.sender';
+
+import {Item, ItemParams} from '../item/item';
 
 type Params = {
 	filter: Filter,
 	requestSender: RequestSender,
-	entityStorage: EntityStorage,
-	subTasksCreator: SubTasksManager
+	entityStorage: EntityStorage
 }
 
-export class FilterHandler extends EventEmitter
+export class FilterHandler
 {
 	constructor(params: Params)
 	{
-		super(params);
-
 		this.filter = params.filter;
 		this.requestSender = params.requestSender;
 		this.entityStorage = params.entityStorage;
-		this.subTasksCreator = params.subTasksCreator;
 
 		this.filter.subscribe('applyFilter', this.onApplyFilter.bind(this));
 	}
@@ -35,61 +30,36 @@ export class FilterHandler extends EventEmitter
 	{
 		this.fadeOutAll();
 
-		const filterInfo = baseEvent.getData();
-
-		this.updateExactSearchStatusToEntities();
-
 		this.requestSender.applyFilter().then((response) => {
-			filterInfo.promise.fulfill();
 
 			const filteredItemsData = response.data;
 
 			this.entityStorage.getAllItems().forEach((item: Item) => {
 				const entity = this.entityStorage.findEntityByEntityId(item.getEntityId());
-				if (item.isParentTask())
+				if (!entity.isCompleted())
 				{
-					this.subTasksCreator.cleanVisibility(item);
-					this.subTasksCreator.cleanSubTasks(item);
+					entity.removeItem(item);
+					item.removeYourself();
 				}
-				entity.removeItem(item);
-				item.removeYourself();
 			});
 
-			filteredItemsData.forEach((itemData) => {
-				const item = Item.buildItem(itemData);
+			filteredItemsData.forEach((itemParams: ItemParams) => {
+				const item = Item.buildItem(itemParams);
 				const entity = this.entityStorage.findEntityByEntityId(item.getEntityId());
-				Dom.append(item.render(), entity.getListItemsNode());
-				entity.setItem(item);
-				item.onAfterAppend(entity.getListItemsNode());
-				if (item.isParentTask())
+				item.setShortView(entity.getShortView());
+				if (!entity.isCompleted())
 				{
-					item.downSubTasksTick();
+					entity.appendItemToList(item);
+					entity.setItem(item);
 				}
 			});
-
-			this.updateVisibilityToEntities();
 
 			this.fadeInAll();
 		}).catch((response) => {
-			filterInfo.promise.reject();
 
 			this.fadeInAll();
 
 			this.requestSender.showErrorAlert(response);
-		});
-	}
-
-	updateExactSearchStatusToEntities()
-	{
-		this.entityStorage.getSprints().forEach((sprint: Sprint) => {
-			sprint.setExactSearchApplied(this.filter.isSearchFieldApplied());
-		});
-	}
-
-	updateVisibilityToEntities()
-	{
-		this.entityStorage.getSprints().forEach((sprint: Sprint) => {
-			sprint.updateVisibility();
 		});
 	}
 
@@ -98,7 +68,10 @@ export class FilterHandler extends EventEmitter
 		this.entityStorage.getBacklog().fadeOut();
 
 		this.entityStorage.getSprints().forEach((sprint: Sprint) => {
-			sprint.fadeOut();
+			if (!sprint.isCompleted())
+			{
+				sprint.fadeOut();
+			}
 		});
 	}
 
@@ -107,7 +80,10 @@ export class FilterHandler extends EventEmitter
 		this.entityStorage.getBacklog().fadeIn();
 
 		this.entityStorage.getSprints().forEach((sprint: Sprint) => {
-			sprint.fadeIn();
+			if (!sprint.isCompleted())
+			{
+				sprint.fadeIn();
+			}
 		});
 	}
 }

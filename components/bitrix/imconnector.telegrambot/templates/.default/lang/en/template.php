@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_API_TOKEN"] = "Access token";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_BOT_LINK"] = "Bot link";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_BOT_NAME"] = "Bot name";
@@ -12,6 +12,13 @@ $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_STEP"] = "Before connection, yo
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_TITLE"] = "Connect Telegram to your Open Channel";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CREATE_BOT"] = "<span class=\"imconnector-field-box-text-bold\">Create a Telegram bot</span>";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_FINAL_FORM_DESCRIPTION"] = "Telegram is now connected to your Open channel. All messages sent via the bot will end up in Bitrix24";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION"] = "You have to <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">create a Telegram bot</a> or use the one you already have. If you don't have a bot, we will help you create one and connect it to your Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_1"] = "Save contacts and communication history to the CRM";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_2"] = "Guide the customer through the sales funnel in the CRM";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_3"] = "Reply to your customers when and where they prefer";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_4"] = "Customer inquiries are distributed among the sales agents as per queue rules";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_SUBTITLE"] = "Reply to your customers the way they want. If a customer finds Telegram more convenient than other means of communication, receive their messages to your Bitrix24 and reply immediately.";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_TITLE"] = "Talk to your customers in Telegram";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INFO"] = "Information";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INFO_CONNECT_CONNECT_ID"] = "redirect=detail&code=6352401";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INFO_CONNECT_ID"] = "redirect=detail&code=6352401";
@@ -20,4 +27,3 @@ $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INSTRUCTION_TITLE"] = "<span class=\"im
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_I_KNOW_TOKEN"] = "I have the token";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_TESTED"] = "Connection test";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_USING_TITLE"] = "I'd like to";
-?>

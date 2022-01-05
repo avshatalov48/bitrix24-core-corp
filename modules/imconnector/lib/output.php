@@ -16,7 +16,7 @@ Library::loadMessages();
  * @method Result delPageActive($idPage, $local = false)
  *
  * @see \Bitrix\ImConnectorServer\Connectors\Facebook\Lib::authorizationPage
- * @method Result authorizationPage($idPage)
+ * @method Result authorizationPage($idPage, array $params = [])
  *
  * @see \Bitrix\ImConnectorServer\Connectors\Connector::deleteConnector
  * @method Result deleteConnector($sendDeactivateConnector = false)
@@ -37,6 +37,8 @@ Library::loadMessages();
  * @method Result sendMessage(array $data)
  * @method Result updateMessage(array $data)
  * @method Result deleteMessage(array $data)
+ *
+ * @method static Result infoConnectorsLine(int $lineId)
  *
  * @package Bitrix\ImConnector
  * @final

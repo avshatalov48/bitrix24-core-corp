@@ -25,9 +25,6 @@ class PageMenu
 		{
 			if (BXMobileAppContext.getApiVersion() >= Instance.getApiVersion('pageMenu'))
 			{
-				BXMobileApp.UI.Page.TopBar.title.params.largeMode = true;
-				BXMobileApp.UI.Page.TopBar.title._applyParams();
-
 				this.initPagePopupMenu();
 			}
 			else

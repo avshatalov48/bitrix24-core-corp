@@ -229,10 +229,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      if (im_lib_utils.Utils.platform.isIos()) {
 	        className.push('bx-mobile-ios');
-
-	        if (Application.getApiVersion() >= 39) {
-	          className.push('bx-mobile-ios-keyboard');
-	        }
 	      } else {
 	        className.push('bx-mobile-android');
 	      }
@@ -663,6 +659,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function initEnvironment() {
 	      console.log('4. initEnvironment');
 	      this.setTextareaMessage = im_lib_utils.Utils.debounce(this.controller.application.setTextareaMessage, 300, this.controller.application);
+
+	      if (im_lib_utils.Utils.platform.isIos() && Application.getApiVersion() >= 39) ;
+
 	      return new Promise(function (resolve, reject) {
 	        return resolve();
 	      });
@@ -1923,10 +1922,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return false;
 	      }
 
-	      var quiteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
+	      var quoteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
 
-	      if (quiteId) {
-	        var quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), quiteId);
+	      if (quoteId) {
+	        var quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), quoteId);
 
 	        if (quoteMessage) {
 	          var user = null;

@@ -7,23 +7,34 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $taskUrlTemplate = ($arParams['MENU_GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams['PATH_TO_USER_TASKS_TASK']);
 $taskTemplateUrlTemplate = $arParams['PATH_TO_USER_TASKS_TEMPLATES'];
 $taskTemplateUrlTemplateAction = $arParams['PATH_TO_USER_TASKS_TEMPLATES_ACTION'];
+
+$isScrumProject = $arResult['IS_SCRUM_PROJECT'];
 ?>
 
-
-<div style="margin-right: 12px" class="ui-btn-split ui-btn-success tasks-interface-filter-btn-add">
-	<a class="ui-btn-main" id="tasks-buttonAdd"
-	   href="<?=CComponentEngine::makePathFromTemplate(
-		   $taskUrlTemplate,
-		   array(
-			   'action'   => 'edit',
-			   'task_id'  => 0,
-			   'user_id'  => $arParams['USER_ID'],
-			   'group_id' => $arParams['MENU_GROUP_ID']
-		   )
-	   )?>"
-	><?=GetMessage('TASKS_BTN_ADD_TASK')?></a>
-	<span id="tasks-popupMenuAdd" class="ui-btn-extra"></span>
-</div>
+<?php if ($isScrumProject): ?>
+	<div class="ui-btn-split ui-btn-light-border ui-btn-themes tasks-interface-filter-btn-add">
+		<a id="tasks-buttonAdd" class="ui-btn-main" href="<?=
+		CComponentEngine::makePathFromTemplate($taskUrlTemplate, [
+			'action' => 'edit',
+			'task_id' => 0,
+			'user_id' => $arParams['USER_ID'],
+			'group_id' => $arParams['MENU_GROUP_ID']
+		])?>"><?=GetMessage('TASKS_BTN_ADD_TASK')?></a>
+		<div id="tasks-popupMenuAdd" class="ui-btn-menu"></div>
+	</div>
+<?php else: ?>
+	<div class="ui-btn-split ui-btn-success tasks-interface-filter-btn-add">
+		<a class="ui-btn-main" id="tasks-buttonAdd" href="<?=
+		CComponentEngine::makePathFromTemplate($taskUrlTemplate, [
+			'action' => 'edit',
+			'task_id' => 0,
+			'user_id' => $arParams['USER_ID'],
+			'group_id' => $arParams['MENU_GROUP_ID']
+		])?>"
+		><?=GetMessage('TASKS_BTN_ADD_TASK')?></a>
+		<span id="tasks-popupMenuAdd" class="ui-btn-extra"></span>
+	</div>
+<?php endif; ?>
 
 <script type="text/javascript">
 	(function()

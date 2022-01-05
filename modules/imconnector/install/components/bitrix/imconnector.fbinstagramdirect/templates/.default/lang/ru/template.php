@@ -33,4 +33,21 @@ $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONVERT_TO_BUSINESS_HELP'] = 'К�
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_NO_SPECIFIC_PAGE'] = 'Нет нужного аккаунта? Возможные причины описаны #A#в статье.#A_END#';
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_PERSONAL_ACCOUNT'] = 'Личный аккаунт';
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_BUSINESS_ACCOUNT'] = 'Бизнес-аккаунт';
-$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_AGREEMENT_TERMS_AGREE'] = 'Я согласен';
+
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_TITLE'] = 'Direct сообщения из Instagram в Битрикс24';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_SUBTITLE'] = 'Клиент задаст вопрос в Instagram, вы его получите в Битрикс24. Это поможет вам отвечать быстрее и повысит конверсию в продажи.';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_LIST_ITEM_1'] = 'Контакты и переписка сохраняются в CRM';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_LIST_ITEM_2'] = 'CRM помогает вести клиента по воронке продаж';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_LIST_ITEM_3'] = 'Вы отвечаете клиентам быстро и там, где им удобно';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_LIST_ITEM_4'] = 'Вопросы от клиентов автоматически распределяются между менеджерами по правилам очереди';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_ADDITIONAL_DESCRIPTION'] = 'Для подключения необходимо создать публичную страницу Facebook или подключить уже существующую, где вы являетесь администратором и к которой подключен бизнес-аккаунт Instagram.';
+
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_DIRECT_AND_BUSINESS'] = 'Также подключить комментарии к публикациям и трансляциям';
+
+
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ACTIVE_COMMENTS'] = 'Комментарии подключены';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_NO_ACTIVE_COMMENTS'] = 'Комментарии не подключены';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_TITLE'] = 'Все равно подключить?';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_DESCRIPTION'] = 'Этот аккаунт на вашем портале уже подключен в коннекторе "Instagram для бизнеса". Чтобы комментарии не дублировались, это подключение будет отключено.';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_BUTTON_OK'] = 'Продолжить';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_BUTTON_CANCEL'] = 'Отмена';

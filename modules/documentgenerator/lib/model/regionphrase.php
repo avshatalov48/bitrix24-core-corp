@@ -4,6 +4,22 @@ namespace Bitrix\DocumentGenerator\Model;
 
 use Bitrix\Main;
 
+/**
+ * Class RegionPhraseTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_RegionPhrase_Query query()
+ * @method static EO_RegionPhrase_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_RegionPhrase_Result getById($id)
+ * @method static EO_RegionPhrase_Result getList(array $parameters = array())
+ * @method static EO_RegionPhrase_Entity getEntity()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_RegionPhrase createObject($setDefaultValues = true)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_RegionPhrase_Collection createCollection()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_RegionPhrase wakeUpObject($row)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_RegionPhrase_Collection wakeUpCollection($rows)
+ */
 class RegionPhraseTable extends Main\ORM\Data\DataManager
 {
 	/**

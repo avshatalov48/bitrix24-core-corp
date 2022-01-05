@@ -510,7 +510,7 @@ class Input
 		{
 			if(!empty($error['userId']))
 			{
-				$user = Connector::getUserByUserCode(['id' => $error['userId']], $this->connector);
+				$user = Connector::initConnectorHandler($this->connector)->getUserByUserCode(['id' => $error['userId']]);
 
 				if ($user->isSuccess())
 				{
@@ -544,7 +544,7 @@ class Input
 		{
 			foreach ($this->data as $status)
 			{
-				$user = Connector::getUserByUserCode($status['user'], $this->connector);
+				$user = Connector::initConnectorHandler($this->connector)->getUserByUserCode($status['user']);
 
 				if ($user->isSuccess())
 				{

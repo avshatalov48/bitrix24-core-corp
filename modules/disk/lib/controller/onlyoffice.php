@@ -11,8 +11,10 @@ use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Engine;
 use Bitrix\Disk\User;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\ActionFilter\ContentType;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
@@ -24,7 +26,11 @@ use Bitrix\Main\Engine\Router;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\HttpResponse;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\HttpClient;
+use Bitrix\Ui;
 
 final class OnlyOffice extends Engine\Controller
 {
@@ -97,6 +103,11 @@ final class OnlyOffice extends Engine\Controller
 	public function configureActions()
 	{
 		return [
+			'handleEndOfTrialFeature' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
+			],
 			'loadDocumentEditor' => [
 				'-prefilters' => [Csrf::class],
 			],
@@ -172,6 +183,79 @@ final class OnlyOffice extends Engine\Controller
 				],
 			],
 		];
+	}
+
+	public function handleEndOfTrialFeatureAction(): void
+	{
+		Disk\UserConfiguration::resetDocumentServiceCode();
+
+		$bitrix24Scenario = new Document\OnlyOffice\Bitrix24Scenario();
+		if ($bitrix24Scenario->isTrialEnded() && !$bitrix24Scenario->canUseView())
+		{
+			$documentHandlersManager = Driver::getInstance()->getDocumentHandlersManager();
+			$defaultHandlerForView = $documentHandlersManager->getDefaultHandlerForView();
+			if ($defaultHandlerForView instanceof Document\OnlyOffice\OnlyOfficeHandler)
+			{
+				Disk\Configuration::setDefaultViewerService(Document\BitrixHandler::getCode());
+			}
+		}
+	}
+
+	public function handleTrialFeatureActivationAction(): void
+	{
+		$trialFeatureInfo = Disk\Integration\Bitrix24Manager::getTrialFeatureInfo('disk_onlyoffice_edit');
+		if (!$trialFeatureInfo)
+		{
+			return;
+		}
+
+		['startDate' => $startDate, 'tillDate' => $tillDate] = $trialFeatureInfo;
+		$startDateTime = new DateTime($startDate, \DateTime::ISO8601);
+		$tillDate = new Date($tillDate, \DateTime::ISO8601);
+		$now = new DateTime();
+		$secondsAfterActivation = $now->getTimestamp() - $startDateTime->getTimestamp();
+		if ($secondsAfterActivation > 12*3600)
+		{
+			return;
+		}
+
+		$value = Option::get(Driver::INTERNAL_MODULE_ID, 'posted_message_after_onlyoffice_feature_trial', 'N');
+		if ($value === 'Y')
+		{
+			return;
+		}
+
+		$imManager = new Disk\Integration\ImManager();
+		$fromUserId = $this->getCurrentUser()->getId();
+
+		$imManager->sendMessageToGeneralChat(
+			$fromUserId,
+			[
+				'MESSAGE' => $this->generateMessageToChat($fromUserId, $tillDate),
+				'SYSTEM' => 'Y',
+			]
+		);
+
+		Option::set(Driver::INTERNAL_MODULE_ID, 'posted_message_after_onlyoffice_feature_trial', 'Y');
+	}
+
+	private function generateMessageToChat(int $fromUserId, Date $tillDate): string
+	{
+		$userModel = User::getById($fromUserId);
+		if ($userModel && $userModel->getPersonalGender() === 'F')
+		{
+			return Loc::getMessage('DISK_ONLYOFFICE_MSG_TO_GENERAL_CHAT_AFTER_DEMO_FEATURE_F', [
+				'#USER#' => "[USER={$fromUserId}][/USER]",
+				'#TRIAL_PERIOD_END_DATE#' => $tillDate->toString(),
+				'#HELPDESK_LINK#' => Ui\Util::getArticleUrlByCode(13663816),
+			]);
+		}
+
+		return Loc::getMessage('DISK_ONLYOFFICE_MSG_TO_GENERAL_CHAT_AFTER_DEMO_FEATURE_M', [
+			'#USER#' => "[USER={$fromUserId}][/USER]",
+			'#TRIAL_PERIOD_END_DATE#' => $tillDate->toString(),
+			'#HELPDESK_LINK#' => Ui\Util::getArticleUrlByCode(13663816),
+		]);
 	}
 
 	public function renameDocumentAction(Models\DocumentSession $documentSession, string $newName): ?array

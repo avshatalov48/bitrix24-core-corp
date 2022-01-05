@@ -372,6 +372,7 @@ BX.Mobile.Crm.Detail = {
 
 	collectInterfaceFormData: function(form, dataFormValues)
 	{
+		var multivalueCounter = {};
 		for (var i = 0; i < form.elements.length; i++)
 		{
 			if (form[i].tagName === "SELECT")
@@ -393,8 +394,28 @@ BX.Mobile.Crm.Detail = {
 					dataFormValues[form[i].name] = "";
 			}
 			else
+			{
+				var fieldName = form[i].name;
+				if (fieldName.substr(-2) === '[]')
 				{
-				dataFormValues[form[i].name] = form[i].value;
+					fieldName = fieldName.substr(0, fieldName.length - 2);
+					if (multivalueCounter.hasOwnProperty(fieldName))
+					{
+						multivalueCounter[fieldName]++;
+					}
+					else
+					{
+						multivalueCounter[fieldName] = 0;
+					}
+					var realFieldName = fieldName + '[' + multivalueCounter[fieldName] + ']';
+					while (dataFormValues.hasOwnProperty(realFieldName))
+					{
+						multivalueCounter[fieldName]++;
+						realFieldName = fieldName + '[' + multivalueCounter[fieldName] + ']';
+					}
+					fieldName = realFieldName;
+				}
+				dataFormValues[fieldName] = form[i].value;
 			}
 		}
 

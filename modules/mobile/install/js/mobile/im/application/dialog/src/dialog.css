@@ -29,10 +29,6 @@ body
 	box-sizing: border-box;
 }
 
-.bx-mobile-ios-keyboard .bx-mobilechat-wrapper {
-	padding-bottom: 55px;
-}
-
 /* DEBUG CASE */
 /*
 .bx-mobilechat-wrapper {
@@ -63,19 +59,15 @@ body
 	-webkit-overflow-scrolling: touch;
 }
 
-.bx-mobilechat-body {
+
+.bx-mobile-ios-safe-area {
 	padding-top: constant(safe-area-inset-top);
 	padding-bottom: constant(safe-area-inset-bottom);
 	padding-top: env(safe-area-inset-top);
 	padding-bottom: env(safe-area-inset-bottom);
-	box-sizing: border-box;
 }
 
 .bx-im-quote-panel, .bx-mobilechat-dialog {
-	padding-right: constant(safe-area-inset-right);
-	padding-left: constant(safe-area-inset-left);
-	padding-right: env(safe-area-inset-right);
-	padding-left: env(safe-area-inset-left);
 	box-sizing: border-box;
 }
 
@@ -137,10 +129,7 @@ body
 	animation: bx-mobilechat-dialog-opacity .2s ease-in-out;
 }
 
-/* END OF CHAT */
-
-/* END OF BODY */
-
+/* END OF GENERAL */
 
 /* MEDIAQUERIES */
 .bx-mobilechat-mobile.bx-mobilechat-wrapper {

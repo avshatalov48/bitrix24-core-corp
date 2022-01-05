@@ -230,7 +230,8 @@ return function (RoutingConfigurator $routes) {
 	$routes->any('/bitrix/services/ymarket/{any}', new PublicPageController('/bitrix/services/ymarket/index.php'))
 		->where('any', '.*');
 
-	$routes->any('/online/(/?)([^/]*)', new PublicPageController('/desktop_app/router.php'));
+	$routes->any('/online/(/?){alias}([^/]*)', new PublicPageController('/desktop_app/router.php'))
+		->where('alias', '[\.\-0-9a-zA-Z]+');
 
 	$routes->any('/bizproc/processes/{any}', new PublicPageController('/bizproc/processes/index.php'))
 		->where('any', '.*');

@@ -517,6 +517,10 @@ BX.DocumentGenerator.UploadTemplate.reInitForm = function()
 			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.regionBlockNode));
 			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.fileBlockNode));
 			BX.show(BX(BX.DocumentGenerator.UploadTemplate.uploadBlockNode));
+			if (this.providerPopup)
+			{
+				this.providerPopup.close();
+			}
 		}
 		catch(e){}
 	}

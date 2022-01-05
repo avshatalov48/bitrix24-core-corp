@@ -17,6 +17,15 @@ class TasksWidgetTagSelectorComponent extends TasksBaseComponent
 			$this->arParams['DATA'] = array();
 		}
 
+		if (
+			!array_key_exists('TASK_ID', $this->arParams)
+			|| !$this->arParams['TASK_ID']
+			|| !is_integer($this->arParams['TASK_ID'])
+		)
+		{
+			$this->arParams['TASK_ID'] = 0;
+		}
+
 		return $this->errors->checkNoFatals();
 	}
 }

@@ -197,7 +197,7 @@ export default class FileController extends DefaultController {
 			if (this.getParser().hasInterface())
 			{
 				item.setPluggedIn();
-				item.subscribe('onClick', () => {
+				item.subscribe('onClickInsertInText', () => {
 					this.getParser().insertFile(item.getId());
 				});
 				item.subscribe('onDelete', () => {

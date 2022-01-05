@@ -12,6 +12,7 @@ use Bitrix\ImConnector\Connector;
 use Bitrix\ImConnector\Output;
 use Bitrix\ImConnector\Status;
 use Bitrix\ImConnector\Library;
+use Bitrix\Notifications\Settings;
 
 Loader::includeModule('imconnector');
 
@@ -20,6 +21,7 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 	use Bitrix\Main\ErrorableImplementation;
 
 	private $connector = Library::ID_NOTIFICATIONS_CONNECTOR;
+	private $scenarioCode;
 
 	private $error = [];
 	private $pageId = 'page_unc';
@@ -28,6 +30,12 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 	private $connectorOutput;
 	/** @var Status */
 	private $status;
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->errorCollection = new \Bitrix\Main\ErrorCollection();
+	}
 
 	protected function checkModules(): bool
 	{
@@ -41,6 +49,11 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 			ShowError('imopenlines is not installed');
 			return false;
 		}
+		if (!Loader::includeModule('notifications'))
+		{
+			ShowError('notifications is not installed');
+			return false;
+		}
 
 		return true;
 	}
@@ -51,11 +64,16 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 
 		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
 
+		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+		$this->scenarioCode = $request->get('scenario') ?? Settings::SCENARIO_CRM_PAYMENT;
+		$this->arResult["SCENARIO_CODE"] = $this->scenarioCode;
 		$this->arResult["STATUS"] = $this->status->isStatus();
-		$this->arResult["ACTIVE_STATUS"] = $this->status->getActive();
-		$this->arResult["CONNECTION_STATUS"] = $this->status->getConnection();
-		$this->arResult["REGISTER_STATUS"] = $this->status->getRegister();
-		$this->arResult["ERROR_STATUS"] = $this->status->getError();
+		$this->arResult["ACTIVE_STATUS"] = $this->status->getActive() && Settings::isScenarioEnabled($this->scenarioCode);
+//		$this->arResult["CONNECTION_STATUS"] = $this->status->getConnection();
+//		$this->arResult["REGISTER_STATUS"] = $this->status->getRegister();
+//		$this->arResult["ERROR_STATUS"] = $this->status->getError();
+
+		$this->arResult["HELP_ARTICLE_CODE"] = $this->scenarioCode == Settings::SCENARIO_VIRTUAL_WHATSAPP ? "14748976" : "13655934";
 
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);
 
@@ -81,6 +99,7 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 			/** @var \Bitrix\ImConnector\Result $resultRegister */
 			$resultRegister = $this->connectorOutput->register([
 				'LINE_ID' => $this->arParams['LINE'],
+				'SKIP_TOS' => $this->scenarioCode === Settings::SCENARIO_VIRTUAL_WHATSAPP
 			]);
 
 			if ($resultRegister->isSuccess())
@@ -97,6 +116,14 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 				$this->arResult["STATUS"] = true;
 
 				Status::deleteLinesExcept($this->connector, $this->arParams['LINE']);
+
+				$scenarioEnableResult = Settings::setScenarioStatus($this->arResult['SCENARIO_CODE'], true);
+				if (!$scenarioEnableResult->isSuccess())
+				{
+					$this->error[] = $scenarioEnableResult->getErrors()[0]->getMessage();
+					$this->arResult["ACTIVE_STATUS"] = false;
+					$this->arResult["STATUS"] = false;
+				}
 			}
 			else
 			{
@@ -108,24 +135,52 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 		{
 			if($this->request[$this->connector. '_del'])
 			{
-				$resultDelete = $this->connectorOutput->delete();
-
-				if($resultDelete->isSuccess())
+				$scenarioDisableResult = Settings::setScenarioStatus($this->arResult['SCENARIO_CODE'], false);
+				if (!$scenarioDisableResult->isSuccess())
 				{
-					//$this->messages[] = Loc::getMessage("IMCONNECTOR_COMPONENT_SETTINGS_OK_DISABLE");
-				}
-				else
-				{
-					$this->error[] = Loc::getMessage("IMCONNECTOR_COMPONENT_SETTINGS_NO_DISABLE");
+					$this->error[] = $scenarioDisableResult->getErrors()[0]->getMessage();
 				}
 
-				Status::delete($this->connector, $this->arParams['LINE']);
-				$this->arResult["STATUS"] = false;
-				$this->arResult["ACTIVE_STATUS"] = false;
-				$this->arResult["CONNECTION_STATUS"] = false;
-				$this->arResult["REGISTER_STATUS"] = false;
-				$this->arResult["ERROR_STATUS"] = false;
-				$this->arResult["PAGE"] = '';
+				if (!Settings::isAnyScenarioEnabled())
+				{
+					$resultDelete = $this->connectorOutput->delete();
+					if (!$resultDelete->isSuccess())
+					{
+						$this->error[] = $resultDelete->getErrors()[0]->getMessage();
+					}
+					else
+					{
+						Status::delete($this->connector, $this->arParams['LINE']);
+					}
+				}
+
+				if (empty($this->error))
+				{
+					$this->arResult["STATUS"] = false;
+					$this->arResult["ACTIVE_STATUS"] = false;
+					$this->arResult["CONNECTION_STATUS"] = false;
+					$this->arResult["REGISTER_STATUS"] = false;
+					$this->arResult["ERROR_STATUS"] = false;
+					$this->arResult["PAGE"] = '';
+				}
+			}
+		}
+
+		\Bitrix\ImConnector\InfoConnectors::updateInfoConnectors($this->arParams['LINE']);
+		if (Loader::includeModule('crm') && method_exists(\Bitrix\Crm\SiteButton\Manager::class, 'updateScriptCacheWithLineId'))
+		{
+			$lineConfig = \Bitrix\ImOpenLines\Model\ConfigTable::getRow([
+				'select' => ['ACTIVE'],
+				'filter' => [
+					'=ID' => $this->arParams['LINE']
+				]
+			]);
+			if ($lineConfig)
+			{
+				\Bitrix\Crm\SiteButton\Manager::updateScriptCacheWithLineId(
+					$this->arParams['LINE'],
+					$lineConfig['ACTIVE'] === 'Y'
+				);
 			}
 		}
 	}
@@ -168,7 +223,12 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 				if (!empty($this->messages))
 					$this->arResult['messages'] = $this->messages;
 
-				$this->includeComponentTemplate();
+				$page = '';
+				if ($this->arResult['SCENARIO_CODE'] === Settings::SCENARIO_VIRTUAL_WHATSAPP)
+				{
+					$page = 'template_virtual_wa';
+				}
+				$this->includeComponentTemplate($page);
 			}
 			else
 			{
@@ -222,5 +282,21 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 				\Bitrix\Main\Context::getCurrent()->getServer()->getRemoteAddr()
 			);
 		}
+	}
+
+	public function saveSettingsAction(array $scenarioStatus, int $lineId)
+	{
+		foreach (Settings::getScenarioList() as $scenarioName)
+		{
+			$scenarioEnabled = isset($scenarioStatus[$scenarioName]) && $scenarioStatus[$scenarioName] === 'Y';
+			$result = Settings::setScenarioStatus($scenarioName, $scenarioEnabled);
+			if (!$result->isSuccess())
+			{
+				$this->errorCollection->add($result->getErrors());
+				return null;
+			}
+		}
+
+		\Bitrix\ImConnector\InfoConnectors::updateInfoConnectors($lineId);
 	}
 }

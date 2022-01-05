@@ -697,6 +697,7 @@
 				});
 				this.links.templates[i] = {
 					text: BX.util.htmlspecialchars(response.data.templates[i]['name']),
+					title: BX.util.htmlspecialchars(response.data.templates[i]['name']),
 					onclick: 'BX.DocumentGenerator.Document.onBeforeCreate(\'' + url + '\', {}, \'' + this.loaderPath + '\')'
 				};
 			}
@@ -778,7 +779,8 @@
 			offsetLeft: 0,
 			offsetTop: 0,
 			closeByEsc: true,
-			className: 'document-toolbar-menu'
+			className: 'document-toolbar-menu',
+			maxWidth: 600
 		});
 	};
 

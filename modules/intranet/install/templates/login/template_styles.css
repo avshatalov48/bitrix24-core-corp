@@ -1,32 +1,32 @@
 @font-face {
 	font-family: 'Montserrat-regular';
-	src: 	url('font/montserrat-regular.eot');
-	src: 	url('font/montserrat-regular.eot?#iefix') format('embedded-opentype'),
-			url('font/montserrat-regular.woff2') format('woff2'),
-			url('font/montserrat-regular.woff') format('woff'),
-			url('font/montserrat-regular.ttf') format('truetype');
+	src: url('font/montserrat-regular.eot');
+	src: url('font/montserrat-regular.eot?#iefix') format('embedded-opentype'),
+	url('font/montserrat-regular.woff2') format('woff2'),
+	url('font/montserrat-regular.woff') format('woff'),
+	url('font/montserrat-regular.ttf') format('truetype');
 	font-weight: normal;
 	font-style: normal;
 }
 
 @font-face {
 	font-family: 'Montserrat-medium';
-	src: 	url('font/montserrat-medium.eot');
-	src: 	url('font/montserrat-medium.eot?#iefix') format('embedded-opentype'),
-			url('font/montserrat-medium.woff2') format('woff2'),
-			url('font/montserrat-medium.woff') format('woff'),
-			url('font/montserrat-medium.ttf') format('truetype');
+	src: url('font/montserrat-medium.eot');
+	src: url('font/montserrat-medium.eot?#iefix') format('embedded-opentype'),
+	url('font/montserrat-medium.woff2') format('woff2'),
+	url('font/montserrat-medium.woff') format('woff'),
+	url('font/montserrat-medium.ttf') format('truetype');
 	font-weight: normal;
 	font-style: normal;
 }
 
 @font-face {
 	font-family: 'Montserrat-semibold';
-	src: 	url('font/montserrat-semibold.eot');
-	src: 	url('font/montserrat-semibold.eot?#iefix') format('embedded-opentype'),
-			url('font/montserrat-semibold.woff2') format('woff2'),
-			url('font/montserrat-semibold.woff') format('woff'),
-			url('font/montserrat-semibold.ttf') format('truetype');
+	src: url('font/montserrat-semibold.eot');
+	src: url('font/montserrat-semibold.eot?#iefix') format('embedded-opentype'),
+	url('font/montserrat-semibold.woff2') format('woff2'),
+	url('font/montserrat-semibold.woff') format('woff'),
+	url('font/montserrat-semibold.ttf') format('truetype');
 	font-weight: normal;
 	font-style: normal;
 }
@@ -39,7 +39,7 @@ body {
 	background: #2fc6f7;
 	box-sizing: border-box;
 	height: 100%;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	min-height: 650px;
 	margin: 0;
 	min-width: 1024px;
@@ -108,13 +108,15 @@ body {
 
 .log-popup {
 	display: block;
-	position: relative;
 	overflow: hidden;
 	background-color: #fff;
 	border-radius: 4px;
 	width: 650px;
 	position: relative;
 	padding: 26px 45px;
+}
+
+.log-popup-wrap .log-popup {
 	white-space: nowrap;
 }
 
@@ -146,7 +148,7 @@ body {
 	font-size: 27px;
 	line-height: 35px;
 	color: #333;
-	font-family: 'Montserrat-medium', Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .log-popup-content {
@@ -182,7 +184,7 @@ body {
 	color: #7d9199;
 	vertical-align: middle;
 	font-size: 19px;
-	font-family: 'geometriamedium';
+	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .login-email-text {
@@ -207,8 +209,7 @@ body {
 	vertical-align: middle;
 }
 
-.login-captcha-img img {display: block;}
-
+.login-captcha-img img { display: block; }
 
 .login-inp {
 	display: block;
@@ -230,8 +231,6 @@ body {
 	border-color: #00c7f9;
 }
 
-.bx-ie8 .login-inp {padding-top: 7px;}
-
 .login-inp-error {
 	border: 3px solid #f2cbcb;
 	border-radius: 4px;
@@ -251,7 +250,6 @@ body {
 	border: 1px solid;
 	border-color: #d9e0e1 #e0e7e9 #dde5e7;
 	border-radius: 3px;
-	-webkit-box-shadow: inset 0 1px 0 #e0e7e9;
 	box-shadow: inset 0 1px 0 #e0e7e9;
 	height: 4px;
 	margin: 8px 0 2px 199px;
@@ -268,32 +266,17 @@ body {
 }
 
 .login-pass-complex-bar-red {
-	background-image: -webkit-linear-gradient(top, #e15a5a, #c73838);
-	background-image: -moz-linear-gradient(top, #e15a5a, #c73838);
-	background-image: -ms-linear-gradient(top, #e15a5a, #c73838);
-	background-image: -o-linear-gradient(top, #e15a5a, #c73838);
-	background-image: linear-gradient(to bottom, #e15a5a, #c73838);
-	-webkit-box-shadow: inset 0 2px 0 #f07e7e, inset 0 -1px 0 #c12222;
+	background-image: linear-gradient(top, #e15a5a, #c73838);
 	box-shadow: inset 0 2px 0 #f07e7e, inset 0 -1px 0 #c12222;
 }
 
 .login-pass-complex-bar-yellow {
-	background-image: -webkit-linear-gradient(top, #ecb822, #dc7a15);
-	background-image: -moz-linear-gradient(top, #ecb822, #dc7a15);
-	background-image: -ms-linear-gradient(top, #ecb822, #dc7a15);
-	background-image: -o-linear-gradient(top, #ecb822, #dc7a15);
-	background-image: linear-gradient(to bottom, #ecb822, #dc7a15);
-	-webkit-box-shadow: inset 0 1px 0 #efa615, inset 0 2px 0 #efc428, inset -1px 0 0 #da860d;
+	background-image: linear-gradient(top, #ecb822, #dc7a15);
 	box-shadow: inset 0 1px 0 #efa615, inset 0 2px 0 #efc428, inset -1px 0 0 #da860d;
 }
 
 .login-pass-complex-bar-green {
-	background-image: -webkit-linear-gradient(top, #a4c31e, #7eaa16);
-	background-image: -moz-linear-gradient(top, #a4c31e, #7eaa16);
-	background-image: -ms-linear-gradient(top, #a4c31e, #7eaa16);
-	background-image: -o-linear-gradient(top, #a4c31e, #7eaa16);
-	background-image: linear-gradient(to bottom, #a4c31e, #7eaa16);
-	-webkit-box-shadow: inset 0 -1px 0 #7ca116, inset 0 1px 0 #a0c624, inset 0 2px 0 #bdd426;
+	background-image: linear-gradient(top, #a4c31e, #7eaa16);
 	box-shadow: inset 0 -1px 0 #7ca116, inset 0 1px 0 #a0c624, inset 0 2px 0 #bdd426;
 }
 
@@ -326,7 +309,6 @@ body {
 	font-family: Georgia, "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-style: italic;
 }
-
 
 .login-user-photo {
 	background: url(images/bx24-login-sprite5.png) no-repeat 0 -679px;
@@ -364,11 +346,10 @@ a.login-item-link {
 	color: #2fc6f7;
 	vertical-align: bottom;
 	text-decoration: none;
-	font-family: 'geometriamedium';
+	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	line-height: 20px;
 	position: relative;
 	bottom: 3px;
-	-webkit-transition: border-color ease-in-out .1s;
 	transition: border-color ease-in-out .1s;
 	text-transform: uppercase;
 }
@@ -434,23 +415,15 @@ a.login-item-link:hover {
 	vertical-align: top;
 }
 
-
 .login-inp-captcha {
 	margin-left: 11px;
 	vertical-align: middle;
 	width: 115px;
 }
 
-
 .login-inp-active {
-	-webkit-box-shadow: inset 0 1px 4px rgba(0, 0, 0, .25), 0 0 0 2px #cdd2d5;
 	box-shadow: inset 0 1px 4px rgba(0, 0, 0, .25), 0 0 0 2px #cdd2d5;
 }
-
-/*.login-inp-error {
-	-webkit-box-shadow: inset 0 1px 4px rgba(0, 0, 0, .25), 0 0 0 2px #db2b2b;
-	box-shadow: inset 0 1px 4px rgba(0, 0, 0, .25), 0 0 0 2px #db2b2b;
-}*/
 
 .login-file-block {
 	display: inline-block;
@@ -462,7 +435,6 @@ a.login-item-link:hover {
 	border: 1px solid;
 	border-color: #b9bcbe #bdc1c3 #c1c5c8;
 	border-radius: 2px;
-	-webkit-box-shadow: inset 0 1px 4px rgba(0, 0, 0, .25);
 	box-shadow: inset 0 1px 4px rgba(0, 0, 0, .25);
 	display: block;
 	height: 39px;
@@ -477,18 +449,12 @@ a.login-item-link:hover {
 	position: relative;
 }
 
-
 .login-file-btn {
 	background-color: #ecf1f3;
-	background-image: -webkit-linear-gradient(top, #f9f9fa, #dee9ec);
-	background-image: -moz-linear-gradient(top, #f9f9fa, #dee9ec);
-	background-image: -ms-linear-gradient(top, #f9f9fa, #dee9ec);
-	background-image: -o-linear-gradient(top, #f9f9fa, #dee9ec);
-	background-image: linear-gradient(to bottom, #f9f9fa, #dee9ec);
+	background-image: linear-gradient(top, #f9f9fa, #dee9ec);
 	border: 1px solid;
 	border-color: #e8e4ca #d0ccb5 #a3a08e;
 	border-radius: 3px;
-	-webkit-box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(255, 255, 255, .4), 0 1px 0 #dcd8c0;
 	box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(255, 255, 255, .4), 0 1px 0 #dcd8c0;
 	color: #7a808c;
 	cursor: pointer;
@@ -510,21 +476,12 @@ a.login-item-link:hover {
 
 .login-file-btn-wrap:hover .login-file-btn {
 	background-color: #f5f7f8;
-	background-image: -webkit-linear-gradient(top, #fafafa, #f1f6f7);
-	background-image: -moz-linear-gradient(top, #fafafa, #f1f6f7);
-	background-image: -ms-linear-gradient(top, #fafafa, #f1f6f7);
-	background-image: -o-linear-gradient(top, #fafafa, #f1f6f7);
-	background-image: linear-gradient(to bottom, #fafafa, #f1f6f7);
+	background-image: linear-gradient(top, #fafafa, #f1f6f7);
 }
 
 .login-file-btn-wrap:active .login-file-btn {
 	background-color: #c5d4cc;
-	background-image: -webkit-linear-gradient(top, #bbccc3, #cddad2);
-	background-image: -moz-linear-gradient(top, #bbccc3, #cddad2);
-	background-image: -ms-linear-gradient(top, #bbccc3, #cddad2);
-	background-image: -o-linear-gradient(top, #bbccc3, #cddad2);
-	background-image: linear-gradient(to bottom, #bbccc3, #cddad2);
-	-webkit-box-shadow: inset 0 1px 1px 1px rgba(122, 128, 141, .78);
+	background-image: linear-gradient(top, #bbccc3, #cddad2);
 	box-shadow: inset 0 1px 1px 1px rgba(122, 128, 141, .78);
 	border-color: #f5f1d6;
 	border-radius: 2px;
@@ -546,7 +503,7 @@ a.login-item-link:hover {
 	padding: 6px 0 0 192px;
 }
 
-.log-popup-content .login-item-checkbox {padding-left: 200px;}
+.log-popup-content .login-item-checkbox { padding-left: 200px; }
 
 .login-alignment-checkbox {
 	display: inline-block;
@@ -564,31 +521,41 @@ a.login-item-link:hover {
 .login-item-checkbox-label {
 	color: #5e5d5d;
 	font-size: 14px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif line-height: normal;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	line-height: normal;
 }
 
-.bx-ie8 .login-item-checkbox-label {padding-top: 2px;}
-
-.login-links {margin: 14px 0;}
+.login-links { margin: 14px 0; }
 
 .login-inp-wrap {
 	padding-top: 7px;
 }
 
-.login-item-checkbox .login-links {margin: 11px 0 0; font-size: 14px;}
+.login-item-checkbox .login-links {
+	margin: 11px 0 0;
+	font-size: 14px;
+}
 
-.login-item-checkbox .login-links a {font-size: 14px; text-decoration: none;}
+.login-item-checkbox .login-links a {
+	font-size: 14px;
+	text-decoration: none;
+}
 
-.login-item-checkbox .login-links a:hover {text-decoration: underline;}
+.login-item-checkbox .login-links a:hover {
+	text-decoration: underline;
+}
 
-.login-links a {font-size: 16px;color: #0097c7;}
+.login-links a {
+	font-size: 16px;
+	color: #0097c7;
+}
 
 .login-link-forgot-pass {
 	display: inline-block;
 	border-bottom: 2px solid #cdf0ff;
 	color: #0097c7;
 	text-decoration: none;
-	font-family: 'Montserrat-medium', Helvetica Neue, Helvetica, Arial, sans-serif;;
+	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	line-height: 20px;
 	position: relative;
 	margin-left: 15px;
@@ -614,10 +581,9 @@ a.login-item-link:hover {
 	border-radius: 6px;
 	border: 1px solid;
 	border-color: #c0d8e5 #d6e4ed #e5edf2;
-	-webkit-box-shadow: inset 0 1px 1px #d6e4ed;
 	box-shadow: inset 0 1px 1px #d6e4ed;
 	min-height: 39px;
-	padding: 18px 17px 0 17px;
+	padding: 18px 17px 0;
 }
 
 .login-social-net-yellow {
@@ -641,7 +607,6 @@ a.login-item-link:hover {
 .bx-auth-serv-icons a {
 	display: inline-block;
 	vertical-align: middle;
-
 }
 
 .bx-auth-serv-icons a:hover {
@@ -799,7 +764,6 @@ a.login-item-link:hover {
 }
 
 .login-create-profile {
-	/*	border-bottom: 1px solid #e5e5e5;*/
 	padding-bottom: 28px;
 	position: relative;
 }
@@ -914,13 +878,14 @@ a.login-create-promo-cod-link {
 	vertical-align: middle;
 	text-decoration: none;
 	cursor: pointer;
-	font-family: 'Montserrat-medium', Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	border-radius: 20px;
 	padding: 0 30px;
 	height: 42px;
 	line-height: 42px;
 	font-size: 17px !important;
 	-webkit-appearance: none;
+	appearance: none;
 }
 
 .login-btn-transparent {
@@ -944,13 +909,15 @@ a.login-btn {
 	padding: 0 20px;
 }
 
-.bx-ie .login-btn {
-	padding-top: 0;
+.login-btn:hover {
+	background: #1ab8eb;
+	color: #fff;
 }
 
-.login-btn:hover {background: #1ab8eb;color: #fff;}
-
-.login-btn:active {background: #1a83bf;color: #fff;}
+.login-btn:active {
+	background: #1a83bf;
+	color: #fff;
+}
 
 .login-btn.wait {
 	background: #13b1e3 url(images/ld_blue.gif) center no-repeat;
@@ -959,8 +926,6 @@ a.login-btn {
 }
 
 .language-box {
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	margin-left: 20px;
 	padding-right: 20px;
@@ -985,7 +950,6 @@ a.login-btn {
 	vertical-align: middle;
 }
 
-
 .language-box:hover {border-color: #d6d6d6;}
 
 .language-box.ru .language-flag {background-position: right -464px;}
@@ -1007,7 +971,7 @@ a.login-btn {
 	width: 5px;
 }
 
-.language-box-item .menu-popup-item-icon {display: none;}
+.language-box-item .menu-popup-item-icon { display: none; }
 
 .language-box-item .menu-popup-item-text {
 	margin-right: 2px;
@@ -1052,7 +1016,6 @@ a.login-btn {
 	margin-top: 5px;
 	vertical-align: top;
 }
-
 
 .errortext,
 .notetext {
@@ -1121,8 +1084,6 @@ a.login-btn {
 }
 
 .log-popup-caption {
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	color: #005e94;
 	font-size: 15px;
@@ -1136,11 +1097,7 @@ a.login-btn {
 
 .log-popup-caption a {
 	color: #005e94;
-	-webkit-transition: color 500ms ease;
-	-moz-transition: color 500ms ease;
-	-ms-transition: color 500ms ease;
-	-o-transition: color 500ms ease;
-	transition: color 500ms ease;
+	transition: color 190ms ease;
 }
 
 .log-popup-caption a:hover {
@@ -1171,7 +1128,6 @@ a.login-btn {
 	background-color: #766c51;
 	border-top: 1px solid #5c543f;
 	border-radius: 12px;
-	-webkit-box-shadow: inset 0 1px 0 #766c51;
 	box-shadow: inset 0 1px 0 #766c51;
 	display: inline-block;
 	margin-top: 28px;
@@ -1233,11 +1189,10 @@ a.login-btn {
 	color: #2fc6f7;
 	vertical-align: bottom;
 	text-decoration: none;
-	font-family: 'geometriamedium';
+	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	line-height: 20px;
 	position: relative;
 	bottom: 3px;
-	-webkit-transition: border-color ease-in-out .1s;
 	transition: border-color ease-in-out .1s;
 	font-size: 14px;
 	text-transform: uppercase;
@@ -1248,22 +1203,26 @@ a.login-btn {
 	border: 2px solid #2fc6f7;
 	display: inline-block;
 	outline: none !important;
-	border-radius: 3px;
 	vertical-align: middle;
 	text-decoration: none;
 	cursor: pointer;
-	font-family: 'geometriamedium';
+	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	border-radius: 20px;
 	padding: 0 30px;
 	height: 40px;
-	font-size: 14px;
 	line-height: 40px;
 	font-size: 21px !important;
 }
 
-.login-tr-btn:hover {color: #1ab8eb !important; border: 2px solid #1ab8eb;}
+.login-tr-btn:hover {
+	color: #1ab8eb !important;
+	border: 2px solid #1ab8eb;
+}
 
-.login-tr-btn.login-btn:active {color: #1ab8eb !important;border: 2px solid #1ab8eb;}
+.login-tr-btn.login-btn:active {
+	color: #1ab8eb !important;
+	border: 2px solid #1ab8eb;
+}
 
 .login-wrapper {
 	display: flex;
@@ -1272,7 +1231,7 @@ a.login-btn {
 
 .login-wrapper-inputs {
 	flex: 1;
-	margin: 10px 0 0 0;
+	margin: 10px 0 0;
 }
 
 .login-wrapper-qr {
@@ -1289,14 +1248,14 @@ a.login-btn {
 	background: #fff;
 	box-sizing: border-box;
 	border-radius: 4px;
-	box-shadow: 0 2px 4px 0 rgba(0,0,0,.13);
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .13);
 	cursor: pointer;
 	transition: .1s;
 }
 
 .login-wrapper-qr-text {
 	font-size: 11px;
-	font-family: 'Montserrat-semibold', Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #545c68;
 }
 
@@ -1362,7 +1321,7 @@ a.login-btn {
 	right: 0;
 	bottom: 0;
 	left: 0;
-	background: rgba(255,255,255,.82);
+	background: rgba(255, 255, 255, .82);
 	border-radius: 5px;
 	opacity: 0;
 	pointer-events: none;
@@ -1392,7 +1351,7 @@ a.login-btn {
 	margin: -70px 0 0 -70px;
 	border-radius: 100%;
 	background: #fff;
-	box-shadow: 0 2px 4px 0 rgba(0,0,0,.06);
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .06);
 	z-index: 9;
 	opacity: 0;
 	pointer-events: none;
@@ -1448,7 +1407,7 @@ a.login-btn {
 .log-popup-form-qr-icon.--loading:after {
 	pointer-events: auto;
 	opacity: 1;
-	background: rgba(255,255,255,.75);
+	background: rgba(255, 255, 255, .75);
 }
 
 .log-popup-form-qr-icon .main-ui-loader-svg-circle {
@@ -1467,7 +1426,7 @@ a.login-btn {
 .log-popup-form-qr-header {
 	margin-bottom: 15px;
 	text-align: center;
-	font-family: 'Montserrat-medium', Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #333;
 }
 
@@ -1485,9 +1444,9 @@ a.login-btn {
 .log-socservice-wrapper {
 	display: flex;
 	justify-content: center;
-	margin: 27px 0 26px 0;
+	margin: 27px 0 26px;
 	padding: 13px;
-	background: rgba(241,245,246,.8);
+	background: rgba(241, 245, 246, .8);
 	border-radius: 32px;
 }
 

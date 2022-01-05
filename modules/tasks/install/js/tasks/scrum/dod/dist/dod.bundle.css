@@ -1,0 +1,189 @@
+.tasks-scrum-dod-side-panel {
+	padding: 0 20px;
+	color: #333;
+	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	margin-bottom: 20px;
+}
+
+.tasks-scrum-dod-side-panel-header {
+	padding-left: 5px;
+	margin: 20px 0 23px;
+}
+
+.tasks-scrum-dod-side-panel-header-title {
+	font: 24px/30px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.tasks-scrum-dod-side-panel-container {
+	background: #f8f9fa;
+}
+
+.tasks-scrum-dod-side-panel-buttons {
+}
+
+.tasks-scrum-dod-settings-container {
+	vertical-align: top;
+	position: relative;
+	overflow: hidden;
+}
+
+.tasks-scrum-dod-settings-container-wrap {
+	position: relative;
+	width: 100%;
+	float: left;
+}
+
+.tasks-scrum-dod-settings-container-shell {
+	width: 75%;
+	float: left;
+	margin: 0 0 0 25%;
+	background: #f8f9fa;
+}
+
+.tasks-scrum-dod-settings-container-sidebar {
+	text-align: left;
+	float: left;
+}
+
+.tasks-scrum-dod-settings-container-sidebar-settings {
+	width: 33.5%;
+	margin: 0 0 0 -33.5%;
+}
+
+.tasks-scrum-dod-settings-container-sidebar-wrapper {
+	text-align: left;
+	padding: 15px 0 35px 15px;
+	background: #f8f9fa;
+	font-size: 0;
+}
+
+.sidebar-tab {
+	position: relative;
+	padding: 13px 15px;
+	background: #ebf1f4;
+	color: rgba(0, 0, 0, 0.7);
+	font-weight: bold;
+	font-size: 14px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	text-align: left;
+}
+
+.sidebar-tab:hover {
+	background: #e1e7ea;
+	color: rgba(0, 0, 0, 0.7);
+	cursor: pointer;
+}
+
+.sidebar-tab-link {
+	bottom: 11px;
+	padding: 13px 15px;
+	background: #ebf1f4;
+}
+
+.sidebar-tab-link:hover {
+	cursor: pointer;
+}
+
+.sidebar-tab-active, .sidebar-tab-active:hover {
+	background: #f8f9fa;
+	color: #000;
+}
+
+.sidebar-tab-active:after, .sidebar-tab-active:hover:after {
+	content: '';
+	position: absolute;
+	width: 4px;
+	top: 0;
+	bottom: 0;
+	margin: auto;
+	right: -2px;
+	background: #f8f9fa;
+}
+
+.tasks-scrum-dod-settings-type-name {
+	padding-right: 15px;
+}
+
+.tasks-scrum-dod-settings-type-edit {
+	background: no-repeat center url(/bitrix/js/tasks/scrum/dod/images/edit.svg);
+	width: 22.5px;
+	height: 22.5px;
+	min-width: 22.5px;
+	max-width: 22.5px;
+	opacity: 0;
+	-webkit-transition: 170ms linear all;
+	-o-transition: 170ms linear all;
+	transition: 170ms linear all;
+	margin-left: auto;
+}
+
+.sidebar-tab:hover .tasks-scrum-dod-settings-type-edit {
+	opacity: .5;
+}
+
+.tasks-scrum-dod-settings-type-remove {
+	background: no-repeat center url(/bitrix/js/tasks/scrum/dod/images/remove.svg);
+	width: 22.5px;
+	height: 22.5px;
+	min-width: 22.5px;
+	max-width: 22.5px;
+	opacity: 0;
+	-webkit-transition: 170ms linear all;
+	-o-transition: 170ms linear all;
+	transition: 170ms linear all;
+}
+
+.sidebar-tab:hover .tasks-scrum-dod-settings-type-remove {
+	opacity: .5;
+}
+
+.tasks-scrum-dod-settings-type-name-input {
+	display: block;
+	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 18px;
+	color: #333;
+	letter-spacing: 0.4px;
+	min-width: 1px;
+	max-width: 100%;
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	-o-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+	border: none;
+	border-bottom: 1px solid transparent;
+	background: none;
+	outline: none;
+	padding: 0;
+	border-bottom: 1px solid rgba(51, 51, 51, 0.45);
+}
+
+.tasks-scrum-project-side-panel {
+	padding: 0 20px;
+	color: #333;
+	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	margin-bottom: 80px;
+}
+
+.tasks-scrum-project-side-panel-header {
+	padding-left: 5px;
+	margin: 20px 0 23px;
+}
+
+.tasks-scrum-project-side-panel-header-title {
+	font: 24px/30px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.tasks-scrum-dod-panel-padding {
+	padding: 0 30px 21px 21px !important;
+}
+
+.tasks-scrum-dod-form {
+	padding-top: 14px;
+}
+
+.tasks-scrum-dod-form.ui-ctl-label-text span {
+	cursor: pointer;
+}

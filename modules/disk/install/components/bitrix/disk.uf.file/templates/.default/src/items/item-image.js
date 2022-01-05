@@ -17,18 +17,16 @@ export default class ItemImage extends Item
 	getContainer(): Element
 	{
 		return this.cache.remember('container', () => {
-			const name = Text.encode(this.data['NAME']);
+			const nameWithoutExtension = Text.encode(this.getNameWithoutExtension());
 			const extension = Text.encode(this.data['EXTENSION']).toLowerCase();
 
 			return Tag.render`
-		<div class="disk-file-thumb disk-file-thumb-preview" onclick="${this.onClick.bind(this)}">
+		<div class="disk-file-thumb disk-file-thumb-preview">
 			<div style="background-image: url('${this.data['PREVIEW_URL']}'); background-size: cover;" class="disk-file-thumb-image"></div>
-			<div data-bx-role="icon" class="ui-icon ui-icon-file-${extension} disk-file-thumb-icon"><i></i></div>
-			<div data-bx-role="name" class="disk-file-thumb-text">${name}</div>
-			<div class="disk-file-thumb-btn-box">
-				<div class="disk-file-thumb-btn-close" onclick="${this.onClickDelete.bind(this)}"></div>
-				<div class="disk-file-thumb-btn-more" data-bx-role="more" onclick="${this.onClickMore.bind(this)}"></div>
-			</div>
+			${this.getIcon(extension)}
+			${this.getNameBox(nameWithoutExtension, extension)}
+			${this.getDeleteButton()}
+			${this.getButtonBox()}
 		</div>`;
 		});
 	}

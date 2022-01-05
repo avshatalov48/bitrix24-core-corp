@@ -106,7 +106,7 @@ ChatDataConverter.getElementFormat = function(element)
 		item.color = element.chat.color;
 		if (this.listType == 'lines' && element.chat.type == 'lines')
 		{
-			if (element.lines.status < 10)
+			if (!element.lines || element.lines.status < 10)
 			{
 				item.sectionCode = 'new';
 				let session = ChatMessengerCommon.linesGetSession(element.chat);
@@ -1498,7 +1498,6 @@ ChatDataConverter.preparePushFormat = function(element)
 	}
 
 	result.notify = result.notify || true;
-	result.lines = result.lines || {};
 
 	if (
 		result.message

@@ -144,7 +144,8 @@ class GoogleSource extends Source
 			'la' => 'es', 		// Spanish
 			'sc' => 'zh-CN', 	// Chinese (Simplified)
 			'tc' => 'zh-TW', 	// Chinese (Traditional)
-			'vn' => 'vi' 		// Vietnamese
+			'vn' => 'vi', 		// Vietnamese
+			'ua' => 'uk', 		// Ukrainian
 		];
 
 		return $langMap[$bitrixLang] ?? $bitrixLang;

@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Scrum\Service;
 
-use Bitrix\Main\Loader;
+use Bitrix\Tasks\Scrum\Form\EpicForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
 
@@ -10,12 +10,6 @@ class PushService
 {
 	public function sendAddItemEvent(ItemTable $item): void
 	{
-		if ($item->getItemType() === ItemTable::EPIC_TYPE)
-		{
-			$this->sendAddEpicEvent($item);
-			return;
-		}
-
 		$entityService = new EntityService();
 		$entity = $entityService->getEntityById($item->getEntityId());
 		if ($entityService->getErrors() || $entity->isEmpty())
@@ -46,12 +40,6 @@ class PushService
 
 	public function sendUpdateItemEvent(ItemTable $updatedItem): void
 	{
-		if ($updatedItem->getItemType() === ItemTable::EPIC_TYPE)
-		{
-			$this->sendUpdateEpicEvent($updatedItem);
-			return;
-		}
-
 		$entityService = new EntityService();
 		$entity = $entityService->getEntityById($updatedItem->getEntityId());
 		if ($entityService->getErrors() || $entity->isEmpty())
@@ -85,13 +73,8 @@ class PushService
 
 	public function sendRemoveItemEvent(ItemTable $removedItem): void
 	{
-		if ($removedItem->getItemType() === ItemTable::EPIC_TYPE)
-		{
-			$this->sendRemoveEpicEvent($removedItem);
-			return;
-		}
-
 		$entityService = new EntityService();
+
 		$entity = $entityService->getEntityById($removedItem->getEntityId());
 		if ($entityService->getErrors() || $entity->isEmpty())
 		{
@@ -112,75 +95,44 @@ class PushService
 		);
 	}
 
-	public function sendAddEpicEvent(ItemTable $epic): void
+	public function sendAddEpicEvent(EpicForm $epic): void
 	{
-		$entityService = new EntityService();
-		$entity = $entityService->getEntityById($epic->getEntityId());
-		if ($entityService->getErrors() || $entity->isEmpty())
-		{
-			return;
-		}
-
-		$tag = 'itemActions_' . $entity->getGroupId();
+		$tag = 'itemActions_' . $epic->getGroupId();
 
 		\CPullWatch::addToStack(
 			$tag,
 			[
 				'module_id' => 'tasks',
 				'command' => 'epicAdded',
-				'params' => [
-					'id' => $epic->getId(),
-					'name' => $epic->getName(),
-					'description' => $epic->getDescription(),
-					'info' => $epic->getInfo()->getInfoData(),
-				],
+				'params' => $epic->toArray(),
 			]
 		);
 	}
 
-	public function sendUpdateEpicEvent(ItemTable $epic): void
+	public function sendUpdateEpicEvent(EpicForm $epic): void
 	{
-		$entityService = new EntityService();
-		$entity = $entityService->getEntityById($epic->getEntityId());
-		if ($entityService->getErrors() || $entity->isEmpty())
-		{
-			return;
-		}
-
-		$tag = 'itemActions_' . $entity->getGroupId();
+		$tag = 'itemActions_' . $epic->getGroupId();
 
 		\CPullWatch::addToStack(
 			$tag,
 			[
 				'module_id' => 'tasks',
 				'command' => 'epicUpdated',
-				'params' => [
-					'id' => $epic->getId(),
-					'name' => $epic->getName(),
-					'description' => $epic->getDescription(),
-					'info' => $epic->getInfo()->getInfoData(),
-				],
+				'params' => $epic->toArray(),
 			]
 		);
 	}
 
-	public function sendRemoveEpicEvent(ItemTable $epic): void
+	public function sendRemoveEpicEvent(EpicForm $epic): void
 	{
-		$entityService = new EntityService();
-		$entity = $entityService->getEntityById($epic->getEntityId());
-		if ($entityService->getErrors() || $entity->isEmpty())
-		{
-			return;
-		}
-
-		$tag = 'itemActions_' . $entity->getGroupId();
+		$tag = 'itemActions_' . $epic->getGroupId();
 
 		\CPullWatch::addToStack(
 			$tag,
 			[
 				'module_id' => 'tasks',
 				'command' => 'epicRemoved',
-				'params' => ['id' => $epic->getId()],
+				'params' => $epic->toArray(),
 			]
 		);
 	}
@@ -259,8 +211,10 @@ class PushService
 		$sprintData = $sprintService->getSprintData($sprint);
 
 		$entityCounters = $entityService->getCounters(
+			$sprint->getGroupId(),
 			$sprint->getId(),
-			($sprint->isPlannedSprint() ? new TaskService($sprint->getCreatedBy()) : null)
+			new TaskService($sprint->getCreatedBy()),
+			(!$sprint->isActiveSprint())
 		);
 
 		$sprintData['storyPoints'] = $entityCounters['storyPoints'];
@@ -314,6 +268,17 @@ class PushService
 	): array
 	{
 		$itemData = $itemService->getItemData($item);
+
+		if ($item->getEpicId())
+		{
+			$epicService = new EpicService();
+
+			$epic = $epicService->getEpic($item->getEpicId());
+
+			$epicData = $epic->getId() ? $epic->toArray() : [];
+
+			$itemData['epic'] = $epicData;
+		}
 
 		$taskId = $item->getSourceId();
 		if ($taskService && $taskId)

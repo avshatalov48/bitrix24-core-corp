@@ -65,13 +65,15 @@ class Config
 	const CONFIG_CACHE_TIME = 86400;
 
 	private $error = null;
+	private $userId = 0;
 
 	static $cacheOperation = [];
 	static $cachePermission = [];
 
-	public function __construct()
+	public function __construct($userId = null)
 	{
 		$this->error = new BasicError(null, '', '');
+		$this->userId = $userId ?? Security\Helper::getCurrentUserId();
 	}
 
 	private function prepareFields($params, $mode = self::MODE_ADD)
@@ -889,11 +891,9 @@ class Config
 	{
 		$fields = $this->prepareFields($params);
 
-		global $USER;
-		$userId = is_object($USER) && $USER->GetID()? $USER->GetID(): 0;
-		if ($userId)
+		if ($this->userId)
 		{
-			$fields['MODIFY_USER_ID'] = $userId;
+			$fields['MODIFY_USER_ID'] = $this->userId;
 		}
 
 		$result = Model\ConfigTable::add($fields);
@@ -1005,11 +1005,9 @@ class Config
 				if (!isset($params['SKIP_MODIFY_MARK']))
 				{
 					$fields['DATE_MODIFY'] = new DateTime();
-					global $USER;
-					$userId = is_object($USER) && $USER->GetID()? $USER->GetID(): 0;
-					if ($userId)
+					if ($this->userId)
 					{
-						$fields['MODIFY_USER_ID'] = $userId;
+						$fields['MODIFY_USER_ID'] = $this->userId;
 					}
 				}
 
@@ -1017,7 +1015,10 @@ class Config
 
 				if($resultConfigTableUpdate->isSuccess())
 				{
-					if ($config['ACTIVE'] !== $fields['ACTIVE'])
+					if (
+						isset($fields['ACTIVE'])
+						&& $fields['ACTIVE'] !== $config['ACTIVE']
+					)
 					{
 						$eventData = [
 							'line' => $id,
@@ -1027,7 +1028,10 @@ class Config
 						$event->send();
 					}
 
-					if ($config['QUEUE_TYPE'] !== $fields['QUEUE_TYPE'])
+					if (
+						isset($fields['QUEUE_TYPE'])
+						&& $fields['QUEUE_TYPE'] !== $config['QUEUE_TYPE']
+					)
 					{
 						$eventData = [
 							'line' => $id,
@@ -1063,17 +1067,20 @@ class Config
 						$queueManager->compatibleUpdate($params['QUEUE'], $params['QUEUE_USERS_FIELDS']);
 					}
 
-					if(
-						$config['QUICK_ANSWERS_IBLOCK_ID'] != $fields['QUICK_ANSWERS_IBLOCK_ID']
-						&& $config['QUICK_ANSWERS_IBLOCK_ID'] > 0
-					)
+					if (isset($fields['QUICK_ANSWERS_IBLOCK_ID']))
 					{
-						ListsDataManager::updateIblockRights($config['QUICK_ANSWERS_IBLOCK_ID']);
-					}
+						if(
+							$config['QUICK_ANSWERS_IBLOCK_ID'] != $fields['QUICK_ANSWERS_IBLOCK_ID']
+							&& $config['QUICK_ANSWERS_IBLOCK_ID'] > 0
+						)
+						{
+							ListsDataManager::updateIblockRights($config['QUICK_ANSWERS_IBLOCK_ID']);
+						}
 
-					if($fields['QUICK_ANSWERS_IBLOCK_ID'] > 0)
-					{
-						ListsDataManager::updateIblockRights($fields['QUICK_ANSWERS_IBLOCK_ID']);
+						if($fields['QUICK_ANSWERS_IBLOCK_ID'] > 0)
+						{
+							ListsDataManager::updateIblockRights($fields['QUICK_ANSWERS_IBLOCK_ID']);
+						}
 					}
 
 					$sendUpdate = false;
@@ -1287,14 +1294,14 @@ class Config
 		return $maxLines > Model\ConfigTable::getCount(array('=ACTIVE' => 'Y', '=TEMPORARY' => 'N'));
 	}
 
-	private static function canDoOperation($id, $entity, $action)
+	private static function canDoOperation($id, $entity, $action, $userId = null)
 	{
 		if (isset(self::$cacheOperation[$id][$entity][$action]))
 		{
 			return self::$cacheOperation[$id][$entity][$action];
 		}
 
-		$userId = Security\Helper::getCurrentUserId();
+		$userId = $userId ?? Security\Helper::getCurrentUserId();
 		if (isset(self::$cachePermission[$userId][$entity][$action]))
 		{
 			$allowedUserIds = self::$cachePermission[$userId][$entity][$action];
@@ -1352,19 +1359,19 @@ class Config
 		return $canEdit;
 	}
 
-	public static function canViewLine($id)
+	public static function canViewLine($id, $userId = null)
 	{
-		return self::canDoOperation($id, Security\Permissions::ENTITY_LINES, Security\Permissions::ACTION_VIEW);
+		return self::canDoOperation($id, Security\Permissions::ENTITY_LINES, Security\Permissions::ACTION_VIEW, $userId);
 	}
 
-	public static function canEditLine($id)
+	public static function canEditLine($id, $userId = null)
 	{
-		return self::canDoOperation($id, Security\Permissions::ENTITY_LINES, Security\Permissions::ACTION_MODIFY);
+		return self::canDoOperation($id, Security\Permissions::ENTITY_LINES, Security\Permissions::ACTION_MODIFY, $userId);
 	}
 
-	public static function canEditConnector($id)
+	public static function canEditConnector($id, $userId = null)
 	{
-		return self::canDoOperation($id, Security\Permissions::ENTITY_CONNECTORS, Security\Permissions::ACTION_MODIFY);
+		return self::canDoOperation($id, Security\Permissions::ENTITY_CONNECTORS, Security\Permissions::ACTION_MODIFY, $userId);
 	}
 
 	/**
@@ -1381,7 +1388,10 @@ class Config
 			!empty($crmEntityId)
 		)
 		{
-			return self::canDoOperation($id, Security\Permissions::ENTITY_JOIN, Security\Permissions::ACTION_PERFORM) || \Bitrix\ImOpenLines\Crm\Common::hasAccessToEntity($crmEntityType, $crmEntityId);
+			return (
+				self::canDoOperation($id, Security\Permissions::ENTITY_JOIN, Security\Permissions::ACTION_PERFORM)
+				|| \Bitrix\ImOpenLines\Crm\Common::hasAccessToEntity($crmEntityType, $crmEntityId)
+			);
 		}
 
 		return self::canDoOperation($id, Security\Permissions::ENTITY_JOIN, Security\Permissions::ACTION_PERFORM);
@@ -1417,9 +1427,10 @@ class Config
 	/**
 	 * @param $id
 	 * @param bool $checkLimit
+	 * @param int $userId
 	 * @return bool|mixed
 	 */
-	public static function canVoteAsHead($id, $checkLimit = true)
+	public static function canVoteAsHead($id, $checkLimit = true, $userId = null)
 	{
 		$result = false;
 
@@ -1428,7 +1439,7 @@ class Config
 			Limit::canUseVoteHead()
 		)
 		{
-			$result =  self::canDoOperation($id, Security\Permissions::ENTITY_VOTE_HEAD, Security\Permissions::ACTION_PERFORM);
+			$result =  self::canDoOperation($id, Security\Permissions::ENTITY_VOTE_HEAD, Security\Permissions::ACTION_PERFORM, $userId);
 		}
 
 		return $result;
@@ -1816,10 +1827,54 @@ class Config
 			$withConfigQueue = false;
 		}
 
+		$checkPermission = false;
+		$permissionAllowedUsers = [];
+		if (isset($options['CHECK_PERMISSION']))
+		{
+			$permission = \Bitrix\ImOpenlines\Security\Permissions::createWithUserId($this->userId);
+
+			$permissionAllowedUsers = \Bitrix\ImOpenlines\Security\Helper::getAllowedUserIds(
+				$this->userId,
+				$permission->getPermission(
+					\Bitrix\ImOpenlines\Security\Permissions::ENTITY_LINES,
+					$options['CHECK_PERMISSION']
+				)
+			);
+
+			if (is_array($permissionAllowedUsers))
+			{
+				$checkPermission = true;
+				$permissionAccessConfig = [];
+
+				if (!empty($permissionAllowedUsers))
+				{
+					$orm = \Bitrix\ImOpenlines\Model\QueueTable::getList([
+						'filter' => [
+							'=USER_ID' => $permissionAllowedUsers
+						]
+					]);
+					while ($row = $orm->fetch())
+					{
+						$permissionAccessConfig[$row['CONFIG_ID']] = true;
+					}
+				}
+			}
+		}
+
+
 		$configs = [];
 		$orm = Model\ConfigTable::getList($params);
 		while ($config = $orm->fetch())
 		{
+			if (
+				$checkPermission
+				&& !isset($permissionAccessConfig[$config['ID']])
+				&& !in_array($config['MODIFY_USER_ID'], $permissionAllowedUsers)
+			)
+			{
+				continue;
+			}
+
 			if (isset($config['WORKTIME_DAYOFF']))
 			{
 				$config['WORKTIME_DAYOFF'] = explode(',', $config['WORKTIME_DAYOFF']);

@@ -1,8 +1,10 @@
 <?php
 $MESS["TAB_NAME_IM_RECENT"] = "Чаты";
+$MESS["TAB_NAME_IM_RECENT_FULL"] = "Чаты и Звонки";
 $MESS["TAB_NAME_IM_RECENT_SHORT"] = "Чаты";
 $MESS["TAB_NAME_IM_OPENLINES"] = "Открытые линии";
 $MESS["TAB_NAME_IM_OPENLINES_SHORT"] = "Линии";
+
 $MESS["TAB_NAME_MORE"] = "Меню";
 $MESS["TAB_NAME_MORE_SHORT"] = "Еще";
 $MESS["TAB_NAME_TASKS_LIST"] = "Задачи и Проекты";
@@ -20,3 +22,6 @@ $MESS['TASKS_ROLE_ORIGINATOR'] = 'Поручил';
 
 $MESS["TAB_NAME_CALLTRACKER"] = "Трекер звонков";
 $MESS["TAB_NAME_CALLTRACKER_SHORT"] = "Звонки";
+
+$MESS["TAB_TASKS_INPUT_PANEL_B24_DISK"] = "Битрикс24.Диск";
+$MESS["TAB_TASKS_INPUT_PANEL_NEW_TASK"] = "Новая задача";

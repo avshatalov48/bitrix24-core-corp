@@ -31,7 +31,7 @@ class Tags extends Content
 			$user = $row['MEMBERS']['MEMBERS'][$userId];
 		}
 
-		if ($user['IS_GROUP_OWNER'] === 'Y')
+		if ($user['IS_OWNER'] === 'Y')
 		{
 			$tags['addButton'] = [
 				'events' => [

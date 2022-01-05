@@ -129,6 +129,17 @@ class TypeTable extends Entity\DataManager
 		return $fields;
 	}
 
+	/**
+	 * Checks if an object is empty based on an Id. If id empty, it means that it was not possible to get data
+	 * from the storage or did not fill out the id.
+	 *
+	 * @return bool
+	 */
+	public function isEmpty(): bool
+	{
+		return (empty($this->id));
+	}
+
 	public function getId(): int
 	{
 		return $this->id;

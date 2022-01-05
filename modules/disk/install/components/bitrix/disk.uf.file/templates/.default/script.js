@@ -49,15 +49,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  height: 115
 	});
 
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-file disk-file-thumb--", " disk-file-thumb--active\">\n\t\t\t<div class=\"ui-icon ui-icon-file-", " disk-file-thumb-icon\"><i></i></div>\n\t\t\t<div class=\"disk-file-thumb-text\">", "</div>\n\t\t\t<div class=\"disk-file-thumb-loader\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"disk-file-thumb-loader-btn\" onclick=\"", "\"></div>\n\t\t\t</div>\n\t\t</div>\n\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject;
 
 	var ItemNew = /*#__PURE__*/function () {
 	  function ItemNew(fileId, fileObject) {
@@ -87,7 +79,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      if (!this.container) {
 	        var extension = this.object.name.split('.').pop().toLowerCase();
 	        extension = main_core.Text.encode(extension === this.object.name ? '' : extension);
-	        this.container = main_core.Tag.render(_templateObject(), extension, extension, this.object.name, this.progress.getContainer(), this.onClickDelete.bind(this));
+	        this.container = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-file disk-file-thumb--", " disk-file-thumb--active\">\n\t\t\t<div class=\"ui-icon ui-icon-file-", " disk-file-thumb-icon\"><i></i></div>\n\t\t\t<div class=\"disk-file-thumb-text\">", "</div>\n\t\t\t<div class=\"disk-file-thumb-loader\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"disk-file-thumb-loader-btn\" onclick=\"", "\"></div>\n\t\t\t</div>\n\t\t</div>\n\t\t"])), extension, extension, this.object.name, this.progress.getContainer(), this.onClickDelete.bind(this));
 	      }
 
 	      return this.container;
@@ -141,9 +133,19 @@ this.BX.Disk = this.BX.Disk || {};
 	  return ItemNew;
 	}();
 
-	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 
-	var _itemsCount = new WeakMap();
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+
+	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+
+	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+
+	var _itemsCount = /*#__PURE__*/new WeakMap();
 
 	var FileUploader = /*#__PURE__*/function () {
 	  function FileUploader(_ref) {
@@ -153,7 +155,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        input = _ref.input;
 	    babelHelpers.classCallCheck(this, FileUploader);
 
-	    _itemsCount.set(this, {
+	    _classPrivateFieldInitSpec(this, _itemsCount, {
 	      writable: true,
 	      value: 0
 	    });
@@ -402,15 +404,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  return DefaultController;
 	}();
 
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-file\" onclick=\"", "\">\n\t\t\t<div class=\"ui-icon ui-icon-more disk-file-thumb-icon\">\n\t\t\t\t<i></i>\n\t\t\t</div>\n\t\t\t<div class=\"disk-file-thumb-text\">", "</div>\n\t\t</div>"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1;
 
 	var ItemMoreButton = /*#__PURE__*/function () {
 	  function ItemMoreButton() {
@@ -427,7 +421,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      var _this = this;
 
 	      return this.cache.remember('container', function () {
-	        return main_core.Tag.render(_templateObject$1(), _this.onClick.bind(_this), _this.getValueContainer());
+	        return main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-file\" onclick=\"", "\">\n\t\t\t<div class=\"ui-icon ui-icon-more disk-file-thumb-icon\">\n\t\t\t\t<i></i>\n\t\t\t</div>\n\t\t\t<div class=\"disk-file-thumb-text\">", "</div>\n\t\t</div>"])), _this.onClick.bind(_this), _this.getValueContainer());
 	      });
 	    }
 	  }, {
@@ -602,15 +596,21 @@ this.BX.Disk = this.BX.Disk || {};
 
 	babelHelpers.defineProperty(Backend, "urlSelect", '/bitrix/tools/disk/uf.php?action=selectFile&SITE_ID=' + main_core.Loc.getMessage('SITE_ID') + '&dialog2=Y&ACTION=SELECT&MULTI=Y');
 
-	function _templateObject$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-file disk-file-thumb--", "\" onclick=\"", "\">\n\t\t\t<div data-bx-role=\"icon\" class=\"ui-icon ui-icon-file-", " disk-file-thumb-icon\"><i></i></div>\n\t\t\t<div data-bx-role=\"name\" class=\"disk-file-thumb-text\">", "</div>\n\t\t\t<div class=\"disk-file-thumb-btn-box\">\n\t\t\t\t<div class=\"disk-file-thumb-btn-close\" onclick=\"", "\"></div>\n\t\t\t\t<div class=\"disk-file-thumb-btn-more\" data-bx-role=\"more\" onclick=\"", "\"></div>\n\t\t\t</div>\n\t\t</div>"]);
+	var _templateObject$2, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7;
 
-	  _templateObject$2 = function _templateObject() {
-	    return data;
-	  };
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
 
-	  return data;
-	}
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _hintPopup = /*#__PURE__*/new WeakMap();
+
+	var _handleMouseEnter = /*#__PURE__*/new WeakSet();
+
+	var _handleMouseLeave = /*#__PURE__*/new WeakSet();
 
 	var Item = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Item, _EventEmitter);
@@ -620,9 +620,20 @@ this.BX.Disk = this.BX.Disk || {};
 
 	    babelHelpers.classCallCheck(this, Item);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item).call(this));
+
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _handleMouseLeave);
+
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _handleMouseEnter);
+
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "cache", new main_core.Cache.MemoryCache());
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "properties", {
-	      pluggedIn: false
+	      pluggedIn: false,
+	      insertedInText: false
+	    });
+
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _hintPopup, {
+	      writable: true,
+	      value: void 0
 	    });
 
 	    _this.setEventNamespace('Disk:UF:');
@@ -677,12 +688,73 @@ this.BX.Disk = this.BX.Disk || {};
 	      return this.properties.pluggedIn;
 	    }
 	  }, {
+	    key: "setInsertedInText",
+	    value: function setInsertedInText() {
+	      var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+	      this.properties.insertedInText = value === true;
+	      main_core.Dom.addClass(this.getContainer(), '--edit-text-preview');
+	    }
+	  }, {
+	    key: "isInsertedInText",
+	    value: function isInsertedInText() {
+	      return this.properties.insertedInText;
+	    }
+	  }, {
+	    key: "getNameWithoutExtension",
+	    value: function getNameWithoutExtension() {
+	      var nameParts = this.data['NAME'].split('.');
+
+	      if (nameParts.length > 1) {
+	        nameParts.pop();
+	      }
+
+	      var nameWithoutExtension = nameParts.join('.');
+
+	      if (nameWithoutExtension.length > 50) {
+	        return nameWithoutExtension.substr(0, 39) + '...' + nameWithoutExtension.substr(-5);
+	      }
+
+	      return nameWithoutExtension;
+	    }
+	  }, {
+	    key: "getButtonBox",
+	    value: function getButtonBox() {
+	      var insertInText = '';
+
+	      if (this.isPluggedIn()) {
+	        insertInText = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div\n\t\t\t\t\tclass=\"disk-file-thumb-btn-text-copy\"\n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\tonmouseenter=\"", "\"\n\t\t\t\t\tonmouseleave=\"", "\"\n\t\t\t\t>\n\t\t\t\t</div>"])), this.onClickInsertInText.bind(this), _classPrivateMethodGet(this, _handleMouseEnter, _handleMouseEnter2).bind(this), _classPrivateMethodGet(this, _handleMouseLeave, _handleMouseLeave2).bind(this));
+	      }
+
+	      return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"disk-file-thumb-btn-box\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"disk-file-thumb-btn-more\" data-bx-role=\"more\" onclick=\"", "\"></div>\n\t\t\t</div>\n\t\t"])), insertInText, this.onClickMore.bind(this));
+	    }
+	  }, {
+	    key: "getDeleteButton",
+	    value: function getDeleteButton() {
+	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"disk-file-thumb-btn-close-box\">\n\t\t\t\t<div class=\"disk-file-thumb-btn-close\" onclick=\"", "\"></div>\n\t\t\t</div>\n\t\t"])), this.onClickDelete.bind(this));
+	    }
+	  }, {
+	    key: "getNameBox",
+	    value: function getNameBox(nameWithoutExtension, extension) {
+	      var extensionNode = '';
+
+	      if (extension) {
+	        extensionNode = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<span class=\"disk-file-thumb-file-extension\">.", "</span>"])), extension);
+	      }
+
+	      return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"disk-file-thumb-text-box\">\n\t\t\t\t<div data-bx-role=\"name\" class=\"disk-file-thumb-text\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), nameWithoutExtension, extensionNode);
+	    }
+	  }, {
+	    key: "getIcon",
+	    value: function getIcon(extension) {
+	      return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div data-bx-role=\"icon\" class=\"ui-icon ui-icon-file-", " disk-file-thumb-icon\"><i></i></div>\n\t\t"])), extension);
+	    }
+	  }, {
 	    key: "getContainer",
 	    value: function getContainer() {
 	      var _this2 = this;
 
 	      return this.cache.remember('container', function () {
-	        var name = main_core.Text.encode(_this2.data['NAME']);
+	        var nameWithoutExtension = main_core.Text.encode(_this2.getNameWithoutExtension());
 	        var extension = main_core.Text.encode(_this2.data['EXTENSION']).toLowerCase();
 
 	        switch (extension) {
@@ -691,7 +763,7 @@ this.BX.Disk = this.BX.Disk || {};
 	            break;
 	        }
 
-	        return main_core.Tag.render(_templateObject$2(), extension, _this2.onClick.bind(_this2), extension, name, _this2.onClickDelete.bind(_this2), _this2.onClickMore.bind(_this2));
+	        return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-file disk-file-thumb--", "\">\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t</div>"])), extension, _this2.getIcon(extension), _this2.getNameBox(nameWithoutExtension, extension), _this2.getDeleteButton(), _this2.getButtonBox());
 	      });
 	    }
 	  }, {
@@ -740,7 +812,17 @@ this.BX.Disk = this.BX.Disk || {};
 	        var contextMenu = new main_popup.Menu({
 	          id: "crm-tunnels-menu-".concat(main_core.Text.getRandom().toLowerCase()),
 	          bindElement: moreButton,
-	          items: [_this4.isPluggedIn() ? {
+	          items: [
+	            /*TODO For the Future
+	               (this.data['CAN_UPDATE'] === true && this.data['EDITABLE'] === true ? {
+	            	text:  Loc.getMessage('WDUF_ITEM_MENU_EDIT'),
+	            	className: 'menu-popup-item-edit',
+	            	onclick: (event) => {
+	            		contextMenu.close();
+	            		this.onClickEdit(event);
+	            	}
+	            } : null),*/
+	          _this4.isPluggedIn() ? {
 	            dataset: {
 	              bxRole: 'insertIntoTheText'
 	            },
@@ -748,7 +830,7 @@ this.BX.Disk = this.BX.Disk || {};
 	            onclick: function onclick(event, item) {
 	              contextMenu.close();
 
-	              _this4.onClick(event);
+	              _this4.onClickInsertInText(event);
 	            }
 	          } : null, {
 	            dataset: {
@@ -760,17 +842,7 @@ this.BX.Disk = this.BX.Disk || {};
 
 	              _this4.onClickDelete(event);
 	            }
-	          },
-	          /*TODO For the Future
-	             (this.data['CAN_UPDATE'] === true && this.data['EDITABLE'] === true ? {
-	          	text:  Loc.getMessage('WDUF_ITEM_MENU_EDIT'),
-	          	className: 'menu-popup-item-edit',
-	          	onclick: (event) => {
-	          		contextMenu.close();
-	          		this.onClickEdit(event);
-	          	}
-	          } : null),*/
-	          _this4.data['CAN_RENAME'] === true ? {
+	          }, _this4.data['CAN_RENAME'] === true ? {
 	            dataset: {
 	              bxRole: 'renameFile'
 	            },
@@ -842,6 +914,11 @@ this.BX.Disk = this.BX.Disk || {};
 	      Backend.deleteAction(this.getId());
 	    }
 	  }, {
+	    key: "onClickInsertInText",
+	    value: function onClickInsertInText(event) {
+	      this.emit('onClickInsertInText');
+	    }
+	  }, {
 	    key: "onClickMore",
 	    value: function onClickMore(event) {
 	      event.preventDefault();
@@ -894,15 +971,57 @@ this.BX.Disk = this.BX.Disk || {};
 	  return Item;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-preview\" onclick=\"", "\">\n\t\t\t<div style=\"background-image: url('", "'); background-size: cover;\" class=\"disk-file-thumb-image\"></div>\n\t\t\t<div data-bx-role=\"icon\" class=\"ui-icon ui-icon-file-", " disk-file-thumb-icon\"><i></i></div>\n\t\t\t<div data-bx-role=\"name\" class=\"disk-file-thumb-text\">", "</div>\n\t\t\t<div class=\"disk-file-thumb-btn-box\">\n\t\t\t\t<div class=\"disk-file-thumb-btn-close\" onclick=\"", "\"></div>\n\t\t\t\t<div class=\"disk-file-thumb-btn-more\" data-bx-role=\"more\" onclick=\"", "\"></div>\n\t\t\t</div>\n\t\t</div>"]);
+	function _handleMouseEnter2(event) {
+	  var _this5 = this;
 
-	  _templateObject$3 = function _templateObject() {
-	    return data;
-	  };
+	  if (babelHelpers.classPrivateFieldGet(this, _hintPopup)) {
+	    return;
+	  }
 
-	  return data;
+	  var targetNode = event.currentTarget;
+	  var targetNodeWidth = targetNode.offsetWidth;
+	  babelHelpers.classPrivateFieldSet(this, _hintPopup, new BX.PopupWindow({
+	    content: main_core.Loc.getMessage('WDUF_ITEM_MENU_INSERT_INTO_THE_TEXT'),
+	    cacheable: false,
+	    animation: 'fading-slide',
+	    bindElement: targetNode,
+	    offsetTop: 0,
+	    bindOptions: {
+	      position: 'top'
+	    },
+	    darkMode: true,
+	    events: {
+	      onClose: function onClose() {
+	        babelHelpers.classPrivateFieldGet(_this5, _hintPopup).destroy();
+	        babelHelpers.classPrivateFieldSet(_this5, _hintPopup, null);
+	      },
+	      onShow: function onShow(event) {
+	        var popup = event.getTarget();
+	        popup.getPopupContainer().style.display = 'block'; // bad hack
+
+	        var offsetLeft = targetNodeWidth / 2 - popup.getPopupContainer().offsetWidth / 2;
+	        popup.setOffset({
+	          offsetLeft: offsetLeft + 40
+	        });
+	        popup.setAngle({
+	          offset: popup.getPopupContainer().offsetWidth / 2 - 17
+	        });
+	      }
+	    }
+	  }));
+	  babelHelpers.classPrivateFieldGet(this, _hintPopup).show();
 	}
+
+	function _handleMouseLeave2(event) {
+	  if (!babelHelpers.classPrivateFieldGet(this, _hintPopup)) {
+	    return;
+	  }
+
+	  babelHelpers.classPrivateFieldGet(this, _hintPopup).close();
+	  babelHelpers.classPrivateFieldSet(this, _hintPopup, null);
+	}
+
+	var _templateObject$3;
 
 	var ItemImage = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemImage, _Item);
@@ -935,9 +1054,9 @@ this.BX.Disk = this.BX.Disk || {};
 	      var _this2 = this;
 
 	      return this.cache.remember('container', function () {
-	        var name = main_core.Text.encode(_this2.data['NAME']);
+	        var nameWithoutExtension = main_core.Text.encode(_this2.getNameWithoutExtension());
 	        var extension = main_core.Text.encode(_this2.data['EXTENSION']).toLowerCase();
-	        return main_core.Tag.render(_templateObject$3(), _this2.onClick.bind(_this2), _this2.data['PREVIEW_URL'], extension, name, _this2.onClickDelete.bind(_this2), _this2.onClickMore.bind(_this2));
+	        return main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-preview\">\n\t\t\t<div style=\"background-image: url('", "'); background-size: cover;\" class=\"disk-file-thumb-image\"></div>\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t</div>"])), _this2.data['PREVIEW_URL'], _this2.getIcon(extension), _this2.getNameBox(nameWithoutExtension, extension), _this2.getDeleteButton(), _this2.getButtonBox());
 	      });
 	    }
 	  }, {
@@ -954,11 +1073,21 @@ this.BX.Disk = this.BX.Disk || {};
 	  return ItemImage;
 	}(Item);
 
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var justCounter = 0;
+
+	var _getHTMLByItem = /*#__PURE__*/new WeakSet();
 
 	var FileParser = /*#__PURE__*/function () {
 	  function FileParser(fileController) {
 	    babelHelpers.classCallCheck(this, FileParser);
+
+	    _classPrivateMethodInitSpec$1(this, _getHTMLByItem);
+
 	    babelHelpers.defineProperty(this, "tag", '[DISK FILE ID=#id#]');
 	    babelHelpers.defineProperty(this, "regexp", /\[(?:DOCUMENT ID|DISK FILE ID)=([n0-9]+)\]/ig);
 	    this.id = ['diskfile' + justCounter++].join('_');
@@ -1018,6 +1147,12 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "getItemBBCode",
 	    value: function getItemBBCode(id) {
+	      var item = this.items.get(String(id));
+
+	      if (item && item.isPluggedIn()) {
+	        item.setInsertedInText();
+	      }
+
 	      return this.tag.replace('#id#', id);
 	    }
 	  }, {
@@ -1026,11 +1161,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      var item = this.items.get(String(id));
 
 	      if (item) {
-	        return item.getHTMLForHTMLEditor(this.htmlEditor.SetBxTag(false, {
-	          tag: this.id,
-	          fileId: id,
-	          itemId: item.getId()
-	        }));
+	        return _classPrivateMethodGet$1(this, _getHTMLByItem, _getHTMLByItem2).call(this, item, id);
 	      }
 
 	      return null;
@@ -1076,11 +1207,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        });
 
 	        if (foundedItem) {
-	          return foundedItem.getHTMLForHTMLEditor(this.htmlEditor.SetBxTag(false, {
-	            tag: this.id,
-	            fileId: id,
-	            itemId: foundedItem.getId()
-	          }));
+	          return _classPrivateMethodGet$1(this, _getHTMLByItem, _getHTMLByItem2).call(this, foundedItem, id);
 	        }
 
 	        return str;
@@ -1102,6 +1229,18 @@ this.BX.Disk = this.BX.Disk || {};
 	  }]);
 	  return FileParser;
 	}();
+
+	function _getHTMLByItem2(item, id) {
+	  if (item.isPluggedIn()) {
+	    item.setInsertedInText();
+	  }
+
+	  return item.getHTMLForHTMLEditor(this.htmlEditor.SetBxTag(false, {
+	    tag: this.id,
+	    fileId: id,
+	    itemId: item.getId()
+	  }));
+	}
 
 	var itemMappings = [Item, ItemImage];
 	function getItem(itemData) {
@@ -1305,7 +1444,7 @@ this.BX.Disk = this.BX.Disk || {};
 
 	        if (this.getParser().hasInterface()) {
 	          item.setPluggedIn();
-	          item.subscribe('onClick', function () {
+	          item.subscribe('onClickInsertInText', function () {
 	            _this4.getParser().insertFile(item.getId());
 	          });
 	          item.subscribe('onDelete', function () {
@@ -2195,25 +2334,7 @@ this.BX.Disk = this.BX.Disk || {};
 	babelHelpers.defineProperty(FileMover, "subscribed", false);
 	babelHelpers.defineProperty(FileMover, "instance", null);
 
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "\" value=\"", "\">"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "\" value=\"", "\">"]);
-
-	  _templateObject$4 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$4, _templateObject2$1;
 	var justCounter$3 = 0;
 
 	function _camelToSNAKE(obj) {
@@ -2308,7 +2429,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        'bx-agentFileId': item['ID']
 	      };
 	      if (item["FILE_ID"]) attrs["bx-attach-file-id"] = 'n' + item["FILE_ID"];
-	      var node = main_core.Tag.render(_templateObject$4(), this.fieldName, item['ID']);
+	      var node = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "\" value=\"", "\">"])), this.fieldName, item['ID']);
 
 	      for (var ii in attrs) {
 	        if (attrs.hasOwnProperty(ii)) {
@@ -2350,7 +2471,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      if (file["FILE_ID"]) attrs["bx-attach-file-id"] = 'n' + file["FILE_ID"];
 	      if (file['FILE_TYPE']) attrs["bx-attach-file-type"] = file["FILE_TYPE"];
 	      file.element_id = file.id;
-	      var node = main_core.Tag.render(_templateObject2(), this.fieldName, file.id);
+	      var node = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "\" value=\"", "\">"])), this.fieldName, file.id);
 
 	      for (var ii in attrs) {
 	        if (attrs.hasOwnProperty(ii)) {

@@ -21,3 +21,4 @@ $MESS["VOX_LINES_CANCEL_NUMBER_DISCONNECT"] = "Отменить отключен
 $MESS["VOX_LINES_REMOVE_CONNECTION"] = "Удалить подключение";
 $MESS["VOX_LINES_SIP_STATUS_FAIL"] = "Ошибка";
 $MESS["VOX_LINES_SIP_STATUS_RECOVERED"] = "Подключено";
+$MESS["VOX_LINES_SIP_STATUS_IN_PROCESS"] = "В обработке";

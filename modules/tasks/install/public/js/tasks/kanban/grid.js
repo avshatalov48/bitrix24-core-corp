@@ -52,6 +52,11 @@ BX.Tasks.Kanban.Grid = function(options)
 	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanDragMode, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", BX.delegate(this.setKanbanRealtimeMode, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanRealtimeMode, this));
+
+	if (this.isScrumGrid())
+	{
+		BX.bind(this.getGridContainer(), 'scroll', BX.delegate(this.onGridScroll, this));
+	}
 };
 
 BX.Tasks.Kanban.Grid.prototype = {
@@ -652,8 +657,6 @@ BX.Tasks.Kanban.Grid.prototype = {
 					{
 						this.removeItem(item);
 					}
-
-					this.updateParentTaskStatus();
 				}
 				else if (data)
 				{
@@ -665,46 +668,6 @@ BX.Tasks.Kanban.Grid.prototype = {
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
 			}.bind(this)
 		);
-	},
-
-	updateParentTaskStatus: function()
-	{
-		if (!this.isChildScrumGrid())
-		{
-			return;
-		}
-
-		if (!this.isParentTaskCompleted() && !this.isAllChildTasksCompleted())
-		{
-			return;
-		}
-
-		this.ajax({
-			action: (this.isAllChildTasksCompleted() ? 'completeParentTask' : 'renewParentTask'),
-			taskId: this.parentTaskId,
-			finishColumnId: this.getFinishColumn().getId(),
-			newColumnId: this.getNewColumn().getId()
-		}, function(data) {
-			if (data && !data.error)
-			{
-				if (this.isAllChildTasksCompleted())
-				{
-					this.parentTaskCompleted = true;
-					BX.onCustomEvent(this, 'Kanban.Grid:onCompleteParentTask', [this]);
-				}
-				else
-				{
-					this.parentTaskCompleted = false;
-					BX.onCustomEvent(this, 'Kanban.Grid:onRenewParentTask', [this]);
-				}
-			}
-			else if (data)
-			{
-				BX.Kanban.Utils.showErrorDialog(data.error, true);
-			}
-		}.bind(this), function(error) {
-			BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-		}.bind(this));
 	},
 
 	/**
@@ -1474,6 +1437,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 					{
 						outerContainer.classList.remove('tasks-scrum-kanban-header');
 					}
+					targetObserver.classList.remove('--with-margin');
 				}
 				else
 				{
@@ -1481,6 +1445,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 					{
 						outerContainer.classList.add('tasks-scrum-kanban-header');
 					}
+					targetObserver.classList.add('--with-margin');
 				}
 			}.bind(this),
 			{
@@ -1491,35 +1456,16 @@ BX.Tasks.Kanban.Grid.prototype = {
 		scrumGridHeaderObserver.observe(targetObserver);
 	},
 
-	scrollToRight: function()
+	onGridScroll: function(event)
 	{
-		this.earTimer = setInterval(function() {
-			this.getGridContainer().scrollLeft += 10;
-			if (this.isGroupingMode())
-			{
-				this.neighborGrids.forEach(function(neighborGrid) {
-					neighborGrid.getGridContainer().scrollLeft += 10;
-				});
-			}
-		}.bind(this), 20);
-	},
-
-	scrollToLeft: function()
-	{
-		this.earTimer = setInterval(function() {
-			this.getGridContainer().scrollLeft -= 10;
-			if (this.isGroupingMode())
-			{
-				this.neighborGrids.forEach(function(neighborGrid) {
-					neighborGrid.getGridContainer().scrollLeft -= 10;
-				});
-			}
-		}.bind(this), 20);
+		this.neighborGrids.forEach(function(neighborGrid) {
+			neighborGrid.getGridContainer().scrollLeft = event.target.scrollLeft;
+		});
 	},
 
 	getEmptyStub: function()
 	{
-		if (this.isScrumGridHeader())
+		if (this.isScrumGrid())
 		{
 			this.layout.emptyStub = document.createElement('div');
 

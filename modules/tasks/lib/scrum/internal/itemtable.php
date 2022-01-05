@@ -11,6 +11,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Fields\Validators;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\PushService;
 
@@ -32,17 +33,13 @@ use Bitrix\Tasks\Scrum\Service\PushService;
  */
 class ItemTable extends Entity\DataManager
 {
-	const TASK_TYPE = 'task';
-	const EPIC_TYPE = 'epic';
-
 	private $id;
 	private $entityId;
 	private $typeId;
+	private $epicId;
 	private $active;
 	private $name;
 	private $description;
-	private $itemType;
-	private $parentId;
 	private $sort;
 	private $createdBy;
 	private $modifiedBy;
@@ -73,6 +70,11 @@ class ItemTable extends Entity\DataManager
 		return 'b_tasks_scrum_item';
 	}
 
+	public static function getCollectionClass()
+	{
+		return Items::class;
+	}
+
 	/**
 	 * Returns entity map definition.
 	 *
@@ -90,6 +92,8 @@ class ItemTable extends Entity\DataManager
 
 		$typeId = new Fields\IntegerField('TYPE_ID');
 
+		$epicId = new Fields\IntegerField('EPIC_ID');
+
 		$active = new Fields\StringField('ACTIVE');
 		$active->addValidator(new Validators\LengthValidator(1, 1));
 		$active->configureDefaultValue('Y');
@@ -98,15 +102,6 @@ class ItemTable extends Entity\DataManager
 		$name->addValidator(new Validators\LengthValidator(null, 255));
 
 		$description = new Fields\TextField('DESCRIPTION');
-
-		$itemType = new Fields\EnumField('ITEM_TYPE');
-		$itemType->addValidator(new Validators\LengthValidator(1, 20));
-		$itemType->configureValues([
-			self::TASK_TYPE,
-			self::EPIC_TYPE
-		]);
-
-		$parentId = new Fields\IntegerField('PARENT_ID');
 
 		$sort = new Fields\IntegerField('SORT');
 		$sort->configureDefaultValue(0);
@@ -124,11 +119,11 @@ class ItemTable extends Entity\DataManager
 		$info->configureObjectClass(ItemInfoColumn::class);
 		$info->configureSerializeCallback(function (?ItemInfoColumn $itemInfoColumn)
 		{
-			return $itemInfoColumn ? json_encode($itemInfoColumn->getInfoData()) : [];
+			return $itemInfoColumn ? Json::encode($itemInfoColumn->getInfoData()) : [];
 		});
 		$info->configureUnserializeCallback(function ($value)
 		{
-			$data = (is_string($value) && !empty($value) ? json_decode($value, true) : []);
+			$data = (is_string($value) && !empty($value) ? Json::decode($value) : []);
 
 			$itemInfoColumn = new ItemInfoColumn();
 			$itemInfoColumn->setInfoData($data);
@@ -139,15 +134,20 @@ class ItemTable extends Entity\DataManager
 		$entity = new Reference('ENTITY', EntityTable::class, Join::on('this.ENTITY_ID', 'ref.ID'));
 		$entity->configureJoinType(Join::TYPE_LEFT);
 
+		$type = new Reference('TYPE', TypeTable::class, Join::on('this.TYPE_ID', 'ref.ID'));
+		$type->configureJoinType(Join::TYPE_LEFT);
+
+		$epic = new Reference('EPIC', EpicTable::class, Join::on('this.EPIC_ID', 'ref.ID'));
+		$epic->configureJoinType(Join::TYPE_LEFT);
+
 		return [
 			$id,
 			$entityId,
 			$typeId,
+			$epicId,
 			$active,
 			$name,
 			$description,
-			$itemType,
-			$parentId,
 			$sort,
 			$createdBy,
 			$modifiedBy,
@@ -155,6 +155,8 @@ class ItemTable extends Entity\DataManager
 			$sourceId,
 			$info,
 			$entity,
+			$type,
+			$epic,
 		];
 	}
 
@@ -210,12 +212,12 @@ class ItemTable extends Entity\DataManager
 
 		$connection = Application::getConnection();
 		$connection->queryExecute(
-			'UPDATE ' . self::getTableName() . ' SET ACTIVE = \'N\' WHERE SOURCE_ID = ' . (int)$sourceId
+			'UPDATE ' . self::getTableName() . ' SET ACTIVE = \'N\' WHERE SOURCE_ID = ' . (int) $sourceId
 		);
 	}
 
 	/**
-	 * Returns a list of fields to update a item.
+	 * Returns a list of fields to update an item.
 	 *
 	 * @return array
 	 */
@@ -243,14 +245,9 @@ class ItemTable extends Entity\DataManager
 			$fields['TYPE_ID'] = $this->typeId;
 		}
 
-		if ($this->itemType)
+		if ($this->epicId !== null)
 		{
-			$fields['ITEM_TYPE'] = $this->itemType;
-		}
-
-		if ($this->parentId !== null)
-		{
-			$fields['PARENT_ID'] = $this->parentId;
+			$fields['EPIC_ID'] = $this->epicId;
 		}
 
 		if ($this->sort !== null)
@@ -293,37 +290,12 @@ class ItemTable extends Entity\DataManager
 
 		return [
 			'ENTITY_ID' => $this->entityId,
-			'ITEM_TYPE' => self::TASK_TYPE,
-			'PARENT_ID' => $this->parentId,
+			'ACTIVE' => 'Y',
 			'SORT' => $this->getSort(),
 			'CREATED_BY' => $this->createdBy,
 			'MODIFIED_BY' => $this->createdBy,
 			'STORY_POINTS' => $this->storyPoints,
 			'SOURCE_ID' => $this->sourceId,
-		];
-	}
-
-	/**
-	 * Returns a list of fields to create a epic item.
-	 *
-	 * @return array
-	 * @throws ArgumentNullException
-	 */
-	public function getFieldsToCreateEpicItem(): array
-	{
-		$this->checkRequiredParametersToCreateEpicItem();
-
-		return [
-			'NAME' => $this->name,
-			'DESCRIPTION' => $this->description,
-			'ENTITY_ID' => $this->entityId,
-			'ITEM_TYPE' => self::EPIC_TYPE,
-			'PARENT_ID' => $this->parentId,
-			'SORT' => $this->sort,
-			'CREATED_BY' => $this->createdBy,
-			'MODIFIED_BY' => $this->createdBy,
-			'STORY_POINTS' => $this->storyPoints,
-			'INFO' => $this->info,
 		];
 	}
 
@@ -368,6 +340,16 @@ class ItemTable extends Entity\DataManager
 		$this->typeId = (int) $typeId;
 	}
 
+	public function getEpicId(): int
+	{
+		return ($this->epicId ? $this->epicId : 0);
+	}
+
+	public function setEpicId($epicId): void
+	{
+		$this->epicId = (is_numeric($epicId) ? (int) $epicId : 0);
+	}
+
 	public function getActive(): string
 	{
 		return ($this->active ? $this->active : 'Y');
@@ -398,16 +380,6 @@ class ItemTable extends Entity\DataManager
 		$this->description = $description;
 	}
 
-	public function getParentId(): int
-	{
-		return ($this->parentId ? $this->parentId : 0);
-	}
-
-	public function setParentId(int $parentId): void
-	{
-		$this->parentId = (int) $parentId;
-	}
-
 	public function getSort(): int
 	{
 		return ($this->sort ? $this->sort : 1);
@@ -421,6 +393,11 @@ class ItemTable extends Entity\DataManager
 	public function getCreatedBy(): int
 	{
 		return ($this->createdBy ? $this->createdBy : 0);
+	}
+
+	public function getModifiedBy(): int
+	{
+		return ($this->modifiedBy ? $this->modifiedBy : 0);
 	}
 
 	public function setCreatedBy(int $createdBy): void
@@ -453,16 +430,6 @@ class ItemTable extends Entity\DataManager
 		$this->sourceId = (int) $sourceId;
 	}
 
-	public function getItemType()
-	{
-		return $this->itemType;
-	}
-
-	public function setItemType(string $itemType): void
-	{
-		$this->itemType = $itemType;
-	}
-
 	public function getInfo(): ItemInfoColumn
 	{
 		return ($this->info ? $this->info : new ItemInfoColumn());
@@ -481,6 +448,28 @@ class ItemTable extends Entity\DataManager
 	public function setTmpId(string $tmpId): void
 	{
 		$this->tmpId = $tmpId;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function toArray(): array
+	{
+		return [
+			'id' => $this->getId(),
+			'entityId' => $this->getEntityId(),
+			'typeId' => $this->getTypeId(),
+			'epicId' => $this->getEpicId(),
+			'active' => $this->getActive(),
+			'name' => $this->getName(),
+			'description' => $this->getDescription(),
+			'sort' => $this->getSort(),
+			'createdBy' => $this->getCreatedBy(),
+			'modifiedBy' => $this->getModifiedBy(),
+			'storyPoints' => $this->getStoryPoints(),
+			'sourceId' => $this->getSourceId(),
+			'info' => $this->getInfo(),
+		];
 	}
 
 	/**
@@ -504,32 +493,6 @@ class ItemTable extends Entity\DataManager
 		}
 	}
 
-	/**
-	 * @throws ArgumentNullException
-	 */
-	private function checkRequiredParametersToCreateEpicItem(): void
-	{
-		if (empty($this->name))
-		{
-			throw new ArgumentNullException('NAME');
-		}
-
-		if (empty($this->entityId))
-		{
-			throw new ArgumentNullException('ENTITY_ID');
-		}
-
-		if (empty($this->createdBy))
-		{
-			throw new ArgumentNullException('CREATED_BY');
-		}
-
-		if (empty($this->info))
-		{
-			throw new ArgumentNullException('INFO');
-		}
-	}
-
 	private static function fillItemObjectByData(ItemTable $item, array $itemData): ItemTable
 	{
 		if ($itemData['ID'])
@@ -544,6 +507,10 @@ class ItemTable extends Entity\DataManager
 		{
 			$item->setTypeId($itemData['TYPE_ID']);
 		}
+		if ($itemData['EPIC_ID'])
+		{
+			$item->setEpicId($itemData['EPIC_ID']);
+		}
 		if ($itemData['ACTIVE'])
 		{
 			$item->setActive($itemData['ACTIVE']);
@@ -555,10 +522,6 @@ class ItemTable extends Entity\DataManager
 		if ($itemData['DESCRIPTION'])
 		{
 			$item->setDescription($itemData['DESCRIPTION']);
-		}
-		if ($itemData['PARENT_ID'])
-		{
-			$item->setParentId($itemData['PARENT_ID']);
 		}
 		if ($itemData['SORT'])
 		{
@@ -580,14 +543,11 @@ class ItemTable extends Entity\DataManager
 		{
 			$item->setSourceId($itemData['SOURCE_ID']);
 		}
-		if ($itemData['ITEM_TYPE'])
-		{
-			$item->setItemType($itemData['ITEM_TYPE']);
-		}
 		if ($itemData['INFO'])
 		{
 			$item->setInfo($itemData['INFO']);
 		}
+
 		return $item;
 	}
 

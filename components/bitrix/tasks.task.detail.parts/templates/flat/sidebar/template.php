@@ -314,12 +314,13 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 					<?php
 					$APPLICATION->IncludeComponent(
 						'bitrix:tasks.tags.selector',
-						'.default',
+						'selector',
 						[
 							'NAME' => 'TAGS',
 							'VALUE' => $arParams['TEMPLATE_DATA']['TAGS'],
 							'PATH_TO_TASKS' => $arParams['PATH_TO_TASKS'],
 							'CAN_EDIT' => $can['EDIT'],
+							'TASK_ID' => $taskData["ID"],
 						],
 						null,
 						['HIDE_ICONS' => 'Y']

@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `b_documentgenerator_document` (
   `UPDATED_BY` int(11),
   `VALUES` TEXT NULL,
   PRIMARY KEY (ID),
-  INDEX ix_docgen_doc_templ(TEMPLATE_ID),
+  INDEX ix_docgen_doc_templ_val(TEMPLATE_ID, VALUE(10)),
   INDEX ix_docgen_doc_file(FILE_ID)
 );
 
@@ -147,4 +147,13 @@ CREATE TABLE IF NOT EXISTS b_documentgenerator_role_access
   ACCESS_CODE varchar(100) NOT NULL,
   PRIMARY KEY (ID),
   KEY IX_DOCGEN_ACCESS_ROLE_ID (ROLE_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_documentgenerator_document_binding
+(
+	`ID` int unsigned NOT NULL auto_increment,
+	`DOCUMENT_ID` int unsigned NOT NULL,
+	`ENTITY_NAME` varchar(255) NOT NULL,
+	`ENTITY_ID` int NOT NULL,
+	PRIMARY KEY (ID)
 );

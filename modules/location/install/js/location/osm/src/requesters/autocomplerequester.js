@@ -39,7 +39,7 @@ export default class AutocompleteRequester extends BaseRequester
 			+ 'action=osmgateway.autocomplete.autocomplete'
 			+ `&params[q]=${encodeURIComponent(text)}`
 			+ `&params[limit]=${this.#autocompletePromptsCount}`
-			+ `&params[lang]=${this.languageId}`
+			+ `&params[lang]=${this.sourceLanguageId}`
 			+ `&params[version]=2`;
 
 		if (autocompleteServiceParams.biasPoint)

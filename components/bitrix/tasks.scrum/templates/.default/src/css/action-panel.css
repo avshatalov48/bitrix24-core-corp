@@ -1,0 +1,170 @@
+.tasks-scrum__action-panel--scope {
+	--tasks_scrum_action-grey: rgba(130,139,149,1);
+	--tasks_scrum_action-grey_alpha_20: rgba(130,139,149,.2);
+
+	--tasks_scrum_action-grey-2: rgba(133,140,150,1);
+	--tasks_scrum_action-grey-3: rgba(82,92,105,1);
+}
+
+.tasks-scrum__action-panel--container {
+	position: absolute;
+	transform: translateY(-36px);
+	transition: .2s;
+	z-index: 90;
+	text-align: center;
+	height: 0;
+	outline:none;
+}
+
+.tasks-scrum__action-panel {
+	padding: 8px 13px 8px 17px;
+	background-color: #fff;
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.14);
+	border-radius: 2px;
+	z-index: 100;
+	display: inline-flex;
+	flex-wrap: nowrap;
+	flex-direction: row;
+	min-height: 34px;
+	box-sizing: border-box;
+	right: auto;
+}
+
+.tasks-scrum__action-panel--btn {
+	position: relative;
+	padding: 1px 0;
+	box-sizing: border-box;
+	cursor: pointer;
+	white-space: nowrap;
+	display: flex;
+	align-items: center;
+}
+
+.tasks-scrum__action-panel--btn.--disabled{
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+.tasks-scrum__action-panel--text {
+	order: 2;
+	color: var(--tasks_scrum_action-grey-2);
+	font-size: 13px;
+	line-height: 19px;
+	vertical-align: middle;
+	transition: .2s;
+}
+
+.tasks-scrum__action-panel--btn:hover .tasks-scrum__action-panel--text {
+	color: var(--tasks_scrum_action-grey-3);
+}
+
+.tasks-scrum__action-panel--icon + .tasks-scrum__action-panel--text {
+	margin-left: 3px;
+}
+
+.tasks-scrum__action-panel--icon {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	order: 1;
+	background-position: center 5px;
+	background-repeat: no-repeat;
+	opacity: 0.7;
+	transition: .2s;
+}
+
+.tasks-scrum__action-panel--btn:hover .tasks-scrum__action-panel--icon {
+	opacity: 1;
+}
+
+.tasks-scrum__action-panel--btn-remove .tasks-scrum__action-panel--icon {
+	background-position: center;
+	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12.4916 4.69727H10.3104V5.7943H7.44812C6.61969 5.7943 5.94812 6.46587 5.94812 7.2943V7.98837H16.8539V7.2943C16.8539 6.46587 16.1824 5.7943 15.3539 5.7943H12.4916V4.69727ZM7.0387 9.0854H15.7633L14.9715 18.0467C14.9259 18.5629 14.4935 18.9587 13.9754 18.9587H8.8267C8.30852 18.9587 7.87619 18.5629 7.83058 18.0467L7.0387 9.0854Z' fill='%23525C69'/%3E%3C/svg%3E%0A");
+}
+
+.tasks-scrum__action-panel--btn-task .tasks-scrum__action-panel--icon{
+	background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.5 12V9.29167H12V2H2V9.29167H4.5V12H9.5ZM1.23529 0H12.7647C13.4469 0 14 0.55306 14 1.23529V12.7647C14 13.4469 13.4469 14 12.7647 14H1.23529C0.55306 14 0 13.4469 0 12.7647V1.23529C0 0.55306 0.55306 0 1.23529 0ZM5.17996 5.44465L6.37996 6.65298L9.37996 3.69465L10.2371 4.94465L6.37996 8.69465L4.23711 6.61131L5.17996 5.44465Z' fill='%23525C69'/%3E%3C/svg%3E%0A");
+}
+
+.tasks-scrum__action-panel--btn-attachment .tasks-scrum__action-panel--icon {
+	background-image: url("data:image/svg+xml,%3Csvg width='17' height='13' viewBox='0 0 17 13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16.9885 7.97652V2.50316C16.9885 2.36466 16.8787 2.25237 16.7433 2.25237H15.2742C15.1388 2.25237 15.029 2.36466 15.029 2.50316V7.97652C15.029 8.77689 14.8562 10.1219 13.1984 10.1219C10.9695 10.1219 10.974 8.8981 10.977 8.06573C10.9771 8.03545 10.9773 8.00568 10.9773 7.97652V2.50157C10.9773 2.03052 11.13 1.89607 11.5124 1.89607C11.8948 1.89607 11.9815 2.14074 11.9815 2.50157V7.64657C11.9815 7.8257 12.0673 7.94042 12.2389 7.99074H13.7494C13.9232 7.93846 14.0101 7.824 14.0101 7.64736V2.65167C14.0101 0.877474 13.0841 0 11.5124 0C9.94077 0 9 0.877474 9 2.65167V7.97652C9 10.3377 9.97579 12.0079 13.1984 12.0079C15.7675 12.0079 16.9885 10.713 16.9885 7.97652ZM8.18362 11C8.6766 11.9551 9.54303 12.6862 10.5898 13H0.9C0.402944 13 0 12.5971 0 12.1V2.9C0 2.40294 0.402944 2 0.9 2H7.74034V4H2.1C2.04477 4 2 4.04477 2 4.1V10.9C2 10.9552 2.04477 11 2.1 11H8.18362ZM7.74034 8.72565V9.16794C7.74034 9.45325 7.77021 9.73159 7.827 10H3L6 6.88686L7.74034 8.72565Z' fill='%23525C69'/%3E%3C/svg%3E%0A");
+}
+
+.tasks-scrum__action-panel--btn-decomposition .tasks-scrum__action-panel--icon {
+	background-position: center;
+	background-image: url("data:image/svg+xml,%3Csvg width='13' height='14' viewBox='0 0 13 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M0 1C0 0.447716 0.447715 0 1 0H2C2.55228 0 3 0.447715 3 1V3.82092L9 1.51773V1C9 0.447715 9.44771 0 10 0H12C12.5523 0 13 0.447715 13 1V3C13 3.55228 12.5523 4 12 4H10C9.44771 4 9 3.55228 9 3V2.58888L3 4.89206V6.5H9V6C9 5.44772 9.44771 5 10 5H12C12.5523 5 13 5.44772 13 6V8C13 8.55229 12.5523 9 12 9H10C9.44771 9 9 8.55229 9 8V7.5H3V9.10794L9 11.4111V11C9 10.4477 9.44771 10 10 10H12C12.5523 10 13 10.4477 13 11V13C13 13.5523 12.5523 14 12 14H10C9.44771 14 9 13.5523 9 13V12.4823L3 10.1791V13C3 13.5523 2.55228 14 2 14H1C0.447715 14 0 13.5523 0 13V1Z' fill='%23525C69'/%3E%3C/svg%3E%0A");
+}
+
+.tasks-scrum__action-panel--btn-selected .tasks-scrum__action-panel--icon {
+	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16.9497 7.05033C16.7229 6.82344 16.355 6.82344 16.1281 7.05033L12 11.1784L7.87189 7.05033C7.645 6.82344 7.27714 6.82344 7.05025 7.05033C6.82336 7.27722 6.82336 7.64508 7.05025 7.87197L11.1784 12.0001L7.05025 16.1282C6.82336 16.3551 6.82336 16.7229 7.05025 16.9498C7.27714 17.1767 7.645 17.1767 7.87189 16.9498L12 12.8217L16.1281 16.9498C16.355 17.1767 16.7229 17.1767 16.9497 16.9498C17.1766 16.7229 17.1766 16.3551 16.9497 16.1282L12.8216 12.0001L16.9497 7.87197C17.1766 7.64508 17.1766 7.27722 16.9497 7.05033Z' fill='%23525C69'/%3E%3C/svg%3E%0A");
+	width: 8px;
+	margin-left: 11px;
+	background-size: 17px;
+	cursor: pointer;
+	order: 2;
+}
+
+.tasks-scrum__action-panel--btn-selected .tasks-scrum__action-panel--icon:hover {
+	opacity: 1;
+}
+
+.tasks-scrum__action-panel--separator {
+	width: 24px;
+	position: relative;
+	flex-basis: 24px;
+}
+
+.tasks-scrum__action-panel--separator::after {
+	content: '';
+	display: block;
+	position: absolute;
+	top: 4px;
+	bottom: 4px;
+	left: 13px;
+	width: 1px;
+	background-color: var(--tasks_scrum_action-grey_alpha_20);
+}
+
+.tasks-scrum__action-panel--selected-btn {
+	box-sizing: border-box;
+	white-space: nowrap;
+	display: flex;
+	align-items: center;
+}
+
+.tasks-scrum__action-panel--btn-attachment {
+	margin-right: -3px;
+}
+
+.tasks-scrum__action-panel--btn-dod {
+	margin: 0 1px 2px 3px;
+}
+
+.tasks-scrum__action-panel--btn-with-arrow {
+	padding-right: 16px;
+	margin: 0 0 2px 7px;
+
+}
+
+.tasks-scrum__action-panel--btn-with-arrow::after {
+	content: '';
+	display: block;
+	width: 5px;
+	height: 5px;
+	border-left: 1px solid var(--tasks_scrum_action-grey-2);
+	border-bottom: 1px solid var(--tasks_scrum_action-grey-2);
+	transform: rotate(-45deg) translate(0, -50%);
+	position: absolute;
+	right: 0;
+	top: 44%;
+	transition: .2s;
+}
+
+.tasks-scrum__action-panel--btn-with-arrow:hover::after {
+	border-color: var(--tasks_scrum_action-grey-3);
+}
+
+.tasks-scrum__action-panel--btn-decomposition {
+	margin-right: -3px;
+	margin-left: -1px;
+}

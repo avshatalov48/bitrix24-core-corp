@@ -133,7 +133,7 @@ class AdsForm extends AdsService
 	{
 		$result = array();
 
-		$form = LeadAds\Service::getForm($type);
+		$form = static::getService()->getForm($type);
 
 		$form->setAccountId($accountId);
 		$formResult = $form->getList();
@@ -170,8 +170,8 @@ class AdsForm extends AdsService
 		$providers = static::getServiceProviders($types);
 		foreach ($providers as $type => $provider)
 		{
-			$form = LeadAds\Service::getForm($type);
-			$account = LeadAds\Service::getAccount($type);
+			$form = static::getService()->getForm($type);
+			$account = static::getService()->getAccount($type);
 			$provider['URL_INFO'] =  $account->getUrlInfo();
 			$provider['URL_ACCOUNT_LIST'] =  $account->getUrlAccountList();
 			$provider['URL_FORM_LIST'] =  $form->getUrlFormList();
@@ -334,7 +334,7 @@ class AdsForm extends AdsService
 		}
 
 		// 1. Send add query to Facebook.
-		$form = LeadAds\Service::getForm($type);
+		$form = static::getService()->getForm($type);
 		$form->setAccountId($accountId);
 		$addResult = $form->add(array(
 			'NAME' => $formName,
@@ -415,7 +415,7 @@ class AdsForm extends AdsService
 		$result = true;
 		while ($link = $links->fetch())
 		{
-			$form = LeadAds\Service::getForm($link['ADS_TYPE']);
+			$form = static::getService()->getForm($link['ADS_TYPE']);
 			$form->setAccountId($link['ADS_ACCOUNT_ID']);
 			if (!$form->unlink($link['ADS_FORM_ID']))
 			{

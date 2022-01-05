@@ -2,7 +2,11 @@
 
 foreach ($arResult['TASKS']['RUNNING'] as &$task)
 {
-	if (!empty($task["DESCRIPTION"]))
+	if (!empty($task["DESCRIPTION"]) && method_exists('CBPViewHelper', 'prepareMobileTaskDescription'))
+	{
+		$task["DESCRIPTION"] = CBPViewHelper::prepareMobileTaskDescription($task["DESCRIPTION"]);
+	}
+	elseif (!empty($task["DESCRIPTION"]))
 	{
 		$task["DESCRIPTION"] = preg_replace_callback(
 			'|<a href="/bitrix/tools/bizproc_show_file.php\?([^"]+)"\starget=\'_blank\'>|',

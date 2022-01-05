@@ -123,7 +123,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 			// language=SQL
 			$fromSql .= "
 				(
-					SELECT 
+					SELECT
 						pth.PARENT_ID,
 						SUM(versions.SIZE) AS FILE_SIZE,
 						COUNT(DISTINCT versions.ID) AS FILE_COUNT,
@@ -131,16 +131,16 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 						COUNT(DISTINCT files.ID) AS DISK_COUNT,
 						COUNT(DISTINCT versions.ID) AS VERSION_COUNT
 						{$subSelectSql}
-					FROM 
-						b_disk_object_path pth 
+					FROM
+						b_disk_object_path pth
 						INNER JOIN b_disk_object files ON pth.OBJECT_ID = files.ID
 						LEFT JOIN b_disk_version versions ON files.ID = versions.OBJECT_ID
-					WHERE 
+					WHERE
 						files.TYPE = ".ObjectTable::TYPE_FILE."
 						AND {$fileDeletedTypeSql}
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
-					GROUP BY 
+					GROUP BY
 						pth.PARENT_ID
 						{$subGroupSql}
 					ORDER BY NULL
@@ -148,11 +148,11 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 
 				INNER JOIN b_disk_object_path path ON CNT_FILES.PARENT_ID = path.OBJECT_ID
 
-				INNER JOIN b_disk_object top_folder ON top_folder.ID = path.PARENT_ID 
+				INNER JOIN b_disk_object top_folder ON top_folder.ID = path.PARENT_ID
 
 				INNER JOIN b_disk_object folder ON folder.ID = CNT_FILES.PARENT_ID
 
-				INNER JOIN b_disk_storage storage ON storage.ID = folder.STORAGE_ID 
+				INNER JOIN b_disk_storage storage ON storage.ID = folder.STORAGE_ID
 			";
 			$whereSql .= "
 				AND folder.TYPE = ".ObjectTable::TYPE_FOLDER."
@@ -212,7 +212,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 			// language=SQL
 			$fromSql .= "
 				(
-					SELECT 
+					SELECT
 						files.PARENT_ID,
 						SUM(versions.SIZE) AS FILE_SIZE,
 						COUNT(DISTINCT versions.ID) AS FILE_COUNT,
@@ -220,23 +220,23 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 						COUNT(DISTINCT files.ID) AS DISK_COUNT,
 						COUNT(DISTINCT versions.ID) AS VERSION_COUNT
 						{$subSelectSql}
-					FROM 
+					FROM
 						b_disk_object files
 						LEFT JOIN b_disk_version versions ON files.ID = versions.OBJECT_ID
-					WHERE 
+					WHERE
 						files.TYPE = ".ObjectTable::TYPE_FILE."
 						AND {$fileDeletedTypeSql}
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
-					GROUP BY 
+					GROUP BY
 						files.PARENT_ID
 						{$subGroupSql}
 					ORDER BY NULL
 				) CNT_FILES
 
 				INNER JOIN b_disk_object folder ON folder.ID = CNT_FILES.PARENT_ID
-				 
-				INNER JOIN b_disk_storage storage ON storage.ID = folder.STORAGE_ID 
+
+				INNER JOIN b_disk_storage storage ON storage.ID = folder.STORAGE_ID
 			";
 			$whereSql .= "
 				AND folder.TYPE = ".ObjectTable::TYPE_FOLDER."
@@ -276,14 +276,14 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 			// language=SQL
 			$fromSql .= "
 				/* preview */
-				LEFT JOIN 
+				LEFT JOIN
 				(
 					SELECT
 						SUM(IFNULL(preview_file.FILE_SIZE, 0)) + SUM(IFNULL(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
 						COUNT(DISTINCT preview_file.ID) + COUNT(DISTINCT view_file.ID) AS PREVIEW_COUNT,
 						pth.PARENT_ID
 					FROM
-						b_disk_object_path pth 
+						b_disk_object_path pth
 						INNER JOIN b_disk_object files ON pth.OBJECT_ID = files.ID
 						LEFT JOIN b_file preview_file ON preview_file.ID = files.PREVIEW_ID
 						LEFT JOIN b_file view_file ON view_file.ID = files.VIEW_ID
@@ -333,14 +333,14 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 			// language=SQL
 			$fromSql .= "
 				/* preview */
-				LEFT JOIN 
+				LEFT JOIN
 				(
 					SELECT
 						SUM(IFNULL(preview_file.FILE_SIZE, 0)) + SUM(IFNULL(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
 						COUNT(DISTINCT preview_file.ID) + COUNT(DISTINCT view_file.ID) AS PREVIEW_COUNT,
 						files.PARENT_ID
 					FROM
-						b_disk_object files 
+						b_disk_object files
 						LEFT JOIN b_file preview_file ON preview_file.ID = files.PREVIEW_ID
 						LEFT JOIN b_file view_file ON view_file.ID = files.VIEW_ID
 					WHERE
@@ -388,20 +388,20 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 			$fromSql .= "
 				/* attached */
 				LEFT JOIN (
-					SELECT 
+					SELECT
 						pth.PARENT_ID,
 						COUNT(DISTINCT attached.ID) AS ATTACHED_COUNT
 						{$subSelectSql}
-					FROM 
-						b_disk_object_path pth 
+					FROM
+						b_disk_object_path pth
 						INNER JOIN b_disk_object files ON pth.OBJECT_ID = files.ID
 						LEFT JOIN b_disk_attached_object attached ON files.ID = attached.OBJECT_ID
-					WHERE 
+					WHERE
 						files.TYPE = ".ObjectTable::TYPE_FILE."
 						AND {$fileDeletedTypeSql}
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
-					GROUP BY 
+					GROUP BY
 						pth.PARENT_ID
 						{$subGroupSql}
 					ORDER BY NULL
@@ -440,21 +440,21 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 			$fromSql .= "
 				/* external_link */
 				LEFT JOIN (
-					SELECT 
+					SELECT
 						pth.PARENT_ID,
 						COUNT(DISTINCT link.ID) AS LINK_COUNT
 						{$subSelectSql}
-					FROM 
-						b_disk_object_path pth 
+					FROM
+						b_disk_object_path pth
 						INNER JOIN b_disk_object files ON pth.OBJECT_ID = files.ID
 						LEFT JOIN b_disk_external_link link ON files.ID = link.OBJECT_ID
-					WHERE 
+					WHERE
 						files.TYPE = ".ObjectTable::TYPE_FILE."
 						AND link.TYPE != ".\Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO."
 						AND {$fileDeletedTypeSql}
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
-					GROUP BY 
+					GROUP BY
 						pth.PARENT_ID
 						{$subGroupSql}
 					ORDER BY NULL
@@ -492,14 +492,14 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 			// language=SQL
 			$fromSql .= "
 				/* sharing */
-				LEFT JOIN 
+				LEFT JOIN
 				(
 					SELECT
 						pth.PARENT_ID,
 						COUNT(DISTINCT sharing.ID) AS SHARING_COUNT
 						{$subSelectSql}
 					FROM
-						b_disk_object_path pth 
+						b_disk_object_path pth
 						INNER JOIN b_disk_object files ON pth.OBJECT_ID = files.ID
 						LEFT JOIN b_disk_sharing sharing on files.ID = sharing.REAL_OBJECT_ID
 					WHERE
@@ -508,7 +508,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 						AND sharing.STATUS = ".SharingTable::STATUS_IS_APPROVED."
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
-					GROUP BY 
+					GROUP BY
 						pth.PARENT_ID
 						{$subGroupSql}
 					ORDER BY NULL
@@ -565,40 +565,40 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 							SUM(ver.SIZE) AS SIZE,
 							COUNT(ver.ID) AS CNT,
 							pth.PARENT_ID
-							
-						FROM 
-							b_disk_object_path pth 
+
+						FROM
+							b_disk_object_path pth
 							INNER JOIN b_disk_version ver ON pth.OBJECT_ID = ver.OBJECT_ID
 							INNER JOIN b_disk_object files ON ver.OBJECT_ID = files.ID and ver.FILE_ID != files.FILE_ID
-  
+
 							/* head */
 							INNER JOIN (
 								SELECT  object_id, max(id) as id
-								FROM b_disk_version 
+								FROM b_disk_version
 								GROUP BY object_id
 								ORDER BY NULL
 							) head ON head.OBJECT_ID = files.ID
-	
+
 							LEFT JOIN b_disk_attached_object  attached
 								ON attached.OBJECT_ID  = ver.OBJECT_ID
 								AND attached.VERSION_ID = ver.ID
 								AND attached.VERSION_ID != head.ID
-	
+
 							LEFT JOIN b_disk_external_link link
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
 								AND ifnull(link.TYPE,-1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
-						WHERE 
+						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
 							AND files.ID = files.REAL_OBJECT_ID
 							AND attached.VERSION_ID is null /* no attach */
 							AND link.VERSION_ID is null /*no link */
 							AND {$fileDeletedTypeSql}
 							{$subWhereSql}
-							
-						GROUP BY 
+
+						GROUP BY
 							files.ID,
 							pth.PARENT_ID
 							{$subGroupSql}
@@ -660,39 +660,39 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 							SUM(ver.SIZE) AS SIZE,
 							COUNT(ver.ID) AS CNT,
 							files.PARENT_ID
-							
-						FROM 
+
+						FROM
 							b_disk_version ver
 							INNER JOIN b_disk_object files ON ver.OBJECT_ID = files.ID and ver.FILE_ID != files.FILE_ID
-  
+
 							/* head */
 							INNER JOIN (
 								SELECT  object_id, max(id) as id
-								FROM b_disk_version 
+								FROM b_disk_version
 								GROUP BY object_id
 								ORDER BY NULL
 							) head ON head.OBJECT_ID = files.ID
-	
+
 							LEFT JOIN b_disk_attached_object  attached
 								ON attached.OBJECT_ID  = ver.OBJECT_ID
 								AND attached.VERSION_ID = ver.ID
 								AND attached.VERSION_ID != head.ID
-	
+
 							LEFT JOIN b_disk_external_link link
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
 								AND ifnull(link.TYPE,-1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
-						WHERE 
+						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
 							AND files.ID = files.REAL_OBJECT_ID
 							AND attached.VERSION_ID is null /* no attach */
 							AND link.VERSION_ID is null /*no link */
 							AND {$fileDeletedTypeSql}
 							{$subWhereSql}
-							
-						GROUP BY 
+
+						GROUP BY
 							files.ID,
 							files.PARENT_ID
 							{$subGroupSql}
@@ -774,12 +774,12 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 
 
 			$queries[] = "
-				SELECT 
+				SELECT
 					'{$indicatorType}' as INDICATOR_TYPE,
 					{$ownerId} as OWNER_ID,
 					".$connection->getSqlHelper()->getCurrentDateTimeFunction()." as CREATE_TIME
 					{$selectSql}
-				FROM 
+				FROM
 					{$fromSql}
 				WHERE
 					1 = 1
@@ -843,12 +843,12 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 
 
 			$queries[] = "
-				SELECT 
+				SELECT
 					'{$indicatorType}' as INDICATOR_TYPE,
 					{$ownerId} as OWNER_ID,
 					". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME
 					{$selectSql}
-				FROM 
+				FROM
 					{$fromSql}
 				WHERE
 					1 = 1
@@ -871,11 +871,11 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 		{
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
 			$querySql = "
-				UPDATE 
-					{$tableName} destinationTbl, 
-					({$temporallyDataSource}) sourceQuery 
-				SET {$columnList} 
-				WHERE 
+				UPDATE
+					{$tableName} destinationTbl,
+					({$temporallyDataSource}) sourceQuery
+				SET {$columnList}
+				WHERE
 					destinationTbl.INDICATOR_TYPE = '{$indicatorType}'
 					AND destinationTbl.OWNER_ID = {$ownerId}
 					AND destinationTbl.STORAGE_ID = sourceQuery.STORAGE_ID
@@ -1111,6 +1111,10 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 			return null;
 		}
 		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Mail::getEntityType()))
+		{
+			return null;
+		}
+		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Documentgenerator::getEntityType()))
 		{
 			return null;
 		}

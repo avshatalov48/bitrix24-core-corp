@@ -1,52 +1,37 @@
-import {Type, Dom, Event, Tag, Text, Loc, Runtime} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {Label} from 'ui.label';
-import {MessageBox} from 'ui.dialogs.messagebox';
+import {Type, Dom, Event, Tag, Text} from 'main.core';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Dialog} from 'ui.entity-selector';
 
-import {DiskManager} from '../service/disk.manager';
-
-import {ActionsPanel} from './task/actions.panel';
-import {TaskCounts} from './task/taskcounts';
-
-import {StoryPoints} from '../utility/story.points';
+import {Toggle} from './task/toggle';
+import {Name} from './task/name';
+import {Checklist} from './task/checklist';
+import {Files} from './task/files';
+import {Comments} from './task/comments';
+import {Epic} from './task/epic';
+import {Tags} from './task/tags';
+import {Responsible} from './task/responsible';
+import {StoryPoints} from './task/story.points';
+import {SubTasks} from './task/sub.tasks';
 
 import '../css/item.css';
 
-type EpicInfoType = {
-	color: string
-}
-
-export type EpicType = {
-	id: number,
-	name: string,
-	description: string,
-	info: EpicInfoType
-}
+import type {TaskCounter} from './task/comments';
+import type {EpicType} from './task/epic';
+import type {ResponsibleType} from './task/responsible';
 
 type AllowedActions = {
 	task_edit: boolean,
-	task_remove: boolean,
-}
-
-export type Responsible = {
-	id: number,
-	name: string,
-	pathToUser: string,
-	photo: {
-		src: string
-	}
+	task_remove: boolean
 }
 
 type ItemInfo = {
 	color?: string,
 	borderColor?: string
 }
-
 type SubTaskInfo = {
 	sourceId: number,
 	completed: 'Y' | 'N',
-	storyPoints: string | StoryPoints
+	storyPoints: string
 }
 
 type SubTasksInfo = {
@@ -54,31 +39,33 @@ type SubTasksInfo = {
 }
 
 export type ItemParams = {
-	itemId: number|string,
+	id: number|string,
 	tmpId: string,
 	name: string,
-	itemType?: string,
-	sort?: number,
-	info?: ItemInfo,
+	checkListComplete: number,
+	checkListAll: number,
+	attachedFilesCount: number,
+	taskCounter: TaskCounter,
+	epic?: EpicType,
+	tags?: Array<string>,
+	responsible?: ResponsibleType,
+	storyPoints?: string,
 	entityId?: number,
 	entityType?: string,
 	parentId?: number,
 	sourceId?: number,
-	responsible?: Responsible,
-	storyPoints?: string,
 	completed?: 'Y' | 'N',
+	sort?: number,
 	allowedActions?: AllowedActions,
-	epic?: EpicType,
-	tags?: Array,
+
+	info?: ItemInfo,
 	isParentTask?: 'Y' | 'N',
-	subTasksCount?: number,
-	subTasksInfo?: SubTasksInfo,
 	isLinkedTask?: 'Y' | 'N',
 	parentTaskId?: number,
-	isSubTask?: 'Y' | 'N'
+	isSubTask?: 'Y' | 'N',
+	subTasksInfo?: SubTasksInfo
 };
 
-//todo single responsibility principle
 export class Item extends EventEmitter
 {
 	constructor(params: ItemParams)
@@ -87,64 +74,304 @@ export class Item extends EventEmitter
 
 		this.setEventNamespace('BX.Tasks.Scrum.Item');
 
-		this.setItemParams(params);
-
 		this.groupMode = false;
-		this.previewMode = false;
+
+		this.node = null;
+
+		this.toggle = null;
+		this.name = null;
+		this.checklist = null;
+		this.files = null;
+		this.comments = null;
+		this.epic = null;
+		this.tags = null;
+		this.responsible = null;
+		this.storyPoints = null;
+		this.subTasks = null;
+
+		this.setItemParams(params);
 	}
 
 	setItemParams(params: ItemParams)
 	{
-		this.setItemNode();
-
-		this.setItemId(params.itemId);
+		this.setId(params.id);
 		this.setTmpId(params.tmpId);
-		this.setName(params.name);
-		this.setItemType(params.itemType);
 		this.setSort(params.sort);
 		this.setEntityId(params.entityId);
 		this.setEntityType(params.entityType);
-		this.setParentId(params.parentId);
 		this.setSourceId(params.sourceId);
 		this.setInfo(params.info);
 
+		this.setSubTasksInfo(params.subTasksInfo);
 		this.setParentTask(params.isParentTask);
-		this.setSubTasksCount(params.subTasksCount);
 		this.setLinkedTask(params.isLinkedTask);
 		this.setParentTaskId(params.parentTaskId);
 		this.setSubTask(params.isSubTask);
-		this.setSubTasksInfo(params.subTasksInfo);
-		this.setResponsible(params.responsible);
 		this.setCompleted(params.completed);
-		this.setDisableStatus(this.isCompleted());
+		this.setDisableStatus(false);
 		this.setAllowedActions(params.allowedActions);
-		this.setEpic(params.epic);
-		this.setTags(params.tags);
-		this.setTaskCounts(params);
 
-		this.setStoryPoints(params.storyPoints);
+		this.shortView = 'Y';
 	}
 
 	static buildItem(params: ItemParams): Item
 	{
-		return new Item(params);
+		const item = new Item(params);
+
+		item.setToggle(item.isParentTask());
+		item.setName(params.name);
+		item.setChecklist(
+			params.checkListComplete,
+			params.checkListAll
+		);
+		item.setFiles(params.attachedFilesCount);
+		item.setComments(params.taskCounter);
+		item.setEpic(params.epic);
+		item.setTags(params.tags);
+		item.setResponsible(params.responsible);
+
+		if (!item.isSubTask())
+		{
+			item.setStoryPoints(params.storyPoints);
+		}
+
+		item.setSubTasks();
+
+		return item;
 	}
 
-	setItemId(itemId: number|string)
+	setToggle(visible: boolean)
 	{
-		this.itemId = (
-			Type.isInteger(itemId) ? parseInt(itemId, 10) :
-				(Type.isString(itemId) && itemId) ? itemId : Text.getRandom()
-		);
-		if (this.isNodeCreated())
+		const toggle = new Toggle({ visible });
+
+		if (this.toggle)
 		{
-			this.getItemNode().dataset.itemId = this.itemId;
+			Dom.replace(this.toggle.getNode(), toggle.render());
+		}
+
+		this.toggle = toggle;
+
+		this.toggle.subscribe('show', this.onShowToggle.bind(this));
+		this.toggle.subscribe('hide', this.onHideToggle.bind(this));
+	}
+
+	getToggle(): Toggle
+	{
+		return this.toggle;
+	}
+
+	setName(inputName: string)
+	{
+		const name = new Name(inputName, this.isCompleted());
+
+		if (this.name)
+		{
+			Dom.replace(this.name.getNode(), name.render());
+		}
+
+		this.name = name;
+
+		this.name.subscribe('click', () => this.emit('showTask'));
+	}
+
+	getName(): Name
+	{
+		return this.name;
+	}
+
+	setChecklist(complete: number, all: number)
+	{
+		const checklist = new Checklist({ complete, all });
+
+		if (this.checklist)
+		{
+			Dom.replace(this.checklist.getNode(), checklist.render());
+		}
+
+		this.checklist = checklist;
+
+		this.checklist.subscribe('click', () => this.emit('showTask'));
+	}
+
+	getChecklist(): Checklist
+	{
+		return this.checklist;
+	}
+
+	setFiles(count: number)
+	{
+		const files = new Files(count);
+
+		if (this.files)
+		{
+			Dom.replace(this.files.getNode(), files.render());
+		}
+
+		this.files = files;
+
+		this.files.subscribe('click', () => this.emit('showTask'));
+	}
+
+	getFiles(): Checklist
+	{
+		return this.files;
+	}
+
+	setComments(taskCounter: TaskCounter)
+	{
+		const comments = new Comments(taskCounter);
+
+		if (this.comments)
+		{
+			Dom.replace(this.comments.getNode(), comments.render());
+		}
+
+		this.comments = comments;
+
+		this.comments.subscribe('click', () => this.emit('showTask'));
+	}
+
+	getComments(): Comments
+	{
+		return this.comments;
+	}
+
+	setEpic(inputEpic?: EpicType)
+	{
+		const epic = new Epic(inputEpic);
+
+		if (this.epic)
+		{
+			Dom.replace(this.epic.getNode(), this.isShortView() ? epic.render() : epic.renderFullView());
+		}
+
+		this.epic = epic;
+
+		this.updateTagsVisibility();
+
+		this.epic.subscribe('click', () => this.emit('filterByEpic', this.epic.getId()));
+	}
+
+	getEpic(): Epic
+	{
+		return this.epic;
+	}
+
+	setTags(inputTags?: Array<string>)
+	{
+		const tags = new Tags(inputTags);
+
+		if (this.tags)
+		{
+			if (this.getNode()) //todo
+			{
+				this.replaceTags(tags);
+			}
+		}
+
+		this.tags = tags;
+
+		this.updateTagsVisibility();
+
+		this.tags.subscribe('click', (baseEvent: BaseEvent) => this.emit('filterByTag', baseEvent.getData()));
+	}
+
+	getTags(): Tags
+	{
+		return this.tags;
+	}
+
+	setShortView(value: string)
+	{
+		this.shortView = (value === 'Y' ? 'Y' : 'N');
+
+		if (this.getNode())
+		{
+			Dom.replace(this.getNode(), this.render());
 		}
 	}
 
-	getItemId()
+	getShortView(): 'Y' | 'N'
 	{
-		return this.itemId;
+		return this.shortView;
+	}
+
+	isShortView(): boolean
+	{
+		return this.shortView === 'Y';
+	}
+
+	setResponsible(inputResponsible: ResponsibleType)
+	{
+		const responsible = new Responsible(inputResponsible);
+
+		if (this.responsible)
+		{
+			Dom.replace(this.responsible.getNode(), responsible.render());
+		}
+
+		this.responsible = responsible;
+
+		this.responsible.subscribe('click', this.onResponsibleClick.bind(this));
+	}
+
+	getResponsible(): Responsible
+	{
+		return this.responsible;
+	}
+
+	setStoryPoints(inputStoryPoints: string)
+	{
+		const storyPoints = new StoryPoints(inputStoryPoints);
+
+		if (this.storyPoints)
+		{
+			Dom.replace(this.storyPoints.getNode(), storyPoints.render());
+		}
+
+		if (this.isDisabled())
+		{
+			storyPoints.disable();
+		}
+
+		this.storyPoints = storyPoints;
+
+		this.storyPoints.subscribe('setStoryPoints', this.onSetStoryPoints.bind(this));
+	}
+
+	getStoryPoints(): StoryPoints
+	{
+		return this.storyPoints;
+	}
+
+	setSubTasks()
+	{
+		this.subTasks = new SubTasks(this);
+
+		this.subTasks.subscribe('click', () => this.emit('showTask'));
+	}
+
+	getSubTasks(): ?SubTasks
+	{
+		return this.subTasks;
+	}
+
+	setId(id: number|string)
+	{
+		this.id = (
+			Type.isInteger(id) ? parseInt(id, 10) :
+				(Type.isString(id) && id) ? id : Text.getRandom()
+		);
+
+		if (this.getNode())
+		{
+			this.getNode().dataset.id = this.id;
+		}
+	}
+
+	getId()
+	{
+		return this.id;
 	}
 
 	setTmpId(tmpId: string)
@@ -157,46 +384,15 @@ export class Item extends EventEmitter
 		return this.tmpId;
 	}
 
-	setName(name: string)
-	{
-		this.name = ((Type.isString(name) && name) ? name : '');
-
-		if (!this.name)
-		{
-			throw new Error(Loc.getMessage('TASKS_SCRUM_TASK_ADD_NAME_ERROR'));
-		}
-
-		if (this.isNodeCreated())
-		{
-			const nameNode = this.getItemNode().querySelector('.tasks-scrum-item-name-field');
-			nameNode.querySelector('.ui-ctl-element').textContent = Text.encode(this.name);
-		}
-	}
-
-	getName(): string
-	{
-		return this.name;
-	}
-
-	setItemType(type: string)
-	{
-		this.itemType = (Type.isString(type) ? type : 'task');
-	}
-
-	getItemType()
-	{
-		return this.itemType;
-	}
-
 	setSort(sort: number)
 	{
 		this.setPreviousSort(this.sort);
 
 		this.sort = (Type.isInteger(sort) ? parseInt(sort, 10) : 0);
 
-		if (this.isNodeCreated())
+		if (this.getNode())
 		{
-			Dom.attr(this.getItemNode(), 'data-sort', this.sort);
+			Dom.attr(this.getNode(), 'data-sort', this.sort);
 		}
 	}
 
@@ -228,6 +424,8 @@ export class Item extends EventEmitter
 	setEntityType(entityType: string)
 	{
 		this.entityType = (new Set(['backlog', 'sprint']).has(entityType) ? entityType : 'backlog');
+
+		this.updateBorderColor();
 	}
 
 	getEntityType(): string
@@ -235,201 +433,33 @@ export class Item extends EventEmitter
 		return this.entityType;
 	}
 
-	setParentId(parentId: number)
-	{
-		this.parentId = (Type.isInteger(parentId) ? parseInt(parentId, 10) : 0);
-	}
-
-	getParentId()
-	{
-		return this.parentId;
-	}
-
 	setSourceId(sourceId: number)
 	{
 		this.sourceId = (Type.isInteger(sourceId) ? parseInt(sourceId, 10) : 0);
 	}
 
-	getSourceId()
+	getSourceId(): number
 	{
 		return this.sourceId;
 	}
 
-	setResponsible(responsible: Responsible)
-	{
-		this.responsible = (Type.isPlainObject(responsible) ? responsible : null);
-
-		if (this.responsible && this.isNodeCreated())
-		{
-			this.updateResponsible();
-		}
-	}
-
-	getResponsible(): Responsible
-	{
-		return this.responsible;
-	}
-
-	setStoryPoints(storyPoints: string)
-	{
-		if (!this.storyPoints)
-		{
-			this.storyPoints = new StoryPoints();
-		}
-
-		this.storyPoints.setPoints(storyPoints);
-
-		this.updateStoryPointsNode();
-	}
-
-	getStoryPoints(): StoryPoints
-	{
-		if (this.isParentTask())
-		{
-			const storyPoints = new StoryPoints();
-
-			Object.values(this.getSubTasksInfo()).map((subTaskInfo: SubTaskInfo) => {
-				if (subTaskInfo.storyPoints instanceof StoryPoints)
-				{
-					storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
-				}
-			});
-
-			return storyPoints;
-		}
-		else
-		{
-			return this.storyPoints;
-		}
-	}
-
-	updateStoryPointsNode()
-	{
-		if (this.isNodeCreated())
-		{
-			const storyPointsNode = this.getItemNode().querySelector('.tasks-scrum-item-story-points');
-			storyPointsNode.querySelector('.ui-ctl-element').textContent = Text.encode(
-				this.getStoryPoints().getPoints()
-			);
-
-			this.sendEventToUpdateStoryPoints();
-		}
-	}
-
-	setSubTasksInfo(subTasksInfo: SubTasksInfo)
-	{
-		if (Type.isUndefined(subTasksInfo))
-		{
-			this.subTasksInfo = [];
-
-			return;
-		}
-
-		Object.values(subTasksInfo).map((subTaskInfo: SubTaskInfo) => {
-			const storyPoints = new StoryPoints();
-			if (Type.isString(subTaskInfo.storyPoints))
-			{
-				storyPoints.setPoints(subTaskInfo.storyPoints);
-			}
-			subTaskInfo.storyPoints = storyPoints;
-		});
-
-		this.subTasksInfo = subTasksInfo;
-	}
-
-	getSubTasksInfo(): SubTasksInfo
-	{
-		return this.subTasksInfo;
-	}
-
-	updateSubTasksPoints(sourceId: number, storyPoints: StoryPoints)
-	{
-		let newSubTasksInfo = this.getSubTasksInfo();
-		if (Type.isArray(newSubTasksInfo))
-		{
-			newSubTasksInfo = {};
-			newSubTasksInfo[sourceId] = {
-				sourceId: sourceId,
-				completed: 'N',
-				storyPoints: storyPoints.getPoints()
-			};
-			this.setSubTasksInfo(newSubTasksInfo);
-
-			this.updateStoryPointsNode();
-
-			return;
-		}
-
-		const subTasksInfo = this.getSubTasksInfo();
-
-		if (subTasksInfo.hasOwnProperty(sourceId))
-		{
-			subTasksInfo[sourceId].storyPoints = storyPoints;
-		}
-		else
-		{
-			subTasksInfo[sourceId] = {
-				sourceId: sourceId,
-				completed: 'N',
-				storyPoints: storyPoints
-			};
-		}
-
-		this.updateStoryPointsNode();
-	}
-
-	getCompletedSubTasksStoryPoints(): StoryPoints
-	{
-		const storyPoints = new StoryPoints();
-
-		if (this.isCompleted())
-		{
-			storyPoints.setPoints(this.storyPoints.getPoints());
-		}
-
-		Object.values(this.getSubTasksInfo()).map((subTaskInfo: SubTaskInfo) => {
-			if (subTaskInfo.completed === 'Y')
-			{
-				if (subTaskInfo.storyPoints instanceof StoryPoints)
-				{
-					storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
-				}
-			}
-		});
-
-		return storyPoints;
-	}
-
-	getUncompletedSubTasksStoryPoints(): StoryPoints
-	{
-		const storyPoints = new StoryPoints();
-
-		if (!this.isCompleted())
-		{
-			storyPoints.setPoints(this.storyPoints.getPoints());
-		}
-
-		Object.values(this.getSubTasksInfo()).map((subTaskInfo: SubTaskInfo) => {
-			if (subTaskInfo.completed === 'N')
-			{
-				if (subTaskInfo.storyPoints instanceof StoryPoints)
-				{
-					storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
-				}
-			}
-		});
-
-		return storyPoints;
-	}
-
 	setCompleted(value: string)
 	{
-		this.completed = (value === 'Y');
+		const completed = (value === 'Y');
 
-		if (this.isNodeCreated())
+		if (this.name)
 		{
-			this.updateCompletedStatus();
+			if (completed)
+			{
+				this.name.strikeOut();
+			}
+			else
+			{
+				this.name.unStrikeOut();
+			}
 		}
+
+		this.completed = completed;
 	}
 
 	setAllowedActions(allowedActions: AllowedActions)
@@ -437,29 +467,52 @@ export class Item extends EventEmitter
 		this.allowedActions = (Type.isPlainObject(allowedActions) ? allowedActions : {});
 	}
 
-	setEpic(epic: EpicType)
+	setSubTasksInfo(subTasksInfo: ?SubTasksInfo)
 	{
-		this.epic = (Type.isPlainObject(epic) ? epic : null);
+		this.subTasksInfo = subTasksInfo;
 	}
 
-	getEpic(): EpicType
+	getSubTasksInfo(): ?SubTasksInfo
 	{
-		return this.epic;
+		return this.subTasksInfo;
 	}
 
-	setTags(tags)
+	getSubTasksCount(): number
 	{
-		this.tags = (Type.isArray(tags) ? tags : []);
-	}
+		if (!this.getSubTasksInfo())
+		{
+			return 0;
+		}
 
-	getTags(): Array
-	{
-		return this.tags;
+		return Object.keys(this.getSubTasksInfo()).length;
 	}
 
 	setParentTask(value: string)
 	{
 		this.parentTask = (value === 'Y');
+
+		if (this.getNode())
+		{
+			this.setToggle(this.isParentTask());
+
+			if (this.isParentTask())
+			{
+				Dom.addClass(this.getNode(), '--parent-tasks');
+
+				if (this.getSubTasksCount() > 1)
+				{
+					Dom.addClass(this.getNode(), '--many');
+				}
+				else
+				{
+					Dom.removeClass(this.getNode(), '--many');
+				}
+			}
+			else
+			{
+				Dom.removeClass(this.getNode(), '--parent-tasks');
+			}
+		}
 	}
 
 	isParentTask(): boolean
@@ -467,19 +520,21 @@ export class Item extends EventEmitter
 		return this.parentTask;
 	}
 
-	setSubTasksCount(count: number)
-	{
-		this.subTasksCount = (Type.isInteger(count) ? parseInt(count, 10) : 0);
-	}
-
-	getSubTasksCount(): number
-	{
-		return this.subTasksCount;
-	}
-
 	setLinkedTask(value: string)
 	{
 		this.linkedTask = (value === 'Y');
+
+		if (this.getNode())
+		{
+			if (this.isLinkedTask() && !this.isSubTask())
+			{
+				Dom.addClass(this.getNode(), '--linked');
+			}
+			else
+			{
+				Dom.removeClass(this.getNode(), '--linked');
+			}
+		}
 	}
 
 	isLinkedTask(): boolean
@@ -500,26 +555,23 @@ export class Item extends EventEmitter
 	setSubTask(value: string)
 	{
 		this.subTask = (value === 'Y');
+
+		if (this.getNode())
+		{
+			if (this.isSubTask())
+			{
+				Dom.addClass(this.getNode(), '--subtasks');
+			}
+			else
+			{
+				Dom.removeClass(this.getNode(), '--subtasks');
+			}
+		}
 	}
 
 	isSubTask(): boolean
 	{
 		return this.subTask;
-	}
-
-	setTaskCounts(params: ItemParams)
-	{
-		this.taskCounts = (this.itemType === 'task' ? new TaskCounts(params) : null);
-	}
-
-	getTaskCounts(): TaskCounts|null
-	{
-		return this.taskCounts;
-	}
-
-	cleanTaskCounts()
-	{
-		this.taskCounts = null;
 	}
 
 	setInfo(info: ?ItemInfo)
@@ -535,8 +587,6 @@ export class Item extends EventEmitter
 		}
 
 		this.info = info;
-
-		this.setBorderColor(this.info.borderColor);
 	}
 
 	getInfo(): ?ItemInfo
@@ -548,17 +598,7 @@ export class Item extends EventEmitter
 	{
 		this.info.borderColor = (Type.isString(color) ? color : '');
 
-		if (this.isNodeCreated())
-		{
-			if (this.getBorderColor())
-			{
-				Dom.style(this.getItemNode(), 'border', '2px solid ' + this.getBorderColor());
-			}
-			else
-			{
-				Dom.style(this.getItemNode(), 'border', null);
-			}
-		}
+		this.updateBorderColor();
 	}
 
 	getBorderColor(): string
@@ -566,26 +606,29 @@ export class Item extends EventEmitter
 		return (Type.isString(this.info.borderColor) ? this.info.borderColor : '');
 	}
 
+	updateBorderColor()
+	{
+		if (this.isLinkedTask() && !this.isSubTask() && this.getNode() && this.getBorderColor() !== '')
+		{
+			const colorNode = this.getNode().querySelector('.tasks-scrum__item--link');
+
+			Dom.style(colorNode, 'backgroundColor', this.getBorderColor());
+
+			switch (this.getEntityType())
+			{
+				case 'backlog':
+					Dom.style(this.getNode(), 'borderLeft', '3px solid' + this.getBorderColor());
+					break;
+				case 'sprint':
+					Dom.style(this.getNode(), 'borderLeft', null);
+					break;
+			}
+		}
+	}
+
 	isCompleted(): boolean
 	{
 		return this.completed;
-	}
-
-	updateCompletedStatus()
-	{
-		const nameNode = this.getItemNode().querySelector('.tasks-scrum-item-name');
-		const nameTextNode = nameNode.querySelector('.ui-ctl-element');
-
-		if (this.isCompleted())
-		{
-			Dom.style(nameTextNode, 'textDecoration', 'line-through');
-		}
-		else
-		{
-			Dom.style(nameTextNode, 'textDecoration', null);
-		}
-
-		this.sendEventToUpdateStoryPoints();
 	}
 
 	isDisabled(): boolean
@@ -607,69 +650,59 @@ export class Item extends EventEmitter
 	{
 		this.disableStatus = Boolean(status);
 
-		if (!this.isNodeCreated())
+		if (this.isDisabled())
 		{
-			return;
-		}
-
-		if (status)
-		{
-			this.hideNode(this.getItemNode().querySelector('.tasks-scrum-dragndrop'));
-		}
-		else
-		{
-			this.showNode(this.getItemNode().querySelector('.tasks-scrum-dragndrop'));
+			this.storyPoints.disable();
 		}
 	}
 
 	activateGroupMode()
 	{
-		this.groupMode = true;
-
-		if (!this.isNodeCreated())
-		{
-			return;
-		}
-
-		const groupModeContainer = this.getItemNode().querySelector('.tasks-scrum-item-group-mode-container');
-		const groupModeCheckbox = groupModeContainer.querySelector('input');
-		groupModeCheckbox.checked = false;
-
-		Event.bind(groupModeCheckbox, 'change', (event) => {
-			Dom.toggleClass(this.getItemNode(), 'tasks-scrum-item-group-mode');
-			if (this.getItemNode().classList.contains('tasks-scrum-item-group-mode'))
-			{
-				this.emit('addItemToGroupMode');
-			}
-			else
-			{
-				this.emit('removeItemFromGroupMode');
-			}
-			this.showActionsPanel(event);
-		});
-
-		this.showNode(groupModeContainer);
-
-		this.deactivateDragNDrop();
+		Dom.addClass(this.getNode(), '--checked');
 	}
 
 	deactivateGroupMode()
 	{
-		if (!this.isNodeCreated())
-		{
-			return;
-		}
+		Dom.removeClass(this.getNode(), '--checked');
+	}
 
-		Dom.removeClass(this.getItemNode(), 'tasks-scrum-item-group-mode');
+	activateLinkedMode()
+	{
+		Dom.addClass(this.getNode(), '--linked-mode');
+	}
 
-		const groupModeContainer = this.getItemNode().querySelector('.tasks-scrum-item-group-mode-container');
-		this.hideNode(groupModeContainer);
+	deactivateLinkedMode()
+	{
+		Dom.removeClass(this.getNode(), '--linked-mode');
+		Dom.removeClass(this.getNode(), '--linked-mode-current');
+	}
 
-		Event.unbindAll(groupModeContainer.querySelector('input'));
+	activateCurrentLinkedMode()
+	{
+		Dom.addClass(this.getNode(), '--linked-mode-current');
+	}
 
+	deactivateCurrentLinkedMode()
+	{
+		Dom.removeClass(this.getNode(), '--linked-mode-current');
+	}
+
+	addItemToGroupMode()
+	{
+		this.groupMode = true;
+
+		Dom.addClass(this.getNode(), ['--group-mode']);
+
+		this.getNode().querySelector('.tasks-scrum__item--group-mode-input').checked = true;
+	}
+
+	removeItemFromGroupMode()
+	{
 		this.groupMode = false;
 
-		this.activateDragNDrop();
+		Dom.removeClass(this.getNode(), ['--group-mode']);
+
+		this.getNode().querySelector('.tasks-scrum__item--group-mode-input').checked = false;
 	}
 
 	isGroupMode(): boolean
@@ -677,102 +710,32 @@ export class Item extends EventEmitter
 		return this.groupMode;
 	}
 
-	activatePreviewMode()
+	getNode(): ?HTMLElement
 	{
-		this.previewMode = true;
+		return this.node;
 	}
 
-	isPreviewMode(): boolean
+	showSubTasks()
 	{
-		return this.previewMode;
+		Dom.addClass(this.getNode(), '--open');
+
+		this.toggle.show();
+
+		this.getSubTasks().show();
 	}
 
-	getPreviewVersion(): Item
+	hideSubTasks()
 	{
-		const previewItem = Runtime.clone(this);
+		Dom.removeClass(this.getNode(), '--open');
 
-		previewItem.setItemId();
-		previewItem.itemNode = null;
-		previewItem.activatePreviewMode();
-		previewItem.taskCounts = null
+		this.toggle.hide();
 
-		return previewItem;
+		this.getSubTasks().hide();
 	}
 
-	activateDecompositionMode(color: string)
+	isShownSubTasks(): boolean
 	{
-		this.decompositionMode = true;
-
-		if (this.getBorderColor() === '')
-		{
-			this.setBorderColor(color);
-		}
-
-		if (this.getBorderColor())
-		{
-			Dom.style(this.getItemNode(), 'border', '2px solid ' + this.getBorderColor());
-		}
-
-		this.deactivateDragNDrop();
-	}
-
-	deactivateDecompositionMode()
-	{
-		this.decompositionMode = false;
-
-		if (this.getBorderColor() === '')
-		{
-			this.setBorderColor();
-			Dom.style(this.getItemNode(), 'border', null);
-		}
-
-		this.activateDragNDrop();
-	}
-
-	activateDragNDrop()
-	{
-		if (this.isNodeCreated())
-		{
-			if (!this.getItemNode().classList.contains('tasks-scrum-item-drag'))
-			{
-				Dom.addClass(this.getItemNode(), 'tasks-scrum-item-drag');
-			}
-		}
-	}
-
-	deactivateDragNDrop()
-	{
-		if (this.isNodeCreated())
-		{
-			Dom.removeClass(this.getItemNode(), 'tasks-scrum-item-drag');
-		}
-	}
-
-	isDecompositionMode(): boolean
-	{
-		return this.decompositionMode;
-	}
-
-	setItemNode(node?: HTMLElement)
-	{
-		try
-		{
-			this.itemNode = ((node instanceof HTMLElement) ? node : null);
-		}
-		catch (e)
-		{
-			this.itemNode = null;
-		}
-	}
-
-	getItemNode(): HTMLElement|null
-	{
-		return this.itemNode;
-	}
-
-	isNodeCreated(): boolean
-	{
-		return (this.itemNode !== null);
+		return this.getSubTasks().isShown();
 	}
 
 	setParentEntity(entityId: number, entityType: string)
@@ -793,483 +756,222 @@ export class Item extends EventEmitter
 
 	updateYourself(tmpItem: Item)
 	{
-		if (tmpItem.getName() !== this.getName())
-		{
-			this.setName(tmpItem.getName());
-		}
-		if (tmpItem.getEntityId() !== this.getEntityId())
-		{
-			this.setEntityId(tmpItem.getEntityId());
-		}
-		if (tmpItem.getResponsible().id !== this.getResponsible().id)
-		{
-			this.setResponsible(tmpItem.getResponsible());
-		}
-		if (tmpItem.getStoryPoints().getPoints() !== this.getStoryPoints().getPoints())
-		{
-			this.setStoryPoints(tmpItem.getStoryPoints().getPoints());
-		}
-		if (this.getTaskCounts() && tmpItem.getTaskCounts())
-		{
-			this.getTaskCounts().updateIndicators({
-				attachedFilesCount: tmpItem.getTaskCounts().getAttachedFilesCount(),
-				checkListComplete: tmpItem.getTaskCounts().getCheckListComplete(),
-				checkListAll: tmpItem.getTaskCounts().getCheckListAll(),
-				taskCounter: tmpItem.getTaskCounts().getTaskCounters(),
-			});
-		}
-		if (tmpItem.isCompleted() !== this.isCompleted())
-		{
-			this.setCompleted(tmpItem.isCompleted() ? 'Y' : 'N')
-		}
+		this.setToggle(tmpItem.isParentTask());
 
-		this.setParentId(tmpItem.getParentId());
-		this.setEpicAndTags(tmpItem.getEpic(), tmpItem.getTags());
-		this.setInfo(tmpItem.getInfo());
+		if (this.getName().getValue() !== tmpItem.getName().getValue())
+		{
+			this.setName(tmpItem.getName().getValue());
+		}
+		if (this.getChecklist().getValue() !== tmpItem.getChecklist().getValue())
+		{
+			this.setChecklist(
+				tmpItem.getChecklist().getComplete(),
+				tmpItem.getChecklist().getAll()
+			);
+		}
+		if (this.getFiles().getValue() !== tmpItem.getFiles().getValue())
+		{
+			this.setFiles(tmpItem.getFiles().getValue());
+		}
+		if (this.getComments().getValue() !== tmpItem.getComments().getValue())
+		{
+			this.setComments(tmpItem.getComments().getValue());
+		}
+		if (this.getEpic().getValue() !== tmpItem.getEpic().getValue())
+		{
+			this.setEpic(tmpItem.getEpic().getValue());
+		}
+		if (!this.getTags().isEqualTags(tmpItem.getTags()))
+		{
+			this.setTags(tmpItem.getTags().getValue());
+		}
+		if (this.getResponsible().getValue() !== tmpItem.getResponsible().getValue())
+		{
+			this.setResponsible(tmpItem.getResponsible().getValue());
+		}
+		if (
+			!this.isSubTask()
+			&& this.getStoryPoints().getValue().getPoints() !== tmpItem.getStoryPoints().getValue().getPoints()
+		)
+		{
+			this.setStoryPoints(tmpItem.getStoryPoints().getValue().getPoints());
+		}
+		this.setEntityId(tmpItem.getEntityId());
+		if (this.isCompleted() !== tmpItem.isCompleted())
+		{
+			this.setCompleted(tmpItem.isCompleted() ? 'Y' : 'N');
+		}
 
 		this.setParentTask(tmpItem.isParentTask() ? 'Y' : 'N');
-		this.setSubTasksCount(tmpItem.getSubTasksCount());
 		this.setLinkedTask(tmpItem.isLinkedTask() ? 'Y' : 'N');
 		this.setParentTaskId(tmpItem.getParentTaskId());
 		this.setSubTask(tmpItem.isSubTask() ? 'Y' : 'N');
-
-		this.setSubTasksInfo(tmpItem.getSubTasksInfo());
-
-		if (this.isNodeCreated())
-		{
-			this.updateParentTaskNodes();
-		}
 	}
 
 	removeYourself()
 	{
-		Dom.remove(this.getItemNode());
-		this.setItemNode();
+		Dom.remove(this.node);
+
+		this.node = null;
 	}
 
 	render(): HTMLElement
 	{
-		let itemClassName = 'tasks-scrum-item';
-		if (this.isSubTask())
+		if (this.isShortView())
 		{
-			itemClassName += ' tasks-scrum-subtask-item'
-		}
-
-		this.itemNode = Tag.render`
-			<div data-item-id="${Text.encode(this.itemId)}" data-sort=
-				"${Text.encode(this.sort)}" class="${itemClassName}">
-				<div class="tasks-scrum-item-inner">
-					<div class="tasks-scrum-item-group-mode-container">
-						<input type="checkbox">
-					</div>
-					<div class="tasks-scrum-item-name">
-						${this.renderName()}
-						${(this.taskCounts && this.itemType === 'task' ? this.taskCounts.renderIndicators() : '')}
-					</div>
-					<div class="tasks-scrum-item-params">
-						${this.renderSubTasksCounter()}
-						${this.renderResponsible()}
-						${this.renderStoryPoints()}
-						${this.renderSubTasksTick()}
-					</div>
-				</div>
-				${this.renderTags()}
-			</div>
-		`;
-
-		if (this.isNodeCreated() && this.getBorderColor())
-		{
-			Dom.style(this.itemNode, 'border', '2px solid ' + this.getBorderColor());
-		}
-
-		return this.itemNode;
-	}
-
-	renderName(): HTMLElement
-	{
-		return Tag.render`
-			<div class="tasks-scrum-item-name-field ui-ctl ui-ctl-xs ui-ctl-textbox ui-ctl-no-border">
-				<div class="ui-ctl-element" contenteditable="false">
-					${Text.encode(this.name)}
-				</div>
-			</div>
-		`;
-	}
-
-	renderResponsible(): HTMLElement
-	{
-		return Tag.render`<div class="ui-icon ui-icon-common-user tasks-scrum-item-responsible"><i></i></div>`;
-	}
-
-	renderStoryPoints(): HTMLElement
-	{
-		return Tag.render`
-			<div class="tasks-scrum-item-story-points">
-				<div class="tasks-scrum-item-story-points-field ui-ctl ui-ctl-xs ui-ctl-textbox ui-ctl-auto ui-ctl-no-border">
-					<div class="ui-ctl-element" contenteditable="false">
-						${Text.encode(this.getStoryPoints().getPoints())}
-					</div>
-				</div>
-			</div>
-		`;
-	}
-
-	renderSubTasksCounter(): HTMLElement
-	{
-		if (!this.isParentTask())
-		{
-			return '';
-		}
-
-		const subTasksCounter = Tag.render`
-			<div class="tasks-scrum-item-subtasks-btn">
-				<span class="tasks-scrum-item-subtasks-icon"></span>
-				<span class="tasks-scrum-item-subtasks-count">
-					${this.getSubTasksCount()}
-				</span>
-			</div>
-		`;
-
-		Event.bind(subTasksCounter, 'click', () => {
-			this.emit('showTask');
-		});
-
-		return subTasksCounter;
-	}
-
-	renderSubTasksTick(): HTMLElement
-	{
-		if (!this.isParentTask() || this.isPreviewMode())
-		{
-			return '';
-		}
-
-		if (this.getEntityType() === 'backlog')
-		{
-			return '';
-		}
-
-		const subTasksTick = Tag.render`
-			<div class="tasks-scrum-item-subtasks-tick">
-				<div class="ui-btn ui-btn-sm ui-btn-light ui-btn-icon-angle-down"></div>
-			</div>
-		`;
-
-		Event.bind(subTasksTick, 'click', () => {
-			if (!this.isDecompositionMode())
-			{
-				this.emit('toggleSubTasks');
-			}
-		});
-
-		return subTasksTick;
-	}
-
-	toggleSubTasksTick()
-	{
-		if (!this.isNodeCreated())
-		{
-			return;
-		}
-
-		const subTasksTick = this.getItemNode().querySelector('.tasks-scrum-item-subtasks-tick');
-
-		if (subTasksTick)
-		{
-			subTasksTick.firstElementChild.classList.toggle('ui-btn-icon-angle-up');
-			subTasksTick.firstElementChild.classList.toggle('ui-btn-icon-angle-down');
-		}
-	}
-
-	upSubTasksTick()
-	{
-		if (!this.isNodeCreated())
-		{
-			return;
-		}
-
-		const subTasksTick = this.getItemNode().querySelector('.tasks-scrum-item-subtasks-tick');
-
-		if (subTasksTick)
-		{
-			Dom.removeClass(subTasksTick.firstElementChild, 'ui-btn-icon-angle-down');
-			Dom.addClass(subTasksTick.firstElementChild, 'ui-btn-icon-angle-up');
-		}
-	}
-
-	downSubTasksTick()
-	{
-		if (!this.isNodeCreated())
-		{
-			return;
-		}
-
-		const subTasksTick = this.getItemNode().querySelector('.tasks-scrum-item-subtasks-tick');
-
-		if (subTasksTick)
-		{
-			Dom.removeClass(subTasksTick.firstElementChild, 'ui-btn-icon-angle-up');
-			Dom.addClass(subTasksTick.firstElementChild, 'ui-btn-icon-angle-down');
-		}
-	}
-
-	renderTags(): ?HTMLElement|string
-	{
-		if (this.epic === null && this.tags.length === 0)
-		{
-			return '';
-		}
-
-		return Tag.render`
-			<div class="tasks-scrum-item-tags-container">
-				${this.getEpicTag()}
-				${this.getListTagNodes()}
-			</div>
-		`;
-	}
-
-	getEpicTag(): ?HTMLElement
-	{
-		if (this.epic === null)
-		{
-			return '';
-		}
-
-		const getContrastYIQ = (hexcolor) => {
-			if (!hexcolor)
-			{
-				hexcolor = Label.Color.DEFAULT;
-			}
-			hexcolor = hexcolor.replace('#', '');
-			const r = parseInt(hexcolor.substr(0, 2), 16);
-			const g = parseInt(hexcolor.substr(2, 2), 16);
-			const b = parseInt(hexcolor.substr(4, 2), 16);
-			const yiq = ((r * 299 ) + (g* 587 ) + (b * 114)) / 1000;
-			return (yiq >= 128) ? 'black' : 'white';
-		};
-
-		const epicLabel = new Label({
-			text: this.epic.name,
-			color: Label.Color.DEFAULT,
-			size: Label.Size.MD,
-			customClass: 'tasks-scrum-item-epic-label'
-		});
-		const container = epicLabel.getContainer();
-		const innerLabel = container.querySelector('.ui-label-inner');
-
-		const contrast = getContrastYIQ(this.epic.info.color);
-		if (contrast === 'white')
-		{
-			Dom.style(innerLabel, 'color', '#ffffff');
+			return this.renderShortView();
 		}
 		else
 		{
-			Dom.style(innerLabel, 'color', '#525c69');
+			return this.renderFullView();
 		}
-		Dom.style(container, 'backgroundColor', this.epic.info.color);
-
-		Event.bind(container, 'click', (event) => {
-			if (this.isGroupMode())
-			{
-				this.clickToGroupModeCheckbox();
-				this.showActionsPanel(event);
-				return;
-			}
-			this.emit('filterByEpic', this.epic.id);
-		});
-
-		return container;
 	}
 
-	getListTagNodes(): HTMLElement
+	renderShortView(): HTMLElement
 	{
-		return this.tags.map((tag) => {
-			const tagLabel = new Label({
-				text: tag,
-				color: Label.Color.TAG_LIGHT,
-				fill: true,
-				size: Label.Size.SM,
-				customClass: ''
-			});
-			const container = tagLabel.getContainer();
-			Event.bind(container, 'click', (event) => {
-				if (this.isGroupMode())
-				{
-					this.clickToGroupModeCheckbox();
-					this.showActionsPanel(event);
-					return;
-				}
-				this.emit('filterByTag', tag);
-			});
-			return container;
-		});
+		const typeClass = (this.isParentTask() ? ' --parent-tasks ' : ' ') + (this.isSubTask() ? ' --subtasks ' : '');
+		const subClass = this.getSubTasksCount() > 1 ? ' --many ' : '';
+		const linkedClass = this.isLinkedTask() && !this.isSubTask() ? ' --linked ' : '';
+		const entityClass = '--item-' + this.getEntityType();
+
+		this.node = Tag.render`
+			<div
+				class="tasks-scrum__item${typeClass}${subClass}${linkedClass}tasks-scrum__item--drag --short-view ${entityClass}"
+				data-id="${Text.encode(this.getId())}"
+				data-sort="${Text.encode(this.getSort())}"
+			>
+				<div class="tasks-scrum__item--link"></div>
+				<div class="tasks-scrum__item--info">
+					${this.toggle ? this.toggle.render() : ''}
+					<div class="tasks-scrum__item--main-info">
+						${this.name ? this.name.render() : ''}
+						<div class="tasks-scrum__item--tags">
+							${this.epic ? this.epic.render() : ''}
+							${this.tags ? this.tags.render() : ''}
+						</div>
+					</div>
+					<div class="tasks-scrum__item--entity-content">
+						${this.comments ? this.comments.render() : ''}
+						<div class="tasks-scrum__item--counter-container">
+							${this.files ? this.files.render() : ''}
+							${this.checklist ? this.checklist.render() : ''}
+						</div>
+					</div>
+				</div>
+				${this.responsible ? this.responsible.render() : ''}
+				${!this.isSubTask() && this.storyPoints ? this.storyPoints.render() : ''}
+				<div class="tasks-scrum__item--group-mode">
+					<input type="checkbox" class="tasks-scrum__item--group-mode-input">
+				</div>
+				<div class="tasks-scrum__item--substrate"></div>
+			</div>
+		`;
+
+		Event.bind(this.node, 'click', this.onItemClick.bind(this));
+
+		this.updateBorderColor();
+
+		return this.node;
 	}
 
-	// todo remove all method
-	onAfterAppend(container)
+	renderFullView(): HTMLElement
 	{
-		this.setItemNode(container.querySelector('[data-item-id="'+this.itemId+'"]'));
+		const typeClass = (this.isParentTask() ? ' --parent-tasks ' : ' ') + (this.isSubTask() ? ' --subtasks ' : '');
+		const subClass = this.getSubTasksCount() > 1 ? ' --many ' : '';
+		const linkedClass = this.isLinkedTask() && !this.isSubTask() ? ' --linked ' : '';
+		const entityClass = '--item-' + this.getEntityType();
 
-		if (!this.isNodeCreated())
+		this.node = Tag.render`
+			<div
+				class="tasks-scrum__item${typeClass}${subClass}${linkedClass}tasks-scrum__item--drag --full-view ${entityClass}"
+				data-id="${Text.encode(this.getId())}"
+				data-sort="${Text.encode(this.getSort())}"
+			>
+			<div class="tasks-scrum__item--info-task--basic">
+				<div class="tasks-scrum__item--link"></div>
+				<div class="tasks-scrum__item--info">
+					${this.toggle ? this.toggle.render() : ''}
+					<div class="tasks-scrum__item--main-info">
+						${this.name ? this.name.render() : ''}
+						<div class="tasks-scrum__item--tags">
+							${this.epic ? this.epic.renderFullView() : ''}
+							${this.tags ? this.tags.render() : ''}
+						</div>
+					</div>
+					${this.comments ? this.comments.render() : ''}
+				</div>
+			</div>
+			<div class="tasks-scrum__item--info-task--details">
+				${this.responsible ? this.responsible.render() : ''}
+
+					<div class="tasks-scrum__item--counter-container">
+						${this.files ? this.files.render() : ''}
+						${this.checklist ? this.checklist.render() : ''}
+					</div>
+
+				${!this.isSubTask() && this.storyPoints ? this.storyPoints.render() : ''}
+			</div>
+
+				<div class="tasks-scrum__item--group-mode">
+					<input type="checkbox" class="tasks-scrum__item--group-mode-input">
+				</div>
+				<div class="tasks-scrum__item--substrate"></div>
+			</div>
+		`;
+
+		this.updateTagsVisibility();
+
+		Event.bind(this.node, 'click', this.onItemClick.bind(this));
+
+		this.updateBorderColor();
+
+		return this.node;
+	}
+
+	updateTagsVisibility()
+	{
+		if (!this.getNode())
 		{
 			return;
 		}
 
-		if (this.taskCounts)
+		if (this.epic.getValue().id > 0 || this.tags.getValue().length > 0)
 		{
-			this.taskCounts.onAfterAppend();
-		}
-
-		this.updateResponsible();
-
-		if (this.isPreviewMode())
-		{
-			Event.bind(this.getItemNode(), 'click', () => this.emit('showTask'));
-			return;
-		}
-
-		if (!this.isDecompositionMode())
-		{
-			this.activateDragNDrop();
-		}
-
-		if (this.isSubTask())
-		{
-			this.deactivateDragNDrop();
-		}
-
-		Event.unbindAll(this.getItemNode());
-		Event.bind(this.getItemNode(), 'click', this.onItemClick.bind(this));
-
-		const nameNode = this.getItemNode().querySelector('.tasks-scrum-item-name');
-		Event.unbindAll(nameNode);
-		Event.bind(nameNode, 'click', this.onNameClick.bind(this));
-
-		const responsibleNode = this.getItemNode().querySelector('.tasks-scrum-item-responsible');
-		Event.unbindAll(responsibleNode);
-		Event.bind(responsibleNode, 'click', this.onResponsibleClick.bind(this));
-
-		const storyPointsNode = this.getItemNode().querySelector('.tasks-scrum-item-story-points');
-		Event.unbindAll(storyPointsNode);
-		Event.bind(storyPointsNode, 'click', this.onStoryPointsClick.bind(this));
-
-		if (this.isCompleted())
-		{
-			const nameTextNode = nameNode.querySelector('.ui-ctl-element');
-			Dom.style(nameTextNode, 'textDecoration', 'line-through');
-		}
-
-		this.updateParentTaskNodes();
-	}
-
-	isShowIndicators(): Boolean
-	{
-		return Boolean(this.attachedFilesCount || this.checkListAll || this.newCommentsCount);
-	}
-
-	updateParentTaskNodes()
-	{
-		if (this.isParentTask())
-		{
-			const subTasksCounterNode = this.getItemNode().querySelector('.tasks-scrum-item-subtasks-btn');
-			if (subTasksCounterNode)
-			{
-				Dom.replace(subTasksCounterNode, this.renderSubTasksCounter());
-			}
-			else
-			{
-				const paramsNode = this.getItemNode().querySelector('.tasks-scrum-item-params');
-				const subTasksCounterNode = this.renderSubTasksCounter();
-				Dom.insertBefore(subTasksCounterNode, paramsNode.firstElementChild);
-			}
-
-			const subTasksTickNode = this.getItemNode().querySelector('.tasks-scrum-item-subtasks-tick');
-			if (subTasksTickNode)
-			{
-				const newSubTasksTickNode = this.renderSubTasksTick();
-				if (newSubTasksTickNode)
-				{
-					Dom.replace(subTasksTickNode, newSubTasksTickNode);
-				}
-				else
-				{
-					Dom.remove(subTasksTickNode);
-				}
-			}
-			else
-			{
-				const paramsNode = this.getItemNode().querySelector('.tasks-scrum-item-params');
-				const newSubTasksTickNode = this.renderSubTasksTick();
-				Dom.append(newSubTasksTickNode, paramsNode);
-			}
+			Dom.addClass(this.getNode().querySelector('.tasks-scrum__item--tags'), '--visible');
 		}
 		else
 		{
-			const subTasksCounterNode = this.getItemNode().querySelector('.tasks-scrum-item-subtasks-btn');
-			if (subTasksCounterNode)
-			{
-				Dom.remove(subTasksCounterNode);
-			}
-			const subTasksTickNode = this.getItemNode().querySelector('.tasks-scrum-item-subtasks-tick');
-			if (subTasksTickNode)
-			{
-				Dom.remove(subTasksTickNode);
-			}
+			Dom.removeClass(this.getNode().querySelector('.tasks-scrum__item--tags'), '--visible');
+		}
+	}
+
+	replaceTags(tags: Tags)
+	{
+		const tagsContainer = this.getNode().querySelector('.tasks-scrum__item--tags');
+		const tagsNode = tagsContainer.querySelectorAll('.tasks-scrum__item--hashtag');
+
+		tagsNode.forEach((tagNode: HTMLElement) => Dom.remove(tagNode));
+
+		const tagList = tags.render();
+
+		if (Type.isArray(tagList))
+		{
+			tagList.forEach((tagNode: HTMLElement) => Dom.append(tagNode, tagsContainer));
+		}
+		else
+		{
+			Dom.append(tagList, tagsContainer);
 		}
 	}
 
 	onItemClick(event)
 	{
-		if (this.isClickOnEditableName(event) && !this.isGroupMode())
+		const target = event.target;
+
+		if (target.classList.contains('tasks-scrum__item--link'))
 		{
-			return;
-		}
+			this.emit('showLinked');
 
-		const ignoreTagList = new Set(['I', 'SPAN', 'INPUT']);
-		if (ignoreTagList.has(event.target.tagName))
-		{
-			return;
-		}
-
-		if (event.target.closest('.tasks-scrum-item-subtasks-tick'))
-		{
-			return;
-		}
-
-		this.clickToGroupModeCheckbox();
-
-		this.showActionsPanel(event);
-	}
-
-	isClickOnEditableName(event): boolean
-	{
-		return (event.target.classList.contains('ui-ctl-element'));
-	}
-
-	onNameClick(event)
-	{
-		if (this.isClickOnEditableName(event) && !this.isGroupMode())
-		{
-			this.emit('showTask');
-		}
-	}
-
-	clickToGroupModeCheckbox()
-	{
-		if (this.isGroupMode())
-		{
-			const groupModeContainer = this.getItemNode().querySelector('.tasks-scrum-item-group-mode-container');
-			const groupModeCheckbox = groupModeContainer.querySelector('input');
-			groupModeCheckbox.click();
-		}
-	}
-
-	onResponsibleClick(event)
-	{
-		if (this.isGroupMode())
-		{
-			this.clickToGroupModeCheckbox();
-			this.showActionsPanel(event);
 			return;
 		}
 
@@ -1278,26 +980,86 @@ export class Item extends EventEmitter
 			return;
 		}
 
-		const responsibleNode = event.currentTarget;
+		if (this.toggle && this.hasNode(this.toggle.getNode(), target))
+		{
+			return;
+		}
+		if (this.name && this.hasNode(this.name.getNode(), target))
+		{
+			return;
+		}
+		if (this.checklist && this.hasNode(this.checklist.getNode(), target))
+		{
+			return;
+		}
+		if (this.files && this.hasNode(this.files.getNode(), target))
+		{
+			return;
+		}
+		if (this.comments && this.hasNode(this.comments.getNode(), target))
+		{
+			return;
+		}
+		if (this.epic && this.hasNode(this.epic.getNode(), target))
+		{
+			return;
+		}
+		if (this.tags && this.hasNode(this.tags.getNode(), target))
+		{
+			return;
+		}
+		if (this.responsible && this.hasNode(this.responsible.getNode(), target, true))
+		{
+			return;
+		}
+		if (this.isSubTask())
+		{
+			return;
+		}
+		if (this.storyPoints && this.hasNode(this.storyPoints.getNode(), target))
+		{
+			return;
+		}
 
-		const dialog = new Dialog({
-			targetNode: responsibleNode,
+		this.emit('toggleActionPanel');
+	}
+
+	onResponsibleClick()
+	{
+		if (this.isGroupMode())
+		{
+			return;
+		}
+
+		if (this.isDisabled())
+		{
+			return;
+		}
+
+		if (this.responsibleDialog)
+		{
+			this.responsibleDialog.destroy();
+			this.responsibleDialog = null;
+
+			return;
+		}
+
+		this.responsibleDialog = new Dialog({
+			targetNode: this.responsible.getNode(),
 			enableSearch: true,
 			context: 'TASKS',
 			events: {
 				'Item:onSelect': (event) => {
-					dialog.hide();
+					this.responsibleDialog.hide();
 					const selectedItem = event.getData().item;
-					this.responsible = {
+					this.setResponsible({
 						id: selectedItem.getId(),
 						name: selectedItem.getTitle(),
 						photo: {
 							src: selectedItem.getAvatar()
 						}
-					};
-					this.updateResponsible();
+					});
 					this.emit('changeTaskResponsible');
-
 				},
 			},
 			entities: [
@@ -1313,282 +1075,108 @@ export class Item extends EventEmitter
 			]
 		});
 
-		dialog.show();
+		this.responsibleDialog.show();
 	}
 
-	onStoryPointsClick(event)
+	onSetStoryPoints(baseEvent: BaseEvent)
 	{
-		if (this.isGroupMode() || this.isDisabled() || this.isCompleted() || this.isParentTask())
-		{
-			this.clickToGroupModeCheckbox();
-			this.showActionsPanel(event);
-			return;
-		}
-
-		const storyPointsNode = event.currentTarget;
-		const borderNode = storyPointsNode.querySelector('.ui-ctl');
-		const valueNode = storyPointsNode.querySelector('.ui-ctl-element');
-		valueNode.textContent = valueNode.textContent.trim();
-		const oldValue = valueNode.textContent.trim();
-
-		if (valueNode.contentEditable === 'true')
+		if (this.isDisabled())
 		{
 			return;
 		}
 
-		Dom.toggleClass(borderNode, 'ui-ctl-no-border');
-		valueNode.contentEditable = 'true';
-
-		this.placeCursorAtEnd(valueNode);
-
-		Event.bind(valueNode, 'keydown', this.blockEnterInput.bind(valueNode));
-
-		Event.bindOnce(valueNode, 'blur', () => {
-			Event.unbind(valueNode, 'keydown', this.blockEnterInput.bind(valueNode));
-
-			Dom.toggleClass(borderNode, 'ui-ctl-no-border');
-			valueNode.contentEditable = 'false';
-
-			const newValue = valueNode.textContent.trim();
-			if (newValue && oldValue === newValue)
-			{
-				valueNode.textContent = oldValue;
-				return;
-			}
-
-			this.emit('updateItem', {
-				itemId: this.getItemId(),
-				entityId: this.getEntityId(),
-				itemType: this.getItemType(),
-				storyPoints: newValue
-			});
-
-			this.setStoryPoints(newValue);
-		}, true);
-	}
-
-	sendEventToUpdateStoryPoints()
-	{
-		this.emit('updateStoryPoints');
-	}
-
-	blockEnterInput(event)
-	{
-		if (event.isComposing || event.keyCode === 13)
-		{
-			this.blur();
-			return;
-		}
-	};
-
-	showActionsPanel(event)
-	{
-		if (this.actionsPanel && this.actionsPanel.isShown() && !this.isGroupMode())
-		{
-			return;
-		}
-
-		if (event)
-		{
-			event.stopPropagation();
-		}
-
-		this.actionsPanel = new ActionsPanel({
-			bindElement: this.getItemNode(),
-			itemList: {
-				task: {
-					activity: (this.itemType === 'task' && !this.isGroupMode()),
-					callback: () => {
-						this.emit('showTask');
-						this.actionsPanel.destroy();
-					},
-				},
-				attachment: {
-					activity: (!this.isDisabled() && this.isEditAllowed() && !this.isGroupMode()),
-					callback: (event) => {
-						const diskManager = new DiskManager({
-							ufDiskFilesFieldName: 'UF_TASK_WEBDAV_FILES'
-						});
-						diskManager.subscribeOnce('onFinish', (baseEvent) => {
-							this.emit('attachFilesToTask', baseEvent.getData());
-							this.actionsPanel.destroy();
-						});
-						diskManager.showAttachmentMenu(event.currentTarget);
-					},
-				},
-				dod: {
-					activity: (!this.decompositionMode && !this.isGroupMode()),
-					callback: () => {
-						this.emit('dod');
-						this.actionsPanel.destroy();
-					},
-				},
-				move: {
-					activity: (!this.decompositionMode && this.isMovable() && !this.isSubTask()),
-					callback: (event) => {
-						this.emit('move', event.currentTarget);
-					},
-				},
-				sprint: {
-					activity: (!this.isDisabled() && !this.decompositionMode && !this.isSubTask()),
-					callback: (event) => {
-						this.emit('moveToSprint', event.currentTarget);
-					},
-				},
-				backlog: {
-					activity: (this.entityType === 'sprint' && !this.decompositionMode && !this.isSubTask()),
-					callback: () => {
-						this.emit('moveToBacklog');
-						this.actionsPanel.destroy();
-					},
-				},
-				tags: {
-					activity: true,
-					callback: (event) => {
-						this.emit('showTagSearcher', event.currentTarget);
-					},
-				},
-				epic: {
-					activity: true,
-					callback: (event) => {
-						this.emit('showEpicSearcher', event.currentTarget);
-					},
-				},
-				decomposition: {
-					activity: (
-						!this.isDisabled()
-						&& !this.decompositionMode
-						&& !this.isGroupMode()
-						&& !this.isSubTask()
-					),
-					callback: (event) => {
-						this.emit('startDecomposition');
-						this.actionsPanel.destroy();
-					},
-				},
-				remove: {
-					activity: this.isRemoveAllowed(),
-					callback: () => {
-						const message = (this.isGroupMode() ? Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TASKS') :
-							Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TASK'));
-						MessageBox.confirm(
-							message,
-							(messageBox) => {
-								this.emit('remove');
-								messageBox.close();
-								this.actionsPanel.destroy();
-							},
-							Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_REMOVE'),
-						);
-					},
-				},
-			}
+		this.emit('updateItem', {
+			itemId: this.getId(),
+			entityId: this.getEntityId(),
+			storyPoints: baseEvent.getData()
 		});
 
-		this.actionsPanel.showPanel();
+		this.setStoryPoints(baseEvent.getData());
 	}
 
-	getCurrentActionsPanel(): ?ActionsPanel
+	onShowToggle()
 	{
-		if (this.actionsPanel && this.actionsPanel.isShown())
-		{
-			return this.actionsPanel;
-		}
-		else
-		{
-			return null
-		}
+		Dom.addClass(this.getNode(), '--open');
+
+		this.toggle.show();
+
+		this.emit('showSubTasks', this.getSubTasks());
 	}
 
-	setEpicAndTags(epic, tags: Array)
+	onHideToggle()
 	{
-		this.epic = (Type.isPlainObject(epic) || epic === null ? epic : this.epic);
-		this.tags = (Type.isArray(tags) ? tags : this.tags);
+		this.hideSubTasks();
+	}
 
-		if (this.epic === null && this.tags.length === 0)
+	hasNode(parentNode: HTMLElement|Array<HTMLElement>, searchNode: HTMLElement, skipParent = false): boolean
+	{
+		if (Type.isArray(parentNode))
+		{
+			const result = parentNode
+				.map((node: HTMLElement) => this.hasNode(node, searchNode, skipParent))
+				.find((result) => result === true)
+			;
+
+			return !Type.isUndefined(result);
+		}
+
+		if (!skipParent && searchNode.isEqualNode(parentNode))
+		{
+			return true;
+		}
+
+		const nodes = parentNode.getElementsByTagName('*');
+
+		for (let k = 0; k < nodes.length; k++)
+		{
+			if (searchNode.isEqualNode(nodes[k]))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	activateBlinking()
+	{
+		if (!this.getNode())
 		{
 			return;
 		}
 
-		this.updateTagsContainer();
-	}
-
-	updateTagsContainer()
-	{
-		if (!this.getItemNode())
+		if (typeof IntersectionObserver === `undefined`)
 		{
 			return;
 		}
 
-		const newContainer = Tag.render`
-			<div class="tasks-scrum-item-tags-container">
-				${this.getEpicTag()}
-				${this.getListTagNodes()}
-			</div>
-		`;
+		const observer = new IntersectionObserver((entries) =>
+			{
+				if (entries[0].isIntersecting === true)
+				{
+					this.blink();
 
-		const tagsContainerNode = this.getItemNode().querySelector('.tasks-scrum-item-tags-container');
-		if (tagsContainerNode)
-		{
-			Dom.replace(tagsContainerNode, newContainer);
-		}
-		else
-		{
-			Dom.append(newContainer, this.getItemNode());
-		}
+					observer.disconnect();
+				}
+			},
+			{
+				threshold: [0]
+			}
+		);
+
+		observer.observe(this.getNode());
 	}
 
-	updateResponsible()
+	blink()
 	{
-		if (!this.getItemNode())
+		if (!this.getNode())
 		{
 			return;
 		}
 
-		const responsibleNode = this.getItemNode().querySelector('.tasks-scrum-item-responsible');
-
-		if (!responsibleNode)
-		{
-			return;
-		}
-
-		Dom.attr(responsibleNode, 'title', this.responsible.name);
-		if (this.responsible.photo && this.responsible.photo.src)
-		{
-			Dom.style(responsibleNode.firstElementChild, 'backgroundImage', 'url("'+this.responsible.photo.src+'")');
-		}
-		else
-		{
-			Dom.style(responsibleNode.firstElementChild, 'backgroundImage', null);
-		}
-	}
-
-	placeCursorAtEnd(node)
-	{
-		node.focus();
-		const selection = window.getSelection();
-		const range = document.createRange();
-		range.selectNodeContents(node);
-		range.collapse(false);
-		selection.removeAllRanges();
-		selection.addRange(range);
-	};
-
-	updateIndicators(data: Object)
-	{
-		if (this.taskCounts)
-		{
-			this.taskCounts.updateIndicators(data);
-		}
-	}
-
-	showNode(node)
-	{
-		Dom.style(node, 'display', 'block');
-	}
-
-	hideNode(node)
-	{
-		Dom.style(node, 'display', 'none');
+		Dom.addClass(this.getNode(), '--blink');
+		setTimeout(() => {
+			Dom.removeClass(this.getNode(), '--blink');
+		}, 300);
 	}
 }

@@ -88,7 +88,6 @@
 	 */
 	BX.FileUploadTask = function (fileData, defaultChunk)
 	{
-
 		if (fileData)
 		{
 			this.applyData(fileData);
@@ -252,7 +251,7 @@
 
 							// let comp = BX.utils.parseUrl(this.fileData.previewUrl);
 							// console.error(comp);
-							let previewName = "preview_" + this.fileEntry.getName() + ".jpg";
+							let previewName = "preview_" + this.getFileName() + ".jpg";
 							let boundary = "FormUploaderBoundary";
 							headers = {"Content-Type": "multipart/form-data; boundary=" + boundary};
 							body = "--" + boundary + "\r\n" +
@@ -274,7 +273,7 @@
 							data: body,
 							uploadBinary: true,
 							url: "/bitrix/services/main/ajax.php?action=disk.api.file.createByContent&filename="
-								+ this.fileEntry.getName()
+								+ this.getFileName()
 								+ "&folderId=" + this.fileEntry.folderId
 								+ "&contentId=" + this.token
 								+ "&generateUniqueName=Y"
@@ -364,9 +363,12 @@
 		{
 			return this.callAction("afterCommitAction");
 		},
-		getFileName:function(){
-			if(this.fileData.name)
+		getFileName:function()
+		{
+			if (this.fileData.name)
+			{
 				return this.fileData.name;
+			}
 
 			return this.fileEntry.getName();
 		},

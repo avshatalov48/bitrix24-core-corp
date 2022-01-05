@@ -21,6 +21,13 @@ $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_DESCRIPTION_NEW"] = "<p class=\"im-conn
 ";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_EXPIRED_ACCOUNT_TOKEN"] = "Log in using your Facebook account to make amends.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_EXPIRED_ACCOUNT_TOKEN_WARNING"] = "Notice that the page will be disconnected from Bitrix24 if you log in using account that is not linked to this page.";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_ADDITIONAL_DESCRIPTION"] = "You will have to create a public Facebook page or connect the one you already have. Your Instagram business account must be connected to this Facebook page. Only the page administrator can connect it to Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_LIST_ITEM_1"] = "Save contacts and communication history to the CRM";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_LIST_ITEM_2"] = "Guide the customer through the sales funnel in the CRM";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_LIST_ITEM_3"] = "React to comments immediately";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_LIST_ITEM_4"] = "Comments are distributed among the sales agents as per queue rules";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_SUBTITLE"] = "Connect your Instagram page to your Bitrix24 to receive comment from your customers. Reply faster and improve conversion.";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_TITLE"] = "Receive comments to your Instagram posts directly to your Bitrix24";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INFO"] = "Information";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INFO_CONNECT_ID"] = "redirect=detail&code=4779109";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">How to connect your Instagram business account:</span>";

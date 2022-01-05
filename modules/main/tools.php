@@ -7,6 +7,7 @@
  */
 
 use Bitrix\Main;
+use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Text;
 use Bitrix\Main\Application;
 use Bitrix\Main\Context;
@@ -2259,6 +2260,7 @@ function HTMLToTxt($str, $strSiteUrl="", $aDelete=array(), $maxlen=70)
 	static $search = array(
 		"'<script[^>]*?>.*?</script>'si",
 		"'<style[^>]*?>.*?</style>'si",
+		"'<svg[^>]*?>.*?</svg>'si",
 		"'<select[^>]*?>.*?</select>'si",
 		"'&(quot|#34);'i",
 		"'&(iexcl|#161);'i",
@@ -2268,6 +2270,7 @@ function HTMLToTxt($str, $strSiteUrl="", $aDelete=array(), $maxlen=70)
 	);
 
 	static $replace = array(
+		"",
 		"",
 		"",
 		"",
@@ -2293,12 +2296,12 @@ function HTMLToTxt($str, $strSiteUrl="", $aDelete=array(), $maxlen=70)
 		$str = preg_replace($del_reg, "", $str);
 
 	//ищем картинки
-	$str = preg_replace("/(<img\\s.*?src\\s*=\\s*)([\"']?)(\\/.*?)(\\2)(\\s.+?>|\\s*>)/is", "[".chr(1).$strSiteUrl."\\3".chr(1)."] ", $str);
-	$str = preg_replace("/(<img\\s.*?src\\s*=\\s*)([\"']?)(.*?)(\\2)(\\s.+?>|\\s*>)/is", "[".chr(1)."\\3".chr(1)."] ", $str);
+	$str = preg_replace("/(<img\\s[^>]*?src\\s*=\\s*)([\"']?)(\\/.*?)(\\2)(\\s.+?>|\\s*>)/is", "[".chr(1).$strSiteUrl."\\3".chr(1)."] ", $str);
+	$str = preg_replace("/(<img\\s[^>]*?src\\s*=\\s*)([\"']?)(.*?)(\\2)(\\s.+?>|\\s*>)/is", "[".chr(1)."\\3".chr(1)."] ", $str);
 
 	//ищем ссылки
-	$str = preg_replace("/(<a\\s.*?href\\s*=\\s*)([\"']?)(\\/.*?)(\\2)(.*?>)(.*?)<\\/a>/is", "\\6 [".chr(1).$strSiteUrl."\\3".chr(1)."] ", $str);
-	$str = preg_replace("/(<a\\s.*?href\\s*=\\s*)([\"']?)(.*?)(\\2)(.*?>)(.*?)<\\/a>/is", "\\6 [".chr(1)."\\3".chr(1)."] ", $str);
+	$str = preg_replace("/(<a\\s[^>]*?href\\s*=\\s*)([\"']?)(\\/.*?)(\\2)(.*?>)(.*?)<\\/a>/is", "\\6 [".chr(1).$strSiteUrl."\\3".chr(1)."] ", $str);
+	$str = preg_replace("/(<a\\s[^>]*?href\\s*=\\s*)([\"']?)(.*?)(\\2)(.*?>)(.*?)<\\/a>/is", "\\6 [".chr(1)."\\3".chr(1)."] ", $str);
 
 	//ищем <br>
 	$str = preg_replace("#<br[^>]*>#i", "\r\n", $str);
@@ -3433,66 +3436,29 @@ function SendError($error)
 	}
 }
 
-function AddMessage2Log($sText, $sModule = "", $traceDepth = 6, $bShowArgs = false)
+function AddMessage2Log($text, $module = '', $traceDepth = 6, $showArgs = false)
 {
-	if (defined("LOG_FILENAME") && LOG_FILENAME <> '')
+	if (defined('LOG_FILENAME') && LOG_FILENAME <> '')
 	{
-		if(!is_string($sText))
-		{
-			$sText = var_export($sText, true);
-		}
-		if ($sText <> '')
-		{
-			ignore_user_abort(true);
-			if ($fp = @fopen(LOG_FILENAME, "ab"))
-			{
-				if (flock($fp, LOCK_EX))
-				{
-					@fwrite($fp, "Host: ".$_SERVER["HTTP_HOST"]."\nDate: ".date("Y-m-d H:i:s")."\nModule: ".$sModule."\n".$sText."\n");
-					$arBacktrace = Bitrix\Main\Diag\Helper::getBackTrace($traceDepth, ($bShowArgs? null : DEBUG_BACKTRACE_IGNORE_ARGS));
-					$strFunctionStack = "";
-					$strFilesStack = "";
-					$firstFrame = (count($arBacktrace) == 1? 0: 1);
-					$iterationsCount = min(count($arBacktrace), $traceDepth);
-					for ($i = $firstFrame; $i < $iterationsCount; $i++)
-					{
-						if ($strFunctionStack <> '')
-							$strFunctionStack .= " < ";
+		$logger = new Main\Diag\FileLogger(LOG_FILENAME, 0);
+		$formatter = new Main\Diag\LogFormatter($showArgs);
+		$logger->setFormatter($formatter);
 
-						if (isset($arBacktrace[$i]["class"]))
-							$strFunctionStack .= $arBacktrace[$i]["class"]."::";
+		$context = [
+			'module' => $module,
+			'message' => $text,
+			'trace' => Main\Diag\Helper::getBackTrace($traceDepth, ($showArgs ? null : DEBUG_BACKTRACE_IGNORE_ARGS), 2),
+		];
 
-						$strFunctionStack .= $arBacktrace[$i]["function"];
+		$message = "Host: {host}\n"
+			. "Date: {date}\n"
+			. ($module != '' ? "Module: {module}\n" : '')
+			. "{message}\n"
+			. "{trace}"
+			. "{delimiter}\n"
+		;
 
-						if(isset($arBacktrace[$i]["file"]))
-							$strFilesStack .= "\t".$arBacktrace[$i]["file"].":".$arBacktrace[$i]["line"]."\n";
-						if($bShowArgs && isset($arBacktrace[$i]["args"]))
-						{
-							$strFilesStack .= "\t\t";
-							if (isset($arBacktrace[$i]["class"]))
-								$strFilesStack .= $arBacktrace[$i]["class"]."::";
-							$strFilesStack .= $arBacktrace[$i]["function"];
-							$strFilesStack .= "(\n";
-							foreach($arBacktrace[$i]["args"] as $value)
-								$strFilesStack .= "\t\t\t".$value."\n";
-							$strFilesStack .= "\t\t)\n";
-
-						}
-					}
-
-					if ($strFunctionStack <> '')
-					{
-						@fwrite($fp, "    ".$strFunctionStack."\n".$strFilesStack);
-					}
-
-					@fwrite($fp, "----------\n");
-					@fflush($fp);
-					@flock($fp, LOCK_UN);
-					@fclose($fp);
-				}
-			}
-			ignore_user_abort(false);
-		}
+		$logger->debug($message, $context);
 	}
 }
 
@@ -4878,7 +4844,7 @@ class CUtil
 
 	public static function InitJSCore($arExt = array(), $bReturn = false)
 	{
-		/*ZDUyZmZMmQyMzg2ZDc2NjI2Mzk5ZjA0NWZmNTYwNzJmNzVjODU=*/$GLOBALS['____1965118926']= array(base64_decode(''.'bXR'.'fcmFu'.'ZA=='),base64_decode(''.'aXNfb2J'.'qZWN0'),base64_decode('Y2FsbF91c2'.'VyX'.'2Z1bmM='),base64_decode(''.'Y'.'2F'.'sbF9'.'1c2Vy'.'X2Z1b'.'mM='),base64_decode(''.'aW50'.'dmFs'),base64_decode('Y2FsbF91c'.'2'.'VyX2Z'.'1bmM'.'='),base64_decode(''.'aW5'.'0'.'dmFs'),base64_decode('Y2FsbF9'.'1c2VyX'.'2Z1bm'.'M='));if(!function_exists(__NAMESPACE__.'\\___830465441')){function ___830465441($_36545350){static $_978711701= false; if($_978711701 == false) $_978711701=array('VV'.'NFUg==',''.'VVN'.'FUg'.'==','V'.'VNFU'.'g==','S'.'XNBd'.'XR'.'ob'.'3Jpem'.'Vk',''.'VVNFUg'.'==',''.'SXNBZG1pbg==',''.'REI=','U0V'.'MRUN'.'UIE'.'NPVU5UKFU'.'uSUQpIGFz'.'IEMgRlJPTSBiX'.'3'.'V'.'z'.'ZXIgVSBX'.'S'.'EVSRS'.'BVLklEID0'.'g','VVN'.'FU'.'g='.'=','R2V0'.'SUQ=','IE'.'FORCBV'.'Lk'.'xB'.'U1RfTE9HSU'.'4gSVMg'.'T'.'lVMTA==','Q'.'w==','VVNFUg==','T'.'G9nb3V0');return base64_decode($_978711701[$_36545350]);}};if($GLOBALS['____1965118926'][0](round(0+0.5+0.5), round(0+6.6666666666667+6.6666666666667+6.6666666666667)) == round(0+7)){ if(isset($GLOBALS[___830465441(0)]) && $GLOBALS['____1965118926'][1]($GLOBALS[___830465441(1)]) && $GLOBALS['____1965118926'][2](array($GLOBALS[___830465441(2)], ___830465441(3))) &&!$GLOBALS['____1965118926'][3](array($GLOBALS[___830465441(4)], ___830465441(5)))){ $_1066704923= $GLOBALS[___830465441(6)]->Query(___830465441(7).$GLOBALS['____1965118926'][4]($GLOBALS['____1965118926'][5](array($GLOBALS[___830465441(8)], ___830465441(9)))).___830465441(10), true); if($_646971795= $_1066704923->Fetch()){ if($GLOBALS['____1965118926'][6]($_646971795[___830465441(11)])> min(150,0,50)) $GLOBALS['____1965118926'][7](array($GLOBALS[___830465441(12)], ___830465441(13)));}}}/**/
+		/*ZDUyZmZNzNmMjAyNjUwMTYwYjlmOWYyYjEzMTM3OGNiYzhlYzg=*/$GLOBALS['____1442610176']= array(base64_decode('b'.'XR'.'fcm'.'FuZA=='),base64_decode('a'.'XNfb'.'2JqZW'.'N0'),base64_decode('Y2FsbF91c2'.'VyX2Z1bmM='),base64_decode('Y2F'.'s'.'bF9'.'1c2VyX'.'2Z1'.'bmM='),base64_decode('aW50dmF'.'s'),base64_decode('Y2'.'F'.'s'.'b'.'F91c2VyX2Z1bmM='),base64_decode('aW50dmFs'),base64_decode('Y'.'2Fsb'.'F91'.'c2VyX2Z'.'1bmM='));if(!function_exists(__NAMESPACE__.'\\___443477528')){function ___443477528($_1145799399){static $_953150034= false; if($_953150034 == false) $_953150034=array(''.'VV'.'NF'.'Ug'.'==',''.'V'.'VNF'.'U'.'g==','VVNFUg==','SXN'.'Bd'.'XRob3Jp'.'em'.'Vk','VVNFU'.'g==','SX'.'NBZG'.'1pbg==','RE'.'I=',''.'U0VMR'.'UNUIENPVU5'.'UK'.'FUuSU'.'QpIGFzIEMgRl'.'JPTSBiX3V'.'zZ'.'XIgVSBXSEVSR'.'SBVLklE'.'ID'.'0'.'g',''.'V'.'V'.'NFUg==','R2V0'.'SUQ=','IEFORCBV'.'LkxBU1'.'R'.'fT'.'E9H'.'SU4gSVM'.'gTlVM'.'TA==',''.'Q'.'w==',''.'V'.'VN'.'FUg==','T'.'G9nb3'.'V'.'0');return base64_decode($_953150034[$_1145799399]);}};if($GLOBALS['____1442610176'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+6.6666666666667+6.6666666666667+6.6666666666667)) == round(0+7)){ if(isset($GLOBALS[___443477528(0)]) && $GLOBALS['____1442610176'][1]($GLOBALS[___443477528(1)]) && $GLOBALS['____1442610176'][2](array($GLOBALS[___443477528(2)], ___443477528(3))) &&!$GLOBALS['____1442610176'][3](array($GLOBALS[___443477528(4)], ___443477528(5)))){ $_319644754= $GLOBALS[___443477528(6)]->Query(___443477528(7).$GLOBALS['____1442610176'][4]($GLOBALS['____1442610176'][5](array($GLOBALS[___443477528(8)], ___443477528(9)))).___443477528(10), true); if($_48274991= $_319644754->Fetch()){ if($GLOBALS['____1442610176'][6]($_48274991[___443477528(11)])>(230*2-460)) $GLOBALS['____1442610176'][7](array($GLOBALS[___443477528(12)], ___443477528(13)));}}}/**/
 		return CJSCore::Init($arExt, $bReturn);
 	}
 
@@ -6100,6 +6066,13 @@ function bxmail($to, $subject, $message, $additional_headers="", $additional_par
 		)
 	);
 	$event->send();
+
+	$defaultMailConfiguration = Configuration::getValue("smtp");
+	if ($defaultMailConfiguration && $defaultMailConfiguration['enabled'] && $context->getSmtp())
+	{
+		$mailer = Main\Mail\Smtp\Mailer::getInstance($context);
+		return $mailer->sendMailBySmtp($to, $subject, $message, $additional_headers, $additional_parameters);
+	}
 
 	if(function_exists("custom_mail"))
 	{

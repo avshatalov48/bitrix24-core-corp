@@ -1,12 +1,15 @@
-<?
+<?php
+
 return [
 	'cache',
 	'chat/readycheck',
+	'files',
 	'notify',
 	'pull/client/events',
 	'reload/listeners',
+	'selector/recipient',
 	'task',
-	'task/grouplist',
-	'task/userlist',
+	'task/uploader/constants',
+	'task/uploader/storage',
 	'utils',
 ];

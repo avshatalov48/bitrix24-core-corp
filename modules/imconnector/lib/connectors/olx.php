@@ -86,11 +86,13 @@ class Olx extends Base
 			$statuses = Status::getInstanceAllLine(Library::ID_OLX_CONNECTOR);
 			if (!empty($statuses))
 			{
+				$isAnyConnected = false;
 				foreach ($statuses as $lineId => $status)
 				{
 					$needNotification = false;
 					if ($status->isStatus())
 					{
+						$isAnyConnected = true;
 						$connectorOutput = new Output(Library::ID_OLX_CONNECTOR, $lineId);
 
 						$responseResult = $connectorOutput->initializeReceiveMessages($status->getData());
@@ -113,6 +115,14 @@ class Olx extends Base
 						}
 					}
 				}
+				if (!$isAnyConnected)
+				{
+					return '';
+				}
+			}
+			else
+			{
+				return '';
 			}
 		}
 
@@ -169,5 +179,30 @@ class Olx extends Base
 		}
 
 		return $adminIds;
+	}
+
+	public static function addAgent(): void
+	{
+		$agentName = '\Bitrix\ImConnector\Connectors\OLX::initializeReceiveMessages();';
+		$agent = \CAgent::getList(
+			[],
+			[
+				'MODULE_ID' => Library::MODULE_ID,
+				'=NAME' => $agentName
+			]
+		)->fetch();
+
+		if (!$agent)
+		{
+			\CAgent::AddAgent(
+				$agentName,
+				Library::MODULE_ID,
+				'N',
+				60,
+				'',
+				'Y',
+				ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL')
+			);
+		}
 	}
 }

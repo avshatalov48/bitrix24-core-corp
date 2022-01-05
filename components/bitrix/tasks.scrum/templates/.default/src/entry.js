@@ -1,5 +1,7 @@
+import {Dom} from 'main.core';
+
 import {View} from './view/view';
-import {Plan} from './view/plan';
+import {Plan} from './view/plan/plan';
 import {ActiveSprint} from './view/active.sprint';
 import {CompletedSprint} from './view/completed.sprint';
 
@@ -95,15 +97,6 @@ export class Entry
 		}
 	}
 
-	renderCountersTo(container: HTMLElement)
-	{
-		const view = this.getView();
-		if (view instanceof View)
-		{
-			this.getView().renderCountersTo(container);
-		}
-	}
-
 	renderSprintStatsTo(container: HTMLElement)
 	{
 		const view = this.getView();
@@ -113,12 +106,12 @@ export class Entry
 		}
 	}
 
-	renderButtonsTo(container: HTMLElement)
+	renderRightElementsTo(container: HTMLElement)
 	{
 		const view = this.getView();
 		if (view instanceof View)
 		{
-			this.getView().renderButtonsTo(container);
+			this.getView().renderRightElementsTo(container);
 		}
 	}
 
@@ -131,15 +124,6 @@ export class Entry
 		}
 	}
 
-	openEpicViewForm(epicId: number)
-	{
-		const view = this.getView();
-		if (view instanceof Plan)
-		{
-			view.openEpicViewForm(epicId);
-		}
-	}
-
 	removeEpic(epicId: number)
 	{
 		const view = this.getView();
@@ -147,5 +131,28 @@ export class Entry
 		{
 			view.removeEpic(epicId);
 		}
+	}
+
+	setDisplayPriority(menuItem: HTMLElement, value: string)
+	{
+		if (!Dom.hasClass(menuItem, 'menu-popup-item-accept'))
+		{
+			this.refreshIcons(menuItem);
+
+			const view = this.getView();
+			if (view instanceof View)
+			{
+				this.getView().setDisplayPriority(value);
+			}
+		}
+	}
+
+	refreshIcons(item: HTMLElement)
+	{
+		item.parentElement.childNodes.forEach((element) => {
+			Dom.removeClass(element, 'menu-popup-item-accept');
+		});
+
+		Dom.addClass(item, 'menu-popup-item-accept');
 	}
 }

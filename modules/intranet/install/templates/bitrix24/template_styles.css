@@ -950,7 +950,8 @@ td.bx-layout-inner-inner-cont {
 	display: none;
 }
 
-.top-menu-mode .pagetitle-wrap {
+.top-menu-mode .pagetitle-wrap,
+.top-menu-mode .ui-toolbar {
 	margin-top: -6px; /* Top Menu has 6px bottom margin */
 }
 

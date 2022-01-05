@@ -12,7 +12,7 @@ export default class SearchRequester extends BaseRequester
 			&params[q]=${encodeURIComponent(params.query)}
 			&params[format]=json
 			&params[limit]=${limit}
-			&params[accept-language]=${this.languageId}`;
+			&params[accept-language]=${this.sourceLanguageId}`;
 
 		if (params.viewbox)
 		{

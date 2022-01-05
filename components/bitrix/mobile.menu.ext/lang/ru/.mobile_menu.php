@@ -21,5 +21,5 @@ $MESS["MB_CRM_QUOTE"] = "Предложения";
 $MESS["MB_CRM_PRODUCT"] = "Товары";
 $MESS["MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW"] = "Мой диск";
 $MESS["MB_SHARED_FILES_MAIN_MENU_ITEM_NEW"] = "Общий диск";
-$MESS["MB_CHAT_AND_CALLS"] = "Чат и звонки";
+$MESS["MB_CHAT_AND_CALLS"] = "Чаты и Звонки";
 $MESS["MB_MARKETPLACE_GROUP_TITLE_2"] = "Маркет";

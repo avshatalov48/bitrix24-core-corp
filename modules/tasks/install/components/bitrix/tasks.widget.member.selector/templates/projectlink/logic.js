@@ -13,6 +13,7 @@ BX.namespace('Tasks.Component');
 	 * Main js controller for this template
 	 */
 	BX.Tasks.Component.TasksWidgetMemberSelectorProjectLink = BX.Tasks.Component.extend({
+		dialog: null,
 		sys: {
 			code: 'ms-plink'
 		},
@@ -24,7 +25,7 @@ BX.namespace('Tasks.Component');
 			bindEvents: function()
 			{
 				this.bindDelegateControl('deselect', 'click', this.onDeSelect.bind(this));
-				this.bindDelegateControl('open-form', 'click', this.onOpenForm.bind(this));
+				this.bindDelegateControl('control', 'click', this.onOpenForm.bind(this));
 			},
 
 			onDeSelect: function()
@@ -39,7 +40,7 @@ BX.namespace('Tasks.Component');
 				if(id)
 				{
 					BX.removeClass(this.control('item'), 'invisible');
-					BX.addClass(this.control('open-form'), 'invisible');
+					BX.addClass(this.control('control'), 'invisible');
 
 					this.control('item-link').innerHTML = BX.util.htmlspecialchars(text);
 					this.control('item-link').setAttribute('href', this.getProjectLink(id));
@@ -49,7 +50,7 @@ BX.namespace('Tasks.Component');
 				else
 				{
 					BX.addClass(this.control('item'), 'invisible');
-					BX.removeClass(this.control('open-form'), 'invisible');
+					BX.removeClass(this.control('control'), 'invisible');
 				}
 
 				this.saveId(id);
@@ -57,7 +58,7 @@ BX.namespace('Tasks.Component');
 
 			onOpenForm: function()
 			{
-				this.getSelector().open();
+				this.getProjectDialog().show();
 			},
 
 			getProjectLink: function(groupId)
@@ -72,7 +73,7 @@ BX.namespace('Tasks.Component');
 				{
 					return;
 				}
-				
+
 				var entityId = this.option('entityId');
 				groupId = parseInt(groupId);
 
@@ -83,9 +84,9 @@ BX.namespace('Tasks.Component');
 					}
 				}, {}, function(){
 					BX.Tasks.Util.fireGlobalTaskEvent(
-						'UPDATE', 
-						{ID: entityId}, 
-						{STAY_AT_PAGE: true}, 
+						'UPDATE',
+						{ID: entityId},
+						{STAY_AT_PAGE: true},
 						{id: entityId}
 					);
 					BX.onCustomEvent(this, 'onChangeProjectLink', [groupId, entityId]);
@@ -95,31 +96,42 @@ BX.namespace('Tasks.Component');
 			onSelectorItemSelected: function(data)
 			{
 				this.setItem(data.id, BX.util.htmlspecialcharsback(data.nameFormatted));
-
-				// deselect it again
-				this.getSelector().close();
-				this.getSelector().deselectItem(data.id);
 			},
 
-			getSelector: function()
+			getProjectDialog: function()
 			{
-				return this.subInstance('socnet', function(){
-					var selector = new BX.Tasks.Integration.Socialnetwork.NetworkSelector({
-						scope: this.control('open-form'),
-						id: this.id()+'socnet-sel',
-						mode: 'group',
-						query: this.getQuery(),
-						useSearch: true,
-						useAdd: false,
-						controlBind: this.option('controlBind'),
-						parent: this,
-						popupOffsetTop: 5,
-						popupOffsetLeft: 40
-					});
-					selector.bindEvent('item-selected', this.onSelectorItemSelected.bind(this));
+				if (!this.dialog)
+				{
+					this.dialog = new BX.UI.EntitySelector.Dialog({
+						targetNode: this.control('control'),
+						enableSearch: true,
+						multiple: false,
+						context: 'TASKS_PROJECTLINK',
+						entities: [
+							{
+								id: 'project',
+							}
+						],
+						events: {
+							'Item:onSelect': function(event) {
+								var item = event.getData().item;
+								var data = {
+									id: item.getId(),
+									nameFormatted: item.getTitle()
+								}
+								this.onSelectorItemSelected(data);
+								BX.addClass(this.control('control'), 'invisible');
 
-					return selector;
-				});
+								this.dialog.hide();
+							}.bind(this),
+							'Item:onDeselect': function(event)
+							{
+
+							}.bind(this)
+						}
+					});
+				}
+				return this.dialog;
 			}
 		}
 	});

@@ -1,6 +1,5 @@
-import {Event, Loc, Tag, Text} from 'main.core';
+import {Event, Loc, Tag} from 'main.core';
 import {EventEmitter} from 'main.core.events';
-import {Menu} from 'main.popup';
 
 export class ActiveSprintActionButton extends EventEmitter
 {
@@ -14,19 +13,14 @@ export class ActiveSprintActionButton extends EventEmitter
 	render(): HTMLElement
 	{
 		const node = Tag.render`
-			<div class="ui-btn-split ui-btn-primary ui-btn-xs"> 
-				<button class="ui-btn-main">
+			<div class="ui-btn ui-btn-sm ui-btn-primary ui-btn-xs ui-btn-round ui-btn-no-caps">
+				<span>
 					${Loc.getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT')}
-				</button> 
-				<button class="ui-btn-menu"></button> 
+				</span>
 			</div>
 		`;
 
-		const completeSprintButtonNode = node.querySelector('.ui-btn-main');
-		const menuButtonNode = node.querySelector('.ui-btn-menu');
-
-		Event.bind(completeSprintButtonNode, 'click', this.onCompleteSprintClick.bind(this));
-		Event.bind(menuButtonNode, 'click', this.onMenuClick.bind(this, completeSprintButtonNode));
+		Event.bind(node, 'click', this.onCompleteSprintClick.bind(this));
 
 		return node;
 	}
@@ -34,23 +28,5 @@ export class ActiveSprintActionButton extends EventEmitter
 	onCompleteSprintClick()
 	{
 		this.emit('completeSprint');
-	}
-
-	onMenuClick(bindElement: HTMLElement)
-	{
-		const menu = new Menu({
-			id: `active-sprint-actions-menu-${Text.getRandom()}`,
-			bindElement: bindElement
-		});
-
-		menu.addMenuItem({
-			text: Loc.getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON'),
-			onclick: (event, menuItem) => {
-				menuItem.getMenuWindow().close();
-				this.emit('showBurnDownChart');
-			}
-		});
-
-		menu.show();
 	}
 }

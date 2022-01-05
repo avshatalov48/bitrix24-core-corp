@@ -9,7 +9,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
-use Bitrix\Tasks\Scrum\Utility\StoryPoints;
 
 class ScrumManager
 {
@@ -66,7 +65,7 @@ class ScrumManager
 					'id' => $parentTaskData['ID'],
 					'name' => $parentTaskData['TITLE'],
 					'completed' => ($parentTaskData['STATUS'] == \CTasks::STATE_COMPLETED ? 'Y' : 'N'),
-					'storyPoints' => $this->getStoryPoints($parentTaskData['ID'], $items, $subTasksItems),
+					'storyPoints' => $this->getStoryPoints($parentTaskData['ID'], $items),
 				];
 				$parentTasks[$item['parentId']]['columns'] = $columns;
 				$parentTasks[$item['parentId']]['items'] = [];
@@ -148,22 +147,16 @@ class ScrumManager
 		return $columns;
 	}
 
-	private function getStoryPoints(int $parentItemId, array $items, array $subTaskItems): string
+	private function getStoryPoints(int $parentItemId, array $items): string
 	{
-		$itemsStoryPoints = [];
-
-		foreach ($subTaskItems as $subTaskItem)
+		foreach ($items as $item)
 		{
-			if ($subTaskItem['parentId'] == $parentItemId)
+			if ($item['id'] == $parentItemId)
 			{
-				$itemsStoryPoints[] = $subTaskItem['data']['storyPoints'];
+				return $item['data']['storyPoints'] ?? '';
 			}
 		}
 
-		$storyPointsService = new StoryPoints();
-
-		$sum = $storyPointsService->calculateSumStoryPoints($itemsStoryPoints);
-
-		return $sum === 0.0 ? '' : (string)$sum;
+		return '';
 	}
 }

@@ -200,6 +200,14 @@ export class MobileDialogApplication
 
 		this.setTextareaMessage = Utils.debounce(this.controller.application.setTextareaMessage, 300, this.controller.application);
 
+		if (
+			Utils.platform.isIos()
+			&& Application.getApiVersion() >= 39
+		)
+		{
+			//document.body.classList.add('bx-mobile-ios-safe-area');
+		}
+
 		return new Promise((resolve, reject) => resolve());
 	}
 
@@ -1634,10 +1642,10 @@ export class MobileDialogApplication
 			return false;
 		}
 
-		let quiteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
-		if (quiteId)
+		let quoteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
+		if (quoteId)
 		{
-			let quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), quiteId);
+			let quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), quoteId);
 			if (quoteMessage)
 			{
 				let user = null;

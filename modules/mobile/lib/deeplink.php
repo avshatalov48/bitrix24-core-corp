@@ -2,6 +2,7 @@
 namespace Bitrix\Mobile;
 
 use Bitrix\Main\Context;
+use Bitrix\Main\Loader;
 
 class Deeplink
 {
@@ -19,5 +20,18 @@ class Deeplink
 		$host = ($request->isHttps() ? 'https' : 'http').'://'.preg_replace("/:(443|80)$/", "", $host);
 		$link = $host."/?intent=".urlencode("${intent};${hash}");
 		return self::domain."?link=${link}&apn=".self::androidPackage."&isi=".self::iosID. "&ibi=".self::iosBundleID ;
+	}
+
+	public static function onOneTimeHashRemoved($userId, $hash) {
+		if(Loader::includeModule('pull'))
+		{
+			\CPullStack::AddByUser($userId,
+				array(
+					'module_id' => 'mobile',
+					'command' => 'onDeeplinkShouldRefresh',
+					'params' => ['previous_hash' => $hash],
+				)
+			);
+		}
 	}
 }

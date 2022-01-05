@@ -5050,9 +5050,11 @@ body .tm-report .tm-report-right-border {
 	border: none;
 }
 
+.feed-add-post-block .bxhtmled-toolbar-cnt,
 .feed-comments-block .bxhtmled-toolbar-cnt {
 	background: none;
-	border-bottom: 1px solid #e4e4e4;
+	/*border-bottom: 1px solid #e4e4e4;*/
+	border-bottom: 1px solid rgba(130,139,149,.08);
 }
 
 .bxhtmled-popup .bxhtmled-top-bar-select,

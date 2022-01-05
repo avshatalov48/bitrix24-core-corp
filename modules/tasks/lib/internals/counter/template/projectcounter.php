@@ -31,14 +31,15 @@ class ProjectCounter
 	 */
 	public function getRowCounter(int $groupId): array
 	{
-		$res = [
+		$result = [
+			'COUNTERS' => [],
 			'COLOR' => CounterStyle::STYLE_GRAY,
 			'VALUE' => 0,
 		];
 
 		if (!$groupId)
 		{
-			return $res;
+			return $result;
 		}
 
 		$counter = Counter::getInstance($this->userId);
@@ -49,25 +50,18 @@ class ProjectCounter
 			'project_new_comments' => $counter->get(CounterDictionary::COUNTER_GROUP_COMMENTS, $groupId),
 		];
 
-		$res['VALUE'] = array_sum($counters);
+		$result['COUNTERS'] = $counters;
+		$result['VALUE'] = array_sum($counters);
 
 		if ($counters['new_comments'] > 0)
 		{
-			$res['COLOR'] = CounterStyle::STYLE_GREEN;
+			$result['COLOR'] = CounterStyle::STYLE_GREEN;
 		}
-
 		if ($counters['expired'] > 0)
 		{
-			$res['COLOR'] = CounterStyle::STYLE_RED;
+			$result['COLOR'] = CounterStyle::STYLE_RED;
 		}
-//		elseif (
-//			$counters['project_expired'] > 0
-//			&& UserRegistry::getInstance($this->userId)->isGroupAdmin($groupId)
-//		)
-//		{
-//			$res['COLOR'] = CounterStyle::STYLE_RED;
-//		}
 
-		return $res;
+		return $result;
 	}
 }

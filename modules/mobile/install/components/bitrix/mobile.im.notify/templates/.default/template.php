@@ -4,6 +4,14 @@ $APPLICATION->AddHeadString('<script type="text/javascript" src="'.CUtil::GetAdd
 $APPLICATION->AddHeadString('<link href="'.CUtil::GetAdditionalFileURL(BX_PERSONAL_ROOT.'/js/im/css/common.css').'" type="text/css" rel="stylesheet" />');
 
 CJSCore::Init("fx");
+?>
+<style type="text/css">
+.bx-notify-loading {
+	padding: 20px;
+	padding-left: 15px;
+}
+</style>
+<?
 if(empty($arResult['NOTIFY'])):?>
 	<div class="notif-block-empty"><?=GetMessage('NM_EMPTY');?></div>
 <?else:?>
@@ -380,19 +388,16 @@ if(empty($arResult['NOTIFY'])):?>
 			var lastId = <?=$arResult['UNREAD_NOTIFY_ID']?>;
 
 			BXMobileApp.onCustomEvent("onNotificationsOpen", {lastId: lastId}, true);
-
 			BXMobileApp.Events.postToComponent("chatdialog::notification::readAll", [{}, true], 'im.recent');
 
-			if (lastId > 0)
-			{
-				BX.ajax({
-					url: '/mobile/ajax.php?mobile_action=im',
-					method: 'POST',
-					dataType: 'json',
-					skipAuthCheck: true,
-					data: {'IM_NOTIFY_READ': 'Y', 'ID': lastId, 'IM_AJAX_CALL': 'Y', 'sessid': BX.bitrix_sessid()},
-				});
-			}
+			BX.rest.callMethod('im.notify.read.all')
+				.then(result => {
+					console.log('im.notify.read.all result:', result);
+				})
+				.catch(error => {
+					console.log('im.notify.read.all error:', error);
+				})
+			;
 
 		}, 300);
 
@@ -423,7 +428,18 @@ if(empty($arResult['NOTIFY'])):?>
 			}
 			else
 			{
-				app.titleAction("setParams", {text: "<?=GetMessage("NM_TITLE")?>", useProgress: true});
+				[...document.getElementsByClassName('notif-new')].forEach(function(element){
+					element.remove();
+				});
+
+				var loadingNode = document.createElement('div');
+				loadingNode.className = 'notif-new';
+				document.body.insertBefore(loadingNode, document.body.firstChild);
+				var loadingNode = document.createElement('div');
+				loadingNode.innerText = '<?=GetMessage('NM_TITLE_2');?>';
+				loadingNode.className = 'bx-notify-loading';
+				document.body.insertBefore(loadingNode, document.body.firstChild);
+
 				location.reload();
 			}
 		}

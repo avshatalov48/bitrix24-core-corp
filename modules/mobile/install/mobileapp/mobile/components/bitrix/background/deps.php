@@ -4,6 +4,7 @@ return [
 	"chat/uploader", // chat uploader
 	"chat/background", // chat background processes (message, reaction, read, .etc)
 	"task/checklist/uploader", // task checklist uploader
+	"task/uploader", // task uploader
 	"task/background", // task background processes (view, .etc)
 	"task", // task background processes (view, .etc)
 	"disk/background", // task background processes (view, .etc)

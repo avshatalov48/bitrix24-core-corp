@@ -120,7 +120,8 @@ class Socialnetwork
 		);
 
 		$eventFields = $event->getParameter('eventFields');
-		$contentEntityType = $contentEntityId = false;
+		$contentEntityType = false;
+		$contentEntityId = false;
 
 		if (!empty($eventFields['EVENT_ID']))
 		{
@@ -131,27 +132,58 @@ class Socialnetwork
 			];
 			foreach ($providersList as $provider)
 			{
-				if (in_array($eventFields['EVENT_ID'], $provider->getEventId()))
+				if (in_array($eventFields['EVENT_ID'], $provider->getEventId(), true))
 				{
-					$contentEntityType = $provider->getContentTypeId();
-					$contentEntityId = (int)$eventFields['ENTITY_ID'];
+					if ($provider::className() === Socialnetwork\Livefeed\CrmActivity::className())
+					{
+						$res = \CCrmActivity::getList(
+							[],
+							[
+								'ID' => (int)$eventFields['ENTITY_ID'],
+								'TYPE_ID' => \CCrmActivityType::Task,
+								'CHECK_PERMISSIONS' => 'N',
+							],
+							false,
+							false,
+							[ 'ASSOCIATED_ENTITY_ID' ]
+						);
+						if (
+							($activityFields = $res->fetch())
+							&& ((int)$activityFields['ASSOCIATED_ENTITY_ID'] > 0)
+						)
+						{
+							$provider = new \Bitrix\Socialnetwork\Livefeed\TasksTask();
+							$contentEntityType = $provider->getContentTypeId();
+							$contentEntityId = (int)$activityFields['ASSOCIATED_ENTITY_ID'];
+						}
+					}
+
+					if (!$contentEntityType)
+					{
+						$contentEntityType = $provider->getContentTypeId();
+						$contentEntityId = (int)$eventFields['ENTITY_ID'];
+					}
+
 					break;
 				}
 			}
 
-			$providersList = [
-				new Socialnetwork\Livefeed\CrmLead(),
-				new Socialnetwork\Livefeed\CrmContact(),
-				new Socialnetwork\Livefeed\CrmCompany(),
-				new Socialnetwork\Livefeed\CrmDeal(),
-			];
-			foreach ($providersList as $provider)
+			if (!$contentEntityType)
 			{
-				if (in_array($eventFields['EVENT_ID'], $provider->getEventId()))
+				$providersList = [
+					new Socialnetwork\Livefeed\CrmLead(),
+					new Socialnetwork\Livefeed\CrmContact(),
+					new Socialnetwork\Livefeed\CrmCompany(),
+					new Socialnetwork\Livefeed\CrmDeal(),
+				];
+				foreach ($providersList as $provider)
 				{
-					$contentEntityType = $provider->getContentTypeId();
-					$contentEntityId = (int)$eventFields['ID'];
-					break;
+					if (in_array($eventFields['EVENT_ID'], $provider->getEventId(), true))
+					{
+						$contentEntityType = $provider->getContentTypeId();
+						$contentEntityId = (int)$eventFields['ID'];
+						break;
+					}
 				}
 			}
 		}

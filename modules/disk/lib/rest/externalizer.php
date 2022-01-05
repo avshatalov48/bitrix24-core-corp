@@ -172,7 +172,7 @@ final class Externalizer
 
 	private function isXml(Disk\File $file)
 	{
-		if ($file->getExtension() !== 'xml')
+		if (mb_strtolower($file->getExtension()) !== 'xml')
 		{
 			return false;
 		}
@@ -183,7 +183,10 @@ final class Externalizer
 			return false;
 		}
 
-		return $fileData['CONTENT_TYPE'] === 'application/xml';
+		return in_array($fileData['CONTENT_TYPE'], [
+			'application/xml',
+			'text/xml',
+		], true);
 	}
 
 	private function isImage(Disk\File $file)

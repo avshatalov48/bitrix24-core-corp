@@ -15,9 +15,15 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_b
 
 $hasTimemanFeature = false;
 
+$includeTimeman = Loader::includeModule('timeman');
+
 if (Loader::includeModule('bitrix24'))
 {
 	$hasTimemanFeature = Feature::isFeatureEnabled('timeman');
+}
+else
+{
+	$hasTimemanFeature = true;
 }
 
 $aMenuLinks = [
@@ -48,15 +54,23 @@ if ($hasTimemanFeature)
 	$workTimeUrl = '/timeman/timeman.php';
 }
 
-$aMenuLinks[] = [
-	Loc::getMessage('MENU_TIMEMAN'),
-	$workTimeUrl,
-	[],
-	['menu_item_id' => 'menu_timeman'],
-	'',
-];
+if ($includeTimeman)
+{
+	$aMenuLinks[] = [
+		Loc::getMessage('MENU_TIMEMAN'),
+		$workTimeUrl,
+		[],
+		['menu_item_id' => 'menu_timeman'],
+		'',
+	];
+}
 
-if (ModuleManager::isModuleInstalled('faceid') && Loader::includeModule('faceid') && FaceId::isAvailable())
+if (
+	ModuleManager::isModuleInstalled('faceid')
+	&& Loader::includeModule('faceid')
+	&& FaceId::isAvailable()
+	&& $includeTimeman
+)
 {
 	$aMenuLinks[] = [
 		'Bitrix24.Time',
@@ -114,23 +128,26 @@ if ($hasTimemanFeature)
 	}
 }
 
-$aMenuLinks[] = [
-	Loc::getMessage('MENU_WORK_REPORT'),
-	$workReportUrl,
-	[],
-	['menu_item_id' => 'menu_work_report'],
-	'',
-];
+if ($includeTimeman)
+{
+	$aMenuLinks[] = [
+		Loc::getMessage('MENU_WORK_REPORT'),
+		$workReportUrl,
+		[],
+		['menu_item_id' => 'menu_work_report'],
+		'',
+	];
 
-$aMenuLinks[] = [
-	Loc::getMessage('MENU_SCHEDULES'),
-	$workSchedulesUrl,
-	[],
-	['menu_item_id' => 'menu_schedules_list'],
-	'',
-];
+	$aMenuLinks[] = [
+		Loc::getMessage('MENU_SCHEDULES'),
+		$workSchedulesUrl,
+		[],
+		['menu_item_id' => 'menu_schedules_list'],
+		'',
+	];
+}
 
-if ($permissionsMenu)
+if ($permissionsMenu && $includeTimeman)
 {
 	$aMenuLinks[] = $permissionsMenu;
 }

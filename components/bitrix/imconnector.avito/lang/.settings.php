@@ -1,6 +1,6 @@
 <?php
 return [
-	'class.php' =>
+	'*' =>
 		[
 			'languages' =>
 				[

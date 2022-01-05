@@ -114,7 +114,7 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
 		<div class="log-popup-form-qr-icon-status --loading" data-role="log-popup-form-qr-icon-loader"></div>
 		<div class="log-popup-form-qr-icon-img" id="bx_auth_qr_code"></div>
 	</div>
-	<div class="log-popup-form-qr-remember">
+	<div class="login-text login-item">
 		<?if ($arResult["STORE_PASSWORD"] == "Y"):?>
 			<input type="checkbox" id="USER_REMEMBER_QR" name="USER_REMEMBER_QR" value="Y" class="login-checkbox-user-remember" checked="checked" /><label class="login-item-checkbox-label" for="USER_REMEMBER_QR"><?=GetMessage("AUTH_REMEMBER_ME")?></label>
 		<?endif?>

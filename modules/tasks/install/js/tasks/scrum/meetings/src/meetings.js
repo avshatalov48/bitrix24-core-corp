@@ -1,0 +1,735 @@
+import {Event, Loc, Tag, Text, Type, Dom} from 'main.core';
+import {BaseEvent} from 'main.core.events';
+import {Loader} from 'main.loader';
+import {Menu} from 'main.popup';
+
+import {PopupComponentsMaker} from 'ui.popupcomponentsmaker';
+
+import {CreatedEvent, CreatedEventType} from './created.event';
+import {ListEvents} from './list.events';
+import {RequestSender} from './request.sender';
+
+import 'ui.hint';
+import 'ui.icons.b24';
+import 'ui.icons.service';
+
+import '../css/base.css';
+
+type Params = {
+	groupId: number
+}
+
+type MeetingsResponse = {
+	data: {
+		listEvents: Array<CreatedEventType>,
+		mapCreatedEvents: ?MapCreatedEvents,
+		todayEvent: ?CreatedEventType,
+		isTemplatesClosed: boolean
+	}
+}
+
+type ChatsResponse = {
+	data: {
+		chats: Array<Chat>
+	}
+}
+
+type MapCreatedEvents = {
+	daily?: number,
+	planning?: number,
+	review?: number,
+	retrospective?: number
+}
+
+type Chat = {
+	id: number,
+	type: string,
+	icon: string,
+	name: string,
+	users: Array<ChatUser>
+}
+
+type ChatUser = {
+	id: number,
+	photo: {
+		src: string,
+	},
+	name: string,
+	pathToUser: string
+}
+
+type EventTemplate = {
+	id: string,
+	entityId: string,
+	name: string,
+	desc: string,
+	from: Date,
+	to: Date,
+	rrule: Rrule,
+	roles: Array<EntityList>,
+	uiClass: string,
+	color: string
+}
+
+type EntityList = {
+	id: string,
+	entityId: string
+}
+
+type Rrule = {
+	FREQ: string,
+	INTERVAL: number,
+	BYDAY: {
+		WE: string,
+		FR: string
+	}
+}
+
+export class Meetings
+{
+	constructor(params: Params)
+	{
+		this.groupId = parseInt(params.groupId, 10);
+
+		this.requestSender = new RequestSender();
+
+		this.todayEvent = new CreatedEvent();
+		this.listEvents = new ListEvents();
+		this.listEvents.subscribe('showView', this.onShowView.bind(this))
+
+		this.menu = null;
+		this.eventTemplatesMenu = null;
+	}
+
+	showMenu(targetNode: HTMLElement)
+	{
+		if (this.menu)
+		{
+			if (this.menu.isShown())
+			{
+				this.menu.close();
+
+				return;
+			}
+		}
+
+		const response = this.requestSender.getMeetings({
+			groupId: this.groupId
+		});
+
+		this.menu = new PopupComponentsMaker({
+			target: targetNode,
+			content: [
+				{
+					html: [
+						{
+							html: this.renderMeetings(response),
+						}
+					]
+				},
+				{
+					html: [
+						{
+							html: this.renderChats(response),
+						}
+					]
+				},
+			]
+		});
+
+		this.menu.show();
+	}
+
+	renderMeetings(response: Promise): Promise
+	{
+		return response
+			.then((response: MeetingsResponse) => {
+				this.meetingsNode = Tag.render`
+					<div class="tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope">
+						${this.renderMeetingsHeader()}
+						${this.renderEventTemplates(response)}
+						${this.renderScheduledMeetings(response)}
+					</div>`
+				;
+
+				return this.meetingsNode;
+			})
+		;
+	}
+
+	renderChats(response: Promise): HTMLElement
+	{
+		return response
+			.then((response: ChatsResponse) => {
+				const chats = response.data.chats;
+				const node = Tag.render`
+					<div class="tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope">
+						<div class="tasks-scrum__widget-meetings--header">
+							<div
+								class="ui-icon ui-icon-service-livechat tasks-scrum__widget-meetings--icon-chats"
+							><i></i></div>
+							<div class="tasks-scrum__widget-meetings--header-title">
+								${Loc.getMessage('TSM_CHATS_HEADER_TITLE')}
+							</div>
+						</div>
+						${this.renderChatsList(chats)}
+						${this.renderChatsEmpty(chats)}
+						
+					</div>
+				`;
+
+				return node;
+			})
+		;
+	}
+
+	renderChatsList(chats: Array<Chat>): HTMLElement
+	{
+		const visibility = chats.length > 0 ? '--visible' : '';
+
+		return Tag.render`
+			<div class="tasks-scrum__widget-meetings--chat-content ${visibility}">
+				${
+					chats.map((chat: Chat) => {
+						const chatIconClass = chat.icon === '' ? 'default' : '';
+						const chatIconStyle = chat.icon !== '' ? `background-image: url('${chat.icon}');` : '';
+						const chatNode = Tag.render`
+							<div class="tasks-scrum__widget-meetings--chat-container">
+								<div class="ui-icon ui-icon-common-company tasks-scrum__widget-meetings--chat-icon">
+									<i
+									class="chat-icon ${chatIconClass}"
+										style="${chatIconStyle}"
+									></i>
+								</div>
+								<div class="tasks-scrum__widget-meetings--chat-info">
+									<div class="tasks-scrum__widget-meetings--chat-name">
+										${Text.encode(chat.name)}
+									</div>
+									<div class="users-icon tasks-scrum__widget-meetings--chat-users">
+										${this.renderChatUser(chat.users)}
+									</div>
+								</div>
+							</div>
+						`;
+
+						Event.bind(chatNode, 'click', this.openChat.bind(this, chat, chatNode));
+						
+						return chatNode;
+					})
+				}
+			</div>
+		`;
+	}
+
+	openChat(chat: Chat, chatNode: HTMLElement)
+	{
+		const loader = new Loader({
+			target: chatNode,
+			size: 34,
+			mode: 'inline',
+			color: 'rgba(82, 92, 105, 0.9)',
+		});
+
+		loader.show();
+
+		this.requestSender.getChat({
+			groupId: this.groupId,
+			chatId: chat.id
+		})
+			.then(() => {
+				if (top.window.BXIM)
+				{
+					top.BXIM.openMessenger('chat' + parseInt(chat.id));
+
+					this.menu.close();
+				}
+			})
+		;
+	}
+
+	renderChatUser(users: Array<ChatUser>): HTMLElement
+	{
+		const uiIconClasses = 'tasks-scrum__widget-meetings--chat-icon-user ui-icon ui-icon-common-user';
+
+		return Tag.render`
+			${
+				users.map((user: ChatUser) => {
+					const src = user.photo ? Text.encode(user.photo.src) : null;
+					const photoStyle = src ? `background-image: url('${src}');` : '';
+					return Tag.render`
+						<div class="user-icon ${uiIconClasses}" title="${Text.encode(user.name)}">
+							<i style="${photoStyle}"></i>
+						</div>
+					`;
+				})
+			}
+		`
+	}
+
+	renderChatsEmpty(chats: Array<Chat>): HTMLElement
+	{
+		const visibility = chats.length > 0 ? '' : '--visible';
+
+		return Tag.render`
+			<div class="tasks-scrum__widget-meetings--content">
+				<div class="tasks-scrum__widget-meetings--empty-chats ${visibility}">
+					<div class="tasks-scrum__widget-meetings--empty-name">
+						${Loc.getMessage('TSM_CHATS_EMPTY_TITLE')}
+					</div>
+					<div class="tasks-scrum__widget-meetings--empty-text">
+						${Loc.getMessage('TSM_CHATS_EMPTY_TEXT')}
+					</div>
+				</div>
+			</div>
+		`;
+	}
+
+	renderMeetingsHeader(): HTMLElement
+	{
+		const node = Tag.render`
+			<div class="tasks-scrum__widget-meetings--header">
+
+				<div class="ui-icon ui-icon-service-calendar tasks-scrum__widget-meetings--icon-calendar"><i></i></div>
+
+				<div class="tasks-scrum__widget-meetings--header-title">
+					${Loc.getMessage('TSM_MEETINGS_HEADER_TITLE')}
+				</div>
+
+				<div class="ui-btn-split ui-btn-light-border ui-btn-xs ui-btn-light ui-btn-no-caps ui-btn-round tasks-scrum__widget-meetings--btn-create">
+					<button class="ui-btn-main">
+						${Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON')}
+					</button>
+					<div class="ui-btn-menu"></div>
+				</div>
+
+			</div>
+		`;
+
+		const button = node.querySelector('button');
+		const menu = node.querySelector('.ui-btn-menu');
+
+		Event.bind(button, 'click', this.showEventSidePanel.bind(this));
+		Event.bind(menu, 'click', this.showMenuWithEventTemplates.bind(this, button));
+
+		return node;
+	}
+
+	renderEventTemplates(response: MeetingsResponse): HTMLElement
+	{
+		const mapCreatedEvents = response.data.mapCreatedEvents;
+		const listEvents = response.data.listEvents;
+		const isTemplatesClosed = response.data.isTemplatesClosed;
+
+		const templateVisibility = (
+			isTemplatesClosed
+			|| this.isAllEventsCreated(mapCreatedEvents)
+				? ''
+				: '--visible'
+		);
+		const emptyVisibility = (isTemplatesClosed && listEvents.length === 0 ? '--visible' : '');
+
+		const contentVisibilityClass = emptyVisibility === '' && templateVisibility === '' ? '--content-hidden' : '';
+
+		const node = Tag.render`
+			<div class="tasks-scrum__widget-meetings--content ${contentVisibilityClass}">
+			
+				<div class="tasks-scrum__widget-meetings--creation-block ${templateVisibility}">
+					<span class="tasks-scrum__widget-meetings--creation-close-btn"></span>
+					<div class="tasks-scrum__widget-meetings--create-element-info">
+						${Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATES_INFO')}
+					</div>
+					${
+						[...this.getEventTemplates().values()]
+							.map((eventTemplate: EventTemplate) => {
+								if (
+									Type.isArray(mapCreatedEvents)
+									|| Type.isUndefined(mapCreatedEvents[eventTemplate.id])
+								)
+								{
+									return this.renderEventTemplate(eventTemplate);
+								}
+								else
+								{
+									return '';
+								}
+							})
+					}
+				</div>
+				
+				<div class="tasks-scrum__widget-meetings--empty-meetings ${emptyVisibility}">
+					<div class="tasks-scrum__widget-meetings--empty-name">
+						${Loc.getMessage('TSM_MEETINGS_EMPTY_TITLE')}
+					</div>
+					<div class="tasks-scrum__widget-meetings--empty-text">
+						${Loc.getMessage('TSM_MEETINGS_EMPTY_TEXT')}
+					</div>
+					<button class="tasks-scrum__widget-meetings--one-click-btn ui-qr-popupcomponentmaker__btn">
+						${Loc.getMessage('TSM_MEETINGS_CREATE_ONE_CLICK')}
+					</button>
+				</div>
+			</div>
+		`;
+
+		const closeButton = node.querySelector('.tasks-scrum__widget-meetings--creation-close-btn');
+		const oneClickButton = node.querySelector('.tasks-scrum__widget-meetings--one-click-btn');
+
+		const templatesNode = node.querySelector('.tasks-scrum__widget-meetings--creation-block');
+		const emptyNode = node.querySelector('.tasks-scrum__widget-meetings--empty-meetings');
+
+		Event.bind(closeButton, 'click', () => {
+			Dom.removeClass(templatesNode, '--visible');
+			const isExistsEvent = listEvents.length;
+			if (!isExistsEvent)
+			{
+				Dom.addClass(emptyNode, '--visible');
+			}
+			this.requestSender.closeTemplates({
+				groupId: this.groupId
+			});
+		});
+		Event.bind(oneClickButton, 'click', () => {
+			Dom.addClass(templatesNode, '--visible');
+			Dom.removeClass(emptyNode, '--visible');
+		});
+
+		return node;
+	}
+
+	renderScheduledMeetings(response: MeetingsResponse): HTMLElement
+	{
+		const todayEvent = response.data.todayEvent;
+		const listEvents = response.data.listEvents;
+
+		const todayEventVisibility = (todayEvent === null ? '' : '--visible');
+
+		this.listEvents.setTodayEvent(todayEvent);
+
+		const node = Tag.render`
+			<div class="tasks-scrum__widget-meetings--timetable">
+				<div class="tasks-scrum__widget-meetings--timetable-container ${todayEventVisibility}">
+					<div class="tasks-scrum__widget-meetings--timetable-title">
+						${Loc.getMessage('TSM_TODAY_EVENT_TITLE')}
+					</div>
+					${this.todayEvent.render(todayEvent)}
+				</div>
+				${this.listEvents.render(listEvents, todayEvent)}
+			</div>
+		`;
+
+		return node;
+	}
+
+	renderEventTemplate(eventTemplate: EventTemplate): HTMLElement
+	{
+		const node = Tag.render`
+			<div class="tasks-scrum__widget-meetings--create-element ${Text.encode(eventTemplate.uiClass)}">
+				<div class="tasks-scrum__widget-meetings--create-element-title">
+					<span class="tasks-scrum__widget-meetings--create-element-name">
+						${Text.encode(eventTemplate.name)}
+					</span>
+					<span class="ui-hint"><i class="ui-hint-icon"></i></span>
+				</div>
+				<div class="tasks-scrum__widget-meetings--create-btn">
+					<button class="ui-qr-popupcomponentmaker__btn">
+						${Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON')}
+					</button>
+				</div>
+			</div>
+		`;
+
+		const createButton = node.querySelector('.tasks-scrum__widget-meetings--create-btn');
+
+		Event.bind(createButton, 'click', this.openCalendarSidePanel.bind(this, eventTemplate));
+
+		return node;
+	}
+
+	onShowView()
+	{
+		this.menu.close();
+	}
+
+	showEventSidePanel()
+	{
+		this.openCalendarSidePanel();
+	}
+
+	showMenuWithEventTemplates(targetNode: HTMLElement)
+	{
+		if (this.eventTemplatesMenu)
+		{
+			if (this.eventTemplatesMenu.getPopupWindow().isShown())
+			{
+				this.eventTemplatesMenu.close();
+
+				return;
+			}
+		}
+
+		this.eventTemplatesMenu = new Menu({
+			id: 'tsm-event-templates-menu',
+			bindElement: targetNode,
+			closeByEsc : true
+		});
+
+		this.eventTemplatesMenu.addMenuItem({
+			text: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_BLANK'),
+			delimiter: true
+		});
+
+		this.getEventTemplates()
+			.forEach((eventTemplate: EventTemplate) => {
+				this.eventTemplatesMenu.addMenuItem({
+					text: eventTemplate.name,
+					onclick: (event, menuItem) => {
+						this.openCalendarSidePanel(eventTemplate);
+						menuItem.getMenuWindow().close();
+					}
+				});
+			})
+		;
+
+		this.eventTemplatesMenu.getPopupWindow()
+			.subscribe('onClose', () => {
+				this.eventTemplatesMenu.destroy();
+			})
+		;
+
+		this.eventTemplatesMenu.show();
+	}
+
+	openCalendarSidePanel(eventTemplate?: EventTemplate)
+	{
+		const participantsEntityList = eventTemplate ? eventTemplate.roles: [];
+
+		const formData = eventTemplate
+			? {
+				name: eventTemplate.name,
+				description: eventTemplate.desc,
+				from: eventTemplate.from,
+				to: eventTemplate.to,
+				color: eventTemplate.color,
+				rrule: eventTemplate.rrule
+			}
+			: {
+				name: '',
+				description: '',
+				color: '#86b100'
+			}
+		;
+
+		const sliderId = Text.getRandom();
+
+		new window.top.BX.Calendar.SliderLoader(
+			0,
+			{
+				sliderId: sliderId,
+				participantsSelectorEntityList: [
+					{
+						id: 'user'
+					},
+					{
+						id: 'project-roles',
+						options: {
+							projectId: this.groupId
+						},
+						dynamicLoad: true
+					}
+				],
+				formDataValue: formData,
+				participantsEntityList: participantsEntityList,
+				type: 'group',
+				ownerId: this.groupId
+			}
+		).show();
+
+		if (eventTemplate)
+		{
+			top.BX.Event.EventEmitter.subscribeOnce(
+				'BX.Calendar:onEntrySave',
+				(baseEvent: BaseEvent) => {
+					const data = baseEvent.getData();
+					if (sliderId === data.sliderId)
+					{
+						this.requestSender.saveEventInfo({
+							groupId: this.groupId,
+							templateId: eventTemplate.id,
+							eventId: data.responseData.entryId
+						})
+							.then(() => {
+								// todo maybe update widget or repeat request if error
+							})
+						;
+					}
+				}
+			);
+		}
+
+		this.menu.close();
+	}
+
+	getEventTemplates(): Set<EventTemplate>
+	{
+		const eventTemplates = new Set();
+
+		eventTemplates.add({
+			id: 'daily',
+			entityId: 'project-roles',
+			name: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_DAILY'),
+			desc: '',
+			from: new Date((new Date()).setHours(9, 0, 0)),
+			to: new Date((new Date()).setHours(9, 15, 0)),
+			rrule: {
+				FREQ: 'WEEKLY',
+				INTERVAL: 1,
+				BYDAY: {
+					MO: 'MO',
+					TU: 'TU',
+					WE: 'WE',
+					TH: 'TH',
+					FR: 'FR'
+				}
+			},
+			roles: [
+				{
+					id: this.groupId + '_M',
+					entityId: 'project-roles'
+				},
+				{
+					id: this.groupId + '_E',
+					entityId: 'project-roles'
+				}
+			],
+			uiClass: 'widget-meetings__sprint-daily',
+			color: '#2FC6F6'
+		});
+
+		eventTemplates.add({
+			id: 'planning',
+			entityId: 'project-roles',
+			name: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_PLANNING'),
+			desc: '',
+			from: new Date(this.getTargetDate(1).setHours(9, 0, 0)),
+			to: new Date(this.getTargetDate(1).setHours(10, 0, 0)),
+			rrule: {
+				FREQ: 'WEEKLY',
+				INTERVAL: 1,
+				BYDAY: {
+					MO: 'MO'
+				}
+			},
+			roles: [
+				{
+					id: this.groupId + '_A',
+					entityId: 'project-roles'
+				},
+				{
+					id: this.groupId + '_M',
+					entityId: 'project-roles'
+				},
+				{
+					id: this.groupId + '_E',
+					entityId: 'project-roles'
+				}
+			],
+			uiClass: 'widget-meetings__sprint-planning',
+			color: '#DA51D4'
+		});
+
+		eventTemplates.add({
+			id: 'review',
+			entityId: 'project-roles',
+			name: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_REVIEW'),
+			desc: '',
+			from: new Date(this.getTargetDate(1).setHours(9, 0, 0)),
+			to: new Date(this.getTargetDate(1).setHours(10, 0, 0)),
+			rrule: {
+				FREQ: 'WEEKLY',
+				INTERVAL: 1,
+				BYDAY: {
+					MO: 'MO'
+				}
+			},
+			roles: [
+				{
+					id: this.groupId + '_A',
+					entityId: 'project-roles'
+				},
+				{
+					id: this.groupId + '_M',
+					entityId: 'project-roles'
+				},
+				{
+					id: this.groupId + '_E',
+					entityId: 'project-roles'
+				}
+			],
+			uiClass: 'widget-meetings__sprint-review',
+			color: '#FF5752'
+		});
+
+		eventTemplates.add({
+			id: 'retrospective',
+			entityId: 'project-roles',
+			name: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_RETROSPECTIVE'),
+			desc: '',
+			from: new Date(this.getTargetDate(1).setHours(9, 0, 0)),
+			to: new Date(this.getTargetDate(1).setHours(10, 0, 0)),
+			rrule: {
+				FREQ: 'WEEKLY',
+				INTERVAL: 1,
+				BYDAY: {
+					MO: 'MO'
+				}
+			},
+			roles: [
+				{
+					id: this.groupId + '_M',
+					entityId: 'project-roles'
+				},
+				{
+					id: this.groupId + '_E',
+					entityId: 'project-roles'
+				}
+			],
+			uiClass: 'widget-meetings__sprint-retrospective',
+			color: '#FF5752'
+		});
+
+		return eventTemplates;
+	}
+
+	isAllEventsCreated(mapCreatedEvents: ?MapCreatedEvents): boolean
+	{
+		if (Type.isArray(mapCreatedEvents))
+		{
+			return false;
+		}
+
+		return (
+			Type.isInteger(mapCreatedEvents.daily)
+			&& Type.isInteger(mapCreatedEvents.planning)
+			&& Type.isInteger(mapCreatedEvents.review)
+			&& Type.isInteger(mapCreatedEvents.retrospective)
+		);
+	}
+
+	getTargetDate(targetDay: number): Date
+	{
+		const date = new Date();
+		const targetDate = new Date();
+
+		const delta = targetDay - date.getDay();
+
+		if (delta >= 0)
+		{
+			targetDate.setDate(date.getDate() + delta)
+		}
+		else
+		{
+			targetDate.setDate(date.getDate() + 7 + delta)
+		}
+
+		return targetDate;
+	}
+}

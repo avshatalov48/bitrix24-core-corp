@@ -1,37 +1,34 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+require_once __DIR__ . '/accesscheck.php';
+
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\Contract\Controllerable;
-use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
-use Bitrix\Main\Grid;
-use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\PageNavigation;
-use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Socialnetwork\ComponentHelper as ComponentHelper;
 use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Component\Scrum;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
-use Bitrix\Tasks\Scrum\Checklist\TypeChecklistFacade;
-use Bitrix\Tasks\Scrum\Checklist\ItemChecklistFacade;
-use Bitrix\Tasks\Scrum\Internal\EntityInfoColumn;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemInfoColumn;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
@@ -39,16 +36,15 @@ use Bitrix\Tasks\Scrum\Service\BacklogService;
 use Bitrix\Tasks\Scrum\Service\CacheService;
 use Bitrix\Tasks\Scrum\Service\DefinitionOfDoneService;
 use Bitrix\Tasks\Scrum\Service\EntityService;
+use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\TypeService;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Scrum\Service\PullService;
 use Bitrix\Tasks\Scrum\Service\PushService;
-use Bitrix\Tasks\Scrum\Service\RobotService;
 use Bitrix\Tasks\Scrum\Service\SprintService;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Scrum\Service\UserService;
-use Bitrix\Tasks\Scrum\Utility\BurnDownChart;
 use Bitrix\Tasks\Scrum\Utility\StoryPoints;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction;
@@ -87,7 +83,92 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 	public function configureActions()
 	{
-		return [];
+		$groupId = (int) $this->arParams['GROUP_ID'];
+
+		$basePrefilters = [
+			new Scrum\AccessCheck($groupId),
+		];
+
+		return [
+			'applyFilter' => [
+				'prefilters' => $basePrefilters
+			],
+			'createTask' => [
+				'prefilters' => $basePrefilters
+			],
+			'getCurrentState' => [
+				'prefilters' => $basePrefilters
+			],
+			'hasTaskInFilter' => [
+				'prefilters' => $basePrefilters
+			],
+			'attachFilesToTask' => [
+				'prefilters' => $basePrefilters
+			],
+			'updateTaskTags' => [
+				'prefilters' => $basePrefilters
+			],
+			'removeTaskTags' => [
+				'prefilters' => $basePrefilters
+			],
+			'updateItemEpic' => [
+				'prefilters' => $basePrefilters
+			],
+			'updateItemEpics' => [
+				'prefilters' => $basePrefilters
+			],
+			'createSprint' => [
+				'prefilters' => $basePrefilters
+			],
+			'changeSprintName' => [
+				'prefilters' => $basePrefilters
+			],
+			'changeSprintDeadline' => [
+				'prefilters' => $basePrefilters
+			],
+			'getSprintCompletedItems' => [
+				'prefilters' => $basePrefilters
+			],
+			'removeSprint' => [
+				'prefilters' => $basePrefilters
+			],
+			'updateItemSort' => [
+				'prefilters' => $basePrefilters
+			],
+			'updateItems' => [
+				'prefilters' => $basePrefilters
+			],
+			'updateItem' => [
+				'prefilters' => $basePrefilters
+			],
+			'removeItems' => [
+				'prefilters' => $basePrefilters
+			],
+			'updateSprintSort' => [
+				'prefilters' => $basePrefilters
+			],
+			'changeTaskResponsible' => [
+				'prefilters' => $basePrefilters
+			],
+			'getSubTaskItems' => [
+				'prefilters' => $basePrefilters
+			],
+			'getItems' => [
+				'prefilters' => $basePrefilters
+			],
+			'getCompletedSprints' => [
+				'prefilters' => $basePrefilters
+			],
+			'getCompletedSprintsStatsAction' => [
+				'prefilters' => $basePrefilters
+			],
+			'saveShortView' => [
+				'prefilters' => $basePrefilters
+			],
+			'showLinkedTasks' => [
+				'prefilters' => $basePrefilters
+			],
+		];
 	}
 
 	protected function listKeysSignedParameters()
@@ -196,81 +277,25 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		{
 			$this->checkModules();
 
-			$userId = Util\User::getId();
-			$groupId = $this->arParams['GROUP_ID'];
-
 			$request = Context::getCurrent()->getRequest();
 			$post = $request->getPostList()->toArray();
+
 			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
+			$this->userId = Util\User::getId();
 
-			$itemService = new ItemService();
-			$taskService = new TaskService($userId, $this->application);
-			$taskService->setOwnerId($this->arParams['OWNER_ID']);
+			$groupId = $this->arParams['GROUP_ID'];
+			$ownerId = $this->arParams['OWNER_ID'];
 
-			$filterInstance = $taskService->getFilterInstance(
-				$groupId,
-				$request->get('tab') === 'completed_sprint'
+			$taskIds = $this->getTaskIdsByFilter($groupId, $ownerId, $request->get('tab') === 'completed_sprint');
+
+			$items = array_merge(
+				$this->getBacklogItems($groupId, $taskIds),
+				$this->getSprintItems($groupId, $taskIds)
 			);
-			$filter = $taskService->getFilter($filterInstance);
 
-			$epicTaskIds = $this->getEpicTaskIdsFromFilter($filter);
-
-			$taskIds = $taskService->getTaskIdsByFilter($filter);
-
-			if ($taskService->getErrors())
+			if ($this->getErrors())
 			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $taskService->getErrors());
 				return null;
-			}
-
-			if ($epicTaskIds)
-			{
-				$taskIds = array_intersect($epicTaskIds, $taskIds);
-			}
-
-			$items = [];
-			if ($taskIds)
-			{
-				$userService = new UserService();
-				$backlogService = new BacklogService();
-				$sprintService = new SprintService();
-
-				$backlog = $backlogService->getBacklogByGroupId($groupId);
-				$backlogItemIds = $itemService->getItemIdsBySourceIds($taskIds, $backlog->getId());
-
-				$backlogItems = $this->getItemsData($backlogItemIds, $itemService, $taskService, $userService);
-
-				$allSprintItems = [];
-
-				$listSprints = $sprintService->getSprintsByGroupId($groupId);
-				foreach ($listSprints as $sprint)
-				{
-					if ($sprint->isCompletedSprint() && !$filterInstance->isSearchFieldApplied())
-					{
-						continue;
-					}
-					$sprintItemIds = $itemService->getItemIdsBySourceIds($taskIds, $sprint->getId());
-					$sprintItems = $this->getItemsData($sprintItemIds, $itemService, $taskService, $userService);
-					$allSprintItems = array_merge($allSprintItems, $sprintItems);
-				}
-
-				if ($itemService->getErrors())
-				{
-					$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $itemService->getErrors());
-					return null;
-				}
-				if ($backlogService->getErrors())
-				{
-					$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $backlogService->getErrors());
-					return null;
-				}
-				if ($taskService->getErrors())
-				{
-					$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $taskService->getErrors());
-					return null;
-				}
-
-				$items = array_merge($backlogItems, $allSprintItems);
 			}
 
 			return $items;
@@ -297,15 +322,13 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			$tmpId = (is_string($post['tmpId'] ) ? $post['tmpId'] : '');
 			$name = (is_string($post['name']) ? $post['name'] : '');
-			$entityId = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
-			$entityType = (is_string($post['entityType']) ? $post['entityType'] : 'backlog');
-			$epicId = (is_numeric($post['parentId']) ? (int)$post['parentId'] : 0);
-			$parentTaskId = (is_numeric($post['parentTaskId']) ? (int)$post['parentTaskId'] : 0);
+			$entityId = (is_numeric($post['entityId']) ? (int) $post['entityId'] : 0);
+			$epicId = (is_numeric($post['epicId']) ? (int) $post['epicId'] : 0);
+			$parentTaskId = (is_numeric($post['parentTaskId']) ? (int) $post['parentTaskId'] : 0);
 			$storyPoints = (is_string($post['storyPoints']) ? $post['storyPoints'] : '');
-			$sort = (is_numeric($post['sort']) ? (int)$post['sort'] : 0);
+			$sort = (is_numeric($post['sort']) ? (int) $post['sort'] : 0);
 			$responsible = (is_array($post['responsible']) ? $post['responsible'] : []);
 			$tags = (is_array($post['tags']) ? $post['tags'] : []);
-			$isActiveSprint = (isset($post['isActiveSprint']) && $post['isActiveSprint'] === 'Y');
 			$sortInfo = (is_array($post['sortInfo']) ? $post['sortInfo'] : []);
 			$info = (is_array($post['info']) ? $post['info'] : []);
 
@@ -318,20 +341,28 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			$groupId = $this->arParams['GROUP_ID'];
 
+			$entityService = new EntityService();
 			$itemService = new ItemService();
 			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 			$taskService = new TaskService($this->userId, $this->application);
 
+			$entity = $entityService->getEntityById($entityId);
+			if ($entity->isEmpty())
+			{
+				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'));
+
+				return null;
+			}
+
 			$item = ItemTable::createItemObject();
-			$item->setEntityId($entityId);
+			$item->setEntityId($entity->getId());
 			if ($epicId)
 			{
-				$item->setParentId($epicId);
+				$item->setEpicId($epicId);
 			}
 			$item->setSort($sort);
 			$item->setCreatedBy($this->userId);
 			$item->setStoryPoints($storyPoints);
-			$item->setItemType(ItemTable::TASK_TYPE);
 
 			$responsibleId = (is_numeric($responsible['id']) ? (int) $responsible['id'] : 0);
 			if (!$responsibleId)
@@ -349,12 +380,11 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			$isDecompositionAction = ($parentTaskId > 0);
 
-			if ($isDecompositionAction && $entityType === 'sprint')
+			if ($isDecompositionAction && $entity->getEntityType() === 'sprint')
 			{
 				$taskFields['PARENT_ID'] = $parentTaskId;
 
 				$parentItem = $itemService->getItemBySourceId($parentTaskId);
-				$parentItem->setStoryPoints('');
 
 				$itemService->changeItem($parentItem);
 			}
@@ -367,22 +397,29 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				return null;
 			}
 
-			if ($isDecompositionAction && $entityType === 'backlog')
-			{
-				$taskService->updateTaskLinks($parentTaskId, $taskId);
-				$taskService->updateTaskLinks($taskId, $parentTaskId);
-			}
-
 			$createdItem = $itemService->getItemBySourceId($taskId);
+
 			$item->setId($createdItem->getId());
 			$item->setSourceId($createdItem->getSourceId());
 			$item->setTmpId($tmpId);
 
-			$itemInfo = new ItemInfoColumn();
-			if (!empty($info[$itemInfo->getBorderColorKey()]))
+			if ($isDecompositionAction && $entity->getEntityType() === 'backlog')
 			{
-				$itemInfo->setBorderColor($info[$itemInfo->getBorderColorKey()]);
-				$item->setInfo($itemInfo);
+				$taskService->updateTaskLinks($parentTaskId, $taskId);
+				$taskService->updateTaskLinks($taskId, $parentTaskId);
+
+				$itemInfo = new ItemInfoColumn();
+				if (!empty($info[$itemInfo->getBorderColorKey()]))
+				{
+					$borderColor = $info[$itemInfo->getBorderColorKey()];
+
+					$createdItem = $this->setBorderColor($createdItem, $borderColor);
+					$item->setInfo($createdItem->getInfo());
+
+					$parentItem = $itemService->getItemBySourceId($parentTaskId);
+					$parentItem = $this->setBorderColor($parentItem, $borderColor);
+					$itemService->changeItem($parentItem);
+				}
 			}
 
 			$itemService->changeItem($item, $pushService);
@@ -393,10 +430,10 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				return null;
 			}
 
-			if ($isActiveSprint)
+			if ($entity->isActiveSprint())
 			{
 				$kanbanService = new KanbanService();
-				$kanbanService->addTasksToKanban($entityId, [$taskId]);
+				$kanbanService->addTasksToKanban($entity->getId(), [$taskId]);
 				if ($kanbanService->getErrors())
 				{
 					$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_ADD_ERROR'), $kanbanService->getErrors());
@@ -510,30 +547,54 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$post = $request->getPostList()->toArray();
 
 			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
+			$this->userId = Util\User::getId();
 
-			$taskId = (is_numeric($post['taskId']) ? (int) $post['taskId'] : 0);
+			$itemIds = (is_array($post['itemIds']) ? $post['itemIds'] : []);
 			$attachedIds = (is_array($post['attachedIds']) ? $post['attachedIds'] : []);
-			$itemId = (is_numeric($post['itemId']) ? (int) $post['itemId'] : 0);
-			$entityId = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
+			$attachedFilesCount = [];
 
-			$taskService = new TaskService($this->userId, $this->application);
-			$ufValue = $taskService->attachFilesToTask($this->userFieldManager, $taskId, $attachedIds);
+			$itemService = new ItemService();
+			$taskService = new TaskService($this->userId);
+
+			$items = [];
+			foreach ($itemIds as $itemId)
+			{
+				$itemId = (is_numeric($itemId) ? (int) $itemId : 0);
+
+				$item = $itemService->getItemById($itemId);
+				if (!$item->isEmpty())
+				{
+					$taskId = $item->getSourceId();
+
+					$ufValue = $taskService->attachFilesToTask($this->userFieldManager, $taskId, $attachedIds);
+
+					(new CacheService($taskId, CacheService::ITEM_TASKS))->clean();
+
+					$items[] = $item;
+
+					$attachedFilesCount[$itemId] = count($ufValue);
+				}
+			}
+
 			if ($taskService->getErrors())
 			{
 				$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_ATTACH_FILES_ERROR'), $taskService->getErrors());
+
 				return null;
 			}
 
-			$itemService = new ItemService();
 			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-			$item = ItemTable::createItemObject();
-			$item->setId($itemId);
-			$item->setEntityId($entityId);
-			$itemService->changeItem($item, $pushService);
+
+			if ($pushService)
+			{
+				foreach ($items as $item)
+				{
+					$pushService->sendUpdateItemEvent($item);
+				}
+			}
 
 			return [
-				'attachedFilesCount' => count($ufValue)
+				'attachedFilesCount' => $attachedFilesCount
 			];
 		}
 		catch (\Exception $exception)
@@ -543,7 +604,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 	}
 
-	public function attachTagToTaskAction()
+	public function updateTaskTagsAction()
 	{
 		try
 		{
@@ -553,170 +614,84 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$post = $request->getPostList()->toArray();
 
 			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
+			$this->userId = Util\User::getId();
 
-			$taskId = (is_numeric($post['taskId']) ? (int) $post['taskId'] : 0);
+			$itemIds = (is_array($post['itemIds']) ? $post['itemIds'] : []);
 			$tag = (is_string($post['tag']) ? $post['tag'] : '');
-			$itemId = (is_numeric($post['itemId']) ? (int)$post['itemId'] : 0);
-			$entityId = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
 
-			$taskService = new TaskService($this->userId, $this->application);
-			$taskService->updateTagsList($taskId, [$tag]);
-			if ($taskService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_TAG_ADD_ERROR'), $taskService->getErrors());
-				return null;
-			}
-
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-			$item = ItemTable::createItemObject();
-			$item->setId($itemId);
-			$item->setEntityId($entityId);
-
-			if ($pushService)
-			{
-				$pushService->sendUpdateItemEvent($item);
-			}
-
-			return '';
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_TAG_ADD_ERROR'));
-			return null;
-		}
-	}
-
-	public function batchAttachTagToTaskAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
-
-			$tasks = (is_array($post['tasks']) ? $post['tasks'] : []);
-			$tag = (is_string($post['tag']) ? $post['tag'] : '');
-			$entityId = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
-
-			$taskService = new TaskService($this->userId, $this->application);
-
-			$itemIds = [];
-			foreach ($tasks as $task)
-			{
-				$taskId = (is_numeric($task['taskId']) ? (int) $task['taskId'] : 0);
-				$taskService->updateTagsList($taskId, [$tag]);
-				$itemIds[] =  (is_numeric($task['itemId']) ? (int)$task['itemId'] : 0);
-			}
-
-			if ($taskService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_TAG_ADD_ERROR'), $taskService->getErrors());
-				return null;
-			}
-
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-			foreach ($itemIds as $itemId)
-			{
-				$item = ItemTable::createItemObject();
-				$item->setId($itemId);
-				$item->setEntityId($entityId);
-
-				if ($pushService)
-				{
-					$pushService->sendUpdateItemEvent($item);
-				}
-			}
-
-			return '';
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_TAG_ADD_ERROR'));
-			return null;
-		}
-	}
-
-	public function deAttachTagToTaskAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
-
-			$taskId = (is_numeric($post['taskId']) ? (int) $post['taskId'] : 0);
-			$tag = (is_string($post['tag']) ? $post['tag'] : '');
-			$itemId = (is_numeric($post['itemId']) ? (int)$post['itemId'] : 0);
-			$entityId = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
-
-			$taskService = new TaskService($this->userId, $this->application);
-			if ($taskId && $tag)
-			{
-				$taskService->removeTags($taskId, $tag);
-			}
-			if ($taskService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $taskService->getErrors());
-				return null;
-			}
-
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-			$item = ItemTable::createItemObject();
-			$item->setId($itemId);
-			$item->setEntityId($entityId);
-
-			if ($pushService)
-			{
-				$pushService->sendUpdateItemEvent($item);
-			}
-
-			return '';
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), [], $exception);
-			return null;
-		}
-	}
-
-	public function batchDeattachTagToTaskAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
-
-			$tasks = (is_array($post['tasks']) ? $post['tasks'] : []);
-			$tag = (is_string($post['tag']) ? $post['tag'] : '');
-			$entityId = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
-
+			$itemService = new ItemService();
 			$taskService = new TaskService($this->userId);
-			$itemIds = [];
-			foreach ($tasks as $task)
+
+			$items = [];
+			foreach ($itemIds as $itemId)
 			{
-				$taskId = (is_numeric($task['taskId']) ? (int)$task['taskId'] : 0);
-				if ($taskId && $tag)
+				$itemId = (is_numeric($itemId) ? (int) $itemId : 0);
+
+				$item = $itemService->getItemById($itemId);
+				if (!$item->isEmpty())
 				{
-					$taskService->removeTags($taskId, $tag);
+					$taskService->updateTagsList($item->getSourceId(), [$tag]);
+
+					$items[] = $item;
 				}
-				$itemIds[] =  (is_numeric($task['itemId']) ? (int)$task['itemId'] : 0);
+			}
+
+			if ($taskService->getErrors())
+			{
+				$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_TAG_ADD_ERROR'), $taskService->getErrors());
+
+				return null;
+			}
+
+			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+
+			if ($pushService)
+			{
+				foreach ($items as $item)
+				{
+					$pushService->sendUpdateItemEvent($item);
+				}
+			}
+
+			return '';
+		}
+		catch (\Exception $exception)
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_TAG_ADD_ERROR'));
+			return null;
+		}
+	}
+
+	public function removeTaskTagsAction()
+	{
+		try
+		{
+			$this->checkModules();
+
+			$request = Context::getCurrent()->getRequest();
+			$post = $request->getPostList()->toArray();
+
+			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
+			$this->userId = Util\User::getId();
+
+			$itemIds = (is_array($post['itemIds']) ? $post['itemIds'] : []);
+			$tag = (is_string($post['tag']) ? $post['tag'] : '');
+
+			$itemService = new ItemService();
+			$taskService = new TaskService($this->userId);
+
+			$items = [];
+			foreach ($itemIds as $itemId)
+			{
+				$itemId = (is_numeric($itemId) ? (int) $itemId : 0);
+
+				$item = $itemService->getItemById($itemId);
+				if (!$item->isEmpty() && $tag)
+				{
+					$taskService->removeTags($item->getSourceId(), $tag);
+
+					$items[] = $item;
+				}
 			}
 
 			if ($taskService->getErrors())
@@ -727,13 +702,9 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
-			foreach ($itemIds as $itemId)
+			if ($pushService)
 			{
-				$item = ItemTable::createItemObject();
-				$item->setId($itemId);
-				$item->setEntityId($entityId);
-
-				if ($pushService)
+				foreach ($items as $item)
 				{
 					$pushService->sendUpdateItemEvent($item);
 				}
@@ -748,7 +719,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 	}
 
-	public function updateItemEpicAction()
+	public function updateItemEpicsAction()
 	{
 		try
 		{
@@ -759,79 +730,36 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
 
-			$epicId = (is_numeric($post['epicId']) ? (int)$post['epicId'] : 0);
-			$itemId = (is_numeric($post['itemId']) ? (int)$post['itemId'] : 0);
-			$entityId = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
-
-			$itemService = new ItemService();
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-			$item = ItemTable::createItemObject();
-			$item->setId($itemId);
-			$item->setParentId($epicId);
-			$item->setEntityId($entityId);
-
-			$itemService->changeItem($item, $pushService);
-			if ($itemService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_ATTACH_ERROR'), $itemService->getErrors());
-				return null;
-			}
-
-			return [
-				'epic' => $itemService->getEpicInfo($epicId)
-			];
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_ATTACH_ERROR'), [], $exception);
-			return null;
-		}
-	}
-
-	public function batchUpdateItemEpicAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-
+			$itemIds = (is_array($post['itemIds']) ? $post['itemIds'] : []);
 			$epicId = (is_numeric($post['epicId']) ? (int) $post['epicId'] : 0);
-			$items = (is_array($post['items']) ? $post['items'] : []);
-			$entityId = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
 
 			$itemService = new ItemService();
+			$epicService = new EpicService();
 			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
-			foreach ($items as $item)
+			$epic = $epicService->getEpic($epicId);
+
+			foreach ($itemIds as $itemId)
 			{
-				$itemId = (is_numeric($item['itemId']) ? (int) $item['itemId'] : 0);
+				$itemId = (is_numeric($itemId) ? (int) $itemId : 0);
 
-				$item = ItemTable::createItemObject();
-				$item->setId($itemId);
-				$item->setParentId($epicId);
-				$item->setEntityId($entityId);
+				$item = $itemService->getItemById($itemId);
+				if (!$item->isEmpty())
+				{
+					$item->setEpicId($epic->getId());
 
-				$itemService->changeItem($item, $pushService);
-			}
-
-			if ($itemService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_ATTACH_ERROR'), $itemService->getErrors());
-				return null;
+					$itemService->changeItem($item, $pushService);
+				}
 			}
 
 			return [
-				'epic' => $itemService->getEpicInfo($epicId),
+				'epic' => $epic->toArray(),
 			];
 		}
 		catch (\Exception $exception)
 		{
 			$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_ATTACH_ERROR'), [], $exception);
+
 			return null;
 		}
 	}
@@ -874,9 +802,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				return null;
 			}
 
-			return [
-				'sprintId' => $sprint->getId()
-			];
+			return $sprintService->getSprintData($sprint);
 		}
 		catch (\Exception $exception)
 		{
@@ -902,9 +828,19 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$sprintService = new SprintService();
 			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
-			$sprint = EntityTable::createEntityObject();
-			$sprint->setId($sprintId);
+			$sprint = $sprintService->getSprintById($sprintId);
+			if ($sprint->isEmpty())
+			{
+				$this->setError(
+					Loc::getMessage('TASKS_SCRUM_SPRINT_UPDATE_NAME_ERROR'),
+					$sprintService->getErrors()
+				);
+
+				return null;
+			}
+
 			$sprint->setName($name);
+			$sprint->setModifiedBy(Util\User::getId());
 
 			$sprintService->changeSprint($sprint, $pushService);
 
@@ -917,6 +853,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			if ($sprintService->getErrors())
 			{
 				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_UPDATE_NAME_ERROR'), $sprintService->getErrors());
+
 				return null;
 			}
 
@@ -947,8 +884,17 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$sprintService = new SprintService();
 			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
-			$sprint = EntityTable::createEntityObject();
-			$sprint->setId($sprintId);
+			$sprint = $sprintService->getSprintById($sprintId);
+			if ($sprint->isEmpty())
+			{
+				$this->setError(
+					Loc::getMessage('TASKS_SCRUM_SPRINT_UPDATE_DEADLINE_ERROR'),
+					$sprintService->getErrors()
+				);
+
+				return null;
+			}
+
 			if ($dateStart)
 			{
 				$sprint->setDateStart(DateTime::createFromTimestamp($dateStart));
@@ -957,12 +903,17 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			{
 				$sprint->setDateEnd(DateTime::createFromTimestamp($dateEnd));
 			}
+			$sprint->setModifiedBy(Util\User::getId());
 
 			$sprintService->changeSprint($sprint, $pushService);
 
 			if ($sprintService->getErrors())
 			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_UPDATE_DEADLINE_ERROR'), $sprintService->getErrors());
+				$this->setError(
+					Loc::getMessage('TASKS_SCRUM_SPRINT_UPDATE_DEADLINE_ERROR'),
+					$sprintService->getErrors()
+				);
+
 				return null;
 			}
 
@@ -1067,11 +1018,26 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$sortInfo = (is_array($post['sortInfo']) ? $post['sortInfo'] : []);
 
 			$sprintService = new SprintService();
+			$itemService = new ItemService();
+			$backlogService = new BacklogService();
 			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
 			$sprint = EntityTable::createEntityObject();
 			$sprint->setId($sprintId);
 			$sprint->setGroupId($groupId);
+
+			$backlog = $backlogService->getBacklogByGroupId($sprint->getGroupId());
+			$itemService->moveItemsToEntity(
+				$itemService->getItemIdsByEntityId($sprint->getId()),
+				$backlog->getId(),
+				$pushService
+			);
+			if ($itemService->getErrors())
+			{
+				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_REMOVE_ERROR'), $itemService->getErrors());
+
+				return null;
+			}
 
 			$sprintService->removeSprint($sprint, $pushService);
 
@@ -1083,6 +1049,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			if ($sprintService->getErrors())
 			{
 				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_REMOVE_ERROR'), $sprintService->getErrors());
+
 				return null;
 			}
 
@@ -1141,7 +1108,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 	}
 
-	public function batchUpdateItemAction()
+	public function updateItemsAction()
 	{
 		try
 		{
@@ -1198,7 +1165,6 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$this->userId = (int)Util\User::getId();
 
 			$itemId = (is_numeric($post['itemId']) ? (int) $post['itemId'] : 0);
-			$itemType = (is_string($post['itemType']) ? $post['itemType'] : ItemTable::TASK_TYPE);
 			$entityId = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
 			$name = (is_string($post['name'] ) ? $post['name'] : '');
 			$storyPoints = (is_string($post['storyPoints']) ? $post['storyPoints'] : null);
@@ -1208,29 +1174,24 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$itemService = new ItemService();
 			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
-			switch ($itemType)
+			if (strlen($name) > 0)
 			{
-				case ItemTable::TASK_TYPE:
-					if (strlen($name) > 0)
-					{
-						$item = $itemService->getItemById($itemId);
-						if ($item->isEmpty())
-						{
-							$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_UPDATE_ERROR'));
-							return null;
-						}
-						$userId = (int)Util\User::getId();
-						$taskService = new TaskService($userId, $this->application);
-						$taskService->changeTask($item->getSourceId(), [
-							'TITLE' => $name
-						]);
-						if ($taskService->getErrors())
-						{
-							$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_UPDATE_ERROR'), $taskService->getErrors());
-							return null;
-						}
-					}
-					break;
+				$item = $itemService->getItemById($itemId);
+				if ($item->isEmpty())
+				{
+					$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_UPDATE_ERROR'));
+					return null;
+				}
+				$userId = (int)Util\User::getId();
+				$taskService = new TaskService($userId, $this->application);
+				$taskService->changeTask($item->getSourceId(), [
+					'TITLE' => $name
+				]);
+				if ($taskService->getErrors())
+				{
+					$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_UPDATE_ERROR'), $taskService->getErrors());
+					return null;
+				}
 			}
 
 			$item = ItemTable::createItemObject();
@@ -1286,7 +1247,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 	}
 
-	public function batchRemoveItemAction()
+	public function removeItemsAction()
 	{
 		try
 		{
@@ -1297,19 +1258,39 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
 
-			$items = (is_array($post['items']) ? $post['items'] : []);
+			$userId = (int) Util\User::getId();
+
+			$itemIds = (is_array($post['itemIds']) ? $post['itemIds'] : []);
 			$sortInfo = (is_array($post['sortInfo']) ? $post['sortInfo'] : []);
+
+			$itemService = new ItemService();
 
 			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
-			foreach ($items as $item)
+			$taskService = new TaskService($userId);
+
+			foreach ($itemService->getItemsByIds($itemIds) as $item)
 			{
-				$this->removeItem($item, $pushService);
+				$taskService->removeTask($item->getSourceId());
+
+				if ($taskService->getErrors())
+				{
+					$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_REMOVE_ERROR'), $taskService->getErrors());
+
+					return null;
+				}
+
+				(new CacheService($item->getSourceId(), CacheService::ITEM_TASKS))->clean();
+
+				$subTaskIds = $taskService->getSubTaskIds($this->arParams['GROUP_ID'], $item->getSourceId());
+				foreach ($subTaskIds as $subTaskId)
+				{
+					(new CacheService($subTaskId, CacheService::ITEM_TASKS))->clean();
+				}
 			}
 
 			if ($sortInfo)
 			{
-				$itemService = new ItemService();
 				$itemService->sortItems($sortInfo, $pushService);
 			}
 
@@ -1318,50 +1299,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		catch (\Exception $exception)
 		{
 			$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_REMOVE_ERROR'), [], $exception);
-			return null;
-		}
-	}
 
-	public function removeItemAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$groupId = $this->arParams['GROUP_ID'];
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-
-			$sortInfo = (is_array($post['sortInfo']) ? $post['sortInfo'] : []);
-
-			$post['entityId'] = (is_numeric($post['entityId']) ? (int)$post['entityId'] : 0);
-			if (!$post['entityId'])
-			{
-				$backlogService = new BacklogService();
-
-				$backlog = $backlogService->getBacklogByGroupId($groupId);
-
-				$post['entityId'] = $backlog->getId();
-			}
-
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-			$response = $this->removeItem($post, $pushService);
-
-			if ($sortInfo)
-			{
-				$itemService = new ItemService();
-				$itemService->sortItems($sortInfo, $pushService);
-			}
-
-			return $response;
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_REMOVE_ERROR'), [], $exception);
 			return null;
 		}
 	}
@@ -1396,247 +1334,6 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		catch (\Exception $exception)
 		{
 			$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_SORT_ERROR'), [], $exception);
-			return null;
-		}
-	}
-
-	public function startSprintAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-
-			$this->userId = (int)Util\User::getId();
-			$groupId = $this->arParams['GROUP_ID'];
-
-			$sprintId = (is_numeric($post['sprintId']) ? (int) $post['sprintId'] : 0);
-
-			$sprint = EntityTable::createEntityObject();
-			$sprint->setId($sprintId);
-			$sprint->setGroupId($groupId);
-
-			$sprintInfo = new EntityInfoColumn();
-			if (!empty($post[$sprintInfo->getSprintGoalKey()]))
-			{
-				$sprintInfo->setSprintGoal($post[$sprintInfo->getSprintGoalKey()]);
-			}
-			$sprint->setInfo($sprintInfo);
-
-			$sprintService = new SprintService();
-			$itemService = new ItemService();
-			$kanbanService = new KanbanService();
-
-			if ($sprintService->isActiveSprint($sprint))
-			{
-				$this->errorCollection->setError(new Error(Loc::getMessage('TASKS_SCRUM_SPRINT_START_ALREADY_ERROR')));
-				return null;
-			}
-
-			$taskIds = $itemService->getTaskIdsByEntityId($sprint->getId());
-			if (empty($taskIds))
-			{
-				$this->errorCollection->setError(new Error(Loc::getMessage('TASKS_SCRUM_SPRINT_START_NOT_TASKS_ERROR')));
-				return null;
-			}
-
-			$taskService = new TaskService($this->userId);
-
-			$subTaskIds = [];
-			foreach ($taskIds as $taskId)
-			{
-				$subTaskIds = array_merge($subTaskIds, $taskService->getSubTaskIds($groupId, $taskId));
-			}
-			if ($taskService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_START_ERROR'), $taskService->getErrors());
-				return null;
-			}
-
-			$kanbanService->addTasksToKanban($sprint->getId(), $taskIds);
-			$kanbanService->addTasksToKanban($sprint->getId(), $subTaskIds);
-			if ($kanbanService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_START_ERROR'), $kanbanService->getErrors());
-				return null;
-			}
-
-			if (Loader::includeModule('bizproc'))
-			{
-				$robotService = new RobotService();
-
-				if ($lastSprintId = $kanbanService->getLastCompletedSprintIdSameGroup($sprint->getId()))
-				{
-					$stageIdsMap = $kanbanService->getStageIdsMapBetweenTwoSprints($sprint->getId(), $lastSprintId);
-
-					$robotService->updateRobotsOfLastSprint($groupId, $stageIdsMap);
-				}
-
-				if ($robotService->getErrors())
-				{
-					$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_START_ERROR'), $robotService->getErrors());
-
-					return null;
-				}
-			}
-
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-			$sprintService->startSprint($sprint, $pushService);
-			if ($sprintService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_START_ERROR'), $sprintService->getErrors());
-				return null;
-			}
-
-			return '';
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_START_ERROR'), [], $exception);
-			return null;
-		}
-	}
-
-	public function completeSprintAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
-
-			$sprintId = (is_numeric($post['sprintId']) ? (int) $post['sprintId'] : 0);
-			$isTargetBacklog = (is_string($post['direction']) && $post['direction'] === 'backlog');
-			$targetSprintId = (is_numeric($post['direction']) ? (int) $post['direction'] : 0);
-
-			$groupId = $this->arParams['GROUP_ID'];
-
-			if (!$sprintId)
-			{
-				$this->setError(
-					Loc::getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ERROR'),
-					[new Error('', self::ERROR_REQUIRED_PARAMETERS)]
-				);
-				return null;
-			}
-
-			$sprintService = new SprintService();
-			$kanbanService = new KanbanService();
-			$itemService = new ItemService();
-			$backlogService = new BacklogService();
-
-			$sprint = EntityTable::createEntityObject();
-			$sprint->setId($sprintId);
-			$sprint->setGroupId($groupId);
-			$sprint->setDateEnd(DateTime::createFromTimestamp(time()));
-
-			$taskService = new TaskService($this->userId);
-
-			$finishedTaskIds = $kanbanService->getFinishedTaskIdsInSprint($sprint->getId());
-			$unFinishedTaskIds = $kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId());
-
-			$taskIdsToComplete = [];
-			foreach ($finishedTaskIds as $key => $finishedTaskId)
-			{
-				$isCompletedTask = $taskService->isCompletedTask($finishedTaskId);
-				if ($taskService->getErrors())
-				{
-					$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ERROR'), $taskService->getErrors());
-					return null;
-				}
-
-				if (!$isCompletedTask)
-				{
-					$taskIdsToComplete[] = $finishedTaskId;
-				}
-			}
-
-			$taskService->completeTasks($taskIdsToComplete);
-			if ($taskService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ERROR'), $taskService->getErrors());
-				return null;
-			}
-
-			foreach ($unFinishedTaskIds as $key => $unFinishedTaskId)
-			{
-				$isCompletedTask = $taskService->isCompletedTask($unFinishedTaskId);
-				if ($taskService->getErrors())
-				{
-					$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ERROR'), $taskService->getErrors());
-					return null;
-				}
-				if ($isCompletedTask)
-				{
-					$kanbanService->addTaskToFinishStatus($sprint->getId(), $unFinishedTaskId);
-					unset($unFinishedTaskIds[$key]);
-				}
-			}
-			if ($kanbanService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ERROR'), $kanbanService->getErrors());
-				return null;
-			}
-
-			if ($isTargetBacklog)
-			{
-				$entity = $backlogService->getBacklogByGroupId($sprint->getGroupId());
-			}
-			else
-			{
-				if ($targetSprintId)
-				{
-					$entity = $sprintService->getSprintById($targetSprintId);
-				}
-				else
-				{
-					$group = Workgroup::getById($groupId);
-					$countSprints = count($sprintService->getSprintsByGroupId($groupId));
-					$entity = $this->createSprint($sprintService, [
-						'groupId' => $sprint->getGroupId(),
-						'tmpId' => '',
-						'name' => Loc::getMessage('TASKS_SCRUM_SPRINT_NAME', ['%s' => $countSprints + 1]),
-						'sort' => 0,
-						'userId' => $this->userId,
-						'dateStart' => time(),
-						'dateEnd' => time() + $group->getDefaultSprintDuration(),
-					]);
-				}
-			}
-
-			$itemIds = $itemService->getItemIdsBySourceIds($unFinishedTaskIds, $sprint->getId());
-
-			if (!$itemService->getErrors() && !$sprintService->getErrors() && !$backlogService->getErrors())
-			{
-				$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-				$itemService->moveItemsToEntity($itemIds, $entity->getId(), $pushService);
-			}
-
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-			$sprintService->completeSprint($sprint, $pushService);
-			if ($sprintService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ERROR'), $sprintService->getErrors());
-				return null;
-			}
-
-			(new CacheService($groupId, CacheService::TEAM_SPEED_CHART))->clean();
-
-			return ['movedItemIds' => $itemIds];
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ERROR'), [], $exception);
 			return null;
 		}
 	}
@@ -1677,895 +1374,6 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		{
 			$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_RESPONSIBLE_UPDATE_ERROR'), [], $exception);
 			return null;
-		}
-	}
-
-	public function createEpicAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
-
-			$name = (is_string($post['name'] ) ? $post['name'] : 'The epic');
-			$description = (is_string($post['description'] ) ? $post['description'] : '');
-			$entityId = (is_numeric($post['entityId']) ? (int) $post['entityId'] : 0);
-			$color = (is_string($post['color'] ) ? $post['color'] : '');
-			$files = (is_array($post['files']) ? $post['files'] : []);
-
-			$epic = ItemTable::createItemObject();
-			$epic->setItemType(ItemTable::EPIC_TYPE);
-			$epic->setEntityId($entityId);
-			$epic->setName($name);
-			$epic->setDescription($description);
-			$epic->setCreatedBy($this->userId);
-
-			$itemInfo = new ItemInfoColumn();
-			$itemInfo->setColor($color);
-			$epic->setInfo($itemInfo);
-
-			$itemService = new ItemService();
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-			$epic = $itemService->createEpicItem($epic, $pushService);
-			if ($itemService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_ADD_ERROR'), $itemService->getErrors());
-				return null;
-			}
-
-			if ($files)
-			{
-				$itemService->attachFilesToItem($this->userFieldManager, $epic->getId(), $files);
-				if ($itemService->getErrors())
-				{
-					$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_ADD_ERROR'), $itemService->getErrors());
-					return null;
-				}
-			}
-
-			return $itemService->getEpicInfo($epic->getId());
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_ADD_ERROR'), [], $exception);
-			return null;
-		}
-	}
-
-	public function getEpicAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-
-			$epicId = (is_numeric($post['id']) ? (int) $post['id'] : 0);
-
-			$itemService = new ItemService();
-
-			return $itemService->getEpicInfo($epicId);
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_GET_ERROR'), [], $exception);
-			return null;
-		}
-	}
-
-	public function editEpicAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
-
-			$name = (is_string($post['name'] ) ? $post['name'] : 'The epic');
-			$epicId = (is_numeric($post['epicId']) ? (int) $post['epicId'] : 0);
-			$description = (is_string($post['description'] ) ? $post['description'] : '');
-			$entityId = (is_numeric($post['entityId']) ? (int) $post['entityId'] : 0);
-			$color = (is_string($post['color'] ) ? $post['color'] : '');
-			$files = (is_array($post['files']) ? $post['files'] : []);
-
-			$epic = ItemTable::createItemObject();
-			$epic->setId($epicId);
-			$epic->setItemType(ItemTable::EPIC_TYPE);
-			$epic->setEntityId($entityId);
-			$epic->setName($name);
-			$epic->setDescription($description);
-			$epic->setModifiedBy($this->userId);
-
-			$itemInfo = new ItemInfoColumn();
-			$itemInfo->setColor($color);
-			$epic->setInfo($itemInfo);
-
-			$itemService = new ItemService();
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-			$itemService->changeItem($epic, $pushService);
-			if ($itemService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_EDIT_ERROR'), $itemService->getErrors());
-				return null;
-			}
-
-			if ($files)
-			{
-				$itemService->attachFilesToItem($this->userFieldManager, $epic->getId(), $files);
-				if ($itemService->getErrors())
-				{
-					$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_EDIT_ERROR'), $itemService->getErrors());
-					return null;
-				}
-			}
-
-			return $itemService->getEpicInfo($epic->getId());
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_EPIC_EDIT_ERROR'), [], $exception);
-			return null;
-		}
-	}
-
-	public function createTypeAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = Util\User::getId();
-
-			$entityId = (is_numeric($post['entityId']) ? (int) $post['entityId'] : 0);
-			$name = (is_string($post['name']) ? $post['name'] : '');
-			$sort = (is_numeric($post['sort']) ? (int) $post['sort'] : 0);
-
-			$typeService = new TypeService();
-
-			$type = $typeService->getType();
-			$type->setEntityId($entityId);
-			$type->setName($name);
-			$type->setSort($sort);
-
-			$createdType = $typeService->createType($type);
-
-			if ($typeService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $typeService->getErrors());
-
-				return null;
-			}
-
-			return $typeService->getTypeData($createdType);
-		}
-		catch (\Exception $exception)
-		{
-			return null;
-		}
-	}
-
-	public function changeTypeNameAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = Util\User::getId();
-
-			$id = (is_numeric($post['id']) ? (int) $post['id'] : 0);
-			$name = (is_string($post['name']) ? $post['name'] : '');
-
-			$typeService = new TypeService();
-
-			$type = $typeService->getType();
-			$type->setId($id);
-			$type->setName($name);
-
-			$typeService->changeType($type);
-
-			if ($typeService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $typeService->getErrors());
-
-				return null;
-			}
-
-			return '';
-		}
-		catch (\Exception $exception)
-		{
-			return null;
-		}
-	}
-
-	public function removeTypeAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = Util\User::getId();
-
-			$id = (is_numeric($post['id']) ? (int) $post['id'] : 0);
-
-			$typeService = new TypeService();
-			$definitionOfDoneService = new DefinitionOfDoneService($this->userId);
-			$itemService = new ItemService();
-
-			$type = $typeService->getType();
-			$type->setId($id);
-
-			$typeService->removeType($type);
-
-			if ($typeService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $typeService->getErrors());
-
-				return null;
-			}
-
-			$definitionOfDoneService->removeList(TypeChecklistFacade::class, $type->getId());
-
-			$itemIds = $itemService->getItemIdsByTypeId($type->getId());
-
-			foreach ($itemIds as $itemId)
-			{
-				$definitionOfDoneService->removeList(ItemChecklistFacade::class, $itemId);
-			}
-
-			$itemService->cleanTypeIdToItems($itemIds);
-
-			return '';
-		}
-		catch (\Exception $exception)
-		{
-			return null;
-		}
-	}
-
-	public function saveDodSettingsAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = Util\User::getId();
-
-			$entityId = (is_numeric($post['entityId']) ? (int) $post['entityId'] : 0);
-			$items = (is_array($post['items']) ? $post['items'] : []);
-			$requiredOption = (is_string($post['requiredOption']) ? $post['requiredOption'] : 'N');
-
-			$definitionOfDoneService = new DefinitionOfDoneService($this->userId);
-
-			$result = $definitionOfDoneService->mergeList(TypeChecklistFacade::class, $entityId, $items);
-
-			$result->setData(
-				array_merge(($result->getData() ?? []), ['OPEN_TIME' => (new DateTime())->getTimestamp()])
-			);
-
-			$typeService = new TypeService();
-
-			$type = $typeService->getType();
-			$type->setId($entityId);
-			$type->setDodRequired($requiredOption);
-
-			$typeService->changeType($type);
-
-			if ($result->isSuccess())
-			{
-				return '';
-			}
-			else
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'));
-				return null;
-			}
-		}
-		catch (\Exception $exception)
-		{
-			return null;
-		}
-	}
-
-	public function getDodChecklistAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = Util\User::getId();
-
-			$entityId = (is_numeric($post['entityId']) ? (int) $post['entityId'] : 0);
-
-			$definitionOfDoneService = new DefinitionOfDoneService($this->userId);
-
-			$items = $definitionOfDoneService->getTypeItems($entityId);
-
-			return $definitionOfDoneService->getComponent($entityId, 'SCRUM_ENTITY', $items);
-		}
-		catch (\Exception $exception)
-		{
-			return '';
-		}
-	}
-
-	public function getDodSettingsAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = Util\User::getId();
-
-			$entityId = (is_numeric($post['entityId']) ? (int) $post['entityId'] : 0);
-
-			$typeService = new TypeService();
-
-			$types = [];
-			foreach ($typeService->getTypes($entityId) as $type)
-			{
-				$types[] = $typeService->getTypeData($type);
-			}
-
-			if ($typeService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $typeService->getErrors());
-
-				return null;
-			}
-
-			return [
-				'types' => $types,
-			];
-		}
-		catch (\Exception $exception)
-		{
-			return '';
-		}
-	}
-
-	public function getEpicsListAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = Util\User::getId();
-
-			$isGridRequest = ($request->get('grid_id') != null);
-
-			$entityId = (is_numeric($post['entityId']) ? (int) $post['entityId'] : 0);
-			$gridId = $post['gridId'];
-
-			$nav = new PageNavigation('page');
-			$nav->allowAllRecords(true)->setPageSize(10)->initFromUri();
-
-			$itemService = new ItemService();
-			$userService = new UserService();
-
-			$columns = $this->getUiGridColumns();
-
-			$rows = [];
-
-			$epicsList = $itemService->getEpicsList($entityId, $this->getGridOrder($gridId), $nav);
-			/** @var $epicsList ItemTable[] */
-			foreach ($epicsList as $epic)
-			{
-				$usersInfo = $userService->getInfoAboutUsers([$epic->getCreatedBy()]);
-				$rows[] = [
-					'id' => $epic->getId(),
-					'columns' => [
-						'NAME' => $this->getEpicGridColumnName($epic),
-						'TAGS' => $this->getEpicGridColumnTags($epic),
-						'TASKS_TOTAL' => $this->getEpicGridColumnTasksTotal($epic),
-						'TASKS_COMPLETED' => $this->getEpicGridColumnTasksCompleted($epic),
-						'USER' => $this->getEpicGridColumnUser($usersInfo),
-					],
-					'actions' => [
-						[
-							'text' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_ACTION_VIEW'),
-							'onclick' => 'BX.Tasks.Scrum.Entry.openEpicViewForm("'.$epic->getId().'");',
-						],
-						[
-							'text' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_ACTION_EDIT'),
-							'onclick' => 'BX.Tasks.Scrum.Entry.openEpicEditForm("'.$epic->getId().'");',
-						],
-						[
-							'text' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_ACTION_REMOVE'),
-							'onclick' => 'BX.Tasks.Scrum.Entry.removeEpic("'.$epic->getId().'");',
-						]
-					]
-				];
-			}
-
-			if ($itemService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $itemService->getErrors());
-				return null;
-			}
-
-			if (empty($rows))
-			{
-				return '';
-			}
-
-			$component = new Component('bitrix:main.ui.grid', '', [
-				'GRID_ID' => $gridId,
-				'COLUMNS' => $columns,
-				'ROWS' => $rows,
-				'NAV_OBJECT' => $nav,
-				'NAV_PARAMS' => ['SHOW_ALWAYS' => false],
-				'SHOW_PAGINATION' => true,
-				'SHOW_TOTAL_COUNTER' => true,
-				'TOTAL_ROWS_COUNT' => $nav->getRecordCount(),
-				'ALLOW_COLUMNS_SORT' => true,
-				'ALLOW_COLUMNS_RESIZE' => false,
-				'AJAX_MODE' => 'N',
-				'AJAX_OPTION_JUMP' => 'N',
-				'AJAX_OPTION_STYLE' => 'N',
-				'AJAX_OPTION_HISTORY' => 'N'
-			]);
-
-			if ($isGridRequest)
-			{
-				$response = new HttpResponse();
-				$content = Json::decode($component->getContent());
-				$response->setContent($content['data']['html']);
-				return $response;
-			}
-
-			return $component;
-		}
-		catch (\Exception $exception)
-		{
-			return '';
-		}
-	}
-
-	public function getEpicDescriptionEditorAction()
-	{
-		try
-		{
-			$this->checkModules();
-			if (!ModuleManager::isModuleInstalled('disk'))
-			{
-				throw new SystemException(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR_INCLUDE_MODULE'));
-			}
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-
-			$epicId = (is_numeric($post['epicId']) ? (int) $post['epicId'] : 0);
-			$description = ($post['text'] ? $post['text'] : '');
-			$description = str_replace("\r\n", "\n", $description);
-
-			$buttons = ['UploadImage', 'UploadFile', 'CreateLink'];
-
-			$itemService = new ItemService();
-			$userFields = $itemService->getUserFields($this->userFieldManager, $epicId);
-			if ($itemService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $itemService->getErrors());
-				return null;
-			}
-			$fileField = $userFields['UF_SCRUM_ITEM_FILES'];
-
-			$params = [
-				'FORM_ID' => $post['editorId'],
-				'SHOW_MORE' => 'N',
-				'PARSER' => [
-					'Bold', 'Italic', 'Underline', 'Strike', 'ForeColor', 'FontList', 'FontSizeList',
-					'RemoveFormat', 'Quote', 'Code', 'CreateLink', 'Image', 'Table', 'Justify',
-					'InsertOrderedList', 'InsertUnorderedList', 'SmileList', 'Source', 'UploadImage', 'MentionUser'
-				],
-				'BUTTONS' => $buttons,
-				'FILES' => [
-					'VALUE' => [],
-					'DEL_LINK' => '',
-					'SHOW' => 'N'
-				],
-
-				'TEXT' => [
-					'INPUT_NAME' => 'ACTION[0][ARGUMENTS][data][DESCRIPTION]',
-					'VALUE' => $description,
-					'HEIGHT' => '120px'
-				],
-				'PROPERTIES' => [],
-				'UPLOAD_FILE' => true,
-				'UPLOAD_WEBDAV_ELEMENT' => $fileField ?? false,
-				'UPLOAD_FILE_PARAMS' => ['width' => 400, 'height' => 400],
-				'NAME_TEMPLATE' => Util\Site::getUserNameFormat(),
-				'LHE' => [
-					'id' => $post['editorId'],
-					'iframeCss' => 'body { padding-left: 10px !important; }',
-					'fontFamily' => "'Helvetica Neue', Helvetica, Arial, sans-serif",
-					'fontSize' => '13px',
-					'bInitByJS' => false,
-					'height' => 100,
-					'lazyLoad' => 'N',
-					'bbCode' => true,
-				]
-			];
-
-			return new Component('bitrix:main.post.form', '', $params);
-		}
-		catch (\Exception $exception)
-		{
-			return '';
-		}
-	}
-
-	public function getEpicDescriptionAction()
-	{
-		try
-		{
-			$this->checkModules();
-			if (!ModuleManager::isModuleInstalled('disk'))
-			{
-				throw new SystemException(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR_INCLUDE_MODULE'));
-			}
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
-
-			$epicId = (is_numeric($post['epicId']) ? (int) $post['epicId'] : 0);
-			$description = ($post['text'] ? $post['text'] : '');
-			$description = str_replace("\r\n", "\n", $description);
-
-			$itemService = new ItemService();
-			$userFields = $itemService->getUserFields($this->userFieldManager, $epicId);
-			if ($itemService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $itemService->getErrors());
-				return null;
-			}
-
-			$taskService = new TaskService($this->userId, $this->application);
-			$outDescription = $taskService->convertDescription($description, $userFields);
-			if ($taskService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $taskService->getErrors());
-				return null;
-			}
-
-			return $outDescription;
-		}
-		catch (\Exception $exception)
-		{
-			return '';
-		}
-	}
-
-	public function getEpicFilesAction()
-	{
-		try
-		{
-			$this->checkModules();
-			if (!ModuleManager::isModuleInstalled('disk'))
-			{
-				throw new SystemException(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR_INCLUDE_MODULE'));
-			}
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-
-			$epicId = (is_numeric($post['epicId']) ? (int) $post['epicId'] : 0);
-
-			$itemService = new ItemService();
-			$userFields = $itemService->getUserFields($this->userFieldManager, $epicId);
-			if ($itemService->getErrors())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $itemService->getErrors());
-				return null;
-			}
-			$fileField = $userFields['UF_SCRUM_ITEM_FILES'];
-
-			return new Component(
-				'bitrix:system.field.view',
-				$fileField['USER_TYPE']['USER_TYPE_ID'],
-				[
-					'arUserField' => $fileField,
-				]
-			);
-		}
-		catch (\Exception $exception)
-		{
-			return '';
-		}
-	}
-
-	public function getBurnDownChartDataAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
-
-			$inputSprintId = (is_numeric($post['sprintId']) ? (int) $post['sprintId'] : 0);
-
-			$sprintService = new SprintService();
-			$sprint = $sprintService->getSprintById($inputSprintId);
-			if ($sprint->isEmpty())
-			{
-				$this->setError(Loc::getMessage('TASKS_SCRUM_SPRINT_GET_DATA_ERROR'));
-				return null;
-			}
-
-			if ($sprint->isActiveSprint())
-			{
-				$currentDateTime = new Datetime();
-				$currentDateEnd = $sprint->getDateEnd();
-				$sprint->setDateEnd($currentDateEnd > $currentDateTime ? $currentDateEnd : $currentDateTime);
-			}
-
-			$kanbanService = new KanbanService();
-			$itemService = new ItemService();
-			$taskService = new TaskService($this->userId, $this->application);
-
-			$completedTaskIds = $kanbanService->getFinishedTaskIdsInSprint($sprint->getId());
-			$uncompletedTaskIds = $kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId());
-			$taskIds = array_merge($completedTaskIds, $uncompletedTaskIds);
-
-			$itemsStoryPoints = $itemService->getItemsStoryPointsBySourceId($taskIds);
-
-			$storyPointsService = new StoryPoints();
-			$sumStoryPoints = $storyPointsService->calculateSumStoryPoints($itemsStoryPoints);
-
-			$calendar = new Util\Calendar();
-			$sprintRanges = $sprintService->getSprintRanges($sprint, $calendar);
-
-			$completedTasksMap = $sprintService->getCompletedTasksMap($sprintRanges, $taskService, $completedTaskIds);
-			$completedStoryPointsMap = $sprintService->getCompletedStoryPointsMap(
-				$sumStoryPoints,
-				$completedTasksMap,
-				$itemsStoryPoints
-			);
-
-			$burnDownChart = new BurnDownChart();
-			$idealData = $burnDownChart->prepareIdealBurnDownChartData($sumStoryPoints, $sprintRanges);
-			$remainingData = $burnDownChart->prepareRemainBurnDownChartData(
-				$sumStoryPoints,
-				$sprintRanges,
-				$completedStoryPointsMap
-			);
-
-			return array_merge($idealData, $remainingData);
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), [], $exception);
-			return null;
-		}
-	}
-
-	public function getTeamSpeedChartDataAction()
-	{
-		try
-		{
-			$this->checkModules();
-
-			$request = Context::getCurrent()->getRequest();
-			$post = $request->getPostList()->toArray();
-
-			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = Util\User::getId();
-
-			$groupId = $this->arParams['GROUP_ID'];
-
-			$cacheService = new CacheService($groupId, CacheService::TEAM_SPEED_CHART);
-
-			if ($cacheService->init())
-			{
-				$data = $cacheService->getData();
-			}
-			else
-			{
-				$sprintService = new SprintService();
-				$itemService = new ItemService();
-				$kanbanService = new KanbanService();
-
-				$cacheService->start();
-
-				$data = [];
-
-				foreach ($sprintService->getCompletedSprintsByGroupId($groupId) as $sprint)
-				{
-					$completedPoints = $sprintService->getCompletedStoryPoints(
-						$sprint,
-						$kanbanService,
-						$itemService
-					);
-
-					$uncompletedPoints = $sprintService->getUnCompletedStoryPoints(
-						$sprint,
-						$kanbanService,
-						$itemService
-					);
-
-					$data[] = [
-						'sprintName' => $sprint->getName(),
-						'plan' => round(($completedPoints + $uncompletedPoints), 2),
-						'done' => $completedPoints,
-					];
-				}
-
-				$cacheService->end($data);
-			}
-
-			return $data;
-		}
-		catch (\Exception $exception)
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), [], $exception);
-			return null;
-		}
-	}
-
-	public function getAddEpicFormButtonsAction()
-	{
-		try
-		{
-			if (!ModuleManager::isModuleInstalled('ui'))
-			{
-				throw new SystemException(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR_INCLUDE_MODULE'));
-			}
-
-			return new Component('bitrix:ui.button.panel', '', [
-				'FRAME' => true,
-				'BUTTONS' => [
-					'save',
-					[
-						'type' => 'custom',
-						'layout' => $this->getCancelButtonLayout(),
-					],
-				]
-			]);
-		}
-		catch (\Exception $exception)
-		{
-			return '';
-		}
-	}
-
-	public function getViewEpicFormButtonsAction()
-	{
-		try
-		{
-			if (!ModuleManager::isModuleInstalled('ui'))
-			{
-				throw new SystemException(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR_INCLUDE_MODULE'));
-			}
-
-			return new Component('bitrix:ui.button.panel', '', [
-				'FRAME' => true,
-				'BUTTONS' => [
-					[
-						'ID' => 'epic_edit',
-						'TYPE' => 'save',
-						'CAPTION' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_ACTION_EDIT')
-					],
-					[
-						'type' => 'custom',
-						'layout' => $this->getCancelButtonLayout(),
-					],
-				]
-			]);
-		}
-		catch (\Exception $exception)
-		{
-			return '';
-		}
-	}
-
-	public function getSprintStartButtonsAction()
-	{
-		try
-		{
-			if (!ModuleManager::isModuleInstalled('ui'))
-			{
-				throw new SystemException(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR_INCLUDE_MODULE'));
-			}
-
-			return new Component('bitrix:ui.button.panel', '', [
-				'FRAME' => true,
-				'BUTTONS' => [
-					[
-						'ID' => 'sprint_start',
-						'TYPE' => 'save',
-						'CAPTION' => Loc::getMessage('TASKS_SCRUM_SPRINT_START_BUTTON')
-					],
-					[
-						'type' => 'custom',
-						'layout' => $this->getCancelButtonLayout(),
-					],
-				]
-			]);
-		}
-		catch (\Exception $exception)
-		{
-			return '';
-		}
-	}
-
-	public function getSprintCompleteButtonsAction()
-	{
-		try
-		{
-			if (!ModuleManager::isModuleInstalled('ui'))
-			{
-				throw new SystemException(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR_INCLUDE_MODULE'));
-			}
-
-			return new Component('bitrix:ui.button.panel', '', [
-				'FRAME' => true,
-				'BUTTONS' => [
-					[
-						'ID' => 'sprint_complete',
-						'TYPE' => 'save',
-						'CAPTION' => Loc::getMessage('TASKS_SCRUM_SPRINT_COMPLETE_BUTTON')
-					],
-					[
-						'type' => 'custom',
-						'layout' => $this->getCancelButtonLayout(),
-					],
-				]
-			]);
-		}
-		catch (\Exception $exception)
-		{
-			return '';
 		}
 	}
 
@@ -2616,7 +1424,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$post = $request->getPostList()->toArray();
 
 			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
-			$this->userId = (int)Util\User::getId();
+			$this->userId = (int) Util\User::getId();
 
 			$items = (is_array($post['items']) ? $post['items'] : []);
 
@@ -2744,7 +1552,6 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			$items = [];
 			$itemIds = $itemService->getItemIdsBySourceIds($subTaskIds);
-			$itemIds = array_reverse($itemIds, true);
 			foreach ($itemIds as $itemId)
 			{
 				$item = $itemService->getItemById($itemId);
@@ -2786,6 +1593,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			$entityId = (is_numeric($post['entityId']) ? (int) $post['entityId'] : 0);
 			$pageNumber = (is_numeric($post['pageNumber']) ? (int) $post['pageNumber'] : 1);
+			$pageSize = (is_numeric($post['pageSize']) ? (int) $post['pageSize'] : 1);
 
 			$itemService = new ItemService();
 			$userService = new UserService();
@@ -2806,9 +1614,9 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				return null;
 			}
 
-			$nav = $this->getNavToItems($pageNumber);
+			$nav = $this->getNavToItems($pageNumber, $pageSize);
 
-			$itemIds = $itemService->getItemIdsBySourceIds($taskIds, $entityId, $nav);
+			$itemIds = $itemService->getItemIdsBySourceIds($taskIds, $entityId, $nav, true);
 
 			return $this->getItemsData($itemIds, $itemService, $taskService, $userService);
 		}
@@ -2831,6 +1639,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
 			$this->userId = Util\User::getId();
+			$groupId = $this->arParams['GROUP_ID'];
 
 			$entityIds = (is_array($post['entityIds']) ? $post['entityIds'] : []);
 
@@ -2862,19 +1671,19 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 						$itemService
 					);
 
-					$entityCounters = $entityService->getCounters($entity->getId());
+					$entityCounters = $entityService->getCounters($groupId, $entity->getId(), $taskService, false);
 				}
 				else if ($entity->isPlannedSprint())
 				{
-					$entityCounters = $entityService->getCounters($entity->getId(), $taskService);
+					$entityCounters = $entityService->getCounters($groupId, $entity->getId(), $taskService);
 				}
 				else if ($entity->isCompletedSprint())
 				{
-					$entityCounters = $entityService->getCounters($entity->getId());
+					$entityCounters = $entityService->getCounters($groupId, $entity->getId(), $taskService, false);
 				}
 				else
 				{
-					$entityCounters = $entityService->getCounters($entity->getId(), $taskService);
+					$entityCounters = $entityService->getCounters($groupId, $entity->getId(), $taskService);
 				}
 
 				$entitiesCounters[$entityId] = [
@@ -2963,6 +1772,202 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 	}
 
+	public function getCompletedSprintsStatsAction()
+	{
+		try
+		{
+			$this->checkModules();
+
+			$request = Context::getCurrent()->getRequest();
+			$post = $request->getPostList()->toArray();
+
+			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
+			$this->userId = Util\User::getId();
+			$groupId = $this->arParams['GROUP_ID'];
+
+			$numberSprints = 0;
+			$averageNumberTasks = 0;
+			$averageNumberStoryPoints = 0;
+			$averagePercentageCompletion = 0;
+
+			$sprintService = new SprintService();
+			$kanbanService = new KanbanService();
+			$itemService = new ItemService();
+			$storyPointsService = new StoryPoints();
+
+			$sprints = $sprintService->getCompletedSprints($groupId);
+
+			$numberTasks = [];
+			$numberStoryPoints = [];
+			$percentageCompletion = [];
+
+			foreach ($sprints as $sprint)
+			{
+				$numberSprints++;
+
+				$completedTaskIds = $kanbanService->getFinishedTaskIdsInSprint($sprint->getId());
+				$uncompletedTaskIds = $kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId());
+				$taskIds = array_merge($completedTaskIds, $uncompletedTaskIds);
+
+				$itemsStoryPoints = $itemService->getItemsStoryPointsBySourceId($taskIds);
+				$itemsCompletedStoryPoints = $itemService->getItemsStoryPointsBySourceId($completedTaskIds);
+
+				$sumStoryPoints = $storyPointsService->calculateSumStoryPoints($itemsStoryPoints);
+				$sumCompletedStoryPoints = $storyPointsService->calculateSumStoryPoints($itemsCompletedStoryPoints);
+
+				$numberTasks[$sprint->getId()] = count($taskIds);
+				$numberStoryPoints[$sprint->getId()] = $sumStoryPoints;
+				if ($sumStoryPoints)
+				{
+					$percentageCompletion[$sprint->getId()] = round($sumCompletedStoryPoints * 100 / $sumStoryPoints);
+				}
+			}
+
+			if ($numberTasks)
+			{
+				$averageNumberTasks = array_sum(array_values($numberTasks)) / count($numberTasks);
+			}
+			if ($numberStoryPoints)
+			{
+				$averageNumberStoryPoints = array_sum(array_values($numberStoryPoints)) / count($numberStoryPoints);
+			}
+			if ($percentageCompletion)
+			{
+				$averagePercentageCompletion = array_sum(array_values($percentageCompletion))
+					/ count($percentageCompletion)
+				;
+			}
+
+			return [
+				'numberSprints' => $numberSprints,
+				'averageNumberTasks' => $averageNumberTasks,
+				'averageNumberStoryPoints' => $averageNumberStoryPoints,
+				'averagePercentageCompletion' => $averagePercentageCompletion,
+			];
+		}
+		catch (\Exception $exception)
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), [], $exception);
+
+			return null;
+		}
+	}
+
+	public function saveShortViewAction()
+	{
+		try
+		{
+			$this->checkModules();
+
+			$request = Context::getCurrent()->getRequest();
+			$post = $request->getPostList()->toArray();
+
+			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
+			$this->userId = Util\User::getId();
+
+			$isShortView = (isset($post['isShortView']) && $post['isShortView'] === 'Y');
+			$groupId = $this->arParams['GROUP_ID'];
+
+			CUserOptions::setOption('tasks.scrum.'.$groupId, 'short_view', ($isShortView ? 'Y' : 'N'));
+
+			return [];
+		}
+		catch (\Exception $exception)
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), [], $exception);
+
+			return null;
+		}
+	}
+
+	public function saveDisplayPriorityAction()
+	{
+		try
+		{
+			$this->checkModules();
+
+			$request = Context::getCurrent()->getRequest();
+			$post = $request->getPostList()->toArray();
+
+			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
+			$this->userId = Util\User::getId();
+
+			$value = (is_string($post['value']) ? $post['value'] : 'sprint');
+			$groupId = $this->arParams['GROUP_ID'];
+
+			$availableValues = ['backlog', 'sprint'];
+			if (!in_array($value, $availableValues))
+			{
+				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'));
+
+				return null;
+			}
+
+			CUserOptions::setOption('tasks.scrum.'.$groupId, 'display_priority', $value);
+
+			return [];
+		}
+		catch (\Exception $exception)
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), [], $exception);
+
+			return null;
+		}
+	}
+
+	public function showLinkedTasksAction()
+	{
+		try
+		{
+			$this->checkModules();
+
+			$request = Context::getCurrent()->getRequest();
+			$post = $request->getPostList()->toArray();
+
+			$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
+			$this->userId = Util\User::getId();
+
+			$taskId = (is_numeric($post['taskId']) ? (int) $post['taskId'] : 0);
+
+			$groupId = $this->arParams['GROUP_ID'];
+			$ownerId = $this->arParams['OWNER_ID'];
+
+			$taskIds = $this->getTaskIdsByFilter($groupId, $ownerId);
+
+			$items = array_merge(
+				$this->getBacklogItems($groupId, $taskIds),
+				$this->getSprintItems($groupId, $taskIds)
+			);
+
+			if ($this->getErrors())
+			{
+				return null;
+			}
+
+			$linkedTaskIds = $this->getLinkedTasks($taskId);
+
+			$linkedItemIds = [];
+			foreach ($items as $item)
+			{
+				if (in_array($item['sourceId'], $linkedTaskIds))
+				{
+					$linkedItemIds[] = $item['id'];
+				}
+			}
+
+			return [
+				'items' => $items,
+				'linkedItemIds' => $linkedItemIds,
+			];
+		}
+		catch (\Exception $exception)
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), [], $exception);
+
+			return null;
+		}
+	}
+
 	/**
 	 * @throws SystemException
 	 */
@@ -2992,6 +1997,9 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 	private function includePlanTemplate(int $groupId): void
 	{
+		$this->arResult['isShortView'] = $this->getShortViewState($groupId);
+		$this->arResult['displayPriority'] = $this->getDisplayPriorityState($groupId);
+
 		$taskService = new TaskService($this->userId, $this->application);
 
 		$filterInstance = $taskService->getFilterInstance($groupId, false);
@@ -3014,8 +2022,10 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$this->arResult['counters'] = $this->getCounters($this->userId, $groupId, $filterInstance);
 		}
 
-		$itemsNav = $this->getNavToItems();
-		$completedSprintNav = $this->getNavToCompletedSprints();
+		$pageSize = 10;
+
+		$itemsNav = $this->getNavToItems(1, $pageSize);
+		$completedSprintNav = $this->getNavToCompletedSprints(1, 1);
 
 		$filter = $taskService->getFilter($filterInstance);
 
@@ -3027,7 +2037,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 		$this->filteredTaskIds = $taskIds;
 
-		$itemService = new ItemService();
+		$epicService = new EpicService($this->userId);
 
 		if ($this->getErrors())
 		{
@@ -3038,25 +2048,27 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		$entityService = new EntityService();
 
+		$group = Workgroup::getById($groupId);
+
+		$this->arResult['defaultSprintDuration'] = $group->getDefaultSprintDuration();
+		$this->arResult['pageSize'] = $pageSize;
+
 		$backlog = $this->getBacklog($groupId, $itemsNav);
 		if ($backlog->isEmpty())
 		{
 			$backlog = $this->createNewBacklogForThisProject($groupId);
+			$firstSprint = $this->createNewSprintForThisProject($groupId);
 		}
 
-		$this->syncItemsWithTasks($backlog->getId(), $this->userId, $groupId, $this->filteredTaskIds);
+		$this->syncItemsWithTasks($backlog->getId(), $this->userId, $groupId);
 
 		$this->arResult['sprints'] = $this->getSprints($groupId, $itemsNav, $completedSprintNav, $filterInstance);
 
-		$group = Workgroup::getById($groupId);
-
-		$this->arResult['defaultSprintDuration'] = $group->getDefaultSprintDuration();
-
-		$this->arResult['tags']['epic'] = $itemService->getAllEpicTags($backlog->getId());
+		$this->arResult['tags']['epic'] = $epicService->getEpics($groupId);
 
 		$backlogItems = $this->prepareEntityItems($backlog);
 
-		$entityCounters = $entityService->getCounters($backlog->getId(), $taskService);
+		$entityCounters = $entityService->getCounters($groupId, $backlog->getId(), $taskService);
 
 		$this->arResult['backlog'] = [
 			'id' => $backlog->getId(),
@@ -3065,7 +2077,14 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			'items' => $backlogItems,
 			'isExactSearchApplied' => ($filterInstance->isSearchFieldApplied() ? 'Y' : 'N'),
 			'pageNumberItems' => 1,
+			'pageSize' => $pageSize,
+			'isShortView' => $this->arResult['isShortView'],
 		];
+
+		foreach ($this->arResult['sprints'] as $key => $sprintData)
+		{
+			$this->arResult['sprints'][$key]['isShortView'] = $this->arResult['isShortView'];
+		}
 
 		$info = $backlog->getInfo();
 
@@ -3073,13 +2092,13 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		if ($typeService->isEmpty($backlog->getId()) && !$info->isTypesGenerated())
 		{
-			$productType = $typeService->getType();
+			$productType = $typeService->getTypeObject();
 			$productType->setEntityId($backlog->getId());
 			$productType->setName(Loc::getMessage('TASKS_SCRUM_TYPE_PRODUCT_NAME'));
 			$productType->setSort(1);
 			$productType->setDodRequired('Y');
 
-			$technicalType = $typeService->getType();
+			$technicalType = $typeService->getTypeObject();
 			$technicalType->setEntityId($backlog->getId());
 			$technicalType->setName(Loc::getMessage('TASKS_SCRUM_TYPE_TECHNICAL_NAME'));
 			$technicalType->setSort(2);
@@ -3113,31 +2132,14 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 	private function includeActiveSprintTemplate(int $groupId): void
 	{
 		$taskService = new TaskService($this->userId, $this->application);
-		$filterInstance = $taskService->getFilterInstance($groupId, false);
 
-		$entityService = new EntityService();
+		$this->arResult['filterInstance'] = $taskService->getFilterInstance($groupId, false);
+
+		$this->arResult['activeSprintId'] = 0;
+
 		$sprintService = new SprintService();
-		$itemService = new ItemService();
-		$kanbanService = new KanbanService();
 
-		$this->arResult['filterInstance'] = $filterInstance;
-
-		$this->arResult['tags'] = [];
-		$this->arResult['tags']['task'] = [];
-
-		$filter = $taskService->getFilter($filterInstance);
-
-		$filter['ONLY_ROOT_TASKS'] = 'N';
-
-		$taskIds = $taskService->getTaskIdsByFilter($filter);
-		$epicTaskIds = $this->getEpicTaskIdsFromFilter($filter);
-		if ($epicTaskIds)
-		{
-			$taskIds = array_intersect($epicTaskIds, $taskIds);
-		}
-		$this->filteredTaskIds = $taskIds;
-
-		$sprint = $sprintService->getActiveSprintByGroupId($groupId, $itemService);
+		$sprint = $sprintService->getActiveSprintByGroupId($groupId);
 
 		if ($sprint->isActiveSprint())
 		{
@@ -3146,34 +2148,9 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$this->arResult['taskLimitExceeded'] = Bitrix24Restriction\Limit\TaskLimit::isLimitExceeded();
 			$this->arResult['canUseAutomation'] = Factory::canUseAutomation();
 
+			$kanbanService = new KanbanService();
+
 			$this->arResult['orderNewTask'] = $kanbanService->getKanbanSortValue($groupId);
-
-			$sprintData = $sprintService->getSprintData($sprint);
-
-			$entityCounters = $entityService->getCounters($sprint->getId());
-
-			$sprintData['items'] = $this->prepareEntityItems($sprint);
-
-			$sprintData['numberTasks'] = $entityCounters['countTotal'];
-
-			$sprintData['storyPoints'] = $entityCounters['storyPoints'];
-			$sprintData['completedStoryPoints'] = $sprintService->getCompletedStoryPoints(
-				$sprint,
-				$kanbanService,
-				$itemService
-			);
-			$sprintData['uncompletedStoryPoints'] = $sprintService->getUnCompletedStoryPoints(
-				$sprint,
-				$kanbanService,
-				$itemService
-			);
-
-			$sprintData['completedTasks'] = count($kanbanService->getFinishedTaskIdsInSprint($sprint->getId()));
-			$sprintData['uncompletedTasks'] = count($kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId()));
-			$sprintData['finishStatus'] = $kanbanService->getFinishStatus();
-			$sprintData['isExactSearchApplied'] = ($filterInstance->isSearchFieldApplied() ? 'Y' : 'N');
-
-			$this->arResult['activeSprintData'] = $sprintData;
 		}
 
 		if ($this->getErrors())
@@ -3182,41 +2159,6 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			return;
 		}
-
-		$uncompletedSprints = $sprintService->getUncompletedSprints($groupId);
-
-		$lastCompletedSprint = $sprintService->getLastCompletedSprint($groupId);
-		$lastCompletedSprint->setChildren($itemService->getHierarchyChildItems($lastCompletedSprint));
-
-		$completedSprints = $sprintService->getCompletedSprints($groupId);
-		foreach ($completedSprints as $key => $completedSprint)
-		{
-			if ($completedSprint->getId() === $lastCompletedSprint->getId())
-			{
-				$completedSprints[$key] = $lastCompletedSprint;
-			}
-		}
-
-		$listSprints = array_merge($uncompletedSprints, $completedSprints);
-
-		$sprints = [];
-		foreach ($listSprints as $sprint)
-		{
-			$cacheService = new CacheService($sprint->getId(), CacheService::COMPLETED_SPRINT);
-
-			$sprints[] = $this->prepareSprintData(
-				$sprint,
-				$this->arResult['views'],
-				$cacheService,
-				$entityService,
-				$sprintService,
-				$itemService,
-				$kanbanService,
-				$filterInstance
-			);
-		}
-
-		$this->arResult['sprints'] = $sprints;
 
 		$this->includeComponentTemplate('active_sprint');
 	}
@@ -3245,12 +2187,20 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$completedSprint = $sprintService->getLastCompletedSprint($groupId);
 		}
 
-		$completedSprintData = $sprintService->getSprintData($completedSprint);
-
 		$sprintViews = $this->arResult['views'];
-		$sprintViews['completedSprint']['url'] = $sprintViews['completedSprint']['url']
-			. '&sprintId=' . $completedSprint->getId();
-		$completedSprintData['views'] = $sprintViews;
+
+		if ($completedSprint->isEmpty())
+		{
+			$completedSprintData = [];
+		}
+		else
+		{
+			$completedSprintData = $sprintService->getSprintData($completedSprint);
+
+			$sprintViews['completedSprint']['url'] = $sprintViews['completedSprint']['url']
+				. '&sprintId=' . $completedSprint->getId();
+			$completedSprintData['views'] = $sprintViews;
+		}
 
 		$sprints = [];
 		foreach ($sprintService->getCompletedSprints($groupId) as $sprint)
@@ -3296,19 +2246,21 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 	{
 		if ($this->arParams['SET_TITLE'])
 		{
-			$title = Loc::getMessage('TASKS_SCRUM_TITLE_BASE');
+			$title = Loc::getMessage('TASKS_SCRUM_TITLE');
 			$this->application->setTitle($title);
 
 			if (
 				(int)$this->arParams['GROUP_ID'] > 0
-				&& \Bitrix\Main\Loader::includeModule('socialnetwork')
-				&& method_exists(Bitrix\Socialnetwork\ComponentHelper::class, 'getWorkgroupPageTitle')
+				&& method_exists(ComponentHelper::class, 'getWorkgroupPageTitle')
 			)
 			{
-				$this->application->SetPageProperty('title', \Bitrix\Socialnetwork\ComponentHelper::getWorkgroupPageTitle([
-					'WORKGROUP_ID' => (int)$this->arParams['GROUP_ID'],
-					'TITLE' => $title
-				]));
+				$this->application->SetPageProperty(
+					'title',
+					ComponentHelper::getWorkgroupPageTitle([
+						'WORKGROUP_ID' => (int)$this->arParams['GROUP_ID'],
+						'TITLE' => $title
+					])
+				);
 			}
 		}
 	}
@@ -3354,6 +2306,30 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 
 		return $backlog;
+	}
+
+	private function createNewSprintForThisProject(int $groupId): EntityTable
+	{
+		$sprintService = new SprintService();
+
+		$sprint = EntityTable::createEntityObject();
+
+		$sprint->setGroupId($groupId);
+		$sprint->setName(Loc::getMessage('TASKS_SCRUM_SPRINT_NAME', ['%s' => 1]));
+		$sprint->setSort(1);
+		$sprint->setCreatedBy($this->userId);
+		$sprint->setModifiedBy($this->userId);
+		$sprint->setDateStart(DateTime::createFromTimestamp(time()));
+		$sprint->setDateEnd(DateTime::createFromTimestamp(time() + $this->arResult['defaultSprintDuration']));
+
+		$sprint = $sprintService->createSprint($sprint);
+
+		if ($sprintService->getErrors())
+		{
+			throw new SystemException(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR_ADD_SPRINT'));
+		}
+
+		return $sprint;
 	}
 
 	private function updateTypeCreationStatus(EntityTable $backlog): void
@@ -3484,8 +2460,10 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		else
 		{
 			$entityCounters = $entityService->getCounters(
+				$sprint->getGroupId(),
 				$sprint->getId(),
-				($sprint->isPlannedSprint() ? new TaskService($this->userId) : null)
+				new TaskService($this->userId),
+				(!$sprint->isActiveSprint())
 			);
 		}
 
@@ -3509,6 +2487,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$sprintData['uncompletedTasks'] = $uncompletedTasks;
 		$sprintData['isExactSearchApplied'] = ($filterInstance && $filterInstance->isSearchFieldApplied() ? 'Y' : 'N');
 		$sprintData['pageNumberItems'] = 1;
+		$sprintData['pageSize'] = $this->arResult['pageSize'] ?? 0;
 
 		if ($sprint->isCompletedSprint() && ($filterInstance && !$filterInstance->isSearchFieldApplied()))
 		{
@@ -3557,15 +2536,11 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		 */
 		foreach ($items as $item)
 		{
-			switch ($item->getItemType())
+			$taskId = $item->getSourceId();
+
+			if (in_array($taskId, $this->filteredTaskIds))
 			{
-				case ItemTable::TASK_TYPE:
-					$taskId = $item->getSourceId();
-					if (in_array($taskId, $this->filteredTaskIds))
-					{
-						$filteredItemIds[] = $item->getId();
-					}
-					break;
+				$filteredItemIds[] = $item->getId();
 			}
 		}
 
@@ -3640,6 +2615,16 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		return CUserOptions::getOption('tasks.scrum.'.$groupId, 'active_tab', 'plan');
 	}
 
+	private function getShortViewState(int $groupId)
+	{
+		return CUserOptions::getOption('tasks.scrum.'.$groupId, 'short_view', 'Y');
+	}
+
+	private function getDisplayPriorityState(int $groupId)
+	{
+		return CUserOptions::getOption('tasks.scrum.'.$groupId, 'display_priority', 'sprint');
+	}
+
 	private function createSprint(SprintService $sprintService, array $fields): EntityTable
 	{
 		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
@@ -3704,143 +2689,17 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 	private function isTaskMoveToActiveSprint(array $itemData): bool
 	{
 		return (
-			$itemData['itemType'] == ItemTable::TASK_TYPE &&
-			isset($itemData['toActiveSprint']) &&
-			$itemData['toActiveSprint'] == 'Y'
+			isset($itemData['toActiveSprint'])
+			&& $itemData['toActiveSprint'] == 'Y'
 		);
 	}
 
 	private function isTaskMoveFromActiveSprint(array $itemData): bool
 	{
 		return (
-			$itemData['itemType'] == ItemTable::TASK_TYPE &&
-			isset($itemData['fromActiveSprint']) &&
-			$itemData['fromActiveSprint'] == 'Y'
+			isset($itemData['fromActiveSprint'])
+			&& $itemData['fromActiveSprint'] == 'Y'
 		);
-	}
-
-	private function getGridOrder(string $gridId): array
-	{
-		$defaultSort = ['ID' => 'DESC'];
-
-		$gridOptions = new Grid\Options($gridId);
-		$sorting = $gridOptions->getSorting(['sort' => $defaultSort]);
-
-		$by = key($sorting['sort']);
-		$order = strtoupper(current($sorting['sort'])) === 'ASC' ? 'ASC' : 'DESC';
-
-		$list = [];
-		foreach ($this->getUiGridColumns() as $column)
-		{
-			if (!empty($column['sort']))
-			{
-				$list[] = $column['sort'];
-			}
-		}
-
-		if (!in_array($by, $list))
-		{
-			return $defaultSort;
-		}
-
-		return [$by => $order];
-	}
-
-	private function getUiGridColumns(): array
-	{
-		return [
-			[
-				'id' => 'NAME',
-				'name' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_NAME_SHORT'),
-				'default' => true,
-				'sort' => 'NAME',
-			],
-			[
-				'id' => 'TAGS',
-				'name' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_TAGS'),
-				'default' => true
-			],
-			[
-				'id' => 'TASKS_TOTAL',
-				'name' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_TASKS_TOTAL'),
-				'default' => true
-			],
-			[
-				'id' => 'TASKS_COMPLETED',
-				'name' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_TASKS_COMPLETED'),
-				'default' => true
-			],
-			[
-				'id' => 'USER',
-				'name' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_USER_SHORT'),
-				'default' => true
-			]
-		];
-	}
-
-	private function getEpicGridColumnName(ItemTable $epic): string
-	{
-		$info = $epic->getInfo();
-		$color = HtmlFilter::encode($info->getColor());
-		$name = HtmlFilter::encode($epic->getName());
-		return '
-			<div class="tasks-scrum-epic-grid-name">
-				<div class="tasks-scrum-epic-grid-name-color" style="background-color: '.$color.';"></div>
-				<a onclick="BX.Tasks.Scrum.Entry.openEpicViewForm(\''.$epic->getId().'\')" class=
-					"tasks-scrum-epic-name-label">'.$name.'</a>
-			</div>
-		';
-	}
-
-	private function getEpicGridColumnTags(ItemTable $epic): string
-	{
-		$itemService = new ItemService();
-		$taskService = new TaskService($this->userId, $this->application);
-
-		$taskIds = $itemService->getTaskIdsByParentId($epic->getId());
-		$tags = $taskService->getTagsByTaskIds($taskIds);
-
-		$tagsNodes = [];
-		foreach ($tags as $tagName)
-		{
-			$tagsNodes[] = '<div>'.HtmlFilter::encode($tagName).'</div>';
-		}
-
-		return '<div class="tasks-scrum-epic-grid-tags">'.implode('', $tagsNodes).'</div>';
-	}
-
-	private function getEpicGridColumnTasksTotal(ItemTable $epic): string
-	{
-		$itemService = new ItemService();
-
-		return '
-			<div class="tasks-scrum-epic-grid-tasks-total">
-				'.count($itemService->getTaskIdsByParentId($epic->getId())).'
-			</div>
-		';
-	}
-
-	private function getEpicGridColumnTasksCompleted(ItemTable $epic): string
-	{
-		$itemService = new ItemService();
-
-		$kanbanService = new KanbanService();
-		$finishedTaskIds = $kanbanService->extractFinishedTaskIds($itemService->getTaskIdsByParentId($epic->getId()));
-
-		return '
-			<div class="tasks-scrum-epic-grid-tasks-completed">
-				'.count($finishedTaskIds).'
-			</div>
-		';
-	}
-
-	private function getEpicGridColumnUser(array $usersInfo): string
-	{
-		return '
-			<div>
-				<a href="'.$usersInfo['pathToUser'].'">'.HtmlFilter::encode($usersInfo['name']).'</a>
-			</div>
-		';
 	}
 
 	/**
@@ -3863,6 +2722,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		{
 			$message = $inputMessage;
 		}
+
 		$this->errorCollection->setError(new Error($message, $this->getFirstErrorCode($errors)));
 	}
 
@@ -3897,52 +2757,10 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		if (isset($filter['EPIC']) && (int)$filter['EPIC'])
 		{
 			$itemService = new ItemService();
-			$epicTaskIds = $itemService->getTaskIdsByParentId($filter['EPIC']);
+			$epicTaskIds = $itemService->getTaskIdsByEpicId($filter['EPIC']);
 		}
 
 		return $epicTaskIds;
-	}
-
-	private function removeItem(array $itemData, PushService $pushService = null)
-	{
-		$userId = (int)Util\User::getId();
-
-		$item = ItemTable::createItemObject();
-		$item->setId($itemData['itemId']);
-		$item->setEntityId($itemData['entityId']);
-		$item->setItemType($itemData['itemType']);
-
-		$itemService = new ItemService();
-
-		$response = '';
-
-		switch ($item->getItemType())
-		{
-			case ItemTable::TASK_TYPE:
-				$taskService = new TaskService($userId, $this->application);
-				$item->setSourceId($itemData['sourceId']);
-				$itemService->removeItem($item, $pushService, $taskService);
-				if ($taskService->getErrors())
-				{
-					$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_REMOVE_ERROR'), $taskService->getErrors());
-					return null;
-				}
-				break;
-			case ItemTable::EPIC_TYPE:
-				$response = $itemService->getEpicInfo($item->getId());
-				$itemService->removeItem($item, $pushService);
-				break;
-			default:
-				$itemService->removeItem($item, $pushService);
-		}
-
-		if ($itemService->getErrors())
-		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_REMOVE_ERROR'), $itemService->getErrors());
-			return null;
-		}
-
-		return $response;
 	}
 
 	private function getDefaultResponsibleId(int $groupId): int
@@ -3984,6 +2802,36 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$items = $itemService->getItemsByIds($itemIds);
 
 		$itemsData = $itemService->getItemsData($items);
+
+		$epicService = new EpicService();
+
+		foreach ($items as $item)
+		{
+			if (!$item->getEpicId())
+			{
+				continue;
+			}
+
+			$taskId = $item->getSourceId();
+
+			$cacheService = new CacheService($item->getEpicId(), CacheService::EPICS);
+
+			if ($cacheService->init())
+			{
+				$itemsData[$taskId]['epic'] = $cacheService->getData();
+			}
+			else
+			{
+				$epic = $epicService->getEpic($item->getEpicId());
+
+				$epicData = $epic->getId() ? $epic->toArray() : [];
+
+				$cacheService->start();
+				$cacheService->end($epicData);
+
+				$itemsData[$taskId]['epic'] = $epicData;
+			}
+		}
 
 		if ($taskService)
 		{
@@ -4169,32 +3017,34 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 	}
 
-	private function syncItemsWithTasks(int $backlogId, int $userId, int $groupId, array $filteredTaskIds): void
+	private function syncItemsWithTasks(int $backlogId, int $userId, int $groupId): void
 	{
-		$entityService = new EntityService();
+		$taskService = new TaskService($userId);
 
-		$currentTaskIds = $entityService->getTaskIdsByGroupId($groupId);
-		if ($entityService->getErrors())
+		$currentTaskIds = $taskService->getTaskIds($groupId);
+		if ($taskService->getErrors())
 		{
 			return;
 		}
 
 		$itemService = new ItemService();
 
-		$taskIdsToCreateItems = array_diff($filteredTaskIds, $currentTaskIds);
+		$itemIds = $itemService->getItemIdsBySourceIds($currentTaskIds);
 
-		foreach ($taskIdsToCreateItems as $taskId)
+		if (count($currentTaskIds) > count($itemIds))
 		{
-			$item = $itemService->getItemBySourceId($taskId);
-			if (!$itemService->getErrors() && $item->isEmpty())
+			foreach ($currentTaskIds as $taskId)
 			{
-				$scrumItem = ItemTable::createItemObject();
-				$scrumItem->setCreatedBy($userId);
-				$scrumItem->setEntityId($backlogId);
-				$scrumItem->setItemType(ItemTable::TASK_TYPE);
-				$scrumItem->setSourceId($taskId);
+				$item = $itemService->getItemBySourceId($taskId);
+				if (!$itemService->getErrors() && $item->isEmpty())
+				{
+					$scrumItem = ItemTable::createItemObject();
+					$scrumItem->setCreatedBy($userId);
+					$scrumItem->setEntityId($backlogId);
+					$scrumItem->setSourceId($taskId);
 
-				$itemService->createTaskItem($scrumItem);
+					$itemService->createTaskItem($scrumItem);
+				}
 			}
 		}
 	}
@@ -4250,23 +3100,176 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			.Loc::getMessage('TASKS_SCRUM_SPRINT_CLOSE_BUTTON').'</a>';
 	}
 
-	private function getNavToItems(int $pageNumber = 1): PageNavigation
+	private function getNavToItems(int $pageNumber = 1, int $pageSize = 10): PageNavigation
 	{
 		$nav = new PageNavigation('entity-items');
 
-		$nav->setPageSize(10);
+		$nav->setPageSize($pageSize);
 		$nav->setCurrentPage($pageNumber);
 
 		return $nav;
 	}
 
-	private function getNavToCompletedSprints(int $pageNumber = 1): PageNavigation
+	private function getNavToCompletedSprints(int $pageNumber = 1, int $pageSize = 10): PageNavigation
 	{
 		$nav = new PageNavigation('completed-sprints');
 
-		$nav->setPageSize(10);
+		$nav->setPageSize($pageSize);
 		$nav->setCurrentPage($pageNumber);
 
 		return $nav;
+	}
+
+	private function getTaskIdsByFilter(int $groupId, int $ownerId, bool $isCompletedSprint = false): array
+	{
+		$taskService = new TaskService($this->userId, $this->application);
+		$taskService->setOwnerId($ownerId);
+
+		$filterInstance = $taskService->getFilterInstance($groupId, $isCompletedSprint);
+
+		$filter = $taskService->getFilter($filterInstance);
+
+		$taskIds = $taskService->getTaskIdsByFilter($filter);
+
+		if ($taskService->getErrors())
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $taskService->getErrors());
+
+			return [];
+		}
+
+		$epicTaskIds = $this->getEpicTaskIdsFromFilter($filter);
+		if ($epicTaskIds)
+		{
+			$taskIds = array_intersect($epicTaskIds, $taskIds);
+		}
+
+		return $taskIds;
+	}
+
+	private function getBacklogItems(int $groupId, array $taskIds): array
+	{
+		$items = [];
+
+		if (empty($taskIds))
+		{
+			return $items;
+		}
+
+		$taskService = new TaskService($this->userId, $this->application);
+		$itemService = new ItemService();
+		$userService = new UserService();
+		$backlogService = new BacklogService();
+
+		$backlog = $backlogService->getBacklogByGroupId($groupId);
+		$backlogItemIds = $itemService->getItemIdsBySourceIds($taskIds, $backlog->getId());
+
+		$items = $this->getItemsData($backlogItemIds, $itemService, $taskService, $userService);
+
+		if ($itemService->getErrors())
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $itemService->getErrors());
+
+			return $items;
+		}
+
+		if ($backlogService->getErrors())
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $backlogService->getErrors());
+
+			return $items;
+		}
+
+		if ($taskService->getErrors())
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $taskService->getErrors());
+
+			return $items;
+		}
+
+		return $items;
+	}
+
+	private function getSprintItems(int $groupId, array $taskIds): array
+	{
+		$items = [];
+
+		if (empty($taskIds))
+		{
+			return $items;
+		}
+
+		$taskService = new TaskService($this->userId, $this->application);
+		$itemService = new ItemService();
+		$userService = new UserService();
+		$sprintService = new SprintService();
+
+		$listSprints = $sprintService->getSprintsByGroupId($groupId);
+		foreach ($listSprints as $sprint)
+		{
+			// todo tmp !$filterInstance->isSearchFieldApplied
+			if ($sprint->isCompletedSprint())
+			{
+				continue;
+			}
+
+			$sprintItemIds = $itemService->getItemIdsBySourceIds($taskIds, $sprint->getId());
+			$sprintItems = $this->getItemsData($sprintItemIds, $itemService, $taskService, $userService);
+
+			$items = array_merge($items, $sprintItems);
+		}
+
+		if ($itemService->getErrors())
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $itemService->getErrors());
+
+			return $items;
+		}
+
+		if ($sprintService->getErrors())
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $sprintService->getErrors());
+
+			return $items;
+		}
+
+		if ($taskService->getErrors())
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $taskService->getErrors());
+
+			return $items;
+		}
+
+		return $items;
+	}
+
+	private function getLinkedTasks(int $taskId, array $linkedTaskIds = []): array
+	{
+		$linkedTaskIds[] = $taskId;
+
+		$taskService = new TaskService($this->userId, $this->application);
+
+		$linkedTasks = $taskService->getLinkedTasks($taskId);
+
+		foreach ($linkedTasks as $linkedTaskId)
+		{
+			if (!in_array($linkedTaskId, $linkedTaskIds))
+			{
+				$linkedTaskIds = array_merge($linkedTaskIds, $this->getLinkedTasks($linkedTaskId, $linkedTaskIds));
+			}
+		}
+
+		return $linkedTaskIds;
+	}
+
+	private function setBorderColor(ItemTable $item, string $color): ItemTable
+	{
+		$info = $item->getInfo();
+
+		$info->setBorderColor($color);
+
+		$item->setInfo($info);
+
+		return $item;
 	}
 }

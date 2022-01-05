@@ -3,6 +3,7 @@ $MESS["TASKS_ADD_QUICK_TASK"] = "Schnellaufgabe erstellen";
 $MESS["TASKS_AJAX_EMPTY_TEMPLATES"] = "Es gibt keine Aufgabenvorlagen";
 $MESS["TASKS_AJAX_ERROR_LOAD_TEMPLATES"] = "Fehler beim Laden der Vorlagenliste";
 $MESS["TASKS_AJAX_LOAD_TEMPLATES"] = "Liste wird geladen...";
+$MESS["TASKS_BTN_ADD_SCRUM_TASK"] = "Eine Aufgabe erstellen";
 $MESS["TASKS_BTN_ADD_TASK"] = "Neue Aufgabe";
 $MESS["TASKS_BTN_ADD_TASK_BY_TEMPLATE"] = "Neue Aufgabe nach Vorlage";
 $MESS["TASKS_BTN_EXPORT"] = "Liste exportieren";

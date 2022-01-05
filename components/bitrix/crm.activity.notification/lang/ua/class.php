@@ -1,4 +1,0 @@
-<?php
-$MESS["CRM_ACTIVITY_NOTIFICATION_ACTIVITY_NOT_FOUND"] = "Справа не знайдена";
-$MESS["CRM_ACTIVITY_NOTIFICATION_MESSAGE_NOT_FOUND"] = "Повідомлення не знайдене";
-$MESS["CRM_ACTIVITY_NOTIFICATION_NOTIFICATIONS_MODULE_IS_NOT_INSTALLED"] = "Модуль Центр  сповіщень не встановлено";

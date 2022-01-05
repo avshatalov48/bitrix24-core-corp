@@ -22,13 +22,14 @@ class Helper
 		switch ($permission)
 		{
 			case Permissions::PERMISSION_NONE:
-				$result = array();
+				$result = [];
 				break;
 			case Permissions::PERMISSION_SELF:
-				$result = array($userId);
+				$result = [$userId];
 				break;
 			case Permissions::PERMISSION_DEPARTMENT:
 				$result = self::getUserColleagues($userId);
+				$result = array_unique(array_merge([$userId], $result));
 				break;
 			case Permissions::PERMISSION_ANY:
 				$result = null;
@@ -280,5 +281,23 @@ class Helper
 		}
 
 		return "";
+	}
+
+	public static function isAdmin(int $userId): bool
+	{
+		global $USER;
+		if ($userId === $USER->GetID() && $USER->isAdmin())
+		{
+			return true;
+		}
+
+		if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+		{
+			return \CBitrix24::IsPortalAdmin($userId);
+		}
+
+		$groups = \CUser::GetUserGroup($userId);
+		$groups = array_map('intval', $groups);
+		return in_array(1, $groups, true);
 	}
 }

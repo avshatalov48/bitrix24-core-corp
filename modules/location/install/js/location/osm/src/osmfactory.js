@@ -40,6 +40,7 @@ export default class OSMFactory
 
 		const searchRequester = new SearchRequester({
 			languageId: params.languageId,
+			sourceLanguageId: params.sourceLanguageId,
 			tokenContainer: tokenContainer,
 			serviceUrl: params.serviceUrl,
 			hostName: params.hostName,
@@ -48,6 +49,7 @@ export default class OSMFactory
 
 		const reverseRequester = new ReverseRequester({
 			languageId: params.languageId,
+			sourceLanguageId: params.sourceLanguageId,
 			serviceUrl: params.serviceUrl,
 			hostName: params.hostName,
 			tokenContainer: tokenContainer,
@@ -58,6 +60,7 @@ export default class OSMFactory
 
 		const autocompleteRequester = new AutocompleteRequester({
 			languageId: params.languageId,
+			sourceLanguageId: params.sourceLanguageId,
 			serviceUrl: params.serviceUrl,
 			hostName: params.hostName,
 			tokenContainer: tokenContainer,

@@ -101,6 +101,7 @@ COption::SetOptionString("main", 'CAPTCHA_arTTFFiles', 'bitrix_captcha.ttf');
 COption::SetOptionString("main", "bx_fast_download", "Y");
 COption::SetOptionString("main", "use_hot_keys", "N");
 COption::SetOptionString("main", "user_profile_history", "Y");
+COption::SetOptionString("main", "allow_qrcode_auth", "Y");
 
 //////// from wizard
 COption::SetOptionString("main", "site_name", GetMessage("main_site_name")/*$wizard->GetVar("siteName"))*/, false, $site_id);

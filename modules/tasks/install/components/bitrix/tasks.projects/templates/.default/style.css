@@ -29,6 +29,19 @@
 	overflow: hidden;
 }
 
+.tasks-projects-icon.sonet-common-workgroup-avatar {
+	margin: 0 8px 0 0;
+	background-size: 14px;
+}
+
+.tasks-projects-icon.sonet-common-workgroup-avatar.--folder {
+	background-position: center 4px;
+}
+
+.tasks-projects-icon.sonet-common-workgroup-avatar.--chart {
+	background-position: 5px 3px;
+}
+
 .tasks-projects-text {
 	display: inline-block;
 	max-width: 100%;

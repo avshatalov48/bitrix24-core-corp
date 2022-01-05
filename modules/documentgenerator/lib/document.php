@@ -1105,7 +1105,14 @@ class Document
 		}
 		elseif(is_callable($value))
 		{
-			$value = $value();
+			if (is_array($value) && $value[0] === $this)
+			{
+				$value = $value();
+			}
+			else
+			{
+				$value = null;
+			}
 		}
 
 		return $value;
@@ -1673,10 +1680,7 @@ class Document
 		return [
 			'DocumentTitle' => [
 				'TITLE' => Loc::getMessage('DOCUMENT_TITLE_FIELD_NAME'),
-				'VALUE' => function()
-				{
-					return $this->getTitle();
-				},
+				'VALUE' => [$this, 'getTitle'],
 				'GROUP' => [
 					Loc::getMessage('DOCUMENT_GROUP_NAME'),
 					'',

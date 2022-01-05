@@ -35,7 +35,7 @@ class Role extends Content
 			return $this->createRequestButton();
 		}
 
-		if ($userData['IS_GROUP_ACCESS_REQUESTING'] === 'Y')
+		if ($userData['IS_ACCESS_REQUESTING'] === 'Y')
 		{
 			return $this->createRequestingLayout($userData);
 		}
@@ -80,7 +80,7 @@ class Role extends Content
 		);
 		$userGroupRelationId = $this->getRowData()['USER_GROUP_ID'];
 
-		if ($user['IS_GROUP_ACCESS_REQUESTING_BY_ME'] === 'Y')
+		if ($user['IS_ACCESS_REQUESTING_BY_ME'] === 'Y')
 		{
 			$text = Loc::getMessage('TASKS_GRID_PROJECT_ROW_CONTENT_ROLE_REQUEST_SENT');
 
@@ -135,11 +135,11 @@ class Role extends Content
 		];
 
 		$role = $roles['member'];
-		if ($user['IS_GROUP_OWNER'] === 'Y')
+		if ($user['IS_OWNER'] === 'Y')
 		{
 			$role = $roles['owner'];
 		}
-		elseif ($user['IS_GROUP_MODERATOR'] === 'Y')
+		elseif ($user['IS_MODERATOR'] === 'Y')
 		{
 			$role = $roles['moderator'];
 		}

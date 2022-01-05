@@ -569,6 +569,12 @@ BX.namespace('Tasks.Component');
 				{
 					if((e.ctrlKey || e.metaKey) && e.type === 'keydown')
 					{
+						var tagDialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
+						if (tagDialog && tagDialog.isOpen())
+						{
+							return;
+						}
+
 						this.submit();
 						prevent = true;
 					}

@@ -2,6 +2,7 @@
 $MESS["KANBAN_COLUMN_TITLE_PLACEHOLDER"] = "Назва ";
 $MESS["KANBAN_ITEM_TITLE_PLACEHOLDER"] = "Назва #тег";
 $MESS["KANBAN_NO_ACTIVE_SPRINT"] = "У вас немає жодного активного спринту, створіть перший із планування";
+$MESS["KANBAN_NO_COMPLETED_SPRINT"] = "У вас немає жодного завершеного спринту";
 $MESS["KANBAN_POPUP_CLOSE"] = "Закрити";
 $MESS["KANBAN_POPUP_DETAIL"] = "Детальніше";
 $MESS["KANBAN_POPUP_K_TEXT_1"] = "Тут ваші завдання в проєктах (робочих групах) представлені у вигляді канбан-дошки. Цей особливий режим роботи із завданнями показує всі етапи роботи: від «Чекає виконання» до «Зроблено».";

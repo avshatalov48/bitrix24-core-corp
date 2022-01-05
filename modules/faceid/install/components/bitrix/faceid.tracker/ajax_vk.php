@@ -66,7 +66,7 @@ if (!empty($_POST['action']))
 
 			$items = $result['items'];
 		}
-		elseif (!empty($response['success']['result']['code']) && $response['success']['result']['code'] != \Bitrix\FaceId\FaceId::CODE_OK)
+		elseif (!empty($response['result']['code']) && $response['result']['code'] != \Bitrix\FaceId\FaceId::CODE_OK)
 		{
 			$errorResponse = array(
 				'code' => $response['success']['result'],

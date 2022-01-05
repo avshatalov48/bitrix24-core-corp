@@ -46,8 +46,6 @@ final class ConfigBuilder
 	protected $documentUrl;
 	/** @var Uri */
 	protected $baseUrlToLogo;
-	/** @var int */
-	protected $height = 600;
 	/** @var array */
 	protected $permissions = [];
 
@@ -147,13 +145,6 @@ final class ConfigBuilder
 		return $this;
 	}
 
-	public function setHeight(int $height): self
-	{
-		$this->height = $height;
-
-		return $this;
-	}
-
 	public function getDocumentType(): string
 	{
 		//https://api.onlyoffice.com/editors/config
@@ -230,7 +221,6 @@ final class ConfigBuilder
 	{
 		$editorOptions = [
 			'documentType' => $this->getDocumentType(),
-			'height' => $this->height . 'px',
 			'document' => [
 				'fileType' => $this->fileExtension,
 				'key' => $this->documentSession->getExternalHash(),

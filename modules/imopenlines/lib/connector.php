@@ -1,19 +1,24 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use Bitrix\Main,
-	Bitrix\Main\Loader,
-	Bitrix\Main\Type\DateTime,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main;
+use Bitrix\Main\Event;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Localization\Loc;
+
 use Bitrix\Pull;
-use Bitrix\ImConnector,
-	Bitrix\ImConnector\Output,
-	Bitrix\ImConnector\Library,
-	Bitrix\ImConnector\InteractiveMessage;
-use Bitrix\Im\Bot\Keyboard,
-	Bitrix\Im\Text as ImText,
-	Bitrix\Im\User as ImUser,
-	Bitrix\Im\Model\ChatTable;
+
+use Bitrix\ImConnector;
+use Bitrix\ImConnector\Output;
+use Bitrix\ImConnector\Library;
+use Bitrix\ImConnector\InteractiveMessage;
+
+use Bitrix\Im\Bot\Keyboard;
+
+use Bitrix\Im\Text as ImText;
+use Bitrix\Im\User as ImUser;
+use Bitrix\Im\Model\ChatTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -95,11 +100,6 @@ class Connector
 	 *
 	 * @param $params
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function addMessage($params)
 	{
@@ -311,6 +311,21 @@ class Connector
 								}
 							}
 
+							if (!empty($params['message']['description']))
+							{
+								Im::addMessage([
+									'TO_CHAT_ID' => $session->getData('CHAT_ID'),
+									'MESSAGE' => $params['message']['description'],
+									'SYSTEM' => 'Y',
+									'SKIP_COMMAND' => 'Y',
+									'URL_PREVIEW' => 'N',
+									'PARAMS' => [
+										'CLASS' => 'bx-messenger-content-item-system'
+									],
+								]);
+								unset($params['message']['description']);
+							}
+
 							$session->joinUser();
 
 							if($session->getData('OPERATOR_ID') > 0)
@@ -350,7 +365,7 @@ class Connector
 										'SESSION_DATA' => $session->getData(),
 										'VOTE' => $voteValue,
 									];
-									$event = new Main\Event('imopenlines', 'OnSessionVote', $voteEventParams);
+									$event = new Event('imopenlines', 'OnSessionVote', $voteEventParams);
 									$event->send();
 
 									$addMessage['RECENT_ADD'] = $userViewChat? 'Y': 'N';
@@ -375,7 +390,7 @@ class Connector
 							$session->isCloseVote()
 						)
 						{
-							$event = new Main\Event('imopenlines', self::EVENT_IMOPENLINE_MESSAGE_RECEIVE, $addMessage);
+							$event = new Event('imopenlines', self::EVENT_IMOPENLINE_MESSAGE_RECEIVE, $addMessage);
 							$event->send();
 
 							$eventMessageFields = $event->getParameters();
@@ -944,7 +959,7 @@ class Connector
 
 		$result = true;
 		//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
-		list($connectorId, $lineId) = explode('|', $chat['CHAT_ENTITY_ID']);
+		[$connectorId, $lineId] = explode('|', $chat['CHAT_ENTITY_ID']);
 
 		if ($connectorId == self::TYPE_NETWORK)
 		{}
@@ -988,7 +1003,7 @@ class Connector
 		}
 
 		//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
-		list($connectorId, $lineId, $connectorChatId) = explode('|', $messageFields['CHAT_ENTITY_ID']);
+		[$connectorId, $lineId, $connectorChatId] = explode('|', $messageFields['CHAT_ENTITY_ID']);
 
 		if ($messageFields['CHAT_ENTITY_TYPE'] == 'LINES')
 		{
@@ -1069,7 +1084,7 @@ class Connector
 
 		if ($messageFields['CHAT_ENTITY_TYPE'] == 'LINES')
 		{
-			list($connectorType, $lineId, $connectorChatId) = explode("|", $messageFields['CHAT_ENTITY_ID']);
+			[$connectorType, $lineId, $connectorChatId] = explode("|", $messageFields['CHAT_ENTITY_ID']);
 		}
 		else if (Connector::isLiveChat($messageFields['CHAT_ENTITY_TYPE']))
 		{
@@ -1169,9 +1184,9 @@ class Connector
 			return false;
 
 		//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
-		list($connectorId, $lineId, $connectorChatId, $connectorUserId) = explode('|', $messageFields['CHAT_ENTITY_ID']);
+		[$connectorId, $lineId, $connectorChatId, $connectorUserId] = explode('|', $messageFields['CHAT_ENTITY_ID']);
 
-		$event = new Main\Event('imopenlines', self::EVENT_IMOPENLINE_MESSAGE_SEND, $messageFields);
+		$event = new Event('imopenlines', self::EVENT_IMOPENLINE_MESSAGE_SEND, $messageFields);
 		$event->send();
 
 		$eventMessageFields = $event->getParameters();
@@ -1587,10 +1602,10 @@ class Connector
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return array|array[]
 	 */
-	protected static function preparationDataOnSession(Main\Event $event): array
+	protected static function preparationDataOnSession(Event $event): array
 	{
 		$result = [];
 
@@ -1624,10 +1639,10 @@ class Connector
 	/**
 	 * Event handler for `imopenlines::OnSessionStart`
 	 * @see \Bitrix\ImOpenLines\Session::createSession
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return void
 	 */
-	public static function onSessionStart(Main\Event $event)
+	public static function onSessionStart(Event $event)
 	{
 		$fields = self::preparationDataOnSession($event);
 
@@ -1646,10 +1661,10 @@ class Connector
 	/**
 	 * Event handler for `imopenlines::OnSessionFinish`
 	 * @see \Bitrix\ImOpenLines\Session::finish
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return void
 	 */
-	public static function onSessionFinish(Main\Event $event)
+	public static function onSessionFinish(Event $event)
 	{
 		$fields = self::preparationDataOnSession($event);
 
@@ -1682,7 +1697,7 @@ class Connector
 		if ($params['CHAT_ENTITY_TYPE'] == 'LINES')
 		{
 			//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId
-			list($connectorId, $lineId, $connectorChatId, $connectorUserId) = explode('|', $params['CHAT_ENTITY_ID']);
+			[$connectorId, $lineId, $connectorChatId, $connectorUserId] = explode('|', $params['CHAT_ENTITY_ID']);
 		}
 		else // LIVECHAT
 		{
@@ -1690,7 +1705,7 @@ class Connector
 			$connectorChatId = 0;
 			$connectorId = self::TYPE_LIVECHAT;
 			//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
-			list($lineId, $connectorUserId) = explode('|', $params['CHAT_ENTITY_ID']);
+			[$lineId, $connectorUserId] = explode('|', $params['CHAT_ENTITY_ID']);
 
 			$orm = Model\SessionTable::getList(array(
 				'select' => Array('ID', 'CHAT_ID'),
@@ -1739,22 +1754,27 @@ class Connector
 	}
 
 	/**
-	 * @param $params
-	 * @return array|false
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @param array $params
+	 * @return array
 	 */
-	public static function onReceivedEntity($params)
+	protected static function processReceivedEntity(array $params): array
 	{
-		$userId = intval($params['user']);
+		$userId = (int)$params['user'];
 
 		global $USER;
-		if($userId > 0 && !$USER->IsAuthorized() && $USER->Authorize($userId, false, false))
+		if (
+			$userId > 0
+			&& !$USER->IsAuthorized()
+			&& (
+				!Loader::includeModule('im')
+				|| ImUser::getInstance($userId)->isConnector()
+			)
+		)
 		{
-			setSessionExpired(true);
+			if ($USER->Authorize($userId, false, false))
+			{
+				setSessionExpired(true);
+			}
 		}
 
 		if (!isset($params['message']['user_id']))
@@ -1762,17 +1782,27 @@ class Connector
 			$params['message']['user_id'] = $params['user'];
 		}
 
-		$fields = array(
-			'connector' => Array(
+		return [
+			'connector' => [
 				'connector_id' => $params['connector'],
 				'line_id' => $params['line'],
 				'chat_id' => $params['chat']['id'],
 				'user_id' => $params['user'],
-			),
+			],
 			'chat' => $params['chat'],
-			'message' => $params['message'],
-			'extra' => isset($params['extra'])? $params['extra']: Array()
-		);
+			'message' => $params['message']
+		];
+	}
+
+	/**
+	 * @param $params
+	 * @return array|false
+	 */
+	public static function onReceivedEntity($params)
+	{
+		$fields = self::processReceivedEntity($params);
+
+		$fields['extra'] = $params['extra'] ?? [];
 
 		Log::write($fields, 'CONNECTOR - ENTITY ADD');
 
@@ -1781,10 +1811,10 @@ class Connector
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return array|false
 	 */
-	public static function onReceivedMessage(\Bitrix\Main\Event $event)
+	public static function onReceivedMessage(Event $event)
 	{
 		$params = $event->getParameters();
 		if (empty($params))
@@ -1794,10 +1824,10 @@ class Connector
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return array|false
 	 */
-	public static function onReceivedPost(\Bitrix\Main\Event $event)
+	public static function onReceivedPost(Event $event)
 	{
 		$params = $event->getParameters();
 		if (empty($params))
@@ -1809,38 +1839,16 @@ class Connector
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return bool
 	 */
-	public static function onReceivedMessageUpdate(\Bitrix\Main\Event $event)
+	public static function onReceivedMessageUpdate(Event $event)
 	{
 		$params = $event->getParameters();
 		if (empty($params))
 			return false;
 
-		$userId = intval($params['user']);
-
-		global $USER;
-		if($userId > 0 && !$USER->IsAuthorized() && $USER->Authorize($userId, false, false))
-		{
-			setSessionExpired(true);
-		}
-
-		if (!isset($params['message']['user_id']))
-		{
-			$params['message']['user_id'] = $params['user'];
-		}
-
-		$fields = array(
-			'connector' => Array(
-				'connector_id' => $params['connector'],
-				'line_id' => $params['line'],
-				'chat_id' => $params['chat']['id'],
-				'user_id' => $params['user'],
-			),
-			'chat' => $params['chat'],
-			'message' => $params['message']
-		);
+		$fields = self::processReceivedEntity($params);
 
 		Log::write($fields, 'CONNECTOR - ENTITY UPDATE');
 		$manager = new self();
@@ -1848,47 +1856,25 @@ class Connector
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return bool
 	 */
-	public static function onReceivedPostUpdate(\Bitrix\Main\Event $event)
+	public static function onReceivedPostUpdate(Event $event)
 	{
 		return self::onReceivedMessageUpdate($event);
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return bool
 	 */
-	public static function onReceivedMessageDelete(\Bitrix\Main\Event $event)
+	public static function onReceivedMessageDelete(Event $event)
 	{
 		$params = $event->getParameters();
 		if (empty($params))
 			return false;
 
-		$userId = intval($params['user']);
-
-		global $USER;
-		if($userId > 0 && !$USER->IsAuthorized() && $USER->Authorize($userId, false, false))
-		{
-			setSessionExpired(true);
-		}
-
-		if (!isset($params['message']['user_id']))
-		{
-			$params['message']['user_id'] = $params['user'];
-		}
-
-		$fields = array(
-			'connector' => Array(
-				'connector_id' => $params['connector'],
-				'line_id' => $params['line'],
-				'chat_id' => $params['chat']['id'],
-				'user_id' => $params['user'],
-			),
-			'chat' => $params['chat'],
-			'message' => $params['message']
-		);
+		$fields = self::processReceivedEntity($params);
 
 		Log::write($fields, 'CONNECTOR - ENTITY DELETE');
 		$manager = new self();
@@ -1896,20 +1882,20 @@ class Connector
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return bool
 	 */
-	public static function onReceivedStatusError(\Bitrix\Main\Event $event)
+	public static function onReceivedStatusError(Event $event)
 	{
 		return true;
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return bool
 	 * @throws Main\LoaderException
 	 */
-	public static function onReceivedStatusDelivery(\Bitrix\Main\Event $event)
+	public static function onReceivedStatusDelivery(Event $event)
 	{
 		$params = $event->getParameters();
 		if (empty($params))
@@ -1931,16 +1917,16 @@ class Connector
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return bool
 	 */
-	public static function onReceivedStatusReading(\Bitrix\Main\Event $event)
+	public static function onReceivedStatusReading(Event $event)
 	{
 		return true;
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return bool
 	 * @throws Main\ArgumentException
 	 * @throws Main\LoaderException
@@ -1948,7 +1934,7 @@ class Connector
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function onReceivedStatusWrites(\Bitrix\Main\Event $event)
+	public static function onReceivedStatusWrites(Event $event)
 	{
 		$params = $event->getParameters();
 		if (empty($params))
@@ -1997,14 +1983,14 @@ class Connector
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return bool
 	 * @throws Main\ArgumentException
 	 * @throws Main\LoaderException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function OnReceivedError(\Bitrix\Main\Event $event): bool
+	public static function OnReceivedError(Event $event): bool
 	{
 		$result = false;
 
@@ -2023,14 +2009,14 @@ class Connector
 	}
 
 	/**
-	 * @param Main\Event $event
+	 * @param Event $event
 	 * @return bool
 	 * @throws Main\ArgumentException
 	 * @throws Main\LoaderException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function OnReceivedStatusBlock(\Bitrix\Main\Event $event): bool
+	public static function OnReceivedStatusBlock(Event $event): bool
 	{
 		$params = $event->getParameters();
 

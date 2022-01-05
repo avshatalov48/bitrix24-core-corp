@@ -11,6 +11,7 @@ use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Validators;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Json;
 
 /**
  * Class EntityTable
@@ -130,11 +131,11 @@ class EntityTable extends Entity\DataManager
 		$info->configureObjectClass(EntityInfoColumn::class);
 		$info->configureSerializeCallback(function (?EntityInfoColumn $entityInfoColumn)
 		{
-			return $entityInfoColumn ? json_encode($entityInfoColumn->getInfoData()) : [];
+			return $entityInfoColumn ? Json::encode($entityInfoColumn->getInfoData()) : [];
 		});
 		$info->configureUnserializeCallback(function ($value)
 		{
-			$data = (is_string($value) && !empty($value) ? json_decode($value, true) : []);
+			$data = (is_string($value) && !empty($value) ? Json::decode($value) : []);
 
 			$entityInfoColumn = new EntityInfoColumn();
 			$entityInfoColumn->setInfoData($data);
@@ -241,6 +242,26 @@ class EntityTable extends Entity\DataManager
 			'ENTITY_TYPE' => self::BACKLOG_TYPE,
 			'CREATED_BY' => $this->createdBy,
 			'MODIFIED_BY' => $this->createdBy
+		];
+	}
+
+	/**
+	 * @return array
+	 */
+	public function toArray(): array
+	{
+		return [
+			'id' => $this->getId(),
+			'groupId' => $this->getGroupId(),
+			'entityType' => $this->getEntityType(),
+			'name' => $this->getName(),
+			'sort' => $this->getSort(),
+			'createdBy' => $this->getCreatedBy(),
+			'modifiedBy' => $this->getModifiedBy(),
+			'dateStart' => $this->getDateStart(),
+			'dateEnd' => $this->getDateEnd(),
+			'status' => $this->getStatus(),
+			'info' => $this->getInfo(),
 		];
 	}
 

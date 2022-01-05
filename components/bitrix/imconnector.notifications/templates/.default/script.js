@@ -59,6 +59,22 @@
 			{
 				button.form.submit();
 			});
+		},
+
+		onSaveSettingsButtonClick: function(button)
+		{
+			BX.addClass(button, "ui-bnt-wait");
+			BX.ajax.runComponentAction("bitrix:imconnector.notifications", "saveSettings", {
+				mode: "class",
+				data: new FormData(BX("settings-form"))
+			}).then(function(response)
+			{
+				BX.removeClass(button, "ui-bnt-wait");
+			}).catch(function(response)
+			{
+				BX.removeClass(button, "ui-bnt-wait");
+				console.error(response.errors);
+			})
 		}
 	};
 

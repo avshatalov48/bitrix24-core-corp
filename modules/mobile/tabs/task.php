@@ -34,17 +34,19 @@ class Task implements Tabable
 
 	private function getDataInternal()
 	{
-		if (Mobile::getApiVersion() < 28 || (Mobile::getPlatform() == "ios" && Mobile::getSystemVersion() < 11))
+		$apiVersion = Mobile::getApiVersion();
+
+		if ($apiVersion < 28 || (Mobile::getPlatform() == "ios" && Mobile::getSystemVersion() < 11))
 		{
 			return [
 				"sort" => 400,
 				"imageName" => "task",
 				"badgeCode" => "tasks",
-				"page" => ["url" => $this->context->siteDir . "mobile/tasks/snmrouter/"],
+				"page" => ["url" => "{$this->context->siteDir}mobile/tasks/snmrouter/"],
 			];
 		}
 
-		return [
+		$data = [
 			"sort" => 400,
 			"imageName" => "task",
 			"badgeCode" => "tasks",
@@ -55,25 +57,66 @@ class Task implements Tabable
 				"componentCode" => "tasks.list",
 				"scriptPath" => Manager::getComponentPath("tasks.list"),
 				"rootWidget" => [
-					'name' => 'tasks.list',
-					'settings' => [
-						'useSearch' => true,
-						'useLargeTitleMode' => true,
-						'objectName' => 'list',
+					"name" => "tasks.list",
+					"settings" => [
+						"useSearch" => true,
+						"useLargeTitleMode" => true,
+						"objectName" => "list",
 					],
 				],
 				"params" => [
 					"COMPONENT_CODE" => "tasks.list",
 					"USER_ID" => $this->context->userId,
 					"SITE_ID" => $this->context->siteId,
-					"LANGUAGE_ID" => LANGUAGE_ID,
 					"SITE_DIR" => $this->context->siteDir,
-					"PATH_TO_TASK_ADD" => $this->context->siteDir . "mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#",
+					"LANGUAGE_ID" => LANGUAGE_ID,
+					"PATH_TO_TASK_ADD" => "{$this->context->siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#",
 					"MIN_SEARCH_SIZE" => Filter\Helper::getMinTokenSize(),
 					"MESSAGES" => [],
 				],
 			],
 		];
+
+		if ($apiVersion >= 40)
+		{
+			$data["component"]["rootWidget"]["settings"]["inputPanel"] = [
+				"action" => 0,
+				"callback" => 0,
+				"useImageButton" => true,
+				"useAudioMessages" => true,
+				"smileButton" => [],
+				"message" => [
+					"placeholder" => Loc::getMessage("TAB_TASKS_INPUT_PANEL_NEW_TASK"),
+				],
+				"attachButton" => [
+					"items" => [
+						[
+							"id" => "disk",
+							"name" => Loc::getMessage("TAB_TASKS_INPUT_PANEL_B24_DISK"),
+							"dataSource" => [
+								"multiple" => true,
+								"url" => "/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId={$this->context->userId}",
+							],
+						],
+					],
+				],
+				"attachFileSettings" => [
+					"resize" => [
+						"targetWidth" => -1,
+						"targetHeight" => -1,
+						"sourceType" => 1,
+						"encodingType" => 0,
+						"mediaType" => 2,
+						"allowsEdit" => false,
+						"saveToPhotoAlbum" => true,
+						"cameraDirection" => 0,
+					],
+					"maxAttachedFilesCount" => 100,
+				],
+			];
+		}
+
+		return $data;
 	}
 
 	public function getData()

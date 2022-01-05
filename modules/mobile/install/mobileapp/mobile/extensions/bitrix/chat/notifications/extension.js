@@ -13,6 +13,7 @@
 		{
 			super(props);
 			this.userId = parseInt(BX.componentParameters.get('USER_ID', 0));
+			this.largeTitle = BX.componentParameters.get('LARGE_TITLE', true);
 			this.storage = Application.sharedStorage(`notify_${this.userId}`);
 
 			this.perPage = 50;
@@ -54,11 +55,7 @@
 				});
 			});
 
-			let storedEvents =
-				BX.componentParameters.get('STORED_EVENTS')
-					? BX.componentParameters.get('STORED_EVENTS')
-					: []
-			;
+			let storedEvents = BX.componentParameters.get('STORED_EVENTS', []);
 
 			if (storedEvents.length > 0)
 			{
@@ -82,7 +79,7 @@
 			const rawCachedNotifications = this.storage.get('collection');
 			const hasCachedNotifications = !!rawCachedNotifications;
 
-			layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:true});
+			layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:true, largeMode: this.largeTitle});
 			if (hasCachedNotifications)
 			{
 				this.getInitialData();
@@ -104,16 +101,16 @@
 			BX.addCustomEvent("onViewShown", () => {
 				if (this.initialDataReceived)
 				{
-					layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:true});
+					layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:true, largeMode: this.largeTitle});
 					this.getInitialStateFromServer()
 						.then(state => {
 							console.log('onViewShown: setState', state);
 							this.setState(state);
-							layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false});
+							layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false, largeMode: this.largeTitle});
 						})
 						.catch((error) => {
 							console.log(error);
-							layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false});
+							layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false, largeMode: this.largeTitle});
 						});
 				}
 			});
@@ -399,10 +396,10 @@
 				this.initialDataReceived = true;
 				this.tempNotificationsToRead.clear();
 				this.firstUnreadNotificationOnInit = this.getFirstUnreadNotificationOnInit();
-				layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false});
+				layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false, largeMode: this.largeTitle});
 			}).catch((error) => {
 				console.error(error);
-				layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false});
+				layoutWidget.setTitle({text: BX.message('IM_NOTIFY_TITLE'), useProgress:false, largeMode: this.largeTitle});
 			});
 		}
 

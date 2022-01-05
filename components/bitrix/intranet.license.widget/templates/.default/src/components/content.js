@@ -158,7 +158,8 @@ export const ContentComponent = {
 			BX.SidePanel.Instance.open(
 				'/bitrix/components/bitrix/bitrix24.license.scan/index.php',
 				{
-					width: 1195
+					width: 1195,
+					cacheable: false,
 				}
 			);
 		},
@@ -296,8 +297,6 @@ export const ContentComponent = {
 									v-html="telephony.balanceFormatted"
 								>
 								</div>
-								<!--<div class="license-widget-item-text"Low balance</div>
-								<div class="license-widget-item-text">99 �</div>-->
 
 								<a
 									v-if="!telephony.isConnected"

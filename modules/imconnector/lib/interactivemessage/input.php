@@ -153,7 +153,7 @@ class Input
 			$chatDispatcher = ServiceLocator::getInstance()->get('ImOpenLines.Services.ChatDispatcher');
 			$chat = $chatDispatcher->getChat((int)$chatId);
 
-			$resultFinishChat = $chat->finish($userId, true, true);
+			$resultFinishChat = $chat->finish($userId, true, true, true);
 
 			if ($resultFinishChat->isSuccess())
 			{

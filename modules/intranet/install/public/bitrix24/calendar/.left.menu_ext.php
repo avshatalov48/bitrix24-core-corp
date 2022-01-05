@@ -50,3 +50,12 @@ if (CBXFeatures::IsFeatureEnabled('CompanyCalendar'))
 		""
 	);
 }
+$aMenuLinks[] = array(
+	GetMessage("MENU_CALENDAR_ROOMS"),
+	"/calendar/rooms/",
+	array(),
+	array(
+		"menu_item_id" => "menu_rooms",
+	),
+	""
+);

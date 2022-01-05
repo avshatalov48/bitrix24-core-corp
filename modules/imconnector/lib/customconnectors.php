@@ -415,30 +415,32 @@ class CustomConnectors
 		{
 			$style = '';
 
-			if(!empty($connector["ICON"]["DATA_IMAGE"]))
+			if(!empty($connector['ICON']['DATA_IMAGE']))
 			{
-				$connector["ICON"]["COLOR"] = !empty($connector["ICON"]["COLOR"]) ? $connector["ICON"]["COLOR"] : "#90be00";
+				$connector['ICON']['COLOR'] = !empty($connector['ICON']['COLOR']) ? $connector['ICON']['COLOR'] : '#90be00';
 
 				$style = '.connector-icon-' . str_replace('.', '_', $connector['ID']) . ' {
-	' . (!empty($connector["ICON"]["COLOR"])? 'background-color: ' . $connector["ICON"]["COLOR"] : '') . ';
-	' . (!empty($connector["ICON"]["SIZE"])? 'background-size: ' . $connector["ICON"]["SIZE"] : '') . ';
-	' . (!empty($connector["ICON"]["POSITION"])? 'background-position: ' . $connector["ICON"]["POSITION"] : '') . ';
-	background-image: url(\'' . $connector["ICON"]["DATA_IMAGE"] . '\');
+	' . (!empty($connector['ICON']['COLOR'])? 'background-color: ' . $connector['ICON']['COLOR'] : '') . ';
+	' . (!empty($connector['ICON']['SIZE'])? 'background-size: ' . $connector['ICON']['SIZE'] : '') . ';
+	' . (!empty($connector['ICON']['POSITION'])? 'background-position: ' . $connector['ICON']['POSITION'] : '') . ';
+	background-image: url(\'' . $connector['ICON']['DATA_IMAGE'] . '\');
 }
 ';
 				$style .= '.ui-icon-service-' . str_replace('.', '_', $connector['ID']) . '>i {
-	' . (!empty($connector["ICON"]["COLOR"])? 'background-color: ' . $connector["ICON"]["COLOR"] : '') . ';
-	' . (!empty($connector["ICON"]["SIZE"])? 'background-size: ' . $connector["ICON"]["SIZE"] : '') . ';
-	' . (!empty($connector["ICON"]["POSITION"])? 'background-position: ' . $connector["ICON"]["POSITION"] : '') . ';
-	background-image: url(\'' . $connector["ICON"]["DATA_IMAGE"] . '\');
+	' . (!empty($connector['ICON']['COLOR'])? 'background-color: ' . $connector['ICON']['COLOR'] : '') . ';
+	' . (!empty($connector['ICON']['COLOR'])? '--ui-icon-service-bg-color: ' . $connector['ICON']['COLOR'] : '') . ';
+	' . (!empty($connector['ICON']['SIZE'])? 'background-size: ' . $connector['ICON']['SIZE'] : '') . ';
+	' . (!empty($connector['ICON']['POSITION'])? 'background-position: ' . $connector['ICON']['POSITION'] : '') . ';
+	background-image: url(\'' . $connector['ICON']['DATA_IMAGE'] . '\');
+	--ui-icon-service-bg-image: url(\'' . $connector['ICON']['DATA_IMAGE'] . '\');
 }
 ';
 				$style .= '.imconnector-' . str_replace('.', '_', $connector['ID']) . '-background-color {
-	' . (!empty($connector["ICON"]["COLOR"])? 'background-color: ' . $connector["ICON"]["COLOR"] : '') . ';
+	' . (!empty($connector['ICON']['COLOR'])? 'background-color: ' . $connector['ICON']['COLOR'] : '') . ';
 }
 ';
 				$style .= '.intranet-' . str_replace('.', '_', $connector['ID']) . '-background-color {
-	' . (!empty($connector["ICON"]["COLOR"])? 'background-color: ' . $connector["ICON"]["COLOR"] : '') . ';
+	' . (!empty($connector['ICON']['COLOR'])? 'background-color: ' . $connector['ICON']['COLOR'] : '') . ';
 }
 ';
 			}
@@ -462,10 +464,10 @@ class CustomConnectors
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
 		{
 			$style = '.connector-icon-disabled.connector-icon-' . str_replace('.', '_', $connector['ID']) . ' {
-	' . (!empty($connector["ICON_DISABLED"]["COLOR"])? 'background-color: ' . $connector["ICON_DISABLED"]["COLOR"] : 'background-color: #ebeff2') . ';
-	' . (!empty($connector["ICON_DISABLED"]["SIZE"])? 'background-size: ' . $connector["ICON_DISABLED"]["SIZE"] : '') . ';
-	' . (!empty($connector["ICON_DISABLED"]["POSITION"])? 'background-position: ' . $connector["ICON_DISABLED"]["POSITION"] : '') . ';
-	' . (!empty($connector["ICON_DISABLED"]["DATA_IMAGE"])? 'background-image: url(\'' . $connector["ICON_DISABLED"]["DATA_IMAGE"] . '\'' : '') . ');
+	' . (!empty($connector['ICON_DISABLED']['COLOR'])? 'background-color: ' . $connector['ICON_DISABLED']['COLOR'] : 'background-color: #ebeff2') . ';
+	' . (!empty($connector['ICON_DISABLED']['SIZE'])? 'background-size: ' . $connector['ICON_DISABLED']['SIZE'] : '') . ';
+	' . (!empty($connector['ICON_DISABLED']['POSITION'])? 'background-position: ' . $connector['ICON_DISABLED']['POSITION'] : '') . ';
+	' . (!empty($connector['ICON_DISABLED']['DATA_IMAGE'])? 'background-image: url(\'' . $connector['ICON_DISABLED']['DATA_IMAGE'] . '\'' : '') . ');
 }
 ';
 

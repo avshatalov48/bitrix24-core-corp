@@ -65,7 +65,7 @@ class RoleManager
 
 		return $result;
 	}
-	
+
 	public static function setRolePermissions($roleId, array $permissions)
 	{
 		$roleId = (int)$roleId;
@@ -99,25 +99,28 @@ class RoleManager
 	public static function getUserPermissions($userId)
 	{
 		//administrators should have full access despite everything
-		if(\Bitrix\ImOpenLines\Common::hasAccessForAdminPages())
+		if (\Bitrix\ImOpenlines\Security\Helper::isAdmin($userId))
+		{
 			return self::getAdminPermissions();
+		}
 
 		//everybody else's permissions are defined by their role
-		$result = array();
+		$result = [];
 		$userAccessCodes = \CAccess::GetUserCodesArray($userId);
-
 		if(!is_array($userAccessCodes) || count($userAccessCodes) === 0)
-			return array();
+		{
+			return [];
+		}
 
-		$cursor = RolePermissionTable::getList(array(
-			'filter' => array(
+		$cursor = RolePermissionTable::getList([
+			'filter' => [
 				'=ROLE_ACCESS.ACCESS_CODE' => $userAccessCodes
-			)
-		));
-
+			]
+		]);
 		while($row = $cursor->fetch())
 		{
-			if (   !isset($result[$row['ENTITY']][$row['ACTION']])
+			if (
+				!isset($result[$row['ENTITY']][$row['ACTION']])
 				|| $result[$row['ENTITY']][$row['ACTION']] < $row['PERMISSION'])
 			{
 				$result[$row['ENTITY']][$row['ACTION']] = $row['PERMISSION'];

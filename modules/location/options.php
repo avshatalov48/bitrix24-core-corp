@@ -169,6 +169,14 @@ if($moduleAccess >= 'W' && Loader::includeModule($module_id)):
 	<?$tabControl->BeginNextTab();?>
 		<?foreach ($sources as $source):
 			$sourceCode = $source->getCode();
+			if (
+				$sourceCode === \Bitrix\Location\Entity\Source\Factory::OSM_SOURCE_CODE
+				&& !\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			)
+			{
+				continue;
+			}
+
 			$config = $source->getConfig();
 		?>
 			<tr class="heading">

@@ -459,7 +459,23 @@ class MonitorReport
 									>
 										{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PLAY') }}
 									</button>
-								</div> 
+								</div>
+
+								<div
+									:key="'activityAlert'"
+									v-if="!hasActivity"
+									class="pwt-report-alert ui-alert ui-alert-icon-info ui-alert-md"
+								>
+									<span class="ui-alert-message">
+										{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_VIEWER_MAC_INACTIVE_ALERT') }}
+										<a
+											class="pwt-report-alert-link"
+											@click="openPermissionHelp"
+										>
+											{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_VIEWER_MAC_HELP_DETAIL') }}
+										</a>
+									</span>
+								</div>
 
 								<div class="pwt-report-content" :key="'report-header'">
 									<div class="pwt-report-content-header">

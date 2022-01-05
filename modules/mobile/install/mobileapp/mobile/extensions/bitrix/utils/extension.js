@@ -606,6 +606,10 @@
 			return this.storageObject.set(key, value)
 		}
 
+		clear() {
+			this.storageObject.clear()
+		}
+
 	}
 
 	let appStorages = {};

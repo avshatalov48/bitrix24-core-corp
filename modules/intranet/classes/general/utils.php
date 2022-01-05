@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CIntranetUtils
@@ -47,28 +48,40 @@ class CIntranetUtils
 	public static function GetIBlockSectionChildren($arSections)
 	{
 		if (!is_array($arSections))
-			$arSections = array($arSections);
+		{
+			$arSections = [ $arSections ];
+		}
 
-		$dbRes = CIBlockSection::GetList(array('LEFT_MARGIN' => 'asc'), array('ID' => $arSections));
+		$dbRes = CIBlockSection::GetList(
+			[ 'LEFT_MARGIN' => 'asc' ],
+			[ 'ID' => $arSections ],
+			false,
+			[ 'ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN' ]
+		);
 
-		$arChildren = array();
+		$arChildren = [];
 		while ($arSection = $dbRes->Fetch())
 		{
-			if ($arSection['RIGHT_MARGIN']-$arSection['LEFT_MARGIN'] > 1 && !in_array($arSection['ID'], $arChildren))
+			if (
+				$arSection['RIGHT_MARGIN'] - $arSection['LEFT_MARGIN'] > 1
+				&& !in_array((int)$arSection['ID'], $arChildren, true)
+			)
 			{
 				$dbChildren = CIBlockSection::GetList(
-					array('id' => 'asc'),
-					array(
+					[ 'id' => 'asc' ],
+					[
 						'IBLOCK_ID' => $arSection['IBLOCK_ID'],
 						'ACTIVE' => 'Y',
 						'>LEFT_BORDER' => $arSection['LEFT_MARGIN'],
-						'<RIGHT_BORDER'=>$arSection['RIGHT_MARGIN']
-					)
+						'<RIGHT_BORDER'=>$arSection['RIGHT_MARGIN'],
+					],
+					false,
+					[ 'ID' ]
 				);
 
 				while ($arChild = $dbChildren->Fetch())
 				{
-					$arChildren[] = $arChild['ID'];
+					$arChildren[] = (int)$arChild['ID'];
 				}
 			}
 		}

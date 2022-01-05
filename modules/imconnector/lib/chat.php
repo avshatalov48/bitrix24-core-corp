@@ -1,21 +1,16 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: varfolomeev
- * Date: 22.01.2019
- * Time: 12:18
- */
-
 namespace Bitrix\ImConnector;
 
-use \Bitrix\ImConnector\Model\ChatLastMessageTable;
+use Bitrix\Main\ORM\Data;
+
+use Bitrix\ImConnector\Model\ChatLastMessageTable;
 
 class Chat
 {
 	/**
 	 * @param $fields
 	 *
-	 * @return \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult
+	 * @return Data\AddResult|Data\UpdateResult
 	 */
 	public static function setLastMessage($fields)
 	{
@@ -63,7 +58,7 @@ class Chat
 	 */
 	public static function getLastMessage($externalChatId, $connector)
 	{
-		$message = ChatLastMessageTable::getList(
+		return ChatLastMessageTable::getList(
 			[
 				'filter' => [
 					'=EXTERNAL_CHAT_ID' => $externalChatId,
@@ -75,19 +70,13 @@ class Chat
 				]
 			]
 		)->fetch();
-
-		return $message;
 	}
 
 	/**
 	 * @param $externalChatId
 	 * @param $connector
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function deleteLastMessage($externalChatId, $connector)
+	public static function deleteLastMessage($externalChatId, $connector): void
 	{
 		$lastMessage = self::getLastMessage($externalChatId, $connector);
 

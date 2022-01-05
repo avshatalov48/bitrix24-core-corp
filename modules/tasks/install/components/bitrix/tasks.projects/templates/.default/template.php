@@ -20,6 +20,7 @@ Extension::load([
 	'ui.buttons.icons',
 	'ui.icons',
 	'ui.label',
+	'socialnetwork.common',
 ]);
 
 CJSCore::Init('tasks_integration_socialnetwork');

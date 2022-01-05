@@ -285,6 +285,11 @@ final class Configuration
 		return $service;
 	}
 
+	public static function setDefaultViewerService(string $code): void
+	{
+		Option::set(Driver::INTERNAL_MODULE_ID, 'default_viewer_service', $code);
+	}
+
 	/**
 	 * @deprecated
 	 * @return bool
@@ -380,14 +385,30 @@ final class Configuration
  */
 final class UserConfiguration
 {
-	public static function resetDocumentServiceCode()
+	public static function resetDocumentServiceCode(): void
 	{
-		\CUserOptions::getOption(
+		$userSettings = \CUserOptions::getOption(
 			Driver::INTERNAL_MODULE_ID,
 			'doc_service',
 			[
 				'default' => '',
-				'primary' => ''
+				'primary' => '',
+				'was_reset_to_onlyoffice' => '',
+			]
+		);
+
+		self::setDocumentServiceOptions('', '', $userSettings['was_reset_to_onlyoffice']);
+	}
+
+	private static function setDocumentServiceOptions(string $default, string $primary, string $wasReset): void
+	{
+		\CUserOptions::setOption(
+			Driver::INTERNAL_MODULE_ID,
+			'doc_service',
+			[
+				'default' => $default,
+				'primary' => $primary,
+				'was_reset_to_onlyoffice' => $wasReset,
 			]
 		);
 	}
@@ -402,18 +423,24 @@ final class UserConfiguration
 			return $service;
 		}
 
-		/** @noinspection PhpParamsInspection */
 		$userSettings = \CUserOptions::getOption(
 			Driver::INTERNAL_MODULE_ID,
 			'doc_service',
 			[
 				'default' => '',
-				'primary' => ''
+				'primary' => '',
+				'was_reset_to_onlyoffice' => '',
 			]
 		);
 
 		$defaultService = $userSettings['default'] ?? '';
 		$primaryService = $userSettings['primary'] ?? '';
+		$wasResetToOnlyOffice = $userSettings['was_reset_to_onlyoffice'] ?? '';
+
+		if (!$wasResetToOnlyOffice && Option::get(Driver::INTERNAL_MODULE_ID, 'reset_user_edit_service_to_onlyoffice', 'N') === 'Y')
+		{
+			self::setDocumentServiceOptions(OnlyOfficeHandler::getCode(), '', 'Y');
+		}
 
 		if ($primaryService === OnlyOfficeHandler::getCode() && OnlyOfficeHandler::isEnabled())
 		{
@@ -441,7 +468,7 @@ final class UserConfiguration
 		return $service;
 	}
 
-	public static function isSetLocalDocumentService()
+	public static function isSetLocalDocumentService(): bool
 	{
 		return LocalDocumentController::isLocalService(self::getDocumentServiceCode());
 	}

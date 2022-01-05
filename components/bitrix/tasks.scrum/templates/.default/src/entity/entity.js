@@ -3,15 +3,12 @@ import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Loader} from 'main.loader';
 
 import {Item} from '../item/item';
-import {GroupActionsButton} from './group.actions.button';
 import {ListItems} from './list.items';
 
 import {Input} from '../utility/input';
-import {StoryPoints} from '../utility/story.points';
+import {StoryPointsStorage} from '../utility/story.points.storage';
 
 import type {Views} from '../view/view';
-
-import '../css/entity.css';
 
 type EntityParams = {
 	id: number,
@@ -19,7 +16,9 @@ type EntityParams = {
 	numberTasks?: number,
 	isExactSearchApplied: 'Y' | 'N',
 	storyPoints?: string,
-	pageNumberItems: number
+	pageSize: number,
+	pageNumberItems: number,
+	isShortView: 'Y' | 'N'
 };
 
 export class Entity extends EventEmitter
@@ -30,18 +29,22 @@ export class Entity extends EventEmitter
 
 		this.setEventNamespace('BX.Tasks.Scrum.Entity');
 
-		this.setEntityParams(params);
+		this.storyPoints = new StoryPointsStorage();
 
 		this.items = new Map();
 
 		this.groupMode = false;
 		this.groupModeItems = new Map();
 
+		this.setEntityParams(params);
+
 		this.node = null;
-		this.groupActionsButton = null;
 		this.listItems = null;
 
-		this.input = new Input();
+		this.itemsLoaderNode = null;
+
+		this.blank = null;
+		this.dropzone = null;
 	}
 
 	setEntityParams(params: EntityParams)
@@ -50,22 +53,17 @@ export class Entity extends EventEmitter
 		this.setViews(params.views);
 		this.setNumberTasks(params.numberTasks);
 		this.setStoryPoints(params.storyPoints);
+		this.setShortView(params.isShortView);
 
 		this.exactSearchApplied = (params.isExactSearchApplied === 'Y');
 
-		this.pageNumberItems = parseInt(params.pageNumberItems, 10);
+		this.pageSize = parseInt(params.pageSize, 10);
+		this.pageNumberItems = (Type.isInteger(params.pageNumberItems) ? parseInt(params.pageNumberItems, 10) : 1);
 	}
 
-	addGroupActionsButton(groupActionsButton: GroupActionsButton)
+	setListItems(entity: Entity)
 	{
-		this.groupActionsButton = groupActionsButton;
-		this.groupActionsButton.subscribe('activateGroupMode', this.onActivateGroupMode.bind(this));
-		this.groupActionsButton.subscribe('deactivateGroupMode', this.onDeactivateGroupMode.bind(this));
-	}
-
-	addListItems(listItems: ListItems)
-	{
-		this.listItems = listItems;
+		this.listItems = new ListItems(entity);
 	}
 
 	getListItems(): ListItems|null
@@ -73,7 +71,32 @@ export class Entity extends EventEmitter
 		return this.listItems;
 	}
 
-	getNode(): HTMLElement|null
+	setShortView(value: string)
+	{
+		this.shortView = (value === 'Y' ? 'Y' : 'N');
+
+		this.getItems()
+			.forEach((item: Item) => {
+				if (item.isParentTask() && item.isShownSubTasks())
+				{
+					item.hideSubTasks();
+				}
+				item.setShortView(this.shortView);
+			})
+		;
+	}
+
+	getShortView(): 'Y' | 'N'
+	{
+		return this.shortView;
+	}
+
+	isShortView(): boolean
+	{
+		return this.shortView === 'Y';
+	}
+
+	getNode(): ?HTMLElement
 	{
 		return this.node;
 	}
@@ -108,19 +131,24 @@ export class Entity extends EventEmitter
 		return 'entity';
 	}
 
-	isActive()
+	isBacklog(): boolean
+	{
+		return this.getEntityType() === 'backlog';
+	}
+
+	isActive(): boolean
 	{
 		return false;
 	}
 
-	isCompleted()
+	isCompleted(): boolean
 	{
 		return false;
 	}
 
-	getListItemsNode(): HTMLElement|null
+	getListItemsNode(): ?HTMLElement
 	{
-		return (this.listItems ? this.listItems.getNode() : null);
+		return (this.listItems ? this.listItems.getListNode() : null);
 	}
 
 	isEmpty(): boolean
@@ -128,9 +156,24 @@ export class Entity extends EventEmitter
 		return (this.items.size === 0);
 	}
 
+	getNumberItems(): number
+	{
+		return this.items.size;
+	}
+
 	getItems(): Map
 	{
 		return this.items;
+	}
+
+	hasItem(item: Item): boolean
+	{
+		return this.items.has(item.getId());
+	}
+
+	getPageSize(): number
+	{
+		return this.pageSize;
 	}
 
 	getPageNumberItems(): number
@@ -153,7 +196,7 @@ export class Entity extends EventEmitter
 
 		let sort = 1;
 		listItemsNode.querySelectorAll('.tasks-scrum-item').forEach((node: HTMLElement) => {
-			const item = this.getItems().get(parseInt(node.dataset.itemId, 10));
+			const item = this.getItems().get(parseInt(node.dataset.id, 10));
 			if (item)
 			{
 				item.setSort(sort);
@@ -162,18 +205,23 @@ export class Entity extends EventEmitter
 		});
 	}
 
-	getInput(): Input
-	{
-		return this.input;
-	}
-
 	setItem(newItem: Item)
 	{
-		this.items.set(newItem.getItemId(), newItem);
+		this.items.set(newItem.getId(), newItem);
+
 		this.subscribeToItem(newItem);
+
 		[...this.items.values()].map((item) => {
 			this.setItemMoveActivity(item);
 		});
+
+		newItem.setEntityType(this.getEntityType());
+		newItem.setShortView(this.getShortView());
+
+		this.hideBlank();
+		this.hideDropzone();
+
+		this.adjustListItemsWidth();
 	}
 
 	setItemMoveActivity(item: Item)
@@ -183,14 +231,34 @@ export class Entity extends EventEmitter
 
 	removeItem(item: Item)
 	{
-		if (this.items.has(item.getItemId()))
+		if (this.items.has(item.getId()))
 		{
-			this.items.delete(item.getItemId());
+			this.items.delete(item.getId());
+
 			item.unsubscribeAll();
+
 			[...this.items.values()].map((item) => {
 				this.setItemMoveActivity(item);
 			});
+
+			if (item.isParentTask())
+			{
+				item.getSubTasks().getList().forEach((item: Item) => {
+					this.removeItem(item);
+				});
+			}
+
+			this.pageNumberItems = 1;
+
+			this.adjustListItemsWidth();
 		}
+	}
+
+	appendItemToList(item: Item)
+	{
+		Dom.insertBefore(item.render(), this.getListItemsNode().lastElementChild);
+
+		this.adjustListItemsWidth();
 	}
 
 	isNodeCreated(): boolean
@@ -206,11 +274,6 @@ export class Entity extends EventEmitter
 	getNumberTasks(): number
 	{
 		return (this.numberTasks ? this.numberTasks : this.getItems().size);
-	}
-
-	hasInput(): boolean
-	{
-		return true;
 	}
 
 	setExactSearchApplied(value: boolean)
@@ -230,32 +293,15 @@ export class Entity extends EventEmitter
 			this.setItemMoveActivity(item);
 		});
 
+		this.setStats();
+
 		if (!this.isCompleted())
 		{
-			this.input.onAfterAppend();
-			this.input.subscribe('tagsSearchOpen', (baseEvent) => {
-				this.emit('tagsSearchOpen', {
-					inputObject: baseEvent.getTarget(),
-					enteredHashTagName: baseEvent.getData()
-				})
-			});
-			this.input.subscribe('tagsSearchClose', () => this.emit('tagsSearchClose'));
-			this.input.subscribe('epicSearchOpen', (baseEvent) => {
-				this.emit('epicSearchOpen', {
-					inputObject: baseEvent.getTarget(),
-					enteredHashEpicName: baseEvent.getData()
-				})
-			});
-			this.input.subscribe('epicSearchClose', () => this.emit('epicSearchClose'));
-			this.input.subscribe('createTaskItem', (baseEvent) => {
-				this.emit('createTaskItem', {
-					inputObject: baseEvent.getTarget(),
-					value: baseEvent.getData()
-				});
-			});
+			this.itemsLoaderNode = this.getNode().querySelector('.tasks-scrum-entity-items-loader');
+			this.bindItemsLoader(this.itemsLoaderNode);
 		}
 
-		this.updateStoryPointsNode();
+		this.adjustListItemsWidth();
 	}
 
 	subscribeToItem(item: Item)
@@ -265,105 +311,33 @@ export class Entity extends EventEmitter
 			return;
 		}
 
-		item.onAfterAppend(this.getListItemsNode());
-
 		item.setEntityType(this.getEntityType());
 
-		item.subscribe('updateItem', (baseEvent) => {
+		item.subscribe('updateItem', (baseEvent: BaseEvent) => {
 			this.emit('updateItem', baseEvent.getData());
 		});
 
-		item.subscribe('updateStoryPoints', () => {
-			if (item.isSubTask())
-			{
-				const parentItem = this.getItemBySourceId(item.getParentTaskId());
-				if (parentItem)
-				{
-					parentItem.updateSubTasksPoints(item.getSourceId(), item.getStoryPoints());
-				}
-			}
-		});
+		item.subscribe('showTask', (baseEvent: BaseEvent) => this.emit('showTask', baseEvent.getTarget()));
 
-		item.subscribe('showTask', (baseEvent) => this.emit('showTask', baseEvent.getTarget()));
-
-		item.subscribe('move', (baseEvent) => {
-			this.emit('moveItem', {
-				item: baseEvent.getTarget(),
-				button: baseEvent.getData()
-			})
-		});
-
-		item.subscribe('moveToSprint', (baseEvent) => {
-			this.emit('moveToSprint', {
-				item: baseEvent.getTarget(),
-				button: baseEvent.getData()
-			})
-		});
-
-		item.subscribe('attachFilesToTask', (baseEvent) => {
-			this.emit('attachFilesToTask', {
-				item: baseEvent.getTarget(),
-				attachedIds: baseEvent.getData()
-			})
-		});
-
-		item.subscribe('dod', (baseEvent) => {
-			this.emit('showDod', baseEvent.getTarget())
-		});
-
-		item.subscribe('showTagSearcher', (baseEvent) => {
-			this.emit('showTagSearcher', {
-				item: baseEvent.getTarget(),
-				button: baseEvent.getData()
-			})
-		});
-		item.subscribe('showEpicSearcher', (baseEvent) => {
-			this.emit('showEpicSearcher', {
-				item: baseEvent.getTarget(),
-				button: baseEvent.getData()
-			})
-		});
-
-		item.subscribe('startDecomposition', (baseEvent) => {
-			this.emit('startDecomposition', baseEvent.getTarget())
-		});
-
-		item.subscribe('remove', (baseEvent) => {
-			if (this.isGroupMode())
-			{
-				this.getGroupModeItems().forEach((groupModeItem: Item) => {
-					this.removeItem(groupModeItem);
-					groupModeItem.removeYourself();
-				});
-			}
-			else
-			{
-				const item = baseEvent.getTarget();
-				this.removeItem(item);
-				item.removeYourself();
-			}
-			this.emit('removeItem', item);
-		});
-
-		item.subscribe('changeTaskResponsible', (baseEvent) => {
+		item.subscribe('changeTaskResponsible', (baseEvent: BaseEvent) => {
 			const item = baseEvent.getTarget();
 			this.emit('changeTaskResponsible', item);
 		});
 
-		item.subscribe('filterByEpic', (baseEvent) => {
+		item.subscribe('filterByEpic', (baseEvent: BaseEvent) => {
 			this.emit('filterByEpic', baseEvent.getData());
 		});
 
-		item.subscribe('filterByTag', (baseEvent) => {
+		item.subscribe('filterByTag', (baseEvent: BaseEvent) => {
 			this.emit('filterByTag', baseEvent.getData());
 		});
 
-		item.subscribe('addItemToGroupMode', (baseEvent) => {
-			this.addItemToGroupMode(baseEvent.getTarget());
+		item.subscribe('toggleActionPanel', (baseEvent: BaseEvent) => {
+			this.emit('toggleActionPanel', baseEvent.getTarget());
 		});
 
-		item.subscribe('removeItemFromGroupMode', (baseEvent) => {
-			this.removeItemFromGroupMode(baseEvent.getTarget());
+		item.subscribe('showLinked', (baseEvent: BaseEvent) => {
+			this.emit('showLinked', baseEvent.getTarget());
 		});
 	}
 
@@ -384,23 +358,21 @@ export class Entity extends EventEmitter
 		[...this.items.values()].map((item: Item) => {
 			if (item.getParentTaskId() === parentTaskId)
 			{
-				items.set(item.getItemId(), item);
+				items.set(item.getId(), item);
 			}
 		});
 
 		return items;
 	}
 
-	setStoryPoints(storyPoints)
+	setStoryPoints(storyPoints: string)
 	{
-		this.storyPoints = new StoryPoints();
+		this.storyPoints.setPoints(storyPoints);
 
-		this.storyPoints.addPoints(storyPoints);
-
-		this.updateStoryPointsNode();
+		this.setStats();
 	}
 
-	getStoryPoints(): StoryPoints
+	getStoryPoints(): StoryPointsStorage
 	{
 		return this.storyPoints;
 	}
@@ -408,56 +380,73 @@ export class Entity extends EventEmitter
 	isFirstItem(item: Item): boolean
 	{
 		const listItemsNode = this.getListItemsNode();
-		const itemNode = item.getItemNode();
-		const firstElementChild = (
-			this.hasInput() ? listItemsNode.firstElementChild.nextElementSibling : listItemsNode.firstElementChild
-		)
+		const itemNode = item.getNode();
+		const firstElementChild = listItemsNode.firstElementChild;
+
 		return firstElementChild.isEqualNode(itemNode);
 	}
 
 	isLastItem(item: Item): boolean
 	{
 		const listItemsNode = this.getListItemsNode();
-		const itemNode = item.getItemNode();
+		const itemNode = item.getNode();
+
 		return listItemsNode.lastElementChild.isEqualNode(itemNode);
+	}
+
+	getFirstItemNode(input?: Input): ?HTMLElement
+	{
+		const listItemsNode = this.getListItemsNode();
+
+		const fistNode = listItemsNode.firstElementChild;
+
+		if (input && fistNode.isEqualNode(input.getNode()))
+		{
+			return fistNode.nextElementSibling;
+		}
+		else
+		{
+			return fistNode;
+		}
+	}
+
+	getLoaderNode(): ?HTMLElement
+	{
+		return this.itemsLoaderNode ? this.itemsLoaderNode : null;
 	}
 
 	fadeOut()
 	{
-		this.getListItemsNode().classList.add('tasks-scrum-entity-items-faded');
+		Dom.addClass(this.getListItemsNode(), 'tasks-scrum__entity-items-faded');
 	}
 
 	fadeIn()
 	{
-		this.getListItemsNode().classList.remove('tasks-scrum-entity-items-faded');
+		Dom.removeClass(this.getListItemsNode(), 'tasks-scrum__entity-items-faded');
+	}
+
+	activateGroupMode()
+	{
+		this.groupMode = true;
+
+		this.getItems().forEach((item: Item) => {
+			item.activateGroupMode();
+		});
 	}
 
 	deactivateGroupMode()
 	{
-		this.groupActionsButton.deactivateGroupMode();
-	}
-
-	onActivateGroupMode(baseEvent: BaseEvent)
-	{
-		this.groupMode = true;
-
-		this.input.disable();
-
-		this.emit('activateGroupMode');
-	}
-
-	onDeactivateGroupMode(baseEvent: BaseEvent)
-	{
 		this.groupMode = false;
 
-		this.input.unDisable();
+		this.getItems().forEach((item: Item) => {
+			item.deactivateGroupMode();
+		});
 
 		this.groupModeItems.forEach((item: Item) => {
-			item.deactivateGroupMode();
+			item.removeItemFromGroupMode();
 		});
 		this.groupModeItems.clear();
 
-		this.emit('deactivateGroupMode');
 	}
 
 	isGroupMode(): boolean
@@ -467,7 +456,21 @@ export class Entity extends EventEmitter
 
 	addItemToGroupMode(item: Item)
 	{
-		this.groupModeItems.set(item.getItemId(), item);
+		this.groupModeItems.set(item.getId(), item);
+
+		item.addItemToGroupMode();
+	}
+
+	removeItemFromGroupMode(item: Item)
+	{
+		this.groupModeItems.delete(item.getId());
+
+		item.removeItemFromGroupMode();
+	}
+
+	hasItemInGroupMode(item: Item): boolean
+	{
+		return this.groupModeItems.has(item.getId());
 	}
 
 	getGroupModeItems(): Map
@@ -475,14 +478,19 @@ export class Entity extends EventEmitter
 		return this.groupModeItems;
 	}
 
-	removeItemFromGroupMode(item: Item)
+	bindItemsLoader(loader?: HTMLElement)
 	{
-		this.groupModeItems.delete(item.getItemId());
-	}
-
-	bindItemsLoader(loader: HTMLElement)
-	{
-		this.setActiveLoadItems(false);
+		if (!loader)
+		{
+			if (this.itemsLoaderNode)
+			{
+				loader = this.itemsLoaderNode;
+			}
+			else
+			{
+				return;
+			}
+		}
 
 		if (typeof IntersectionObserver === `undefined`)
 		{
@@ -491,7 +499,7 @@ export class Entity extends EventEmitter
 
 		const observer = new IntersectionObserver((entries) =>
 			{
-				if(entries[0].isIntersecting === true)
+				if (entries[0].isIntersecting === true)
 				{
 					if (!this.isActiveLoadItems())
 					{
@@ -514,7 +522,7 @@ export class Entity extends EventEmitter
 
 	isActiveLoadItems(): boolean
 	{
-		return this.activeLoadItems;
+		return this.activeLoadItems === true;
 	}
 
 	showItemsLoader()
@@ -525,16 +533,89 @@ export class Entity extends EventEmitter
 			target: this.itemsLoaderNode,
 			size: 60,
 			mode: 'inline',
-			color: 'rgba(82, 92, 105, 0.9)',
 			offset: {
+				top: '7px',
 				left: `${(listPosition.width / 2 - 30)}px`
 			}
 		});
 
-		loader.show();
+		if (this.getNumberItems() >= this.pageSize)
+		{
+			loader.show();
+		}
 
 		return loader;
 	}
 
-	updateStoryPointsNode() {}
+	setStats() {}
+
+	showBlank()
+	{
+		if (this.blank)
+		{
+			Dom.addClass(this.blank.getNode(), '--open');
+		}
+	}
+
+	hideBlank()
+	{
+		if (this.blank)
+		{
+			Dom.removeClass(this.blank.getNode(), '--open');
+		}
+	}
+
+	showDropzone()
+	{
+		if (this.dropzone)
+		{
+			Dom.addClass(this.dropzone.getNode(), '--open');
+		}
+	}
+
+	hideDropzone()
+	{
+		if (this.dropzone)
+		{
+			Dom.removeClass(this.dropzone.getNode(), '--open');
+		}
+	}
+
+	getDropzone(): ?HTMLElement
+	{
+		return this.dropzone ? this.dropzone.getNode() : null;
+	}
+
+	appendNodeAfterItem(newItemNode: HTMLElement, bindItemNode: HTMLElement)
+	{
+		if (bindItemNode.nextElementSibling)
+		{
+			Dom.insertBefore(newItemNode, bindItemNode.nextElementSibling);
+		}
+		else
+		{
+			if (this.getLoaderNode())
+			{
+				Dom.append(newItemNode, this.getLoaderNode());
+			}
+			else
+			{
+				Dom.append(newItemNode, this.getListItemsNode());
+			}
+		}
+	}
+
+	adjustListItemsWidth()
+	{
+		const hasListItemsScroll = this.getListItemsNode().scrollHeight > this.getListItemsNode().clientHeight;
+
+		if (hasListItemsScroll)
+		{
+			this.getListItems().addScrollbar();
+		}
+		else
+		{
+			this.getListItems().removeScrollbar();
+		}
+	}
 }

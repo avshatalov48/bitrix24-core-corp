@@ -38,6 +38,7 @@ Class mobile extends CModule
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler('pull', 'ShouldMessageBeSent', 'mobile', 'CMobileEvent', 'shouldSendNotification');
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'mobile', '\Bitrix\Mobile\Rest', 'onRestServiceBuildDescription');
+		$eventManager->registerEventHandler('mobile', 'onOneTimeHashRemoved', 'mobile', '\Bitrix\Mobile\Deeplink', 'onOneTimeHashRemoved');
 		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', 'mobile', 'CMobileEvent', 'PullOnGetDependentModule');
 		$eventManager->registerEventHandler('main', 'OnApplicationsBuildList', 'mobile', 'MobileApplication', 'OnApplicationsBuildList', 100, "modules/mobile/classes/general/mobile_event.php");
 		$eventManager->registerEventHandler('mobileapp', 'onJNComponentWorkspaceGet', 'mobile', 'CMobileEvent', 'getJNWorkspace');

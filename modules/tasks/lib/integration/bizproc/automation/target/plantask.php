@@ -41,13 +41,19 @@ class PlanTask extends Base
 		$planId = Document\Task::resolvePlanId($this->getDocumentType()[2]);
 
 		$stages = Tasks\Kanban\TaskStageTable::getList(array(
-			'select' => ['ID'],
+			'select' => ['ID', 'STAGE_ID'],
 			'filter' => array(
 				'=TASK_ID' => $this->getDocumentId(),
 				'=STAGE.ENTITY_TYPE' => Tasks\Kanban\StagesTable::WORK_MODE_USER,
 				'=STAGE.ENTITY_ID' => $planId
 			)
-		));
+		))->fetchAll();
+
+		if (in_array($statusId, array_column($stages, 'STAGE_ID')))
+		{
+			return;
+		}
+
 		foreach ($stages as $stage)
 		{
 			Tasks\Kanban\TaskStageTable::update($stage['ID'], ['STAGE_ID' => $statusId]);

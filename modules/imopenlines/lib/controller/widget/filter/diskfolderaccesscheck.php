@@ -40,16 +40,7 @@ class DiskFolderAccessCheck extends Base
 			return new EventResult(EventResult::ERROR, null, null, $this);
 		}
 
-		$chatId = (int)\Bitrix\Im\Dialog::getChatId($dialogId);
-		if ($chatId <= 0)
-		{
-			$this->addError(new Error("Chat ID can't be empty"));
-
-			return new EventResult(EventResult::ERROR, null, null, $this);
-		}
-
-		$chatRelation = \CIMChat::GetRelationById($chatId);
-		if (!$chatRelation[\CIMDisk::GetUserId()])
+		if (!\Bitrix\Im\Dialog::hasAccess($dialogId))
 		{
 			$this->addError(new Error("You don't have access to this chat"));
 

@@ -1,5 +1,9 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 __IncludeLang(dirname(__FILE__)."/lang/".LANGUAGE_ID."/include.php");
 
@@ -80,7 +84,7 @@ if (!function_exists('__SLMGetLogRecord'))
 			if (array_key_exists("CACHED_CSS_PATH", $arEvent["FIELDS_FORMATTED"]))
 			{
 				if (
-					!is_array($arEvent["FIELDS_FORMATTED"]["CACHED_CSS_PATH"]) 
+					!is_array($arEvent["FIELDS_FORMATTED"]["CACHED_CSS_PATH"])
 					&& $arEvent["FIELDS_FORMATTED"]["CACHED_CSS_PATH"] <> ''
 				)
 				{
@@ -184,7 +188,7 @@ if (!function_exists('__SLMGetLogRecord'))
 					}
 
 					if (
-						is_set($arEvent["URL"]) 
+						is_set($arEvent["URL"])
 						&& isset($arSiteWorkgroupsPage[SITE_ID])
 					)
 					{
@@ -445,8 +449,8 @@ if (!function_exists('__SLMGetLogRecord'))
 		else
 			$dateTimeFormated = FormatDate(
 				(
-					$arParams["DATE_TIME_FORMAT"] == "FULL" 
-						? $GLOBALS["DB"]->DateFormatToPHP(str_replace(":SS", "", FORMAT_DATETIME)) 
+					$arParams["DATE_TIME_FORMAT"] == "FULL"
+						? $GLOBALS["DB"]->DateFormatToPHP(str_replace(":SS", "", FORMAT_DATETIME))
 						: $arParams["DATE_TIME_FORMAT"]
 				),
 				$timestamp
@@ -457,9 +461,9 @@ if (!function_exists('__SLMGetLogRecord'))
 
 		// strip current year
 		if (
-			!empty($arParams["DATE_TIME_FORMAT"]) 
+			!empty($arParams["DATE_TIME_FORMAT"])
 			&& (
-				$arParams["DATE_TIME_FORMAT"] == "j F Y G:i" 
+				$arParams["DATE_TIME_FORMAT"] == "j F Y G:i"
 				|| $arParams["DATE_TIME_FORMAT"] == "j F Y g:i a"
 			)
 		)
@@ -503,12 +507,12 @@ if (!function_exists('__SLMGetLogRecord'))
 			);
 			$arEvent["FIELDS_FORMATTED"]["DATETIME_FORMATTED"] = FormatDate($arFormat, $timestamp);
 		}
-		
+
 		if (is_array($arEvent["FIELDS_FORMATTED"]["EVENT"]))
 		{
 			if (
 				$arCommentEvent
-				&& array_key_exists("OPERATION_ADD", $arCommentEvent) 
+				&& array_key_exists("OPERATION_ADD", $arCommentEvent)
 				&& $arCommentEvent["OPERATION_ADD"] == "log_rights"
 			)
 				$arEvent["FIELDS_FORMATTED"]["CAN_ADD_COMMENTS"] = (CSocNetLogRights::CheckForUser($arEvent["FIELDS_FORMATTED"]["EVENT"]["ID"], $GLOBALS["USER"]->GetID()) ? "Y" : "N");
@@ -518,38 +522,38 @@ if (!function_exists('__SLMGetLogRecord'))
 
 				if (array_key_exists($array_key, $GLOBALS["CurUserCanAddComments"]))
 					$arEvent["FIELDS_FORMATTED"]["CAN_ADD_COMMENTS"] = (
-						$GLOBALS["CurUserCanAddComments"][$array_key] == "Y" 
-						&& $arEvent["FIELDS_FORMATTED"]["HAS_COMMENTS"] == "Y" 
-							? "Y" 
+						$GLOBALS["CurUserCanAddComments"][$array_key] == "Y"
+						&& $arEvent["FIELDS_FORMATTED"]["HAS_COMMENTS"] == "Y"
+							? "Y"
 							: "N"
 					);
 				else
 				{
 					$feature = CSocNetLogTools::FindFeatureByEventID($arEvent["FIELDS_FORMATTED"]["EVENT"]["EVENT_ID"]);
 					if (
-						$feature 
-						&& $arCommentEvent 
-						&& array_key_exists("OPERATION_ADD", $arCommentEvent) 
+						$feature
+						&& $arCommentEvent
+						&& array_key_exists("OPERATION_ADD", $arCommentEvent)
 						&& $arCommentEvent["OPERATION_ADD"] <> ''
 					)
 						$GLOBALS["CurUserCanAddComments"][$array_key] = (
 							CSocNetFeaturesPerms::CanPerformOperation(
-								$GLOBALS["USER"]->GetID(), 
-								$arEvent["FIELDS_FORMATTED"]["EVENT"]["ENTITY_TYPE"], 
-								$arEvent["FIELDS_FORMATTED"]["EVENT"]["ENTITY_ID"], 
-								($feature == "microblog" ? "blog" : $feature), 
+								$GLOBALS["USER"]->GetID(),
+								$arEvent["FIELDS_FORMATTED"]["EVENT"]["ENTITY_TYPE"],
+								$arEvent["FIELDS_FORMATTED"]["EVENT"]["ENTITY_ID"],
+								($feature == "microblog" ? "blog" : $feature),
 								$arCommentEvent["OPERATION_ADD"]
-							) 
-								? "Y" 
+							)
+								? "Y"
 								: "N"
 						);
 					else
 						$GLOBALS["CurUserCanAddComments"][$array_key] = "Y";
 
 					$arEvent["FIELDS_FORMATTED"]["CAN_ADD_COMMENTS"] = (
-						$GLOBALS["CurUserCanAddComments"][$array_key] == "Y" 
-						&& $arEvent["FIELDS_FORMATTED"]["HAS_COMMENTS"] == "Y" 
-							? "Y" 
+						$GLOBALS["CurUserCanAddComments"][$array_key] == "Y"
+						&& $arEvent["FIELDS_FORMATTED"]["HAS_COMMENTS"] == "Y"
+							? "Y"
 							: "N"
 					);
 				}
@@ -570,11 +574,11 @@ if (!function_exists('__SLMGetLogRecord'))
 			&& is_object($GLOBALS["USER"])
 			&& (
 				(
-					array_key_exists("DESTINATION", $arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]) 
+					array_key_exists("DESTINATION", $arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"])
 					&& is_array($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["DESTINATION"])
 				)
 				|| (
-					array_key_exists("DESTINATION_CODE", $arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]) 
+					array_key_exists("DESTINATION_CODE", $arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"])
 					&& is_array($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["DESTINATION_CODE"])
 				)
 			)
@@ -585,7 +589,7 @@ if (!function_exists('__SLMGetLogRecord'))
 			$arGroupID = CSocNetLogTools::GetAvailableGroups(($bExtranetUser ? "Y" : "N"));
 
 			if (
-				array_key_exists("DESTINATION", $arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]) 
+				array_key_exists("DESTINATION", $arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"])
 				&& is_array($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["DESTINATION"])
 			)
 			{
@@ -653,15 +657,15 @@ if (!function_exists('__SLMGetLogCommentRecord'))
 		$timeFormated = FormatDate(GetMessage("SONET_SLM_FORMAT_TIME"), $timestamp);
 		$dateTimeFormated = FormatDate(
 			(
-				$arParams["DATE_TIME_FORMAT"] == "FULL" 
-					? $GLOBALS["DB"]->DateFormatToPHP(str_replace(":SS", "", FORMAT_DATETIME)) 
+				$arParams["DATE_TIME_FORMAT"] == "FULL"
+					? $GLOBALS["DB"]->DateFormatToPHP(str_replace(":SS", "", FORMAT_DATETIME))
 					: $arParams["DATE_TIME_FORMAT"]
 			),
 			$timestamp
 		);
 
 		if (
-			strcasecmp(LANGUAGE_ID, 'EN') !== 0 
+			strcasecmp(LANGUAGE_ID, 'EN') !== 0
 			&& strcasecmp(LANGUAGE_ID, 'DE') !== 0
 		)
 		{
@@ -670,9 +674,9 @@ if (!function_exists('__SLMGetLogCommentRecord'))
 		}
 		// strip current year
 		if (
-			!empty($arParams['DATE_TIME_FORMAT']) 
+			!empty($arParams['DATE_TIME_FORMAT'])
 			&& (
-				$arParams['DATE_TIME_FORMAT'] == 'j F Y G:i' 
+				$arParams['DATE_TIME_FORMAT'] == 'j F Y G:i'
 				|| $arParams['DATE_TIME_FORMAT'] == 'j F Y g:i a')
 			)
 		{
@@ -946,10 +950,10 @@ if (!function_exists('__SLMAjaxGetComment'))
 				}
 
 				$arFIELDS_FORMATTED = call_user_func(
-					array($arEventTmp["CLASS_FORMAT"], $arEventTmp["METHOD_FORMAT"]), 
+					array($arEventTmp["CLASS_FORMAT"], $arEventTmp["METHOD_FORMAT"]),
 					$arComment,
 					array_merge(
-						$arParams, 
+						$arParams,
 						array(
 							"MOBILE" => "N",
 							"PATH_TO_USER" => COption::GetOptionString("main", "TOOLTIP_PATH_TO_USER", SITE_DIR."company/personal/user/#user_id#/", SITE_ID)
@@ -963,10 +967,10 @@ if (!function_exists('__SLMAjaxGetComment'))
 				}
 
 				$arFIELDS_FORMATTED = call_user_func(
-					array($arEventTmp["CLASS_FORMAT"], $arEventTmp["METHOD_FORMAT"]), 
+					array($arEventTmp["CLASS_FORMAT"], $arEventTmp["METHOD_FORMAT"]),
 					$arComment,
 					array_merge(
-						$arParams, 
+						$arParams,
 						array(
 							"MOBILE" => "Y",
 							"PATH_TO_USER" => SITE_DIR."mobile/users/?user_id=#user_id#"
@@ -1025,109 +1029,3 @@ if (!function_exists("__logUFfileShowMobile"))
 		return $result;
 	}
 }
-
-
-if (!class_exists("MSLEUFProcessor"))
-{
-	class MSLEUFProcessor
-	{
-		public static function getDataByText($text)
-		{
-			$result = false;
-
-			if (
-				!empty($text)
-				&& \Bitrix\Main\ModuleManager::isModuleInstalled('disk')
-			)
-			{
-				$commentObjectId = $commentAttachedObjectId = array();
-
-				if (preg_match_all("#\\[disk file id=(n\\d+)\\]#is".BX_UTF_PCRE_MODIFIER, $text, $matches))
-				{
-					$commentObjectId = array_map(function($a) { return intval(mb_substr($a, 1)); }, $matches[1]);
-				}
-
-				if (preg_match_all("#\\[disk file id=(\\d+)\\]#is".BX_UTF_PCRE_MODIFIER, $text, $matches))
-				{
-					$commentAttachedObjectId = array_map(function($a) { return intval($a); }, $matches[1]);
-				}
-
-				if (
-					!empty($commentObjectId)
-					|| !empty($commentAttachedObjectId)
-				)
-				{
-					$result = array(
-						'OBJECT_ID' => $commentObjectId,
-						'ATTACHED_OBJECT_ID' => $commentAttachedObjectId
-					);
-				}
-			}
-
-			return $result;
-		}
-
-		public static function getUFData($inlineDiskObjectIdList = array(), $inlineDiskAttachedObjectIdList = array())
-		{
-			$result = false;
-
-			if (
-				(
-					!empty($inlineDiskObjectIdList)
-					|| !empty($inlineDiskAttachedObjectIdList)
-				)
-				&& \Bitrix\Main\Loader::includeModule('disk')
-			)
-			{
-				$inlineDiskAttachedObjectIdImageList = $entityAttachedObjectIdList = array();
-
-				$filter = array(
-					'=OBJECT.TYPE_FILE' => \Bitrix\Disk\TypeFile::IMAGE
-				);
-
-				$subFilter = [];
-				if (!empty($inlineDiskObjectIdList))
-				{
-					$subFilter['@OBJECT_ID'] = $inlineDiskObjectIdList;
-				}
-				elseif (!empty($inlineDiskAttachedObjectIdList))
-				{
-					$subFilter['@ID'] = $inlineDiskAttachedObjectIdList;
-				}
-
-				if(count($subFilter) > 1)
-				{
-					$subFilter['LOGIC'] = 'OR';
-					$filter[] = $subFilter;
-				}
-				else
-				{
-					$filter = array_merge($filter, $subFilter);
-				}
-
-				$res = \Bitrix\Disk\Internals\AttachedObjectTable::getList(array(
-					'filter' => $filter,
-					'select' => array('ID', 'OBJECT_ID', 'ENTITY_ID')
-				));
-				while ($attachedObjectFields = $res->fetch())
-				{
-					$inlineDiskAttachedObjectIdImageList[intval($attachedObjectFields['ID'])] = intval($attachedObjectFields['OBJECT_ID']);
-					if (!isset($entityAttachedObjectIdList[intval($attachedObjectFields['ENTITY_ID'])]))
-					{
-						$entityAttachedObjectIdList[intval($attachedObjectFields['ENTITY_ID'])] = array();
-					}
-					$entityAttachedObjectIdList[intval($attachedObjectFields['ENTITY_ID'])][] = intval($attachedObjectFields['ID']);
-				}
-
-				$result = array(
-					'ATTACHED_OBJECT_DATA' => $inlineDiskAttachedObjectIdImageList,
-					'ENTITIES_DATA' => $entityAttachedObjectIdList
-				);
-			}
-
-			return $result;
-		}
-	}
-}
-
-?>

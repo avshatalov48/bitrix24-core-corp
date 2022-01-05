@@ -249,8 +249,13 @@ BX.namespace('Tasks.Component');
 				this.initDialog();
 			},
 
-			initDialog: function()
+			getDialog: function()
 			{
+				if (this.dialog)
+				{
+					return this.dialog;
+				}
+
 				this.dialog = new BX.UI.EntitySelector.Dialog({
 					enableSearch: true,
 					multiple: this.option('max') > 1,
@@ -289,6 +294,11 @@ BX.namespace('Tasks.Component');
 					}
 				});
 
+				return this.dialog;
+			},
+
+			initDialog: function()
+			{
 				var targetNodes = this.scope().getElementsByClassName('js-id-mem-sel-is-control');
 				for (var i = 0; i < targetNodes.length; i++)
 				{
@@ -303,8 +313,8 @@ BX.namespace('Tasks.Component');
 							return;
 						}
 
-						this.dialog.setTargetNode(node);
-						this.dialog.show();
+						this.getDialog().setTargetNode(node);
+						this.getDialog().show();
 					}.bind(this));
 				}
 			},
@@ -504,12 +514,12 @@ BX.namespace('Tasks.Component');
 					return;
 				}
 
-				if (!this.dialog)
+				if (!this.getDialog())
 				{
 					return;
 				}
 
-				this.dialog.getItem(this.prepareItemData(value.data())).deselect();
+				this.getDialog().getItem(this.prepareItemData(value.data())).deselect();
 			}
 		}
 	});

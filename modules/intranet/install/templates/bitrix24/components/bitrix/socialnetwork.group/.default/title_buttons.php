@@ -59,19 +59,26 @@ $APPLICATION->AddHeadScript('/bitrix/templates/bitrix24/components/bitrix/social
 </script>
 
 <div class="socialnetwork-group-title-buttons"><?php
-	if (!$arResult['IS_IFRAME'] && in_array($arResult['CurrentUserPerms']['UserRole'], \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()))
+
+	if (
+		!$arResult['IS_IFRAME']
+		&& in_array($arResult['CurrentUserPerms']['UserRole'], \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember(), true)
+	)
 	{
-		$APPLICATION->includeComponent(
-			'bitrix:intranet.binding.menu',
-			'',
-			[
-				'SECTION_CODE' => 'socialnetwork',
-				'MENU_CODE' => 'group_notifications',
-				'CONTEXT' => [
-					'GROUP_ID' => $arResult['Group']['ID']
+		if (!$arResult['isScrumProject'])
+		{
+			$APPLICATION->includeComponent(
+				'bitrix:intranet.binding.menu',
+				'',
+				[
+					'SECTION_CODE' => 'socialnetwork',
+					'MENU_CODE' => 'group_notifications',
+					'CONTEXT' => [
+						'GROUP_ID' => $arResult['Group']['ID']
+					]
 				]
-			]
-		);
+			);
+		}
 
 		if ($arResult['bChatActive'])
 		{
@@ -83,10 +90,21 @@ $APPLICATION->AddHeadScript('/bitrix/templates/bitrix24/components/bitrix/social
 			<?php
 		}
 
-		?><button id="group_menu_subscribe_button" class="ui-btn ui-btn-light-border ui-btn-icon-follow ui-btn-themes
-			<?= ($arResult['bSubscribed'] ? ' ui-btn-active' : '') ?>"
-			title="<?= Loc::getMessage('SONET_SGM_T_NOTIFY_TITLE_' . ($arResult['bSubscribed'] ? 'ON' : 'OFF')) ?>"
-			onclick="B24SGControl.getInstance().setSubscribe(event);"
+		$classList = [
+			'ui-btn',
+			'ui-btn-light-border',
+			'ui-btn-icon-follow',
+			'ui-btn-themes',
+		];
+
+		if ($arResult['bSubscribed'])
+		{
+			$classList[] = 'ui-btn-active';
+		}
+		?><button id="group_menu_subscribe_button" class="<?= implode(' ', $classList) ?>"
+				  title="<?= Loc::getMessage('SONET_SGM_T_NOTIFY_TITLE_' . ($arResult['bSubscribed'] ? 'ON' : 'OFF')) ?>"
+				  onclick="B24SGControl.getInstance().setSubscribe(event);"
 		></button><?php
+
 	}
 ?></div>

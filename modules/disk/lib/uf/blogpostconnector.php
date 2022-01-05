@@ -97,12 +97,12 @@ final class BlogPostConnector extends Connector
 			)
 		));
 
-
-		\CBlogComment::addLiveComment($comId, array(
-			"MODE" => "PULL_MESSAGE",
-			"AUX" => 'fileversion',
-			"AUX_LIVE_PARAMS" => $provider->getLiveParams()
-		));
+		\CBlogComment::addLiveComment($comId, [
+			'MODE' => 'PULL_MESSAGE',
+			'AUX' => 'fileversion',
+			'AUX_LIVE_PARAMS' => $provider->getLiveParams(),
+			'CURRENT_USER_ID' => $authorId,
+		]);
 
 		BXClearCache(true, "/blog/comment/".intval($this->entityId / 100)."/".$this->entityId."/");
 

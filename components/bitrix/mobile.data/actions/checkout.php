@@ -262,6 +262,7 @@ else
 					"turnServerLogin" => Main\Config\Option::get("im", "turn_server_login", ""),
 					"turnServerPassword" => Main\Config\Option::get("im", "turn_server_password", ""),
 					"callLogService" => Main\Config\Option::get("im", "call_log_service", ""),
+					"jitsiServer" => Main\Config\Option::get("im", "jitsi_server", ""),
 				]
 			],
 			[
@@ -318,7 +319,7 @@ else
 				'select' => Array('ID'),
 				'filter' => Array(
 					'USER_ID' => $USER->GetID(),
-					'CODE' => $appUUID
+					'=CODE' => strtoupper($appUUID),
 				)
 			));
 			if ($row = $result->fetch())

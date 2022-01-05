@@ -1,6 +1,6 @@
 import {ajax as Ajax, Runtime, Type} from "main.core";
 import { EventEmitter } from "main.core.events";
-import { MenuItem } from 'main.popup';
+import { MenuItem } from "main.popup";
 import {PULL, PullClient} from "pull.client";
 import type {EditorOptions, DocumentSession, Context} from "./types";
 import {ButtonManager, Button, SplitButton} from "ui.buttons";
@@ -8,7 +8,9 @@ import ClientCommandHandler from "./client-command-handler";
 import ServerCommandHandler from "./server-command-handler";
 import UserManager from "./user-manager";
 import {LegacyPopup, SharingControlType} from "disk.sharing-legacy-popup";
-import {ExternalLink} from 'disk.external-link';
+import {ExternalLink} from "disk.external-link";
+import {PromoPopup} from "disk.onlyoffice-promo-popup";
+import CustomErrorControl from "./custom-error-controls";
 
 const SECONDS_TO_MARK_AS_STILL_WORKING = 60;
 
@@ -23,6 +25,7 @@ export default class OnlyOffice
 	documentSession: DocumentSession = null;
 	linkToEdit: string = null;
 	linkToView: string = null;
+	linkToDownload: string = null;
 	pullConfig: any = null;
 	editButton: SplitButton = null;
 	setupSharingButton: Button = null;
@@ -40,6 +43,7 @@ export default class OnlyOffice
 		this.documentSession = options.documentSession;
 		this.linkToEdit = options.linkToEdit;
 		this.linkToView = options.linkToView;
+		this.linkToDownload = options.linkToDownload;
 		this.targetNode = options.targetNode;
 		this.userBoxNode = options.userBoxNode;
 		this.editorNode = options.editorNode;
@@ -74,6 +78,11 @@ export default class OnlyOffice
 		if (this.isEditMode())
 		{
 			this.registerTimerToTrackWork();
+		}
+
+		if (PromoPopup.shouldShowViewPromo())
+		{
+			PromoPopup.showViewPromo();
 		}
 	}
 
@@ -183,7 +192,6 @@ export default class OnlyOffice
 
 	initializeEditor(options): void
 	{
-		this.adjustEditorHeight(options);
 		options.events = {
 			onDocumentStateChange: this.handleDocumentStateChange.bind(this),
 			onDocumentReady: this.handleDocumentReady.bind(this),
@@ -200,11 +208,6 @@ export default class OnlyOffice
 
 		this.editorJson = options;
 		this.editor = new DocsAPI.DocEditor(this.editorNode.id, options);
-	}
-
-	adjustEditorHeight(options): void
-	{
-		options.height = (document.body.clientHeight - 70) + 'px';
 	}
 
 	loadDiskExtensionInTopWindow(): void
@@ -256,6 +259,13 @@ export default class OnlyOffice
 
 	handleClickEditButton(): void
 	{
+		if (PromoPopup.shouldShowEditPromo())
+		{
+			PromoPopup.showEditPromo();
+
+			return;
+		}
+
 		this.handleRequestEditRights();
 	}
 
@@ -395,6 +405,19 @@ export default class OnlyOffice
 	handleError(d): void
 	{
 		console.log('onlyoffice error:', d.data);
+
+		if (d.data.errorCode === -84)
+		{
+			setTimeout(() => {
+				(new CustomErrorControl()).showWhenTooLarge(
+					this.context.object.name,
+					this.getEditorWrapperNode(),
+					this.getContainer(),
+					this.linkToDownload,
+				);
+
+			}, 100);
+		}
 	}
 
 	handleRequestRename(event): void

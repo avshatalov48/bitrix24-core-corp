@@ -1,13 +1,15 @@
-import {RequestSender} from '../utility/request.sender';
-import {DomBuilder} from '../utility/dom.builder';
-import {EntityStorage} from '../utility/entity.storage';
-import {Epic} from '../utility/epic';
+import {EntityStorage} from '../entity/entity.storage';
 
-import type {EpicType} from '../item/item';
+import {BaseEvent} from 'main.core.events';
+
+import {RequestSender} from '../utility/request.sender';
+
+import {Epic} from '../epic/epic';
+
+import type {EpicType} from '../item/task/epic';
 
 type Params = {
 	requestSender: RequestSender,
-	domBuilder: DomBuilder,
 	entityStorage: EntityStorage,
 	epic: Epic
 }
@@ -17,7 +19,6 @@ export class PullEpic
 	constructor(params: Params)
 	{
 		this.requestSender = params.requestSender;
-		this.domBuilder = params.domBuilder;
 		this.entityStorage = params.entityStorage;
 		this.epic = params.epic;
 
@@ -42,16 +43,16 @@ export class PullEpic
 
 	onEpicAdded(epicData: EpicType)
 	{
-		this.epic.onAfterCreateEpic(epicData);
+		this.epic.onAfterAdd((new BaseEvent()).setData(epicData));
 	}
 
 	onEpicUpdated(epicData: EpicType)
 	{
-		this.epic.onAfterUpdateEpic(epicData);
+		this.epic.onAfterEdit((new BaseEvent()).setData(epicData));
 	}
 
 	onEpicRemoved(epicData: EpicType)
 	{
-		this.epic.onAfterRemoveEpic(epicData);
+		this.epic.onAfterRemove((new BaseEvent()).setData(epicData));
 	}
 }

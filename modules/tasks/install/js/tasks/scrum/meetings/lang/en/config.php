@@ -1,0 +1,22 @@
+<?php
+$MESS["TSM_CHATS_CREATE_BUTTON"] = "Create";
+$MESS["TSM_CHATS_EMPTY_TEXT"] = "create team meetings; meeting chats will be created automatically";
+$MESS["TSM_CHATS_EMPTY_TITLE"] = "There are no chats for this project";
+$MESS["TSM_CHATS_HEADER_TITLE"] = "Chats";
+$MESS["TSM_MEETINGS_CREATE_BUTTON"] = "Create";
+$MESS["TSM_MEETINGS_CREATE_ONE_CLICK"] = "Create now";
+$MESS["TSM_MEETINGS_EMPTY_TEXT"] = "create regular team meetings";
+$MESS["TSM_MEETINGS_EMPTY_TITLE"] = "There are no meetings for this project";
+$MESS["TSM_MEETINGS_ERROR_POPUP_TITLE"] = "That's an error.";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATES_INFO"] = "Create regular meetings for your team with just one click. Meeting chats will be created for each meeting for the participants to communicate.";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_BLANK"] = "SCRUM MEETING TEMPLATES";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_DAILY"] = "Daily SCRUM";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_PLANNING"] = "Plan sprint";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_RETROSPECTIVE"] = "Sprint retrospective";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_REVIEW"] = "Review sprint";
+$MESS["TSM_MEETINGS_HEADER_TITLE"] = "Team meetings";
+$MESS["TSM_MEETINGS_SCHEDULED_BUTTON"] = "Planned meetings";
+$MESS["TSM_MEETINGS_SCHEDULED_BUTTON_HIDE"] = "Hide";
+$MESS["TSM_PLANNING_EVENTS_TITLE"] = "Planned meetings";
+$MESS["TSM_TODAY_EVENT_TITLE"] = "For today";
+$MESS["TSM_VIDEO_CALL_BUTTON"] = "HD Video call";

@@ -108,7 +108,10 @@ class TaskTagProvider extends BaseProvider
 		$result = [];
 		foreach ($tags as $tag)
 		{
-			$result[] = self::makeItem($tag, $options);
+			if ($tag->getName() !== '')
+			{
+				$result[] = self::makeItem($tag, $options);
+			}
 		}
 
 		return $result;
@@ -158,6 +161,11 @@ class TaskTagProvider extends BaseProvider
 		}
 	}
 
+	public function handleBeforeItemSave(Item $item): void
+	{
+
+	}
+
 	private function fillWithRecentTags(Dialog $dialog): void
 	{
 		$recentItems = $dialog->getRecentItems()->getAll();
@@ -166,7 +174,7 @@ class TaskTagProvider extends BaseProvider
 			/** @var RecentItem $item */
 			$name = (string)$item->getId();
 
-			if ($dialog->getItemCollection()->get(self::$entityId, $name))
+			if ($name === '' || $dialog->getItemCollection()->get(self::$entityId, $name))
 			{
 				continue;
 			}

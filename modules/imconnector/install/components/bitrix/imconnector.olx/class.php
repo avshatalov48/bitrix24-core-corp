@@ -186,6 +186,7 @@ class ImConnectorOlx extends CBitrixComponent
 						if ($registerResult->isSuccess())
 						{
 							$this->setStatus(true);
+							\Bitrix\ImConnector\Connectors\Olx::addAgent();
 						}
 					}
 					$cache->endDataCache($this->arResult['FORM']);
@@ -240,4 +241,6 @@ class ImConnectorOlx extends CBitrixComponent
 			}
 		}
 	}
+
+
 }

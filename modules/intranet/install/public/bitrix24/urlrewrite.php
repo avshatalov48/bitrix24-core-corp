@@ -266,6 +266,12 @@ $arUrlRewrite = array(
 		"PATH" => "/company/personal.php",
 	),
 	array(
+		"CONDITION" => "#^/calendar/rooms/#",
+		"RULE" => "",
+		"ID" => "bitrix:calender",
+		"PATH" => "/calendar/rooms.php",
+	),
+	array(
 		"CONDITION" => "#^/crm/configs/tax/#",
 		"RULE" => "",
 		"ID" => "bitrix:crm.config.tax",
@@ -777,6 +783,12 @@ $arUrlRewrite = array(
 		'RULE' => '',
 		'ID' => 'bitrix:intranet.customsection',
 		'PATH' => '/page/index.php',
+	),
+	array(
+		"CONDITION" => "#^/sign/#",
+		"RULE" => "",
+		"ID" => "bitrix:sign.start",
+		"PATH" => "/sign/index.php",
 	),
 );
 ?>

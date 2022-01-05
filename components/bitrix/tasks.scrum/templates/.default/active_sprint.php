@@ -77,14 +77,12 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 			groupId: '<?= (int)$arParams['GROUP_ID'] ?>',
 			views: <?= Json::encode($arResult['views']) ?>,
 			activeSprintId: '<?= $arResult['activeSprintId'] ?>',
-			activeSprint: <?= Json::encode($arResult['activeSprintData']) ?>,
-			sprints: <?= Json::encode($arResult['sprints']) ?>,
 			pathToTask: '<?= \CUtil::jSEscape($pathToTask) ?>',
 			taskLimitExceeded: '<?= ($arResult['taskLimitExceeded'] ? 'Y' : 'N') ?>',
 			canUseAutomation: '<?= ($arResult['canUseAutomation'] ? 'Y' : 'N') ?>'
 		});
 		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
 		BX.Tasks.Scrum.Entry.renderSprintStatsTo(document.getElementById('tasks-scrum-sprint-stats'));
-		BX.Tasks.Scrum.Entry.renderButtonsTo(document.getElementById('tasks-scrum-buttons-container'));
+		BX.Tasks.Scrum.Entry.renderRightElementsTo(document.getElementById('tasks-scrum-right-container'));
 	});
 </script>

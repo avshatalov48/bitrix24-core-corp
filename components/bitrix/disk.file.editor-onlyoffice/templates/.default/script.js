@@ -1,7 +1,11 @@
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports,main_popup,ui_buttons,disk_users,main_core_events,disk_sharingLegacyPopup,disk_externalLink,main_core,pull_client) {
+(function (exports,main_popup,disk_users,main_core_events,disk_sharingLegacyPopup,disk_externalLink,disk_onlyofficePromoPopup,ui_buttons,main_core,pull_client) {
 	'use strict';
+
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var ALLOWED_ATTEMPTS_TO_GET_USER_INFO = 3;
@@ -13,7 +17,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  function UserManager(options) {
 	    babelHelpers.classCallCheck(this, UserManager);
 
-	    _makeLinkAbsolute.add(this);
+	    _classPrivateMethodInitSpec(this, _makeLinkAbsolute);
 
 	    babelHelpers.defineProperty(this, "userBoxNode", null);
 	    babelHelpers.defineProperty(this, "context", null);
@@ -355,6 +359,10 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var _templateObject, _templateObject2;
 
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _handleClickToRefreshEditor = /*#__PURE__*/new WeakSet();
@@ -375,7 +383,7 @@ this.BX.Disk = this.BX.Disk || {};
 
 	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(ServerCommandHandler)).call.apply(_babelHelpers$getProt, [this].concat(args)));
 
-	    _handleClickToRefreshEditor.add(babelHelpers.assertThisInitialized(_this));
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _handleClickToRefreshEditor);
 
 	    return _this;
 	  }
@@ -415,16 +423,16 @@ this.BX.Disk = this.BX.Disk || {};
 	        this.userManager.getUserInfo(data.object.updatedBy, data.updatedBy.infoToken).then(function (userData) {
 	          BX.UI.Notification.Center.notify({
 	            content: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_SAVED_WHILE_EDITING', {
-	              '#NAME#': data.object.name,
-	              '#USER_NAME#': userData.name
+	              '#NAME#': main_core.Text.encode(data.object.name),
+	              '#USER_NAME#': main_core.Text.encode(userData.name)
 	            })
 	          });
 	        }, function () {});
 	      } else if (this.onlyOffice.isViewMode()) {
 	        this.userManager.getUserInfo(data.object.updatedBy, data.updatedBy.infoToken).then(function (userData) {
 	          var content = main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_VIEW_NON_ACTUAL_VERSION', {
-	            '#NAME#': data.object.name,
-	            '#USER_NAME#': userData.name
+	            '#NAME#': main_core.Text.encode(data.object.name),
+	            '#USER_NAME#': main_core.Text.encode(userData.name)
 	          });
 	          content = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"])), content);
 	          var refreshButton = content.querySelector('[data-refresh-btn]');
@@ -448,6 +456,40 @@ this.BX.Disk = this.BX.Disk || {};
 	  this.onlyOffice.reloadView();
 	}
 
+	var _templateObject$1;
+
+	var CustomErrorControl = /*#__PURE__*/function () {
+	  function CustomErrorControl() {
+	    babelHelpers.classCallCheck(this, CustomErrorControl);
+	  }
+
+	  babelHelpers.createClass(CustomErrorControl, [{
+	    key: "showWhenTooLarge",
+	    value: function showWhenTooLarge(fileName, container, targetNode, linkToDownload) {
+	      var containerClass = 'disk-fe-office-warning--popup';
+	      var downloadButton = new ui_buttons.Button({
+	        text: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_DOWNLOAD'),
+	        round: true,
+	        tag: ui_buttons.Button.Tag.LINK,
+	        link: linkToDownload,
+	        color: ui_buttons.Button.Color.SUCCESS,
+	        className: 'disk-fe-office-warning-btn',
+	        props: {
+	          target: '_blank'
+	        }
+	      });
+	      var errorControl = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"disk-fe-office-warning-wrap\">\n\t\t\t\t<div class=\"disk-fe-office-warning-overlay\"></div>\n\t\t\t\t<div class=\"disk-fe-office-warning-box\">\n\t\t\t\t\t<div class=\"disk-fe-office-warning-icon\"></div>\n\t\t\t\t\t<div class=\"disk-fe-office-warning-title\">", "</div>\n\t\t\t\t\t<div class=\"disk-fe-office-warning-file-name\">", "</div>\n\t\t\t\t\t<div class=\"disk-fe-office-warning-desc\">", "</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_TITLE'), main_core.Text.encode(fileName), main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_DESCR'), downloadButton.render());
+	      main_core.Dom.addClass(container, containerClass);
+	      main_core.Dom.prepend(errorControl, targetNode);
+	    }
+	  }]);
+	  return CustomErrorControl;
+	}();
+
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
 	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var SECONDS_TO_MARK_AS_STILL_WORKING = 60;
 
@@ -457,7 +499,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  function OnlyOffice(editorOptions) {
 	    babelHelpers.classCallCheck(this, OnlyOffice);
 
-	    _trackWork.add(this);
+	    _classPrivateMethodInitSpec$2(this, _trackWork);
 
 	    babelHelpers.defineProperty(this, "editor", null);
 	    babelHelpers.defineProperty(this, "editorJson", null);
@@ -468,6 +510,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.defineProperty(this, "documentSession", null);
 	    babelHelpers.defineProperty(this, "linkToEdit", null);
 	    babelHelpers.defineProperty(this, "linkToView", null);
+	    babelHelpers.defineProperty(this, "linkToDownload", null);
 	    babelHelpers.defineProperty(this, "pullConfig", null);
 	    babelHelpers.defineProperty(this, "editButton", null);
 	    babelHelpers.defineProperty(this, "setupSharingButton", null);
@@ -481,6 +524,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    this.documentSession = options.documentSession;
 	    this.linkToEdit = options.linkToEdit;
 	    this.linkToView = options.linkToView;
+	    this.linkToDownload = options.linkToDownload;
 	    this.targetNode = options.targetNode;
 	    this.userBoxNode = options.userBoxNode;
 	    this.editorNode = options.editorNode;
@@ -513,6 +557,10 @@ this.BX.Disk = this.BX.Disk || {};
 
 	    if (this.isEditMode()) {
 	      this.registerTimerToTrackWork();
+	    }
+
+	    if (disk_onlyofficePromoPopup.PromoPopup.shouldShowViewPromo()) {
+	      disk_onlyofficePromoPopup.PromoPopup.showViewPromo();
 	    }
 	  }
 
@@ -607,7 +655,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "initializeEditor",
 	    value: function initializeEditor(options) {
-	      this.adjustEditorHeight(options);
 	      options.events = {
 	        onDocumentStateChange: this.handleDocumentStateChange.bind(this),
 	        onDocumentReady: this.handleDocumentReady.bind(this),
@@ -623,11 +670,6 @@ this.BX.Disk = this.BX.Disk || {};
 
 	      this.editorJson = options;
 	      this.editor = new DocsAPI.DocEditor(this.editorNode.id, options);
-	    }
-	  }, {
-	    key: "adjustEditorHeight",
-	    value: function adjustEditorHeight(options) {
-	      options.height = document.body.clientHeight - 70 + 'px';
 	    }
 	  }, {
 	    key: "loadDiskExtensionInTopWindow",
@@ -677,6 +719,11 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleClickEditButton",
 	    value: function handleClickEditButton() {
+	      if (disk_onlyofficePromoPopup.PromoPopup.shouldShowEditPromo()) {
+	        disk_onlyofficePromoPopup.PromoPopup.showEditPromo();
+	        return;
+	      }
+
 	      this.handleRequestEditRights();
 	    }
 	  }, {
@@ -808,7 +855,15 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleError",
 	    value: function handleError(d) {
+	      var _this2 = this;
+
 	      console.log('onlyoffice error:', d.data);
+
+	      if (d.data.errorCode === -84) {
+	        setTimeout(function () {
+	          new CustomErrorControl().showWhenTooLarge(_this2.context.object.name, _this2.getEditorWrapperNode(), _this2.getContainer(), _this2.linkToDownload);
+	        }, 100);
+	      }
 	    }
 	  }, {
 	    key: "handleRequestRename",
@@ -947,6 +1002,7 @@ this.BX.Disk = this.BX.Disk || {};
 
 	exports.OnlyOffice = OnlyOffice;
 	exports.Waiting = Waiting;
+	exports.CustomErrorControl = CustomErrorControl;
 
-}((this.BX.Disk.Editor = this.BX.Disk.Editor || {}),BX.Main,BX.UI,BX.Disk,BX.Event,BX.Disk.Sharing,BX.Disk,BX,BX));
+}((this.BX.Disk.Editor = this.BX.Disk.Editor || {}),BX.Main,BX.Disk,BX.Event,BX.Disk.Sharing,BX.Disk,BX.Disk.OnlyOfficePromo,BX.UI,BX,BX));
 //# sourceMappingURL=script.js.map

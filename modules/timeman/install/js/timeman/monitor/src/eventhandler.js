@@ -184,7 +184,7 @@ class EventHandler
 
 		BX.desktop.addCustomEvent(
 			'BXExitApplication',
-			this.catchAppClose
+			this.catchAppClose.bind(this)
 		);
 
 		if (this.isTrackerGetActiveAppAvailable())

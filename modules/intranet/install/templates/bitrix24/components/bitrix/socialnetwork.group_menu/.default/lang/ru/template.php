@@ -37,6 +37,7 @@ $MESS["SONET_SGM_T_NOTIFY_TITLE_OFF"] = "Уведомления выключен
 $MESS["SONET_SGM_T_NOTIFY_TITLE_ON"] = "Уведомления включены";
 $MESS["SONET_SGM_T_LINKS_ABOUT"] = "О группе";
 $MESS["SONET_SGM_T_LINKS_ABOUT_PROJECT"] = "О проекте";
+$MESS["SONET_SGM_T_LINKS_ABOUT_SCRUM"] = "О Скрам";
 $MESS["SONET_SGM_T_MEMBERS"] = "Участники";
 $MESS["SONET_SGM_T_MEMBERS2"] = "Участники: #NUM#";
 $MESS["SONET_SGM_T_SETTINGS"] = "Настройки";
@@ -52,4 +53,7 @@ $MESS["SONET_SGM_T_CONTROL_HINT_OPENNEWWINDOW"] = "Открыть страниц
 $MESS["SONET_SGM_T_CONTROL_HINT_FAVORITES_ADD"] = "Добавить в избранное";
 $MESS["SONET_SGM_T_CONTROL_HINT_FAVORITES_REMOVE"] = "Убрать из избранного";
 $MESS["SONET_SGM_T_CONTROL_NOTIFICATION_COPYURL"] = "Ссылка на страницу скопирована в буфер обмена";
-
+$MESS["SONET_TASKS_SCRUM_MEETINGS_BUTTON"] = "ЧАТЫ И ВСТРЕЧИ";
+$MESS["SONET_TASKS_SCRUM_METHODOLOGY_BUTTON"] = "ЭЛЕМЕНТЫ СКРАМ";
+$MESS["SONET_TASKS_SCRUM_MEETINGS_LINK"] = "Чаты и встречи";
+$MESS["SONET_TASKS_SCRUM_METHODOLOGY_LINK"] = "Элементы Скрама";

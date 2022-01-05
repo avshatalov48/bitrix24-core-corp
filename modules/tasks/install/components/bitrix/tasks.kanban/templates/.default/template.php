@@ -229,15 +229,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 ?>
 
 <div id="task_kanban">
-	<?if ($arParams['SPRINT_SELECTED'] == 'Y' && !$arParams['SPRINT_ID']):?>
-		<div class="tasks-kanban-start">
-			<div class="tasks-kanban-start-title-sm">
-				<?= Loc::getMessage('KANBAN_NO_ACTIVE_SPRINT');?>
-			</div>
-		</div>
-		<?
-		return;
-	elseif ($emptyKanban):?>
+	<?if ($emptyKanban):?>
 		<div class="tasks-kanban-start">
 			<div class="tasks-kanban-start-wrapper">
 				<div class="tasks-kanban-start-title">

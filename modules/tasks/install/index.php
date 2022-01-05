@@ -204,6 +204,7 @@ Class tasks extends CModule
 		$errors = static::createChecklistFileField('TASKS_TASK_TEMPLATE_CHECKLIST', $errors);
 
 		$errors = static::createScrumItemFileField('TASKS_SCRUM_ITEM', $errors);
+		$errors = static::createScrumEpicFileField('TASKS_SCRUM_EPIC', $errors);
 
 		return $errors;
 	}
@@ -304,6 +305,42 @@ Class tasks extends CModule
 			$userFieldId = $userField->Add([
 				'ENTITY_ID' => $entityId,
 				'FIELD_NAME' => 'UF_SCRUM_ITEM_FILES',
+				'USER_TYPE_ID' => 'disk_file',
+				'MULTIPLE' => 'Y',
+				'MANDATORY' => 'N',
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' => 'N',
+				'EDIT_IN_LIST' => 'N',
+				'IS_SEARCHABLE' => 'N',
+			], false);
+
+			if (!$userFieldId && ($exception = $APPLICATION->getException()))
+			{
+				$errors[] = $exception->getString();
+			}
+		}
+
+		return $errors;
+	}
+
+	private static function createScrumEpicFileField(string $entityId, array $errors): array
+	{
+		global $APPLICATION;
+
+		$userField = new CUserTypeEntity();
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID' => $entityId,
+				'FIELD_NAME' => 'UF_SCRUM_EPIC_FILES',
+			]
+		);
+
+		if (!$userFieldRes->Fetch())
+		{
+			$userFieldId = $userField->Add([
+				'ENTITY_ID' => $entityId,
+				'FIELD_NAME' => 'UF_SCRUM_EPIC_FILES',
 				'USER_TYPE_ID' => 'disk_file',
 				'MULTIPLE' => 'Y',
 				'MANDATORY' => 'N',
@@ -660,6 +697,7 @@ Class tasks extends CModule
 		$this->deleteMailFields('TASKS_TASK');
 
 		$this->deleteScrumItemFileFields('TASKS_SCRUM_ITEM');
+		$this->deleteScrumEpicFileFields('TASKS_SCRUM_EPIC');
 	}
 
 	private function deleteFileFields(string $entityId): void
@@ -714,6 +752,21 @@ Class tasks extends CModule
 			[
 				'ENTITY_ID'  => $entityId,
 				'FIELD_NAME' => 'UF_SCRUM_ITEM_FILES',
+			]
+		);
+		if ($userField = $userFieldRes->Fetch())
+		{
+			(new CUserTypeEntity())->delete($userField['ID']);
+		}
+	}
+
+	private function deleteScrumEpicFileFields(string $entityId): void
+	{
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID'  => $entityId,
+				'FIELD_NAME' => 'UF_SCRUM_EPIC_FILES',
 			]
 		);
 		if ($userField = $userFieldRes->Fetch())

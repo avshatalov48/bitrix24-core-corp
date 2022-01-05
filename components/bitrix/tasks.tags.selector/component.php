@@ -55,4 +55,10 @@ else
 
 $arResult['CAN_EDIT'] = ($arParams['CAN_EDIT'] ?? false);
 
+$arResult['TASK_ID'] = 0;
+if (array_key_exists('TASK_ID', $arParams))
+{
+	$arResult['TASK_ID'] = (int) $arParams['TASK_ID'];
+}
+
 $this->IncludeComponentTemplate();

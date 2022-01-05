@@ -6,6 +6,8 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
+
+\Bitrix\Main\UI\Extension::load('ui.entity-selector');
 ?>
 
 <?//$helper->displayFatals();?>
@@ -27,10 +29,11 @@ $helper = $arResult['HELPER'];
 					?><?if(!$readOnly):?><span class="js-id-ms-plink-deselect task-group-field-title-del"></span><?endif?><?
 				?></span><?
 			?></span>
-			<?/*<span class="task-detail-group-loader"><?=Loc::getMessage("TASKS_COMMON_LOADING")?></span>*/?>
 
 			<?if(!$readOnly):?>
-				<span class="js-id-ms-plink-open-form task-dashed-link task-group-select <?=($empty ? '' : 'invisible')?>"><span class="task-dashed-link-inner"><?=Loc::getMessage("TASKS_COMMON_ADD")?></span></span>
+				<span class="js-id-ms-plink-control task-dashed-link task-group-select <?=($empty ? '' : 'invisible')?>">
+					<span class="task-dashed-link-inner"><?=Loc::getMessage("TASKS_COMMON_ADD")?></span>
+				</span>
 			<?endif?>
 
 		</span>

@@ -2,6 +2,7 @@
 $MESS["KANBAN_COLUMN_TITLE_PLACEHOLDER"] = "Name";
 $MESS["KANBAN_ITEM_TITLE_PLACEHOLDER"] = "Name #Tag";
 $MESS["KANBAN_NO_ACTIVE_SPRINT"] = "Sie haben noch keinen aktiven Sprint. Erstellen Sie jetzt einen aus der Ansicht Planer.";
+$MESS["KANBAN_NO_COMPLETED_SPRINT"] = "Sie haben keine abgeschlossenen Sprints";
 $MESS["KANBAN_POPUP_CLOSE"] = "Schließen";
 $MESS["KANBAN_POPUP_DETAIL"] = "Details";
 $MESS["KANBAN_POPUP_K_TEXT_1"] = "Hier werden die Aufgaben Ihres Projektes (Ihrer Projektgruppe) in Form einer Kanban-Tafel dargestellt. In dieser Ansicht werden alle Aufgabenphasen von \"Anstehend\" bis zu \"Abgeschlossen\" angezeigt.";

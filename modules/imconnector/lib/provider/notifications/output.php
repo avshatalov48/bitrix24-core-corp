@@ -2,12 +2,15 @@
 
 namespace Bitrix\ImConnector\Provider\Notifications;
 
+use Bitrix\ImConnector\Connector;
+use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Provider\Base;
 use Bitrix\ImConnector\Result;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Notifications\Integration\ImConnector;
+use Bitrix\Notifications\Settings;
 
 class Output extends Base\Output
 {
@@ -49,12 +52,13 @@ class Output extends Base\Output
 		}
 
 		$lineId = (int)$data['LINE_ID'];
+		$skipTOS = isset($data['SKIP_TOS']) ? (bool)$data['SKIP_TOS'] : false;
 		if ($lineId <= 0)
 		{
 			return $result->addError(new Error('LINE_ID should be positive integer'));
 		}
 
-		$registerResult = ImConnector::registerConnector($lineId);
+		$registerResult = ImConnector::registerConnector($lineId, $skipTOS);
 		if (!$registerResult->isSuccess())
 		{
 			$result->addErrors($registerResult->getErrors());
@@ -192,5 +196,36 @@ class Output extends Base\Output
 		$result = clone $this->result;
 
 		return $result->addError(new Error('Message delete is not supported', 'NOT_SUPPORTED'));
+	}
+
+	/**
+	 * Used for integration with CRM Widget/Button
+	 *
+	 * @param int $lineId
+	 * @return Result
+	 */
+	protected function infoConnectorsLine($lineId): Result
+	{
+		$result = clone $this->result;
+
+		$notificationsData = [];
+		if (
+			$result->isSuccess()
+			&& Settings::isScenarioEnabled(Settings::SCENARIO_VIRTUAL_WHATSAPP)
+			&& $lineId == \Bitrix\Notifications\Integration\ImConnector::getLineId()
+		)
+		{
+			$notificationsData['id'] = $lineId;
+
+			/** will be overwritten later, in \Bitrix\Crm\SiteButton\Channel\ChannelOpenLine::getWidgetsById */
+			$notificationsData['name'] = Loc::getMessage("IMCONNECTOR_PROVIDER_NOTIFICATIONS_CONTACT_US_ON_WHATSAPP");
+			$notificationsData['icon'] = Connector::getIconByConnector('notifications_virtual_wa');
+			$notificationsData['url'] = '';
+		}
+		$result->setData([
+			Library::ID_NOTIFICATIONS_CONNECTOR => $notificationsData
+		]);
+
+		return $result;
 	}
 }

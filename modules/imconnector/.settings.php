@@ -1,18 +1,27 @@
 <?php
+use Bitrix\ImConnector\Tools;
+
 return [
 	'services' => [
 		'value' => [
+			//@deprecated
 			'ImConnector.toolsFbInstagramDirect' => [
-				'className' => \Bitrix\ImConnector\Tools\Connectors\FbInstagramDirect::class,
+				'className' => Tools\Connectors\FbInstagramDirect::class,
 			],
 			'ImConnector.toolsWeChat' => [
-				'className' => \Bitrix\ImConnector\Tools\Connectors\WeChat::class,
+				'className' => Tools\Connectors\WeChat::class,
 			],
 			'ImConnector.toolsNetwork' => [
-				'className' => \Bitrix\ImConnector\Tools\Connectors\Network::class,
+				'className' => Tools\Connectors\Network::class,
 			],
 			'ImConnector.toolsNotifications' => [
-				'className' => \Bitrix\ImConnector\Tools\Connectors\Notifications::class,
+				'className' => Tools\Connectors\Notifications::class,
+			],
+			'ImConnector.toolsMessageservice' => [
+				'className' => Tools\Connectors\Messageservice::class,
+			],
+			'toolsConnector' => [
+				'className' => Tools\Connector::class,
 			],
 		],
 		'readonly' => true,

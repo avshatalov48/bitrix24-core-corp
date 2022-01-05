@@ -1,4 +1,5 @@
-import {Tag} from 'main.core';
+import {Dom, Tag} from 'main.core';
+
 import {Entity} from './entity';
 import {Item} from '../item/item';
 
@@ -14,18 +15,29 @@ export class ListItems
 	render(): HTMLElement
 	{
 		this.node = Tag.render`
-			<div class="tasks-scrum-items-list" data-entity-id="${this.entity.getId()}">
-				${this.entity.isCompleted() ? '' : this.entity.getInput().render()}
+			<div class="tasks-scrum__content-items" data-entity-id="${this.entity.getId()}">
 				${[...this.entity.getItems().values()].map((item: Item) => {
 					item.setEntityType(this.entity.getEntityType());
 					return item.render();
 				})}
+				${this.renderLoader()}
 			</div>
 		`;
+
 		return this.node;
 	}
 
-	getNode(): HTMLElement|null
+	renderLoader(): ?HTMLElement
+	{
+		return Tag.render`<div class="tasks-scrum-entity-items-loader"></div>`;
+	}
+
+	getNode(): ?HTMLElement
+	{
+		return this.node;
+	}
+
+	getListNode(): ?HTMLElement
 	{
 		return this.node;
 	}
@@ -33,5 +45,15 @@ export class ListItems
 	setEntityId(entityId: number)
 	{
 		this.node.dataset.entityId = parseInt(entityId, 10);
+	}
+
+	addScrollbar()
+	{
+		Dom.addClass(this.getNode(), '--scrollbar');
+	}
+
+	removeScrollbar()
+	{
+		Dom.removeClass(this.getNode(), '--scrollbar');
 	}
 }

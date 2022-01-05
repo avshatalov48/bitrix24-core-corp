@@ -1,5 +1,5 @@
 module.exports = {
-	input: 'src/scrum.dod.js',
-	output: 'dist/scrum.dod.bundle.js',
+	input: 'src/dod.js',
+	output: 'dist/dod.bundle.js',
 	namespace: 'BX.Tasks.Scrum'
 };

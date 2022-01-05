@@ -119,18 +119,6 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 
 					//Reset cache
 					$this->cleanCache();
-
-					$serviceLocator = ServiceLocator::getInstance();
-					if(
-						!empty($this->request[$this->connector . '_agreement_terms'])
-						&& $serviceLocator->has('ImConnector.toolsFbInstagramDirect')
-					)
-					{
-						/** @var \Bitrix\ImConnector\Tools\Connectors\FbInstagramDirect $toolsFbInstagramDirect */
-						$toolsFbInstagramDirect = $serviceLocator->get('ImConnector.toolsFbInstagramDirect');
-
-						$toolsFbInstagramDirect->addUserConsentAgreementTerms();
-					}
 				}
 
 				if(!empty($this->arResult['ACTIVE_STATUS']))
@@ -176,9 +164,16 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 					}
 
 					//If you bind to the group
-					if($this->request[$this->connector. '_authorization_page'])
+					if($this->request[$this->connector . '_authorization_page'])
 					{
-						$authorizationPage = $this->connectorOutput->authorizationPage($this->request['page_id']);
+						$paramsAuthorizationPage = [];
+
+						if($this->request['comments'] === 'Y')
+						{
+							$paramsAuthorizationPage['comments'] = true;
+						}
+
+						$authorizationPage = $this->connectorOutput->authorizationPage($this->request['page_id'], $paramsAuthorizationPage);
 
 						if($authorizationPage->isSuccess())
 						{
@@ -366,7 +361,7 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 						}
 					}
 
-					if(!empty($InvalidOauthAccessToken ))
+					if(!empty($InvalidOauthAccessToken))
 					{
 						$this->arResult['FORM'] = $infoOAuth->getData();
 						$this->arResult['FORM']['STEP'] = 1;
@@ -412,23 +407,6 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 				$this->arResult['URL']['SIMPLE_FORM'] = $uri->getUri();
 			}
 			//Analytic tags end
-		}
-		elseif($serviceLocator->has('ImConnector.toolsFbInstagramDirect'))
-		{
-			/** @var \Bitrix\ImConnector\Tools\Connectors\FbInstagramDirect $toolsFbInstagramDirect */
-			$toolsFbInstagramDirect = $serviceLocator->get('ImConnector.toolsFbInstagramDirect');
-			if($toolsFbInstagramDirect->isUserConsentAgreementTerms() === false)
-			{
-				$agreementTerms = $toolsFbInstagramDirect->getAgreementTerms();
-
-				if(
-					!empty($agreementTerms) &&
-					!empty($agreementTerms['HTML'])
-				)
-				{
-					$this->arResult['AGREEMENT_TERMS'] = $agreementTerms;
-				}
-			}
 		}
 
 		$this->arResult['CONNECTOR'] = $this->connector;

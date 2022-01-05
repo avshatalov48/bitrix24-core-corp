@@ -2,8 +2,9 @@
 
 namespace Bitrix\Mobile\AppTabs;
 
+use Bitrix\Main\Loader;
+use \Bitrix\MobileApp\Mobile;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Mobile\Context;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\MobileApp\Janative\Manager;
 
@@ -13,7 +14,25 @@ class Notify implements Tabable
 
 	public function isAvailable()
 	{
+		if (!Loader::includeModule('mobileapp') || !Loader::includeModule('im'))
+		{
+			return false;
+		}
+
+		if (Mobile::getApiVersion() >= 41)
+		{
+			return false;
+		}
+
 		return true;
+	}
+
+	public function isNext()
+	{
+		return (
+			Mobile::getApiVersion() >= 41
+			&& \Bitrix\Main\Config\Option::get("mobile", "NEXT_NOTIFICATIONS", "N") !== "N"
+		);
 	}
 
 	public function getData()
@@ -23,19 +42,26 @@ class Notify implements Tabable
 
 	public function getMenuData()
 	{
-		$data = $this->getDataInternal();
 		$result = [
 			"title" => $this->getTitle(),
+			"sort" => $this->defaultSortValue(),
+			"counter" => "notifications",
 			"useLetterImage" => true,
 			"color" => "#40465A",
 			"imageUrl" => "favorite/notify.png",
 		];;
 
-		if($data["component"])
+		$data = $this->getDataInternal();
+
+		if ($this->isNext())
 		{
-			$result["params"]= [
-				"onclick"=>\Bitrix\Mobile\Tab\Utils::getComponentJSCode($data["component"]),
+			$result["params"] = [
+				"onclick" => \Bitrix\Mobile\Tab\Utils::getComponentJSCode($data["component"]),
 			];
+		}
+		else
+		{
+			$result["params"] = $data["page"];
 		}
 
 		return $result;
@@ -43,24 +69,44 @@ class Notify implements Tabable
 
 	public function getDataInternal()
 	{
-		return [
+		$data = [
 			"sort" => $this->defaultSortValue(),
 			"imageName" => "bell",
 			"badgeCode" => "notifications",
 			"id" => $this->getId(),
-			"component" => [
+		];
+
+		if ($this->isNext())
+		{
+			$data["component"] = [
 				"name" => "JSStackComponent",
-				"title" =>  $this->getTitle(),
+				"titleParams" => [
+					"useLargeTitleMode" => true,
+					"text" => $this->getTitle()
+				],
 				"componentCode" => "im.notify",
 				"scriptPath" => Manager::getComponentPath("im.notify"),
 				"rootWidget" => [
-					'name' => 'layout',
-					'settings' => [
-						'objectName' => 'layoutWidget',
+					"name" => "layout",
+					"settings" => [
+						'objectName' => "layoutWidget",
 					],
 				],
-			],
-		];
+			];
+		}
+		else
+		{
+			$data["page"] = [
+				"titleParams" => [
+					"useLargeTitleMode" => true,
+					"text" => $this->getTitle()
+				],
+				"page_id" => "im.notify",
+				"url" => $this->context->siteDir . "mobile/im/notify.php",
+			];
+		}
+
+		return $data;
 	}
 
 	public function shouldShowInMenu()

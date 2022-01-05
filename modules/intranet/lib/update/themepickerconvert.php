@@ -107,6 +107,10 @@ final class ThemePickerConvert extends Stepper
 				Option::set('intranet', 'needConvertThemePicker', 'N');
 			}
 		}
+		else
+		{
+			Option::set('intranet', 'needConvertThemePicker', 'N');
+		}
 
 		return $return;
 	}

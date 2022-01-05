@@ -68,7 +68,7 @@ class Action
 			'href' => $this->rowData['PATH'],
 		];
 
-		if ($user['IS_GROUP_OWNER'] === 'Y')
+		if ($user['IS_OWNER'] === 'Y')
 		{
 			$actions[] = [
 				'text' => Loc::getMessage('TASKS_GRID_PROJECT_ROW_ACTION_EDIT'),
@@ -123,11 +123,11 @@ class Action
 
 		if (
 			$isMember
-			&& $user['IS_GROUP_OWNER'] === 'N'
-			&& $user['AUTO_MEMBER'] === 'N'
+			&& $user['IS_OWNER'] === 'N'
+			&& $user['IS_AUTO_MEMBER'] === 'N'
 		)
 		{
-			if ($user['IS_GROUP_ACCESS_REQUESTING'] === 'Y')
+			if ($user['IS_ACCESS_REQUESTING'] === 'Y')
 			{
 				$requestPath = \CComponentEngine::makePathFromTemplate(
 					$this->parameters['PATH_TO_USER_REQUESTS'],
@@ -135,7 +135,7 @@ class Action
 				);
 				$userGroupRelationId = $this->rowData['USER_GROUP_ID'];
 
-				if ($user['IS_GROUP_ACCESS_REQUESTING_BY_ME'] === 'Y')
+				if ($user['IS_ACCESS_REQUESTING_BY_ME'] === 'Y')
 				{
 					$actions[] = [
 						'text' => Loc::getMessage('TASKS_GRID_PROJECT_ROW_ACTION_CANCEL_REQUEST'),

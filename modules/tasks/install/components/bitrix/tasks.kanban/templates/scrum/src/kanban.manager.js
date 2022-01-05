@@ -40,6 +40,7 @@ type Params = {
 	ajaxComponentParams: AjaxComponentParams,
 	siteTemplateId: string,
 	sprintSelected: boolean,
+	isActiveSprint: boolean,
 	parentTasks: {
 		[id: number]: ParentTask
 	}
@@ -79,6 +80,7 @@ export class KanbanManager
 		this.ajaxComponentPath = params.ajaxComponentPath;
 		this.ajaxComponentParams = params.ajaxComponentParams;
 		this.sprintSelected = params.sprintSelected;
+		this.isActiveSprint = params.isActiveSprint;
 
 		this.kanbanHeader = null;
 		this.kanban = null;
@@ -104,6 +106,7 @@ export class KanbanManager
 		if (!this.sprintSelected)
 		{
 			this.showNotSprintMessage(renderTo);
+
 			return;
 		}
 
@@ -208,6 +211,7 @@ export class KanbanManager
 			this.downGroupingVisibility(container);
 		}
 
+		// todo handle task complete push
 		EventEmitter.subscribe(kanban, 'Kanban.Grid:onCompleteParentTask', () => {
 			this.onCompleteParentTask(kanban);
 		});
@@ -434,10 +438,15 @@ export class KanbanManager
 
 	showNotSprintMessage(renderTo: HTMLElement)
 	{
+		const message = this.isActiveSprint
+			? Loc.getMessage('KANBAN_NO_ACTIVE_SPRINT')
+			: Loc.getMessage('KANBAN_NO_COMPLETED_SPRINT')
+		;
+
 		Dom.append(Tag.render`
 			<div class="tasks-kanban-start">
 				<div class="tasks-kanban-start-title-sm">
-					${Loc.getMessage('KANBAN_NO_ACTIVE_SPRINT')}
+					${message}
 				</div>
 			</div>
 		`, renderTo);

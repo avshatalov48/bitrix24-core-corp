@@ -1,5 +1,9 @@
 <?php
 
+use Bitrix\Disk\Document\OnlyOffice\Bitrix24Scenario;
+use Bitrix\Disk\Document\OnlyOffice\ExporterBitrix24Scenario;
+use Bitrix\Main\UI\Extension;
+
 \Bitrix\Main\Loader::registerAutoLoadClasses(
 	"disk",
 	array(
@@ -109,9 +113,19 @@ CJSCore::RegisterExt('disk', array(
 	'css' => '/bitrix/js/disk/css/disk.css',
 	'lang' => BX_ROOT.'/modules/disk/lang/'.LANGUAGE_ID.'/js_disk.php',
 	'rel' => array('core', 'popup', 'ajax', 'fx', 'dd', 'ui.notification'),
-	'oninit' => function()
-	{
+	'oninit' => function() {
+
+		$bitrix24Scenario = new Bitrix24Scenario();
+		$exporterBitrix24Scenario = new ExporterBitrix24Scenario($bitrix24Scenario);
+		$onlyOfficeEnabled = \Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler::isEnabled();
+
+		if ($onlyOfficeEnabled)
+		{
+			Extension::load('disk.onlyoffice-promo-popup');
+		}
+
 		$isCompositeMode = defined("USE_HTML_STATIC_CACHE") && USE_HTML_STATIC_CACHE === true;
+
 		if($isCompositeMode)
 		{
 			// It's a hack. The package "disk" can be included in static area and pasted in <head>.
@@ -122,21 +136,26 @@ CJSCore::RegisterExt('disk', array(
 			$APPLICATION->AddViewContent("inline-scripts", '
 				<script>
 					BX.message["disk_restriction"] = false;
-					BX.message["disk_onlyoffice_available"] = ' . (int)\Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler::isEnabled() . ';
+					BX.message["disk_onlyoffice_available"] = ' . (int)$onlyOfficeEnabled . ';
 					BX.message["disk_revision_api"] = ' . (int)\Bitrix\Disk\Configuration::getRevisionApi() . ';
-					BX.message["disk_document_service"] = "' . (string)\Bitrix\Disk\UserConfiguration::getDocumentServiceCode() . '";
-				</script>    
+					BX.message["disk_document_service"] = "' . (string)\Bitrix\Disk\UserConfiguration::getDocumentServiceCode() . '"
+					' . ($onlyOfficeEnabled ? $exporterBitrix24Scenario->exportToBxMessages() : '') . '
+				</script>
 			');
 		}
 		else
 		{
+			$messages = [
+				'disk_restriction' => false,
+				'disk_onlyoffice_available' => $onlyOfficeEnabled,
+				'disk_revision_api' => (int)\Bitrix\Disk\Configuration::getRevisionApi(),
+				'disk_document_service' => (string)\Bitrix\Disk\UserConfiguration::getDocumentServiceCode(),
+			];
+
+			$scenarioMessages = $onlyOfficeEnabled ? $exporterBitrix24Scenario->exportToArray() : [];
+
 			return [
-				'lang_additional' => [
-					'disk_restriction' => false,
-					'disk_onlyoffice_available' => \Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler::isEnabled(),
-					'disk_revision_api' => (int)\Bitrix\Disk\Configuration::getRevisionApi(),
-					'disk_document_service' => (string)\Bitrix\Disk\UserConfiguration::getDocumentServiceCode(),
-				],
+				'lang_additional' => array_merge($messages, $scenarioMessages),
 			];
 		}
 	},

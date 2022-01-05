@@ -127,6 +127,51 @@
 
 		static openTaskListComponent(data)
 		{
+			const settings = {
+				objectName: 'list',
+				useSearch: true,
+				useLargeTitleMode: true,
+			};
+
+			if (Application.getApiVersion() >= 40)
+			{
+				settings.inputPanel = {
+					action: 0,
+						callback: 0,
+						useImageButton: true,
+						useAudioMessages: true,
+						smileButton: [],
+						message: {
+						placeholder: BX.message('MOBILE_TASKS_BACKGROUND_INPUT_PANEL_PLACEHOLDER'),
+					},
+					attachButton: {
+						items: [
+							{
+								id: 'disk',
+								name: BX.message('MOBILE_TASKS_BACKGROUND_INPUT_PANEL_B24_DISK'),
+								dataSource: {
+									multiple: true,
+									url: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${data.params.DATA.ownerId}`,
+								},
+							},
+						],
+					},
+					attachFileSettings: {
+						resize: {
+							targetWidth: -1,
+								targetHeight: -1,
+								sourceType: 1,
+								encodingType: 0,
+								mediaType: 2,
+								allowsEdit: false,
+								saveToPhotoAlbum: true,
+								cameraDirection: 0,
+						},
+						maxAttachedFilesCount: 100,
+					},
+				};
+			}
+
 			PageManager.openComponent('JSStackComponent', {
 				canOpenInDefault: data.canOpenInDefault || false,
 				scriptPath: data.path,
@@ -134,12 +179,8 @@
 				params: data.params,
 				title: data.title || '',
 				rootWidget: {
+					settings,
 					name: 'tasks.list',
-					settings: {
-						objectName: 'list',
-						useSearch: true,
-						useLargeTitleMode: true,
-					},
 				},
 			});
 		}

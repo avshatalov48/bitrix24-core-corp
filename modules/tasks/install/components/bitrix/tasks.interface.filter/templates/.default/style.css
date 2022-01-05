@@ -181,3 +181,7 @@
 .tasks-interface-filter .main-ui-filter-search {
 	flex: 1;
 }
+
+.tasks-interface-filter-btn-add {
+	margin-right: 12px
+}

@@ -800,6 +800,19 @@ class ThemePicker
 			$currentUserId = (is_object($GLOBALS["USER"]) ? (int)$GLOBALS["USER"]->getID() : 0);
 		}
 
+		if ($currentUserThemeFields = ThemeTable::getList([
+			'filter' => [
+				'=USER_ID' => $currentUserId,
+				'=ENTITY_TYPE' => $this->getEntityType(),
+				'=ENTITY_ID' => $currentUserId,
+				'=CONTEXT' => $this->getContext(),
+			],
+			'select' => [ 'ID' ]
+		])->fetch())
+		{
+			ThemeTable::delete($currentUserThemeFields['ID']);
+		}
+
 		return ThemeTable::set([
 			'THEME_ID' => $themeId,
 			'USER_ID' => $currentUserId,

@@ -1,0 +1,11 @@
+<?php
+$MESS["TASKS_SCRUM_ADD_EPIC_FORM_TITLE"] = "Новый эпик";
+$MESS["TASKS_SCRUM_EDIT_EPIC_FORM_TITLE"] = "Изменение эпика";
+$MESS["TASKS_SCRUM_VIEW_EPIC_FORM_TITLE"] = "Просмотр эпика";
+$MESS["TASKS_SCRUM_SPRINT_ADD_EPIC_NAME_PLACEHOLDER"] = "Введите название эпика";
+$MESS["TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TITLE"] = "Эпики";
+$MESS["TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TOOLBAR_BUTTON"] = "Создать эпик";
+$MESS["TASKS_SCRUM_EPICS_EMPTY_FIRST_TITLE"] = "Здесь будут все ваши эпики";
+$MESS["TASKS_SCRUM_EPICS_EMPTY_SECOND_TITLE"] = "Создайте первый эпик";
+$MESS["TASKS_SCRUM_EPIC_EDIT_BUTTON"] = "Изменить";
+$MESS["TSE_ERROR_POPUP_TITLE"] = "Произошла ошибка";

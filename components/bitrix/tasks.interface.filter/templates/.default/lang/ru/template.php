@@ -43,3 +43,5 @@ $MESS['TASKS_BTN_GROUP_BY_POPUP_TEXT'] = "При сортировке «по а�
 
 $MESS['TASKS_LINK_CREATE_GROUP'] = 'Создать группу';
 $MESS['TASKS_LINK_CREATE_PROJECT'] = 'Создать проект';
+
+$MESS['TASKS_BTN_ADD_SCRUM_TASK']='Создать задачу';

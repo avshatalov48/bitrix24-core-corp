@@ -31,7 +31,6 @@ class Counter
 	public function prepare(): array
 	{
 		$userId = (int)$this->parameters['USER_ID'];
-		$groupId = (int)$this->rowData['ID'];
 		$groupUrl = $this->rowData['PATH'];
 
 		$counter = [
@@ -44,7 +43,7 @@ class Counter
 			|| array_key_exists($userId, $this->rowData['MEMBERS']['MEMBERS'])
 		)
 		{
-			$counter = (new ProjectCounter($userId))->getRowCounter($groupId);
+			$counter = $this->rowData['COUNTER'];
 		}
 
 		$colorMap = [

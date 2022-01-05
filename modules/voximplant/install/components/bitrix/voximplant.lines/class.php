@@ -25,7 +25,7 @@ class VoximplantLinesComponent extends \CBitrixComponent
 		$this->userPermissions = Permissions::createWithCurrentUser();
 		$this->rentedNumbers = CVoxImplantPhone::GetRentNumbers();
 		$sip = new CVoxImplantSip();
-		$sip->updateSipRegisrations();
+		$sip->updateSipRegistrations();
 		if(is_array($this->rentedNumbers) && CVoxImplantPhone::GetRentedNumbersCount() != count($this->rentedNumbers))
 		{
 			CVoxImplantPhone::syncWithController([
@@ -87,7 +87,6 @@ class VoximplantLinesComponent extends \CBitrixComponent
 			],
 			"order" => ["ID" => "ASC"],
 		]);
-
 
 		while ($row = $cursor->fetch())
 		{
@@ -294,14 +293,22 @@ class VoximplantLinesComponent extends \CBitrixComponent
 		{
 			$state = "-";
 		}
-		else if((int)$row["SIP_STATUS_CODE"] === 200)
+		if ($row['SIP_TYPE'] === CVoxImplantSip::TYPE_CLOUD)
 		{
-			$state = "<span class='voximplant-grid-state-active'>" . Loc::getMessage("VOX_LINES_SIP_STATUS_RECOVERED") . "</span>";
+			if (!$row['SIP_STATUS_CODE'])
+			{
+				$state = "<span class='voximplant-grid-state-process'>" . Loc::getMessage("VOX_LINES_SIP_STATUS_IN_PROCESS") . "</span>";
+			}
+			elseif ((int)$row["SIP_STATUS_CODE"] === 200)
+			{
+				$state = "<span class='voximplant-grid-state-active'>" . Loc::getMessage("VOX_LINES_SIP_STATUS_RECOVERED") . "</span>";
+			}
+			else
+			{
+				$state = "<span class='voximplant-grid-state-fail'>" . Loc::getMessage("VOX_LINES_SIP_STATUS_FAIL") . "</span>";
+			}
 		}
-		else
-		{
-			$state = "<span class='voximplant-grid-state-fail'>" . Loc::getMessage("VOX_LINES_SIP_STATUS_FAIL") . "</span>";
-		}
+
 
 		return [
 			"ID" => $row["ID"],

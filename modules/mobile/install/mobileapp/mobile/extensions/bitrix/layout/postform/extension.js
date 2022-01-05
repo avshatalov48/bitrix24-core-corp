@@ -419,14 +419,24 @@
 
 				postFormLayoutWidget.close();
 
-			}).catch((errorText) => {
+			}).catch((error) => {
 
-				console.error(errorText);
+				console.error(error.message);
 
-				Utils.showError({
-					errorText: errorText,
-					callback: null
-				});
+				if (error.code === 'DESTINATIONS_EMPTY')
+				{
+					this.onClickDestinationMenuItem({
+						title: BX.message('RECIPIENT_SELECT_TITLE'),
+						callback: this.onPublish.bind(this),
+					});
+				}
+				else
+				{
+					Utils.showError({
+						errorText: error.message,
+						callback: null,
+					});
+				}
 			});
 		}
 
@@ -436,7 +446,10 @@
 			{
 				if (postText.length <= 0)
 				{
-					reject(BX.message('MOBILE_EXT_LAYOUT_POSTFORM_TEXT_EMPTY'));
+					reject({
+						message: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_TEXT_EMPTY'),
+						code: 'TEXT_EMPTY',
+					});
 				}
 
 				postData.POST_MESSAGE = postText;
@@ -484,7 +497,6 @@
 					'departments': 'DR',
 				};
 
-
 				Object.keys(recipients)
 					.filter( key => Array.isArray(recipients[key]) && recipients[key].length)
 					.forEach( key =>
@@ -504,7 +516,10 @@
 
 				if (destinationList.length <= 0)
 				{
-					reject(BX.message('MOBILE_EXT_LAYOUT_POSTFORM_DESTINATIONS_EMPTY'));
+					reject({
+						message: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_DESTINATIONS_EMPTY'),
+						code: 'DESTINATIONS_EMPTY',
+					});
 				}
 
 				postData.DEST = destinationList;
@@ -558,7 +573,10 @@
 					)
 				)
 				{
-					reject(BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDE_EMPLOYEE_EMPTY'));
+					reject({
+						message: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDE_EMPLOYEE_EMPTY'),
+						code: 'GRATITUDE_EMPLOYEE_EMPTY',
+					});
 				}
 
 				if (
@@ -890,7 +908,7 @@
 			}
 		}
 
-		onClickDestinationMenuItem()
+		onClickDestinationMenuItem(params)
 		{
 			const recipients = this.recipients;
 			const showAll = !BX.componentParameters.get('DESTINATION_TO_ALL_DENY', false);
@@ -923,8 +941,17 @@
 						dynamicSearch: true
 					},
 				})
-				.open({ selected: Utils.formatSelectedRecipients(recipients) })
-				.then(recipients => this.onSelectedRecipient(recipients))
+				.open({
+					selected: Utils.formatSelectedRecipients(recipients),
+					title: (params && params.title ? params.title : null),
+				})
+				.then(recipients => {
+					this.onSelectedRecipient(recipients);
+					if (params && params.callback)
+					{
+						params.callback();
+					}
+				})
 				.catch(e=>console.error(e))
 		}
 

@@ -7,19 +7,15 @@ import {View} from './view';
 import {ActiveSprintActionButton} from './header/active.sprint.action.button';
 import {RobotButton} from './header/robot.button';
 
-import {Sprint} from '../entity/sprint/sprint';
 import {SprintSidePanel} from '../entity/sprint/sprint.side.panel';
-import {StatsHeaderBuilder} from '../entity/sprint/stats.header.builder';
-import {Item} from '../item/item';
 
-import type {SprintParams} from '../entity/sprint/sprint';
+import {StatsBuilder} from '../entity/sprint/stats/stats.builder';
+
 import type {Views} from './view';
 
 type Params = {
-	pathToTask: string,
+	activeSprintId: number,
 	views: Views,
-	activeSprint: SprintParams,
-	sprints: Array<SprintParams>,
 	taskLimitExceeded: 'Y' | 'N',
 	canUseAutomation: 'Y' | 'N'
 }
@@ -36,12 +32,6 @@ export class ActiveSprint extends View
 
 		if (this.existActiveSprint())
 		{
-			this.finishStatus = this.getActiveSprintParams().finishStatus;
-
-			this.sprint = new Sprint(this.getActiveSprintParams());
-
-			this.itemsInFinishStage = new Map();
-
 			this.bindHandlers();
 		}
 
@@ -52,18 +42,19 @@ export class ActiveSprint extends View
 	{
 		super.renderSprintStatsTo(container);
 
+		// todo ger data for sprint from server
 		if (this.sprint)
 		{
-			this.statsHeader = StatsHeaderBuilder.build(this.sprint);
-			this.statsHeader.setKanbanStyle();
+			this.stats = StatsBuilder.build(this.sprint);
+			this.stats.setKanbanStyle();
 
-			Dom.append(this.statsHeader.render(), container);
+			Dom.append(this.stats.render(), container);
 		}
 	}
 
-	renderButtonsTo(container: HTMLElement)
+	renderRightElementsTo(container: HTMLElement)
 	{
-		super.renderButtonsTo(container);
+		super.renderRightElementsTo(container);
 
 		if (!this.existActiveSprint())
 		{
@@ -81,44 +72,20 @@ export class ActiveSprint extends View
 		activeSprintActionButton.subscribe('completeSprint', this.onCompleteSprint.bind(this));
 		activeSprintActionButton.subscribe('showBurnDownChart', this.onShowSprintBurnDownChart.bind(this));
 
+		Dom.addClass(container, '--without-bg');
+
 		Dom.append(robotButton.render(), container);
 		Dom.append(activeSprintActionButton.render(), container);
 	}
 
 	setParams(params: Params)
 	{
-		this.setPathToTask(params.pathToTask);
-		this.setActiveSprintParams(params.activeSprint);
+		this.activeSprintId = parseInt(params.activeSprintId, 10);
+
 		this.setTaskLimitsExceeded(params.taskLimitExceeded);
 		this.setCanUseAutomation(params.canUseAutomation);
 
-		this.sprints = new Map();
-		params.sprints.forEach((sprintData) => {
-			const sprint = new Sprint(sprintData);
-			this.sprints.set(sprint.getId(), sprint);
-		});
-
 		this.views = params.views;
-	}
-
-	setPathToTask(pathToTask: string)
-	{
-		this.pathToTask = (Type.isString(pathToTask) ? pathToTask : '');
-	}
-
-	getPathToTask(): string
-	{
-		return this.pathToTask;
-	}
-
-	setActiveSprintParams(params: SprintParams)
-	{
-		this.activeSprint = (Type.isPlainObject(params) ? params : null);
-	}
-
-	getActiveSprintParams(): SprintParams
-	{
-		return this.activeSprint;
 	}
 
 	setTaskLimitsExceeded(limitExceeded: string)
@@ -143,7 +110,7 @@ export class ActiveSprint extends View
 
 	existActiveSprint(): boolean
 	{
-		return (this.activeSprint !== null);
+		return this.activeSprintId > 0;
 	}
 
 	bindHandlers()
@@ -161,8 +128,6 @@ export class ActiveSprint extends View
 
 	bindKanbanHandlers(kanban)
 	{
-		this.onKanbanRender(kanban);
-
 		EventEmitter.subscribe(kanban, 'Kanban.Grid:onItemMoved', (event: BaseEvent) => {
 			const [kanbanItem, targetColumn, beforeItem] = event.getCompatData();
 			this.onItemMoved(kanbanItem, targetColumn, beforeItem);
@@ -172,39 +137,15 @@ export class ActiveSprint extends View
 	onCompleteSprint(baseEvent: BaseEvent)
 	{
 		const sprintSidePanel = new SprintSidePanel({
-			sprints: this.sprints,
+			groupId: this.groupId,
 			sidePanel: this.sidePanel,
-			requestSender: this.requestSender,
 			views: this.views
 		});
-		sprintSidePanel.showCompleteSidePanel(this.sprint);
+		sprintSidePanel.showCompletionForm();
 
-		this.sprint.subscribe('showTask', (innerBaseEvent: BaseEvent) => {
-			const item = innerBaseEvent.getData();
-			this.sidePanel.openSidePanelByUrl(this.getPathToTask().replace('#task_id#', item.getSourceId()));
+		sprintSidePanel.subscribe('showTask', (innerBaseEvent: BaseEvent) => {
+			this.sidePanel.openSidePanelByUrl(this.getPathToTask().replace('#task_id#', innerBaseEvent.getData()));
 		});
-	}
-
-	/**
-	 * Handles Kanban render.
-	 * @param {BX.Tasks.Kanban.Grid} kanbanGrid
-	 * @returns {void}
-	 */
-	onKanbanRender(kanbanGrid)
-	{
-		const items = kanbanGrid.getItems();
-		const hasOwnProperty = Object.prototype.hasOwnProperty;
-		for (let itemId in kanbanGrid.getItems())
-		{
-			if (hasOwnProperty.call(items, itemId))
-			{
-				const item = items[itemId];
-				if (item.getColumn().getType() === this.finishStatus)
-				{
-					this.itemsInFinishStage.set(itemId, '');
-				}
-			}
-		}
 	}
 
 	/**
@@ -216,93 +157,15 @@ export class ActiveSprint extends View
 	 */
 	onItemMoved(kanbanItem, targetColumn, beforeItem)
 	{
-		if (targetColumn.type === this.finishStatus)
-		{
-			if (!this.itemsInFinishStage.has(kanbanItem.getId()))
-			{
-				this.updateStatsAfterMovedToFinish(kanbanItem, this.sprint);
-			}
-		}
-		else
-		{
-			if (this.itemsInFinishStage.has(kanbanItem.getId()))
-			{
-				this.updateStatsAfterMovedFromFinish(kanbanItem, this.sprint);
-			}
-		}
-
-		this.statsHeader.updateStats(this.sprint);
-	}
-
-	updateStatsAfterMovedToFinish(kanbanItem, sprint: Sprint)
-	{
-		this.itemsInFinishStage.set(kanbanItem.getId(), kanbanItem.getStoryPoints());
-
-		sprint.getCompletedStoryPoints().addPoints(kanbanItem.getStoryPoints());
-		sprint.getUncompletedStoryPoints().subtractPoints(kanbanItem.getStoryPoints());
-
-		sprint.setCompletedTasks(sprint.getCompletedTasks() + 1);
-		sprint.setUncompletedTasks(sprint.getUncompletedTasks() - 1);
-
-		sprint.getItems().forEach((scrumItem: Item) => {
-			if (scrumItem.getSourceId() === parseInt(kanbanItem.getId(), 10))
-			{
-				scrumItem.setCompleted('Y');
-
-				if (scrumItem.isSubTask())
-				{
-					const parentItem = sprint.getItemBySourceId(scrumItem.getParentTaskId());
-					if (parentItem)
-					{
-						const subTasksItems = sprint.getItemsByParentTaskId(parentItem.getSourceId());
-						const unCompletedItem = [...subTasksItems.values()].find((item: Item) => !item.isCompleted());
-						if (!unCompletedItem)
-						{
-							parentItem.setCompleted('Y');
-						}
-					}
-				}
-			}
-		});
-	}
-
-	updateStatsAfterMovedFromFinish(kanbanItem, sprint: Sprint)
-	{
-		this.itemsInFinishStage.delete(kanbanItem.getId());
-
-		sprint.getCompletedStoryPoints().subtractPoints(kanbanItem.getStoryPoints());
-		sprint.getUncompletedStoryPoints().addPoints(kanbanItem.getStoryPoints());
-
-		sprint.setCompletedTasks(sprint.getCompletedTasks() - 1);
-		sprint.setUncompletedTasks(sprint.getUncompletedTasks() + 1);
-
-		sprint.getItems().forEach((scrumItem: Item) => {
-			if (scrumItem.getSourceId() === parseInt(kanbanItem.getId(), 10))
-			{
-				scrumItem.setCompleted('N');
-
-				if (scrumItem.isSubTask())
-				{
-					const parentItem = sprint.getItemBySourceId(scrumItem.getParentTaskId());
-					if (parentItem)
-					{
-						const subTasksItems = sprint.getItemsByParentTaskId(parentItem.getSourceId());
-						const unCompletedItem = [...subTasksItems.values()].find((item: Item) => !item.isCompleted());
-						if (unCompletedItem)
-						{
-							parentItem.setCompleted('N');
-						}
-					}
-				}
-			}
-		});
+		// todo update stats
+		//this.stats.setSprintData(this.sprint);
 	}
 
 	onShowSprintBurnDownChart(baseEvent: BaseEvent)
 	{
 		const sprintSidePanel = new SprintSidePanel({
+			groupId: this.groupId,
 			sidePanel: this.sidePanel,
-			requestSender: this.requestSender,
 			views: this.views
 		});
 		sprintSidePanel.showBurnDownChart(this.sprint);

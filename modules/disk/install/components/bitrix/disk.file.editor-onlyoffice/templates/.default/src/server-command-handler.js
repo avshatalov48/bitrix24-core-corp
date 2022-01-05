@@ -1,7 +1,7 @@
 import BaseCommandHandler from "./base-command-handler";
 import type {DocumentSavedMessage} from "./types";
 import {ContentUpdatedMessage} from "./types";
-import {Loc, Tag} from "main.core";
+import {Loc, Tag, Text} from "main.core";
 
 export default class ServerCommandHandler extends BaseCommandHandler
 {
@@ -40,8 +40,8 @@ export default class ServerCommandHandler extends BaseCommandHandler
 			this.userManager.getUserInfo(data.object.updatedBy, data.updatedBy.infoToken).then(userData => {
 				BX.UI.Notification.Center.notify({
 					content: Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_SAVED_WHILE_EDITING', {
-						'#NAME#': data.object.name,
-						'#USER_NAME#': userData.name,
+						'#NAME#': Text.encode(data.object.name),
+						'#USER_NAME#': Text.encode(userData.name),
 					}),
 				});
 			}, () => {});
@@ -50,8 +50,8 @@ export default class ServerCommandHandler extends BaseCommandHandler
 		{
 			this.userManager.getUserInfo(data.object.updatedBy, data.updatedBy.infoToken).then(userData => {
 				let content = Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_VIEW_NON_ACTUAL_VERSION', {
-					'#NAME#': data.object.name,
-					'#USER_NAME#': userData.name,
+					'#NAME#': Text.encode(data.object.name),
+					'#USER_NAME#': Text.encode(userData.name),
 				});
 				content = Tag.render`<span>${content}</span>`;
 

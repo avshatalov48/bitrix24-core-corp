@@ -13,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CMain $APPLICATION */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
@@ -28,6 +29,7 @@ UI\Extension::load([
 	'ui.buttons.icons',
 	'ui.notification',
 	'ui.info-helper',
+	'ui.hint',
 ]);
 
 if (Loader::includeModule('bitrix24'))
@@ -61,7 +63,8 @@ if (
 				RELATION_ID: <?= (int)$arResult["UserRelationId"] ?>,
 				URL_REJECT_OUTGOING_REQUEST: '<?= CUtil::JSEscape($arResult["Urls"]["UserRequests"]) ?>',
 				URL_GROUPS_LIST: '<?= CUtil::JSEscape($arResult["Urls"]["GroupsList"]) ?>',
-				PROJECT: <?= ($arResult["Group"]["PROJECT"] === "Y" ? 'true' : 'false') ?>
+				PROJECT: <?= ($arResult["Group"]["PROJECT"] === "Y" ? 'true' : 'false') ?>,
+				SCRUM: <?= ($arResult['isScrumProject'] ? 'true' : 'false') ?>
 			});
 		});
 	</script><?php
@@ -92,8 +95,10 @@ if (
 		BX.BXSGM24.init({
 			currentUserId: BX.message('USER_ID'),
 			groupId: <?=(int)$arResult["Group"]["ID"]?>,
-			groupType: '<?=CUtil::JSEscape($arResult['Group']['TypeCode'])?>',
+			groupType: '<?= CUtil::JSEscape($arResult['Group']['TypeCode']) ?>',
+			projectTypeCode: '<?= CUtil::JSEscape($arResult['Group']['ProjectTypeCode']) ?>',
 			isProject: <?=($arResult["Group"]["PROJECT"] === "Y" ? 'true' : 'false')?>,
+			isScrumProject: <?= ($arResult['isScrumProject'] ? 'true' : 'false') ?>,
 			isOpened: <?=($arResult["Group"]["OPENED"] === "Y" ? 'true' : 'false')?>,
 			favoritesValue: <?=($arResult["FAVORITES"] ? 'true' : 'false')?>,
 			canInitiate: <?=($arResult["CurrentUserPerms"]["UserCanInitiate"] && !$arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
@@ -113,7 +118,9 @@ if (
 					: 'false'
 			) ?>,
 			urls: <?= CUtil::PhpToJSObject($arResult['Urls']) ?>,
-			pageId: '<?= $arParams['PAGE_ID'] ?>'
+			pageId: '<?= $arParams['PAGE_ID'] ?>',
+			avatarPath: '<?= CUtil::JSEscape(isset($arResult['Group']['IMAGE_FILE']['src']) ? (string)$arResult['Group']['IMAGE_FILE']['src'] : '') ?>',
+			avatarType: '<?= CUtil::JSEscape(isset($arResult['Group']['AVATAR_TYPE']) ? \Bitrix\Socialnetwork\Helper\Workgroup::getAvatarTypeWebCssClass($arResult['Group']['AVATAR_TYPE']) : '') ?>',
 		});
 	});
 </script><?php
@@ -128,13 +135,30 @@ if (
 					: ''
 			);
 
-			if (!$arResult['inIframe'])
+			$classList = [];
+
+			if (
+				empty($arResult['Group']['IMAGE_FILE']['src'])
+				&& !empty($arResult['Group']['AVATAR_TYPE'])
+			)
 			{
-				?><a href="<?= $arResult['Urls']['View'] ?>" class="ui-icon ui-icon-common-user-group profile-menu-avatar"><i <?= $avatarStyle ?>></i></a><?php
+				$classList[] = 'sonet-common-workgroup-avatar';
+				$classList[] = '--' . \Bitrix\Socialnetwork\Helper\Workgroup::getAvatarTypeWebCssClass($arResult['Group']['AVATAR_TYPE']);
 			}
 			else
 			{
-				?><span class="ui-icon ui-icon-common-user-group profile-menu-avatar"><i <?= $avatarStyle ?>></i></span><?php
+				$classList[] = 'ui-icon';
+				$classList[] = 'ui-icon-common-user-group';
+				$classList[] = 'profile-menu-avatar';
+			}
+
+			if (!$arResult['inIframe'])
+			{
+				?><a href="<?= $arResult['Urls']['View'] ?>" class="<?= implode(' ', $classList) ?>"><i <?= $avatarStyle ?>></i></a><?php
+			}
+			else
+			{
+				?><span class="<?= implode(' ', $classList) ?>"><i <?= $avatarStyle ?>></i></span><?php
 			}
 			?><div class="profile-menu-group-info">
 				<div class="profile-menu-name-box"><?php
@@ -163,38 +187,40 @@ if (
 					?><span class="profile-menu-description"><?= Loc::getMessage('SONET_UM_ARCHIVE_GROUP') ?></span><?php
 				}
 
+				switch (mb_strtolower($arResult['Group']['ProjectTypeCode']))
+				{
+					case 'scrum':
+						$aboutTitle = Loc::getMessage('SONET_SGM_T_LINKS_ABOUT_SCRUM');
+						break;
+					case 'project':
+						$aboutTitle = Loc::getMessage('SONET_SGM_T_LINKS_ABOUT_PROJECT');
+						break;
+					default:
+						$aboutTitle = Loc::getMessage('SONET_SGM_T_LINKS_ABOUT');
+				}
+
 				if (!$arResult['inIframe'])
 				{
-					?><span class="profile-menu-links"><?php
-						?><a href="<?=$arResult["Urls"]["Card"]?>" class="profile-menu-links-item"><?= Loc::getMessage("SONET_SGM_T_LINKS_ABOUT_PROJECT") ?></a><?php
+					?><span class="profile-menu-links">
+						<?php
 
-						?><a href="<?=$arResult["Urls"]["GroupUsers"]?>" class="profile-menu-links-item"><?php
-							if ((int)$arResult['Group']['NUMBER_OF_MEMBERS'] > 0)
-							{
-								echo Loc::getMessage("SONET_SGM_T_MEMBERS2", array('#NUM#' => (int)$arResult['Group']['NUMBER_OF_MEMBERS']));
-							}
-							else
-							{
-								echo Loc::getMessage("SONET_SGM_T_MEMBERS");
-							}
-						?></a><?php
-
-						if (
-							$arResult["CurrentUserPerms"]["UserCanProcessRequestsIn"]
-							&& !$arResult["HideArchiveLinks"]
-							&& (int)$arResult['Group']['NUMBER_OF_REQUESTS'] > 0
-						)
+						if ($isScrumProject && $arResult['CanView']['tasks'])
 						{
-							?><a href="<?= $arResult['Urls']['GroupRequests'] ?>" class="profile-menu-links-count">+<?= (int)$arResult['Group']['NUMBER_OF_REQUESTS'] ?></a><?php
+							?>
+							<span
+								id="tasks-scrum-meetings-button"
+								class="ui-btn ui-btn-primary ui-btn-icon-camera"
+								style="cursor: pointer;"
+							><?= Loc::getMessage('SONET_TASKS_SCRUM_MEETINGS_LINK') ?></span>
+							<span
+								id="tasks-scrum-methodology-button"
+								class="ui-btn ui-btn-light-border"
+								style="cursor: pointer;"
+							><?= Loc::getMessage('SONET_TASKS_SCRUM_METHODOLOGY_LINK') ?></span>
+							<?php
 						}
 
-						if (
-							$arResult["CurrentUserPerms"]["UserCanModifyGroup"]
-							|| $arResult["CurrentUserPerms"]["UserIsMember"]
-						)
-						{
-							?><a id="bx-group-menu-settings" href="javascript:void(0);" class="profile-menu-links-item"><?=Loc::getMessage("SONET_UM_ACTIONS_BUTTON")?></a><?php
-						}
+						?><a href="<?= $arResult['Urls']['Card'] ?>" id="project-widget-button" class="ui-btn ui-btn-light-border" data-slider-ignore-autobinding="true" data-workgroup="<?= htmlspecialcharsbx(Json::encode($arResult['projectWidgetData'])) ?>"><?= $aboutTitle ?></a><?php
 
 					?></span><?php
 				}
@@ -203,6 +229,20 @@ if (
 				{
 
 					?><span class="profile-menu-links"><?php
+
+						if ($isScrumProject && $arResult['CanView']['tasks'])
+						{
+							?>
+							<button
+								id="tasks-scrum-meetings-button"
+								class="ui-btn ui-btn-primary ui-btn-icon-camera"
+							><?= Loc::getMessage('SONET_TASKS_SCRUM_MEETINGS_BUTTON') ?></button>
+							<button
+								id="tasks-scrum-methodology-button"
+								class="ui-btn ui-btn-light-border ui-btn-themes"
+							><?= Loc::getMessage('SONET_TASKS_SCRUM_METHODOLOGY_BUTTON') ?></button>
+							<?php
+						}
 
 						if ($arResult['bUserCanRequestGroup'])
 						{
@@ -222,40 +262,38 @@ if (
 							}
 						}
 
-						if ($groupMember)
-						{
-							$APPLICATION->includeComponent(
-								'bitrix:intranet.binding.menu',
-								'',
-								[
-									'SECTION_CODE' => 'socialnetwork',
-									'MENU_CODE' => 'group_notifications',
-									'CONTEXT' => [
-										'GROUP_ID' => $arResult['Group']['ID']
-									]
-								]
-							);
-						}
-
-						if ($arResult['CanView']['chat'])
+						if (
+							$arResult['CanView']['chat']
+							&& !$arResult['isScrumProject']
+						)
 						{
 							?><span id="group-menu-control-button-cont" class="profile-menu-button-container"></span><?php
 						}
 
-						if ($groupMember)
+						if (
+							$groupMember
+							&& in_array($arParams['PAGE_ID'], [ 'group', 'group_general', 'group_log' ], true)
+						)
 						{
-							?><button id="group_menu_subscribe_button" class="ui-btn ui-btn-light-border ui-btn-icon-follow ui-btn-themes
-								<?= ($arResult['bSubscribed'] ? ' ui-btn-active' : '') ?>"
+							$classList = [
+								'ui-btn',
+								'ui-btn-light-border',
+								'ui-btn-icon-follow',
+								'ui-btn-themes',
+							];
+
+							if ($arResult['bSubscribed'])
+							{
+								$classList[] = 'ui-btn-active';
+							}
+
+							?><button id="group_menu_subscribe_button" class="<?= implode(' ', $classList) ?>"
 									  title="<?= Loc::getMessage('SONET_SGM_T_NOTIFY_TITLE_' . ($arResult['bSubscribed'] ? 'ON' : 'OFF')) ?>"
 									  onclick="B24SGControl.getInstance().setSubscribe(event);"
 							></button><?php
 						}
 
-						?><a href="<?=$arResult["Urls"]["Card"]?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?= Loc::getMessage('SONET_SGM_T_LINKS_ABOUT_PROJECT') ?></a><?php
-						?><button id="bx-group-menu-settings" class="ui-btn ui-btn-light-border ui-btn-icon-dots ui-btn-themes"
-							title="&hellip;"
-							onclick=""
-						></button><?php
+						?><a href="<?= $arResult['Urls']['Card'] ?>" id="project-widget-button" class="ui-btn ui-btn-light-border ui-btn-themes" data-slider-ignore-autobinding="true" data-workgroup="<?= htmlspecialcharsbx(Json::encode($arResult['projectWidgetData'])) ?>"><?= $aboutTitle ?></a><?php
 
 					?></span><?php
 				}

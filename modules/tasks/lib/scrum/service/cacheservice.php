@@ -7,6 +7,7 @@ class CacheService
 	const TEAM_SPEED_CHART = 'teamSpeedChart';
 	const COMPLETED_SPRINT = 'completedSprint';
 	const ITEM_TASKS = 'itemTasks';
+	const EPICS = 'epics';
 
 	/** @var \CPHPCache */
 	private $cache;
@@ -29,6 +30,11 @@ class CacheService
 		CacheService::ITEM_TASKS => [
 			'id' => 'tasks-scrum-item-tasks-',
 			'dir' => '/tasks/scrum/tasks/',
+			'time' => (3600 * 24),
+		],
+		CacheService::EPICS => [
+			'id' => 'tasks-scrum-epic-',
+			'dir' => '/tasks/scrum/epics/',
 			'time' => (3600 * 24),
 		],
 	];

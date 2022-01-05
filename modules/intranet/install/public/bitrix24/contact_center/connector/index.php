@@ -45,10 +45,10 @@ if($_GET['IFRAME'] !== 'Y')
 	<script>
 		BX.ready(function () {
 			BX.SidePanel.Instance.open(
-				'<?=Context::getCurrent()->getServer()->getRequestUri()?>',
+				'<?=CUtil::JSescape(Context::getCurrent()->getServer()->getRequestUri())?>',
 				{
 					cacheable: false,
-					allowChangeHistory: false,
+					allowChangeHistory: true,
 					width: <?=$width?>,
 					events: {
 						onCloseComplete: function(event) {

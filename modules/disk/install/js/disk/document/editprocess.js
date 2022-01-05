@@ -33,9 +33,32 @@
 	{
 		start: function ()
 		{
+			var hasPromoPopups = BX.getClass('BX.Disk.OnlyOfficePromo.PromoPopup');
 			if (this.serviceCode === 'onlyoffice')
 			{
+				if (hasPromoPopups)
+				{
+					if (BX.Disk.OnlyOfficePromo.PromoPopup.shouldBlockViewAndEdit())
+					{
+						BX.Disk.OnlyOfficePromo.PromoPopup.showCommonPromoForNonPaid();
+
+						return;
+					}
+					if (BX.Disk.OnlyOfficePromo.PromoPopup.shouldShowEditPromo())
+					{
+						BX.Disk.OnlyOfficePromo.PromoPopup.showEditPromo();
+
+						return;
+					}
+				}
+
 				this.openSlider();
+
+				return;
+			}
+			else if (hasPromoPopups && BX.Disk.OnlyOfficePromo.PromoPopup.shouldShowEndDemo())
+			{
+				BX.Disk.OnlyOfficePromo.PromoPopup.showEndOfDemo();
 
 				return;
 			}

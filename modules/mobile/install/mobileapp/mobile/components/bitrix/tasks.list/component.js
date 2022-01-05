@@ -131,6 +131,7 @@ include('InAppNotifier');
 					foldable: false,
 					folded: false,
 					badgeValue: 0,
+					sortItemParams: {activityDate: 'desc'},
 					backgroundColor: '#FFFFFF',
 					styles: {title: {font: {size: 18}}},
 				},
@@ -1381,7 +1382,7 @@ include('InAppNotifier');
 			return {
 				id: user.id,
 				name: user.title,
-				icon: user.imageUrl,
+				icon: (user.defaultImage ? '' : user.imageUrl),
 				link: '',
 			};
 		}
@@ -1391,7 +1392,7 @@ include('InAppNotifier');
 			return {
 				id: group.id,
 				name: group.title,
-				image: group.imageUrl,
+				image: (group.defaultImage ? '' : group.imageUrl),
 			};
 		}
 
@@ -1466,13 +1467,13 @@ include('InAppNotifier');
 			this.pull = new Pull(this);
 			this.push = new Push(this);
 			this.search = new Search(this);
+			this.fileStorage = new TaskUploadFilesStorage();
 
 			this.cache = TasksListCache.getInstance(`tasks.task.list_v3_${owner}`);
 
 			this.getTaskLimitExceeded();
 			this.getEfficiencyCounter();
 			this.checkDeadlinesUpdate();
-			this.prepareTaskGroupList();
 
 			BX.addCustomEvent('onPullEvent-tasks', (command, params) => {
 				if (command === 'user_counter')
@@ -1491,9 +1492,10 @@ include('InAppNotifier');
 
 				this.filter.updateCounters();
 
+				this.setTopButtons();
+				this.setFloatingButton();
 				this.setListListeners();
 				this.bindEvents();
-				this.setTopButtons();
 
 				this.loadTasksFromCache();
 				this.reload();
@@ -1572,6 +1574,7 @@ include('InAppNotifier');
 			BX.addCustomEvent('onAppPaused', () => this.onAppPaused());
 			BX.addCustomEvent('task.view.onCommentsRead', eventData => this.onCommentsRead(eventData));
 			BX.addCustomEvent('task.list.onToggleCompleted', () => this.onToggleCompleted());
+			BX.addCustomEvent('onFileUploadStatusChanged', this.onFileUploadStatusChange.bind(this));
 
 			if (apiVersion >= 34)
 			{
@@ -1598,6 +1601,17 @@ include('InAppNotifier');
 				},
 			]);
 			this.filter.setVisualCounters();
+		}
+
+		setFloatingButton()
+		{
+			if (apiVersion >= 40)
+			{
+				this.list.setFloatingButton({
+					icon: 'plus',
+					callback: () => this.list.showAudioInput(),
+				});
+			}
 		}
 
 		loadTasksFromCache()
@@ -2001,15 +2015,8 @@ include('InAppNotifier');
 			this.filter.updateCounters();
 			this.reload();
 
-			this.prepareTaskGroupList();
-
+			this.search.fillCacheWithLastActiveProjects();
 			this.pull.setCanExecute(true);
-		}
-
-		prepareTaskGroupList()
-		{
-			TaskGroupList.loadLastActiveProjects();
-			TaskGroupList.validateLastSearchedProjects();
 		}
 
 		getTaskLimitExceeded()
@@ -2404,13 +2411,19 @@ include('InAppNotifier');
 			});
 		}
 
-		onNewItem(title)
+		onNewItem(params)
 		{
-			console.log('onNewItem');
+			console.log('onNewItem', params);
+
+			const title = (apiVersion >= 40 ? params.text : params);
+			const attachedFiles = this.prepareNewItemAttachedFiles((apiVersion >= 40 ? params.attachedFiles : null));
+
+			if (title.trim().length === 0)
+			{
+				return;
+			}
 
 			const task = new Task(this.currentUser);
-			this.newTaskList.set(task.guid);
-
 			task.title = title;
 			task.creator = this.currentUser;
 			task.responsible = this.currentUser;
@@ -2424,14 +2437,111 @@ include('InAppNotifier');
 					image: this.group.imageUrl,
 				};
 			}
+			task.files = attachedFiles.disk;
 
+			this.newTaskList.set(task.guid);
 			this.addItem(task, 'new');
 
 			const oldTaskId = task.id;
 			task.save().then(() => {
 				this.newTaskList.set(task.id);
+				this.attachFiles(attachedFiles, task.id);
 				this.updateItem(oldTaskId, {id: task.id});
 			}, e => console.error(e));
+		}
+
+		prepareNewItemAttachedFiles(attachedFiles)
+		{
+			const files = {
+				disk: [],
+				local: [],
+			};
+
+			if (!attachedFiles)
+			{
+				return files;
+			}
+
+			const getGuid = function() {
+				const s4 = function() {
+					return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+				};
+				return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+			};
+
+			attachedFiles.forEach((file) => {
+				if (file.dataAttributes)
+				{
+					files.disk.push(file.dataAttributes.VALUE);
+				}
+				else
+				{
+					const taskId = `task-${getGuid()}`;
+					files.local.push({
+						taskId,
+						id: taskId,
+						params: file,
+						name: file.name,
+						type: file.type,
+						url: file.url,
+						previewUrl: file.previewUrl,
+						folderId: result.diskFolderId,
+						onDestroyEventName: TaskUploaderEvents.FILE_SUCCESS_UPLOAD,
+					});
+				}
+			});
+
+			return files;
+		}
+
+		attachFiles(files, taskId)
+		{
+			const {local} = files;
+
+			if (local.length <= 0)
+			{
+				return;
+			}
+
+			local.forEach(file => file.params.taskId = taskId);
+
+			this.fileStorage.addFiles(local);
+			BX.postComponentEvent('onFileUploadTaskReceived', [{files: local}], 'background');
+		}
+
+		onFileUploadStatusChange(eventName, eventData, taskId)
+		{
+			if (taskId.indexOf('task-') !== 0)
+			{
+				return false;
+			}
+
+			switch (eventName)
+			{
+				case BX.FileUploadEvents.FILE_CREATED:
+				case BX.FileUploadEvents.FILE_UPLOAD_START:
+				case BX.FileUploadEvents.FILE_UPLOAD_PROGRESS:
+				case BX.FileUploadEvents.ALL_TASK_COMPLETED:
+				case BX.FileUploadEvents.TASK_TOKEN_DEFINED:
+				case BX.FileUploadEvents.TASK_CREATED:
+				default:
+					// do nothing
+					break;
+
+				case BX.FileUploadEvents.TASK_STARTED_FAILED:
+				case BX.FileUploadEvents.FILE_CREATED_FAILED:
+				case BX.FileUploadEvents.FILE_UPLOAD_FAILED:
+				case BX.FileUploadEvents.TASK_CANCELLED:
+				case BX.FileUploadEvents.TASK_NOT_FOUND:
+				case BX.FileUploadEvents.FILE_READ_ERROR:
+				case TaskUploaderEvents.FILE_SUCCESS_UPLOAD:
+				case TaskUploaderEvents.FILE_FAIL_UPLOAD:
+					this.fileStorage.removeFiles([taskId]);
+					this.updateItem(eventData.file.extra.params.taskId, {});
+					break;
+			}
+
+			return true;
 		}
 
 		getItemDataFromTask(task, withActions = true)
@@ -2445,6 +2555,7 @@ include('InAppNotifier');
 				deadline: task.deadline || 9999999999999,
 				activityDate: task.activityDate,
 			};
+			itemData.locked = (this.fileStorage.getArrayFiles().findIndex(file => file.params.taskId === task.id) >= 0);
 
 			if (task.isPinned)
 			{
@@ -2535,6 +2646,10 @@ include('InAppNotifier');
 				taskData.sectionCode = sectionId;
 				if (sectionId === 'new')
 				{
+					if (apiVersion >= 38)
+					{
+						taskData.locked = true;
+					}
 					taskData.actions = taskData.actions.filter(item => item.identifier === 'changeResponsible');
 				}
 
@@ -2608,6 +2723,7 @@ include('InAppNotifier');
 				groupId: data.id,
 				groupName: projectName,
 				groupImageUrl: data.imageUrl,
+				ownerId: this.owner.id,
 			}]);
 		}
 
@@ -2985,35 +3101,42 @@ include('InAppNotifier');
 		 */
 		onChangeResponsibleAction(task)
 		{
-			// UserList.openPicker({
-			// 	title: BX.message('TASKS_LIST_POPUP_RESPONSIBLE'),
-			// 	allowMultipleSelection: false,
-			// 	listOptions: {
-			// 		users: {
-			// 			hideUnnamed: true,
-			// 			useRecentSelected: true,
-			// 		},
-			// 	},
-			// }).then((users) => {
-
-			new TaskUserList(result.userList, {
-				onSelect: (user) => {
-					task.responsible = TaskList.getItemDataFromUser(user);
-					if (!task.isMember(this.currentUser.id))
+			(new RecipientSelector('TASKS_MEMBER_SELECTOR_EDIT_responsible', ['user']))
+				.setSingleChoose(true)
+				.setTitle(BX.message('TASKS_LIST_POPUP_RESPONSIBLE'))
+				.setSelected({
+					user: [{
+						id: task.responsible.id,
+						title: task.responsible.name,
+						imageUrl: task.responsible.icon,
+					}],
+				})
+				.open()
+				.then((recipients) => {
+					if (recipients.user && recipients.user.length > 0)
 					{
-						this.removeItem(task.id);
-						this.filter.pseudoUpdateCounters(-task.getMessageInfo().count, task);
+						const user = recipients.user[0];
+						if (Number(task.responsible.id) === Number(user.id))
+						{
+							return;
+						}
+						task.responsible = TaskList.getItemDataFromUser(user);
+						if (!task.isMember(this.currentUser.id))
+						{
+							this.removeItem(task.id);
+							this.filter.pseudoUpdateCounters(-task.getMessageInfo().count, task);
+						}
+						else
+						{
+							this.updateItem(task.id, {
+								responsibleIcon: task.responsible.icon,
+								activityDate: Date.now(),
+							});
+						}
+						void task.save();
 					}
-					else
-					{
-						this.updateItem(task.id, {
-							responsibleIcon: task.responsible.icon,
-							activityDate: Date.now(),
-						});
-					}
-					void task.save();
-				},
-			});
+				})
+			;
 		}
 
 		/**
@@ -3021,27 +3144,34 @@ include('InAppNotifier');
 		 */
 		onDelegateAction(task)
 		{
-			// UserList.openPicker({
-			// 	title: BX.message('TASKS_LIST_POPUP_RESPONSIBLE'),
-			// 	allowMultipleSelection: false,
-			// 	listOptions: {
-			// 		users: {
-			// 			hideUnnamed: true,
-			// 			useRecentSelected: true,
-			// 		},
-			// 	},
-			// }).then((users) => {
-
-			new TaskUserList(result.userList, {
-				onSelect: (user) => {
-					task.responsible = TaskList.getItemDataFromUser(user);
-					this.updateItem(task.id, {
-						responsibleIcon: task.responsible.icon,
-						activityDate: Date.now(),
-					});
-					void task.delegate();
-				},
-			});
+			(new RecipientSelector('TASKS_MEMBER_SELECTOR_EDIT_responsible', ['user']))
+				.setSingleChoose(true)
+				.setTitle(BX.message('TASKS_LIST_POPUP_RESPONSIBLE'))
+				.setSelected({
+					user: [{
+						id: task.responsible.id,
+						title: task.responsible.name,
+						imageUrl: task.responsible.image,
+					}],
+				})
+				.open()
+				.then((recipients) => {
+					if (recipients.user && recipients.user.length)
+					{
+						const user = recipients.user[0];
+						if (Number(task.responsible.id) === Number(user.id))
+						{
+							return;
+						}
+						task.responsible = TaskList.getItemDataFromUser(user);
+						this.updateItem(task.id, {
+							responsibleIcon: task.responsible.icon,
+							activityDate: Date.now(),
+						});
+						void task.delegate();
+					}
+				})
+			;
 		}
 
 		/**
@@ -3049,75 +3179,37 @@ include('InAppNotifier');
 		 */
 		onChangeGroupAction(task)
 		{
-			new TaskGroupList({
-				onSelect: (group) => {
-					if (Number(task.groupId) === Number(group.id))
-					{
-						return;
-					}
-					task.groupId = Number(group.id);
-					task.group = TaskList.getItemDataFromGroup(group);
-					this.updateItem(task.id, {});
-					void task.save();
-				},
-			});
-		}
+			const selected = [];
+			if (task.group.id > 0)
+			{
+				selected.push({
+					id: task.group.id,
+					title: task.group.name,
+					imageUrl: task.group.image,
+				});
+			}
 
-		// /**
-		//  * @param {Task} task
-		//  */
-		// onChangeGroupAction(task)
-		// {
-		// 	const selected = {};
-		// 	const selectedGroup = {};
-		//
-		// 	if (Number(task.groupId) > 0)
-		// 	{
-		// 		selectedGroup.id = task.groupId;// (task.groupId + '').split('/').pop();
-		// 		selectedGroup.title = task.group.name;
-		// 		selectedGroup.imageUrl = task.group.image;
-		//
-		// 		selected.groups = [selectedGroup];
-		// 	}
-		//
-		// 	(new RecipientList(['groups']))
-		// 		.open({
-		// 			returnShortFormat: false,
-		// 			allowMultipleSelection: false,
-		// 			title: BX.message('TASKS_LIST_POPUP_RESPONSIBLE'),
-		// 			selected,
-		// 		})
-		// 		.then((recipients) => {
-		// 			if (recipients.groups)
-		// 			{
-		// 				if (recipients.groups.length > 0)
-		// 				{
-		// 					const group = recipients.groups[0];
-		//
-		// 					if (Number(task.groupId) === Number(group.params.id))
-		// 					{
-		// 						return;
-		// 					}
-		//
-		// 					task.groupId = Number(group.params.id);
-		// 					task.group = TaskList.getItemDataFromGroup(group);
-		// 					this.updateItem(task.id, {});
-		// 					void task.save();
-		// 				}
-		// 				else if (Number(task.groupId) > 0)
-		// 				{
-		// 					task.groupId = 0;
-		// 					task.group = {
-		// 						id: 0,
-		// 						name: '',
-		// 						image: '',
-		// 					};
-		// 					this.updateItem(task.id, {});
-		// 					void task.save();
-		// 				}
-		// 			}
-		// 		});
-		// }
+			(new RecipientSelector('TASKS_PROJECT', ['project']))
+				.setSingleChoose(true)
+				.setTitle(BX.message('TASKS_LIST_POPUP_PROJECT'))
+				.setSelected({project: selected})
+				.open()
+				.then((recipients) => {
+					if (recipients.project && recipients.project.length)
+					{
+						const group = recipients.project[0];
+						if (Number(task.groupId) === Number(group.id))
+						{
+							return;
+						}
+						task.groupId = Number(group.id);
+						task.group = TaskList.getItemDataFromGroup(group);
+						this.updateItem(task.id, {activityDate: Date.now(),});
+						void task.save();
+					}
+				})
+			;
+		}
 
 		/**
 		 * @param {Task} task
@@ -3740,6 +3832,18 @@ include('InAppNotifier');
 			this.debounceFunction = this.getDebounceFunction();
 
 			this.cache = Cache.getInstance(`tasks.task.search_${this.list.owner.id}`);
+			this.fillCacheWithLastActiveProjects();
+		}
+
+		fillCacheWithLastActiveProjects()
+		{
+			(new Request('mobile.tasks.'))
+				.call('group.lastActive.get')
+				.then((response) => {
+					const cacheKey = Search.cacheKeys.lastActiveProjects;
+					this.cache.update(cacheKey, response.result.slice(0, this.maxProjectCount + 1));
+				})
+			;
 		}
 
 		getDebounceFunction()
@@ -3991,17 +4095,10 @@ include('InAppNotifier');
 
 		onSearchShow()
 		{
-			this.fillCacheWithLastActiveProjects();
 			this.loadProjectsFromCache();
 			this.loadTasksFromCache();
 
 			this.renderList(true);
-		}
-
-		fillCacheWithLastActiveProjects()
-		{
-			const cacheKey = Search.cacheKeys.lastActiveProjects;
-			this.cache.update(cacheKey, this.list.lastActiveGroups.slice(0, this.maxProjectCount + 1));
 		}
 
 		loadProjectsFromCache()
@@ -4123,6 +4220,7 @@ include('InAppNotifier');
 				groupId: data.id,
 				groupName: data.title,
 				groupImageUrl: data.imageUrl,
+				ownerId: this.list.owner.id,
 			}]);
 
 			setTimeout(() => {

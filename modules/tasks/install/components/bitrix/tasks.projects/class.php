@@ -6,30 +6,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Entity\Query\Join;
-use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\Grid;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ORM\Query\Filter\ConditionTree;
-use Bitrix\Main\UI\Filter;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
-use Bitrix\Socialnetwork\WorkgroupTable;
-use Bitrix\SocialNetwork\WorkgroupTagTable;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
-use Bitrix\Tasks\Internals\Counter;
-use Bitrix\Tasks\Internals\Effective;
-use Bitrix\Tasks\Internals\Project\UserOption\UserOptionController;
+use Bitrix\Tasks\Internals\Project\Filter\GridFilter;
+use Bitrix\Tasks\Internals\Project\Order;
+use Bitrix\Tasks\Internals\Project\Provider;
 use Bitrix\Tasks\Internals\Project\UserOption\UserOptionTypeDictionary;
-use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
 use Bitrix\Tasks\Internals\Task\ProjectUserOptionTable;
 use Bitrix\Tasks\TourGuide;
+use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\Error\Collection;
-use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
@@ -39,11 +29,14 @@ Loc::loadMessages(__FILE__);
  */
 class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 {
-	/** @var ConditionTree */
-	private static $projectVisibilityCondition;
-
 	/** @var Collection */
 	private $errors;
+	/** @var GridFilter */
+	private $filter;
+	/** @var Order */
+	private $order;
+	/** @var Provider */
+	private $provider;
 
 	private function checkModules(): bool
 	{
@@ -106,69 +99,33 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		$this->arResult['GRID_ID'] = $this->arParams['GRID_ID'];
 	}
 
-	private function getOrder(): array
+	private function init(): void
 	{
-		$order = ['IS_PINNED' => 'desc'];
-
-		$gridOptions = new Grid\Options($this->arParams['GRID_ID']);
-		$sorting = $gridOptions->GetSorting($this->getDefaultSorting());
-
-		return array_merge($order, $sorting['sort']);
-	}
-
-	private function getGridSort(): array
-	{
-		$order = $this->getOrder();
-		unset($order['IS_PINNED']);
-
-		reset($order);
-		$field = key($order);
-		$direction = current($order);
-		$direction = ($direction ? explode(',', $direction)[0] : 'asc');
-
-		return [$field => $direction];
-	}
-
-	private function getDefaultSorting(): array
-	{
-		return [
-			'sort' => ['ACTIVITY_DATE' => 'desc'],
-			'vars' => [
-				'by' => 'by',
-				'order' => 'order',
-			],
-		];
+		$this->filter = new GridFilter(
+			$this->arParams['USER_ID'],
+			$this->arParams['GRID_ID'],
+			['NAME_TEMPLATE' => $this->arParams['NAME_TEMPLATE']]
+		);
+		$this->order = new Order($this->arParams['GRID_ID']);
+		$this->provider = new Provider();
 	}
 
 	private function doPreAction(): void
 	{
+		$this->init();
+
 		if (!$this->request->isAjaxRequest())
 		{
-			$option = CUserOptions::GetOption(
-				'main.ui.filter',
-				$this->arResult['GRID_ID'],
-				false,
-				$this->arResult['USER_ID']
-			);
-			if (!$option && ($filterOptions = $this->getFilterOptions()))
-			{
-				$filterOptions->reset();
-			}
+			$this->filter->resetFilter();
 		}
 	}
 
 	private function getData(): void
 	{
-		$this->arResult['FILTERS'] = $this->getFilterFields();
-		$this->arResult['PRESETS'] = $this->getPresetFields();
+		$this->arResult['FILTERS'] = $this->filter->getFilterFields();
+		$this->arResult['PRESETS'] = $this->filter->getPresets();
 
-		$gridSort = $this->getGridSort();
-		$this->arParams['GRID_SORT'] = $gridSort;
-		$this->arResult['SORT'] = $gridSort;
-
-		$filterFields = $this->getFilterFields();
-		$filterOptions = $this->getFilterOptions();
-		$this->arParams['FILTER_DATA'] = ($filterOptions ? $filterOptions->getFilter($filterFields) : []);
+		$this->arResult['SORT'] = $this->order->getGridSorting();
 
 		$this->arResult['GROUPS'] = $this->getGroups();
 		$this->arResult['GRID'] = new Bitrix\Tasks\Grid\Project\Grid($this->arResult['GROUPS'], $this->arParams);
@@ -192,7 +149,7 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 
 	private function getStub(): array
 	{
-		if ($this->isUserFilterApplied())
+		if ($this->filter->isUserFilterApplied())
 		{
 			return [
 				'title' => Loc::getMessage('TASKS_PROJECTS_GRID_STUB_NO_DATA_TITLE'),
@@ -204,21 +161,6 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			'title' => Loc::getMessage('TASKS_PROJECTS_GRID_STUB_TITLE'),
 			'description' => Loc::getMessage('TASKS_PROJECTS_GRID_STUB_DESCRIPTION'),
 		];
-	}
-
-	private function isUserFilterApplied(): bool
-	{
-		if ($filterOptions = $this->getFilterOptions())
-		{
-			$currentPreset = $filterOptions->getCurrentFilterId();
-			$isDefaultPreset = $filterOptions->getDefaultFilterId() === $currentPreset;
-			$additionalFields = $filterOptions->getAdditionalPresetFields($currentPreset);
-			$isSearchStringEmpty = $filterOptions->getSearchString() === '';
-
-			return !$isSearchStringEmpty || !$isDefaultPreset || !empty($additionalFields);
-		}
-
-		return false;
 	}
 
 	private function getCurrentPage(): int
@@ -233,6 +175,30 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		return 1;
 	}
 
+	private function getSelect(): array
+	{
+		return [
+			'ID',
+			'NAME',
+			'PROJECT_DATE_START',
+			'PROJECT_DATE_FINISH',
+			'IMAGE_ID',
+			'AVATAR_TYPE',
+			'NUMBER_OF_MODERATORS',
+			'NUMBER_OF_MEMBERS',
+			'OPENED',
+			'CLOSED',
+			'USER_GROUP_ID',
+			'ACTIVITY_DATE',
+			'IS_PINNED',
+			'COUNTERS',
+			'MEMBERS',
+			// 'ACTIONS',
+			'TAGS',
+			'EFFICIENCY',
+		];
+	}
+
 	private function getGroups(): array
 	{
 		$nav = new PageNavigation('page');
@@ -242,9 +208,13 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			->setCurrentPage($this->getCurrentPage())
 		;
 
-		$query = $this->getPrimaryProjectsQuery();
+		$select = $this->getSelect();
+		$querySelect = $this->provider->prepareQuerySelect($select);
+
+		$query = $this->provider->getPrimaryProjectsQuery($querySelect);
+		$query = $this->filter->process($query);
 		$query
-			->setOrder($this->getOrder())
+			->setOrder($this->order->getOrder())
 			->setOffset($nav->getOffset())
 			->setLimit($nav->getLimit())
 			->countTotal(true)
@@ -270,694 +240,32 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			);
 			$groups[$groupId] = $group;
 		}
-		if (empty($groups))
+
+		if (!empty($groups))
 		{
-			return [];
-		}
-
-		$groups = $this->fillEfficiencies($groups);
-		$groups = $this->fillMembers($groups);
-		$groups = $this->fillTags($groups);
-
-		return $groups;
-	}
-
-	private function getPrimaryProjectsQuery(): Query
-	{
-		$query = WorkgroupTable::query();
-		$query
-			->setSelect([
-				'ID',
-				'NAME',
-				'PROJECT_DATE_START',
-				'PROJECT_DATE_FINISH',
-				'IMAGE_ID',
-				'NUMBER_OF_MODERATORS',
-				'NUMBER_OF_MEMBERS',
-				'OPENED',
-				'CLOSED',
-				'USER_GROUP_ID' => 'UG.ID',
-				'ACTIVITY_DATE',
-				new ExpressionField(
-					'IS_PINNED',
-					ProjectUserOptionTable::getSelectExpression(
-						$this->arParams['USER_ID'],
-						UserOptionTypeDictionary::OPTION_PINNED
-					),
-					['ID', 'UG.USER_ID']
-				)
-			])
-			->registerRuntimeField(
-				'UG',
-				new ReferenceField(
-					'UG',
-					UserToGroupTable::getEntity(),
-					Join::on('this.ID', 'ref.GROUP_ID')->where('ref.USER_ID', $this->arParams['USER_ID']),
-					['join_type' => 'left']
-				)
-			)
-			->registerRuntimeField(
-				'PLA',
-				new ReferenceField(
-					'PLA',
-					ProjectLastActivityTable::getEntity(),
-					Join::on('this.ID', 'ref.PROJECT_ID'),
-					['join_type' => 'left']
-				)
-			)
-			->registerRuntimeField(
-				null,
-				new ExpressionField('ACTIVITY_DATE', 'IFNULL(%s, %s)', ['PLA.ACTIVITY_DATE', 'DATE_UPDATE'])
-			)
-			->where($this->getProjectVisibilityCondition())
-		;
-
-		return $this->processGridFilter($query);
-	}
-
-	private function getProjectVisibilityCondition(): ConditionTree
-	{
-		if (!static::$projectVisibilityCondition)
-		{
-			static::$projectVisibilityCondition =
-				Query::filter()
-					->logic('or')
-					->where('VISIBLE', 'Y')
-					->where(
-						Query::filter()
-							->whereNotNull('UG.ID')
-							->whereIn('UG.ROLE', UserToGroupTable::getRolesMember())
-					)
-			;
-		}
-
-		return static::$projectVisibilityCondition;
-	}
-
-	private function fillEfficiencies(array $groups): array
-	{
-		$efficiencies = Effective::getAverageEfficiencyForGroups(
-			null,
-			null,
-			0,
-			array_keys($groups)
-		);
-
-		foreach ($groups as $groupId => $group)
-		{
-			$groups[$groupId]['EFFICIENCY'] = ($efficiencies[$groupId] ?: 0);
-		}
-
-		return $groups;
-	}
-
-	private function fillMembers(array $groups): array
-	{
-		$groupIds = array_keys($groups);
-		$members = array_fill_keys($groupIds, []);
-
-		$query = $this->getPrimaryUsersQuery($groupIds);
-		$query
-			->whereIn(
-				'ROLE',
-				[
-					UserToGroupTable::ROLE_OWNER,
-					UserToGroupTable::ROLE_MODERATOR,
-					UserToGroupTable::ROLE_USER,
-					UserToGroupTable::ROLE_REQUEST,
-				]
-			)
-		;
-
-		$result = $query->exec();
-		while ($member = $result->fetch())
-		{
-			$memberId = (int)$member['USER_ID'];
-			$groupId = (int)$member['GROUP_ID'];
-
-			$isGroupOwner = ($member['ROLE'] === UserToGroupTable::ROLE_OWNER);
-			$isGroupModerator = ($member['ROLE'] === UserToGroupTable::ROLE_MODERATOR);
-			$isGroupAccessRequesting = ($member['ROLE'] === UserToGroupTable::ROLE_REQUEST);
-			$isGroupAccessRequestingByMe = (
-				$isGroupAccessRequesting && $member['INITIATED_BY_TYPE'] === UserToGroupTable::INITIATED_BY_USER
-			);
-			$isHead = ($isGroupOwner || $isGroupModerator);
-
-			$members[$groupId][($isHead ? 'HEADS' : 'MEMBERS')][$memberId] = [
-				'ID' => $memberId,
-				'IS_GROUP_OWNER' => ($isGroupOwner ? 'Y' : 'N'),
-				'IS_GROUP_MODERATOR' => ($isGroupModerator ? 'Y' : 'N'),
-				'IS_GROUP_ACCESS_REQUESTING' => ($isGroupAccessRequesting ? 'Y' : 'N'),
-				'IS_GROUP_ACCESS_REQUESTING_BY_ME' => ($isGroupAccessRequestingByMe ? 'Y' : 'N'),
-				'AUTO_MEMBER' => $member['AUTO_MEMBER'],
-				'PHOTO' => $this->getUserPictureSrc($member['PERSONAL_PHOTO']),
-				'HREF' => CComponentEngine::MakePathFromTemplate(
-					$this->arParams['PATH_TO_USER'],
-					['user_id' => $memberId]
-				),
-				'FORMATTED_NAME' => CUser::FormatName($this->arParams['NAME_TEMPLATE'], $member, true),
-			];
-		}
-
-		foreach ($groupIds as $groupId)
-		{
-			$groups[$groupId]['MEMBERS'] = [
-				'HEADS' => ($members[$groupId]['HEADS'] ?? []),
-				'MEMBERS' => ($members[$groupId]['MEMBERS'] ?? []),
-			];
-		}
-
-		return $groups;
-	}
-
-	private function getPrimaryUsersQuery(array $groupIds): Query
-	{
-		$query = UserToGroupTable::query();
-		$query
-			->setSelect([
-				'GROUP_ID',
-				'USER_ID',
-				'ROLE',
-				'INITIATED_BY_TYPE',
-				'AUTO_MEMBER',
-				'NAME' => 'USER.NAME',
-				'LAST_NAME' => 'USER.LAST_NAME',
-				'SECOND_NAME' => 'USER.SECOND_NAME',
-				'LOGIN' => 'USER.LOGIN',
-				'PERSONAL_PHOTO' => 'USER.PERSONAL_PHOTO',
-			])
-			->where('GROUP.ACTIVE', 'Y')
-			->where('USER.ACTIVE', 'Y')
-			->whereIn('GROUP_ID', $groupIds)
-		;
-
-		return $query;
-	}
-
-	private function getUserPictureSrc(?int $photoId): ?string
-	{
-		static $cache = [];
-
-		$width = $height = 100;
-		$key = "{$photoId}.{$width}.{$height}";
-
-		if (!array_key_exists($key, $cache))
-		{
-			$src = false;
-
-			if ($photoId > 0)
+			if (in_array('IMAGE_ID', $select, true))
 			{
-				$imageFile = CFile::GetFileArray($photoId);
-				if ($imageFile !== false)
-				{
-					$tmpImage = CFile::ResizeImageGet(
-						$imageFile,
-						[
-							'width' => $width,
-							'height' => $height,
-						],
-						BX_RESIZE_IMAGE_EXACT
-					);
-					$src = $tmpImage['src'];
-				}
-
-				$cache[$key] = $src;
+				$groups = $this->provider->fillAvatars($groups);
+			}
+			if (in_array('EFFICIENCY', $select, true))
+			{
+				$groups = $this->provider->fillEfficiencies($groups);
+			}
+			if (in_array('MEMBERS', $select, true))
+			{
+				$groups = $this->provider->fillMembers($groups);
+			}
+			if (in_array('TAGS', $select, true))
+			{
+				$groups = $this->provider->fillTags($groups);
+			}
+			if (in_array('COUNTERS', $select, true))
+			{
+				$groups = $this->provider->fillCounters($groups);
 			}
 		}
 
-		return $cache[$key];
-	}
-
-	private function fillTags(array $groups): array
-	{
-		$groupTags = [];
-
-		$res = WorkgroupTagTable::getList([
-			'select' => ['GROUP_ID', 'NAME'],
-			'filter' => [
-				'GROUP_ID' => array_keys($groups),
-				'GROUP.ACTIVE' => 'Y',
-			],
-		]);
-		while ($tag = $res->fetch())
-		{
-			$groupId = (int)$tag['GROUP_ID'];
-			$groupTags[$groupId][] = $tag['NAME'];
-		}
-
-		foreach ($groups as $groupId => $group)
-		{
-			$groups[$groupId]['TAGS'] = $groupTags[$groupId];
-		}
-
 		return $groups;
-	}
-
-	private function processGridFilter(Query $query): Query
-	{
-		$filterFields = $this->getFilterFields();
-		$filterOptions = $this->getFilterOptions();
-		$filterData = ($filterOptions ? $filterOptions->getFilter($filterFields) : []);
-
-		if (!array_key_exists('FILTER_APPLIED', $filterData) || $filterData['FILTER_APPLIED'] !== true)
-		{
-			return $query;
-		}
-
-		if (array_key_exists('FIND', $filterData) && trim($filterData['FIND']) !== '')
-		{
-			$query->whereMatch('SEARCH_INDEX', trim(str_rot13($filterData['FIND'])));
-		}
-
-		foreach ($filterFields as $filterRow)
-		{
-			$id = $filterRow['id'];
-			$type = $filterRow['type'];
-
-			switch ($type)
-			{
-				case 'number':
-					$this->handleNumberFilterRow($id, $filterData, $query);
-					break;
-
-				case 'string':
-					$this->handleStringFilterRow($id, $filterData, $query);
-					break;
-
-				case 'date':
-					$this->handleDateFilterRow($id, $filterData, $query);
-					break;
-
-				case 'list':
-					$this->handleListFilterRow($id, $filterData, $query);
-					break;
-
-				case 'dest_selector':
-					$this->handleEntitySelectorFilterRow($id, $filterData, $query);
-					break;
-
-				default:
-					break;
-			}
-		}
-
-		return $query;
-	}
-
-	private function getFilterFields(): array
-	{
-		return [
-			'NAME' => [
-				'id' => 'NAME',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_NAME'),
-				'type' => 'string',
-				'default' => true,
-			],
-			'OWNER_ID' => [
-				'id' => 'OWNER_ID',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_DIRECTOR'),
-				'type' => 'dest_selector',
-				'params' => [
-					'apiVersion' => '3',
-					'context' => 'TASKS_PROJECTS_FILTER_OWNER_ID',
-					'multiple' => 'N',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'Y',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
-				],
-				'default' => true,
-			],
-			'MEMBER' => [
-				'id' => 'MEMBER_ID',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_MEMBER'),
-				'type' => 'dest_selector',
-				'params' => [
-					'apiVersion' => '3',
-					'context' => 'TASKS_PROJECTS_FILTER_MEMBER_ID',
-					'multiple' => 'N',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'Y',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
-				],
-				'default' => true,
-			],
-			'IS_PROJECT' => [
-				'id' => 'IS_PROJECT',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_IS_PROJECT'),
-				'type' => 'list',
-				'items' => [
-					'Y' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_IS_PROJECT_Y'),
-					'N' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_IS_PROJECT_N'),
-				],
-			],
-			'TYPE' => [
-				'id' => 'TYPE',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_TYPE'),
-				'type' => 'list',
-				'items' => $this->getProjectTypes(),
-			],
-			'PROJECT_DATE' => [
-				'id' => 'PROJECT_DATE',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_PROJECT_DATE'),
-				'type' => 'date',
-			],
-			'CLOSED' => [
-				'id' => 'CLOSED',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_CLOSED'),
-				'type' => 'list',
-				'items' => [
-					'Y' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_CLOSED_Y'),
-					'N' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_CLOSED_N'),
-				],
-			],
-			'ID' => [
-				'id' => 'ID',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_ID'),
-				'type' => 'number',
-				'default' => false,
-			],
-			'TAGS' => [
-				'id' => 'TAGS',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_TAG'),
-				'type' => 'string',
-				'default' => false,
-			],
-			'COUNTERS' => [
-				'id' => 'COUNTERS',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_COUNTERS'),
-				'type' => 'list',
-				'items' => [
-					'EXPIRED' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_COUNTERS_EXPIRED'),
-					'NEW_COMMENTS' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_COUNTERS_NEW_COMMENTS'),
-					'PROJECT_EXPIRED' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_COUNTERS_PROJECT_EXPIRED'),
-					'PROJECT_NEW_COMMENTS' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_COUNTERS_PROJECT_NEW_COMMENTS'),
-				],
-			],
-		];
-	}
-
-	private function getProjectTypes(): array
-	{
-		static $types = [];
-
-		if (empty($types))
-		{
-			$types = Workgroup::getTypes([
-				'category' => ['projects', 'groups'],
-			]);
-		}
-
-		return $types;
-	}
-
-	private function getFilterOptions(): ?Filter\Options
-	{
-		static $filterOptions = null;
-
-		if (!$filterOptions)
-		{
-			$filterOptions = new Filter\Options($this->arParams['GRID_ID'], $this->getPresetFields());
-		}
-
-		return $filterOptions;
-	}
-
-	private function getPresetFields(): array
-	{
-		return [
-			'my' => [
-				'name' => Loc::getMessage('TASKS_PROJECTS_PRESET_MY'),
-				'fields' => [
-					'CLOSED' => 'N',
-					'MEMBER_ID' => $this->arParams['USER_ID'],
-					'MEMBER_ID_label' => $this->getCurrentUserName(),
-				],
-				'default' => true,
-			],
-			'active_project' => [
-				'name' => Loc::getMessage('TASKS_PROJECTS_PRESET_ACTIVE_PROJECT'),
-				'fields' => [
-					'CLOSED' => 'N',
-				],
-				'default' => false,
-			],
-			'inactive_project' => [
-				'name' => Loc::getMessage('TASKS_PROJECTS_PRESET_INACTIVE_PROJECT'),
-				'fields' => [
-					'CLOSED' => 'Y',
-				],
-				'default' => false,
-			],
-		];
-	}
-
-	private function getCurrentUserName(): string
-	{
-		$result = \CUser::GetList(
-			'',
-			'',
-			['ID_EQUAL_EXACT' => $this->arParams['USER_ID']],
-			['FIELDS' => ['NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN']]
-		);
-		if ($user = $result->fetch())
-		{
-			return CUser::FormatName($this->arParams['NAME_TEMPLATE'], $user, true, false);
-		}
-
-		return '';
-	}
-
-	private function handleNumberFilterRow($id, $filterData, Query $query): void
-	{
-		$from = "{$id}_from";
-		$to = "{$id}_to";
-		$less = "<={$id}";
-		$more = ">={$id}";
-
-		$filter = [];
-
-		if (array_key_exists($from, $filterData) && !empty($filterData[$from]))
-		{
-			$filter[$more] = Query::filter()->where($id, '>=', $filterData[$from]);
-		}
-		if (array_key_exists($to, $filterData) && !empty($filterData[$to]))
-		{
-			$filter[$less] = Query::filter()->where($id, '<=', $filterData[$to]);
-		}
-
-		if (
-			array_key_exists($more, $filter)
-			&& array_key_exists($less, $filter)
-			&& $filter[$more] === $filter[$less]
-		)
-		{
-			$filter[$id] = $filter[$more];
-			unset($filter[$more], $filter[$less]);
-		}
-
-		foreach ($filter as $condition)
-		{
-			$query->where($condition);
-		}
-	}
-
-	private function handleStringFilterRow($id, $filterData, Query $query): void
-	{
-		if (!array_key_exists($id, $filterData) || empty($filterData[$id]))
-		{
-			return;
-		}
-
-		if ($id === 'TAGS')
-		{
-			$query
-				->registerRuntimeField(
-					'WT',
-					new ReferenceField(
-						'WT',
-						WorkgroupTagTable::getEntity(),
-						Join::on('this.ID', 'ref.GROUP_ID'),
-						['join_type' => 'left']
-					)
-				)
-				->where('WT.NAME', $filterData[$id])
-			;
-		}
-		else
-		{
-			$query->whereLike($id, $filterData[$id]);
-		}
-	}
-
-	private function handleDateFilterRow($id, $filterData, Query $query): void
-	{
-		$from = "{$id}_from";
-		$to = "{$id}_to";
-
-		if (array_key_exists($from, $filterData) && !empty($filterData[$from]))
-		{
-			$date = MakeTimeStamp($filterData[$from]);
-			$date = DateTime::createFromTimestamp($date);
-			$query->where("{$id}_START", '>=', $date);
-		}
-		if (array_key_exists($to, $filterData) && !empty($filterData[$to]))
-		{
-			$date = MakeTimeStamp($filterData[$to]);
-			$date = DateTime::createFromTimestamp($date);
-			$query->where("{$id}_FINISH", '<=', $date);
-		}
-	}
-
-	private function handleListFilterRow($id, $filterData, Query $query): void
-	{
-		if (!array_key_exists($id, $filterData) || empty($filterData[$id]))
-		{
-			return;
-		}
-
-		if ($id === 'CLOSED')
-		{
-			$query->where('CLOSED', $filterData[$id]);
-		}
-		else if ($id === 'IS_PROJECT')
-		{
-			$query->where('PROJECT', $filterData[$id]);
-		}
-		else if ($id === 'TYPE')
-		{
-			$types = $this->getProjectTypes();
-			$typeName = $filterData[$id];
-			$type = $types[$typeName];
-
-			if ($type)
-			{
-				$condition =
-					Query::filter()
-						->where('OPENED', $type['OPENED'])
-						->where('VISIBLE', $type['VISIBLE'])
-						->where('PROJECT', $type['PROJECT'])
-				;
-				if ($type['EXTERNAL'] !== 'N')
-				{
-					$condition->where('SITE_ID', CExtranet::GetExtranetSiteID());
-				}
-
-				$query->where($condition);
-			}
-		}
-		elseif ($id === 'COUNTERS')
-		{
-			$query->getFilterHandler()->removeCondition($this->getProjectVisibilityCondition());
-			$query
-				->setDistinct(true)
-				->registerRuntimeField(
-					'TS',
-					new ReferenceField(
-						'TS',
-						Counter\CounterTable::getEntity(),
-						Join::on('this.ID', 'ref.GROUP_ID')->where('ref.USER_ID', $this->arParams['USER_ID']),
-						['join_type' => 'inner']
-					)
-				)
-				->where(
-					Query::filter()
-						->whereNotNull('UG.ID')
-						->whereIn('UG.ROLE', UserToGroupTable::getRolesMember())
-				)
-			;
-
-			$typesMap = [
-				'EXPIRED' => [
-					'INCLUDE' => Counter\CounterDictionary::MAP_EXPIRED,
-					'EXCLUDE' => null,
-				],
-				'NEW_COMMENTS' => [
-					'INCLUDE' => Counter\CounterDictionary::MAP_COMMENTS,
-					'EXCLUDE' => null,
-				],
-				'PROJECT_EXPIRED' => [
-					'INCLUDE' => array_merge(
-						[Counter\CounterDictionary::COUNTER_GROUP_EXPIRED],
-						Counter\CounterDictionary::MAP_MUTED_EXPIRED
-					),
-					'EXCLUDE' => Counter\CounterDictionary::MAP_EXPIRED,
-				],
-				'PROJECT_NEW_COMMENTS' => [
-					'INCLUDE' => array_merge(
-						[Counter\CounterDictionary::COUNTER_GROUP_COMMENTS],
-						Counter\CounterDictionary::MAP_MUTED_COMMENTS
-					),
-					'EXCLUDE' => Counter\CounterDictionary::MAP_COMMENTS,
-				],
-			];
-			$type = $filterData[$id];
-
-			$condition = Query::filter()->whereIn('TS.TYPE', $typesMap[$type]['INCLUDE']);
-			if ($typesMap[$type]['EXCLUDE'])
-			{
-				$typesToExclude = "('" . implode("','", $typesMap[$type]['EXCLUDE']) . "')";
-				$query->registerRuntimeField(
-					'EXCLUDED_COUNTER_EXISTS',
-					new ExpressionField(
-						'EXCLUDED_COUNTER_EXISTS',
-						"(
-							SELECT 1
-							FROM b_tasks_scorer 
-							WHERE GROUP_ID = %s
-							  AND TASK_ID = %s
-							  AND USER_ID = {$this->arParams['USER_ID']}
-							  AND TYPE IN {$typesToExclude}
-							LIMIT 1
-						)",
-						['ID', 'TS.TASK_ID']
-					)
-				);
-				$condition->whereNull('EXCLUDED_COUNTER_EXISTS');
-			}
-
-			$query->where($condition);
-		}
-	}
-
-	private function handleEntitySelectorFilterRow($id, $filterData, Query $query): void
-	{
-		if (!array_key_exists($id, $filterData) || empty($filterData[$id]))
-		{
-			return;
-		}
-
-		if ($id === 'OWNER_ID')
-		{
-			$query->whereIn('OWNER_ID', $filterData[$id]);
-		}
-		elseif ($id === 'MEMBER_ID')
-		{
-			$query
-				->setDistinct(true)
-				->registerRuntimeField(
-					'UG2',
-					new ReferenceField(
-						'UG2',
-						UserToGroupTable::getEntity(),
-						Join::on('this.ID', 'ref.GROUP_ID'),
-						['join_type' => 'left']
-					)
-				)
-				->whereIn('UG2.USER_ID', $filterData[$id])
-				->whereNotNull('UG2.ID')
-				->whereIn('UG2.ROLE', UserToGroupTable::getRolesMember())
-			;
-		}
 	}
 
 	private function doPostAction(): void
@@ -1070,6 +378,11 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		return $this->checkModules() && $this->checkPermissions();
 	}
 
+	private function initForAjaxCalls(): void
+	{
+		$this->init();
+	}
+
 	public function processActionAction(string $action, array $ids, array $data = []): ?array
 	{
 		if (!$this->checkRequirementsForAjaxCalls())
@@ -1077,26 +390,18 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			return null;
 		}
 
+		$this->initForAjaxCalls();
+
 		$result = [];
 
 		switch ($action)
 		{
 			case 'pin':
-				foreach ($ids as $groupId)
-				{
-					UserOptionController::getInstance($this->arParams['USER_ID'], $groupId)
-						->add(UserOptionTypeDictionary::OPTION_PINNED)
-					;
-				}
+				$this->provider->pin($ids);
 				break;
 
 			case 'unpin':
-				foreach ($ids as $groupId)
-				{
-					UserOptionController::getInstance($this->arParams['USER_ID'], $groupId)
-						->delete(UserOptionTypeDictionary::OPTION_PINNED)
-					;
-				}
+				$this->provider->unpin($ids);
 				break;
 
 			case 'request':
@@ -1138,6 +443,8 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			return null;
 		}
 
+		$this->initForAjaxCalls();
+
 		$members = [];
 
 		$rolesMap = [
@@ -1147,24 +454,38 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		];
 		$limit = 10;
 
-		$query = $this->getPrimaryUsersQuery([$groupId]);
+		$query = $this->provider->getPrimaryUsersQuery([$groupId]);
 		$query
 			->whereIn('ROLE', $rolesMap[$type])
 			->setLimit($limit)
 			->setOffset(($page - 1) * $limit)
 		;
 
+		$imageIds = [];
+		$resultMembers = [];
+
 		$result = $query->exec();
 		while ($member = $result->fetch())
+		{
+			$imageIds[$member['USER_ID']] = $member['PERSONAL_PHOTO'];
+			$resultMembers[] = $member;
+		}
+
+		$imageIds = array_filter(
+			$imageIds,
+			static function ($id) {
+				return (int)$id > 0;
+			}
+		);
+		$avatars = UI::getAvatars($imageIds);
+
+		foreach ($resultMembers as $member)
 		{
 			$id = $member['USER_ID'];
 			$members[] = [
 				'ID' => $id,
-				'PHOTO' => $this->getUserPictureSrc($member['PERSONAL_PHOTO']),
-				'HREF' => CComponentEngine::MakePathFromTemplate(
-					$this->arParams['PATH_TO_USER'],
-					['user_id' => $id]
-				),
+				'PHOTO' => $avatars[$imageIds[$id]],
+				'HREF' => CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER'], ['user_id' => $id]),
 				'FORMATTED_NAME' => CUser::FormatName($this->arParams['NAME_TEMPLATE'], $member, true),
 			];
 		}
@@ -1179,7 +500,9 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			return null;
 		}
 
-		return $this->getGroupsData($groupIds);
+		$this->initForAjaxCalls();
+
+		return $this->getGroupsData($groupIds, $this->getSelect());
 	}
 
 	public function prepareGridRowsAction(array $groupIds, array $data = []): array
@@ -1189,19 +512,45 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			return [];
 		}
 
-		$groups = (empty($data) ? $this->getGroupsData($groupIds) : $data);
-		$groups = $this->fillEfficiencies($groups);
-		$groups = $this->fillMembers($groups);
-		$groups = $this->fillTags($groups);
+		$this->initForAjaxCalls();
+
+		$select = $this->getSelect();
+		$groups = (empty($data) ? $this->getGroupsData($groupIds, $select) : $data);
+		if (!empty($groups))
+		{
+			if (in_array('IMAGE_ID', $select, true))
+			{
+				$groups = $this->provider->fillAvatars($groups);
+			}
+			if (in_array('EFFICIENCY', $select, true))
+			{
+				$groups = $this->provider->fillEfficiencies($groups);
+			}
+			if (in_array('MEMBERS', $select, true))
+			{
+				$groups = $this->provider->fillMembers($groups);
+			}
+			if (in_array('TAGS', $select, true))
+			{
+				$groups = $this->provider->fillTags($groups);
+			}
+			if (in_array('COUNTERS', $select, true))
+			{
+				$groups = $this->provider->fillCounters($groups);
+			}
+		}
 
 		return (new Bitrix\Tasks\Grid\Project\Grid($groups, $this->arParams))->prepareRows();
 	}
 
-	private function getGroupsData(array $groupIds): array
+	private function getGroupsData(array $groupIds, array $select): array
 	{
 		$groups = array_fill_keys($groupIds, false);
 
-		$query = $this->getPrimaryProjectsQuery();
+		$querySelect = $this->provider->prepareQuerySelect($select);
+
+		$query = $this->provider->getPrimaryProjectsQuery($querySelect);
+		$query = $this->filter->process($query);
 		$query->whereIn('ID', $groupIds);
 
 		$result = $query->exec();
@@ -1225,7 +574,12 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			return null;
 		}
 
-		$query = $this->getPrimaryProjectsQuery();
+		$this->initForAjaxCalls();
+
+		$select = $this->provider->prepareQuerySelect($this->getSelect());
+
+		$query = $this->provider->getPrimaryProjectsQuery($select);
+		$query = $this->filter->process($query);
 		$query
 			->setSelect([
 				'ID',
@@ -1239,7 +593,7 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 					['ID', 'UG.USER_ID']
 				)
 			])
-			->setOrder($this->getOrder())
+			->setOrder($this->order->getOrder())
 			->setLimit($currentPage * 10)
 		;
 

@@ -257,7 +257,12 @@
 		},
 		getName: function ()
 		{
-			return this.file.name;
+			let name = this.file.name;
+			let extension = (this.file.localURL.match(/\.(\w+)$/gi) || []).pop();
+			if (extension)
+				name = name.replace(/\.(\w+)$/gi, extension);
+
+			return name;
 		},
 		readNext: function ()
 		{

@@ -51,8 +51,8 @@ class CAllDavConnection
 			if (!in_array($arFields['ACCOUNT_TYPE'], [
 				'caldav',
 				'ical',
-				Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV,
-				Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_API
+				\Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV,
+				\Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_API
 			], true)
 		)
 			{

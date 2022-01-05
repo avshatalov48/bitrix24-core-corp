@@ -75,17 +75,11 @@ final class FileAttributes extends ItemAttributes
 			$documentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
 			if ($documentHandler instanceof OnlyOfficeHandler)
 			{
-				if (isset($this->fileData['FILE_SIZE']) && OnlyOfficeHandler::shouldRestrictedBySize($this->fileData['FILE_SIZE']))
-				{
-					$this->setAttribute('data-viewer-type', Renderer\RestrictedBySize::getJsType());
-				}
-				else
-				{
-					$this->setTypeClass(self::JS_TYPE_CLASS_ONLYOFFICE);
-					$this->setAsSeparateItem();
-				}
-
-				$this->setExtension('disk.viewer.onlyoffice-item');
+				$this
+					->setTypeClass(self::JS_TYPE_CLASS_ONLYOFFICE)
+					->setAsSeparateItem()
+					->setExtension('disk.viewer.onlyoffice-item')
+				;
 
 				Extension::load('disk.viewer.onlyoffice-item');
 			}

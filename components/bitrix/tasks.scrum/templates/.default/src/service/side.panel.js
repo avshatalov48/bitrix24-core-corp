@@ -1,4 +1,4 @@
-import {Dom} from 'main.core';
+import {Runtime} from 'main.core';
 import {EventEmitter, BaseEvent} from 'main.core.events';
 
 export class SidePanel extends EventEmitter
@@ -11,10 +11,7 @@ export class SidePanel extends EventEmitter
 
 		/* eslint-disable */
 		this.sidePanelManager = BX.SidePanel.Instance;
-		this.contentSidePanelManager = new BX.SidePanel.Manager({});
 		/* eslint-enable */
-
-		this.contentSidePanels = new Set();
 
 		this.bindEvents();
 	}
@@ -33,30 +30,11 @@ export class SidePanel extends EventEmitter
 			const sidePanel = sliderEvent.getSlider();
 			this.emit('onCloseSidePanel', sidePanel);
 		});
-
-		EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', (event: BaseEvent) => {
-			const [sliderEvent] = event.getCompatData();
-			const sidePanel = sliderEvent.getSlider();
-			if (this.contentSidePanels.has(sidePanel.getUrl()))
-			{
-				this.contentSidePanels.delete(sidePanel.getUrl());
-				if (!this.contentSidePanels.size)
-				{
-					this.resetBodyWidthHack();
-					this.addEscapePressHandler();
-				}
-			}
-		});
 	}
 
 	isPreviousSidePanelExist(currentSidePanel): Boolean
 	{
-		const manager = this.contentSidePanels.has(currentSidePanel.getUrl())
-			? this.contentSidePanelManager
-			: this.sidePanelManager
-		;
-
-		return Boolean(manager.getPreviousSlider(currentSidePanel));
+		return Boolean(this.sidePanelManager.getPreviousSlider(currentSidePanel));
 	}
 
 	getTopSidePanel()
@@ -66,33 +44,25 @@ export class SidePanel extends EventEmitter
 		return topSidePanel ? topSidePanel : null;
 	}
 
-	reloadTopSidePanel(contentSidePanel: boolean = false)
+	reloadTopSidePanel()
 	{
-		const manager = contentSidePanel ? this.contentSidePanelManager : this.sidePanelManager;
-
-		if (manager.getTopSlider())
+		if (this.sidePanelManager.getTopSlider())
 		{
-			manager.getTopSlider().reload();
+			this.sidePanelManager.getTopSlider().reload();
 		}
 	}
 
-	closeTopSidePanel(contentSidePanel: boolean = false)
+	closeTopSidePanel()
 	{
-		const manager = contentSidePanel ? this.contentSidePanelManager : this.sidePanelManager;
-
-		if (manager.getTopSlider())
+		if (this.sidePanelManager.getTopSlider())
 		{
-			manager.getTopSlider().close();
+			this.sidePanelManager.getTopSlider().close();
 		}
 	}
 
 	reloadPreviousSidePanel(currentSidePanel)
 	{
-		const manager = this.contentSidePanels.has(currentSidePanel.getUrl())
-			? this.contentSidePanelManager
-			: this.sidePanelManager
-		;
-		const previousSidePanel = manager.getPreviousSlider(currentSidePanel);
+		const previousSidePanel = this.sidePanelManager.getPreviousSlider(currentSidePanel);
 
 		previousSidePanel.reload();
 	}
@@ -104,52 +74,31 @@ export class SidePanel extends EventEmitter
 
 	openSidePanel(id, options)
 	{
-		this.applyBodyWidthHack();
-		this.removeEscapePressHandler();
-
-		this.contentSidePanelManager.open(id, options);
-
-		this.contentSidePanels.add(id);
+		this.sidePanelManager.open(id, options);
 	}
 
-	existFrameTopSlider(): boolean
+	showByExtension(name: string, params: Object): Promise
 	{
-		return Boolean(this.sidePanelManager.getTopSlider());
-	}
+		const extensionName = 'tasks.scrum.' + name.toLowerCase();
 
-	addEscapePressHandler()
-	{
-		const sidePanel = this.sidePanelManager.getTopSlider();
-		if (sidePanel)
-		{
-			const frameWindow = sidePanel.getFrameWindow();
-			frameWindow.addEventListener('keydown', sidePanel.handleFrameKeyDown);
-		}
-	}
+		return Runtime.loadExtension(extensionName)
+			.then((exports) => {
 
-	removeEscapePressHandler()
-	{
-		const sidePanel = this.sidePanelManager.getTopSlider();
-		if (sidePanel)
-		{
-			const frameWindow = sidePanel.getFrameWindow();
-			frameWindow.removeEventListener('keydown', sidePanel.handleFrameKeyDown);
-		}
-	}
+				name = name.replaceAll('-', '');
 
-	applyBodyWidthHack()
-	{
-		if (this.existFrameTopSlider())
-		{
-			Dom.addClass(document.body, 'tasks-scrum-side-panel-padding');
-		}
-	}
+				if (exports && exports[name])
+				{
+					const extension = new exports[name](params);
 
-	resetBodyWidthHack()
-	{
-		if (this.existFrameTopSlider())
-		{
-			Dom.removeClass(document.body, 'tasks-scrum-side-panel-padding');
-		}
+					extension.show();
+
+					return extension;
+				}
+				else
+				{
+					return null;
+				}
+			})
+		;
 	}
 }

@@ -186,6 +186,7 @@ class CVoxImplantSip
 			$this->error = new CVoxImplantError(__METHOD__, 'CONFIG_NOT_FOUND', GetMessage('VI_SIP_CONFIG_NOT_FOUND'));
 			return false;
 		}
+		$arUpdate['REGISTRATION_STATUS_CODE'] = 0;
 
 		VI\SipTable::update($entity['ID'], $arUpdate);
 
@@ -594,7 +595,7 @@ class CVoxImplantSip
 	 * @param $parameters
 	 * <li> array parameters
 	 */
-	public function updateSipRegisrations($parameters = [])
+	public function updateSipRegistrations($parameters = [])
 	{
 		if(isset($parameters['sipRegistrations']))
 		{
@@ -618,14 +619,18 @@ class CVoxImplantSip
 
 	public function updateSipRegistrationStatus(array $sipRegistration)
 	{
-		$sipData = $this->getSipData($sipRegistration);
-
-		if(!isset($sipRegistration['status_code']))
+		$sipRegistrationId = (int)($sipRegistration['sip_registration_id'] ?? 0);
+		if (!$sipRegistrationId)
 		{
-			$sipRegistration['status_code'] = 200;
+			return;
+		}
+		$sipData = $this->getSipData($sipRegistrationId);
+		if (!$sipData || !isset($sipRegistration['status_code']))
+		{
+			return;
 		}
 
-		if($sipData && (int)$sipData['REGISTRATION_STATUS_CODE'] !== $sipRegistration['status_code'])
+		if((int)$sipData['REGISTRATION_STATUS_CODE'] !== (int)$sipRegistration['status_code'])
 		{
 			\Bitrix\Voximplant\SipStatusInformer::notifyStatusUpdate(
 				$sipRegistration['successful'],
@@ -650,8 +655,7 @@ class CVoxImplantSip
 
 	}
 
-
-	public function getSipData($sipRegistration)
+	public function getSipData(int $sipRegistrationId)
 	{
 		$row = \Bitrix\Voximplant\SipTable::getList([
 			'select' => [
@@ -663,7 +667,7 @@ class CVoxImplantSip
 				'PHONE_ID' => 'CONFIG_ID'
 			],
 			'filter' => [
-				'=REG_ID' => $sipRegistration['sip_registration_id'],
+				'=REG_ID' => $sipRegistrationId,
 			],
 			'limit' => 1
 		])->fetch();

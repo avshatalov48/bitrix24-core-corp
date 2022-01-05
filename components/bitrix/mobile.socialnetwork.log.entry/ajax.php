@@ -646,7 +646,7 @@ if(CModule::IncludeModule("socialnetwork"))
 									"NOTIFY_TAG" => "",
 									"NOTIFY_TEXT" => "",
 									"SHOW_MINIMIZED" => "Y",
-									"SHOW_POST_FORM" => "",
+									"SHOW_POST_FORM" => "Y",
 
 									"IMAGE_SIZE" => "",
 									"mfi" => ""
@@ -786,7 +786,7 @@ if(CModule::IncludeModule("socialnetwork"))
 		{
 			$log_entity_type = $arLog["ENTITY_TYPE"];
 			$arListParams = (
-			mb_strpos($log_entity_type, "CRM") === 0
+				mb_strpos($log_entity_type, "CRM") === 0
 				&& IsModuleInstalled("crm")
 					? array("IS_CRM" => "Y", "CHECK_CRM_RIGHTS" => "Y")
 					: array("CHECK_RIGHTS" => "Y", "USE_SUBSCRIBE" => "N")
@@ -825,10 +825,32 @@ if(CModule::IncludeModule("socialnetwork"))
 
 		if (
 			$log_tmp_id > 0
-			&& ($rsLog = CSocNetLog::GetList(array(), array("ID" => $log_tmp_id), false, false, array("ID", "EVENT_ID", "SOURCE_ID"), $arListParams))
+			&& ($rsLog = CSocNetLog::GetList(
+				array(),
+				array("ID" => $log_tmp_id),
+				false,
+				false,
+				array(
+					"ID", "EVENT_ID", "SOURCE_ID",
+					'ENTITY_TYPE', 'ENTITY_ID',
+					'PARAMS',
+				),
+				$arListParams
+			))
 			&& ($arLog = $rsLog->Fetch())
 		)
 		{
+			$liveFeedCommentsParams = \Bitrix\Socialnetwork\ComponentHelper::getLFCommentsParams([
+				"ID" => $arLog["ID"],
+				"EVENT_ID" => $arLog["EVENT_ID"],
+				"ENTITY_TYPE" => $arLog["ENTITY_TYPE"],
+				"ENTITY_ID" => $arLog["ENTITY_ID"],
+				"SOURCE_ID" => $arLog["SOURCE_ID"],
+				"PARAMS" => $arLog["PARAMS"]
+			]);
+
+			$entityXmlId = $liveFeedCommentsParams['ENTITY_XML_ID'];
+
 			$arCommentEvent = CSocNetLogTools::FindLogCommentEventByLogEventID($arLog["EVENT_ID"]);
 
 			$bHasEditCallback = (
@@ -1144,7 +1166,7 @@ if(CModule::IncludeModule("socialnetwork"))
 						: $arComment["EVENT"]["ID"]
 				);
 
-				if ($ufData = MSLEUFProcessor::getDataByText($arComment["EVENT"]["MESSAGE"]))
+				if ($ufData = \Bitrix\Mobile\Livefeed\Helper::getDiskDataByCommentText($arComment["EVENT"]["MESSAGE"]))
 				{
 					$commentInlineDiskData[$commentId] = $ufData;
 					$inlineDiskObjectIdList = array_merge($inlineDiskObjectIdList, $ufData['OBJECT_ID']);
@@ -1155,7 +1177,7 @@ if(CModule::IncludeModule("socialnetwork"))
 			}
 
 			$inlineDiskAttachedObjectIdImageList = $entityAttachedObjectIdList = array();
-			if ($ufData = \MSLEUFProcessor::getUFData($inlineDiskObjectIdList, $inlineDiskAttachedObjectIdList))
+			if ($ufData = \Bitrix\Mobile\Livefeed\Helper::getDiskUFDataForComments($inlineDiskObjectIdList, $inlineDiskAttachedObjectIdList))
 			{
 				$inlineDiskAttachedObjectIdImageList = $ufData['ATTACHED_OBJECT_DATA'];
 				$entityAttachedObjectIdList = $ufData['ENTITIES_DATA'];
@@ -1202,25 +1224,17 @@ if(CModule::IncludeModule("socialnetwork"))
 					"AUX" => (isset($arComment["AUX"]) ? $arComment["AUX"] : ''),
 				);
 
-				// find all inline images and remove them from UF
 				if (
 					!empty($inlineDiskAttachedObjectIdImageList)
 					&& isset($commentInlineDiskData[$commentId])
 				)
 				{
-					$inlineAttachedImagesId = array();
-					if (!empty($commentInlineDiskData[$commentId]['OBJECT_ID']))
-					{
-						foreach($commentInlineDiskData[$commentId]['OBJECT_ID'] as $val)
-						{
-							$inlineAttachedImagesId = array_merge($inlineAttachedImagesId, array_keys($inlineDiskAttachedObjectIdImageList, $val));
-						}
-					}
-					if (!empty($commentInlineDiskData[$commentId]['ATTACHED_OBJECT_ID']))
-					{
-						$inlineAttachedImagesId = array_merge($inlineAttachedImagesId, array_intersect($commentInlineDiskData[$commentId]['ATTACHED_OBJECT_ID'], array_keys($inlineDiskAttachedObjectIdImageList)));
-					}
-					$inlineAttachedImagesId = array_intersect($inlineAttachedImagesId, $entityAttachedObjectIdList[$commentId]);
+					$inlineAttachedImagesId = \Bitrix\Mobile\Livefeed\Helper::getCommentInlineAttachedImagesId([
+						'commentId' => $commentId,
+						'inlineDiskAttachedObjectIdImageList' => $inlineDiskAttachedObjectIdImageList,
+						'commentInlineDiskData' => $commentInlineDiskData[$commentId],
+						'entityAttachedObjectIdList' => $entityAttachedObjectIdList[$commentId],
+					]);
 
 					$records[$commentId]["UF"]["UF_SONET_COM_DOC"]['VALUE_INLINE'] = $inlineAttachedImagesId;
 				}
@@ -1238,7 +1252,7 @@ if(CModule::IncludeModule("socialnetwork"))
 				"",
 				array(
 					"RATING_TYPE_ID" => $rating_entity_type,
-					"ENTITY_XML_ID" => $_REQUEST["ENTITY_XML_ID"],
+					"ENTITY_XML_ID" => $entityXmlId,
 					"POST_CONTENT_TYPE_ID" => $postContentTypeId,
 					"COMMENT_CONTENT_TYPE_ID" => $commentContentTypeId,
 					"RECORDS" => $records,
@@ -1329,6 +1343,20 @@ if(CModule::IncludeModule("socialnetwork"))
 				"CHECK_PERMISSIONS_DEST" => "N",
 				"CREATED_BY" => $author_id
 			);
+
+			if (
+				($logFields = \Bitrix\Socialnetwork\LogTable::getList([
+					'filter' => [
+						'=ID' => $log_id,
+					],
+					'select' => [ 'ENTITY_TYPE', 'ENTITY_ID', 'EVENT_ID', 'MODULE_ID' ],
+				])->fetch())
+				&& ($logFields['MODULE_ID'] === 'crm_shared')
+				&& \Bitrix\Main\Loader::includeModule('crm')
+			)
+			{
+				\CCrmLiveFeed::OnBeforeSocNetLogEntryGetRights($logFields, $arRights);
+			}
 
 			$arDestinations = CSocNetLogTools::FormatDestinationFromRights($arRights, $arParams, $iMoreCount);
 			if (is_array($arDestinations))

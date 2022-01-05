@@ -81,6 +81,7 @@ $MESS['TASKS_LIST_ACTION_REOPEN'] = 'Возобновить';
 
 $MESS['TASKS_LIST_POPUP_RESPONSIBLE'] = 'Ответственный';
 $MESS['TASKS_LIST_POPUP_SELECT_DATE'] = 'Крайний срок';
+$MESS['TASKS_LIST_POPUP_PROJECT'] = 'Проект';
 
 $MESS['TASKS_LIST_BUTTON_NEXT'] = 'Загрузить еще';
 $MESS['TASKS_LIST_BUTTON_NEXT_PROCESS'] = 'Загрузка';

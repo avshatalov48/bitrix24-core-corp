@@ -42,24 +42,17 @@ class EmailUser
 		}
 		else
 		{
-			try
-			{
-				$userId = \Bitrix\Mail\User::create(
-					[
-						'EMAIL' => $fields['email'],
-						'NAME' => empty($fields['name']) ? '' : $fields['name'],
-						'LAST_NAME' => empty($fields['lastName']) ? '' : $fields['lastName']
-					]
-				);
+			$userId = \Bitrix\Mail\User::create(
+				[
+					'EMAIL' => $fields['email'],
+					'NAME' => empty($fields['name']) ? '' : $fields['name'],
+					'LAST_NAME' => empty($fields['lastName']) ? '' : $fields['lastName']
+				]
+			);
 
-				if ($userId)
-				{
-					$user = UserTable::getById($userId)->fetchObject();
-				}
-			}
-			catch (\Exception $e)
+			if ($userId)
 			{
-
+				$user = UserTable::getById($userId)->fetchObject();
 			}
 		}
 

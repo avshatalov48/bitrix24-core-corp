@@ -72,7 +72,8 @@ class Task
 
 		try
 		{
-			$taskData = $task->getData(false, [], false);
+			$select = ['ID', 'TITLE', 'DESCRIPTION', 'CREATED_BY', 'RESPONSIBLE_ID', 'STATUS', 'DEADLINE', 'GROUP_ID'];
+			$taskData = $task->getData(false, ['select' => $select], false);
 		}
 		catch (\TasksException $exception)
 		{
@@ -127,7 +128,7 @@ class Task
 			'WIDTH' => $columnWidth,
 		];
 
-		if ($taskData['DEADLINE'] !== '')
+		if ((string)$taskData['DEADLINE'] !== '')
 		{
 			$grid[] = [
 				'NAME' => Loc::getMessage('TASK_PREVIEW_FIELD_DEADLINE') . ':',
@@ -137,9 +138,11 @@ class Task
 			];
 		}
 
-		if ($taskData['DESCRIPTION'] !== '')
+		if ((string)$taskData['DESCRIPTION'] !== '')
 		{
-			$description = \CTextParser::clearAllTags(htmlspecialcharsback($taskData['DESCRIPTION']));
+			$description = \CTextParser::clearAllTags(
+				htmlspecialchars_decode(htmlspecialcharsback($taskData['DESCRIPTION']), ENT_QUOTES)
+			);
 			if (mb_strlen($description) > 100)
 			{
 				$description = mb_substr($description, 0, 100) . '...';

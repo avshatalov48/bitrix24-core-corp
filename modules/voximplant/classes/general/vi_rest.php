@@ -358,17 +358,17 @@ class CVoxImplantRestService extends IRestService
 		$viSip = new CVoxImplantSip();
 		$result = $viSip->GetSipRegistrations($arParams['REG_ID']);
 
+		if (!$result)
+		{
+			throw new Bitrix\Rest\RestException($viSip->GetError()->msg, $viSip->GetError()->code, CRestServer::STATUS_WRONG_REQUEST);
+		}
+
 		$viSip->updateSipRegistrationStatus([
 			'sip_registration_id' => $result->reg_id,
 			'error_message' => $result->error_message,
 			'status_code' => $result->status_code,
 			'successful' => $result->status_result === 'success'
 		]);
-
-		if (!$result)
-		{
-			throw new Bitrix\Rest\RestException($viSip->GetError()->msg, $viSip->GetError()->code, CRestServer::STATUS_WRONG_REQUEST);
-		}
 
 		return Array(
 			'REG_ID' => $result->reg_id,

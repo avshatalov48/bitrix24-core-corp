@@ -10,8 +10,10 @@ export default class Item extends EventEmitter
 	data: ItemSavedType;
 	cache = new Cache.MemoryCache();
 	properties = {
-		pluggedIn: false
+		pluggedIn: false,
+		insertedInText: false,
 	};
+	#hintPopup: null;
 
 	constructor(itemData: ItemSavedType)
 	{
@@ -62,10 +64,146 @@ export default class Item extends EventEmitter
 		return this.properties.pluggedIn;
 	}
 
+	setInsertedInText(value: boolean = true): boolean
+	{
+		this.properties.insertedInText = (value === true);
+		Dom.addClass(this.getContainer(), '--edit-text-preview');
+	}
+
+	isInsertedInText(): boolean
+	{
+		return this.properties.insertedInText;
+	}
+
+	getNameWithoutExtension(): string
+	{
+		let nameParts = this.data['NAME'].split('.');
+		if (nameParts.length > 1)
+		{
+			nameParts.pop();
+		}
+
+		const nameWithoutExtension = nameParts.join('.');
+		if (nameWithoutExtension.length > 50)
+		{
+			return nameWithoutExtension.substr(0, 39) + '...' + nameWithoutExtension.substr(-5);
+		}
+
+		return nameWithoutExtension;
+	}
+
+	#handleMouseEnter(event: Event)
+	{
+		if (this.#hintPopup)
+		{
+			return;
+		}
+
+		const targetNode = event.currentTarget;
+		const targetNodeWidth = targetNode.offsetWidth;
+
+		this.#hintPopup = new BX.PopupWindow({
+			content: Loc.getMessage('WDUF_ITEM_MENU_INSERT_INTO_THE_TEXT'),
+			cacheable: false,
+			animation: 'fading-slide',
+			bindElement: targetNode,
+			offsetTop: 0,
+			bindOptions: {
+				position: 'top',
+			},
+			darkMode: true,
+			events: {
+				onClose: () => {
+					this.#hintPopup.destroy();
+					this.#hintPopup = null;
+				},
+				onShow: (event) => {
+					const popup = event.getTarget();
+					popup.getPopupContainer().style.display = 'block'; // bad hack
+
+					const offsetLeft = (targetNodeWidth / 2) - popup.getPopupContainer().offsetWidth / 2;
+					popup.setOffset({offsetLeft: offsetLeft + 40});
+					popup.setAngle({offset: popup.getPopupContainer().offsetWidth / 2 - 17});
+				}
+			}
+		});
+
+		this.#hintPopup.show();
+	}
+
+	#handleMouseLeave(event: Event)
+	{
+		if (!this.#hintPopup)
+		{
+			return;
+		}
+
+		this.#hintPopup.close();
+		this.#hintPopup = null;
+	}
+
+	getButtonBox(): HTMLElement
+	{
+		let insertInText = '';
+		if (this.isPluggedIn())
+		{
+			insertInText = Tag.render`
+				<div
+					class="disk-file-thumb-btn-text-copy"
+					onclick="${this.onClickInsertInText.bind(this)}"
+					onmouseenter="${this.#handleMouseEnter.bind(this)}"
+					onmouseleave="${this.#handleMouseLeave.bind(this)}"
+				>
+				</div>`;
+		}
+
+		return Tag.render`
+			<div class="disk-file-thumb-btn-box">
+				${insertInText}
+				<div class="disk-file-thumb-btn-more" data-bx-role="more" onclick="${this.onClickMore.bind(this)}"></div>
+			</div>
+		`;
+	}
+
+	getDeleteButton(): HTMLElement
+	{
+		return Tag.render`
+			<div class="disk-file-thumb-btn-close-box">
+				<div class="disk-file-thumb-btn-close" onclick="${this.onClickDelete.bind(this)}"></div>
+			</div>
+		`;
+	}
+
+	getNameBox(nameWithoutExtension, extension): HTMLElement
+	{
+		let extensionNode = '';
+		if (extension)
+		{
+			extensionNode = Tag.render`<span class="disk-file-thumb-file-extension">.${extension}</span>`;
+		}
+
+		return Tag.render`
+			<div class="disk-file-thumb-text-box">
+				<div data-bx-role="name" class="disk-file-thumb-text">
+					${nameWithoutExtension}
+					${extensionNode}
+				</div>
+			</div>
+		`;
+	}
+
+	getIcon(extension): HTMLElement
+	{
+		return Tag.render`
+			<div data-bx-role="icon" class="ui-icon ui-icon-file-${extension} disk-file-thumb-icon"><i></i></div>
+		`;
+	}
+
 	getContainer(): Element
 	{
 		return this.cache.remember('container', () => {
-			const name = Text.encode(this.data['NAME']);
+
+			const nameWithoutExtension = Text.encode(this.getNameWithoutExtension());
 			let extension = Text.encode(this.data['EXTENSION']).toLowerCase();
 
 			switch (extension) {
@@ -75,13 +213,11 @@ export default class Item extends EventEmitter
 			}
 
 			return Tag.render`
-		<div class="disk-file-thumb disk-file-thumb-file disk-file-thumb--${extension}" onclick="${this.onClick.bind(this)}">
-			<div data-bx-role="icon" class="ui-icon ui-icon-file-${extension} disk-file-thumb-icon"><i></i></div>
-			<div data-bx-role="name" class="disk-file-thumb-text">${name}</div>
-			<div class="disk-file-thumb-btn-box">
-				<div class="disk-file-thumb-btn-close" onclick="${this.onClickDelete.bind(this)}"></div>
-				<div class="disk-file-thumb-btn-more" data-bx-role="more" onclick="${this.onClickMore.bind(this)}"></div>
-			</div>
+		<div class="disk-file-thumb disk-file-thumb-file disk-file-thumb--${extension}">
+			${this.getIcon(extension)}
+			${this.getNameBox(nameWithoutExtension, extension)}
+			${this.getDeleteButton()}
+			${this.getButtonBox()}
 		</div>`;
 		});
 	}
@@ -133,7 +269,7 @@ export default class Item extends EventEmitter
 						text: Loc.getMessage('WDUF_ITEM_MENU_INSERT_INTO_THE_TEXT'),
 						onclick : (event, item) => {
 							contextMenu.close();
-							this.onClick(event);
+							this.onClickInsertInText(event);
 						}
 					} : null,
 					{
@@ -234,6 +370,11 @@ export default class Item extends EventEmitter
 		this.emit('onDelete');
 		this.destroy();
 		Backend.deleteAction(this.getId());
+	}
+
+	onClickInsertInText(event: MouseEvent)
+	{
+		this.emit('onClickInsertInText');
 	}
 
 	onClickMore(event: MouseEvent)

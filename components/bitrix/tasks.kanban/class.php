@@ -208,6 +208,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 				$params['SPRINT_ID'] = 0;
 				$params['SPRINT_SELECTED'] = 'N';
 			}
+
+			$params['IS_ACTIVE_SPRINT'] = ($this->getActiveTab($params['GROUP_ID']) === 'active_sprint' ? 'Y' : 'N');
 		}
 
 		// force set last user group
@@ -2676,7 +2678,6 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$taskItem->setSourceId($taskId);
 			$taskItem->setEntityId($sprintId);
 			$taskItem->setCreatedBy($fields['CREATED_BY']);
-			$taskItem->setItemType(ItemTable::TASK_TYPE);
 
 			$createdItem = $itemService->getItemBySourceId($taskId);
 			$taskItem->setId($createdItem->getId());
@@ -3796,6 +3797,11 @@ class TasksKanbanComponent extends \CBitrixComponent
 		{
 			$this->addError($exception->getMessage());
 		}
+	}
+
+	private function getActiveTab(int $groupId)
+	{
+		return \CUserOptions::getOption('tasks.scrum.'.$groupId, 'active_tab', 'plan');
 	}
 
 	/**

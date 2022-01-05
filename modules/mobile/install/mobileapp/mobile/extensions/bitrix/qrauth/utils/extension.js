@@ -5,12 +5,12 @@
 
 	let qrauth = {
 		urlTemplate: "https://b24.to/a/",
-		open: ({title, redirectUrl, external, urlData, type}) => {
+		open: ({title, redirectUrl, external, urlData, type, showHint}) => {
 			let componentUrl = availableComponents["qrcodeauth"].publicUrl;
 			PageManager.openComponent("JSStackComponent", {
 				scriptPath: componentUrl,
 				componentCode: "qrauth",
-				params: {redirectUrl, external, urlData, type},
+				params: {redirectUrl, external, urlData, type, showHint},
 				rootWidget: {
 					name: "layout",
 					settings: {
@@ -18,7 +18,7 @@
 						title: title,
 						backdrop: {
 							bounceEnable: true,
-							showOnTop: !Boolean(external),
+							mediumPositionHeight:500
 						},
 					}
 				}
@@ -60,7 +60,13 @@
 									reject(errors[0])
 								}
 							}
-						);
+						)
+						.catch(({errors}) => {
+							if (errors.length > 0) {
+								reject(errors[0])
+							}
+						})
+					;
 				}
 				else
 				{

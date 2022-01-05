@@ -449,18 +449,9 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 					$iCalEvent["PRIORITY"] = 5;
 			}
 
-			if ((isset($event["DESCRIPTION"]) && $event["DESCRIPTION"] <> '') || $event['ATTENDEES_CODES'])
+			if (isset($event["DESCRIPTION"]) && $event["DESCRIPTION"] !== '' && is_string($event['DESCRIPTION']))
 			{
-				$event['DESCRIPTION'] = self::replaceBBcodes($event['DESCRIPTION']);
-				if (isset($event['ATTENDEES_CODES']) && count($event['ATTENDEES_CODES']) > 1)
-				{
-					$users = self::GetAttendees($event['ATTENDEES_CODES']);
-					$iCalEvent["DESCRIPTION"] = GetMessage('ATTENDEES_EVENT').': '.$users.' '.$event["DESCRIPTION"];
-				}
-				else
-				{
-					$iCalEvent["DESCRIPTION"] = $event["DESCRIPTION"];
-				}
+				$iCalEvent["DESCRIPTION"] = self::replaceBBcodes($event['DESCRIPTION']);
 			}
 
 			if (isset($event["REMIND"]) && is_array($event["REMIND"]) && count($event["REMIND"]) > 0)

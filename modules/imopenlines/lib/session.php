@@ -1,25 +1,27 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\Main,
-	\Bitrix\Main\Loader,
-	\Bitrix\Main\Application,
-	\Bitrix\Main\Type\DateTime,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Application;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\UserConsent\Consent;
 
-use \Bitrix\Im\User as ImUser;
+use Bitrix\Im\User as ImUser;
 
-use \Bitrix\ImOpenLines\Log\Library,
-	\Bitrix\Imopenlines\Im\Messages,
-	\Bitrix\ImOpenLines\Log\EventLog,
-	\Bitrix\ImOpenLines\Session\Agent,
-	\Bitrix\ImOpenLines\Model\SessionTable,
-	\Bitrix\ImOpenLines\Model\SessionCheckTable,
-	\Bitrix\Imopenlines\Model\SessionIndexTable,
-	\Bitrix\ImOpenLines\Model\SessionAutomaticTasksTable,
-	\Bitrix\Imopenlines\Model\ConfigAutomaticMessagesTable;
+use Bitrix\ImOpenLines\Log\Library;
+use Bitrix\Imopenlines\Im\Messages;
+use Bitrix\ImOpenLines\Log\EventLog;
+use Bitrix\ImOpenLines\Session\Agent;
+use Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\ImOpenLines\Model\SessionCheckTable;
+use Bitrix\Imopenlines\Model\SessionIndexTable;
+use Bitrix\ImOpenLines\Model\SessionAutomaticTasksTable;
+use Bitrix\Imopenlines\Model\ConfigAutomaticMessagesTable;
 
+use Bitrix\ImConnector;
 use Bitrix\ImConnector\InteractiveMessage;
 
 Loc::loadMessages(__FILE__);
@@ -40,6 +42,7 @@ class Session
 	private $isCreated = false;
 	protected $isCloseVote = false;
 	protected $isDisabledSendSystemMessage = false;
+	protected $isForcedSendVote = false;
 
 	const RULE_TEXT = 'text';
 	const RULE_FORM = 'form';
@@ -1168,10 +1171,13 @@ class Session
 					}
 
 					if (
-						$enableSystemMessage &&
-						$this->config['VOTE_MESSAGE'] == 'Y' &&
-						$this->session['CHAT_ID'] &&
-						empty($this->session['VOTE'])
+						(
+							$enableSystemMessage === true
+							|| $this->isForcedSendVote === true
+						)
+						&& $this->config['VOTE_MESSAGE'] === 'Y'
+						&& $this->session['CHAT_ID']
+						&& empty($this->session['VOTE'])
 					)
 					{
 						$paramsDateCloseVote = '';
@@ -1333,7 +1339,7 @@ class Session
 			if (method_exists('\\Bitrix\\ImConnector\\Chat', 'deleteLastMessage'))
 			{
 				//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
-				list($connectorId, $lineId, $connectorChatId, $connectorUserId) = explode('|', $this->user['USER_CODE']);
+				[$connectorId, $lineId, $connectorChatId, $connectorUserId] = explode('|', $this->user['USER_CODE']);
 				\Bitrix\ImConnector\Chat::deleteLastMessage($connectorChatId, $connectorId);
 			}
 
@@ -2063,50 +2069,59 @@ class Session
 	/**
 	 * @param $params
 	 */
-	public function execAutoAction($params)
+	public function execAutoAction($params): void
 	{
-		$update = [];
-
-		if ($this->action == self::ACTION_CLOSED && $this->config['ACTIVE'] == 'N')
+		if (
+			$this->action === self::ACTION_CLOSED
+			&& $this->config['ACTIVE'] === 'N'
+		)
 		{
 			Im::addMessage([
-				"TO_CHAT_ID" => $this->session['CHAT_ID'],
-				"MESSAGE" => Loc::getMessage('IMOL_SESSION_LINE_IS_CLOSED'),
-				"SYSTEM" => 'Y',
+				'TO_CHAT_ID' => $this->session['CHAT_ID'],
+				'MESSAGE' => Loc::getMessage('IMOL_SESSION_LINE_IS_CLOSED'),
+				'SYSTEM' => 'Y',
 			]);
 		}
 
-		if ($this->chat->isNowCreated() && $this->config['AGREEMENT_MESSAGE'] == 'Y' && $this->isEnableSendSystemMessage())
+		if (
+			$this->config['AGREEMENT_MESSAGE'] === 'Y'
+			&& $this->chat->isNowCreated()
+			&& $this->isEnableSendSystemMessage()
+		)
 		{
 			$addAgreementMessage = true;
 			if (Connector::isLiveChat($this->session['SOURCE']))
 			{
 				$parsedUserCode = Session\Common::parseUserCode($this->session['USER_CODE']);
-				$addAgreementMessage = !\Bitrix\Main\UserConsent\Consent::getByContext(intval($this->config['AGREEMENT_ID']), 'imopenlines/livechat', $parsedUserCode['EXTERNAL_CHAT_ID']);
+				$addAgreementMessage = !Consent::getByContext(
+					(int)$this->config['AGREEMENT_ID'],
+					'imopenlines/livechat',
+					$parsedUserCode['EXTERNAL_CHAT_ID']
+				);
 			}
 
 			if ($addAgreementMessage)
 			{
 				$mess = Loc::loadLanguageFile(__FILE__, $this->config['LANGUAGE_ID']);
 				Im::addMessage([
-					"TO_CHAT_ID" => $this->session['CHAT_ID'],
-					"MESSAGE" => str_replace(
+					'TO_CHAT_ID' => $this->session['CHAT_ID'],
+					'MESSAGE' => str_replace(
 						['#LINK_START#', '#LINK_END#'],
-						['[URL='.\Bitrix\ImOpenLines\Common::getAgreementLink($this->config['AGREEMENT_ID'], $this->config['LANGUAGE_ID'])."]", '[/URL]'],
+						['[URL=' . Common::getAgreementLink($this->config['AGREEMENT_ID'], $this->config['LANGUAGE_ID']) . ']', '[/URL]'],
 						$mess['IMOL_SESSION_AGREEMENT_MESSAGE']
 					),
-					"SYSTEM" => 'Y',
-					"IMPORTANT_CONNECTOR" => 'Y',
-					"PARAMS" => [
-						"CLASS" => "bx-messenger-content-item-ol-output",
+					'SYSTEM' => 'Y',
+					'IMPORTANT_CONNECTOR' => 'Y',
+					'PARAMS' => [
+						'CLASS'=> 'bx-messenger-content-item-ol-output',
 					]
 				]);
 				Im::addMessage([
-					"TO_CHAT_ID" => $this->session['CHAT_ID'],
-					"MESSAGE" => Loc::getMessage('IMOL_SESSION_AGREEMENT_MESSAGE_OPERATOR'),
-					"SYSTEM" => 'Y',
-					"PARAMS" => [
-						"CLASS" => "bx-messenger-content-item-ol-attention",
+					'TO_CHAT_ID' => $this->session['CHAT_ID'],
+					'MESSAGE' => Loc::getMessage('IMOL_SESSION_AGREEMENT_MESSAGE_OPERATOR'),
+					'SYSTEM' => 'Y',
+					'PARAMS' => [
+						'CLASS' => 'bx-messenger-content-item-ol-attention',
 					]
 				]);
 			}
@@ -2996,6 +3011,15 @@ class Session
 			{
 				$result = false;
 			}
+			elseif (Loader::includeModule('imconnector'))
+			{
+				$connectorHandler = ImConnector\Connector::initConnectorHandler($this->getData('SOURCE'));
+
+				if (!empty($connectorHandler))
+				{
+					$result = $connectorHandler->isEnableSendSystemMessage($this);
+				}
+			}
 		}
 
 		return $result;
@@ -3014,6 +3038,16 @@ class Session
 	public function setDisabledSendSystemMessage(bool $value): void
 	{
 		$this->isDisabledSendSystemMessage = $value;
+	}
+
+	/**
+	 * Forcibly disabling system messages.
+	 *
+	 * @param bool $value
+	 */
+	public function setForcedSendVote(bool $value): void
+	{
+		$this->isForcedSendVote = $value;
 	}
 
 	//Event

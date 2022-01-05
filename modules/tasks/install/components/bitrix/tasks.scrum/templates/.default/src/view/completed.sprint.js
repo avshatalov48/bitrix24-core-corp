@@ -1,4 +1,4 @@
-import {Dom, Text} from 'main.core';
+import {Dom, Text, Type} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {SidePanel} from '../service/side.panel';
@@ -31,27 +31,33 @@ export class CompletedSprint extends View
 		this.bindHandlers();
 	}
 
-	renderSprintStatsTo(container: HTMLElement)
+	renderRightElementsTo(container: HTMLElement)
 	{
-		super.renderSprintStatsTo(container);
+		super.renderRightElementsTo(container);
 
-		this.titleContainer = container;
-		this.titleContainer.textContent = Text.encode(this.completedSprint.getName());
-	}
-
-	renderButtonsTo(container: HTMLElement)
-	{
-		super.renderButtonsTo(container);
+		if (this.completedSprint === null)
+		{
+			return;
+		}
 
 		const burnDownButton = new BurnDownButton();
 		burnDownButton.subscribe('click', this.onShowSprintBurnDownChart.bind(this));
+
+		Dom.addClass(container, '--without-bg');
 
 		Dom.append(burnDownButton.render(), container);
 	}
 
 	setParams(params: Params)
 	{
-		this.completedSprint = new Sprint(params.completedSprint);
+		if (Type.isArray(params.completedSprint))
+		{
+			this.completedSprint = null;
+		}
+		else
+		{
+			this.completedSprint = new Sprint(params.completedSprint);
+		}
 
 		this.sidePanel = new SidePanel();
 
@@ -80,8 +86,8 @@ export class CompletedSprint extends View
 	onShowSprintBurnDownChart(baseEvent: BaseEvent)
 	{
 		const sprintSidePanel = new SprintSidePanel({
+			groupId: this.groupId,
 			sidePanel: this.sidePanel,
-			requestSender: this.requestSender,
 			views: this.views
 		});
 		sprintSidePanel.showBurnDownChart(this.completedSprint);

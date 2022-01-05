@@ -30,9 +30,7 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 			$this->arParams['SPRINT_ID']//mark that we are in sprint mode
 		)
 		{
-
-			$group = Bitrix\Socialnetwork\Item\Workgroup::getById($this->arParams['GROUP_ID']);
-			if ($group && $group->isScrumProject())
+			if ($this->arResult['IS_SCRUM_PROJECT'])
 			{
 				$sprintService = new SprintService();
 				$listSprints = $sprintService->getSprintsByGroupId($this->arParams['GROUP_ID']);
@@ -93,6 +91,9 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		{
 			FilterLimit::notifyLimitWarning($this->arParams['USER_ID'], $limitWarningValue);
 		}
+
+		$group = Bitrix\Socialnetwork\Item\Workgroup::getById($this->arParams['GROUP_ID']);
+		$this->arResult['IS_SCRUM_PROJECT'] = ($group && $group->isScrumProject());
 
 		$this->arResult['SPRINTS'] = $this->getSprints();
 	}

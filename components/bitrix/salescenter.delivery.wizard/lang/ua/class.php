@@ -1,4 +1,0 @@
-<?php
-$MESS["SALESCENTER_DELIVERY_INSTALLATION_MODULE_ERROR"] = "Модуль Центр продажів не встановлений";
-$MESS["SALESCENTER_DELIVERY_INSTALLATION_SALE_MODULE_ERROR"] = "Модуль Інтернет-магазин не встановлений";
-$MESS["SALESCENTER_DELIVERY_INSTALLATION_SLIDER_TITLE"] = "Доставка";

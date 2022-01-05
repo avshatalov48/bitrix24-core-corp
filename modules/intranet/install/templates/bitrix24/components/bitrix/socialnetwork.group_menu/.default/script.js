@@ -13,6 +13,7 @@
 		userIsAutoMember: null,
 		userRole: null,
 		isProject: null,
+		isScrumProject: null,
 		favoritesValue: null,
 		canInitiate: null,
 		canModify: null,
@@ -28,10 +29,12 @@
 		this.currentUserId = parseInt(params.currentUserId);
 		this.groupId = parseInt(params.groupId);
 		this.groupType = params.groupType;
+		this.projectTypeCode = params.projectTypeCode;
 		this.userIsMember = !!params.userIsMember;
 		this.userIsAutoMember = !!params.userIsAutoMember;
 		this.userRole = params.userRole;
 		this.isProject = !!params.isProject;
+		this.isScrumProject = !!params.isScrumProject;
 		this.isOpened = !!params.isOpened;
 		this.favoritesValue = !!params.favoritesValue;
 		this.canInitiate = !!params.canInitiate;
@@ -39,6 +42,12 @@
 		this.canProcessRequestsIn = !!params.canProcessRequestsIn;
 		this.canPickTheme = !!params.canPickTheme;
 		this.pageId = params.pageId;
+		this.avatarPath = params.avatarPath;
+		this.avatarType = params.avatarType;
+
+		this.scrumMeetings = null;
+		this.scrumMethodology = null;
+		this.projectWidgetInstance = null;
 
 		if (!BX.type.isUndefined(params.urls))
 		{
@@ -120,6 +129,24 @@
 					});
 				}
 			}.bind(this));
+		}
+
+		var scrumMeetingsButton = document.getElementById('tasks-scrum-meetings-button');
+		if (scrumMeetingsButton)
+		{
+			BX.bind(scrumMeetingsButton, 'click', BX.delegate(this.showScrumMeetings, this));
+		}
+
+		var scrumMethodologyButton = document.getElementById('tasks-scrum-methodology-button');
+		if (scrumMethodologyButton)
+		{
+			BX.bind(scrumMethodologyButton, 'click', BX.delegate(this.showScrumMethodology, this));
+		}
+
+		var projectWidgetButton = document.getElementById('project-widget-button');
+		if (projectWidgetButton)
+		{
+			BX.bind(projectWidgetButton, 'click', BX.delegate(this.showProjectWidget, this));
 		}
 	};
 
@@ -277,6 +304,7 @@
 			userIsAutoMember: this.userIsAutoMember,
 			userRole: this.userRole,
 			isProject: this.isProject,
+			isScrumProject: this.isScrumProject,
 			isOpened: this.groupOpened,
 			editFeaturesAllowed: this.editFeaturesAllowed,
 			copyFeatureAllowed: this.copyFeatureAllowed,
@@ -303,6 +331,82 @@
 				copy: this.urls.Copy
 			}
 		});
+
+		event.preventDefault();
+	};
+
+	BX.BXSGM24.showScrumMeetings = function(event)
+	{
+		BX.addClass(event.target, 'ui-btn-wait');
+
+		BX.loadExt('tasks.scrum.meetings').then(function() {
+			if (BX.Tasks.Scrum.Meetings)
+			{
+				if (this.scrumMeetings === null)
+				{
+					this.scrumMeetings = new BX.Tasks.Scrum.Meetings({
+						groupId: this.groupId
+					});
+				}
+
+				this.scrumMeetings.showMenu(event.target);
+			}
+			BX.removeClass(event.target, 'ui-btn-wait');
+		}.bind(this));
+
+		event.preventDefault();
+	};
+
+	BX.BXSGM24.showScrumMethodology = function(event)
+	{
+		BX.addClass(event.target, 'ui-btn-wait');
+
+		BX.loadExt('tasks.scrum.methodology').then(function() {
+			if (BX.Tasks.Scrum.Methodology)
+			{
+				if (this.scrumMethodology === null)
+				{
+					this.scrumMethodology = new BX.Tasks.Scrum.Methodology({
+						groupId: this.groupId
+					});
+				}
+
+				this.scrumMethodology.showMenu(event.target);
+			}
+			BX.removeClass(event.target, 'ui-btn-wait');
+		}.bind(this));
+
+		event.preventDefault();
+	};
+
+	BX.BXSGM24.showProjectWidget = function(event)
+	{
+		if (this.projectWidgetInstance === null)
+		{
+			this.projectWidgetInstance = new BX.Socialnetwork.UIWorkgroupWidget({
+				groupId: this.groupId,
+				avatarPath: this.avatarPath,
+				avatarType: this.avatarType,
+				projectTypeCode: this.projectTypeCode,
+				perms: {
+					canModify: this.canModify,
+				},
+				urls: {
+					card: this.urls.Card,
+					members: this.urls.GroupUsers,
+					features: this.urls.Features,
+				},
+			});
+		}
+
+		this.projectWidgetInstance.show(event.target);
+		if (
+			this.projectWidgetInstance.widget
+			&& this.projectWidgetInstance.widget.getPopup()
+		)
+		{
+			BX.UI.Hint.init(this.projectWidgetInstance.widget.getPopup().getContentContainer());
+		}
 
 		event.preventDefault();
 	};

@@ -2,6 +2,7 @@
 $MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_DROPBOX"] = "Dropbox";
 $MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_GDRIVE"] = "Google Drive";
 $MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_OFFICE365"] = "Office 365";
+$MESS["DISK_UF_FILE_EDIT_SERVICE_LABEL"] = "Neues Dokument mit #NAME# erstellen";
 $MESS["WDUF_ALLOW_COLLAGE"] = "Fotocollage erlauben";
 $MESS["WDUF_ALLOW_EDIT"] = "Dokumentbearbeitung erlauben";
 $MESS["WDUF_CREATE_DOCUMENT"] = "Neues Dokument";
@@ -10,6 +11,7 @@ $MESS["WDUF_CREATE_PPTX"] = "Präsentation";
 $MESS["WDUF_CREATE_XLSX"] = "Tabelle";
 $MESS["WDUF_DND_AREA_TITLE"] = "Verschieben Sie Ihre Dateien hierher";
 $MESS["WDUF_FILE_IS_EXISTS"] = "Datei existiert bereits.";
+$MESS["WDUF_ITEM_ERROR"] = "Fehler";
 $MESS["WDUF_ITEM_MENU_DELETE"] = "Löschen";
 $MESS["WDUF_ITEM_MENU_EDIT"] = "Bearbeiten";
 $MESS["WDUF_ITEM_MENU_FILE"] = "Datei";

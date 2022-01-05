@@ -413,6 +413,19 @@
 			},
 			{
 				condition: [
+					new RegExp(siteDir + "workgroups/group/[0-9]+/tasks/\\?scrum=Y$", "i")
+				],
+				options: {
+					contentClassName: "bitrix24-group-slider-content",
+					loader: "intranet:scrum",
+					cacheable: false,
+					customLeftBoundary: 0,
+					newWindowLabel: true,
+					copyLinkLabel: true,
+				},
+			},
+			{
+				condition: [
 					new RegExp(siteDir + "timeman/worktime/records/[0-9]+/report/($|\\?)", "i")
 				],
 				options: {

@@ -10,6 +10,22 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
 
+/**
+ * Class RoleAccessTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_RoleAccess_Query query()
+ * @method static EO_RoleAccess_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_RoleAccess_Result getById($id)
+ * @method static EO_RoleAccess_Result getList(array $parameters = array())
+ * @method static EO_RoleAccess_Entity getEntity()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_RoleAccess createObject($setDefaultValues = true)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_RoleAccess_Collection createCollection()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_RoleAccess wakeUpObject($row)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_RoleAccess_Collection wakeUpCollection($rows)
+ */
 class RoleAccessTable extends DataManager
 {
 	/**

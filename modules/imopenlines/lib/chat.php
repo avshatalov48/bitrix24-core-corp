@@ -340,6 +340,10 @@ class Chat
 						$event = new Event('imopenlines', 'OnChatAnswer', $eventData);
 						$event->send();
 					}
+
+					$CIMChat = new \CIMChat($userId);
+					$CIMChat->SetReadMessage($this->chat['ID']);
+
 				}
 				else
 				{
@@ -1205,9 +1209,10 @@ class Chat
 	 * @param int $userId
 	 * @param bool $permissionOtherClose
 	 * @param bool $skipSendSystemMessage
+	 * @param bool $forcedSendVote
 	 * @return Result
 	 */
-	public function finish($userId = 0, bool $permissionOtherClose = true, bool $skipSendSystemMessage = false): Result
+	public function finish($userId = 0, bool $permissionOtherClose = true, bool $skipSendSystemMessage = false, bool $forcedSendVote = false): Result
 	{
 		$result = new Result();
 
@@ -1270,6 +1275,10 @@ class Chat
 						{
 							$session->setDisabledSendSystemMessage(true);
 						}
+						if($forcedSendVote === true)
+						{
+							$session->setForcedSendVote(true);
+						}
 
 						$eventData = [
 							'RUNTIME_SESSION' => $session
@@ -1283,6 +1292,10 @@ class Chat
 						if($skipSendSystemMessage === true)
 						{
 							$session->setDisabledSendSystemMessage(false);
+						}
+						if($forcedSendVote === true)
+						{
+							$session->setForcedSendVote(false);
 						}
 
 						$queueManager->stopLock();
@@ -1643,6 +1656,19 @@ class Chat
 					]);
 					if ($resultLoadSession)
 					{
+						global $USER;
+						if (
+							$userId > 0
+							&& !$USER->IsAuthorized()
+							&& ImUser::getInstance($userId)->isConnector()
+						)
+						{
+							if ($USER->Authorize($userId, false, false))
+							{
+								setSessionExpired(true);
+							}
+						}
+
 						$messageId = Im::addMessage([
 							'TO_CHAT_ID' => $this->chat['ID'],
 							'MESSAGE' => $message,
@@ -2679,14 +2705,10 @@ class Chat
 
 	/**
 	 * @param $entityId
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function updateChatLineData($entityId)
+	public function updateChatLineData($entityId): void
 	{
-		$this->update(array('ENTITY_ID' => $entityId));
+		$this->update(['ENTITY_ID' => $entityId]);
 
 		//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId
 		$entity = explode('|', $entityId);
@@ -2695,7 +2717,7 @@ class Chat
 		{
 			$relationChat = new self($entity[2]);
 			$relationEntityId = $entity[1] . '|' . $entity[3];
-			$relationChat->update(array('ENTITY_ID' => $relationEntityId));
+			$relationChat->update(['ENTITY_ID' => $relationEntityId]);
 		}
 	}
 
@@ -2944,7 +2966,12 @@ class Chat
 
 		if(!empty($entityId))
 		{
-			list($result['connectorId'], $result['lineId'], $result['connectorChatId'], $result['connectorUserId']) = explode('|', $entityId);
+			[
+				$result['connectorId'],
+				$result['lineId'],
+				$result['connectorChatId'],
+				$result['connectorUserId']
+			] = explode('|', $entityId);
 		}
 
 		return $result;

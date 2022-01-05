@@ -964,3 +964,110 @@ span.imconnector-public-link-inner-copy-button-item {
 	display: block;
 	pointer-events: auto;
 }
+
+.imconnector-field-section-info {
+	padding: 30px 25px 40px;
+}
+
+.imconnector-field-section-main-subtitle {
+	font-size: 24px;
+	line-height: 28px;
+	margin-bottom: 23px;
+}
+
+.imconnector-field-box-content-text-items {
+	list-style-type: none;
+	padding: 0;
+	margin: 0 0 37px 0;
+}
+
+.imconnector-field-box-content-text-item {
+	position: relative;
+	padding-left: 23px;
+	margin-bottom: 12px;
+}
+
+.imconnector-field-box-content-text-item::before {
+	content: '';
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Crect width='14' height='14' fill='%239DCF00' rx='7'/%3E%3Cpolygon fill='%23FFF' points='6.14 8.31 9.755 4.718 10.756 5.711 6.156 10.282 6.14 10.267 6.125 10.282 3.244 7.421 4.245 6.428'/%3E%3C/g%3E%3C/svg%3E");
+	position: absolute;
+	left: 0;
+	top: 3px;
+}
+
+.imconnector-field-box-content-text-light {
+	margin-bottom: 17px;
+}
+
+.imconnector-field-box-content-subtitle {
+	font: 21px/30px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	margin-bottom: 19px;
+	color: #2066B0;
+}
+
+.imconnector-field-box-content-text {
+	font-size: 15px;
+	line-height: 23px;
+	color: #333333;
+	margin-bottom: 21px;
+}
+
+.imconnector-field-box-content-btn {
+	margin: 30px 0 0 0;
+}
+
+.imconnector-field-box-content-text-light a {
+	border-bottom: 1px dashed rgba(32, 103, 176, 0.5);
+	font-size: 13px;
+}
+
+.imconnector-field-box-content-text-light a:hover {
+	border-bottom: 1px dashed #2067b0;
+}
+
+.imconnector-field-more-info-block {
+	position: absolute;
+	bottom: 0px;
+	left: 50%;
+	transform: translate(-50%, 0);
+	height: 45px;
+	width: 100%;
+	background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5) 10px, rgba(255, 255, 255, 1) 20px);
+	z-index: 3;
+	cursor: pointer;
+	transition: .4s;
+	opacity: 1;
+}
+
+.imconnector-field-more-button {
+	background: none;
+	display: block;
+	border-bottom: 1px solid #d7dce0;
+	height: 24px;
+	position: relative;
+	transition: .4s;
+}
+
+.imconnector-field-more-button:before {
+	content: '';
+	width: 63px;
+	height: 21px;
+	position: absolute;
+	bottom: -1px;
+	left: 50%;
+	background: #fff url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2012%208%22%3E%0A%20%20%3Cpath%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M431%2C15%20L437%2C15%20L437%2C17%20L431%2C17%20L429%2C17%20L429%2C9%20L431%2C9%20L431%2C15%20Z%22%20opacity%3D%22.5%22%20transform%3D%22rotate%28-45%20206.222%20522.935%29%22/%3E%0A%3C/svg%3E%0A) center 10px no-repeat;
+	background-size: 12px 8px;
+	border: 1px solid #d7dce0;
+	border-bottom: none;
+	border-radius: 16px 16px 0 0;
+	margin-left: -32px;
+	transition: border-color 0.2s linear;
+}
+
+.imconnector-field-more-info-block:hover .imconnector-field-more-button:before,
+.imconnector-field-more-info-block:hover .imconnector-field-more-button {
+	border-color: #b6bbbd;
+}

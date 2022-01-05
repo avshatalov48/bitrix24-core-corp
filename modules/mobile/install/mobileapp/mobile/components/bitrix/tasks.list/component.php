@@ -6,6 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main;
 use Bitrix\Main\UserTable;
+use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Kanban\TimeLineTable;
 use Bitrix\Tasks\Ui\Avatar;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -24,6 +25,7 @@ $result = [
 	],
 	'deadlines' => getDeadlines(),
 	'userList' => [],
+	'diskFolderId' => Integration\Disk::getFolderForUploadedFiles($userId)->getData()['FOLDER_ID'],
 ];
 
 $dbRes = UserTable::getList([

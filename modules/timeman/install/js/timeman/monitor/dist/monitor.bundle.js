@@ -1867,7 +1867,7 @@ this.BX = this.BX || {};
 	      BX.desktop.addCustomEvent('BXUserApp', function (process, name, title, url) {
 	        return _this.catch(process, name, title, url);
 	      });
-	      BX.desktop.addCustomEvent('BXExitApplication', this.catchAppClose);
+	      BX.desktop.addCustomEvent('BXExitApplication', this.catchAppClose.bind(this));
 
 	      if (this.isTrackerGetActiveAppAvailable()) {
 	        BXDesktopSystem.TrackerGetActiveApp();
@@ -2351,6 +2351,7 @@ this.BX = this.BX || {};
 
 	      logger.warn("Monitor will be turned on at ".concat(this.getPausedUntilTime().toString()));
 	      debug.log("Monitor will be turned on at ".concat(this.getPausedUntilTime().toString()));
+	      clearTimeout(this.playTimeout);
 	      this.playTimeout = setTimeout(function () {
 	        return _this4.clearPausedUntil().then(function () {
 	          return _this4.launch();
@@ -2401,6 +2402,7 @@ this.BX = this.BX || {};
 	    value: function play() {
 	      var _this6 = this;
 
+	      clearTimeout(this.playTimeout);
 	      this.playTimeout = null;
 	      this.clearPausedUntil().then(function () {
 	        return _this6.launch();

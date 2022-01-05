@@ -4,6 +4,22 @@ namespace Bitrix\DocumentGenerator\Model;
 
 use Bitrix\Main;
 
+/**
+ * Class SpreadsheetTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Spreadsheet_Query query()
+ * @method static EO_Spreadsheet_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Spreadsheet_Result getById($id)
+ * @method static EO_Spreadsheet_Result getList(array $parameters = array())
+ * @method static EO_Spreadsheet_Entity getEntity()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_Spreadsheet createObject($setDefaultValues = true)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_Spreadsheet_Collection createCollection()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_Spreadsheet wakeUpObject($row)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_Spreadsheet_Collection wakeUpCollection($rows)
+ */
 class SpreadsheetTable extends Main\Entity\DataManager
 {
 	/**

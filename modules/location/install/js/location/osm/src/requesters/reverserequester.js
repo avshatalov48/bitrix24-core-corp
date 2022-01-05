@@ -14,6 +14,6 @@ export default class ReverseRequester extends BaseRequester
 			&params[format]=json
 			&params[zoom]=${zoom}
 			&params[addressdetails]=0			
-			&params[accept-language]=${this.languageId}`;
+			&params[accept-language]=${this.sourceLanguageId}`;
 	}
 }

@@ -241,6 +241,22 @@
 		}
 	}
 
+	let ActionPromiseWrapper = promise => {
+		return new Promise((resolve, reject) =>
+			promise
+				.then(result => {
+					if (result["status"] === "error")
+					{
+						reject(result)
+					}
+					else
+					{
+						resolve(result)
+					}
+				})
+				.catch(result => reject.call(null, result)));
+	}
+
 	/**
 	 *
 	 * @param actionName
@@ -282,7 +298,7 @@
 
 		let ajaxPromise = BX.ajax(config);
 		onCreate(config.xhr);
-		return ajaxPromise;
+		return ActionPromiseWrapper(ajaxPromise);
 	};
 
 	/**
@@ -300,6 +316,7 @@
 	 * @param {number} [config.navigation.page]
 	 * @param {function} [config.onCreate]
 	 */
+
 	BX.ajax.runComponentAction = (component, action, config = {} )=>{
 		config.mode = config.mode || 'ajax';
 		let getParameters = prepareAjaxGetParameters(config);
@@ -315,7 +332,7 @@
 		};
 		let ajaxPromise = BX.ajax(config);
 		onCreate(config.xhr);
-		return ajaxPromise;
+		return ActionPromiseWrapper(ajaxPromise);
 	};
 
 	let prepareAjaxGetParameters = function(config)

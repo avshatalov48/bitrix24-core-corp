@@ -33,6 +33,7 @@ class Library
 	const ID_IMESSAGE_CONNECTOR = 'imessage';
 	const ID_OLX_CONNECTOR = 'olx';
 	public const ID_NOTIFICATIONS_CONNECTOR = 'notifications';
+	public const ID_EDNA_WHATSAPP_CONNECTOR = 'whatsappbyedna';
 
 	const COMPONENT_NAME_REST = 'bitrix:imconnector.rest';
 
@@ -144,7 +145,17 @@ class Library
 			'BLOCK_DATE' => null,
 			'BLOCK_REASON' => self::BLOCK_REASON_DEFAULT
 		],
+		self::ID_FBINSTAGRAMDIRECT_CONNECTOR => [
+			'LIMIT_START_DATE' => 1583280001, //04 Mar 2020 00:00:01
+			'BLOCK_DATE' => null,
+			'BLOCK_REASON' => self::BLOCK_REASON_DEFAULT
+		],
 		'whatsappbytwilio' => [
+			'LIMIT_START_DATE' => 1575158401,
+			'BLOCK_DATE' => 86400,
+			'BLOCK_REASON' => self::BLOCK_REASON_DEFAULT
+		],
+		self::ID_EDNA_WHATSAPP_CONNECTOR => [
 			'LIMIT_START_DATE' => 1575158401,
 			'BLOCK_DATE' => 86400,
 			'BLOCK_REASON' => self::BLOCK_REASON_DEFAULT
@@ -172,11 +183,11 @@ class Library
 			'deny' => [],
 		],
 		'yandex' => [
-			'allow' => [],
+			'allow' => ['ru', 'by', 'kz'],
 			'deny' => ['ua'],
 		],
 		'vkgroup' => [
-			'allow' => [],
+			'allow' => ['ru', 'by', 'kz'],
 			'deny' => ['ua'],
 		],
 		'ok' => [
@@ -204,7 +215,6 @@ class Library
 	public static $listNotNeedSystemMessages = [
 		'facebookcomments',
 		self::ID_FBINSTAGRAM_CONNECTOR,
-		self::ID_NOTIFICATIONS_CONNECTOR,
 	];
 
 	/** @var array A list of connectors that support group chat.*/
@@ -247,7 +257,8 @@ class Library
 		'facebookcomments',
 		self::ID_FBINSTAGRAM_CONNECTOR,
 		'viber',
-		'yandex'
+		'yandex',
+		self::ID_EDNA_WHATSAPP_CONNECTOR
 	];
 
 	/** @var array A list of connectors, where we use rich links on operator side.*/

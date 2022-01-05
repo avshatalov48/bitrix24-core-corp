@@ -22,7 +22,7 @@ class Members extends Content
 			$innerLayouts = [];
 			foreach ($heads as $head)
 			{
-				if ($head['IS_GROUP_OWNER'] === 'Y')
+				if ($head['IS_OWNER'] === 'Y')
 				{
 					array_unshift($innerLayouts, $head['LAYOUT']);
 					continue;
@@ -50,7 +50,7 @@ class Members extends Content
 		$users = array_filter(
 			$users,
 			static function ($user) {
-				return $user['IS_GROUP_ACCESS_REQUESTING'] !== 'Y';
+				return $user['IS_ACCESS_REQUESTING'] !== 'Y';
 			}
 		);
 		if (count($users) > 0)

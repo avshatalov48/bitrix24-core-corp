@@ -15,6 +15,8 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
+use Bitrix\Notifications\FeatureStatus;
+use Bitrix\Notifications\Settings;
 use Bitrix\Voximplant\Limits;
 
 Loc::loadMessages(__FILE__);
@@ -302,9 +304,8 @@ class ContactCenter
 	 * @param array $filter
 	 *
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function imopenlinesGetItems($filter = array())
+	public function imopenlinesGetItems($filter = []): Result
 	{
 		$result = new Result();
 		$module = 'imopenlines';
@@ -325,16 +326,20 @@ class ContactCenter
 			$statusList = ImConnector\Status::getInstanceAll();
 			$linkTemplate = Common::getContactCenterPublicFolder() . "connector/";
 			$codeMap = ImConnector\Connector::getIconClassMap();
+			//TODO: Delete after exiting 92ee8cf838a0
 			$cisOnlyConnectors = ['vkgroup', 'vkgrouporder', 'yandex'];
 			$cisCheck = $this->cisCheck() && $filter["CHECK_REGION"] !== "N";
+			//TODO: End
 			$configList = $this->getImopenlinesConfigList();
 
 			foreach ($connectors as $code => $connector)
 			{
+				//TODO: Delete after exiting 92ee8cf838a0
 				if ($cisCheck && in_array($code, $cisOnlyConnectors))
 				{
 					continue;
 				}
+				//TODO: End
 
 				$selected = false;
 				$selectedOrder = false;
@@ -420,6 +425,48 @@ class ContactCenter
 								"CONNECTION_INFO_HELPER_LIMIT" => false,
 								"LOGO_CLASS" => "ui-icon ui-icon-service-" . $codeMap["vkgrouporder"]
 							);
+						}
+					}
+					if ($code === \Bitrix\ImConnector\Library::ID_NOTIFICATIONS_CONNECTOR
+						&& Loader::includeModule('notifications')
+						&& class_exists(Settings::class)
+					)
+					{
+						if (!empty($itemsList[$code]["LIST"]))
+						{
+							$uri = new Uri($link);
+							$uri->addParams(["LINE" => \Bitrix\Notifications\Integration\ImConnector::getLineId()]);
+							$link = $uri->getUri();
+
+							unset($itemsList[$code]["LIST"]);
+							$itemsList[$code]["LINK"] = \CUtil::JSEscape($link);
+							$itemsList[$code]["SELECTED"] = Settings::isScenarioEnabled(Settings::SCENARIO_CRM_PAYMENT);
+						}
+
+						if (Settings::getScenarioAvailability(Settings::SCENARIO_VIRTUAL_WHATSAPP) !== FeatureStatus::UNAVAILABLE)
+						{
+							$uri = new Uri($link);
+							$uri->addParams(["scenario" => Settings::SCENARIO_VIRTUAL_WHATSAPP]);
+							$itemsList["virtual_whatsapp"] = [
+								"NAME" => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_NOTIFICATION_VIRTUAL_WA"),
+								"LINK" => \CUtil::JSEscape($uri->getUri()),
+								"SELECTED" => Settings::isScenarioEnabled(Settings::SCENARIO_VIRTUAL_WHATSAPP),
+								"CONNECTION_INFO_HELPER_LIMIT" => false,
+								"LOGO_CLASS" => "ui-icon ui-icon-service-" . $codeMap["notifications_virtual_wa"]
+							];
+						}
+
+						if (Settings::getScenarioAvailability(Settings::SCENARIO_REVERSE_WHATSAPP) !== FeatureStatus::UNAVAILABLE)
+						{
+							$uri = new Uri($link);
+							$uri->addParams(["scenario" => Settings::SCENARIO_REVERSE_WHATSAPP]);
+							$itemsList["reverse_whatsapp"] = [
+								"NAME" => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_NOTIFICATION_REVERSE_WA"),
+								"LINK" => \CUtil::JSEscape($uri->getUri()),
+								"SELECTED" => Settings::isScenarioEnabled(Settings::SCENARIO_REVERSE_WHATSAPP),
+								"CONNECTION_INFO_HELPER_LIMIT" => false,
+								"LOGO_CLASS" => "ui-icon ui-icon-service-" . $codeMap["notifications_reverse_wa"]
+							];
 						}
 					}
 				}
@@ -1465,7 +1512,6 @@ class ContactCenter
 	 * Make cis-region check for bx24 only. For not bx24 always return false
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function cisCheck()
 	{

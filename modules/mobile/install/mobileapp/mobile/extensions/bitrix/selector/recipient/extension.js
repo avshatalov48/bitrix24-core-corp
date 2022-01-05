@@ -44,9 +44,9 @@
 	 */
 	class RecipientSelector extends EntitySelector
 	{
-		constructor(context = "BLOG_POST", entities = null)
+		constructor(context = "BLOG_POST", entities = null, ui = null)
 		{
-			super();
+			super(ui);
 			this.singleSelection = false;
 			this.entities = entities || defaultEntities
 			let provider = new CommonSelectorProvider(context);

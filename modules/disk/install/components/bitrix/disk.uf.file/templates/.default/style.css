@@ -142,7 +142,7 @@
 .disk-file-control-panel-file-wrap {
 	display: grid;
 	align-items: center;
-	grid-template-columns: minmax(80px, 136px) minmax(80px, 136px) 17px minmax(80px, 136px) minmax(80px, 136px) minmax(64px, 136px);
+	grid-template-columns: minmax(75px,136px) minmax(75px,136px) minmax(3px,17px) minmax(75px,136px) minmax(75px,136px) minmax(59px,136px);
 	margin-bottom: 15px;
 	max-height: 140px;
 }
@@ -191,7 +191,7 @@
 	width: 100%;
 	height: 100%;
 	max-width: 120px;
-	min-width: 85px;
+	min-width: 75px;
 }
 
 .disk-file-control-panel-file-wrap .disk-file-control-panel-card-content .disk-file-control-panel-card-icon {
@@ -241,6 +241,16 @@
 	box-shadow: 0 5px 6px 0 rgba(0,0,0,.22);
 }
 
+.disk-file-thumb-preview.disk-file-thumb {
+	display: flex;
+	flex-direction: column;
+}
+
+.--edit-text-preview.disk-file-thumb {
+	transition: box-shadow .3s;
+	box-shadow: 0 0 0 2px #2fc6f6;
+}
+
 .disk-file-thumb-image {
 	position: relative;
 	display: block;
@@ -251,6 +261,14 @@
 	background-image: url("data:image/svg+xml,%3Csvg width='81' height='74' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(-10 -18)' fill='%23B9BEC4' fill-rule='evenodd' opacity='.2'%3E%3Cpath d='M10 92h81v-5.5L69.402 64.5 58.599 75.5 31.6 48 10 69.998V92z'/%3E%3Ccircle fill-rule='nonzero' cx='76' cy='28' r='10'/%3E%3C/g%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: center;
+}
+
+.disk-file-thumb-preview .disk-file-thumb-image {
+	flex: 1;
+}
+
+.--image-contain .disk-file-thumb-image {
+	background-size: contain!important;
 }
 
 /*.disk-file-thumb-loader {*/
@@ -361,9 +379,19 @@
 
 .disk-file-thumb-icon {
 	display: none;
-	margin: 20px auto 13px auto;
+	margin: 22px auto 2px auto;
 	width: 42px;
 	height: 42px;
+}
+
+.disk-file-thumb-text-box {
+	display: flex;
+	align-items: center;
+	height: 47px;
+}
+
+.disk-file-thumb-preview .disk-file-thumb-text-box {
+	height: auto;
 }
 
 .disk-file-thumb-text {
@@ -371,12 +399,14 @@
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	padding: 0 6px;
-	max-height: 36px;
+	margin-bottom: 6px;
 	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: rgba(82,92,105,.8);
 	overflow: hidden;
 	max-width: 100%;
+	width: 100%;
 	word-break: break-all;
+	box-sizing: border-box;
 }
 
 .disk-file-thumb.disk-file-thumb-file .disk-file-thumb-image {
@@ -387,8 +417,36 @@
 	display: block;
 }
 
-.disk-file-thumb.disk-file-thumb-file .disk-file-thumb-text {
+.disk-file-thumb.disk-file-thumb-file .disk-file-thumb-text,
+.disk-file-thumb-preview .disk-file-thumb-text {
 	display: -webkit-box;
+}
+
+.disk-file-thumb-preview .disk-file-thumb-text {
+	padding: 4px 6px 0 6px;
+	margin-bottom: 6px;
+	height: auto;
+	max-height: 49px;
+	font-size: 12px;
+	color: #525c69;
+	line-height: 13px;
+	box-sizing: border-box;
+}
+
+.disk-file-thumb-file-name {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	max-width: 100%;
+	word-break: break-all;
+}
+
+.disk-file-thumb-file-extension {
+	display: inline-block;
+	margin-left: -3px;
+	font: 12px/13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #a8adb4;
 }
 
 /*region Upload region */
@@ -430,7 +488,8 @@
 
 /*endregion*/
 
-.disk-file-thumb-btn-box {
+.disk-file-thumb-btn-box,
+.disk-file-thumb-btn-close-box {
 	position: absolute;
 	top: -4px;
 	right: -4px;
@@ -439,12 +498,31 @@
 	padding: 0 4px ;
 	border-radius: 0 14px 0 8px;
 	background-color: #fff;
-	transition: box-shadow .2s;
+	transition: box-shadow .15s;
 	z-index: 4;
 }
 
+.disk-file-thumb-btn-close-box {
+	left: -4px;
+	right: auto;
+	width: 0;
+	border-radius: 14px 0 8px 0;
+	transition: width .15s;
+	opacity: 0;
+	pointer-events: none;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.disk-file-thumb:hover .disk-file-thumb-btn-close-box {
+	width: 32px;
+	opacity: 1;
+	pointer-events: auto;
+}
+
 .disk-file-thumb-btn-close,
-.disk-file-thumb-btn-more {
+.disk-file-thumb-btn-more,
+.disk-file-thumb-btn-text-copy {
 	display: inline-block;
 	width: 24px;
 	height: 24px;
@@ -456,7 +534,8 @@
 	z-index: 1;
 }
 
-.disk-file-thumb-btn-close {
+.disk-file-thumb-btn-close,
+.disk-file-thumb-btn-text-copy {
 	margin-left: -24px;
 	/*transform: translate(24px, 0);*/
 	opacity: 0;
@@ -469,7 +548,9 @@
 /*}*/
 
 .disk-file-thumb:hover .disk-file-thumb-btn-close,
-.disk-file-thumb.disk-file-thumb--active .disk-file-thumb-btn-close {
+.disk-file-thumb.disk-file-thumb--active .disk-file-thumb-btn-close,
+.disk-file-thumb:hover .disk-file-thumb-btn-text-copy,
+.--edit-text-preview .disk-file-thumb-btn-text-copy {
 	margin-left: 0;
 	width: 25px;
 	transform: translate(0, 0);
@@ -477,12 +558,18 @@
 	pointer-events: all;
 }
 
+.--edit-text-preview .disk-file-thumb-btn-text-copy,
+.disk-file-thumb:hover.--edit-text-preview .disk-file-thumb-btn-text-copy {
+	opacity: 1;
+}
+
 .disk-file-thumb-btn-more {
 	z-index: 2;
 }
 
 .disk-file-thumb:hover .disk-file-thumb-btn-close:hover,
-.disk-file-thumb-btn-more:hover {
+.disk-file-thumb-btn-more:hover,
+.disk-file-thumb:hover .disk-file-thumb-btn-text-copy:hover {
 	opacity: 1;
 }
 
@@ -492,6 +579,19 @@
 
 .disk-file-thumb-btn-more {
 	background-image: url("data:image/svg+xml,%3Csvg width='16' height='4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 0a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4z' fill='%23525C69' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.disk-file-thumb-btn-text-copy {
+	background-image: url("data:image/svg+xml,%3Csvg width='16' height='10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12.708 2.034V10h-2.416V2.034H7V0h9v2.034h-3.292Zm-8.543 1.86c-.088-.398.41-.678.699-.39l2.26 2.26a.4.4 0 0 1 0 .566L4.78 8.675c-.282.281-.764.022-.69-.37.088-.454.18-.963.252-1.418a.854.854 0 0 1-.091.005H.528a.5.5 0 0 1-.5-.5v-.69a.5.5 0 0 1 .5-.5h3.723c.056 0 .11.006.164.017a19.265 19.265 0 0 0-.25-1.325Z' fill='%23525C69'/%3E%3C/svg%3E");
+}
+
+.disk-file-thumb-btn-close-box .disk-file-thumb-btn-close {
+	margin-left: 0;
+	opacity: .5;
+}
+
+.--edit-text-preview .disk-file-thumb-btn-text-copy {
+	background-image: url("data:image/svg+xml,%3Csvg width='18' height='11' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14.708 10V2.034H18V0H9v2.034h3.292V10h2.416ZM3.811 6.025 2.69 4.908l-.914.913L3.762 7.8l.05.049 3.445-3.402-.913-.913-2.533 2.49Zm.73 4.034a4.523 4.523 0 1 1 0-9.045 4.523 4.523 0 0 1 0 9.045Z' fill='%232FC6F6'/%3E%3C/svg%3E");
 }
 
 .disk-file-control-panel-card-file .disk-file-control-panel-card-name {

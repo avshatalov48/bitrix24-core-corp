@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace Bitrix\Mobile\Livefeed;
 
@@ -449,6 +449,138 @@ class Helper
 		}
 
 		ksort($result['images']);
+
+		return $result;
+	}
+
+	public static function getDiskDataByCommentText($text)
+	{
+		$result = false;
+
+		if (
+			!empty($text)
+			&& \Bitrix\Main\ModuleManager::isModuleInstalled('disk')
+		)
+		{
+			$commentObjectId = $commentAttachedObjectId = array();
+
+			if (preg_match_all("#\\[disk file id=(n\\d+)\\]#is" . BX_UTF_PCRE_MODIFIER, $text, $matches))
+			{
+				$commentObjectId = array_map(function($a) { return intval(mb_substr($a, 1)); }, $matches[1]);
+			}
+
+			if (preg_match_all("#\\[disk file id=(\\d+)\\]#is" . BX_UTF_PCRE_MODIFIER, $text, $matches))
+			{
+				$commentAttachedObjectId = array_map(function($a) { return intval($a); }, $matches[1]);
+			}
+
+			if (
+				!empty($commentObjectId)
+				|| !empty($commentAttachedObjectId)
+			)
+			{
+				$result = array(
+					'OBJECT_ID' => $commentObjectId,
+					'ATTACHED_OBJECT_ID' => $commentAttachedObjectId
+				);
+			}
+		}
+
+		return $result;
+	}
+
+	public static function getDiskUFDataForComments($inlineDiskObjectIdList = array(), $inlineDiskAttachedObjectIdList = array())
+	{
+		$result = false;
+
+		if (
+			(
+				!empty($inlineDiskObjectIdList)
+				|| !empty($inlineDiskAttachedObjectIdList)
+			)
+			&& \Bitrix\Main\Loader::includeModule('disk')
+		)
+		{
+			$inlineDiskAttachedObjectIdImageList = $entityAttachedObjectIdList = array();
+
+			$filter = array(
+				'=OBJECT.TYPE_FILE' => \Bitrix\Disk\TypeFile::IMAGE
+			);
+
+			$subFilter = [];
+			if (!empty($inlineDiskObjectIdList))
+			{
+				$subFilter['@OBJECT_ID'] = $inlineDiskObjectIdList;
+			}
+			elseif (!empty($inlineDiskAttachedObjectIdList))
+			{
+				$subFilter['@ID'] = $inlineDiskAttachedObjectIdList;
+			}
+
+			if(count($subFilter) > 1)
+			{
+				$subFilter['LOGIC'] = 'OR';
+				$filter[] = $subFilter;
+			}
+			else
+			{
+				$filter = array_merge($filter, $subFilter);
+			}
+
+			$res = \Bitrix\Disk\Internals\AttachedObjectTable::getList(array(
+				'filter' => $filter,
+				'select' => array('ID', 'OBJECT_ID', 'ENTITY_ID')
+			));
+			while ($attachedObjectFields = $res->fetch())
+			{
+				$inlineDiskAttachedObjectIdImageList[(int)$attachedObjectFields['ID']] = (int)$attachedObjectFields['OBJECT_ID'];
+				if (!isset($entityAttachedObjectIdList[(int)$attachedObjectFields['ENTITY_ID']]))
+				{
+					$entityAttachedObjectIdList[(int)$attachedObjectFields['ENTITY_ID']] = array();
+				}
+				$entityAttachedObjectIdList[(int)$attachedObjectFields['ENTITY_ID']][] = (int)$attachedObjectFields['ID'];
+			}
+
+			$result = array(
+				'ATTACHED_OBJECT_DATA' => $inlineDiskAttachedObjectIdImageList,
+				'ENTITIES_DATA' => $entityAttachedObjectIdList
+			);
+		}
+
+		return $result;
+	}
+
+	public static function getCommentInlineAttachedImagesId(array $params = []): array
+	{
+		$result = [];
+
+		$commentId = ($params['commentId'] ?? 0);
+		if ($commentId <= 0)
+		{
+			return $result;
+		}
+
+		$inlineDiskAttachedObjectIdImageList = ($params['inlineDiskAttachedObjectIdImageList'] ?? []);
+		$commentInlineDiskData = ($params['commentInlineDiskData'] ?? []);
+		$entityAttachedObjectIdList = ($params['entityAttachedObjectIdList'] && is_array($params['entityAttachedObjectIdList']) ? $params['entityAttachedObjectIdList'] : null);
+
+		if (!empty($commentInlineDiskData['OBJECT_ID']))
+		{
+			foreach($commentInlineDiskData['OBJECT_ID'] as $val)
+			{
+				$result = array_merge($result, array_keys($inlineDiskAttachedObjectIdImageList, $val));
+			}
+		}
+
+		if (!empty($commentInlineDiskData['ATTACHED_OBJECT_ID']))
+		{
+			$result = array_merge($result, array_intersect($commentInlineDiskData['ATTACHED_OBJECT_ID'], array_keys($inlineDiskAttachedObjectIdImageList)));
+		}
+
+		if (is_array($entityAttachedObjectIdList))
+		{
+			$result = array_intersect($result, $entityAttachedObjectIdList);
+		}
 
 		return $result;
 	}

@@ -5,6 +5,22 @@ namespace Bitrix\DocumentGenerator\Model;
 use Bitrix\Main;
 use Bitrix\Main\ORM\Event;
 
+/**
+ * Class TemplateUserTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TemplateUser_Query query()
+ * @method static EO_TemplateUser_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TemplateUser_Result getById($id)
+ * @method static EO_TemplateUser_Result getList(array $parameters = array())
+ * @method static EO_TemplateUser_Entity getEntity()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateUser createObject($setDefaultValues = true)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateUser_Collection createCollection()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateUser wakeUpObject($row)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateUser_Collection wakeUpCollection($rows)
+ */
 class TemplateUserTable extends Main\Entity\DataManager
 {
 	const ALL_USERS = 'UA';

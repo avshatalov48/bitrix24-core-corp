@@ -293,7 +293,7 @@ class Manager
 			return $this->config["presets"][$preset];
 		}
 
-		return null;
+		return $this->config["presets"]["default"];
 	}
 
 	/**

@@ -3,7 +3,7 @@ var Module, isModuleInitialized, isBxFaceIdInitialized;
 
 /** @see BXFaceIdStart */
 var faceTrackerSettings = {
-	socnet_enabled: true
+	socnet_enabled: false
 };
 
 if(typeof Module==="undefined")
@@ -203,7 +203,7 @@ function _BXFaceIdStart ()
 	function initStream()
 	{
 		navigator.mediaDevices.getUserMedia({
-			video: {deviceId: {exact: deviceId}},
+			video: {deviceId: {ideal: deviceId}},
 			audio: false
 		})
 		.then(function(stream) {

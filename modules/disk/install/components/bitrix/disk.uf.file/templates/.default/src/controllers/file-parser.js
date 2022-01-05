@@ -77,6 +77,12 @@ export default class FileParser {
 
 	getItemBBCode(id: String)
 	{
+		const item = this.items.get(String(id));
+		if (item && item.isPluggedIn())
+		{
+			item.setInsertedInText();
+		}
+
 		return this.tag.replace('#id#', id);
 	}
 
@@ -85,9 +91,20 @@ export default class FileParser {
 		const item = this.items.get(String(id));
 		if (item)
 		{
-			return item.getHTMLForHTMLEditor(this.htmlEditor.SetBxTag(false, {tag: this.id, fileId: id, itemId: item.getId()}));
+			return this.#getHTMLByItem(item, id);
 		}
+
 		return null;
+	}
+
+	#getHTMLByItem(item: Item, id: string)
+	{
+		if (item.isPluggedIn())
+		{
+			item.setInsertedInText();
+		}
+
+		return item.getHTMLForHTMLEditor(this.htmlEditor.SetBxTag(false, {tag: this.id, fileId: id, itemId: item.getId()}));
 	}
 
 	deleteFile(fileId)
@@ -145,7 +162,7 @@ export default class FileParser {
 				});
 				if (foundedItem)
 				{
-					return foundedItem.getHTMLForHTMLEditor(this.htmlEditor.SetBxTag(false, {tag: this.id, fileId: id, itemId: foundedItem.getId()}))
+					return this.#getHTMLByItem(foundedItem, id);
 				}
 				return str;
 			}.bind(this)

@@ -1,11 +1,11 @@
 <?php
 namespace Bitrix\ImConnector;
 
+use Bitrix\ImConnector\Tools\Connectors\Messageservice;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Context;
 use Bitrix\Main\Web\Json;
-use Bitrix\Main\UserTable;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Type\DateTime;
@@ -178,7 +178,16 @@ class Connector
 			$toolsNotifications = $serviceLocator->get('ImConnector.toolsNotifications');
 			if($toolsNotifications->isEnabled())
 			{
-				$connectors[Library::ID_NOTIFICATIONS_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NOTIFICATIONS');
+				$connectors[Library::ID_NOTIFICATIONS_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NOTIFICATIONS_2');
+			}
+		}
+		if ($serviceLocator->has('ImConnector.toolsMessageservice'))
+		{
+			/** @var Messageservice $toolsMessageservice */
+			$toolsMessageservice = $serviceLocator->get('ImConnector.toolsMessageservice');
+			if ($toolsMessageservice->isEnabled())
+			{
+				$connectors[Library::ID_EDNA_WHATSAPP_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYEDNA');
 			}
 		}
 
@@ -361,6 +370,7 @@ class Connector
 		$components['network'] = 'bitrix:imconnector.network';
 		$components['botframework'] = 'bitrix:imconnector.botframework';
 		$components[Library::ID_NOTIFICATIONS_CONNECTOR] = 'bitrix:imconnector.notifications';
+		$components[Library::ID_EDNA_WHATSAPP_CONNECTOR] = 'bitrix:imconnector.whatsappbyedna';
 
 		$customComponents = CustomConnectors::getListComponentConnector();
 
@@ -906,6 +916,9 @@ class Connector
 			'fbinstagram' => 'instagram-fb',
 			'network' => 'bitrix24',
 			Library::ID_NOTIFICATIONS_CONNECTOR => 'bitrix24-sms',
+//			'notifications_virtual_wa' => 'bitrix24-virtual-wa',
+			'notifications_virtual_wa' => 'whatsapp',
+			'notifications_reverse_wa' => 'bitrix24-sms',
 			'botframework' => 'microsoft',
 			'skypebot' => 'skype',
 			'skype' => 'skype',
@@ -919,6 +932,7 @@ class Connector
 			'whatsappbytwilio' => 'whatsapp',
 			'avito' => 'avito',
 			'olx' => 'olx',
+			Library::ID_EDNA_WHATSAPP_CONNECTOR => 'edna',
 			'directline' => 'directline',
 			'botframework.skype' => 'skype',
 			'botframework.slack' => 'slack',
@@ -1422,58 +1436,10 @@ class Connector
 	}
 
 	/**
-	 * @param array $user
-	 * @param string $connector
-	 * @return Result
-	 */
-	public static function getUserByUserCode(array $user, string $connector): Result
-	{
-		$result = new Result();
-
-		if (Library::isEmpty($user['id']))
-		{
-			$result->addError(new Error(Loc::getMessage(
-				'IMCONNECTOR_PROXY_NO_USER_IM'),
-				Library::ERROR_CONNECTOR_PROXY_NO_USER_IM,
-				__METHOD__,
-				$user
-			));
-		}
-		else
-		{
-			$raw = UserTable::getList([
-					'select' => [
-						'ID',
-						'MD5' => 'UF_CONNECTOR_MD5'
-					],
-					'filter' => [
-						'=EXTERNAL_AUTH_ID' => Library::NAME_EXTERNAL_USER,
-						'=XML_ID' => $connector . '|' . $user['id']
-					],
-					'limit' => 1
-				]
-			);
-
-			if ($userFields = $raw->fetch())
-			{
-				$result->setResult($userFields);
-			}
-			else
-			{
-				//user record does not yet exist, it will be created on next step.
-				$result->addError(new \Bitrix\Main\Error('User does not yet exist'));
-			}
-		}
-
-		return $result;
-	}
-
-	/**
 	 * Get reply limit for connector, if the limit exists.
 	 *
 	 * @param string $connectorId Connector ID.
 	 * @return array|null
-	 * @throws \Bitrix\Main\ObjectException
 	 */
 	public static function getReplyLimit(string $connectorId): ?array
 	{
@@ -1584,8 +1550,6 @@ class Connector
 	 * https://helpdesk.bitrix24.com/open/10225886/
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	private static function isWeChatEnabled(): bool
 	{

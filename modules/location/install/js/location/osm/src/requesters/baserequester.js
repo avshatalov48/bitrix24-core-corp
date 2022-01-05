@@ -3,6 +3,7 @@ import {Runtime} from 'main.core';
 export default class BaseRequester
 {
 	languageId;
+	sourceLanguageId;
 	serviceUrl;
 
 	#responseConverter;
@@ -13,6 +14,7 @@ export default class BaseRequester
 	{
 		this.serviceUrl = props.serviceUrl;
 		this.languageId = props.languageId;
+		this.sourceLanguageId = props.sourceLanguageId;
 		this.#responseConverter = props.responseConverter;
 		this.#hostName = props.hostName;
 		this.#tokenContainer = props.tokenContainer;

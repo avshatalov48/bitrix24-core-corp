@@ -105,6 +105,7 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 		"/mobile/",
 		"/bitrix/tools/check_appcache.php",
 		"/bitrix/tools/disk/uf.php",
+		"/bitrix/tools/rest_control.php",
 		"/bitrix/services/disk/index.php",
 		"/bitrix/groupdav.php",
 		"/bitrix/tools/composite_data.php",

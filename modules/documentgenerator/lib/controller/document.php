@@ -16,6 +16,7 @@ use Bitrix\DocumentGenerator\Model\DocumentTable;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
 use Bitrix\DocumentGenerator\UserPermissions;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response\Component;
@@ -196,7 +197,7 @@ class Document extends Base
 	/**
 	 * @param \Bitrix\DocumentGenerator\Document $document
 	 * @param \CRestServer|null $restServer
-	 * @return null|Result
+	 * @return null
 	 */
 	public function deleteAction(\Bitrix\DocumentGenerator\Document $document, \CRestServer $restServer = null)
 	{
@@ -205,7 +206,8 @@ class Document extends Base
 		{
 			$this->errorCollection = $result->getErrorCollection();
 		}
-		return $result;
+
+		return null;
 	}
 
 	/**
@@ -618,10 +620,11 @@ class Document extends Base
 
 			if (is_string($provider) && \Bitrix\Main\Loader::includeModule('intranet'))
 			{
-				$providerChunks = explode('\\', $provider);
+				$codeBuilder = ServiceLocator::getInstance()->get('documentgenerator.integration.intranet.binding.codeBuilder');
+
 				$result['intranetExtensions'] = \Bitrix\Intranet\Binding\Menu::getMenuItems(
 					'crm_documents',
-					mb_strtolower(array_pop($providerChunks)),
+					$codeBuilder->getMenuCode($moduleId, $provider, $value),
 					[
 						'context' => [
 							'ENTITY_ID' => $value
@@ -666,4 +669,3 @@ class Document extends Base
 		return false;
 	}
 }
-

@@ -62,6 +62,22 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 		return parent::prepareParams();
 	}
 
+	protected function shouldWorkWithOnlyOffice(): bool
+	{
+		if (!Disk\Document\OnlyOffice\OnlyOfficeHandler::isEnabled())
+		{
+			return false;
+		}
+
+		$bitrix24Scenario = new Disk\Document\OnlyOffice\Bitrix24Scenario();
+		if (!$bitrix24Scenario->canUseEdit())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	protected function prepareItems(array $files, array $visibleColumns = []): array
 	{
 		$items = [];
@@ -132,7 +148,12 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 			;
 
 			$documentName = \CUtil::JSEscape($item['NAME']);
-			$attr->setAttribute('data-open-edit-instead-preview', true);
+
+			if ($this->shouldWorkWithOnlyOffice())
+			{
+				$attr->setAttribute('data-open-edit-instead-preview', true);
+			}
+
 			$attr->addAction([
 				'type' => 'edit',
 				'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',

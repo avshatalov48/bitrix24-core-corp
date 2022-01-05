@@ -1,6 +1,11 @@
 <?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;

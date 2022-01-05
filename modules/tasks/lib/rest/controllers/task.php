@@ -275,7 +275,7 @@ final class Task extends Base
 		{
 			$userId = $user['ID'];
 			$userName = \CUser::FormatName(
-				'#NOBR##LAST_NAME# #NAME##/NOBR#',
+				\CSite::GetNameFormat(),
 				[
 					'LOGIN' => $user['LOGIN'],
 					'NAME' => $user['NAME'],

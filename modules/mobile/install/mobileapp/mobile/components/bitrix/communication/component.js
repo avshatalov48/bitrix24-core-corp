@@ -25,8 +25,9 @@
 
 			this.tabNameMapConfigName = {
 				'stream': 'socialnetwork_livefeed',
-				'messages': 'im_messenger',
+				'chats': 'im_messenger',
 				'openlines': 'im_messenger',
+				'notifications': 'im_messenger',
 				'tasks_total': 'tasks_total',
 				'crm_activity_current_calltracker': 'crm_activity_current_calltracker',
 			};
@@ -52,15 +53,21 @@
 			BX.addCustomEvent("onUpdateConfig", this.onUpdateApplicationCounterConfig.bind(this));
 			BX.addCustomEvent("onSetUserCounters", this.onSetUserCounters.bind(this));
 			BX.addCustomEvent("onClearLiveFeedCounter", this.onClearLiveFeedCounter.bind(this));
-			BX.addCustomEvent("onUpdateBadges", this.onUpdateBadges.bind(this));
 			BX.addCustomEvent("onPullEvent-main", this.onPullEvent.bind(this));
 			BX.addCustomEvent("requestUserCounters", this.requestUserCounters.bind(this));
+
+			BX.addCustomEvent("requestCounters", this.requestCounters.bind(this));
+			BX.addCustomEvent("ImRecent::counter::list", this.onUpdateBadges.bind(this));
 
 			this.updateCacheTimeout = 500;
 
 			this.databaseMessenger = new ReactDatabase(ChatDatabaseName, CONFIG.USER_ID, CONFIG.LANGUAGE_ID, CONFIG.SITE_ID);
 
 			this.loadFromCache();
+
+			BX.addCustomEvent("onAppActive", () => {
+				this.update();
+			});
 		}
 
 		onSetUserCounters(counters, time)
@@ -293,7 +300,7 @@
 			{
 				if (!this.updateCountersTimeout)
 				{
-					this.updateCountersTimeout = setTimeout(this.update.bind(this), 1000);
+					this.updateCountersTimeout = setTimeout(this.update.bind(this), 300);
 				}
 				return true;
 			}
@@ -311,6 +318,16 @@
 			;
 
 			console.info("AppCounters.update: update counters: "+total+"\n", this.counters);
+
+			if (Application.getApiVersion() >= 41)
+			{
+				this.counters['messages'] = this.counters['chats'] + this.counters['notifications'] + this.counters['openlines'];
+			}
+			else
+			{
+				this.counters['messages'] = this.counters['chats'];
+			}
+
 			Application.setBadges(this.counters);
 
 			this.total = total;
@@ -378,6 +395,20 @@
 			}, this.updateCacheTimeout);
 
 			return true;
+		}
+
+		requestCounters(params)
+		{
+			console.info('Counters.requestCounters: ', params);
+
+			if (params.component && params.component.toString().length > 0)
+			{
+				BX.postComponentEvent("onUpdateCounters", [this.counters], params.component);
+			}
+			if (params.web)
+			{
+				BX.postWebEvent("onUpdateCounters", this.counters);
+			}
 		}
 
 		requestUserCounters(params)

@@ -9,6 +9,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__DIR__.'/template.php');
 
+/**
+ * Class TemplateProviderTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TemplateProvider_Query query()
+ * @method static EO_TemplateProvider_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TemplateProvider_Result getById($id)
+ * @method static EO_TemplateProvider_Result getList(array $parameters = array())
+ * @method static EO_TemplateProvider_Entity getEntity()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateProvider createObject($setDefaultValues = true)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateProvider_Collection createCollection()
+ * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateProvider wakeUpObject($row)
+ * @method static \Bitrix\DocumentGenerator\Model\EO_TemplateProvider_Collection wakeUpCollection($rows)
+ */
 class TemplateProviderTable extends Main\Entity\DataManager
 {
 	/**

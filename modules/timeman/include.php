@@ -25,17 +25,15 @@ $GLOBALS['BX_TIMEMAN_TASKS_MIGRATION_RULES'] = array(
 $GLOBALS['BX_TIMEMAN_RECENTLY_ADDED_TASK_ID'] = null;
 $GLOBALS['BX_TIMEMAN_RECENTLY_ADDED_EVENT_ID'] = null;
 
-global $DBType;
-
 CModule::AddAutoloadClasses(
 	"timeman",
 	array(
 		"CTimeMan" => "classes/general/timeman.php",
 		"CTimeManCalendar" => "classes/general/timeman.php",
 		"CTimeManUser" => "classes/general/timeman_user.php",
-		"CTimeManEntry" => "classes/".$DBType."/timeman_entry.php",
-		"CTimeManReport" => "classes/".$DBType."/timeman_report.php",
-		"CTimeManReportDaily" => "classes/".$DBType."/timeman_report_daily.php",
+		"CTimeManEntry" => "classes/mysql/timeman_entry.php",
+		"CTimeManReport" => "classes/mysql/timeman_report.php",
+		"CTimeManReportDaily" => "classes/mysql/timeman_report_daily.php",
 		"CTimeManReportFull" => "classes/general/timeman_report_full.php",
 		"CUserReportFull" => "classes/general/timeman_report_full.php",
 		"CReportSettings" => "classes/general/timeman_report_full.php",
