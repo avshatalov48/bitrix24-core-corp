@@ -35,7 +35,7 @@ Class controller extends CModule
 		RegisterModule("controller");
 		if (!$DB->Query("SELECT 'x' FROM b_controller_member WHERE 1=0", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/mysql/install.sql");
 			if (!$this->errors)
 			{
 				$DB->Query("
@@ -76,7 +76,7 @@ Class controller extends CModule
 		if (!array_key_exists("savedata", $arParams) || ($arParams["savedata"] != "Y"))
 		{
 			if ($DB->Query("SELECT 'x' FROM b_controller_member", true))
-				$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+				$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/mysql/uninstall.sql");
 		}
 
 		UnRegisterModuleDependences("perfmon", "OnGetTableSchema", "controller", "controller", "OnGetTableSchema");

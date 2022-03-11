@@ -2,6 +2,7 @@
 $MESS["CRM_MODULE_ERROR"] = "Модуль \"CRM\" не встановлений";
 $MESS["SALESCENTER_AMOUNT_TO_PAY"] = "До оплати";
 $MESS["SALESCENTER_APP_ADD_TITLE"] = "Додати";
+$MESS["SALESCENTER_APP_CASHBOX_FFD_12_SUPPORT"] = "ФФД 1.2";
 $MESS["SALESCENTER_APP_CASHBOX_INFO"] = "Налаштування каси \"#CASHBOX_NAME#\"";
 $MESS["SALESCENTER_APP_CASHBOX_ITEM_EXTRA"] = "Ще каси";
 $MESS["SALESCENTER_APP_CASHBOX_OFFLINE_INFO"] = "Налаштування офлайн-каси";

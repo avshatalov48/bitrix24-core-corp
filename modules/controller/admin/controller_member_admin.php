@@ -15,95 +15,10 @@ IncludeModuleLangFile(__FILE__);
 
 $entity_id = "CONTROLLER_MEMBER";
 $sTableID = "t_controll_admin";
-$oSort = new CAdminSorting($sTableID, "timestamp_x", "desc");
+$oSort = new CAdminUiSorting($sTableID, "id", "desc");
 /** @global string $by */
 /** @global string $order */
-$lAdmin = new CAdminList($sTableID, $oSort);
-
-$arFilterRows = array(
-	"ID" => "ID",
-	"URL" => GetMessage("CTRL_MEMB_ADMIN_FILTER_URL"),
-	"GROUP" => GetMessage("CTRL_MEMB_ADMIN_FILTER_GROUP"),
-	"UNIQID" => GetMessage("CTRL_MEMB_ADMIN_FILTER_UNIQID"),
-	"ACTIVE" => GetMessage("CTRL_MEMB_ADMIN_FILTER_ACTIVE"),
-	"DISCONN" => GetMessage("CTRL_MEMB_ADMIN_FILTER_DISCONN"),
-	"MODIFIED" => GetMessage("CTRL_MEMB_ADMIN_FILTER_MODIFIED"),
-	"CREATED" => GetMessage("CTRL_MEMB_ADMIN_FILTER_CREATED"),
-	"ACT_FROM" => GetMessage("CTRL_MEMB_ADMIN_FILTER_ACT_FROM"),
-	"ACT_TO" => GetMessage("CTRL_MEMB_ADMIN_FILTER_ACT_TO"),
-	"CONTACT_PERSON" => GetMessage("CTRL_MEMB_ADMIN_CONTACT_PERSON"),
-	"EMAIL" => GetMessage("CTRL_MEMB_ADMIN_EMAIL"),
-);
-$USER_FIELD_MANAGER->AddFindFields($entity_id, $arFilterRows);
-
-$filter = new CAdminFilter(
-	$sTableID."_filter_id",
-	$arFilterRows
-);
-
-$arFilterFields = array(
-	"find_name",
-	"find_id",
-	"find_active",
-	"find_disconnected",
-	"find_active_from_from",
-	"find_active_from_to",
-	"find_active_to_from",
-	"find_active_to_to",
-	"find_controller_group_id",
-	"find_timestamp_x_from",
-	"find_timestamp_x_to",
-	"find_created_from",
-	"find_created_to",
-	"find_member_id",
-	"find_url",
-	"find_contact_person",
-	"find_email",
-);
-$USER_FIELD_MANAGER->AdminListAddFilterFields($entity_id, $arFilterFields);
-
-$adminFilter = $lAdmin->InitFilter($arFilterFields);
-if (is_array($adminFilter['find_controller_group_id']))
-{
-	$adminFilter['find_controller_group_id'] = array_filter($adminFilter['find_controller_group_id']);
-}
-
-$arFilter = array(
-	"ID" => $adminFilter['find_id'],
-	"%EMAIL" => $adminFilter['find_email'],
-	"%CONTACT_PERSON" => $adminFilter['find_contact_person'],
-	"ACTIVE" => $adminFilter['find_active'],
-	"DISCONNECTED" => $adminFilter['find_disconnected'],
-	">=DATE_ACTIVE_FROM" => $adminFilter['find_active_from_from'],
-	"<=DATE_ACTIVE_FROM" => $adminFilter['find_active_from_to'],
-	">=DATE_ACTIVE_TO" => $adminFilter['find_active_to_from'],
-	"<=DATE_ACTIVE_TO" => $adminFilter['find_active_to_to'],
-	"CONTROLLER_GROUP_ID" => $adminFilter['find_controller_group_id'],
-	">=TIMESTAMP_X" => $adminFilter['find_timestamp_x_from'],
-	"<=TIMESTAMP_X" => $adminFilter['find_timestamp_x_to'],
-	">=DATE_CREATE" => $adminFilter['find_created_from'],
-	"<=DATE_CREATE" => $adminFilter['find_created_to'],
-	"%MEMBER_ID" => $adminFilter['find_member_id'],
-	"%URL" => $adminFilter['find_url'],
-);
-$USER_FIELD_MANAGER->AdminListAddFilter($entity_id, $arFilter);
-
-$names = explode(" ", $adminFilter['find_name']);
-foreach ($names as $i => $name)
-{
-	$name = trim($name);
-	if (!$name)
-		unset($names[$i]);
-}
-
-if (count($names) > 1)
-{
-	$arFilter["=NAME"] = $names;
-}
-elseif ($adminFilter['find_name'])
-{
-	$arFilter["%NAME"] = $adminFilter['find_name'];
-}
+$lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $arGroups = array();
 $dbr_groups = CControllerGroup::GetList(array("SORT" => "ASC", "NAME" => "ASC", "ID" => "ASC"));
@@ -111,6 +26,116 @@ while ($ar_groups = $dbr_groups->Fetch())
 {
 	$arGroups[$ar_groups["ID"]] = $ar_groups["NAME"];
 }
+
+$filterFields = array(
+	array(
+		"id" => "NAME",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_COLUMN_NAME"),
+		"filterable" => "%",
+		"default" => true,
+	),
+	array(
+		"id" => "ID",
+		"name" => "ID",
+		"filterable" => "",
+		"default" => true,
+	),
+	array(
+		"id" => "URL",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_FILTER_URL"),
+		"filterable" => "%",
+	),
+	array(
+		"id" => "CONTROLLER_GROUP_ID",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_FILTER_GROUP"),
+		"type" => "list",
+		"items" => $arGroups,
+		"params" => array("multiple" => "Y"),
+		"filterable" => "=",
+	),
+	array(
+		"id" => "MEMBER_ID",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_FILTER_UNIQID"),
+		"filterable" => "%",
+	),
+	array(
+		"id" => "ACTIVE",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_FILTER_ACTIVE"),
+		"type" => "list",
+		"items" => array(
+			"Y" => GetMessage("MAIN_YES"),
+			"N" => GetMessage("MAIN_NO")
+		),
+		"filterable" => "=",
+	),
+	array(
+		"id" => "DISCONNECTED",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_FILTER_DISCONN"),
+		"type" => "list",
+		"items" => array(
+			"Y" => GetMessage("MAIN_YES"),
+			"N" => GetMessage("MAIN_NO")
+		),
+		"filterable" => "=",
+	),
+	array(
+		"id" => "TIMESTAMP_X",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_FILTER_MODIFIED"),
+		"type" => "date",
+	),
+	array(
+		"id" => "DATE_CREATE",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_FILTER_CREATED"),
+		"type" => "date",
+	),
+	array(
+		"id" => "DATE_ACTIVE_FROM",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_FILTER_ACT_FROM"),
+		"type" => "date",
+	),
+	array(
+		"id" => "DATE_ACTIVE_TO",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_FILTER_ACT_TO"),
+		"type" => "date",
+	),
+	array(
+		"id" => "CONTACT_PERSON",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_CONTACT_PERSON"),
+		"filterable" => "%",
+	),
+	array(
+		"id" => "EMAIL",
+		"name" => GetMessage("CTRL_MEMB_ADMIN_EMAIL"),
+		"filterable" => "%",
+	),
+);
+
+$USER_FIELD_MANAGER->AdminListAddFilterFieldsV2($entity_id, $filterFields);
+$arFilter = array();
+$lAdmin->AddFilter($filterFields, $arFilter);
+
+$filterOption = new Bitrix\Main\UI\Filter\Options($sTableID);
+$filterData = $filterOption->getFilter($filterFields);
+if (!empty($filterData["FIND"]))
+{
+	$arFilter["=%NAME"] = $filterData["FIND"].'%';
+}
+
+$names = explode(" ", $arFilter['%NAME']);
+foreach ($names as $i => $name)
+{
+	$name = trim($name, " \t\n\r");
+	if (!$name)
+		unset($names[$i]);
+}
+
+if (count($names) > 1)
+{
+	$arFilter["=NAME"] = $names;
+	unset($arFilter["%NAME"]);
+}
+
+$USER_FIELD_MANAGER->AdminListAddFilterV2($entity_id, $arFilter, $sTableID, $filterFields);
 
 if ($USER->CanDoOperation("controller_member_edit") && $lAdmin->EditAction())
 {
@@ -150,9 +175,7 @@ if (
 {
 	if ($_REQUEST['action_target'] == 'selected')
 	{
-		$rsData = CControllerMember::GetList(array(
-			$by => $order,
-		), $arFilter);
+		$rsData = CControllerMember::GetList(array(), $arFilter, ["ID"]);
 		while ($arRes = $rsData->Fetch())
 		{
 			$arID[] = $arRes['ID'];
@@ -233,6 +256,15 @@ if (
 			}
 			break;
 		}
+	}
+
+	if ($lAdmin->hasGroupErrors())
+	{
+		$adminSidePanelHelper->sendJsonErrorResponse($lAdmin->getGroupErrors());
+	}
+	else
+	{
+		$adminSidePanelHelper->sendSuccessResponse();
 	}
 }
 
@@ -391,6 +423,31 @@ $USER_FIELD_MANAGER->AdminListAddHeaders($entity_id, $arHeaders);
 
 $lAdmin->AddHeaders($arHeaders);
 
+$nav = $lAdmin->getPageNavigation("pages-controller-member-admin");
+
+if ($lAdmin->isTotalCountRequest())
+{
+	$count = CControllerMember::GetList(
+		array(),
+		$arFilter,
+		array("ID"),
+		array(),
+		array("bOnlyCount" => true)
+	);
+	$lAdmin->sendTotalCountResponse($count);
+}
+elseif ($_REQUEST["mode"] == "excel")
+{
+	$arNavParams = false;
+}
+else
+{
+	$arNavParams = array(
+		"nTopCount" => $nav->getLimit() + 1,
+		"nOffset" => $nav->getOffset(),
+	);
+}
+
 $arSelect = $lAdmin->GetVisibleHeaderColumns();
 $arSelect[] = "ID";
 $arSelect[] = "DISCONNECTED";
@@ -409,15 +466,20 @@ $rsData = CControllerMember::GetList(
 	$arFilter,
 	$arSelect,
 	array(),
-	array("nPageSize" => CAdminResult::GetNavSize($sTableID))
+	$arNavParams
 );
 $rsData = new CAdminResult($rsData, $sTableID);
-$rsData->NavStart();
 
-$lAdmin->NavText($rsData->GetNavPrint(GetMessage("CTRL_MEMB_ADMIN_NAVSTRING")));
-
+$n = 0;
+$pageSize = $lAdmin->getNavSize();
 while ($arRes = $rsData->Fetch())
 {
+	$n++;
+	if ($n > $pageSize && !($_REQUEST["mode"] == "excel"))
+	{
+		break;
+	}
+
 	$row = &$lAdmin->AddRow($arRes['ID'], $arRes, 'controller_member_edit.php?lang='.LANGUAGE_ID.'&ID='.intval($arRes['ID']));
 	$USER_FIELD_MANAGER->AddUserFields($entity_id, $arRes, $row);
 
@@ -543,7 +605,7 @@ while ($arRes = $rsData->Fetch())
 		$arActions[] = array(
 			"ICON" => "list",
 			"TEXT" => GetMessage("CTRL_MEMB_ADMIN_MENU_LOG"),
-			"ACTION" => $lAdmin->ActionRedirect("controller_log_admin.php?find_controller_member_id=".intval($arRes['ID'])."&set_filter=Y&lang=".LANGUAGE_ID),
+			"ACTION" => $lAdmin->ActionRedirect("controller_log_admin.php?CONTROLLER_MEMBER_ID=".intval($arRes['ID'])."&apply_filter=Y&lang=".LANGUAGE_ID),
 		);
 	}
 
@@ -592,6 +654,9 @@ while ($arRes = $rsData->Fetch())
 	}
 }
 
+$nav->setRecordCount($nav->getOffset() + $n);
+$lAdmin->setNavigation($nav, GetMessage("CTRL_MEMB_ADMIN_NAVSTRING"), false);
+
 $groupActions = array();
 if ($USER->CanDoOperation("controller_member_edit"))
 	$groupActions["activate"] = GetMessage("MAIN_ADMIN_LIST_ACTIVATE");
@@ -634,110 +699,10 @@ $lAdmin->AddAdminContextMenu($aContext);
 $lAdmin->CheckListMode();
 
 $APPLICATION->SetTitle(GetMessage("CTRL_MEMB_ADMIN_TITLE"));
+
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
-?>
-<form name="form1" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>?">
-	<? $filter->Begin(); ?>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_COLUMN_NAME")?>:</td>
-		<td nowrap>
-			<input type="text" name="find_name" value="<? echo htmlspecialcharsbx($adminFilter['find_name']) ?>" size="47">
-		</td>
-	</tr>
 
-	<tr>
-		<td nowrap>ID:</td>
-		<td nowrap>
-			<input type="text" name="find_id" value="<? echo htmlspecialcharsbx($adminFilter['find_id']) ?>" size="47">
-		</td>
-	</tr>
+$lAdmin->DisplayFilter($filterFields);
+$lAdmin->DisplayList(["SHOW_COUNT_HTML" => true]);
 
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_URL")?>:</td>
-		<td nowrap>
-			<input type="text" name="find_url" value="<? echo htmlspecialcharsbx($adminFilter['find_url']) ?>" size="47">
-		</td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_GROUP")?></td>
-		<td>
-			<select name="find_controller_group_id[]" multiple size="5">
-				<option value=""><? echo GetMessage("CTRL_MEMB_ADMIN_FILTER_ANY") ?></option>
-				<? foreach ($arGroups as $group_id => $group_name): ?>
-					<option value="<?=htmlspecialcharsbx($group_id)?>" <? if ($group_id == $adminFilter['find_controller_group_id'])
-						echo 'selected="selected"' ?>><?=htmlspecialcharsEx($group_name)?></option>
-				<? endforeach; ?>
-			</select>
-		</td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_UNIQID")?>:</td>
-		<td nowrap>
-			<input type="text" name="find_member_id" value="<? echo htmlspecialcharsbx($adminFilter['find_member_id']) ?>" size="47">
-		</td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_ACTIVE")?>:</td>
-		<td nowrap><?
-			$arr = array(
-				"reference" => Array(GetMessage("CTRL_MEMB_ADMIN_FILTER_ANY2"), GetMessage("MAIN_YES"), GetMessage("MAIN_NO")),
-				"reference_id" => array("", "Y", "N"),
-			);
-			echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($adminFilter['find_active']), GetMessage("MAIN_ALL"));
-			?></td>
-	</tr>
-
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_DISCONNECTED")?>:</td>
-		<td nowrap><?
-			$arr = array(
-				"reference" => Array(GetMessage("CTRL_MEMB_ADMIN_FILTER_ANY2"), GetMessage("MAIN_YES"), GetMessage("MAIN_NO"), GetMessage("CTRL_MEMB_ADMIN_DISCON")),
-				"reference_id" => array("", "Y", "N", "I"),
-			);
-			echo SelectBoxFromArray("find_disconnected", $arr, htmlspecialcharsbx($adminFilter['find_disconnected']), GetMessage("MAIN_ALL"));
-			?></td>
-	</tr>
-
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_MODIFIED")?>:</td>
-		<td nowrap><? echo CalendarPeriod("find_timestamp_x_from", $adminFilter['find_timestamp_x_from'], "find_timestamp_x_to", $adminFilter['find_timestamp_x_to'], "form1", "Y") ?></td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_CREATED")?>:</td>
-		<td nowrap><? echo CalendarPeriod("find_created_from", $adminFilter['find_created_from'], "find_created_to", $adminFilter['find_created_to'], "form1", "Y") ?></td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_ACT_FROM")?>:</td>
-		<td nowrap><? echo CalendarPeriod("find_active_from_from", $adminFilter['find_active_from_from'], "find_active_from_to", $adminFilter['find_active_from_to'], "form1", "Y") ?></td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_ACT_TO")?>:</td>
-		<td nowrap><? echo CalendarPeriod("find_active_to_from", $adminFilter['find_active_to_from'], "find_active_to_to", $adminFilter['find_active_to_to'], "form1", "Y") ?></td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_CONTACT_PERSON")?>:</td>
-		<td nowrap>
-			<input type="text" name="find_contact_person" value="<? echo htmlspecialcharsbx($adminFilter['find_contact_person']) ?>" size="47">
-		</td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_EMAIL")?>:</td>
-		<td nowrap>
-			<input type="text" name="find_email" value="<? echo htmlspecialcharsbx($adminFilter['find_email']) ?>" size="47">
-		</td>
-	</tr>
-
-	<?
-	$USER_FIELD_MANAGER->AdminListShowFilter($entity_id);
-	$filter->Buttons(array(
-		"table_id" => $sTableID,
-		"url" => $APPLICATION->GetCurPage(),
-		"form" => "form1",
-	));
-	$filter->End();
-	?>
-</form>
-
-<?
-$lAdmin->DisplayList();
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

@@ -352,7 +352,7 @@ if ($ID > 0)
 		$aMenu[] = array(
 			"TEXT" => GetMessage("CTRLR_MEM_EDIT_TOOLBAR_HISTORY_TEXT"),
 			"TITLE" => GetMessage("CTRLR_MEM_EDIT_TOOLBAR_HISTORY"),
-			"LINK" => "controller_member_history.php?find_id=".$ID."&set_filter=Y&lang=".LANG,
+			"LINK" => "controller_member_history.php?CONTROLLER_MEMBER_ID=".$ID."&apply_filter=Y&lang=".LANG,
 		);
 	}
 
@@ -758,7 +758,7 @@ if (method_exists($USER_FIELD_MANAGER, 'showscript'))
 		{
 			?>
 			<tr>
-				<td colspan="2"><a href="controller_auth_log.php?lang=<?LANGUAGE_ID?>&amp;find_to_controller_member=<?echo $ID?>&amp;set_filter=Y"><? echo GetMessage("CTRLR_MEM_EDIT_AUTH_LOG") ?></a></td>
+				<td colspan="2"><a href="controller_auth_log.php?lang=<?LANGUAGE_ID?>&amp;TO_CONTROLLER_MEMBER_ID=<?echo $ID?>&amp;apply_filter=Y"><? echo GetMessage("CTRLR_MEM_EDIT_AUTH_LOG") ?></a></td>
 			</tr>
 			<tr class="heading">
 				<td colspan="2"><? echo GetMessage("CTRLR_MEM_EDIT_AUTH_ADD") ?></td>

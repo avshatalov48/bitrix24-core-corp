@@ -21,7 +21,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Controller
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CounterHistory_Query query()
+ * @method static EO_CounterHistory_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CounterHistory_Result getById($id)
+ * @method static EO_CounterHistory_Result getList(array $parameters = array())
+ * @method static EO_CounterHistory_Entity getEntity()
+ * @method static \Bitrix\Controller\EO_CounterHistory createObject($setDefaultValues = true)
+ * @method static \Bitrix\Controller\EO_CounterHistory_Collection createCollection()
+ * @method static \Bitrix\Controller\EO_CounterHistory wakeUpObject($row)
+ * @method static \Bitrix\Controller\EO_CounterHistory_Collection wakeUpCollection($rows)
+ */
 
 class CounterHistoryTable extends Main\Entity\DataManager
 {

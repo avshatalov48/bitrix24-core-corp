@@ -13,9 +13,10 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/controller/prolog.php")
 IncludeModuleLangFile(__FILE__);
 
 $sTableID = "t_controller_counter_history";
-$lAdmin = new CAdminList($sTableID);
+$lAdmin = new CAdminUiList($sTableID);
 
-if ($USER->CanDoOperation("controller_counters_manage") && $arID = $lAdmin->GroupAction())
+$arID = $lAdmin->GroupAction();
+if ($arID && $USER->CanDoOperation("controller_counters_manage"))
 {
 	foreach ($arID as $ID)
 	{
@@ -53,39 +54,43 @@ if ($USER->CanDoOperation("controller_counters_manage") && $arID = $lAdmin->Grou
 	}
 }
 
-$arFilterRows = array(
-	GetMessage("CTRL_MEMB_HIST_FIELD"),
+$filterFields = array(
+	array(
+		"id" => "COUNTER_ID",
+		"name" => GetMessage("CTRL_COUNTER_HIST_COUNTER_ID"),
+		"filterable" => "=",
+		"default" => true,
+	),
+	array(
+		"id" => "NAME",
+		"name" => GetMessage("CTRL_COUNTER_HIST_NAME"),
+		"filterable" => "%",
+		"default" => true,
+	),
+	array(
+		"id" => "COMMAND",
+		"name" => GetMessage("CTRL_COUNTER_HIST_COMMAND"),
+		"filterable" => "%",
+		"default" => true,
+	),
 );
-
-$filter = new CAdminFilter(
-	$sTableID."_filter_id",
-	$arFilterRows
-);
-
-$arFilterFields = array(
-	"find_id",
-	"find_name",
-	"find_command",
-);
-
-$adminFilter = $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
-if ($find_id)
+$lAdmin->AddFilter($filterFields, $arFilter);
+foreach ($arFilter as $k => $v)
 {
-	$arFilter["=COUNTER_ID"] = $find_id;
+	if ($v == '')
+		unset($arFilter[$k]);
 }
-if ($find_name)
-{
-	$arFilter["%NAME"] = $find_name;
-}
-if ($find_command)
+
+if (isset($arFilter["%COMMAND"]))
 {
 	$arFilter[] = array(
 		"LOGIC" => "OR",
-		"%COMMAND_FROM" => $find_command,
-		"%COMMAND_TO" => $find_command,
+		"%COMMAND_FROM" => $arFilter["%COMMAND"],
+		"%COMMAND_TO" => $arFilter["%COMMAND"],
 	);
+	unset($arFilter["%COMMAND"]);
 }
 
 $arHeaders = array(
@@ -136,10 +141,10 @@ while ($arCounter = $rsData->Fetch())
 }
 
 $rsData = CControllerCounter::GetHistory($arFilter);
-$rsData = new CAdminResult($rsData, $sTableID);
+$rsData = new CAdminUiResult($rsData, $sTableID);
 $rsData->NavStart();
 
-$lAdmin->NavText($rsData->GetNavPrint(GetMessage("CTRL_COUNTER_HIST_NAVSTRING")));
+$lAdmin->SetNavigationParams($rsData);
 
 while ($arRes = $rsData->Fetch())
 {
@@ -215,35 +220,11 @@ $lAdmin->AddAdminContextMenu($aContext);
 $lAdmin->CheckListMode();
 
 $APPLICATION->SetTitle(GetMessage("CTRL_COUNTER_HIST_TITLE"));
+
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
-?>
-<form name="form1" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>?">
-	<? $filter->Begin(); ?>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_COUNTER_HIST_COUNTER_ID")?>:</td>
-		<td nowrap>
-			<input type="text" name="find_id" value="<? echo htmlspecialcharsbx($adminFilter['find_id']) ?>" size="47">
-		</td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_COUNTER_HIST_NAME")?>:</td>
-		<td nowrap>
-			<input type="text" name="find_name" value="<? echo htmlspecialcharsbx($adminFilter['find_name']) ?>" size="47">
-		</td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRL_COUNTER_HIST_COMMAND")?>:</td>
-		<td nowrap>
-			<input type="text" name="find_command" value="<? echo htmlspecialcharsbx($adminFilter['find_command']) ?>" size="47">
-		</td>
-	</tr>
-	<? $filter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "form1"));
-	$filter->End(); ?>
-</form>
 
-<?
+$lAdmin->DisplayFilter($filterFields);
 $lAdmin->DisplayList();
-
 
 //http://en.wikipedia.org/wiki/Longest_common_subsequence_problem
 //function  LCS(X[1..m], Y[1..n])

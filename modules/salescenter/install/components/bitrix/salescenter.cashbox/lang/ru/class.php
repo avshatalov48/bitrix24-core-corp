@@ -20,3 +20,7 @@ $MESS["SC_CASHBOX_FIELDS_EMAIL_HINT"] = "В случае возникновен�
 $MESS["SC_CASHBOX_FIELDS_KKM_ID"] = "Марка ККМ";
 
 $MESS["SC_CASHBOX_FILE_LABEL"] = "Загрузить файл";
+
+$MESS["SC_CASHBOX_KKM_ATOL"] = "АТОЛ";
+$MESS["SC_CASHBOX_KKM_SHTRIHM"] = "Штрих-М";
+$MESS["SC_CASHBOX_KKM_EVOTOR"] = "Эвотор";

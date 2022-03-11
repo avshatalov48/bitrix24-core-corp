@@ -1,12 +1,12 @@
 <?
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\Localization\Loc;
 
 $helpDeskCode = 'redirect=detail&code=8288267';
 
 Loc::loadMessages(__FILE__);
 ?>
-<?if($arResult['STATUS']):?>
+<?if ($arResult['STATUS']):?>
 	<div class="imconnector-field-container">
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
@@ -33,7 +33,7 @@ Loc::loadMessages(__FILE__);
 	</div>
 	<?include 'messages.php';?>
 	<div class="imconnector-field-container">
-		<?if($arResult['DATA_STATUS']['get_order_messages'] === 'Y'):?>
+		<?if ($arResult['DATA_STATUS']['get_order_messages'] === 'Y'):?>
 			<div class="imconnector-field-section">
 				<div class="imconnector-field-main-title imconnector-field-main-title-no-border">
 					<?
@@ -54,21 +54,21 @@ Loc::loadMessages(__FILE__);
 				<div class="imconnector-field-social-card">
 					<div class="imconnector-field-social-card-info">
 						<div class="connector-icon ui-icon ui-icon-service-vk imconnector-field-social-icon"><i></i></div>
-						<a href="<?= htmlspecialcharsbx($arResult['FORM']['GROUP']['URL']) ?>"
+						<a href="<?=htmlspecialcharsbx($arResult['FORM']['GROUP']['URL']) ?>"
 						   target="_blank"
 						   class="imconnector-field-social-name">
-							<?= htmlspecialcharsbx($arResult['FORM']['GROUP']['NAME']) ?>
+							<?=htmlspecialcharsbx($arResult['FORM']['GROUP']['NAME']) ?>
 						</a>
 					</div>
-					<form action="<?= $arResult['URL']['SIMPLE_FORM'] ?>" method="post">
+					<form action="<?=$arResult['URL']['SIMPLE_FORM'] ?>" method="post">
 						<input type="hidden" name="<?= $arResult['CONNECTOR'] ?>_form" value="true">
 						<input type="hidden" name="get_order_messages" value="N">
-						<?= bitrix_sessid_post(); ?>
+						<?=bitrix_sessid_post(); ?>
 						<button class="ui-btn ui-btn-sm ui-btn-light-border imconnector-field-social-card-button"
 								name="<?=$arResult['CONNECTOR']?>_save_orders"
 								type="submit"
-								value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_DEL_REFERENCE') ?>">
-							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_DEL_REFERENCE') ?>
+								value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_DEL_REFERENCE') ?>">
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_DEL_REFERENCE') ?>
 						</button>
 					</form>
 				</div>

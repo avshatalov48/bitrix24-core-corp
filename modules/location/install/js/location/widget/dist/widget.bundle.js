@@ -685,8 +685,12 @@ this.BX.Location = this.BX.Location || {};
 	  } else if (address.fieldCollection.isEqual(babelHelpers.classPrivateFieldGet(this, _address$1).fieldCollection, location_core.LocationType.ADDRESS_LINE_1)) {
 	    babelHelpers.classPrivateFieldGet(this, _address$1).latitude = address.latitude;
 	    babelHelpers.classPrivateFieldGet(this, _address$1).longitude = address.longitude;
-	    babelHelpers.classPrivateFieldGet(this, _address$1).location.latitude = address.latitude;
-	    babelHelpers.classPrivateFieldGet(this, _address$1).location.longitude = address.longitude;
+
+	    if (babelHelpers.classPrivateFieldGet(this, _address$1).location) {
+	      babelHelpers.classPrivateFieldGet(this, _address$1).location.latitude = address.latitude;
+	      babelHelpers.classPrivateFieldGet(this, _address$1).location.longitude = address.longitude;
+	    }
+
 	    this.emit(_classStaticPrivateFieldSpecGet(MapPopup, MapPopup, _onChangedEvent), {
 	      address: babelHelpers.classPrivateFieldGet(this, _address$1)
 	    });
@@ -1109,10 +1113,12 @@ this.BX.Location = this.BX.Location || {};
 	        case 'NumpadEnter':
 	          this.resetView();
 	          break;
-
-	        default:
-	          babelHelpers.classPrivateFieldSet(this, _isInputNodeValueUpdated, true);
 	      }
+	    }
+	  }, {
+	    key: "onInputInput",
+	    value: function onInputInput(e) {
+	      babelHelpers.classPrivateFieldSet(this, _isInputNodeValueUpdated, true);
 	    }
 	  }, {
 	    key: "resetView",
@@ -1150,6 +1156,7 @@ this.BX.Location = this.BX.Location || {};
 	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focus', _classPrivateMethodGet$3(this, _onInputFocus, _onInputFocus2).bind(this));
 	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focusout', _classPrivateMethodGet$3(this, _onInputFocusOut, _onInputFocusOut2).bind(this));
 	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'keyup', this.onInputKeyup.bind(this));
+	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'input', this.onInputInput.bind(this));
 	      }
 	    }
 	  }, {
@@ -1191,6 +1198,7 @@ this.BX.Location = this.BX.Location || {};
 	      main_core.Event.unbind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focus', _classPrivateMethodGet$3(this, _onInputFocus, _onInputFocus2));
 	      main_core.Event.unbind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focusout', _classPrivateMethodGet$3(this, _onInputFocusOut, _onInputFocusOut2));
 	      main_core.Event.unbind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'keyup', this.onInputKeyup);
+	      main_core.Event.unbind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'input', this.onInputInput);
 
 	      _classPrivateMethodGet$3(this, _executeFeatureMethod, _executeFeatureMethod2).call(this, 'destroy');
 
@@ -2795,8 +2803,7 @@ this.BX.Location = this.BX.Location || {};
 	};
 
 	var _makeAutocompleteServiceParams2 = function _makeAutocompleteServiceParams2() {
-	  var result = {};
-	  result.biasPoint = babelHelpers.classPrivateFieldGet(this, _userLocationPoint$1);
+	  var result = {}; //result.biasPoint = this.#userLocationPoint;
 
 	  if (babelHelpers.classPrivateFieldGet(this, _address$3) && babelHelpers.classPrivateFieldGet(this, _address$3).latitude && babelHelpers.classPrivateFieldGet(this, _address$3).longitude) {
 	    result.biasPoint = new location_core.Point(babelHelpers.classPrivateFieldGet(this, _address$3).latitude, babelHelpers.classPrivateFieldGet(this, _address$3).longitude);

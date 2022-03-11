@@ -311,7 +311,7 @@ export default class Autocomplete extends EventEmitter
 	{
 		const result: AutocompleteServiceParams = {};
 
-		result.biasPoint = this.#userLocationPoint;
+		//result.biasPoint = this.#userLocationPoint;
 		if (this.#address && this.#address.latitude && this.#address.longitude)
 		{
 			result.biasPoint = new Point(

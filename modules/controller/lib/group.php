@@ -34,7 +34,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Controller
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Group_Query query()
+ * @method static EO_Group_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Group_Result getById($id)
+ * @method static EO_Group_Result getList(array $parameters = array())
+ * @method static EO_Group_Entity getEntity()
+ * @method static \Bitrix\Controller\EO_Group createObject($setDefaultValues = true)
+ * @method static \Bitrix\Controller\EO_Group_Collection createCollection()
+ * @method static \Bitrix\Controller\EO_Group wakeUpObject($row)
+ * @method static \Bitrix\Controller\EO_Group_Collection wakeUpCollection($rows)
+ */
 
 class GroupTable extends Main\Entity\DataManager
 {

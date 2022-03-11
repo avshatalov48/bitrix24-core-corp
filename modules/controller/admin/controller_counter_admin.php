@@ -13,33 +13,34 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/controller/prolog.php")
 IncludeModuleLangFile(__FILE__);
 
 $sTableID = "t_controller_counter";
-$oSort = new CAdminSorting($sTableID, "id", "desc");
+$oSort = new CAdminUiSorting($sTableID, "id", "desc");
 /** @global string $by */
 /** @global string $order */
-$lAdmin = new CAdminList($sTableID, $oSort);
+$lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $arFilterRows = array();
 
 $arGroups = array();
 $dbr_groups = CControllerGroup::GetList(array("SORT" => "ASC", "NAME" => "ASC", "ID" => "ASC"));
 while ($ar_groups = $dbr_groups->Fetch())
+{
 	$arGroups[$ar_groups["ID"]] = $ar_groups["NAME"];
+}
 
-$filter = new CAdminFilter(
-	$sTableID."_filter_id",
-	$arFilterRows
+$filterFields = array(
+	array(
+		"id" => "CONTROLLER_GROUP_ID",
+		"name" => GetMessage("CTRL_CNT_ADMIN_FILTER_GROUP"),
+		"type" => "list",
+		"items" => $arGroups,
+		"params" => array("multiple" => "Y"),
+		"filterable" => "=",
+		"default" => true,
+	),
 );
 
-$arFilterFields = array(
-	"find_controller_group_id",
-);
-
-$adminFilter = $lAdmin->InitFilter($arFilterFields);
-
-if ($adminFilter["find_controller_group_id"])
-	$arFilter = array("=CONTROLLER_GROUP_ID" => $adminFilter["find_controller_group_id"]);
-else
-	$arFilter = array();
+$arFilter = array();
+$lAdmin->AddFilter($filterFields, $arFilter);
 
 if ($USER->CanDoOperation("controller_counters_manage") && $lAdmin->EditAction())
 {
@@ -61,8 +62,8 @@ if ($USER->CanDoOperation("controller_counters_manage") && $lAdmin->EditAction()
 	}
 }
 
-
-if ($USER->CanDoOperation("controller_counters_manage") && $arID = $lAdmin->GroupAction())
+$arID = $lAdmin->GroupAction();
+if ($arID && $USER->CanDoOperation("controller_counters_manage"))
 {
 	if ($_REQUEST['action_target'] == 'selected')
 	{
@@ -92,12 +93,21 @@ if ($USER->CanDoOperation("controller_counters_manage") && $arID = $lAdmin->Grou
 			break;
 		}
 	}
+
+	if ($lAdmin->hasGroupErrors())
+	{
+		$adminSidePanelHelper->sendJsonErrorResponse($lAdmin->getGroupErrors());
+	}
+	else
+	{
+		$adminSidePanelHelper->sendSuccessResponse();
+	}
 }
 
 $rsData = CControllerCounter::GetList(Array($by => $order), $arFilter);
-$rsData = new CAdminResult($rsData, $sTableID);
+$rsData = new CAdminUiResult($rsData, $sTableID);
 $rsData->NavStart();
-$lAdmin->NavText($rsData->GetNavPrint(GetMessage("CTRL_CNT_ADMIN_NAV")));
+$lAdmin->SetNavigationParams($rsData);
 
 $arHeaders = array(
 	array(
@@ -134,33 +144,44 @@ $lAdmin->AddHeaders($arHeaders);
 while ($arRes = $rsData->Fetch())
 {
 	$row = $lAdmin->AddRow($arRes["ID"], $arRes);
-
-	$row->AddInputField("NAME", array("size" => "35"));
 	$htmlLink = 'controller_counter_edit.php?ID='.urlencode($arRes['ID']).'&lang='.LANGUAGE_ID;
-	$row->AddViewField("NAME", '<a href="'.htmlspecialcharsbx($htmlLink).'">'.htmlspecialcharsEx($arRes['NAME']).'</a>');
 
+	$row->AddViewField("ID", '<a href="'.htmlspecialcharsbx($htmlLink).'">'.htmlspecialcharsEx($arRes['ID']).'</a>');
+	$row->AddInputField("NAME", array("size" => "35"));
+	$row->AddViewField("NAME", '<a href="'.htmlspecialcharsbx($htmlLink).'">'.htmlspecialcharsEx($arRes['NAME']).'</a>');
 	$row->AddSelectField("COUNTER_TYPE", CControllerCounter::GetTypeArray());
 	$row->AddSelectField("COUNTER_FORMAT", CControllerCounter::GetFormatArray());
 	$row->AddViewField("COMMAND", "<pre>".htmlspecialcharsEx($arRes["COMMAND"])."</pre>");
 	$row->AddEditField("COMMAND", "<textarea cols=\"80\" rows=\"15\" name=\"".htmlspecialcharsEx("FIELDS[".$arRes["ID"]."][COMMAND]")."\">".htmlspecialcharsbx($arRes["COMMAND"])."</textarea>");
 
+	$arActions = array();
+
+	if ($USER->CanDoOperation("controller_counters_view"))
+	{
+		$arActions[] = array(
+			"TEXT" => GetMessage("CTRL_CNT_ADMIN_MENU_HISTORY"),
+			"ACTION" => $lAdmin->ActionRedirect("controller_counter_history.php?COUNTER_ID=".urlencode($arRes["ID"])."&apply_filter=Y&lang=".LANGUAGE_ID),
+		);
+	}
+
 	if ($USER->CanDoOperation("controller_counters_manage"))
 	{
-		$arActions = array(
-			array(
-				"ICON" => "edit",
-				"DEFAULT" => "Y",
-				"TEXT" => GetMessage("CTRL_CNT_ADMIN_MENU_EDIT"),
-				"ACTION" => $lAdmin->ActionRedirect("controller_counter_edit.php?ID=".urlencode($arRes["ID"])."&lang=".LANGUAGE_ID),
-			),
-			array("SEPARATOR" => true),
-			array(
-				"ICON" => "delete",
-				"TEXT" => GetMessage("CTRL_CNT_ADMIN_MENU_DELETE"),
-				"ACTION" => "if(confirm('".GetMessage("CTRL_CNT_ADMIN_MENU_DELETE_ALERT")."')) ".$lAdmin->ActionDoGroup($arRes["ID"], "delete"),
-			),
+		$arActions[] = array("SEPARATOR" => true);
+		$arActions[] = array(
+			"ICON" => "edit",
+			"DEFAULT" => "Y",
+			"TEXT" => GetMessage("CTRL_CNT_ADMIN_MENU_EDIT"),
+			"ACTION" => $lAdmin->ActionRedirect("controller_counter_edit.php?ID=".urlencode($arRes["ID"])."&lang=".LANGUAGE_ID),
 		);
-
+		$arActions[] = array(
+			"ICON" => "delete",
+			"TEXT" => GetMessage("CTRL_CNT_ADMIN_MENU_DELETE"),
+			"ACTION" => "if(confirm('".GetMessage("CTRL_CNT_ADMIN_MENU_DELETE_ALERT")."')) ".$lAdmin->ActionDoGroup($arRes["ID"], "delete"),
+		);
+	}
+	
+	if ($arActions)
+	{
 		$row->AddActions($arActions);
 	}
 }
@@ -182,6 +203,7 @@ $lAdmin->AddFooter(
 if ($USER->CanDoOperation("controller_counters_manage"))
 {
 	$lAdmin->AddGroupActionTable(Array(
+			"edit" => true,
 			"delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
 		)
 	);
@@ -204,29 +226,10 @@ $lAdmin->AddAdminContextMenu($aContext);
 $lAdmin->CheckListMode();
 
 $APPLICATION->SetTitle(GetMessage("CTRL_CNT_ADMIN_TITLE"));
+
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
-?>
-<form name="form1" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>?">
-	<? $filter->Begin(); ?>
-	<tr>
-		<td nowrap><label for="find_controller_group_id"><?=GetMessage("CTRL_CNT_ADMIN_FILTER_GROUP")?></label></td>
-		<td>
-			<select name="find_controller_group_id" id="find_controller_group_id">
-				<option value=""><? echo GetMessage("CTRL_CNT_ADMIN_FILTER_ANY") ?></option>
-				<? foreach ($arGroups as $group_id => $group_name): ?>
-					<option value="<?=htmlspecialcharsbx($group_id)?>" <? if ($group_id == $adminFilter['find_controller_group_id']) echo "selected" ?>><?=htmlspecialcharsEx($group_name)?></option>
-				<? endforeach; ?>
-			</select>
-		</td>
-	</tr>
 
-	<?
-	$filter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "form1"));
-	$filter->End();
-	?>
-
-</form>
-<?
+$lAdmin->DisplayFilter($filterFields);
 $lAdmin->DisplayList();
 
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

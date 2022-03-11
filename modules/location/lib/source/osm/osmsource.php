@@ -74,7 +74,8 @@ final class OsmSource extends Source
 			'la' => 'es', 	// Spanish
 			'sc' => 'zh', 	// Chinese (Simplified)
 			'tc' => 'zh', 	// Chinese (Traditional)
-			'vn' => 'vi' 	// Vietnamese
+			'vn' => 'vi', 	// Vietnamese
+			'ua' => 'uk',	// Ukrainian
 		];
 
 		return $langMap[$bitrixLang] ?? $bitrixLang;

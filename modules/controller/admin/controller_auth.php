@@ -52,6 +52,18 @@ $APPLICATION->SetTitle(GetMessage("CTRLR_AUTH_TITLE"));
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 
+if ($USER->CanDoOperation("controller_auth_log_view"))
+{
+	$aMenu = array(
+		array(
+			"TEXT" => GetMessage("CTRL_AUTH_LOG"),
+			"LINK" => "controller_auth_log.php?lang=".LANGUAGE_ID
+		)
+	);
+
+	$context = new CAdminContextMenu($aMenu);
+	$context->Show();
+}
 ?>
 	<form method="POST"
 		action="controller_auth.php?lang=<? echo LANGUAGE_ID ?><? echo $_GET["return_url"]? "&amp;return_url=".urlencode($_GET["return_url"]): "" ?>"

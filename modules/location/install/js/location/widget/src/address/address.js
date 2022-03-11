@@ -357,9 +357,12 @@ export default class Address extends EventEmitter
 			case 'NumpadEnter':
 				this.resetView();
 				break;
-			default:
-				this.#isInputNodeValueUpdated = true;
 		}
+	}
+
+	onInputInput(e)
+	{
+		this.#isInputNodeValueUpdated = true;
 	}
 
 	resetView(): void
@@ -399,6 +402,7 @@ export default class Address extends EventEmitter
 			Event.bind(this.#inputNode, 'focus', this.#onInputFocus.bind(this));
 			Event.bind(this.#inputNode, 'focusout', this.#onInputFocusOut.bind(this));
 			Event.bind(this.#inputNode, 'keyup', this.onInputKeyup.bind(this));
+			Event.bind(this.#inputNode, 'input', this.onInputInput.bind(this));
 		}
 	}
 
@@ -512,6 +516,7 @@ export default class Address extends EventEmitter
 		Event.unbind(this.#inputNode, 'focus', this.#onInputFocus);
 		Event.unbind(this.#inputNode, 'focusout', this.#onInputFocusOut);
 		Event.unbind(this.#inputNode, 'keyup', this.onInputKeyup);
+		Event.unbind(this.#inputNode, 'input', this.onInputInput);
 
 		this.#executeFeatureMethod('destroy');
 		this.#destroyFeatures();

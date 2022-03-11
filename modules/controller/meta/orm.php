@@ -290,18 +290,6 @@ namespace Bitrix\Controller {
 }
 namespace Bitrix\Controller {
 	/**
-	 * @method static EO_AuthGrant_Query query()
-	 * @method static EO_AuthGrant_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_AuthGrant_Result getById($id)
-	 * @method static EO_AuthGrant_Result getList(array $parameters = array())
-	 * @method static EO_AuthGrant_Entity getEntity()
-	 * @method static \Bitrix\Controller\EO_AuthGrant createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Controller\EO_AuthGrant_Collection createCollection()
-	 * @method static \Bitrix\Controller\EO_AuthGrant wakeUpObject($row)
-	 * @method static \Bitrix\Controller\EO_AuthGrant_Collection wakeUpCollection($rows)
-	 */
-	class AuthGrantTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -541,18 +529,6 @@ namespace Bitrix\Controller {
 }
 namespace Bitrix\Controller {
 	/**
-	 * @method static EO_AuthLog_Query query()
-	 * @method static EO_AuthLog_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_AuthLog_Result getById($id)
-	 * @method static EO_AuthLog_Result getList(array $parameters = array())
-	 * @method static EO_AuthLog_Entity getEntity()
-	 * @method static \Bitrix\Controller\EO_AuthLog createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Controller\EO_AuthLog_Collection createCollection()
-	 * @method static \Bitrix\Controller\EO_AuthLog wakeUpObject($row)
-	 * @method static \Bitrix\Controller\EO_AuthLog_Collection wakeUpCollection($rows)
-	 */
-	class AuthLogTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -753,18 +729,6 @@ namespace Bitrix\Controller {
 	}
 }
 namespace Bitrix\Controller {
-	/**
-	 * @method static EO_CounterHistory_Query query()
-	 * @method static EO_CounterHistory_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_CounterHistory_Result getById($id)
-	 * @method static EO_CounterHistory_Result getList(array $parameters = array())
-	 * @method static EO_CounterHistory_Entity getEntity()
-	 * @method static \Bitrix\Controller\EO_CounterHistory createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Controller\EO_CounterHistory_Collection createCollection()
-	 * @method static \Bitrix\Controller\EO_CounterHistory wakeUpObject($row)
-	 * @method static \Bitrix\Controller\EO_CounterHistory_Collection wakeUpCollection($rows)
-	 */
-	class CounterHistoryTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1124,18 +1088,6 @@ namespace Bitrix\Controller {
 }
 namespace Bitrix\Controller {
 	/**
-	 * @method static EO_Group_Query query()
-	 * @method static EO_Group_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Group_Result getById($id)
-	 * @method static EO_Group_Result getList(array $parameters = array())
-	 * @method static EO_Group_Entity getEntity()
-	 * @method static \Bitrix\Controller\EO_Group createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Controller\EO_Group_Collection createCollection()
-	 * @method static \Bitrix\Controller\EO_Group wakeUpObject($row)
-	 * @method static \Bitrix\Controller\EO_Group_Collection wakeUpCollection($rows)
-	 */
-	class GroupTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1300,18 +1252,6 @@ namespace Bitrix\Controller {
 	}
 }
 namespace Bitrix\Controller {
-	/**
-	 * @method static EO_GroupMap_Query query()
-	 * @method static EO_GroupMap_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_GroupMap_Result getById($id)
-	 * @method static EO_GroupMap_Result getList(array $parameters = array())
-	 * @method static EO_GroupMap_Entity getEntity()
-	 * @method static \Bitrix\Controller\EO_GroupMap createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Controller\EO_GroupMap_Collection createCollection()
-	 * @method static \Bitrix\Controller\EO_GroupMap wakeUpObject($row)
-	 * @method static \Bitrix\Controller\EO_GroupMap_Collection wakeUpCollection($rows)
-	 */
-	class GroupMapTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1767,18 +1707,6 @@ namespace Bitrix\Controller {
 	}
 }
 namespace Bitrix\Controller {
-	/**
-	 * @method static EO_Member_Query query()
-	 * @method static EO_Member_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Member_Result getById($id)
-	 * @method static EO_Member_Result getList(array $parameters = array())
-	 * @method static EO_Member_Entity getEntity()
-	 * @method static \Bitrix\Controller\EO_Member createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Controller\EO_Member_Collection createCollection()
-	 * @method static \Bitrix\Controller\EO_Member wakeUpObject($row)
-	 * @method static \Bitrix\Controller\EO_Member_Collection wakeUpCollection($rows)
-	 */
-	class MemberTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

@@ -80,8 +80,6 @@ $placeholder = ' placeholder="' . Loc::getMessage('IMCONNECTOR_COMPONENT_SETTING
 					<div class="imconnector-intro">
 						<span class="imconnector-text"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_NAME_BOT')?>:</span>
 						<span class="imconnector-text imconnector-bold"><?=$arResult["INFO_CONNECTION"]['NAME']?></span><br>
-						<span class="imconnector-text"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_LINK_PUBLIC_ACCOUNT')?>:</span>
-						<a class="imconnector-link imconnector-newwrap" href="<?=$arResult["INFO_CONNECTION"]['URL']?>"><?=$arResult["INFO_CONNECTION"]['URL']?></a></span><br>
 						<?if(!empty($arResult["INFO_CONNECTION"]['URL_OTO'])):?>
 							<span class="imconnector-text"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_LINK_CHAT_ONE_TO_ONE')?>:</span>
 							<a class="imconnector-link imconnector-newwrap" href="<?=$arResult["INFO_CONNECTION"]['URL_OTO']?>" target="_blank"><?=$arResult["INFO_CONNECTION"]['URL_OTO']?></a></span>

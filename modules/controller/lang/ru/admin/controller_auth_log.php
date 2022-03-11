@@ -1,4 +1,5 @@
 <?
+$MESS ['CONTROLLER_AUTH_LOG_TITLE'] = "Авторизации";
 $MESS ['CONTROLLER_AUTH_LOG_USER_ID'] = "Идентификатор пользователя";
 $MESS ['CONTROLLER_AUTH_LOG_FROM_CONTROLLER_MEMBER'] = "С какого сайта пользователь";
 $MESS ['CONTROLLER_AUTH_LOG_TO_CONTROLLER_MEMBER'] = "На каком сайте был авторизован";

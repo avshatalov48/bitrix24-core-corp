@@ -17,6 +17,5 @@ $MESS ['CTRL_LOG_ADMIN_COLUMN_STATUS_ERR'] = "Ошибка";
 $MESS ['CTRL_LOG_ADMIN_MENU_DEL'] = "Удалить";
 $MESS ['CTRL_LOG_ADMIN_MENU_DEL_CONFIRM'] = "Запись будет удалена из списка. Продолжить?";
 $MESS ['CTRL_LOG_ADMIN_TITLE'] = "Журнал работы контроллера сайтов";
-$MESS ['CTRL_LOG_ADMIN_FILTER_ANY'] = "(любой)";
 $MESS ['CTRL_LOG_ADMIN_MENU_DETAIL'] = "Подробно";
 ?>

@@ -460,7 +460,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 			}
 			else
 			{
-				if ($this->handler === '\\'.Cashbox\CashboxOrangeData::class)
+				if (is_a($this->handler, Cashbox\CashboxOrangeData::class, true))
 				{
 					$result['OFD'] = '\\'.Cashbox\TaxcomOfd::class;
 				}
@@ -811,7 +811,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	{
 		$settings = [];
 
-		if ($this->handler == '\Bitrix\Sale\Cashbox\CashboxOrangeData')
+		if (is_a($this->handler, Bitrix\Sale\Cashbox\CashboxOrangeData::class, true))
 		{
 			global $APPLICATION;
 			$files = $this->request->getFile('fields');
@@ -840,7 +840,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	}
 
 	/**
-	 * @return array
+	 * @return array|null
 	 */
 	protected function getHandlerDescription()
 	{
@@ -858,6 +858,13 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 					'title' => 'SC_CASHBOX_ORANGE_TITLE',
 					'description' => 'SC_CASHBOX_ORANGE_DESCRITION',
 				];
+			case Sale\Cashbox\CashboxOrangeDataFfd12::getCode():
+				return [
+					'code' => 'orange',
+					'title' => Sale\Cashbox\CashboxOrangeDataFfd12::getName(),
+					'description' => 'SC_CASHBOX_ORANGE_DESCRITION',
+				];
+				break;
 			case 'cashboxcheckbox':
 				return [
 					'code' => 'checkbox',
@@ -882,6 +889,25 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 					'title' => 'SC_CASHBOX_BUSINESSRU_EVOTOR_TITLE',
 					'description' => 'SC_CASHBOX_BUSINESSRU_DESCRIPTION',
 				];
+			case Sale\Cashbox\CashboxBusinessRuV5::getCode() . '_atol':
+				return [
+					'code' => 'businessru-atol',
+					'title' => Sale\Cashbox\CashboxBusinessRuV5::getName() . ': ' . Loc::getMessage('SC_CASHBOX_KKM_ATOL'),
+					'description' => 'SC_CASHBOX_BUSINESSRU_DESCRIPTION',
+				];
+			case Sale\Cashbox\CashboxBusinessRuV5::getCode() . '_shtrih-m':
+				return [
+					'code' => 'businessru-shtrihm',
+					'title' => Sale\Cashbox\CashboxBusinessRuV5::getName() . ': ' . Loc::getMessage('SC_CASHBOX_KKM_SHTRIHM'),
+					'description' => 'SC_CASHBOX_BUSINESSRU_DESCRIPTION',
+				];
+			case Sale\Cashbox\CashboxBusinessRuV5::getCode() . '_evotor':
+				return [
+					'code' => 'businessru-evotor',
+					'title' => Sale\Cashbox\CashboxBusinessRuV5::getName() . ': ' . Loc::getMessage('SC_CASHBOX_KKM_EVOTOR'),
+					'description' => 'SC_CASHBOX_BUSINESSRU_DESCRIPTION',
+				];
+
 			case 'cashboxrest':
 				$handlerName = Cashbox\Manager::getRestHandlersList()[$this->arParams['restHandler']]["NAME"];
 				return [
@@ -895,13 +921,21 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 					'title' => Cashbox\CashboxRobokassa::getName(),
 					'description' => 'SC_CASHBOX_ROBOKASSA_DESCRITION',
 				];
-			default:
+			case Sale\Cashbox\CashboxAtolFarmV4::getCode():
 				return [
 					'code' => 'atol',
 					'title' => 'SC_CASHBOX_ATOL_TITLE',
 					'description' => 'SC_CASHBOX_ATOL_DESCRITION',
 				];
+			case Sale\Cashbox\CashboxAtolFarmV5::getCode():
+				return [
+					'code' => 'atol',
+					'title' => 'SC_CASHBOX_ATOL_FFD_12_TITLE',
+					'description' => 'SC_CASHBOX_ATOL_DESCRITION',
+				];
 		}
+
+		return null;
 	}
 
 	/**

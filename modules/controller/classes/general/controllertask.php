@@ -187,16 +187,100 @@ class CControllerTask
 	{
 		global $DB;
 
+		if (is_array($bCnt))
+		{
+			$arSelect = $bCnt;
+			$bCnt = false;
+		}
+		else
+		{
+			$arSelect = array("ID");
+		}
+
+		if (!$arSelect)
+		{
+			$arSelect = array("ID", "TASK_ID", "CONTROLLER_MEMBER_ID", "INIT_EXECUTE", "INIT_EXECUTE_PARAMS", "INIT_CRC", "UPDATE_PERIOD", "RESULT_EXECUTE", "STATUS", "RETRY_COUNT", "RETRY_TIMEOUT", "CONTROLLER_MEMBER_NAME", "CONTROLLER_MEMBER_URL", "TIMESTAMP_X", "DATE_EXECUTE", "DATE_CREATE", "EXECUTED_INTERVAL");
+		}
+
 		static $arFields = array(
-			"ID" => array("FIELD_NAME" => "T.ID", "FIELD_TYPE" => "int"),
-			"TIMESTAMP_X" => array("FIELD_NAME" => "T.TIMESTAMP_X", "FIELD_TYPE" => "datetime"),
-			"DATE_CREATE" => array("FIELD_NAME" => "T.DATE_CREATE", "FIELD_TYPE" => "datetime"),
-			"TASK_ID" => array("FIELD_NAME" => "T.TASK_ID", "FIELD_TYPE" => "string"),
-			"CONTROLLER_MEMBER_ID" => array("FIELD_NAME" => "T.CONTROLLER_MEMBER_ID", "FIELD_TYPE" => "int"),
-			"CONTROLLER_MEMBER_NAME" => array("FIELD_NAME" => "M.NAME", "FIELD_TYPE" => "string"),
-			"CONTROLLER_MEMBER_URL" => array("FIELD_NAME" => "M.URL", "FIELD_TYPE" => "string"),
-			"STATUS" => array("FIELD_NAME" => "T.STATUS", "FIELD_TYPE" => "string"),
-			"DATE_EXECUTE" => array("FIELD_NAME" => "T.DATE_EXECUTE", "FIELD_TYPE" => "datetime"),
+			"ID" => array(
+				"FIELD_NAME" => "T.ID",
+				"FIELD_TYPE" => "int",
+			),
+			"TIMESTAMP_X" => array(
+				"FIELD_NAME" => "T.TIMESTAMP_X",
+				"FIELD_TYPE" => "datetime",
+			),
+			"DATE_CREATE" => array(
+				"FIELD_NAME" => "T.DATE_CREATE",
+				"FIELD_TYPE" => "datetime",
+			),
+			"TASK_ID" => array(
+				"FIELD_NAME" => "T.TASK_ID",
+				"FIELD_TYPE" => "string",
+			),
+			"CONTROLLER_MEMBER_ID" => array(
+				"FIELD_NAME" => "T.CONTROLLER_MEMBER_ID",
+				"FIELD_TYPE" => "int",
+			),
+			"CONTROLLER_MEMBER_NAME" => array(
+				"FIELD_NAME" => "M.NAME",
+				"FIELD_TYPE" => "string",
+				"TABLE_ALIAS" => "M",
+				"JOIN" => "INNER JOIN b_controller_member M ON M.ID = T.CONTROLLER_MEMBER_ID",
+				"LEFT_JOIN" => "LEFT JOIN b_controller_member M ON M.ID = T.CONTROLLER_MEMBER_ID",
+			),
+			"CONTROLLER_MEMBER_URL" => array(
+				"FIELD_NAME" => "M.URL",
+				"FIELD_TYPE" => "string",
+				"TABLE_ALIAS" => "M",
+				"JOIN" => "INNER JOIN b_controller_member M ON M.ID = T.CONTROLLER_MEMBER_ID",
+				"LEFT_JOIN" => "LEFT JOIN b_controller_member M ON M.ID = T.CONTROLLER_MEMBER_ID",
+			),
+			"DATE_EXECUTE" => array(
+				"FIELD_NAME" => "T.DATE_EXECUTE",
+				"FIELD_TYPE" => "datetime",
+			),
+			"EXECUTED_INTERVAL" => array(
+				"FIELD_NAME" => "unix_timestamp(now()) - unix_timestamp(T.DATE_EXECUTE)",
+				"FIELD_TYPE" => "int",
+			),
+			"INIT_EXECUTE" => array(
+				"FIELD_NAME" => "T.INIT_EXECUTE",
+				"FIELD_TYPE" => "string",
+			),
+			"INIT_EXECUTE_PARAMS" => array(
+				"FIELD_NAME" => "T.INIT_EXECUTE_PARAMS",
+				"FIELD_TYPE" => "string",
+			),
+			"INIT_CRC" => array(
+				"FIELD_NAME" => "T.INIT_CRC",
+				"FIELD_TYPE" => "int",
+			),
+			"UPDATE_PERIOD" => array(
+				"FIELD_NAME" => "T.UPDATE_PERIOD",
+				"FIELD_TYPE" => "int",
+			),
+			"RESULT_EXECUTE" => array(
+				"FIELD_NAME" => "T.RESULT_EXECUTE",
+				"FIELD_TYPE" => "string",
+			),
+			"STATUS" => array(
+				"FIELD_NAME" => "T.STATUS",
+				"FIELD_TYPE" => "string",
+			),
+			"INDEX_SALT" => array(
+				"FIELD_NAME" => "T.INDEX_SALT",
+				"FIELD_TYPE" => "int",
+			),
+			"RETRY_COUNT" => array(
+				"FIELD_NAME" => "T.RETRY_COUNT",
+				"FIELD_TYPE" => "int",
+			),
+			"RETRY_TIMEOUT" => array(
+				"FIELD_NAME" => "T.RETRY_TIMEOUT",
+				"FIELD_TYPE" => "int",
+			),
 		);
 
 		$obWhere = new CSQLWhere;
@@ -213,6 +297,39 @@ class CControllerTask
 
 		$strWhere = $obWhere->GetQuery($arFilterNew);
 
+		if(is_array($arOrder))
+		{
+			foreach($arOrder as $key => $value)
+			{
+				$key = mb_strtoupper($key);
+				if(array_key_exists($key, $arFields) && isset($arFields[$key]["LEFT_JOIN"]))
+					$obWhere->c_joins[$key]++;
+			}
+		}
+
+		$duplicates = array("ID" => 1);
+		$strSelect = "SELECT T.ID AS ID\n";
+		foreach($arSelect as $key)
+		{
+			$key = mb_strtoupper($key);
+			if(array_key_exists($key, $arFields) && !array_key_exists($key, $duplicates))
+			{
+				$duplicates[$key] = 1;
+
+				if(isset($arFields[$key]["LEFT_JOIN"]))
+					$obWhere->c_joins[$key]++;
+
+				if($arFields[$key]["FIELD_TYPE"] == "datetime")
+				{
+					$strSelect .= ",".$DB->DateToCharFunction($arFields[$key]["FIELD_NAME"], $arFields[$key]["FORMAT"])." AS ".$key."\n";
+				}
+				else
+				{
+					$strSelect .= ",".$arFields[$key]["FIELD_NAME"]." AS ".$key."\n";
+				}
+			}
+		}
+
 		if($bCnt)
 		{
 			$strSelect = "
@@ -222,54 +339,39 @@ class CControllerTask
 					,MAX(T.ID) as MAX_ID
 			";
 		}
-		else
-		{
-			$strSelect = "
-				SELECT
-					T.ID
-					,T.TASK_ID
-					,T.CONTROLLER_MEMBER_ID
-					,T.INIT_EXECUTE
-					,T.INIT_EXECUTE_PARAMS
-					,T.INIT_CRC
-					,T.UPDATE_PERIOD
-					,T.RESULT_EXECUTE
-					,T.STATUS
-					,T.RETRY_COUNT
-					,T.RETRY_TIMEOUT
-					,M.NAME as CONTROLLER_MEMBER_NAME
-					,M.URL as CONTROLLER_MEMBER_URL
-					,".$DB->DateToCharFunction("T.TIMESTAMP_X")." as TIMESTAMP_X
-					,".$DB->DateToCharFunction("T.DATE_EXECUTE")." as DATE_EXECUTE
-					,".$DB->DateToCharFunction("T.DATE_CREATE")." as DATE_CREATE
-					,unix_timestamp(now()) - unix_timestamp(T.DATE_EXECUTE) as EXECUTED_INTERVAL
-			";
-		}
 
 		$strSql = "
 			FROM b_controller_task T
-			INNER JOIN b_controller_member M ON T.CONTROLLER_MEMBER_ID = M.ID
-			".($strWhere == '' ? "" : "WHERE ".$strWhere)."
+				".$obWhere->GetJoins()."
+				".($strWhere == '' ? "" : "WHERE ".$strWhere)."
 		";
 
 		$strOrder = CControllerAgent::_OrderBy($arOrder, $arFields);
 
-		if (is_array($arNavParams) && $arNavParams["nTopCount"] > 0)
+		if (!is_array($arNavParams))
 		{
-			$strSql = $DB->TopSQL($strSelect.$strSql.$strOrder, $arNavParams["nTopCount"]);
-			$dbr = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbr = $DB->Query($strSelect.$strSql.$strOrder, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
-		elseif (is_array($arNavParams))
+		elseif ($arNavParams["nTopCount"] > 0)
 		{
-			$res_cnt = $DB->Query("SELECT count('x') CNT ".$strSql);
-			$ar_cnt = $res_cnt->Fetch();
-
-			$dbr = new CDBResult();
-			$dbr->NavQuery($strSelect.$strSql.$strOrder, $ar_cnt["CNT"], $arNavParams);
+			$strSql = $strSelect.$strSql.$strOrder."\nLIMIT ".intval($arNavParams["nTopCount"]);
+			if ($arNavParams["nOffset"] > 0)
+			{
+				$strSql .= " OFFSET ".intval($arNavParams["nOffset"]);
+			}
+			$dbr = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
 		else
 		{
-			$dbr = $DB->Query($strSelect.$strSql.$strOrder, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$res_cnt = $DB->Query("SELECT count('x') CNT ".$strSql);
+			$ar_cnt = $res_cnt->Fetch();
+			if (isset($arNavParams["bOnlyCount"]) && $arNavParams["bOnlyCount"] === true)
+			{
+				return $ar_cnt["CNT"];
+			}
+
+			$dbr = new CDBResult();
+			$dbr->NavQuery($strSelect.$strSql.$strOrder, $ar_cnt["CNT"], $arNavParams);
 		}
 
 		$dbr->is_filtered = ($strWhere <> '');

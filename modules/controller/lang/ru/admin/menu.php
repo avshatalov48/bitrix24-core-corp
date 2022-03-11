@@ -20,4 +20,6 @@ $MESS["CTRLR_MENU_COUNTERS_TITLE"]="Настройка счетчиков";
 $MESS["CTRLR_MENU_COUNTERS_HISTORY"]="История";
 $MESS["CTRLR_MENU_COUNTERS_HISTORY_TITLE"]="История счетчиков";
 $MESS["CTRLR_MENU_AUTH"]="Авторизация";
+$MESS["CTRLR_MENU_AUTH_LOG"]="Журнал";
+$MESS["CTRLR_MENU_AUTH_LOG_TITLE"]="Журнал авторизаций";
 ?>

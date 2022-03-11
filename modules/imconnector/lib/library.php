@@ -25,7 +25,6 @@ class Library
 	const ID_LIVE_CHAT_CONNECTOR = 'livechat';
 	const ID_FBINSTAGRAM_CONNECTOR = 'fbinstagram';
 	const ID_VIBER_CONNECTOR = 'viber';
-	const ID_YANDEX_CONNECTOR = 'yandex';
 	const ID_WECHAT_CONNECTOR = 'wechat';
 	const ID_NETWORK_CONNECTOR = 'network';
 	const ID_FB_COMMENTS_CONNECTOR = 'facebookcomments';
@@ -182,10 +181,6 @@ class Library
 			'allow' => ['ru'],
 			'deny' => [],
 		],
-		'yandex' => [
-			'allow' => ['ru', 'by', 'kz'],
-			'deny' => ['ua'],
-		],
 		'vkgroup' => [
 			'allow' => ['ru', 'by', 'kz'],
 			'deny' => ['ua'],
@@ -196,6 +191,10 @@ class Library
 		],
 		'olx' => [
 			'allow' => ['ua', 'pl'],
+			'deny' => [],
+		],
+		'whatsappbyedna' => [
+			'allow' => ['ru', 'by', 'kz'],
 			'deny' => [],
 		],
 	];
@@ -257,7 +256,6 @@ class Library
 		'facebookcomments',
 		self::ID_FBINSTAGRAM_CONNECTOR,
 		'viber',
-		'yandex',
 		self::ID_EDNA_WHATSAPP_CONNECTOR
 	];
 

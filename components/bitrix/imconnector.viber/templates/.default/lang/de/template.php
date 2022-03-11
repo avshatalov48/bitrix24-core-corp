@@ -21,7 +21,6 @@ $MESS["IMCONNECTOR_COMPONENT_VIBER_INFO_IOS_CONNECT_ID"] = "redirect=detail&code
 $MESS["IMCONNECTOR_COMPONENT_VIBER_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">So erhalten Sie einen Schlüssel des öffentlichen Accounts</span>:";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_I_KNOW_KEY"] = "Ich habe den Schlüssel";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_LINK_CHAT_ONE_TO_ONE"] = "Link zum Unter-vier-Augen Chat";
-$MESS["IMCONNECTOR_COMPONENT_VIBER_LINK_PUBLIC_ACCOUNT"] = "Link zum öffentlichen Account";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_NAME_BOT"] = "Name des öffentlichen Accounts";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_TESTED"] = "Testverbindung";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_USING_ANDROID"] = "<span class=\"imconnector-field-box-text-bold\">ANDROID</span> APP";

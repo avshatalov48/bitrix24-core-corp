@@ -2,6 +2,7 @@
 $MESS["CRM_MODULE_ERROR"] = "The CRM module is not installed.";
 $MESS["SALESCENTER_AMOUNT_TO_PAY"] = "amount payable";
 $MESS["SALESCENTER_APP_ADD_TITLE"] = "Add";
+$MESS["SALESCENTER_APP_CASHBOX_FFD_12_SUPPORT"] = "FFD 1.2";
 $MESS["SALESCENTER_APP_CASHBOX_INFO"] = "#CASHBOX_NAME# settings";
 $MESS["SALESCENTER_APP_CASHBOX_ITEM_EXTRA"] = "More cash registers";
 $MESS["SALESCENTER_APP_CASHBOX_OFFLINE_INFO"] = "Physical cash register settings";

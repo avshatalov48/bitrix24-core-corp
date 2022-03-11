@@ -1,7 +1,16 @@
 <?php
 $MESS["SC_ADD_CASHBOX_BUTTOM"] = "Kassenapparat hinzufügen";
 $MESS["SC_CASHBOX_ATOL_DESCRITION"] = "Sie müssen einen Kassenapparat nutzen, um Zahlungen per Kreditkarte oder Bargeld zu akzeptieren.";
+$MESS["SC_CASHBOX_ATOL_FFD_12_TITLE"] = "Atol Online (FFD 1.2)";
 $MESS["SC_CASHBOX_ATOL_TITLE"] = "ATOL online";
+$MESS["SC_CASHBOX_BUSINESSRU_ATOL_TITLE"] = "Business.RU: ATOL";
+$MESS["SC_CASHBOX_BUSINESSRU_DESCRIPTION"] = "Under the Federal law 54-FZ, business shall issue receipts for all transactions with customers, including digital receipts. You can connect physical or cloud-based cash register using the fiscalization service Business.RU Online Receipts.";
+$MESS["SC_CASHBOX_BUSINESSRU_EVOTOR_TITLE"] = "Business.RU: Evotor";
+$MESS["SC_CASHBOX_BUSINESSRU_INSTRUCTION_ITEM1"] = "Submit <a target='_blank' href='https://online-check.business.ru/form-bitrix/'>request</a> for connecting or purchasing a cash register at the website.";
+$MESS["SC_CASHBOX_BUSINESSRU_INSTRUCTION_ITEM2"] = "Indicate login and password from your \"Online-Recepits\" personal profile in the cash register settings and oomplete other required.";
+$MESS["SC_CASHBOX_BUSINESSRU_INSTRUCTION_ITEM3"] = "Check the \"Enable receipt printing\" box in the payment system settings if receipts are required.";
+$MESS["SC_CASHBOX_BUSINESSRU_LINK_CONNECT"] = "How to connect cash register via Business.RU";
+$MESS["SC_CASHBOX_BUSINESSRU_SHTRIHM_TITLE"] = "Business.RU: Shtrih-M";
 $MESS["SC_CASHBOX_CHECKBOX_DESCRIPTION"] = "Verbinden Sie einen Checkbos Kassenapparat, wenn Ihr Unternehmen Geräte zur Registrierung von Finanztransaktionen nutzen und Kassenzettel ausstellen muss.";
 $MESS["SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM1"] = "Registrieren Sie sich auf <a target='_blank' href='https://my.checkbox.in.ua/'>my.checkbox.in.ua</a>";
 $MESS["SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM2"] = "Wählen Sie eine der Methoden der Key-Signatur aus: Signature-Agent, Cloud-Speicher HSM oder die App Ukey.";
@@ -17,7 +26,7 @@ $MESS["SC_CASHBOX_INSTRUCTION_ITEM1"] = "Vertrag bez. OFD datenübermittlung abs
 $MESS["SC_CASHBOX_INSTRUCTION_ITEM2"] = "Einen Online-Kassenapparat bei einem der Cloud-Services (ATOL, Orange Data) mieten";
 $MESS["SC_CASHBOX_INSTRUCTION_ITEM3"] = "Erstellen Sie einen Kassenapparat auf Ihrer Website: wählen Sie einen Handler aus und geben Sie erforderliche Parameter an";
 $MESS["SC_CASHBOX_INSTRUCTION_ITEM4"] = "Aktivieren Sie die Checkbox \"Drucken von Kassenzetteln erlauben\" in den Einstellungen des Zahlungssystems, wenn Kassenzettel erforderlich sind.";
-$MESS["SC_CASHBOX_INSTRUCTION_ITEM5"] = " ";
+$MESS["SC_CASHBOX_INSTRUCTION_ITEM5"] = "Compliance to 54-FZ allows to avoid fines and fees ";
 $MESS["SC_CASHBOX_INSTRUCTION_TITLE"] = "Anleitung zur Einrichtung des Kassenapparats";
 $MESS["SC_CASHBOX_LINK_CONNECT"] = "So kann ein Kassenapparat eingerichtet werden";
 $MESS["SC_CASHBOX_OFFLINE_DESCRIPTION_DESC1"] = "Haben Sie bereits einen physischen Kassenapparat, den Sie auch regelmäßig nutzen, können Sie es ruhig weitermachen. Ihr Vertriebsmitarbeiter wirdden Kassenzettel einscannen und ihn an den Kunden senden.";
@@ -34,6 +43,7 @@ $MESS["SC_CASHBOX_OFFLINE_INSTRUCTIION_TITLE"] = "Wie funktioniert das?";
 $MESS["SC_CASHBOX_OFFLINE_TITLE"] = "Arbeit mit eigenem physischen Kassenapparat";
 $MESS["SC_CASHBOX_ORANGE_DESCRITION"] = "Sie müssen einen Kassenapparat verwenden, um Bar- oder Kartenzahlungen akzeptieren zu können.";
 $MESS["SC_CASHBOX_ORANGE_TITLE"] = "Orange Data";
+$MESS["SC_CASHBOX_REST_DESCRITION"] = "You have to use a cash register to receive payments using cash money or credit cards.";
 $MESS["SC_CASHBOX_ROBOKASSA_DESCRITION"] = "Robochecki ist verfügbar, wenn Sie Robokassa nutzen, um die Zahlungssysteme zu verbinden. Robochecki werden die Cloud-Kassenbons ersetzen. Kassenbons werden an Ihre Kunden, Fiskalinformation an enstprechende Behörde gesendet. Wenn Sie Robochecki nutzen, brauchen Sie keinen Kassenapparat zu kaufen oder zu mieten.";
 $MESS["SC_CASHBOX_ROBOKASSA_LINK_CONNECT"] = "Wie kann ich Robocheki konfigurieren?";
 $MESS["SC_MENU_TITLE"] = "Einstellungen";

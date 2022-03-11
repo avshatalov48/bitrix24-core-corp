@@ -17,7 +17,6 @@ class Provider
 				'telegrambot',
 				'imessage',
 				'wechat',
-				'yandex',
 				'vkgroup',
 				'ok',
 				'olx',

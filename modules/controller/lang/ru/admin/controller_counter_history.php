@@ -9,7 +9,6 @@ $MESS ['CTRL_COUNTER_HIST_NAME'] = "Название";
 $MESS ['CTRL_COUNTER_HIST_COMMAND'] = "Команда";
 $MESS ['CTRL_COUNTER_HIST_COMMAND_FROM'] = "Команда до";
 $MESS ['CTRL_COUNTER_HIST_COMMAND_TO'] = "Команда после";
-$MESS ['CTRL_COUNTER_HIST_NAVSTRING'] = "Запись";
 $MESS ['CTRL_COUNTER_HIST_MENU_RESTORE'] = "Восстановить";
 $MESS ['CTRL_COUNTER_HIST_MENU_RESTORE_ALERT'] = "Вы уверены, что хотите восстановить команду счётчика?";
 ?>

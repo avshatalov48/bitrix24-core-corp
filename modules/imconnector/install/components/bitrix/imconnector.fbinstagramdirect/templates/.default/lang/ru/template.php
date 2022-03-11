@@ -44,10 +44,14 @@ $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_ADDITIONAL_DESCRIPTION'] = 
 
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_DIRECT_AND_BUSINESS'] = 'Также подключить комментарии к публикациям и трансляциям';
 
-
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ACTIVE_COMMENTS'] = 'Комментарии подключены';
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_NO_ACTIVE_COMMENTS'] = 'Комментарии не подключены';
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_TITLE'] = 'Все равно подключить?';
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_DESCRIPTION'] = 'Этот аккаунт на вашем портале уже подключен в коннекторе "Instagram для бизнеса". Чтобы комментарии не дублировались, это подключение будет отключено.';
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_BUTTON_OK'] = 'Продолжить';
 $MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_BUTTON_CANCEL'] = 'Отмена';
+
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT'] = 'Расширить "окно переписки" с 24 часов до 7 дней';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT_DESCRIPTION'] = 'Обратите внимание, по правилам Facebook после 24 часов нельзя отправлять клиентам рекламу, в том числе предлагать скидки, купоны или отправлять автосообщения, иначе ваш аккаунт будет автоматически заблокирован. #START_HELP_DESC#Подробнее#END_HELP_DESC#';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT_ON'] = '"Окно переписки" расширено  с 24 часов до 7 дней';
+$MESS['IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT_OFF'] = '"Окно переписки" не расширено с 24 часов до 7 дней';

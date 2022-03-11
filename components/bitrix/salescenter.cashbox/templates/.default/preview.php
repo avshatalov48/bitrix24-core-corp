@@ -72,7 +72,10 @@ Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'ui.sidepan
 					</ul>
 					<p class="ui-color-medium"><?=Loc::getMessage("SC_CASHBOX_CHECKBOX_UKTZED_WARNING")?></p>
 				</div>
-			<?php elseif (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxBusinessRu')): ?>
+			<?php elseif (
+				mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxBusinessRu')
+				|| mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxBusinessRuV5')
+			): ?>
 				<div class="ui-title-4"><?=Loc::getMessage("SC_CASHBOX_INSTRUCTION_TITLE")?></div>
 				<hr class="ui-hr">
 					<ul class="ui-list ui-color-medium ui-list-icon">

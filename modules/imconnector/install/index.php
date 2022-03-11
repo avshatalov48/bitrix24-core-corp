@@ -75,7 +75,6 @@ Class ImConnector extends CModule
 			'telegrambot',
 			'imessage',
 			'wechat',
-			'yandex',
 			'vkgroup',
 			'ok',
 			'olx',
@@ -84,6 +83,7 @@ Class ImConnector extends CModule
 			'fbinstagramdirect',
 			'network',
 			'notifications',
+			'whatsappbyedna',
 		];
 		Option::set($this->MODULE_ID, 'list_connector', implode(',', $listConnector));
 

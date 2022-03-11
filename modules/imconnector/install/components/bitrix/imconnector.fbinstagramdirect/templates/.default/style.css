@@ -34,6 +34,26 @@
 	overflow: hidden;
 }
 
+.imconnector-field-social-card-human-agent-instagram-direct {
+	display: inline-block;
+	padding: 10px;
+	margin: 10px 0 10px 0;
+	background: #BCEBFF;
+	font-size: 11px;
+	line-height: 12px;
+	color: #333333;
+	opacity: 0.9;
+	border-radius: 2px;
+}
+
+.imconnector-field-social-card-human-agent-instagram-direct-invert {
+	background: #FFFFFF;
+}
+
+.imconnector-field-social-card-human-agent-instagram-direct-link {
+	cursor: pointer;
+}
+
 .imconnector-indicator-comments-instagram-direct {
 	display: inline-block;
 	margin: 0 10px 0 0;

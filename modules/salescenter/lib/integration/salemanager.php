@@ -466,8 +466,11 @@ class SaleManager extends Base
 		{
 			$result = array_merge($result, [
 				'\Bitrix\Sale\Cashbox\CashboxAtolFarmV4',
+				'\Bitrix\Sale\Cashbox\CashboxAtolFarmV5',
 				'\Bitrix\Sale\Cashbox\CashboxOrangeData',
+				'\Bitrix\Sale\Cashbox\CashboxOrangeDataFfd12',
 				'\Bitrix\Sale\Cashbox\CashboxBusinessRu',
+				'\Bitrix\Sale\Cashbox\CashboxBusinessRuV5',
 			]);
 		}
 		if ($zone === 'ua' || ($zone === 'ru' && !$isCloud))

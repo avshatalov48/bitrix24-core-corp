@@ -13,7 +13,7 @@ use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\InteractiveMessage;
 
 /**
- * Class Yandex
+ * Class Network
  * @package Bitrix\ImConnector\Connectors
  */
 class Network extends Base
@@ -43,6 +43,7 @@ class Network extends Base
 			));
 		}
 
+		/*
 		if ($message['MESSAGE_TYPE'] !== 'P')
 		{
 			$result->addError(new Error(
@@ -52,6 +53,7 @@ class Network extends Base
 				$message
 			));
 		}
+		*/
 
 		if ($result->isSuccess())
 		{

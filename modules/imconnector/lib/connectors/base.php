@@ -13,6 +13,7 @@ use Bitrix\Main\Localization\Loc;
 
 use Bitrix\ImConnector\Chat;
 use Bitrix\ImConnector\Error;
+use Bitrix\ImConnector\Status;
 use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Connector;
@@ -25,7 +26,7 @@ Loc::loadMessages(__FILE__);
 Library::loadMessages();
 
 /**
- * Class Connector
+ * Class Base
  * @package Bitrix\ImConnector\Connectors
  */
 class Base
@@ -1134,5 +1135,26 @@ class Base
 		}
 
 		return $message;
+	}
+
+	/**
+	 * @param $idLine
+	 * @return bool
+	 */
+	protected function isHumanAgent($idLine): bool
+	{
+		$result = false;
+
+		$statusData = Status::getInstance($this->idConnector, $idLine)->getData();
+
+		if (
+			!empty($statusData)
+			&& $statusData['HUMAN_AGENT'] === true
+		)
+		{
+			$result = true;
+		}
+
+		return $result;
 	}
 }

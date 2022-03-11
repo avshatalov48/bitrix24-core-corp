@@ -8,7 +8,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\DI\ServiceLocator;
 
 use Bitrix\ImConnector\Output;
 use Bitrix\ImConnector\Status;
@@ -63,6 +62,7 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 		$this->arResult['CONNECTION_STATUS'] = $this->status->getConnection();
 		$this->arResult['REGISTER_STATUS'] = $this->status->getRegister();
 		$this->arResult['ERROR_STATUS'] = $this->status->getError();
+		$this->arResult['DATA_STATUS'] = $this->status->getData();
 
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);
 
@@ -72,8 +72,9 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 	/**
 	 * @param $status
 	 * @param bool $resetError
+	 * @param array|null $data
 	 */
-	protected function setStatus($status, bool $resetError = true): void
+	protected function setStatus($status, bool $resetError = true, ?array $data = []): void
 	{
 		$this->arResult['STATUS'] = $status;
 
@@ -82,7 +83,13 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 		$this->status->setRegister($status);
 		$this->arResult['REGISTER_STATUS'] = $status;
 
-		if($resetError)
+		if ($data !== null)
+		{
+			$this->status->setData($data);
+			$this->arResult['DATA_STATUS'] = $data;
+		}
+
+		if ($resetError)
 		{
 			$this->status->setError(false);
 			$this->arResult['ERROR_STATUS'] = false;
@@ -109,7 +116,7 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 			if(check_bitrix_sessid())
 			{
 				//Activation
-				if(
+				if (
 					$this->request[$this->connector . '_active']
 					&& empty($this->arResult['ACTIVE_STATUS'])
 				)
@@ -121,14 +128,14 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 					$this->cleanCache();
 				}
 
-				if(!empty($this->arResult['ACTIVE_STATUS']))
+				if (!empty($this->arResult['ACTIVE_STATUS']))
 				{
 					//If you remove the reference to the user
-					if($this->request[$this->connector. '_del_user'])
+					if ($this->request[$this->connector. '_del_user'])
 					{
 						$delUser = $this->connectorOutput->delUserActive($this->request['user_id']);
 
-						if($delUser->isSuccess())
+						if ($delUser->isSuccess())
 						{
 							$this->setStatus(false);
 
@@ -144,11 +151,11 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 					}
 
 					//If you remove the reference to the group
-					if($this->request[$this->connector. '_del_page'])
+					if ($this->request[$this->connector. '_del_page'])
 					{
 						$delPage = $this->connectorOutput->delPageActive($this->request['page_id']);
 
-						if($delPage->isSuccess())
+						if ($delPage->isSuccess())
 						{
 							$this->setStatus(false);
 
@@ -164,20 +171,29 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 					}
 
 					//If you bind to the group
-					if($this->request[$this->connector . '_authorization_page'])
+					if ($this->request[$this->connector . '_authorization_page'])
 					{
 						$paramsAuthorizationPage = [];
 
-						if($this->request['comments'] === 'Y')
+						if ($this->request['comments'] === 'Y')
 						{
 							$paramsAuthorizationPage['comments'] = true;
 						}
 
 						$authorizationPage = $this->connectorOutput->authorizationPage($this->request['page_id'], $paramsAuthorizationPage);
 
-						if($authorizationPage->isSuccess())
+						if ($authorizationPage->isSuccess())
 						{
-							$this->setStatus(true);
+							if ($this->request['human_agent'] === 'Y')
+							{
+								$data = ['HUMAN_AGENT' => true];
+							}
+							else
+							{
+								$data = [];
+							}
+
+							$this->setStatus(true, true, $data);
 
 							$this->messages[] =
 								Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_OK_AUTHORIZATION_PAGE');
@@ -188,12 +204,12 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 
 							$errorsAuthorizationPage = $authorizationPage->getErrorMessages();
 
-							if(!empty($errorsAuthorizationPage))
+							if (!empty($errorsAuthorizationPage))
 							{
 								$errorsAuthorizationPage = array_filter($errorsAuthorizationPage);
 							}
 
-							if(
+							if (
 								$authorizationPage
 									->getErrorCollection()
 									->getErrorByCode('ERROR_INSTAGRAM_DISABLED_ACCESS_INSTAGRAM_DIRECT_MESSAGES') !== null
@@ -210,7 +226,7 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 									]);
 							}
 
-							if(
+							if (
 								$authorizationPage
 									->getErrorCollection()
 									->getErrorByCode('ERROR_INSTAGRAM_IG_ACCOUNT_IS_NOT_ELIGIBLE_API') !== null
@@ -242,11 +258,11 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 						$this->cleanCache();
 					}
 
-					if($this->request[$this->connector. '_del'])
+					if ($this->request[$this->connector. '_del'])
 					{
 						$rawDelete = $this->connectorOutput->deleteConnector();
 
-						if($rawDelete->isSuccess())
+						if ($rawDelete->isSuccess())
 						{
 							Status::delete($this->connector, $this->arParams['LINE']);
 							$this->arResult['STATUS'] = false;
@@ -254,6 +270,7 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 							$this->arResult['CONNECTION_STATUS'] = false;
 							$this->arResult['REGISTER_STATUS'] = false;
 							$this->arResult['ERROR_STATUS'] = false;
+							$this->arResult['DATA_STATUS'] = [];
 							$this->arResult['PAGE'] = '';
 						}
 						else
@@ -276,7 +293,6 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 	public function constructionForm(): void
 	{
 		global $APPLICATION;
-		$serviceLocator = ServiceLocator::getInstance();
 
 		$this->arResult['NAME'] = Connector::getNameConnectorReal($this->connector);
 
@@ -295,17 +311,17 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 
 		$this->arResult['FORM']['STEP'] = 1;
 
-		if($this->arResult['ACTIVE_STATUS'])
+		if ($this->arResult['ACTIVE_STATUS'])
 		{
 			//Reset cache
-			if(!empty($this->arResult['PAGE']))
+			if (!empty($this->arResult['PAGE']))
 			{
 				$this->cleanCache();
 			}
 
 			$cache = Cache::createInstance();
 
-			if($cache->initCache(Library::CACHE_TIME_COMPONENT, $this->cacheId, Library::CACHE_DIR_COMPONENT))
+			if ($cache->initCache(Library::CACHE_TIME_COMPONENT, $this->cacheId, Library::CACHE_DIR_COMPONENT))
 			{
 				$this->arResult['FORM'] = $cache->getVars();
 			}
@@ -324,26 +340,26 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 				{
 					$this->arResult['FORM'] = $infoOAuth->getData();
 
-					if(!empty($this->arResult['FORM']['PAGE']))
+					if (!empty($this->arResult['FORM']['PAGE']))
 					{
 						$this->arResult['FORM']['STEP'] = 3;
 
-						$this->setStatus(true);
+						$this->setStatus(true, true, null);
 					}
-					elseif(!empty($this->arResult['FORM']['PAGES']))
+					elseif (!empty($this->arResult['FORM']['PAGES']))
 					{
 						$this->arResult['FORM']['STEP'] = 2;
 
 						$this->setStatus(false, false);
 					}
-					elseif(!empty($this->arResult['FORM']['USER']))
+					elseif (!empty($this->arResult['FORM']['USER']))
 					{
 						$this->arResult['FORM']['STEP'] = 1;
 
 						$this->setStatus(false, false);
 					}
 
-					if(!empty($this->arResult['FORM']['GROUP_DEL']))
+					if (!empty($this->arResult['FORM']['GROUP_DEL']))
 					{
 						$this->error[] =
 							Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_REMOVED_REFERENCE_TO_PAGE');
@@ -355,7 +371,7 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 				{
 					foreach ($infoOAuth->getErrorCollection() as $error)
 					{
-						if($error->getCode() === Library::ERROR_CONNECTOR_MESSENGER_INVALID_OAUTH_ACCESS_TOKEN)
+						if ($error->getCode() === Library::ERROR_CONNECTOR_MESSENGER_INVALID_OAUTH_ACCESS_TOKEN)
 						{
 							$InvalidOauthAccessToken = true;
 						}

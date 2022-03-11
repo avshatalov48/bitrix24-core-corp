@@ -35,7 +35,7 @@ Class extranet extends CModule
 
 	function DoInstall()
 	{
-		global $DB, $DBType, $DOCUMENT_ROOT, $APPLICATION;
+		global $DOCUMENT_ROOT, $APPLICATION;
 		$APPLICATION->ResetException();
 
 		if(!CBXFeatures::IsFeatureEditable("Extranet"))
@@ -59,9 +59,6 @@ Class extranet extends CModule
 
 	function InstallDB($arParams = array())
 	{
-
-		global $DB, $DBType, $APPLICATION;
-
 		$this->errors = array();
 
 		RegisterModule("extranet");
@@ -118,8 +115,6 @@ Class extranet extends CModule
 
 	function InstallFiles($arParams = array())
 	{
-		global $APPLICATION;
-
 		if($_ENV["COMPUTERNAME"]!='BX')
 		{
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", True, True);

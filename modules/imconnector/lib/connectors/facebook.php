@@ -8,6 +8,8 @@ use Bitrix\ImConnector\Library;
 
 use Bitrix\UI;
 
+use Bitrix\Im\Model\MessageTable;
+
 Loc::loadMessages(__FILE__);
 
 /**
@@ -21,7 +23,42 @@ class Facebook extends Base
 	//END Input
 
 	//Output
+	/**
+	 * @param array $message
+	 * @param $line
+	 * @return array
+	 */
+	public function sendMessageProcessing(array $message, $line): array
+	{
+		$message = parent::sendMessageProcessing($message, $line);
 
+		if (
+			!empty($message['im']['message_id'])
+			&& $message['im']['message_id'] > 0
+			&& $this->isHumanAgent($line) === true
+			&& Loader::includeModule('im')
+		)
+		{
+			$raw = MessageTable::getList([
+				'select' => [
+					'AUTHOR_ID'
+				],
+				'filter' => [
+					'=ID' => (int)$message['im']['message_id'],
+				]
+			]);
+
+			if (
+				($row = $raw->fetch())
+				&& !empty($row['AUTHOR_ID'])
+			)
+			{
+				$message['message']['long'] = true;
+			}
+		}
+
+		return $message;
+	}
 	//END Output
 
 	/**
@@ -32,16 +69,54 @@ class Facebook extends Base
 	protected function receivedErrorNotSendMessageChat($paramsError, string $message = ''): bool
 	{
 		if(
-			(int)$paramsError['params']['errorCode'] === 10
+			!empty($paramsError['params'])
+			&& (int)$paramsError['params']['errorCode'] === 10
 			&& (int)$paramsError['params']['errorSubCode'] === 2018278
 			&& Loader::includeModule('ui')
 		)
 		{
 			$paramsError['messageConnector'] = '';
-			$message = Loc::getMessage('IMCONNECTOR_FACEBOOK_NOT_SEND_MESSAGE_CHAT_24_TIME_LIMIT', [
+			$message = Loc::getMessage('IMCONNECTOR_FACEBOOK_NOT_SEND_MESSAGE_CHAT_LIMIT', [
 				'#A_START#' => '[URL=' . UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT) . ']',
 				'#A_END#' => '[/URL]',
 			]);
+
+			if (
+				!empty($paramsError['messageId'])
+				&& $paramsError['messageId'] > 0
+				&& Loader::includeModule('im')
+			)
+			{
+				$raw = MessageTable::getList([
+					'select' => [
+						'AUTHOR_ID'
+					],
+					'filter' => [
+						'=ID' => (int)$paramsError['messageId'],
+					]
+				]);
+
+				if (
+					($row = $raw->fetch())
+					&& !empty($row['AUTHOR_ID'])
+				)
+				{
+					if ($this->isHumanAgent($paramsError['line']) === true)
+					{
+						$message = Loc::getMessage('IMCONNECTOR_FACEBOOK_NOT_SEND_MESSAGE_CHAT_7_DAY_LIMIT', [
+							'#A_START#' => '[URL=' . UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT) . ']',
+							'#A_END#' => '[/URL]',
+						]);
+					}
+					else
+					{
+						$message = Loc::getMessage('IMCONNECTOR_FACEBOOK_NOT_SEND_MESSAGE_CHAT_24_HOURS_LIMIT', [
+							'#A_START#' => '[URL=' . UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT) . ']',
+							'#A_END#' => '[/URL]',
+						]);
+					}
+				}
+			}
 		}
 
 		return parent::receivedErrorNotSendMessageChat($paramsError, $message);

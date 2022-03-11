@@ -24,7 +24,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Controller
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AuthLog_Query query()
+ * @method static EO_AuthLog_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AuthLog_Result getById($id)
+ * @method static EO_AuthLog_Result getList(array $parameters = array())
+ * @method static EO_AuthLog_Entity getEntity()
+ * @method static \Bitrix\Controller\EO_AuthLog createObject($setDefaultValues = true)
+ * @method static \Bitrix\Controller\EO_AuthLog_Collection createCollection()
+ * @method static \Bitrix\Controller\EO_AuthLog wakeUpObject($row)
+ * @method static \Bitrix\Controller\EO_AuthLog_Collection wakeUpCollection($rows)
+ */
 
 class AuthLogTable extends Main\Entity\DataManager
 {

@@ -2,6 +2,7 @@
 $MESS["CRM_MODULE_ERROR"] = "Das Modul CRM ist nicht installiert.";
 $MESS["SALESCENTER_AMOUNT_TO_PAY"] = "Zu zahlender Betrag:";
 $MESS["SALESCENTER_APP_ADD_TITLE"] = "Hinzufügen";
+$MESS["SALESCENTER_APP_CASHBOX_FFD_12_SUPPORT"] = "FFD 1.2";
 $MESS["SALESCENTER_APP_CASHBOX_INFO"] = "Einstellungen von #CASHBOX_NAME#";
 $MESS["SALESCENTER_APP_CASHBOX_ITEM_EXTRA"] = "Weitere Kassenapparate";
 $MESS["SALESCENTER_APP_CASHBOX_OFFLINE_INFO"] = "Einstelleung des physischen Kassenapparats";

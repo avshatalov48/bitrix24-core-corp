@@ -1,8 +1,7 @@
 <?php
 
 use \Bitrix\Location\Service;
-use Bitrix\Main\Context;
-use Bitrix\Main\IO\File;
+use Bitrix\Location\Infrastructure\UserLocation;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -52,12 +51,6 @@ return [
 		$format = Service\FormatService::getInstance()->findDefault(LANGUAGE_ID);
 		$format  = $format ? $format->toJson() : '';
 
-		/*
-		 * Here it could be a performance problem due to custom handlers.
-		 * Make an option, or receive via ajax request.
-		 */
-		$userLocationPoint = \Bitrix\Location\Infrastructure\UserLocation::getPoint();
-
 		return [
 			'lang_additional' => [
 				'LOCATION_WIDGET_SOURCE_CODE' => $sourceCode,
@@ -65,7 +58,7 @@ return [
 				'LOCATION_WIDGET_DEFAULT_FORMAT' => $format,
 				'LOCATION_WIDGET_LANGUAGE_ID' => LANGUAGE_ID,
 				'LOCATION_WIDGET_SOURCE_LANGUAGE_ID' => $sourceLanguageId,
-				'LOCATION_WIDGET_USER_LOCATION_POINT' => $userLocationPoint->toJson()
+				'LOCATION_WIDGET_USER_LOCATION_POINT' => UserLocation::getPoint()->toJson()
 			]
 		];
 	}

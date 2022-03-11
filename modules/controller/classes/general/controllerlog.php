@@ -144,27 +144,50 @@ class CControllerLog
 		return true;
 	}
 
-	public static function GetList($arOrder = Array(), $arFilter = Array(), $arNavParams = false)
+	public static function GetList($arOrder = Array(), $arFilter = Array(), $arNavParams = false, $arSelect = Array())
 	{
 		/** @global CDatabase $DB */
 		global $DB;
+
+		if (!$arSelect)
+		{
+			$arSelect = array("ID", "CONTROLLER_MEMBER_ID", "NAME", "DESCRIPTION", "TASK_ID", "USER_ID", "STATUS", "CONTROLLER_MEMBER_NAME", "CONTROLLER_MEMBER_URL", "USER_NAME", "USER_LAST_NAME", "USER_LOGIN", "TASK_NAME", "TIMESTAMP_X");
+		}
 
 		static $arFields = array(
 			"ID" => array(
 				"FIELD_NAME" => "L.ID",
 				"FIELD_TYPE" => "int",
 			),
+			"TIMESTAMP_X" => array(
+				"FIELD_NAME" => "L.TIMESTAMP_X",
+				"FIELD_TYPE" => "datetime",
+			),
 			"CONTROLLER_MEMBER_ID" => array(
 				"FIELD_NAME" => "L.CONTROLLER_MEMBER_ID",
 				"FIELD_TYPE" => "int",
+			),
+			"CONTROLLER_MEMBER_NAME" => array(
+				"FIELD_NAME" => "M.NAME",
+				"FIELD_TYPE" => "string",
+				"TABLE_ALIAS" => "M",
+				"JOIN" => "INNER JOIN b_controller_member M ON M.ID = L.CONTROLLER_MEMBER_ID",
+				"LEFT_JOIN" => "LEFT JOIN b_controller_member M ON M.ID = L.CONTROLLER_MEMBER_ID",
+			),
+			"CONTROLLER_MEMBER_URL" => array(
+				"FIELD_NAME" => "M.URL",
+				"FIELD_TYPE" => "string",
+				"TABLE_ALIAS" => "M",
+				"JOIN" => "INNER JOIN b_controller_member M ON M.ID = L.CONTROLLER_MEMBER_ID",
+				"LEFT_JOIN" => "LEFT JOIN b_controller_member M ON M.ID = L.CONTROLLER_MEMBER_ID",
 			),
 			"NAME" => array(
 				"FIELD_NAME" => "L.NAME",
 				"FIELD_TYPE" => "string",
 			),
-			"TIMESTAMP_X" => array(
-				"FIELD_NAME" => "L.TIMESTAMP_X",
-				"FIELD_TYPE" => "datetime",
+			"DESCRIPTION" => array(
+				"FIELD_NAME" => "L.DESCRIPTION",
+				"FIELD_TYPE" => "string",
 			),
 			"TASK_ID" => array(
 				"FIELD_NAME" => "L.TASK_ID",
@@ -173,6 +196,7 @@ class CControllerLog
 			"TASK_NAME" => array(
 				"FIELD_NAME" => "T.TASK_ID",
 				"FIELD_TYPE" => "string",
+				"TABLE_ALIAS" => "T",
 				"JOIN" => "INNER JOIN b_controller_task T ON T.ID = L.TASK_ID",
 				"LEFT_JOIN" => "LEFT JOIN b_controller_task T ON T.ID = L.TASK_ID",
 			),
@@ -181,36 +205,29 @@ class CControllerLog
 				"FIELD_TYPE" => "int",
 			),
 			"USER_NAME" => array(
-				"FIELD_NAME" => "L.USER_ID",
+				"FIELD_NAME" => "U.NAME",
 				"FIELD_TYPE" => "string",
+				"TABLE_ALIAS" => "U",
+				"JOIN" => "INNER JOIN b_user U ON U.ID = L.USER_ID",
+				"LEFT_JOIN" => "LEFT JOIN b_user U ON U.ID = L.USER_ID",
 			),
 			"USER_LAST_NAME" => array(
 				"FIELD_NAME" => "U.LAST_NAME",
 				"FIELD_TYPE" => "string",
+				"TABLE_ALIAS" => "U",
 				"JOIN" => "INNER JOIN b_user U ON U.ID = L.USER_ID",
 				"LEFT_JOIN" => "LEFT JOIN b_user U ON U.ID = L.USER_ID",
 			),
 			"USER_LOGIN" => array(
 				"FIELD_NAME" => "U.LOGIN",
 				"FIELD_TYPE" => "string",
+				"TABLE_ALIAS" => "U",
 				"JOIN" => "INNER JOIN b_user U ON U.ID = L.USER_ID",
 				"LEFT_JOIN" => "LEFT JOIN b_user U ON U.ID = L.USER_ID",
 			),
 			"STATUS" => array(
 				"FIELD_NAME" => "L.STATUS",
 				"FIELD_TYPE" => "string",
-			),
-			"CONTROLLER_MEMBER_NAME" => array(
-				"FIELD_NAME" => "M.NAME",
-				"FIELD_TYPE" => "string",
-				"JOIN" => "INNER JOIN b_controller_member M ON M.ID = L.CONTROLLER_MEMBER_ID",
-				"LEFT_JOIN" => "LEFT JOIN b_controller_member M ON M.ID = L.CONTROLLER_MEMBER_ID",
-			),
-			"CONTROLLER_MEMBER_URL" => array(
-				"FIELD_NAME" => "M.URL",
-				"FIELD_TYPE" => "string",
-				"JOIN" => "INNER JOIN b_controller_member M ON M.ID = L.CONTROLLER_MEMBER_ID",
-				"LEFT_JOIN" => "LEFT JOIN b_controller_member M ON M.ID = L.CONTROLLER_MEMBER_ID",
 			),
 		);
 
@@ -228,55 +245,71 @@ class CControllerLog
 
 		$strWhere = $obWhere->GetQuery($arFilterNew);
 
-		$strSelect = "
-			SELECT
-				L.ID
-				,L.CONTROLLER_MEMBER_ID
-				,L.NAME
-				,L.DESCRIPTION
-				,L.TASK_ID
-				,L.USER_ID
-				,L.STATUS
-				,M.NAME as CONTROLLER_MEMBER_NAME
-				,M.URL as CONTROLLER_MEMBER_URL
-				,U.NAME as USER_NAME
-				,U.LAST_NAME as USER_LAST_NAME
-				,U.LOGIN as USER_LOGIN
-				,T.TASK_ID as TASK_NAME
-				,".$DB->DateToCharFunction("L.TIMESTAMP_X")." as TIMESTAMP_X
-		";
+		if(is_array($arOrder))
+		{
+			foreach($arOrder as $key => $value)
+			{
+				$key = mb_strtoupper($key);
+				if(array_key_exists($key, $arFields) && isset($arFields[$key]["LEFT_JOIN"]))
+					$obWhere->c_joins[$key]++;
+			}
+		}
+
+		$duplicates = array("ID" => 1);
+		$strSelect = "SELECT L.ID AS ID\n";
+		foreach($arSelect as $key)
+		{
+			$key = mb_strtoupper($key);
+			if(array_key_exists($key, $arFields) && !array_key_exists($key, $duplicates))
+			{
+				$duplicates[$key] = 1;
+
+				if(isset($arFields[$key]["LEFT_JOIN"]))
+					$obWhere->c_joins[$key]++;
+
+				if($arFields[$key]["FIELD_TYPE"] == "datetime")
+				{
+					$strSelect .= ",".$DB->DateToCharFunction($arFields[$key]["FIELD_NAME"], $arFields[$key]["FORMAT"])." AS ".$key."\n";
+				}
+				else
+				{
+					$strSelect .= ",".$arFields[$key]["FIELD_NAME"]." AS ".$key."\n";
+				}
+			}
+		}
 
 		$strSql = "
 			FROM b_controller_log L
-			LEFT JOIN b_controller_member M ON L.CONTROLLER_MEMBER_ID=M.ID
-			LEFT JOIN b_controller_task T ON T.ID = L.TASK_ID
-			LEFT JOIN b_user U ON U.ID = L.USER_ID
+			".$obWhere->GetJoins()."
 			".($strWhere == ''? "": "WHERE ".$strWhere)."
 		";
 
 		$strOrder = CControllerAgent::_OrderBy($arOrder, $arFields);
 
-		if (is_array($arNavParams) && $arNavParams["nTopCount"] > 0)
+		if (!is_array($arNavParams))
 		{
-			$strSql = $DB->TopSQL($strSelect.$strSql.$strOrder, $arNavParams["nTopCount"]);
-			$dbr = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbr = $DB->Query($strSelect.$strSql.$strOrder, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
-		elseif (is_array($arNavParams))
+		elseif ($arNavParams["nTopCount"] > 0)
 		{
-			$res_cnt = $DB->Query("
-				SELECT count('x') CNT
-				FROM b_controller_log L
-				".$obWhere->GetJoins()."
-				".($strWhere == ''? "": "WHERE ".$strWhere)."
-			");
-			$ar_cnt = $res_cnt->Fetch();
-
-			$dbr = new CDBResult();
-			$dbr->NavQuery($strSelect.$strSql.$strOrder, $ar_cnt["CNT"], $arNavParams);
+			$strSql = $strSelect.$strSql.$strOrder."\nLIMIT ".intval($arNavParams["nTopCount"]);
+			if ($arNavParams["nOffset"] > 0)
+			{
+				$strSql .= " OFFSET ".intval($arNavParams["nOffset"]);
+			}
+			$dbr = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
 		else
 		{
-			$dbr = $DB->Query($strSelect.$strSql.$strOrder, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$res_cnt = $DB->Query("SELECT count('x') CNT ".$strSql);
+			$ar_cnt = $res_cnt->Fetch();
+			if (isset($arNavParams["bOnlyCount"]) && $arNavParams["bOnlyCount"] === true)
+			{
+				return $ar_cnt["CNT"];
+			}
+
+			$dbr = new CDBResult();
+			$dbr->NavQuery($strSelect.$strSql.$strOrder, $ar_cnt["CNT"], $arNavParams);
 		}
 
 		$dbr->is_filtered = ($strWhere <> '');

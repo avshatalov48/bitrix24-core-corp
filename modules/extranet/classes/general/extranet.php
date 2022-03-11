@@ -2,6 +2,9 @@
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\UserToGroupTable;
 
 class CExtranet
@@ -9,22 +12,24 @@ class CExtranet
 	public static function IsExtranetSite($site_id = SITE_ID): bool
 	{
 		if (!$site_id)
+		{
 			$site_id = SITE_ID;
+		}
 
-		if ($site_id == COption::GetOptionString("extranet", "extranet_site"))
-			return true;
-
-		return false;
+		return ($site_id === Option::get('extranet', 'extranet_site'));
 	}
 
 	public static function GetExtranetSiteID()
 	{
 		$extranet_site_id = COption::GetOptionString("extranet", "extranet_site");
-		if ($extranet_site_id <> '')
+		if (
+			($extranet_site_id <> '')
+			&& CSite::GetArrayByID($extranet_site_id)
+		)
 		{
-			if(CSite::GetArrayByID($extranet_site_id))
-				return $extranet_site_id;
+			return $extranet_site_id;
 		}
+
 		return false;
 	}
 
@@ -35,6 +40,7 @@ class CExtranet
 		{
 			return $extranet_group_id;
 		}
+
 		return false;
 	}
 
@@ -47,7 +53,7 @@ class CExtranet
 	{
 		global $USER;
 
-		static $staticCache = array();
+		static $staticCache = [];
 
 		if(!is_int($userID))
 		{
@@ -72,7 +78,6 @@ class CExtranet
 
 				$result = $staticCache[$userID] = (
 					is_array($arUser)
-					&& isset($arUser["UF_DEPARTMENT"])
 					&& isset($arUser["UF_DEPARTMENT"][0])
 					&& $arUser["UF_DEPARTMENT"][0] > 0
 				);
@@ -104,7 +109,10 @@ class CExtranet
 
 		if(
 			$USER->IsAdmin()
-			|| (CModule::IncludeModule("socialnetwork") && CSocNetUser::IsCurrentUserModuleAdmin($site))
+			|| (
+				Loader::includeModule('socialnetwork')
+				&& CSocNetUser::IsCurrentUserModuleAdmin($site)
+			)
 		)
 		{
 			\Bitrix\Main\Application::getInstance()->getKernelSession()["aExtranetUser_{$userID}"][$site] = true;
@@ -127,7 +135,6 @@ class CExtranet
 			$arUser = $rsUser->Fetch();
 			$result = $staticCache[$userID] = (
 				is_array($arUser)
-				&& isset($arUser["UF_DEPARTMENT"])
 				&& isset($arUser["UF_DEPARTMENT"][0])
 				&& $arUser["UF_DEPARTMENT"][0] > 0
 			);
@@ -145,26 +152,22 @@ class CExtranet
 	{
 		global $USER;
 
-		if (is_object($USER) && $USER->IsAuthorized())
-		{
-			if (in_array(CExtranet::GetExtranetUserGroupID(), $USER->GetUserGroupArray()))
-			{
-				return true;
-			}
-		}
-
-		return false;
+		return (
+			is_object($USER)
+			&& $USER->IsAuthorized()
+			&& in_array(self::GetExtranetUserGroupID(), $USER->GetUserGroupArray())
+		);
 	}
 
 	public static function IsExtranetSocNetGroup($groupID): bool
 	{
-		if (!CModule::IncludeModule("socialnetwork"))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			return false;
 		}
 
-		$extranet_site_id = CExtranet::GetExtranetSiteID();
-		$arGroupSites = array();
+		$extranet_site_id = self::GetExtranetSiteID();
+		$arGroupSites = [];
 
 		$rsGroupSite = CSocNetGroup::GetSite($groupID);
 		while($arGroupSite = $rsGroupSite->Fetch())
@@ -172,7 +175,7 @@ class CExtranet
 			$arGroupSites[] = $arGroupSite["LID"];
 		}
 
-		return (in_array($extranet_site_id, $arGroupSites));
+		return (in_array($extranet_site_id, $arGroupSites, true));
 	}
 
 	public static function IsExtranetAdmin()
@@ -180,10 +183,14 @@ class CExtranet
 		global $USER;
 
 		if (is_object($USER) && $USER->IsAdmin())
+		{
 			return true;
+		}
 
 		if (is_object($USER) && !$USER->IsAuthorized())
+		{
 			return false;
+		}
 
 		static $isExtAdmin = 'no';
 		if($isExtAdmin === 'no')
@@ -199,7 +206,7 @@ class CExtranet
 			}
 
 			if (
-				CModule::IncludeModule("socialnetwork")
+				Loader::includeModule('socialnetwork')
 				&& CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
 			)
 			{
@@ -210,10 +217,8 @@ class CExtranet
 			$isExtAdmin = false;
 			return false;
 		}
-		else
-		{
-			return $isExtAdmin;
-		}
+
+		return $isExtAdmin;
 	}
 
 	public static function ExtranetRedirect()
@@ -238,77 +243,78 @@ class CExtranet
 			&& (mb_strpos($curPage, "/pub/") !== 0)
 			&& (mb_strpos($curPage, "/rest/") !== 0)
 			&& !preg_match("/^\\/online\\/([\\.\\-0-9a-zA-Z]+)(\\/?)([^\\/]*)$/i", $curPage)
-			&& (!CExtranet::IsExtranetSite())
+			&& (!self::IsExtranetSite())
+			&& self::GetExtranetSiteID() <> ''
+			&& $USER->IsAuthorized()
+			&& !$USER->IsAdmin()
+			&& !self::IsIntranetUser()
+			&& !$USER->CanDoFileOperation(
+				'fm_view_file',
+				[
+					SITE_ID,
+					\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getScriptFile()
+				]
+			)
 		)
 		{
+			$rsSites = CSite::GetByID(self::GetExtranetSiteID());
 			if (
-				CExtranet::GetExtranetSiteID() <> ''
-				&& $USER->IsAuthorized()
-				&& !$USER->IsAdmin()
-				&& !CExtranet::IsIntranetUser()
-				&& !$USER->CanDoFileOperation('fm_view_file', array(SITE_ID, \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getScriptFile()))
+				($arExtranetSite = $rsSites->Fetch())
+				&& ($arExtranetSite["ACTIVE"] !== "N")
 			)
 			{
-				$rsSites = CSite::GetByID(CExtranet::GetExtranetSiteID());
+				$URLToRedirect = false;
+
+				$userSEFFolder = COption::GetOptionString("socialnetwork", "user_page", false, SITE_ID);
+				$workgroupSEFFolder = COption::GetOptionString("socialnetwork", "workgroups_page", false, SITE_ID);
+				if (mb_strpos($curPage, $userSEFFolder) === 0)
+				{
+					$userSEFFolderExtranet = COption::GetOptionString("socialnetwork", "user_page", false, $arExtranetSite['LID']);
+					if ($userSEFFolderExtranet)
+					{
+						$URLToRedirect = $userSEFFolderExtranet.mb_substr($curPage, mb_strlen($userSEFFolder));
+					}
+				}
+				elseif (mb_strpos($curPage, $workgroupSEFFolder) === 0)
+				{
+					$workgroupSEFFolderExtranet = COption::GetOptionString("socialnetwork", "workgroups_page", false, $arExtranetSite['LID']);
+					if ($workgroupSEFFolderExtranet)
+					{
+						$URLToRedirect = $workgroupSEFFolderExtranet.mb_substr($curPage, mb_strlen($workgroupSEFFolder));
+					}
+				}
+
+				if (!$URLToRedirect)
+				{
+					$URLToRedirect = ($arExtranetSite["SERVER_NAME"] <> '' ? (CMain::IsHTTPS() ? "https" : "http") . "://" . $arExtranetSite["SERVER_NAME"] : "") . $arExtranetSite["DIR"];
+				}
+
+				$urlParams = array();
+
 				if (
-					($arExtranetSite = $rsSites->Fetch())
-					&& ($arExtranetSite["ACTIVE"] != "N")
+					($urlParts = parse_url($curPage))
+					&& !empty($urlParts['query'])
 				)
 				{
-					$URLToRedirect = false;
+					$keyWhiteList = [ 'IM_SETTINGS' ];
 
-					$userSEFFolder = COption::GetOptionString("socialnetwork", "user_page", false, SITE_ID);
-					$workgroupSEFFolder = COption::GetOptionString("socialnetwork", "workgroups_page", false, SITE_ID);
-					if (mb_strpos($curPage, $userSEFFolder) === 0)
+					$pairsList = explode('&', $urlParts['query']);
+					foreach ($pairsList as $pair)
 					{
-						$userSEFFolderExtranet = COption::GetOptionString("socialnetwork", "user_page", false, $arExtranetSite['LID']);
-						if ($userSEFFolderExtranet)
+						[ $key, $value ] = explode('=', $pair);
+						if (in_array($key, $keyWhiteList, true))
 						{
-							$URLToRedirect = $userSEFFolderExtranet.mb_substr($curPage, mb_strlen($userSEFFolder));
+							$urlParams[$key] = $value;
 						}
 					}
-					elseif (mb_strpos($curPage, $workgroupSEFFolder) === 0)
-					{
-						$workgroupSEFFolderExtranet = COption::GetOptionString("socialnetwork", "workgroups_page", false, $arExtranetSite['LID']);
-						if ($workgroupSEFFolderExtranet)
-						{
-							$URLToRedirect = $workgroupSEFFolderExtranet.mb_substr($curPage, mb_strlen($workgroupSEFFolder));
-						}
-					}
-
-					if (!$URLToRedirect)
-					{
-						$URLToRedirect = ($arExtranetSite["SERVER_NAME"] <> '' ? (CMain::IsHTTPS() ? "https" : "http") . "://" . $arExtranetSite["SERVER_NAME"] : "") . $arExtranetSite["DIR"];
-					}
-
-					$urlParams = array();
-
-					if (
-						($urlParts = parse_url($curPage))
-						&& !empty($urlParts['query'])
-					)
-					{
-						$keyWhiteList = array('IM_SETTINGS');
-
-
-						$pairsList = explode('&', $urlParts['query']);
-						foreach ($pairsList as $pair)
-						{
-							list($key, $value) = explode('=', $pair);
-							if (in_array($key, $keyWhiteList))
-							{
-								$urlParams[$key] = $value;
-							}
-						}
-					}
-
-					if (!empty($urlParams))
-					{
-						$URLToRedirect = CHTTP::urlAddParams($URLToRedirect, $urlParams);
-					}
-
-					LocalRedirect($URLToRedirect, true);
 				}
+
+				if (!empty($urlParams))
+				{
+					$URLToRedirect = CHTTP::urlAddParams($URLToRedirect, $urlParams);
+				}
+
+				LocalRedirect($URLToRedirect, true);
 			}
 		}
 	}
@@ -333,7 +339,7 @@ class CExtranet
 		$arUserSocNetGroups = array();
 
 		if (
-			CModule::IncludeModule("socialnetwork")
+			Loader::includeModule('socialnetwork')
 			&& (
 				!CSocNetUser::IsCurrentUserModuleAdmin()
 				|| $bGadget
@@ -395,10 +401,10 @@ class CExtranet
 			$dbUsers = CUser::GetList(
 				'ID',
 				'ASC',
-				array(
+				[
 					"ACTIVE" => "Y",
-					"GROUPS_ID" => array(CExtranet::GetExtranetUserGroupID())
-				)
+					"GROUPS_ID" => [ self::GetExtranetUserGroupID() ],
+				]
 			);
 
 			if ($dbUsers)
@@ -444,10 +450,10 @@ class CExtranet
 		if (
 			is_array($params)
 			&& isset($params['userId'])
-			&& intval($params['userId']) > 0
+			&& (int)$params['userId'] > 0
 		)
 		{
-			$userId = intval($params['userId']);
+			$userId = (int)$params['userId'];
 		}
 		elseif (
 			is_object($USER)
@@ -471,7 +477,7 @@ class CExtranet
 
 		$arUsersInMyGroups = array();
 
-		if (CModule::IncludeModule('socialnetwork'))
+		if (Loader::includeModule('socialnetwork'))
 		{
 			$query = new Query(UserToGroupTable::getEntity());
 			$query->setSelect(array('GROUP_ID'));
@@ -510,42 +516,51 @@ class CExtranet
 	{
 		global $USER;
 
-		$arUsersInMyGroups = array();
+		$arUsersInMyGroups = [];
 
-		$arUsersInMyGroupsID = CExtranet::GetMyGroupsUsers($site, $bGadget);
+		$arUsersInMyGroupsID = self::GetMyGroupsUsers($site, $bGadget);
 		if (count($arUsersInMyGroupsID) > 0)
 		{
 			$strUsersInMyGroupsID = "(".implode(" | ", $arUsersInMyGroupsID).")";
 			if ($bNotCurrent)
+			{
 				$strUsersInMyGroupsID .= " ~".$USER->GetID();
+			}
 
 			$arFilter = Array("ID"=>$strUsersInMyGroupsID);
 
 			$rsUsers = CUser::GetList("ID", "asc", $arFilter, array("SELECT"=>array("UF_*")));
 
 			while($arUser = $rsUsers->GetNext())
+			{
 				$arUsersInMyGroups[] = $arUser;
+			}
 
 			return $arUsersInMyGroups;
 		}
-		else
-			return array();
 
+		return [];
 	}
 
 	public static function GetExtranetGroupUsers($full = false): array
 	{
 		$arExtranetGroupUsers = array();
 
-		$arFilter = Array("GROUPS_ID"=>array(CExtranet::GetExtranetUserGroupID()));
+		$arFilter = [
+			'GROUPS_ID' => [ self::GetExtranetUserGroupID() ],
+		];
 
 		$rsUsers = CUser::GetList("ID", "asc", $arFilter);
 		while($arUser = $rsUsers->GetNext())
 		{
 			if ($full)
+			{
 				$arExtranetGroupUsers[] = $arUser;
+			}
 			else
+			{
 				$arExtranetGroupUsers[] = $arUser["ID"];
+			}
 		}
 
 		return $arExtranetGroupUsers;
@@ -556,20 +571,24 @@ class CExtranet
 		global $USER;
 
 		$arPublicUsers = array();
-		$arFilter = Array(
-			COption::GetOptionString("extranet", "extranet_public_uf_code", "UF_PUBLIC") => "1",
+		$arFilter = [
+			Option::get("extranet", "extranet_public_uf_code", "UF_PUBLIC") => "1",
 			"ID" => "~".$USER->GetID(),
 			"!UF_DEPARTMENT" => false,
-			"GROUPS_ID" => array(CExtranet::GetExtranetUserGroupID())
-		);
+			"GROUPS_ID" => [ self::GetExtranetUserGroupID() ],
+		];
 
 		$rsUsers = CUser::GetList("ID", "asc", $arFilter);
 		while($arUser = $rsUsers->GetNext())
 		{
 			if ($full)
+			{
 				$arPublicUsers[] = $arUser;
+			}
 			else
+			{
 				$arPublicUsers[] = $arUser["ID"];
+			}
 		}
 
 		return $arPublicUsers;
@@ -662,13 +681,13 @@ class CExtranet
 		}
 
 		// if current user is admin
-		if (CExtranet::IsExtranetAdmin())
+		if (self::IsExtranetAdmin())
 		{
 			return true;
 		}
 
 		// if extranet site is not set
-		if (!CExtranet::GetExtranetSiteID())
+		if (!self::GetExtranetSiteID())
 		{
 			return true;
 		}
@@ -681,8 +700,8 @@ class CExtranet
 
 		// if intranet and current user is not employee
 		if (
-			!CExtranet::IsExtranetSite($site_id)
-			&& !CExtranet::IsIntranetUser()
+			!self::IsExtranetSite($site_id)
+			&& !self::IsIntranetUser()
 		)
 		{
 			return false;
@@ -691,11 +710,10 @@ class CExtranet
 		$bNeedCheckContext = false;
 
 		// if intranet and profile user is not employee
-		if (!CExtranet::IsExtranetSite($site_id))
+		if (!self::IsExtranetSite($site_id))
 		{
 			if (
-				CExtranet::IsIntranetUser()
-				&& (
+				(
 					(
 						!is_array($arUser["UF_DEPARTMENT"])
 						&& (int)$arUser["UF_DEPARTMENT"] > 0
@@ -705,15 +723,16 @@ class CExtranet
 						&& (int)$arUser["UF_DEPARTMENT"][0] > 0
 					)
 				)
+				&& self::IsIntranetUser()
 			)
 			{
 				return true;
 			}
 
-			$arUsersInMyGroupsID = CExtranet::GetMyGroupsUsers(CExtranet::GetExtranetSiteID(), false, $bOnlyActive);
+			$arUsersInMyGroupsID = self::GetMyGroupsUsers(self::GetExtranetSiteID(), false, $bOnlyActive);
 			if (
 				!in_array($arUser["ID"], $arUsersInMyGroupsID)
-				&& ($arUser["ID"] != $USER->GetID())
+				&& ((int)$arUser["ID"] !== (int)$USER->GetID())
 			)
 			{
 				$bNeedCheckContext = true;
@@ -721,17 +740,17 @@ class CExtranet
 		}
 
 		// if extranet and profile user not public
-		if (CExtranet::IsExtranetSite($site_id))
+		if (self::IsExtranetSite($site_id))
 		{
 			if ((int)$arUser[COption::GetOptionString("extranet", "extranet_public_uf_code", "UF_PUBLIC")] === 1)
 			{
 				return true;
 			}
 
-			$arUsersInMyGroupsID = CExtranet::GetMyGroupsUsers(SITE_ID);
+			$arUsersInMyGroupsID = self::GetMyGroupsUsers(SITE_ID);
 			if (
 				!in_array($arUser["ID"], $arUsersInMyGroupsID)
-				&& ($arUser["ID"] != $USER->GetID())
+				&& ((int)$arUser["ID"] !== (int)$USER->GetID())
 			)
 			{
 				$bNeedCheckContext = true;
@@ -741,19 +760,19 @@ class CExtranet
 		if ($bNeedCheckContext)
 		{
 			if (
-				isset($arContext)
-				&& isset($arContext["ENTITY_TYPE"])
+				isset($arContext["ENTITY_TYPE"], $arContext["ENTITY_ID"])
 				&& $arContext["ENTITY_TYPE"] === "LOG_ENTRY"
-				&& isset($arContext["ENTITY_ID"])
 				&& (int)$arContext["ENTITY_ID"] > 0
 			)
 			{
-				return CSocNetUser::CheckContext($USER->GetID(), $arUser["ID"], array_merge($arContext, array('SITE_ID' => CExtranet::GetExtranetSiteID())));
+				return CSocNetUser::CheckContext(
+					$USER->GetID(),
+					$arUser["ID"],
+					array_merge($arContext, [ 'SITE_ID' => self::GetExtranetSiteID() ])
+				);
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		return true;
@@ -762,29 +781,34 @@ class CExtranet
 	public static function IsProfileViewableByID($user_id, $site_id = false): bool
 	{
 		if (
-			CExtranet::IsExtranetAdmin()
+			self::IsExtranetAdmin()
 			||
 			(
-				IsModuleInstalled("bitrix24")
+				ModuleManager::isModuleInstalled('bitrix24')
 				&& CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
 			)
 		)
+		{
 			return true;
+		}
 
-		if (intval($user_id) > 0 && CExtranet::GetExtranetSiteID() <> '')
+		if ((int)$user_id > 0 && self::GetExtranetSiteID() <> '')
 		{
 			$dbUser = CUser::GetByID($user_id);
 			$arUser = $dbUser->Fetch();
 
-			if (!CExtranet::IsProfileViewable($arUser, $site_id))
+			if (!self::IsProfileViewable($arUser, $site_id))
+			{
 				return false;
+			}
 		}
+
 		return true;
 	}
 
 	public static function ModifyGroupDefaultFeatures(&$arSocNetFeaturesSettings, $site_id = false)
 	{
-		if (CExtranet::IsExtranetSite($site_id))
+		if (self::IsExtranetSite($site_id))
 		{
 			$arSocNetFeaturesSettings["calendar"]["operations"]["write"][SONET_ENTITY_GROUP] = SONET_ROLES_USER;
 			$arSocNetFeaturesSettings["files"]["operations"]["write_limited"][SONET_ENTITY_GROUP] = SONET_ROLES_USER;
@@ -797,11 +821,15 @@ class CExtranet
 	{
 		global $bArchiveBeforeUpdate, $APPLICATION;
 
-		if (!array_key_exists("CLOSED", $arFields))
+		if (!isset($arFields["CLOSED"]))
+		{
 			return true;
+		}
 
-		if (!CModule::IncludeModule("socialnetwork"))
+		if (!Loader::includeModule('socialnetwork'))
+		{
 			return false;
+		}
 
 		$arSocNetGroup = CSocNetGroup::GetByID($ID);
 		if (!$arSocNetGroup)
@@ -809,69 +837,73 @@ class CExtranet
 			$APPLICATION->ThrowException(GetMessage("SONET_NO_GROUP"), "ERROR_NO_GROUP");
 			return false;
 		}
-		else
+
+		if (Loader::includeModule('extranet'))
 		{
-			if (CModule::IncludeModule('extranet'))
+			$ExtranetSiteID = self::GetExtranetSiteID();
+			$arGroupSites = array();
+
+			$rsGroupSite = CSocNetGroup::GetSite($ID);
+			while($arGroupSite = $rsGroupSite->Fetch())
 			{
-				$ExtranetSiteID = CExtranet::GetExtranetSiteID();
-				$arGroupSites = array();
-
-				$rsGroupSite = CSocNetGroup::GetSite($ID);
-				while($arGroupSite = $rsGroupSite->Fetch())
-				{
-					$arGroupSites[] = $arGroupSite["LID"];
-				}
-
-				if (!in_array($ExtranetSiteID, $arGroupSites))
-					return true;
+				$arGroupSites[] = $arGroupSite["LID"];
 			}
-			else
+
+			if (!in_array($ExtranetSiteID, $arGroupSites, true))
 			{
 				return true;
 			}
-
-			$bArchiveBeforeUpdate = ($arSocNetGroup["CLOSED"] == "Y");
-
+		}
+		else
+		{
 			return true;
 		}
+
+		$bArchiveBeforeUpdate = ($arSocNetGroup["CLOSED"] === "Y");
+
+		return true;
 	}
 
 	public static function OnSocNetGroupUpdateHandler($ID, $arFields): bool
 	{
 		global $bArchiveBeforeUpdate, $APPLICATION;
 
-		if (!array_key_exists("CLOSED", $arFields))
+		if (!isset($arFields["CLOSED"]))
+		{
 			return true;
+		}
 
-		if (intval($ID) <= 0)
+		if ((int)$ID <= 0)
+		{
 			return false;
+		}
 
-		if (!CModule::IncludeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
+		{
 			return false;
+		}
 
-		if (CModule::IncludeModule('extranet'))
+		if (Loader::includeModule('extranet'))
 		{
 			$arSocNetGroup = CSocNetGroup::GetByID($ID);
 			if (!$arSocNetGroup)
 			{
-				$APPLICATION->ThrowException(GetMessage("SONET_NO_GROUP"), "ERROR_NO_GROUP");
+				$APPLICATION->ThrowException(Loc::getMessage("SONET_NO_GROUP"), "ERROR_NO_GROUP");
 				return false;
 			}
-			else
+
+			$ExtranetSiteID = self::GetExtranetSiteID();
+			$arGroupSites = array();
+
+			$rsGroupSite = CSocNetGroup::GetSite($ID);
+			while($arGroupSite = $rsGroupSite->Fetch())
 			{
-				$ExtranetSiteID = CExtranet::GetExtranetSiteID();
-				$arGroupSites = array();
+				$arGroupSites[] = $arGroupSite["LID"];
+			}
 
-				$rsGroupSite = CSocNetGroup::GetSite($ID);
-				while($arGroupSite = $rsGroupSite->Fetch())
-				{
-					$arGroupSites[] = $arGroupSite["LID"];
-				}
-
-				if (!in_array($ExtranetSiteID, $arGroupSites))
-				{
-					return true;
-				}
+			if (!in_array($ExtranetSiteID, $arGroupSites))
+			{
+				return true;
 			}
 		}
 		else
@@ -880,11 +912,11 @@ class CExtranet
 		}
 
 		$bFromArchiveToOpen = $bFromOpenToArchive = false;
-		if ($arFields["CLOSED"] == "Y" && !$bArchiveBeforeUpdate)
+		if ($arFields["CLOSED"] === "Y" && !$bArchiveBeforeUpdate)
 		{
 			$bFromOpenToArchive = true;
 		}
-		elseif ($arFields["CLOSED"] != "Y" && $bArchiveBeforeUpdate)
+		elseif ($arFields["CLOSED"] !== "Y" && $bArchiveBeforeUpdate)
 		{
 			$bFromArchiveToOpen = true;
 		}
@@ -966,11 +998,11 @@ class CExtranet
 		if (
 			array_key_exists("ROLE", $arFields)
 			&& array_key_exists("GROUP_ID", $arFields)
-			&& intval($arFields["GROUP_ID"]) > 0
-			&& intval($arFields["USER_ID"]) > 0
+			&& (int)$arFields["GROUP_ID"] > 0
+			&& (int)$arFields["USER_ID"] > 0
 		)
 		{
-			if (!CModule::IncludeModule('socialnetwork'))
+			if (!Loader::includeModule('socialnetwork'))
 			{
 				return false;
 			}
@@ -1010,17 +1042,21 @@ class CExtranet
 	public static function OnSocNetUserToGroupUpdate($ID, $arFields): bool
 	{
 		if(!defined("BX_COMP_MANAGED_CACHE"))
+		{
 			return true;
+		}
 
 		if (
 			array_key_exists("ROLE", $arFields)
 			&& array_key_exists("GROUP_ID", $arFields)
-			&& intval($arFields["GROUP_ID"]) > 0
-			&& intval($arFields["USER_ID"]) > 0
+			&& (int)$arFields["GROUP_ID"] > 0
+			&& (int)$arFields["USER_ID"] > 0
 		)
 		{
-			if (!CModule::IncludeModule('socialnetwork'))
+			if (!Loader::includeModule('socialnetwork'))
+			{
 				return false;
+			}
 
 			$dbUsersInGroup = CSocNetUserToGroup::GetList(
 				array(),
@@ -1057,20 +1093,26 @@ class CExtranet
 	public static function OnSocNetUserToGroupDelete($ID): bool
 	{
 		if(!defined("BX_COMP_MANAGED_CACHE"))
+		{
 			return true;
+		}
 
-		if (!CModule::IncludeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
+		{
 			return false;
+		}
 
 		$arUser2Group = CSocNetUserToGroup::GetByID($ID);
 		if (!$arUser2Group)
+		{
 			return true;
+		}
 
 		if (
 			array_key_exists("GROUP_ID", $arUser2Group)
 			&& array_key_exists("USER_ID", $arUser2Group)
-			&& intval($arUser2Group["GROUP_ID"]) > 0
-			&& intval($arUser2Group["USER_ID"]) > 0
+			&& (int)$arUser2Group["GROUP_ID"] > 0
+			&& (int)$arUser2Group["USER_ID"] > 0
 		)
 		{
 			$dbUsersInGroup = CSocNetUserToGroup::GetList(
@@ -1108,12 +1150,16 @@ class CExtranet
 	public static function OnUserDelete($ID): bool
 	{
 		if(!defined("BX_COMP_MANAGED_CACHE"))
-			return true;
-
-		if (intval($ID) > 0)
 		{
-			if (!CModule::IncludeModule('socialnetwork'))
+			return true;
+		}
+
+		if ((int)$ID > 0)
+		{
+			if (!Loader::includeModule('socialnetwork'))
+			{
 				return false;
+			}
 
 			$dbUsersInGroup = CSocNetUserToGroup::GetList(
 				array(),
@@ -1126,7 +1172,7 @@ class CExtranet
 				array("ID", "GROUP_ID")
 			);
 
-			$arUserSocNetGroups = array();
+			$arUserSocNetGroups = [];
 
 			if ($dbUsersInGroup)
 			{
@@ -1173,13 +1219,17 @@ class CExtranet
 	*/
 	public static function OnSocNetGroupDelete($ID): bool
 	{
-		if(!defined("BX_COMP_MANAGED_CACHE"))
-			return true;
-
-		if (intval($ID) > 0)
+		if (!defined("BX_COMP_MANAGED_CACHE"))
 		{
-			if (!CModule::IncludeModule('socialnetwork'))
+			return true;
+		}
+
+		if ((int)$ID > 0)
+		{
+			if (!Loader::includeModule('socialnetwork'))
+			{
 				return false;
+			}
 
 			$dbUsersInGroup = CSocNetUserToGroup::GetList(
 				array(),
@@ -1216,27 +1266,25 @@ class CExtranet
 	{
 		global $CACHE_MANAGER;
 
-		if (intval($arFields["ID"]) > 0) // update
+		if ((int)$arFields["ID"] > 0) // update
 		{
 			$dbRes = CUser::GetList(
 				"id", "asc",
-				array("ID_EQUAL_EXACT" => intval($arFields['ID'])),
+				array("ID_EQUAL_EXACT" => (int)$arFields['ID']),
 				array('SELECT' => array('UF_PUBLIC'))
 			);
 
-			if ($arOldFields = $dbRes->Fetch())
+			if (
+				($arOldFields = $dbRes->Fetch()) && isset($arFields['UF_PUBLIC'])
+				&& $arOldFields['UF_PUBLIC'] != $arFields['UF_PUBLIC']
+			)
 			{
-				if (
-					isset($arFields['UF_PUBLIC'])
-					&& $arOldFields['UF_PUBLIC'] != $arFields['UF_PUBLIC']
-				)
-					$CACHE_MANAGER->ClearByTag("extranet_public");
+				$CACHE_MANAGER->ClearByTag("extranet_public");
 			}
 		}
-		else // add
+		elseif (isset($arFields['UF_PUBLIC'])) // add
 		{
-			if (isset($arFields['UF_PUBLIC']))
-				$CACHE_MANAGER->ClearByTag("extranet_public");
+			$CACHE_MANAGER->ClearByTag("extranet_public");
 		}
 
 		return true;
@@ -1249,23 +1297,21 @@ class CExtranet
 	{
 		global $CACHE_MANAGER;
 
-		if (intval($ID) > 0)
+		if ((int)$ID > 0)
 		{
 			$dbRes = CUser::GetList(
 				"id", "asc",
-				array("ID_EQUAL_EXACT" => intval($ID)),
+				array("ID_EQUAL_EXACT" => (int)$ID),
 				array('SELECT' => array('UF_PUBLIC'))
 			);
 
-			if ($arFields = $dbRes->Fetch())
+			if (
+				($arFields = $dbRes->Fetch())
+				&& isset($arFields["UF_PUBLIC"])
+				&& $arFields["UF_PUBLIC"]
+			)
 			{
-				if (
-					array_key_exists("UF_PUBLIC", $arFields)
-					&& $arFields["UF_PUBLIC"]
-				)
-				{
-					$CACHE_MANAGER->ClearByTag("extranet_public");
-				}
+				$CACHE_MANAGER->ClearByTag("extranet_public");
 			}
 		}
 
@@ -1287,7 +1333,7 @@ class CExtranet
 
 		if ($extranet_site_id === null)
 		{
-			$extranet_site_id = CExtranet::GetExtranetSiteID();
+			$extranet_site_id = self::GetExtranetSiteID();
 			$arIntranetSiteID = array();
 			$rsSite = CSite::GetList("sort", "desc", array("ACTIVE" => "Y"));
 			while ($arSite = $rsSite->Fetch())
@@ -1365,7 +1411,7 @@ class CExtranet
 
 		if (
 			!empty($arSonetGroupId)
-			&& CModule::IncludeModule('socialnetwork')
+			&& Loader::includeModule('socialnetwork')
 		)
 		{
 			$rsGroupSite = CSocNetGroup::GetSite($arSonetGroupId);
@@ -1421,31 +1467,21 @@ class CExtranet
 			$arParams = array();
 		}
 
-		$currentUserId = (
-			!isset($arParams["CURRENT_USER_ID"])
-				? intval($USER->GetId())
-				: intval($arParams["CURRENT_USER_ID"])
-		);
+		$currentUserId = (int)($arParams["CURRENT_USER_ID"] ?? $USER->GetId());
 
-		$bExtranetUser = (
-			!isset($arParams["EXTRANET_USER"])
-				? !CExtranet::IsIntranetUser(SITE_ID, $currentUserId)
-				: !!($arParams["EXTRANET_USER"])
-		);
+		$bExtranetUser = (bool)($arParams["EXTRANET_USER"] ?? !self::IsIntranetUser(SITE_ID, $currentUserId));
 
 		$arFilteredUserIDs = (
 			isset($arParams["MY_USERS"])
 			&& is_array($arParams["MY_USERS"])
 				? $arParams["MY_USERS"]
-				: array()
+				: []
 		);
-
-		$bEmailUsersAll = ($arParams["EMAIL_USERS_ALL"] ?? (IsModuleInstalled('mail') && Option::get('socialnetwork', 'email_users_all', 'N') === 'Y'));
 
 		if ($IsShowAllContacts === false)
 		{
 			$IsShowAllContacts = (
-				CExtranet::ShowAllContactsAllowed()
+				self::ShowAllContactsAllowed()
 				|| (
 					isset($arParams['SHOW_ALL_EXTRANET_CONTACTS'])
 					&& $arParams['SHOW_ALL_EXTRANET_CONTACTS']
@@ -1459,26 +1495,26 @@ class CExtranet
 		if ($IsExtranetWorkGroupsAllowed === false)
 		{
 			$IsExtranetWorkGroupsAllowed = (
-				CExtranet::WorkgroupsAllowed()
+				self::WorkgroupsAllowed()
 					? "Y"
 					: "N"
 			);
 		}
 
 		if (
-			$IsExtranetWorkGroupsAllowed == "Y"
+			$IsExtranetWorkGroupsAllowed === "Y"
 			&& (
 				$bExtranetUser
-				|| $IsShowAllContacts != "Y"
+				|| $IsShowAllContacts !== "Y"
 			)
 		)
 		{
-			$arFilteredUserIDs = array_merge($arFilteredUserIDs, CExtranet::GetMyGroupsUsers(CExtranet::GetExtranetSiteID()));
+			$arFilteredUserIDs = array_merge($arFilteredUserIDs, self::GetMyGroupsUsers(self::GetExtranetSiteID()));
 		}
 
 		if ($bExtranetUser)
 		{
-			if ($IsExtranetWorkGroupsAllowed != "Y")
+			if ($IsExtranetWorkGroupsAllowed !== "Y")
 			{
 				$arFilter = false;
 			}
@@ -1602,7 +1638,7 @@ class CUsersInMyGroupsCache
 			$userId = $USER->getId();
 		}
 
-		$userId = intval($userId);
+		$userId = (int)$userId;
 
 		if (!$userId)
 		{

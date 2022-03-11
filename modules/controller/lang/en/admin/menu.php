@@ -1,5 +1,7 @@
-<?
+<?php
 $MESS["CTRLR_MENU_AUTH"] = "Authentication";
+$MESS["CTRLR_MENU_AUTH_LOG"] = "Log";
+$MESS["CTRLR_MENU_AUTH_LOG_TITLE"] = "Authentication log";
 $MESS["CTRLR_MENU_COUNTERS"] = "Counters";
 $MESS["CTRLR_MENU_COUNTERS_HISTORY"] = "History";
 $MESS["CTRLR_MENU_COUNTERS_HISTORY_TITLE"] = "Counter history";
@@ -20,4 +22,3 @@ $MESS["CTRLR_MENU_UPD_NAME"] = "Update Sites";
 $MESS["CTRLR_MENU_UPD_TYPE"] = "Update client sites";
 $MESS["CTRLR_MENU_UPLOAD_NAME"] = "Upload File";
 $MESS["CTRLR_MENU_UPLOAD_TITLE"] = "Send files to client sites";
-?>

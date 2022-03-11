@@ -130,8 +130,12 @@ export default class MapPopup extends EventEmitter
 		{
 			this.#address.latitude = address.latitude;
 			this.#address.longitude = address.longitude;
-			this.#address.location.latitude = address.latitude;
-			this.#address.location.longitude = address.longitude;
+
+			if (this.#address.location)
+			{
+				this.#address.location.latitude = address.latitude;
+				this.#address.location.longitude = address.longitude;
+			}
 
 			this.emit(
 				MapPopup.#onChangedEvent,

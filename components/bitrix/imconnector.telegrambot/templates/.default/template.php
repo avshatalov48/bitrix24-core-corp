@@ -4,6 +4,7 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\ImConnector\Connector;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -22,7 +23,7 @@ use Bitrix\ImConnector\Connector;
 
 Loc::loadMessages(__FILE__);
 
-if ($arParams['INDIVIDUAL_USE'] != 'Y')
+if ($arParams['INDIVIDUAL_USE'] !== 'Y')
 {
 	$this->addExternalCss('/bitrix/components/bitrix/imconnector.settings/templates/.default/style.css');
 	$this->addExternalJs('/bitrix/components/bitrix/imconnector.settings/templates/.default/script.js');
@@ -40,9 +41,9 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 	<input type="hidden" name="<?=$arResult['CONNECTOR']?>_del" value="Y">
 	<?=bitrix_sessid_post();?>
 </form>
-<?if(empty($arResult['PAGE'])):?>
+<?if (empty($arResult['PAGE'])):?>
 	<div class="imconnector-field-container">
-	<?if($arResult['STATUS'] === true): //case when connection competed?>
+	<?if ($arResult['STATUS'] === true): //case when connection competed?>
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
@@ -65,7 +66,7 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 				</div>
 			</div>
 		</div>
-	<?elseif($arResult['ACTIVE_STATUS'] === true):?>
+	<?elseif ($arResult['ACTIVE_STATUS'] === true):?>
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
@@ -95,19 +96,19 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 			</div>
 			<div class="imconnector-field-box" data-role="more-info">
 				<div class="imconnector-field-main-subtitle imconnector-field-section-main-subtitle">
-					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_TITLE')?>
+					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_TITLE')?>
 				</div>
 				<div class="imconnector-field-box-content">
 
 					<div class="imconnector-field-box-content-text-light">
-						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_SUBTITLE') ?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_SUBTITLE') ?>
 					</div>
 
 					<ul class="imconnector-field-box-content-text-items">
-						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_1') ?></li>
-						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_2') ?></li>
-						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_3') ?></li>
-						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_4') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_1') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_2') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_3') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_4') ?></li>
 					</ul>
 
 					<div class="imconnector-field-box-content-text-light">
@@ -155,7 +156,7 @@ else:?>
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
 			</div>
 			<div class="imconnector-field-box">
-				<?if(empty($arResult['INFO_CONNECTION'])):?>
+				<?if (empty($arResult['INFO_CONNECTION'])):?>
 					<div class="imconnector-field-main-subtitle">
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_TITLE')?>
 					</div>
@@ -172,7 +173,7 @@ else:?>
 				<?endif;?>
 			</div>
 		</div>
-		<? include 'messages.php'?>
+		<?include 'messages.php'?>
 		<div class="imconnector-field-section imconnector-field-section-control">
 			<div class="imconnector-field-box">
 				<div class="imconnector-field-box-subtitle">

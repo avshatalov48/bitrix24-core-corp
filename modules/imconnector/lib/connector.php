@@ -32,7 +32,7 @@ class Connector
 
 	/**
 	 * @param string $idConnector
-	 * @return Connectors\Facebook|Connectors\|Connectors\FacebookComments|Connectors\FbInstagram|Connectors\IMessage|Connectors\Olx|Connectors\Viber|Connectors\Yandex|Connectors\Network
+	 * @return Connectors\Facebook|Connectors\|Connectors\FacebookComments|Connectors\FbInstagram|Connectors\IMessage|Connectors\Olx|Connectors\Viber|Connectors\Network
 	 */
 	public static function initConnectorHandler($idConnector = '')
 	{
@@ -162,7 +162,6 @@ class Connector
 				$connectors['wechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT');
 			}
 		}
-		$connectors['yandex'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_YANDEX');
 		$connectors['vkgroup'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VK_GROUP');
 		$connectors['ok'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OK');
 		$connectors['olx'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OLX');
@@ -359,7 +358,6 @@ class Connector
 		$components['telegrambot'] = 'bitrix:imconnector.telegrambot';
 		$components['wechat'] = 'bitrix:imconnector.wechat';
 		$components['imessage'] = 'bitrix:imconnector.imessage';
-		$components['yandex'] = 'bitrix:imconnector.yandex';
 		$components['vkgroup'] = 'bitrix:imconnector.vkgroup';
 		$components['ok'] = 'bitrix:imconnector.ok';
 		$components['olx'] = 'bitrix:imconnector.olx';
@@ -900,7 +898,6 @@ class Connector
 	{
 		return [
 			'livechat' => 'livechat',
-			'yandex' => 'ya-dialogs',
 			'viber' => 'viber',
 			'telegrambot' => 'telegram',
 			'telegram' => 'telegram',

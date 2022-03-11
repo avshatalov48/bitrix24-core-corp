@@ -24,6 +24,8 @@ use Bitrix\ImConnector\Connector;
 
 Loc::loadMessages(__FILE__);
 
+const HELP_DESK_HUMAN_AGENT = '14927782';
+
 if($arParams['INDIVIDUAL_USE'] !== 'Y')
 {
 	$this->addExternalCss('/bitrix/components/bitrix/imconnector.settings/templates/.default/style.css');
@@ -354,12 +356,13 @@ else:
 						</div>
 						<div class="imconnector-field-social-list">
 							<?
-							foreach ($arResult['FORM']['PAGES'] as $page)
+							foreach ($arResult['FORM']['PAGES'] as $cell => $page)
 							{
 								if(empty($page['ACTIVE']))
 								{
 									?>
 									<div class="imconnector-field-social-list-item">
+									<form action="<?=$arResult['URL']['SIMPLE_FORM'] ?>" method="post">
 										<div class="imconnector-field-social-list-inner">
 											<div class="imconnector-field-social-icon imconnector-field-social-list-icon"></div>
 											<div class="imconnector-field-social-list-info">
@@ -376,19 +379,30 @@ else:
 											<?else:?>
 												</a>
 											<?endif;?>
+												<span class="imconnector-ui-option-facebook">
+												<label for="human_agent_<?=$cell?>">
+													<input id="human_agent_<?=$cell?>" class="imconnector-public-link-settings-inner-option-field" type="checkbox" name="human_agent" value="Y" checked>
+													<span class="imconnector-public-link-settings-inner-option-text"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT')?></span>
+												</label><span class="imconnector-ui-hint-icon-facebook" onclick="top.BX.Helper.show('redirect=detail&code=<?=HELP_DESK_HUMAN_AGENT?>');"></span>
+												</span>
+												<div class="imconnector-field-social-card-human-agent-facebook">
+													<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT_DESCRIPTION', [
+														'#START_HELP_DESC#' => '<strong class="imconnector-field-social-card-human-agent-facebook-link" onclick="top.BX.Helper.show(\'redirect=detail&code=' . HELP_DESK_HUMAN_AGENT . '\');">',
+														'#END_HELP_DESC#' => '</strong>',
+													])?>
+												</div>
+												<input type="hidden" name="<?=$arResult['CONNECTOR'] ?>_form" value="true">
+												<input type="hidden" name="page_id" value="<?=$page['INFO']['ID'] ?>">
+												<?=bitrix_sessid_post(); ?>
+												<button type="submit"
+														name="<?=$arResult['CONNECTOR'] ?>_authorization_page"
+														class="ui-btn ui-btn-sm ui-btn-light-border"
+														value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>">
+													<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>
+												</button>
 											</div>
 										</div>
-										<form action="<?=$arResult['URL']['SIMPLE_FORM'] ?>" method="post">
-											<input type="hidden" name="<?=$arResult['CONNECTOR'] ?>_form" value="true">
-											<input type="hidden" name="page_id" value="<?=$page['INFO']['ID'] ?>">
-											<?=bitrix_sessid_post(); ?>
-											<button type="submit"
-													name="<?=$arResult['CONNECTOR'] ?>_authorization_page"
-													class="ui-btn ui-btn-sm ui-btn-light-border"
-													value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>">
-												<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>
-											</button>
-										</form>
+									</form>
 									</div>
 									<?
 								}
@@ -406,41 +420,60 @@ else:
 			{
 				?>
 				<div class="imconnector-field-container">
-					<div class="imconnector-field-section">
+					<div class="imconnector-field-section imconnector-field-section-social-list-fbinstagram">
 						<div class="imconnector-field-main-title imconnector-field-main-title-no-border">
 							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_CONNECTED_PAGE') ?>
 						</div>
 
 						<div class="imconnector-field-social-card">
-							<div class="imconnector-field-social-card-info">
+							<div class="imconnector-field-social-card-info-facebook">
 								<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?> imconnector-field-social-icon"><i></i></div>
-								<?if(empty($arResult['FORM']['PAGE']['URL'])):?>
-								<span class="imconnector-field-social-name">
-								<?else:?>
-									<a href="<?=$arResult['FORM']['PAGE']['URL'] ?>"
-									   target="_blank"
-									   class="imconnector-field-social-name">
-								<?endif;?>
-								<?=htmlspecialcharsbx($arResult['FORM']['PAGE']['NAME']) ?>
-								<?if(empty($arResult['FORM']['PAGE']['URL'])):?>
-									</span>
-							<?else:?>
-								</a>
-							<?endif;?>
-							</div>
-							<form action="<?=$arResult['URL']['SIMPLE_FORM'] ?>" method="post">
-								<input type="hidden" name="<?=$arResult['CONNECTOR'] ?>_form" value="true">
-								<input type="hidden" name="page_id" value="<?=$arResult['FORM']['PAGE']['ID'] ?>">
-								<?=bitrix_sessid_post(); ?>
-								<button class="ui-btn ui-btn-sm ui-btn-light-border imconnector-field-social-card-button"
-										name="<?=$arResult['CONNECTOR'] ?>_del_page"
-										type="submit"
-										value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_DEL_REFERENCE') ?>">
-									<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_DEL_REFERENCE') ?>
-								</button>
-							</form>
-						</div>
 
+								<div class="imconnector-field-social-list-info">
+									<div class="imconnector-field-social-list-info-inner">
+										<?if(empty($arResult['FORM']['PAGE']['URL'])):?>
+										<span class="imconnector-field-social-name">
+										<?else:?><a href="<?=$arResult['FORM']['PAGE']['URL'] ?>"
+											target="_blank"
+											class="imconnector-field-social-name">
+										<?endif;?>
+										<?=htmlspecialcharsbx($arResult['FORM']['PAGE']['NAME']) ?>
+										<?if(empty($arResult['FORM']['PAGE']['URL'])):?>
+										</span>
+										<?else:?>
+										</a>
+										<?endif;?>
+									</div>
+
+									<div class="imconnector-field-social-list-info-inner imconnector-public-link-settings-inner-option">
+										<?if ($arResult['DATA_STATUS']['HUMAN_AGENT'] === true):?>
+											<span class="imconnector-indicator-human-agent-facebook-on"></span><?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT_ON')?>
+										<?else:?>
+											<span class="imconnector-indicator-human-agent-facebook-off"></span><?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT_OFF')?>
+										<?endif;?>
+									</div>
+									<div class="imconnector-field-social-card-human-agent-facebook imconnector-field-social-card-human-agent-facebook-invert">
+										<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT_DESCRIPTION', [
+											'#START_HELP_DESC#' => '<strong class="imconnector-field-social-card-human-agent-facebook-link" onclick="top.BX.Helper.show(\'redirect=detail&code=' . HELP_DESK_HUMAN_AGENT . '\');">',
+											'#END_HELP_DESC#' => '</strong>',
+										])?>
+									</div>
+									<div class="imconnector-field-social-list-info-inner imconnector-public-link-settings-inner-option">
+										<form action="<?=$arResult['URL']['SIMPLE_FORM'] ?>" method="post">
+											<input type="hidden" name="<?=$arResult['CONNECTOR'] ?>_form" value="true">
+											<input type="hidden" name="page_id" value="<?=$arResult['FORM']['PAGE']['ID'] ?>">
+											<?=bitrix_sessid_post(); ?>
+											<button class="ui-btn ui-btn-sm ui-btn-light-border imconnector-field-social-card-button"
+													name="<?=$arResult['CONNECTOR'] ?>_del_page"
+													type="submit"
+													value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_DEL_REFERENCE') ?>">
+												<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_DEL_REFERENCE') ?>
+											</button>
+										</form>
+									</div>
+								</div>
+							</div>
+						</div>
 						<?
 						if(count($arResult['FORM']['PAGES']) > 1)
 						{
@@ -462,6 +495,7 @@ else:
 										{
 											?>
 											<div class="imconnector-field-social-list-item">
+											<form action="<?=$arResult['URL']['SIMPLE_FORM_EDIT'] ?>" method="post">
 												<div class="imconnector-field-social-list-inner">
 													<div class="imconnector-field-social-icon imconnector-field-social-list-icon"></div>
 													<div class="imconnector-field-social-list-info">
@@ -478,21 +512,33 @@ else:
 													<?else:?>
 														</a>
 													<?endif;?>
+														<span class="imconnector-ui-option-facebook">
+														<label for="human_agent_<?=$cell?>">
+															<input id="human_agent_<?=$cell?>" class="imconnector-public-link-settings-inner-option-field" type="checkbox" name="human_agent" value="Y" checked>
+															<span class="imconnector-public-link-settings-inner-option-text"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT')?></span>
+														</label>
+														</span>
+														<div class="imconnector-field-social-card-human-agent-facebook">
+															<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT_DESCRIPTION', [
+																'#START_HELP_DESC#' => '<strong class="imconnector-field-social-card-human-agent-facebook-link" onclick="top.BX.Helper.show(\'redirect=detail&code=' . HELP_DESK_HUMAN_AGENT . '\');">',
+																'#END_HELP_DESC#' => '</strong>',
+															])?>
+														</div>
+														<input type="hidden" name="<?=$arResult['CONNECTOR'] ?>_form"
+															   value="true">
+														<input type="hidden" name="page_id"
+															   value="<?=htmlspecialcharsbx($page['INFO']['ID']) ?>">
+														<?=bitrix_sessid_post(); ?>
+														<button type="submit"
+																name="<?=$arResult['CONNECTOR'] ?>_authorization_page"
+																class="ui-btn ui-btn-sm ui-btn-light-border"
+																value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_CHANGE_PAGE') ?>">
+															<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_CHANGE_PAGE') ?>
+														</button>
 													</div>
 												</div>
-												<form action="<?=$arResult['URL']['SIMPLE_FORM_EDIT'] ?>" method="post">
-													<input type="hidden" name="<?=$arResult['CONNECTOR'] ?>_form"
-														   value="true">
-													<input type="hidden" name="page_id"
-														   value="<?=htmlspecialcharsbx($page['INFO']['ID']) ?>">
-													<?=bitrix_sessid_post(); ?>
-													<button type="submit"
-															name="<?=$arResult['CONNECTOR'] ?>_authorization_page"
-															class="ui-btn ui-btn-sm ui-btn-light-border"
-															value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_CHANGE_PAGE') ?>">
-														<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_CHANGE_PAGE') ?>
-													</button>
-												</form>
+
+											</form>
 											</div>
 											<?
 										}

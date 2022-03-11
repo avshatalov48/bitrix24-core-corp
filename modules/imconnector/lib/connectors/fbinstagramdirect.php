@@ -10,6 +10,10 @@ use Bitrix\ImConnector\Library;
 
 use Bitrix\ImOpenLines\Session;
 
+use Bitrix\UI;
+
+use Bitrix\Im\Model\MessageTable;
+
 Loc::loadMessages(__FILE__);
 
 /**
@@ -100,6 +104,31 @@ class FbInstagramDirect extends InstagramBase
 			}
 		}
 
+		if (
+			!empty($message['im']['message_id'])
+			&& $message['im']['message_id'] > 0
+			&& $this->isHumanAgent($line) === true
+			&& Loader::includeModule('im')
+		)
+		{
+			$raw = MessageTable::getList([
+				'select' => [
+					'AUTHOR_ID'
+				],
+				'filter' => [
+					'=ID' => (int)$message['im']['message_id'],
+				]
+			]);
+
+			if (
+				($row = $raw->fetch())
+				&& !empty($row['AUTHOR_ID'])
+			)
+			{
+				$message['message']['long'] = true;
+			}
+		}
+
 		return $message;
 	}
 
@@ -125,7 +154,6 @@ class FbInstagramDirect extends InstagramBase
 					$result = false;
 				}
 			}
-
 		}
 
 		return $result;
@@ -139,7 +167,10 @@ class FbInstagramDirect extends InstagramBase
 	 */
 	protected function receivedErrorNotSendMessageChat($paramsError, string $message = ''): bool
 	{
-		if (!empty($paramsError['params']))
+		if (
+			!empty($paramsError['params'])
+			&& Loader::includeModule('ui')
+		)
 		{
 			if ($paramsError['params']['additionalCode'] === 'ERROR_INSTAGRAM_NOT_SEND_MESSAGE_FOR_COMMENT')
 			{
@@ -152,7 +183,47 @@ class FbInstagramDirect extends InstagramBase
 			)
 			{
 				$paramsError['messageConnector'] = '';
-				$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_OUTSIDE_ALLOWED_WINDOW');
+				$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_CHAT_LIMIT', [
+					'#A_START#' => '[URL=' . UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT) . ']',
+					'#A_END#' => '[/URL]',
+				]);
+
+				if (
+					!empty($paramsError['messageId'])
+					&& $paramsError['messageId'] > 0
+					&& Loader::includeModule('im')
+				)
+				{
+					$raw = MessageTable::getList([
+						'select' => [
+							'AUTHOR_ID'
+						],
+						'filter' => [
+							'=ID' => (int)$paramsError['messageId'],
+						]
+					]);
+
+					if (
+						($row = $raw->fetch())
+						&& !empty($row['AUTHOR_ID'])
+					)
+					{
+						if ($this->isHumanAgent($paramsError['line']) === true)
+						{
+							$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_CHAT_7_DAY_LIMIT', [
+								'#A_START#' => '[URL=' . UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT) . ']',
+								'#A_END#' => '[/URL]',
+							]);
+						}
+						else
+						{
+							$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_CHAT_24_HOURS_LIMIT', [
+								'#A_START#' => '[URL=' . UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT) . ']',
+								'#A_END#' => '[/URL]',
+							]);
+						}
+					}
+				}
 			}
 		}
 

@@ -1,10 +1,10 @@
 <?php
 namespace Bitrix\ImConnector;
 
-use \Bitrix\Main\Event,
-	\Bitrix\Main\Data\Cache,
-	\Bitrix\Main\EventManager;
-use \Bitrix\ImConnector\Model\StatusConnectorsTable;
+use Bitrix\Main\Event;
+use Bitrix\Main\Data\Cache;
+use Bitrix\Main\EventManager;
+use Bitrix\ImConnector\Model\StatusConnectorsTable;
 
 /**
  * Class Status
@@ -16,7 +16,7 @@ class Status
 	private static $instance = [];
 	private static $flagEvent = false;
 	private static $flagGenerationUpdateEvent = false;
-	private static $rowsCacheTable = array();
+	private static $rowsCacheTable = [];
 	private $active = 'N';
 	private $connection = 'N';
 	private $register = 'N';
@@ -47,16 +47,20 @@ class Status
 
 		while($row = $raw->fetch())
 		{
-			if (empty(self::$instance[$connector][$row["LINE"]]) )
+			if (empty(self::$instance[$connector][$row['LINE']]) )
 			{
-				self::$instance[$connector][$row["LINE"]] = new self($connector,$row["LINE"]);
+				self::$instance[$connector][$row['LINE']] = new self($connector,$row['LINE']);
 			}
 		}
 
 		if(empty(self::$instance[$connector]))
-			return array();
+		{
+			return [];
+		}
 		else
+		{
 			return self::$instance[$connector];
+		}
 	}
 
 	/**
@@ -74,16 +78,20 @@ class Status
 
 		while($row = $raw->fetch())
 		{
-			if (empty(self::$instance[$row["CONNECTOR"]][$row["LINE"]]) )
+			if (empty(self::$instance[$row['CONNECTOR']][$row['LINE']]) )
 			{
-				self::$instance[$row["CONNECTOR"]][$row["LINE"]]= new self($row["CONNECTOR"],$row["LINE"]);
+				self::$instance[$row['CONNECTOR']][$row['LINE']] = new self($row['CONNECTOR'],$row['LINE']);
 			}
 		}
 
 		if(empty(self::$instance))
+		{
 			return [];
+		}
 		else
+		{
 			return self::$instance;
+		}
 	}
 
 	/**
@@ -131,7 +139,9 @@ class Status
 		if (!empty(self::$instance) )
 		{
 			foreach (self::$instance as $connector)
+			{
 				unset(self::$instance[$connector][$line]);
+			}
 		}
 
 		$raw = StatusConnectorsTable::getList([
@@ -145,8 +155,8 @@ class Status
 		{
 			//Event
 			$dataEvent = [
-				"connector" => $row['CONNECTOR'],
-				"line" => $line,
+				'connector' => $row['CONNECTOR'],
+				'line' => $line,
 			];
 			$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_DELETE, $dataEvent);
 			$event->send();
@@ -155,10 +165,14 @@ class Status
 			self::cleanCache($row['CONNECTOR'], $line);
 		}
 
-		if(!empty($delete) && is_object($delete) && $delete->isSuccess())
+		if (!empty($delete) && is_object($delete) && $delete->isSuccess())
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
 	/**
@@ -190,16 +204,20 @@ class Status
 
 		//Event
 		$dataEvent = [
-			"connector" => $connector,
-			"line" => $line,
+			'connector' => $connector,
+			'line' => $line,
 		];
 		$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_DELETE, $dataEvent);
 		$event->send();
 
-		if(!empty($delete) && is_object($delete) && $delete->isSuccess())
+		if (!empty($delete) && is_object($delete) && $delete->isSuccess())
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
 	/**
@@ -236,17 +254,21 @@ class Status
 
 			//Event
 			$dataEvent = [
-				"connector" => $connector,
-				"line" => $row['LINE'],
+				'connector' => $connector,
+				'line' => $row['LINE'],
 			];
 			$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_DELETE, $dataEvent);
 			$event->send();
 		}
 
-		if(!empty($delete) && is_object($delete) && $delete->isSuccess())
+		if (!empty($delete) && is_object($delete) && $delete->isSuccess())
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
 	/**
@@ -256,7 +278,7 @@ class Status
 	{
 		if(empty(self::$flagEvent))
 		{
-			EventManager::getInstance()->addEventHandler("main", "OnAfterEpilog", Array(__CLASS__, "save"), false, 1000);
+			EventManager::getInstance()->addEventHandler('main', 'OnAfterEpilog', [__CLASS__, 'save'], false, 1000);
 
 			self::$flagEvent = true;
 		}
@@ -269,7 +291,7 @@ class Status
 	{
 		if(empty(self::$flagGenerationUpdateEvent))
 		{
-			EventManager::getInstance()->addEventHandler("main", "OnAfterEpilog", Array(__CLASS__, "sendUpdateEvent"), false, 1000);
+			EventManager::getInstance()->addEventHandler('main', 'OnAfterEpilog', [__CLASS__, 'sendUpdateEvent'], false, 1000);
 
 			self::$flagGenerationUpdateEvent = true;
 		}
@@ -277,10 +299,6 @@ class Status
 
 	/**
 	 * A cache reset to all connector.
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function cleanCacheAll()
 	{
@@ -366,22 +384,32 @@ class Status
 				$connector = self::$instance[$currentConnector][$line];
 				$fields = array();
 
-				if(!empty($connector->active))
-					$fields["ACTIVE"] = $connector->active;
-				if(!empty($connector->connection))
-					$fields["CONNECTION"] = $connector->connection;
-				if(!empty($connector->register))
-					$fields["REGISTER"] = $connector->register;
-				if(!empty($connector->error))
-					$fields["ERROR"] = $connector->error;
-				if($connector->data !== false)
-					$fields["DATA"] = $connector->data;
+				if (!empty($connector->active))
+				{
+					$fields['ACTIVE'] = $connector->active;
+				}
+				if (!empty($connector->connection))
+				{
+					$fields['CONNECTION'] = $connector->connection;
+				}
+				if (!empty($connector->register))
+				{
+					$fields['REGISTER'] = $connector->register;
+				}
+				if (!empty($connector->error))
+				{
+					$fields['ERROR'] = $connector->error;
+				}
+				if ($connector->data !== false)
+				{
+					$fields['DATA'] = $connector->data;
+				}
 
 				//Event
 				$dataEvent = [
-					"connector" => $currentConnector,
-					"line" => $line,
-					"fields" => $fields
+					'connector' => $currentConnector,
+					'line' => $line,
+					'fields' => $fields
 				];
 				$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_UPDATE, $dataEvent);
 				$event->send();
@@ -389,12 +417,6 @@ class Status
 		}
 	}
 
-	/**
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
 	public static function cleanupDuplicates()
 	{
 		$statuses = [];
@@ -411,7 +433,7 @@ class Status
 			}
 			else
 			{
-				if(empty($statuses[$row['CONNECTOR']][$row['LINE']]))
+				if (empty($statuses[$row['CONNECTOR']][$row['LINE']]))
 				{
 					$statuses[$row['CONNECTOR']][$row['LINE']] = $row;
 				}
@@ -421,31 +443,31 @@ class Status
 					$old = $statuses[$row['CONNECTOR']][$row['LINE']];
 					$result = 'old';
 
-					if($old['REGISTER'] !== 'Y' && $new['REGISTER'] === 'Y')
+					if ($old['REGISTER'] !== 'Y' && $new['REGISTER'] === 'Y')
 					{
 						$result = 'new';
 					}
-					elseif($old['REGISTER'] !== 'Y' && $new['REGISTER'] !== 'Y')
+					elseif ($old['REGISTER'] !== 'Y' && $new['REGISTER'] !== 'Y')
 					{
-						if($old['CONNECTION'] !== 'Y' && $new['CONNECTION'] === 'Y')
+						if ($old['CONNECTION'] !== 'Y' && $new['CONNECTION'] === 'Y')
 						{
 							$result = 'new';
 						}
-						elseif($old['CONNECTION'] !== 'Y' && $new['CONNECTION'] !== 'Y')
+						elseif ($old['CONNECTION'] !== 'Y' && $new['CONNECTION'] !== 'Y')
 						{
-							if(empty($old['DATA']) && !empty($new['DATA']))
+							if (empty($old['DATA']) && !empty($new['DATA']))
 							{
 								$result = 'new';
 							}
-							elseif(empty($old['DATA']) && empty($new['DATA']))
+							elseif (empty($old['DATA']) && empty($new['DATA']))
 							{
-								if($old['ERROR'] === 'Y' && $new['ERROR'] !== 'Y')
+								if ($old['ERROR'] === 'Y' && $new['ERROR'] !== 'Y')
 								{
 									$result = 'new';
 								}
-								elseif($old['ERROR'] === 'Y' && $new['ERROR'] === 'Y')
+								elseif ($old['ERROR'] === 'Y' && $new['ERROR'] === 'Y')
 								{
-									if($new['ID'] < $old['ID'])
+									if ($new['ID'] < $old['ID'])
 									{
 										$result = 'new';
 									}
@@ -454,7 +476,7 @@ class Status
 						}
 					}
 
-					if($result == 'new')
+					if ($result == 'new')
 					{
 						StatusConnectorsTable::delete($old['ID']);
 						$statuses[$row['CONNECTOR']][$row['LINE']] = $new;
@@ -490,15 +512,19 @@ class Status
 		}
 		else
 		{
-			if(empty(self::$rowsCacheTable))
+			if (empty(self::$rowsCacheTable))
+			{
 				self::$rowsCacheTable = StatusConnectorsTable::getList()->fetchAll();
+			}
 
 			foreach(self::$rowsCacheTable as $row)
 			{
-				if($row["CONNECTOR"] == $connector && $row["LINE"] == $line)
+				if ($row['CONNECTOR'] == $connector && $row['LINE'] == $line)
+				{
 					$status = $row;
+				}
 
-				if ($cache->startDataCache(Library::CACHE_TIME_STATUS, Connector::getCacheIdConnector($row["LINE"], $row["CONNECTOR"]), Library::CACHE_DIR_STATUS))
+				if ($cache->startDataCache(Library::CACHE_TIME_STATUS, Connector::getCacheIdConnector($row['LINE'], $row['CONNECTOR']), Library::CACHE_DIR_STATUS))
 				{
 					$cache->endDataCache($row);
 				}
@@ -507,12 +533,12 @@ class Status
 
 		if(!empty($status))
 		{
-			$this->id = $status["ID"];
-			$this->active = $status["ACTIVE"];
-			$this->connection = $status["CONNECTION"];
-			$this->register = $status["REGISTER"];
-			$this->error = $status["ERROR"];
-			$this->data = $status["DATA"];
+			$this->id = $status['ID'];
+			$this->active = $status['ACTIVE'];
+			$this->connection = $status['CONNECTION'];
+			$this->register = $status['REGISTER'];
+			$this->error = $status['ERROR'];
+			$this->data = $status['DATA'];
 		}
 		else
 		{
@@ -528,8 +554,8 @@ class Status
 
 			//Event
 			$dataEvent = [
-				"connector" => $connector,
-				"line" => $line
+				'connector' => $connector,
+				'line' => $line
 			];
 			$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_ADD, $dataEvent);
 			$event->send();
@@ -558,9 +584,13 @@ class Status
 			self::cleanCache($this->connector, $this->line);
 
 			if(empty($status))
+			{
 				$this->active = 'N';
+			}
 			else
+			{
 				$this->active = 'Y';
+			}
 		}
 	}
 
@@ -579,9 +609,13 @@ class Status
 			self::cleanCache($this->connector, $this->line);
 
 			if (empty($status))
+			{
 				$this->connection = 'N';
+			}
 			else
+			{
 				$this->connection = 'Y';
+			}
 		}
 	}
 
@@ -600,9 +634,13 @@ class Status
 			self::cleanCache($this->connector, $this->line);
 
 			if(empty($status))
+			{
 				$this->register = 'N';
+			}
 			else
+			{
 				$this->register = 'Y';
+			}
 		}
 	}
 
@@ -621,9 +659,13 @@ class Status
 			self::cleanCache($this->connector, $this->line);
 
 			if (empty($status))
+			{
 				$this->error = 'N';
+			}
 			else
+			{
 				$this->error = 'Y';
+			}
 		}
 	}
 
@@ -682,10 +724,14 @@ class Status
 	 */
 	public function getActive()
 	{
-		if($this->active == 'Y')
+		if ($this->active == 'Y')
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
 	/**
@@ -695,10 +741,14 @@ class Status
 	 */
 	public function getConnection()
 	{
-		if($this->connection == 'Y')
+		if ($this->connection == 'Y')
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
 	/**
@@ -708,10 +758,14 @@ class Status
 	 */
 	public function getRegister()
 	{
-		if($this->register == 'Y')
+		if ($this->register == 'Y')
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
 	/**
@@ -721,10 +775,14 @@ class Status
 	 */
 	public function getError()
 	{
-		if($this->error == 'Y')
+		if ($this->error == 'Y')
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
 	/**
@@ -744,10 +802,14 @@ class Status
 	 */
 	public function isConfigured()
 	{
-		if($this->getConnection() && $this->getRegister() && $this->getActive())
+		if ($this->getConnection() && $this->getRegister() && $this->getActive())
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
 	/**
@@ -757,9 +819,13 @@ class Status
 	 */
 	public function isStatus()
 	{
-		if($this->isConfigured() && !$this->getError())
+		if ($this->isConfigured() && !$this->getError())
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 }

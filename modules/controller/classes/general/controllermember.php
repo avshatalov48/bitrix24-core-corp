@@ -119,7 +119,12 @@ class CAllControllerMember
 
 		if(!$oResponse->Check())
 		{
-			$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR2"));
+			$strError = GetMessage("CTRLR_MEM_ERR2");
+			if ($oResponse->httpHeaders)
+			{
+				$strError .= " ".explode("\n", $oResponse->httpHeaders)[0];
+			}
+			$e = new CApplicationException($strError);
 			$APPLICATION->ThrowException($e);
 			return false;
 		}
@@ -651,7 +656,11 @@ class CAllControllerMember
 				"FIELD_TYPE" => "int",
 			),
 			"MODIFIED_BY_USER" => array(
+				"FIELD_NAME" => "concat('(', UM.LOGIN, ') ', UM.NAME, ' ', UM.LAST_NAME)",
 				"FIELD_TYPE" => "string",
+				"TABLE_ALIAS" => "UM",
+				"JOIN" => "INNER JOIN b_user UM ON UM.ID = M.MODIFIED_BY",
+				"LEFT_JOIN" => "LEFT JOIN b_user UM ON UM.ID = M.MODIFIED_BY",
 			),
 			"DATE_CREATE" => array(
 				"FIELD_NAME" => "M.DATE_CREATE",
@@ -663,7 +672,11 @@ class CAllControllerMember
 				"FIELD_TYPE" => "int",
 			),
 			"CREATED_BY_USER" => array(
+				"FIELD_NAME" => "concat('(', UC.LOGIN, ') ', UC.NAME, ' ', UC.LAST_NAME)",
 				"FIELD_TYPE" => "string",
+				"TABLE_ALIAS" => "UC",
+				"JOIN" => "INNER JOIN b_user UC ON UC.ID = M.CREATED_BY",
+				"LEFT_JOIN" => "LEFT JOIN b_user UC ON UC.ID = M.CREATED_BY",
 			),
 			"COUNTER_FREE_SPACE" => array(
 				"FIELD_NAME" => "M.COUNTER_FREE_SPACE",
@@ -696,9 +709,6 @@ class CAllControllerMember
 			),
 		);
 
-		$arFields["MODIFIED_BY_USER"]["FIELD_NAME"] = $DB->Concat("'('", "UM.LOGIN", "') '", "UM.NAME", "' '", "UM.LAST_NAME");
-		$arFields["CREATED_BY_USER"]["FIELD_NAME"] = $DB->Concat("'('", "UC.LOGIN", "') '", "UC.NAME", "' '", "UC.LAST_NAME");
-
 		$rsCounters = CControllerCounter::GetList();
 		while($arCounter = $rsCounters->Fetch())
 		{
@@ -713,9 +723,6 @@ class CAllControllerMember
 
 		$obWhere = new CSQLWhere;
 		$obWhere->SetFields($arFields);
-
-		$obWhereCnt = new CSQLWhere;
-		$obWhereCnt->SetFields($arFields);
 
 		$arDateFields = array();
 		foreach($arFields as $code => $arField)
@@ -749,7 +756,6 @@ class CAllControllerMember
 
 		$strWhere = "1 = 1";
 
-		$r = $obWhereCnt->GetQuery($arFilterNew);
 		$r = $obWhere->GetQuery($arFilterNew);
 		if($r <> '')
 			$strWhere .= " AND (".$r.") ";
@@ -830,87 +836,44 @@ class CAllControllerMember
 			}
 		}
 
-		$bUseSubQuery = false;
-		if(
-			$DB->type == "ORACLE"
-			&& $obUserFieldsSql->GetDistinct()
-		)
+		$strSql = "
+			SELECT ".($obUserFieldsSql->GetDistinct()? "DISTINCT": "")." ".$strSelect.$obUserFieldsSql->GetSelect()."
+			FROM b_controller_member M
+				".$obWhere->GetJoins()."
+				".$obUserFieldsSql->GetJoin("M.ID")."
+			WHERE ".$strWhere."
+			".CControllerAgent::_OrderBy($arOrder, $arFields, $obUserFieldsSql);
+
+		if (!is_array($arNavParams))
 		{
-			$bUseSubQuery = true;
+			$dbr = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
-
-		if($bUseSubQuery)
+		elseif ($arNavParams["nTopCount"] > 0)
 		{
-			$ob = new CUserTypeSQL;
-			$ob->SetEntity("CONTROLLER_MEMBER", "M.ID");
-			$ob->SetSelect($arSelect);
-			$ob->SetOrder($arOrder);
-
-			$strSelect = "SELECT ".$strSelect.$ob->GetSelect();
-			$strSql = "
-				FROM b_controller_member M
-					LEFT JOIN b_user UC ON UC.ID = M.CREATED_BY
-					LEFT JOIN b_user UM ON UM.ID = M.MODIFIED_BY
-					".$obWhere->GetJoins()."
-					".$ob->GetJoin("M.ID")."
-				WHERE M.ID IN (
-					SELECT M.ID
-					FROM b_controller_member M
-					".$obWhere->GetJoins()."
-					".$obUserFieldsSql->GetJoin("M.ID")."
-					WHERE ".$strWhere."
-				)
-			";
-			$strSqlCnt = "
-				FROM b_controller_member M
-					".$obWhereCnt->GetJoins()."
-					".$ob->GetJoin("M.ID")."
-				WHERE M.ID IN (
-					SELECT M.ID
-					FROM b_controller_member M
-					".$obWhereCnt->GetJoins()."
-					".$obUserFieldsSql->GetJoin("M.ID")."
-					WHERE ".$strWhere."
-				)
-			";
-			$strOrder = CControllerAgent::_OrderBy($arOrder, $arFields, $ob);
+			$strSql = $strSql."\nLIMIT ".intval($arNavParams["nTopCount"]);
+			if ($arNavParams["nOffset"] > 0)
+			{
+				$strSql .= " OFFSET ".intval($arNavParams["nOffset"]);
+			}
+			$dbr = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
 		else
 		{
-			$strSelect = "SELECT ".($obUserFieldsSql->GetDistinct()? "DISTINCT": "")." ".$strSelect.$obUserFieldsSql->GetSelect();
-			$strSql = "
-				FROM b_controller_member M
-					LEFT JOIN b_user UC ON UC.ID = M.CREATED_BY
-					LEFT JOIN b_user UM ON UM.ID = M.MODIFIED_BY
-					".$obWhere->GetJoins()."
-					".$obUserFieldsSql->GetJoin("M.ID")."
-				WHERE ".$strWhere."
-			";
 			$strSqlCnt = "
 				FROM b_controller_member M
-					".$obWhereCnt->GetJoins()."
+					".$obWhere->GetJoins()."
 					".($userFieldsWhere? $obUserFieldsSql->GetJoin("M.ID"): "")."
 				WHERE ".$strWhere."
 			";
-			$strOrder = CControllerAgent::_OrderBy($arOrder, $arFields, $obUserFieldsSql);
-		}
-
-		if (is_array($arNavParams) && $arNavParams["nTopCount"] > 0)
-		{
-			$strSql = $DB->TopSQL($strSelect.$strSql.$strOrder, $arNavParams["nTopCount"]);
-			$dbr = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-		}
-		elseif (is_array($arNavParams))
-		{
 			$res_cnt = $DB->Query("SELECT count('x') CNT ".$strSqlCnt);
 			$ar_cnt = $res_cnt->Fetch();
+			if (isset($arNavParams["bOnlyCount"]) && $arNavParams["bOnlyCount"] === true)
+			{
+				return $ar_cnt["CNT"];
+			}
 
 			$dbr = new CDBResult();
-			$dbr->NavQuery($strSelect.$strSql.$strOrder, $ar_cnt["CNT"], $arNavParams);
-		}
-		else
-		{
-			$dbr = $DB->Query($strSelect.$strSql.$strOrder, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbr->NavQuery($strSql, $ar_cnt["CNT"], $arNavParams);
 		}
 
 		$dbr->is_filtered = $strWhere != "1 = 1";

@@ -7,8 +7,11 @@ use Bitrix\Timeman\Form\Schedule\ScheduleForm;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\Form\Schedule\ScheduleFormHelper;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartment;
+use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartmentTable;
 use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser;
+use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUserTable;
 use Bitrix\Timeman\Model\Schedule\Schedule;
+use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\Schedule\Shift\ShiftCollection;
 use Bitrix\Timeman\Provider\Schedule\ScheduleProvider;
 use Bitrix\Timeman\Service\Agent\WorktimeAgentManager;
@@ -17,7 +20,6 @@ use Bitrix\Timeman\Service\BaseServiceResult;
 use Bitrix\Timeman\Service\Exception\BaseServiceException;
 use Bitrix\Timeman\Service\Schedule\Result\ScheduleServiceResult;
 use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
-use Bitrix\Timeman\Service\Worktime\WorktimeService;
 
 class ScheduleService extends BaseService
 {
@@ -220,6 +222,9 @@ class ScheduleService extends BaseService
 		}
 		return $this->wrapAction(function () use ($schedule) {
 			$schedule->markDeleted();
+			(ScheduleTable::getEntity())->cleanCache();
+			(ScheduleUserTable::getEntity())->cleanCache();
+			(ScheduleDepartmentTable::getEntity())->cleanCache();
 			$res = $this->safeRun($this->scheduleProvider->save($schedule));
 			$this->safeRun($this->shiftService->deleteFutureShiftPlans($schedule));
 			$this->violationRulesService->deletePeriodTimeLackAgents($schedule->getId());

@@ -121,7 +121,7 @@ if ($ID > 0 && $USER->CanDoOperation("controller_counters_view"))
 		$aMenu[] = array(
 			"TEXT" => GetMessage("CTRL_COUNTER_EDIT_TOOLBAR_HISTORY_TEXT"),
 			"TITLE" => GetMessage("CTRL_COUNTER_EDIT_TOOLBAR_HISTORY"),
-			"LINK" => "controller_counter_history.php?find_id=".$ID."&set_filter=Y&lang=".LANG,
+			"LINK" => "controller_counter_history.php?COUNTER_ID=".$ID."&apply_filter=Y&lang=".LANG,
 		);
 }
 

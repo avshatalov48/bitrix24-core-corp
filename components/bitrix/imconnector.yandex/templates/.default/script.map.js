@@ -1,1 +1,0 @@
-{"version":3,"sources":["script.js"],"names":["window","BX","ready","bindDelegate","document","body","className","addPreloader","copyToClipboard","tag"],"mappings":"CAAC,SAAWA,GACXC,GAAGC,MAAM,WACRD,GAAGE,aACFC,SAASC,KACT,SACCC,UAAW,yBACZC,cAEDN,GAAGE,aACFC,SAASC,KACT,SACCC,UAAW,qBACZE,iBAEDP,GAAGE,aACFC,SAASC,KACT,UACCI,IAAK,QACNF,iBAlBF,CAqBEP","file":""}

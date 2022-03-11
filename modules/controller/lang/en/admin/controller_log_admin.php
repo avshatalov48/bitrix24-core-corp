@@ -16,7 +16,6 @@ $MESS["CTRL_LOG_ADMIN_COLUMN_STATUS_ERR"] = "Error";
 $MESS["CTRL_LOG_ADMIN_MENU_DEL"] = "Delete";
 $MESS["CTRL_LOG_ADMIN_MENU_DEL_CONFIRM"] = "This will remove the record from the list. Continue?";
 $MESS["CTRL_LOG_ADMIN_TITLE"] = "Site Controller Journal";
-$MESS["CTRL_LOG_ADMIN_FILTER_ANY"] = "(any)";
 $MESS["CTRL_LOG_ADMIN_MENU_DETAIL"] = "Detailed";
 $MESS["CTRL_LOG_ADMIN_FILTER_ID"] = "ID";
 ?>

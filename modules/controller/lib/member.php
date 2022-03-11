@@ -42,7 +42,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Controller
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Member_Query query()
+ * @method static EO_Member_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Member_Result getById($id)
+ * @method static EO_Member_Result getList(array $parameters = array())
+ * @method static EO_Member_Entity getEntity()
+ * @method static \Bitrix\Controller\EO_Member createObject($setDefaultValues = true)
+ * @method static \Bitrix\Controller\EO_Member_Collection createCollection()
+ * @method static \Bitrix\Controller\EO_Member wakeUpObject($row)
+ * @method static \Bitrix\Controller\EO_Member_Collection wakeUpCollection($rows)
+ */
 
 class MemberTable extends Main\Entity\DataManager
 {

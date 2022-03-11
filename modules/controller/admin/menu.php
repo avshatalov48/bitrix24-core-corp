@@ -31,7 +31,6 @@ if ($USER->CanDoOperation("controller_member_view"))
 		),
 		"items_id" => "menu_controller_member_",
 		"title" => GetMessage("CTRLR_MENU_SITE_TITLE"),
-		"items" => Array(),
 	);
 }
 
@@ -136,16 +135,34 @@ if ($USER->CanDoOperation("controller_counters_view"))
 
 if ($USER->CanDoOperation("controller_auth_view"))
 {
+	$more_url = array(
+		"controller_group_map.php",
+	);
+
+	$items = array();
+	if ($USER->CanDoOperation("controller_auth_log_view"))
+	{
+		$items[] = array(
+			"text" => GetMessage("CTRLR_MENU_AUTH_LOG"),
+			"url" => "controller_auth_log.php?lang=".LANG,
+			"module_id" => "controller",
+			"items_id" => "menu_controller_auth_log",
+			"title" => GetMessage("CTRLR_MENU_AUTH_LOG_TITLE"),
+		);
+	}
+	else
+	{
+		$more_url[] = "controller_auth_log.php";
+	}
+
 	$aMenu["items"][] = array(
 		"text" => GetMessage("CTRLR_MENU_AUTH"),
 		"url" => "controller_auth.php?lang=".LANG,
 		"module_id" => "controller",
-		"more_url" => array(
-			"controller_group_map.php",
-			"controller_auth_log.php",
-		),
+		"more_url" => $more_url,
 		"items_id" => "menu_controller_auth",
 		"title" => "",
+		"items" => $items,
 	);
 }
 

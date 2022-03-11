@@ -28,7 +28,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Controller
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AuthGrant_Query query()
+ * @method static EO_AuthGrant_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AuthGrant_Result getById($id)
+ * @method static EO_AuthGrant_Result getList(array $parameters = array())
+ * @method static EO_AuthGrant_Entity getEntity()
+ * @method static \Bitrix\Controller\EO_AuthGrant createObject($setDefaultValues = true)
+ * @method static \Bitrix\Controller\EO_AuthGrant_Collection createCollection()
+ * @method static \Bitrix\Controller\EO_AuthGrant wakeUpObject($row)
+ * @method static \Bitrix\Controller\EO_AuthGrant_Collection wakeUpCollection($rows)
+ */
 
 class AuthGrantTable extends Main\Entity\DataManager
 {

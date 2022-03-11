@@ -14,10 +14,8 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/controller/prolog.php")
 
 Loc::loadMessages(__FILE__);
 
-/** @var $request \Bitrix\Main\HttpRequest */
-$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
-if ($request["type"] === "loc")
+if ($_REQUEST["type"] === "loc")
 {
 	$type = "loc";
 	$filter = array(
@@ -35,7 +33,7 @@ if ($request["type"] === "loc")
 	);
 	$title = Loc::getMessage("CONTROLLER_GROUP_MAP_CS_TITLE");
 }
-elseif ($request["type"] === "trans")
+elseif ($_REQUEST["type"] === "trans")
 {
 	$type = "trans";
 	$filter = array(
@@ -73,10 +71,10 @@ else
 }
 
 $tableID = "t_controller_group_map_".$type;
-$sorting = new CAdminSorting($tableID, "ID", "ASC");
+$sorting = new CAdminUiSorting($tableID, "ID", "DESC");
 /** @global string $by */
 /** @global string $order */
-$adminList = new CAdminList($tableID, $sorting);
+$adminList = new CAdminUiList($tableID, $sorting);
 
 $groups = array();
 $groupList = CGroup::GetList();
@@ -96,7 +94,7 @@ while ($record = $data->fetch())
 
 if ($adminList->EditAction() && $USER->CanDoOperation("controller_auth_manage"))
 {
-	foreach ($request["FIELDS"] as $ID => $fields)
+	foreach ($_REQUEST["FIELDS"] as $ID => $fields)
 	{
 		$errors = array();
 		foreach ($controls as $controlName)
@@ -145,9 +143,11 @@ if ($adminList->EditAction() && $USER->CanDoOperation("controller_auth_manage"))
 	}
 }
 
-if (($arID = $adminList->GroupAction()) && $USER->CanDoOperation("controller_auth_manage"))
+
+$arID = $adminList->GroupAction();
+if ($arID && $USER->CanDoOperation("controller_auth_manage"))
 {
-	if ($request['action_target'] == 'selected')
+	if ($_REQUEST['action_target'] == 'selected')
 	{
 		$arID = array_keys($groupMap);
 	}
@@ -157,7 +157,7 @@ if (($arID = $adminList->GroupAction()) && $USER->CanDoOperation("controller_aut
 		if (!isset($groupMap[$ID]))
 			continue;
 
-		switch ($request['action_button'])
+		switch ($_REQUEST['action_button'])
 		{
 		case "delete":
 			$result = GroupMapTable::delete($ID);
@@ -172,7 +172,7 @@ if (($arID = $adminList->GroupAction()) && $USER->CanDoOperation("controller_aut
 
 $APPLICATION->SetTitle($title);
 
-$nav = new \Bitrix\Main\UI\AdminPageNavigation("nav-controller-group-map");
+$nav = $adminList->getPageNavigation("nav-controller-group-map");
 
 $groupMapList = GroupMapTable::getList(array(
 	'filter' => $filter,
@@ -187,6 +187,15 @@ $nav->setRecordCount($groupMapList->getCount());
 $adminList->setNavigation($nav, Loc::getMessage("CONTROLLER_GROUP_MAP_PAGES"));
 
 $adminList->AddHeaders($headers);
+
+if ($USER->CanDoOperation("controller_auth_manage"))
+{
+	$row = &$adminList->AddRow('new', []);
+	$row->AddViewField("ID", '<script>showNewRow();</script>');
+	$row->AddSelectField("CONTROLLER_GROUP_ID", $groups);
+	$row->AddInputField("REMOTE_GROUP_CODE", array("size" => "30"));
+	$row->AddInputField("LOCAL_GROUP_CODE", array("size" => "30"));
+}
 
 while ($groupMap = $groupMapList->fetch())
 {
@@ -209,20 +218,50 @@ while ($groupMap = $groupMapList->fetch())
 	$row->AddActions($arActions);
 }
 
-$adminList->AddGroupActionTable(array(
-	"delete" => true,
-));
-
 if ($USER->CanDoOperation("controller_auth_manage"))
 {
+	$adminList->AddGroupActionTable(array(
+		"edit" => true,
+		"delete" => true,
+	));
+
 	$aContext = array(
 		array(
-			"TEXT" => Loc::getMessage("CONTROLLER_GROUP_MAP_ADD"),
-			"LINK" => "javascript:show_add_form()",
-			"TITLE" => Loc::getMessage("CONTROLLER_GROUP_MAP_ADD_TITLE"),
-			"ICON" => "btn_new"
+			"ICON" => "btn_new",
+			"TEXT" => GetMessage("MAIN_ADD"),
+			"LINK" => "javascript:showNewRow(1)",
+			"TITLE" => GetMessage("MAIN_ADD")
 		),
 	);
+
+	$adminList->BeginPrologContent();
+	?>
+	<script>
+		function showNewRow(show)
+		{
+			var tr = BX.findChildren(BX('<?=$tableID?>'), {
+				tag: 'TR',
+				class: 'main-grid-row main-grid-row-body',
+				attr: {'data-id': 'new'}}, true);
+			if (tr)
+			{
+				tr[0].style.display = show? 'table-row': 'none';
+				if (show)
+				{
+					var gridInstance = BX.Main.gridManager.getById('<?=$tableID?>').instance;
+					var newRow = gridInstance.getRows().getById('new');
+					newRow.select();
+					var editButton = gridInstance.getActionsPanel().getButtons()
+							.find(function(button) {
+								return button.id === "grid_edit_button_control";
+							});
+					BX.fireEvent(editButton, 'click');
+				}
+			}
+		}
+	</script>
+	<?
+	$adminList->EndPrologContent();
 }
 else
 {
@@ -230,117 +269,10 @@ else
 }
 $adminList->AddAdminContextMenu($aContext);
 
+
 $adminList->CheckListMode();
 
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
-
-if ($USER->CanDoOperation("controller_auth_manage"))
-{
-	CUtil::InitJSCore(array('fx'));
-
-	$aTabs = array(
-		array(
-			"DIV" => "edit1",
-			"TAB" => Loc::getMessage("CONTROLLER_GROUP_MAP_NEW_TAB"),
-			"ICON" => "main_user_edit",
-		),
-	);
-	$tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
-	?>
-	<script>
-
-		function show_add_form()
-		{
-			(new BX.fx({
-				start: 0,
-				finish: 200,
-				time: 0.5,
-				type: 'accelerated',
-				callback: function (res)
-				{
-					BX('add_form', true).style.height = res + 'px';
-				},
-				callback_start: function ()
-				{
-					BX('add_form', true).style.height = '0px';
-					BX('add_form', true).style.overflow = 'hidden';
-					BX('add_form', true).style.display = 'block';
-				},
-				callback_complete: function ()
-				{
-					BX('add_form', true).style.height = 'auto';
-					BX('add_form', true).style.overflow = 'auto';
-				}
-			})).start();
-		}
-		function hide_add_form()
-		{
-			BX('add_form').style.display = 'none';
-		}
-
-		function add_action()
-		{
-			ShowWaitWindow();
-			BX('add_action_button').enabled = false;
-
-			BX.ajax.submit(BX('editform'),
-				function (result)
-				{
-					BX('<?echo $tableID?>_result_div').innerHTML = result;
-					CloseWaitWindow();
-					BX('add_action_button').disabled = false;
-				}
-			);
-
-		}
-
-	</script>
-	<div id="add_form" style="display:none;height:200px;">
-		<form method="POST" action="<? echo htmlspecialcharsbx($APPLICATION->GetCurPageParam()) ?>"
-			enctype="multipart/form-data" name="editform" id="editform">
-			<?
-			$tabControl->Begin();
-			$tabControl->BeginNextTab();
-			foreach ($controls as $controlName)
-			{
-				?>
-				<tr class="adm-detail-required-field">
-					<td width="40%"><? echo Loc::getMessage("CONTROLLER_GROUP_MAP_".$controlName) ?>:</td>
-					<td width="60%">
-						<?if ($controlName === "CONTROLLER_GROUP_ID"):?>
-							<? $groupList = CGroup::GetList(); ?>
-							<select name="FIELDS[new][<? echo $controlName ?>]">
-								<option value=""></option>
-								<? foreach ($groups as $groupId => $groupName): ?>
-									<option value="<?=$groupId?>"><?=$groupName?> [<?echo $groupId?>]
-									</option>
-								<? endforeach; ?>
-							</select>
-						<?else:?>
-							<input type="text" id="<? echo $controlName ?>" name="FIELDS[new][<? echo $controlName ?>]" size="30" value="">
-						<?endif?>
-					</td>
-				</tr>
-				<?
-			}
-			$tabControl->Buttons(false);
-			?>
-			<input type="hidden" name="mode" value="frame">
-			<input type="hidden" name="save" value="y">
-			<input type="hidden" name="ID" value="new">
-			<? echo bitrix_sessid_post(); ?>
-			<input type="hidden" name="lang" value="<? echo LANGUAGE_ID ?>">
-			<input type="button" id="add_action_button" onclick="add_action();"
-				value="<? echo Loc::getMessage("CONTROLLER_GROUP_MAP_ADD_BTN") ?>" class="adm-btn-save">
-			<input type="button" value="<? echo Loc::getMessage("CONTROLLER_GROUP_MAP_CANCEL_BTN") ?>"
-				onclick="hide_add_form()">
-			<?
-			$tabControl->End();
-			?>
-		</form>
-	</div>
-	<?
-}
 
 $adminList->DisplayList();
 

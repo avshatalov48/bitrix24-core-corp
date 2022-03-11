@@ -4,7 +4,7 @@ namespace Bitrix\ImConnector\Connectors;
 use Bitrix\Main\Localization\Loc;
 
 /**
- * Class Yandex
+ * Class Avito
  * @package Bitrix\ImConnector\Connectors
  */
 class Avito extends Base

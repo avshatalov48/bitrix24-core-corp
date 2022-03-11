@@ -1,0 +1,23 @@
+<?php
+$MESS["SALESCENTER_MODULE_ERROR"] = "Das Modul \"Vertriebsstelle\" ist nicht installiert.";
+$MESS["SC_CASHBOX_FIELDS_EMAIL"] = "E-Mail für Benachrichtigungen";
+$MESS["SC_CASHBOX_FIELDS_EMAIL_HINT"] = "Eine Nachricht wird an diese E-Mail gesendet, wenn kein Kassenzettel gedruckt werden kann";
+$MESS["SC_CASHBOX_FIELDS_KKM_ID"] = "Marke des Cash-Registers";
+$MESS["SC_CASHBOX_FIELDS_NAME"] = "Name";
+$MESS["SC_CASHBOX_FIELDS_NUMBER_KKM"] = "Externe ID des Kassenapparats";
+$MESS["SC_CASHBOX_FIELDS_NUMBER_KKM_HINT"] = "Nutzen Sie ID der Gruppe für ATOL.Online und Orange Data.";
+$MESS["SC_CASHBOX_FIELDS_OFD"] = "OFD";
+$MESS["SC_CASHBOX_FIELDS_USE_OFFLINE"] = "Offline Modus";
+$MESS["SC_CASHBOX_FILE_LABEL"] = "Datei hochladen";
+$MESS["SC_CASHBOX_KKM_ATOL"] = "ATOL";
+$MESS["SC_CASHBOX_KKM_EVOTOR"] = "Evotor";
+$MESS["SC_CASHBOX_KKM_SHTRIHM"] = "Shtrih-M";
+$MESS["SC_CASHBOX_OFD_ANOTHER"] = "Anderer";
+$MESS["SC_MENU_ITEM_CASHBOX_PARAM"] = "Parameter des Kassenapparats";
+$MESS["SC_MENU_ITEM_OFD_SETTINGS"] = "OFD-Einstellungen";
+$MESS["SC_MENU_ITEM_SETTINGS"] = "Einstellungen";
+$MESS["SC_SALESCENTER_ERROR_NO_CASHBOX"] = "Kassenapparat wurde nicht gefunden";
+$MESS["SC_SALESCENTER_ERROR_NO_HANDLER"] = "Der Handler des Kassenapparats ist nicht angegeben";
+$MESS["SC_SALESCENTER_ERROR_NO_HANDLER_EXIST"] = "Der Handler des Kassenapparats ist nicht korrekt";
+$MESS["SC_SALESCENTER_ERROR_NO_OFD_EXIST"] = "OFD ungültig";
+$MESS["SC_SALESCENTER_SALE_ACCESS_DENIED"] = "Zugriff verweigert.";

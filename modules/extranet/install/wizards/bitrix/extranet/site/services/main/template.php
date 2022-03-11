@@ -155,11 +155,11 @@ if ($arSite = $obSite->Fetch())
 	}
 
 	if (
-		!$foundEmpty 
+		!$foundEmpty
 		&& $allowGuests <> "Y"
 	)
 	{
-		$arTemplates[]= Array("CONDITION" => "!\$GLOBALS['USER']->IsAuthorized() && (!isset(\$_SERVER['REMOTE_USER']) || strlen(\$_SERVER['REMOTE_USER']) <= 0)", "SORT" => 250, "TEMPLATE" => "login");
+		$arTemplates[]= Array("CONDITION" => '((method_exists("CUser", "HasNoAccess") && $GLOBALS["USER"]->HasNoAccess()) || !$GLOBALS["USER"]->IsAuthorized()) && $_SERVER["REMOTE_USER"]==""', "SORT" => 250, "TEMPLATE" => "login");
 	}
 
 	$current_template = "";
@@ -193,7 +193,7 @@ if ($arSite = $obSite->Fetch())
 			);
 		}
 		else
-		{	
+		{
 			$path = WIZARD_SITE_PATH."contacts/personal.php";
 			if (file_exists($path))
 			{
@@ -227,9 +227,9 @@ if ($arSite = $obSite->Fetch())
 				$fp = fopen($path_index_b24, 'w');
 				fwrite($fp, $contents_b24_new);
 				fclose($fp);
-			}			
+			}
 		}
-		
+
 		if (file_exists(WIZARD_SITE_PATH.".top.menu_ext.php"))
 		{
 			CopyDirFiles(
@@ -288,7 +288,7 @@ if ($arSite = $obSite->Fetch())
 			$recursive = true,
 			$delete_after_copy = true
 		);
-		
+
 		CopyDirFiles(
 			WIZARD_SITE_PATH."index_old.php",
 			WIZARD_SITE_PATH."index.php",

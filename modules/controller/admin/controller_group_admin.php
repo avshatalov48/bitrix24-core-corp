@@ -15,44 +15,43 @@ IncludeModuleLangFile(__FILE__);
 
 $entity_id = "CONTROLLER_GROUP";
 $sTableID = "t_controll_group";
-$oSort = new CAdminSorting($sTableID, "timestamp_x", "desc");
+$oSort = new CAdminUiSorting($sTableID, "timestamp_x", "desc");
 /** @global string $by */
 /** @global string $order */
-$lAdmin = new CAdminList($sTableID, $oSort);
+$lAdmin = new CAdminUiList($sTableID, $oSort);
 
-$arFilterRows = array(
-	"ID" => "ID",
-	"MODIFIED_BY" => GetMessage("CTRLR_GR_AD_FLT_MODIF"),
-	"CREATED_BY" => GetMessage("CTRLR_GR_AD_FLT_CREAT"),
+$filterFields = array(
+	array(
+		"id" => "ID",
+		"name" => GetMessage("CTRLR_GR_AD_COL_ID"),
+		"filterable" => "=",
+		"default" => true,
+	),
+	array(
+		"id" => "TIMESTAMP_X",
+		"name" => GetMessage("CTRLR_GR_AD_FLT_MODIF"),
+		"type" => "date",
+		"default" => true,
+	),
+	array(
+		"id" => "DATE_CREATE",
+		"name" => GetMessage("CTRLR_GR_AD_FLT_CREAT"),
+		"type" => "date",
+		"default" => true,
+	),
 );
-$USER_FIELD_MANAGER->AddFindFields($entity_id, $arFilterRows);
 
-$filter = new CAdminFilter(
-	$sTableID."_filter_id",
-	$arFilterRows
-);
+$USER_FIELD_MANAGER->AdminListAddFilterFieldsV2($entity_id, $filterFields);
+$arFilter = array();
+$lAdmin->AddFilter($filterFields, $arFilter);
+$USER_FIELD_MANAGER->AdminListAddFilterV2($entity_id, $arFilter, $sTableID, $filterFields);
 
-$arFilterFields = Array(
-	"find_name",
-	"find_id",
-	"find_timestamp_x_from",
-	"find_timestamp_x_to",
-	"find_created_from",
-	"find_created_to",
-);
-$USER_FIELD_MANAGER->AdminListAddFilterFields($entity_id, $arFilterFields);
-
-$adminFilter = $lAdmin->InitFilter($arFilterFields);
-
-$arFilter = array(
-	"ID" => $adminFilter["find_id"],
-	"%NAME" => $adminFilter["find_name"],
-	">=TIMESTAMP_X" => $adminFilter["find_timestamp_x_from"],
-	"<=TIMESTAMP_X" => $adminFilter["find_timestamp_x_to"],
-	">=DATE_CREATE" => $adminFilter["find_created_from"],
-	"<=DATE_CREATE" => $adminFilter["find_created_to"],
-);
-$USER_FIELD_MANAGER->AdminListAddFilter($entity_id, $arFilter);
+$filterOption = new Bitrix\Main\UI\Filter\Options($sTableID);
+$filterData = $filterOption->getFilter($filterFields);
+if (!empty($filterData["FIND"]))
+{
+	$arFilter["%NAME"] = $filterData["FIND"];
+}
 
 if ($USER->CanDoOperation("controller_group_manage") && $lAdmin->EditAction())
 {
@@ -76,7 +75,8 @@ if ($USER->CanDoOperation("controller_group_manage") && $lAdmin->EditAction())
 	}
 }
 
-if ($USER->CanDoOperation("controller_group_manage") && $arID = $lAdmin->GroupAction())
+$arID = $lAdmin->GroupAction();
+if ($arID && $USER->CanDoOperation("controller_group_manage"))
 {
 	if ($_REQUEST['action_target'] == 'selected')
 	{
@@ -105,6 +105,15 @@ if ($USER->CanDoOperation("controller_group_manage") && $arID = $lAdmin->GroupAc
 			$DB->Commit();
 			break;
 		}
+	}
+
+	if ($lAdmin->hasGroupErrors())
+	{
+		$adminSidePanelHelper->sendJsonErrorResponse($lAdmin->getGroupErrors());
+	}
+	else
+	{
+		$adminSidePanelHelper->sendSuccessResponse();
 	}
 }
 
@@ -177,9 +186,11 @@ $USER_FIELD_MANAGER->AdminListAddHeaders($entity_id, $arHeaders);
 $lAdmin->AddHeaders($arHeaders);
 
 $rsData = CControllerGroup::GetList(Array($by => $order), $arFilter, $lAdmin->GetVisibleHeaderColumns());
-$rsData = new CAdminResult($rsData, $sTableID);
+$rsData = new CAdminUiResult($rsData, $sTableID);
 $rsData->NavStart();
-$lAdmin->NavText($rsData->GetNavPrint(GetMessage("CTRLR_GR_AD_NAV")));
+
+$lAdmin->SetNavigationParams($rsData);
+
 while ($arRes = $rsData->Fetch())
 {
 	$row =& $lAdmin->AddRow($arRes["ID"], $arRes, 'controller_group_edit.php?lang='.LANGUAGE_ID.'&ID='.intval($arRes['ID']));
@@ -239,6 +250,7 @@ $lAdmin->AddFooter(
 if ($USER->CanDoOperation("controller_group_manage"))
 {
 	$lAdmin->AddGroupActionTable(array(
+			"edit" => true,
 			"delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
 		)
 	);
@@ -262,54 +274,10 @@ $lAdmin->AddAdminContextMenu($aContext);
 $lAdmin->CheckListMode();
 
 $APPLICATION->SetTitle(GetMessage("CTRLR_GR_AD_TITLE"));
+
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
-?>
-<form name="form1" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>?">
-	<? $filter->Begin(); ?>
-	<tr>
-		<td nowrap><label for="find_name"><?=GetMessage("CTRLR_GR_AD_COL_NAME")?></label>:</td>
-		<td nowrap>
-			<input type="text" name="find_name" id="find_name" value="<? echo htmlspecialcharsbx($adminFilter['find_name']) ?>" size="47">
-		</td>
-	</tr>
 
-	<tr>
-		<td nowrap><label for="find_id"><?=GetMessage("CTRLR_GR_AD_COL_ID")?></label>:</td>
-		<td nowrap>
-			<input type="text" name="find_id" id="find_id" value="<? echo htmlspecialcharsbx($adminFilter['find_id']) ?>" size="47">
-		</td>
-	</tr>
-
-	<tr>
-		<td nowrap><?=GetMessage("CTRLR_GR_AD_FLT_MODIF")?>:</td>
-		<td nowrap><? echo CalendarPeriod("find_timestamp_x_from", $adminFilter['find_timestamp_x_from'], "find_timestamp_x_to", $adminFilter['find_timestamp_x_to'], "form1", "Y") ?></td>
-	</tr>
-	<tr>
-		<td nowrap><?=GetMessage("CTRLR_GR_AD_FLT_CREAT")?>:</td>
-		<td nowrap><? echo CalendarPeriod("find_created_from", $adminFilter['find_created_from'], "find_created_to", $adminFilter['find_created_to'], "form1", "Y") ?></td>
-	</tr>
-	<? if (false): ?>
-		<tr>
-			<td nowrap><?=GetMessage("CTRLR_GR_AD_FLT_ACT_FROM")?>:</td>
-			<td nowrap><? echo CalendarPeriod("find_active_from_from", $adminFilter['find_active_from_from'], "find_active_from_to", $adminFilter['find_active_from_to'], "form1", "Y") ?></td>
-		</tr>
-		<tr>
-			<td nowrap><?=GetMessage("CTRLR_GR_AD_FLT_ACT_TO")?>:</td>
-			<td nowrap><? echo CalendarPeriod("find_active_to_from", $adminFilter['find_active_to_from'], "find_active_to_to", $adminFilter['find_active_to_to'], "form1", "Y") ?></td>
-		</tr>
-	<? endif ?>
-
-	<?
-	$USER_FIELD_MANAGER->AdminListShowFilter($entity_id);
-	$filter->Buttons(array(
-		"table_id" => $sTableID,
-		"url" => $APPLICATION->GetCurPage(),
-		"form" => "form1",
-	));
-	$filter->End();
-	?>
-
-</form>
-<?
+$lAdmin->DisplayFilter($filterFields);
 $lAdmin->DisplayList();
+
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

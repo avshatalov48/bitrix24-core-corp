@@ -12,16 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/controller/prolog.php")
 
 IncludeModuleLangFile(__FILE__);
 
-$sTableID = "t_controll_task";
+$sTableID = "t_controll_task_v3";
 $arTask = CControllerTask::GetTaskArray();
 $arStatus = CControllerTask::GetStatusArray();
-
-$iTaskNCnt = 0;
-if ($USER->CanDoOperation("controller_task_run"))
-{
-	$dbrTaskN = CControllerTask::GetList(Array(), Array("=STATUS" => Array('P', 'N', 'R', 'L')), true);
-	$iTaskNCnt = $dbrTaskN->Fetch()['C'];
-}
 
 $iCntExecuted = intval($_REQUEST["executed"]);
 $iCntTotal = intval($_REQUEST["cnt"]);
@@ -38,7 +31,7 @@ if (
 	$endTime = microtime(true) + COption::GetOptionString('controller', 'tasks_run_step_time');
 
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
-	if ($iTaskNCnt > 0)
+	if ($USER->CanDoOperation("controller_task_run"))
 	{
 		$sleep = 0;
 		//1. Finish partial
@@ -98,7 +91,7 @@ if (
 		$message = new CAdminMessage($strError);
 		echo $message->Show();
 	}
-	elseif ($iTaskNCnt == 0 || $onlyRetry)
+	elseif (!CControllerTask::GetList([],["=STATUS" => ['P', 'N', 'R', 'L']],['ID'],['bOnlyCount' => true]) || $onlyRetry)
 	{
 		$message = new CAdminMessage(array(
 			"TYPE" => "PROGRESS",
@@ -112,7 +105,7 @@ if (
 		?>
 		<script>
 			CloseWaitWindow();
-			<?=$sTableID?>.GetAdminList('<?echo CUtil::JSEscape($APPLICATION->GetCurPage().'?lang='.urlencode(LANGUAGE_ID).'&executed='.$iCntExecuted.'&cnt='.$iCntTotal)?>');
+			<?=$sTableID?>.onReloadGrid();
 		</script>
 		<?
 	}
@@ -137,54 +130,67 @@ if (
 	require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_js.php");
 }
 
-$oSort = new CAdminSorting($sTableID, "id", "desc");
+$oSort = new CAdminUiSorting($sTableID, "id", "desc");
 /** @global string $by */
 /** @global string $order */
-$lAdmin = new CAdminList($sTableID, $oSort);
+$lAdmin = new CAdminUiList($sTableID, $oSort);
 
-$arFilterRows = array(
-	GetMessage("CTRLR_TASK_FLT_ID"),
-	GetMessage("CTRLR_TASK_FLT_CLIENT"),
-	GetMessage("CTRLR_TASK_FLT_OPERATION"),
-	GetMessage("CTRLR_TASK_FLT_EXECUTED"),
-	GetMessage("CTRLR_TASK_FLT_MODYFIED"),
-	GetMessage("CTRLR_TASK_FLT_CREATED"),
+$filterFields = array(
+	array(
+		"id" => "STATUS",
+		"name" => GetMessage("CTRLR_TASK_FLR_ST"),
+		"filterable" => "=",
+		"default" => true,
+		"type" => "list",
+		"items" => $arStatus,
+		"params" => array("multiple" => "Y"),
+	),
+	array(
+		"id" => "ID",
+		"name" => GetMessage("CTRLR_TASK_FLT_ID"),
+		"filterable" => "=",
+	),
+	array(
+		"id" => "CONTROLLER_MEMBER_ID",
+		"name" => GetMessage("CTRLR_TASK_FLT_CLIENT"),
+		"filterable" => "=",
+	),
+	array(
+		"id" => "TASK_ID",
+		"name" => GetMessage("CTRLR_TASK_FLT_OPERATION"),
+		"type" => "list",
+		"items" => $arTask,
+		"params" => array("multiple" => "N"),
+		"filterable" => "=",
+	),
+	array(
+		"id" => "DATE_EXECUTE",
+		"name" => GetMessage("CTRLR_TASK_FLT_EXECUTED"),
+		"type" => "date",
+	),
+	array(
+		"id" => "TIMESTAMP_X",
+		"name" => GetMessage("CTRLR_TASK_FLT_MODYFIED"),
+		"type" => "date",
+	),
+	array(
+		"id" => "DATE_CREATE",
+		"name" => GetMessage("CTRLR_TASK_FLT_CREATED"),
+		"type" => "date",
+	),
 );
 
-$filter = new CAdminFilter(
-	$sTableID."_filter_id",
-	$arFilterRows
-);
-$arFilterFields = Array(
-	"find_status",
-	"find_task_id",
-	"find_id",
-	"find_controller_member_id",
-	"find_executed_from",
-	"find_executed_to",
-	"find_timestamp_x_from",
-	"find_timestamp_x_to",
-	"find_created_from",
-	"find_created_to",
-);
+$lAdmin->setFilterPresets([
+	'in_process' => [
+		'name' => GetMessage("CTRLR_TASK_PRESET_IN_PROCESS"),
+		'default' => true,
+		'current' => true,
+		'fields' => ['STATUS' => ['P', 'R', 'N', 'L']],
+	],
+]);
 
-$adminFilter = $lAdmin->InitFilter($arFilterFields);
-
-if (!isset($find_status) || !is_array($find_status) && $_REQUEST["del_filter"] !== "Y")
-	$find_status = array('P', 'R', 'N', 'L');
-
-$arFilter = array(
-	"%TASK_ID" => $_REQUEST["find_task_id"],
-	"ID" => $_REQUEST["find_id"],
-	"=STATUS" => $find_status,
-	"CONTROLLER_MEMBER_ID" => $_REQUEST["find_controller_member_id"],
-	">=TIMESTAMP_X" => $_REQUEST["find_timestamp_x_from"],
-	"<=TIMESTAMP_X" => $_REQUEST["find_timestamp_x_to"],
-	">=DATE_CREATE" => $_REQUEST["find_created_from"],
-	"<=DATE_CREATE" => $_REQUEST["find_created_to"],
-	">=DATE_EXECUTE" => $_REQUEST["find_executed_from"],
-	"<=DATE_EXECUTE" => $_REQUEST["find_executed_to"],
-);
+$arFilter = array();
+$lAdmin->AddFilter($filterFields, $arFilter);
 
 $arID = $lAdmin->GroupAction();
 if (
@@ -197,7 +203,7 @@ if (
 {
 	if ($_REQUEST['action_target'] == 'selected')
 	{
-		$rsData = CControllerTask::GetList(array($by => $order), $arFilter);
+		$rsData = CControllerTask::GetList(array($by => $order), $arFilter, array("ID"));
 		while ($arRes = $rsData->Fetch())
 			$arID[] = $arRes['ID'];
 	}
@@ -221,11 +227,7 @@ if (
 			break;
 
 		case "repeat":
-			if (CControllerTask::Update($ID, Array("STATUS" => "N", "DATE_EXECUTE" => false)))
-			{
-				$iTaskNCnt++;
-			}
-			else
+			if (!CControllerTask::Update($ID, Array("STATUS" => "N", "DATE_EXECUTE" => false)))
 			{
 				if ($e = $APPLICATION->GetException())
 					$lAdmin->AddGroupError(GetMessage("CTRLR_TASK_REP_DELETE")." ".$ID.": ".$e->GetString(), $ID);
@@ -233,21 +235,16 @@ if (
 			break;
 		}
 	}
-}
 
-$rsData = CControllerTask::GetList(
-	array(
-		$by => $order,
-	),
-	$arFilter,
-	false,
-	array(
-		"nPageSize" => CAdminResult::GetNavSize($sTableID),
-	)
-);
-$rsData = new CAdminResult($rsData, $sTableID);
-$rsData->NavStart();
-$lAdmin->NavText($rsData->GetNavPrint(GetMessage("CTRLR_TASK_NAV")));
+	if ($lAdmin->hasGroupErrors())
+	{
+		$adminSidePanelHelper->sendJsonErrorResponse($lAdmin->getGroupErrors());
+	}
+	else
+	{
+		$adminSidePanelHelper->sendSuccessResponse();
+	}
+}
 
 $arHeaders = array(
 	array("id" => "CONTROLLER_MEMBER_NAME", "content" => GetMessage("CTRLR_TASK_FLT_CLIENT"), "default" => true, "sort" => "CONTROLLER_MEMBER_NAME"),
@@ -265,12 +262,59 @@ $arHeaders = array(
 );
 
 $lAdmin->AddHeaders($arHeaders);
-$arSelectedFieldsMap = array_fill_keys($lAdmin->GetVisibleHeaderColumns(), true);
+
+$nav = $lAdmin->getPageNavigation("pages-controller-log-admin");
+
+if ($lAdmin->isTotalCountRequest())
+{
+	$count = CControllerTask::GetList(
+		array(),
+		$arFilter,
+		array("ID"),
+		array("bOnlyCount" => true)
+	);
+	$lAdmin->sendTotalCountResponse($count);
+}
+elseif ($_REQUEST["mode"] == "excel")
+{
+	$arNavParams = false;
+}
+else
+{
+	$arNavParams = array(
+		"nTopCount" => $nav->getLimit() + 1,
+		"nOffset" => $nav->getOffset(),
+	);
+}
+
+$arSelect = $lAdmin->GetVisibleHeaderColumns();
+$arSelect[] = "ID";
+
+$initExecuteSelected = in_array('INIT_EXECUTE', $arSelect);
 $sourceTasks = array();
+
+$rsData = CControllerTask::GetList(
+	array(
+		$by => $order,
+	),
+	$arFilter,
+	$arSelect,
+	$arNavParams
+);
+$rsData = new CAdminResult($rsData, $sTableID);
+
+$n = 0;
+$pageSize = $lAdmin->getNavSize();
 while ($arRes = $rsData->Fetch())
 {
+	$n++;
+	if ($n > $pageSize && !($_REQUEST["mode"] == "excel"))
+	{
+		break;
+	}
+
 	if (
-		isset($arSelectedFieldsMap["INIT_EXECUTE"])
+		$initExecuteSelected
 		&& $arRes['INIT_EXECUTE'] === ''.intval($arRes['INIT_EXECUTE']).''
 	)
 	{
@@ -321,7 +365,7 @@ while ($arRes = $rsData->Fetch())
 		$arActions[] = array(
 			"ICON" => "other",
 			"TEXT" => GetMessage("CTRLR_TASK_MENU_LOG"),
-			"ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/controller_log_admin.php?lang=".urlencode(LANGUAGE_ID)."&set_filter=Y&find_task_id=".urlencode($arRes["ID"])),
+			"ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/controller_log_admin.php?lang=".urlencode(LANGUAGE_ID)."&apply_filter=Y&TASK_ID=".urlencode($arRes["ID"])),
 		);
 	}
 
@@ -330,6 +374,8 @@ while ($arRes = $rsData->Fetch())
 		$row->AddActions($arActions);
 	}
 }
+$nav->setRecordCount($nav->getOffset() + $n);
+$lAdmin->setNavigation($nav, GetMessage("CTRLR_TASK_NAV"), false);
 
 $lAdmin->AddFooter(
 	array(
@@ -353,6 +399,7 @@ $lAdmin->BeginPrologContent();
 ?>
 <div id="progress">
 	<?
+	$iTaskNCnt = $USER->CanDoOperation("controller_task_run")? CControllerTask::GetList([],["=STATUS" => ['P', 'N', 'R', 'L']],['ID'],['bOnlyCount' => true]): 0;
 	if ($iTaskNCnt > 0)
 	{
 		$message = new CAdminMessage(array(
@@ -407,62 +454,10 @@ $lAdmin->EndPrologContent();
 $lAdmin->CheckListMode();
 
 $APPLICATION->SetTitle(GetMessage("CTRLR_TASK_TITLE"));
+
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
-?>
-<form name="form1" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>?">
-	<? $filter->Begin(); ?>
 
-	<tr>
-		<td><?=GetMessage("CTRLR_TASK_FLR_ST")?>:</td>
-		<td>
-			<select name="find_status[]" multiple="multiple" size="<?echo count($arStatus)?>">
-				<? foreach ($arStatus as $status_id => $status_name): ?>
-					<option value="<?=htmlspecialcharsbx($status_id)?>"<? if (in_array($status_id, $find_status)) echo ' selected' ?>><?=htmlspecialcharsEx($status_name)?></option>
-				<? endforeach ?>
-			</select>
-		</td>
-	</tr>
-	<tr>
-		<td>ID:</td>
-		<td>
-			<input type="text" name="find_id" value="<? echo htmlspecialcharsbx($_REQUEST["find_id"]) ?>" size="47">
-		</td>
-	</tr>
-	<tr>
-		<td><?=GetMessage("CTRLR_TASK_FLT_CLIENT")?>:</td>
-		<td>
-			<input type="text" name="find_controller_member_id" value="<? echo htmlspecialcharsbx($_REQUEST["find_controller_member_id"]) ?>" size="47">
-		</td>
-	</tr>
-	<tr>
-		<td><?=GetMessage("CTRLR_TASK_FLT_OPERATION")?>:</td>
-		<td>
-			<select name="find_task_id">
-				<option value=""><? echo GetMessage("CTRLR_TASK_FLR_ANY") ?></option>
-				<? foreach ($arTask as $task_id => $task_name): ?>
-					<option value="<?=htmlspecialcharsbx($task_id)?>" <? if ($_REQUEST["find_task_id"] == $task_id) echo ' selected="selected"'; ?>><?=htmlspecialcharsEx($task_name)?></option>
-				<? endforeach ?>
-			</select>
-	</tr>
-	<tr>
-		<td><?=GetMessage("CTRLR_TASK_FLT_EXECUTED")?>:</td>
-		<td><? echo CalendarPeriod("find_executed_from", $adminFilter["find_executed_from"], "find_executed_to", $adminFilter["find_executed_to"], "form1", "Y") ?></td>
-	</tr>
-	<tr>
-		<td><?=GetMessage("CTRLR_TASK_FLT_MODYFIED")?>:</td>
-		<td><? echo CalendarPeriod("find_timestamp_x_from", $adminFilter["find_timestamp_x_from"], "find_timestamp_x_to", $adminFilter["find_timestamp_x_to"], "form1", "Y") ?></td>
-	</tr>
-	<tr>
-		<td><?=GetMessage("CTRLR_TASK_FLT_CREATED")?>:</td>
-		<td><? echo CalendarPeriod("find_created_from", $adminFilter["find_created_from"], "find_created_to", $adminFilter["find_created_to"], "form1", "Y") ?></td>
-	</tr>
+$lAdmin->DisplayFilter($filterFields);
+$lAdmin->DisplayList(["SHOW_COUNT_HTML" => true]);
 
-	<? $filter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "form1"));
-	$filter->End(); ?>
-
-</form>
-
-<?
-$lAdmin->DisplayList();
-
-require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php"); ?>
+require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

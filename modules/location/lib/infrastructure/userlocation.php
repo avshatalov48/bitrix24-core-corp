@@ -4,7 +4,6 @@ namespace Bitrix\Location\Infrastructure;
 
 use Bitrix\Location\Common\Point;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Service\GeoIp;
 
 /**
  * Class UserLocation
@@ -18,33 +17,7 @@ final class UserLocation
 	 */
 	public static function getPoint(): Point
 	{
-		$location = self::getPointByIp();
-
-		if(!$location)
-		{
-			$location = self::getPointByPortalRegion();
-		}
-
-		return $location;
-	}
-
-	/**
-	 * @param string $ipAddress
-	 * @return Point|null
-	 */
-	private static function getPointByIp(string $ipAddress = ''): ?Point
-	{
-		$coordinates = GeoIp\Manager::getGeoPosition($ipAddress);
-		if (
-			!is_array($coordinates)
-			|| !isset($coordinates['latitude'])
-			|| !isset($coordinates['longitude'])
-		)
-		{
-			return null;
-		}
-
-		return new Point($coordinates['latitude'], $coordinates['longitude']);
+		return self::getPointByPortalRegion();
 	}
 
 	/**

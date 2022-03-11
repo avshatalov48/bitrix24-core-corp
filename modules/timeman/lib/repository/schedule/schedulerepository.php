@@ -575,17 +575,19 @@ class ScheduleRepository
 		$result = ScheduleUserTable::query()
 			->addSelect('*')
 			->registerRuntimeField(new Reference('SCHEDULE', ScheduleTable::class, ['this.SCHEDULE_ID' => 'ref.ID']))
-			->whereIn('SCHEDULE.DELETED', ScheduleTable::DELETED_NO)
-			->whereIn('USER_ID', $userIds);
+			->where('SCHEDULE.DELETED', ScheduleTable::DELETED_NO)
+			->whereIn('USER_ID', $userIds)
+		;
+
 		if ($exceptScheduleId > 0)
 		{
 			$result->whereNot('SCHEDULE_ID', $exceptScheduleId);
 		}
+
 		$result->setCacheTtl(3600 * 12);
 		$result->cacheJoins(true);
-		return $result
-			->exec()
-			->fetchCollection();
+
+		return $result->exec()->fetchCollection();
 	}
 
 	public function findDepartmentAssignmentsByIds($departmentIds, $exceptScheduleId = null)

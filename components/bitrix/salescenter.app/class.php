@@ -1531,37 +1531,43 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		}
 		else
 		{
+			$businessRuCashboxHandlers = [
+				'\\' . Cashbox\CashboxBusinessRu::class,
+				'\\' . Cashbox\CashboxBusinessRuV5::class
+			];
 			/** @var Cashbox\Cashbox $handler */
 			foreach ($this->getCashboxHandlerList() as $handler)
 			{
 				$queryParams['handler'] = $handler;
 				$cashboxPath->addParams($queryParams);
 
-				if (mb_strpos($handler, Cashbox\CashboxBusinessRu::class) !== false)
+				if (in_array($handler, $businessRuCashboxHandlers, true))
 				{
-					$kkmList = [
-						Cashbox\CashboxBusinessRu::SUPPORTED_KKM_ATOL,
-						Cashbox\CashboxBusinessRu::SUPPORTED_KKM_EVOTOR,
-					];
-					foreach ($kkmList as $kkm)
+					foreach ([Cashbox\KkmRepository::ATOL, Cashbox\KkmRepository::EVOTOR] as $kkm)
 					{
-						$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/businessru_'.$kkm.'.svg';
-
 						$queryParams['kkm-id'] = $kkm;
 						$cashboxPath->addParams($queryParams);
 
 						$info = $handler::getSupportedKkmModels()[$kkm];
 
 						$result['items'][] = [
-							'name' => $info['NAME'],
-							'img' => $img,
+							'name' => $info['NAME']
+								. (
+									$handler::getFfdVersion() === 1.2
+										? ' (' . Loc::getMessage('SALESCENTER_APP_CASHBOX_FFD_12_SUPPORT') . ')'
+										: ''
+								),
+							'img' => '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/businessru_'.$kkm.'.svg',
 							'link' => $cashboxPath->getLocator(),
 							'info' => Loc::getMessage(
 								'SALESCENTER_APP_CASHBOX_INFO',
-								[
-									'#CASHBOX_NAME#' => $info['NAME'],
-								]
-							),
+								['#CASHBOX_NAME#' => $info['NAME']]
+							)
+								. (
+									$handler::getFfdVersion() === 1.2
+										? ' (' . Loc::getMessage('SALESCENTER_APP_CASHBOX_FFD_12_SUPPORT') . ')'
+										: ''
+								),
 							'type' => 'cashbox',
 							'showTitle' => true,
 						];
@@ -1590,27 +1596,32 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 						];
 					}
 				}
-				else
+				elseif (is_a($queryParams['handler'], Cashbox\CashboxOrangeData::class, true))
 				{
-					$img = '';
-					if (mb_strpos($queryParams['handler'], Cashbox\CashboxOrangeData::class) !== false)
-					{
-						$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/orangedata.svg';
-					}
-					elseif (mb_strpos($queryParams['handler'], Cashbox\CashboxCheckbox::class) !== false)
-					{
-						$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/checkbox.svg';
-					}
-
-					$name = $handler::getName();
 					$result['items'][] = [
 						'name' => $handler::getName(),
-						'img' => $img,
+						'img' => '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/orangedata.svg',
 						'link' => $cashboxPath->getLocator(),
 						'info' => Loc::getMessage(
 							'SALESCENTER_APP_CASHBOX_INFO',
 							[
-								'#CASHBOX_NAME#' => $name,
+								'#CASHBOX_NAME#' => $handler::getName(),
+							]
+						),
+						'type' => 'cashbox',
+						'showTitle' => true,
+					];
+				}
+				else
+				{
+					$result['items'][] = [
+						'name' => $handler::getName(),
+						'img' => '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/checkbox.svg',
+						'link' => $cashboxPath->getLocator(),
+						'info' => Loc::getMessage(
+							'SALESCENTER_APP_CASHBOX_INFO',
+							[
+								'#CASHBOX_NAME#' => $handler::getName(),
 							]
 						),
 						'type' => 'cashbox',
@@ -1666,10 +1677,15 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	{
 		$result = [];
 
+		$atolCashboxHandlers = [
+			'\\' . Cashbox\CashboxAtolFarmV4::class,
+			'\\' . Cashbox\CashboxAtolFarmV5::class,
+		];
+
 		/** @var Cashbox\Cashbox $handler */
 		foreach (SaleManager::getCashboxHandlers() as $handler)
 		{
-			if (mb_strpos($handler, Cashbox\CashboxAtolFarmV4::class) !== false)
+			if (in_array($handler, $atolCashboxHandlers, true))
 			{
 				continue;
 			}

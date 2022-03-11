@@ -15,48 +15,50 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/controller/prolog.php")
 Loc::loadMessages(__FILE__);
 
 $tableID = "t_controller_auth_log";
-$sorting = new CAdminSorting($tableID, "ID", "DESC");
+$sorting = new CAdminUiSorting($tableID, "ID", "DESC");
 /** @global string $by */
 /** @global string $order */
-$adminList = new CAdminList($tableID, $sorting);
+$adminList = new CAdminUiList($tableID, $sorting);
 
-$arFilterRows = array(
-	"USER_ID" => Loc::getMessage("CONTROLLER_AUTH_LOG_USER_ID"),
-	"FROM_CONTROLLER_MEMBER" => Loc::getMessage("CONTROLLER_AUTH_LOG_FROM_CONTROLLER_MEMBER"),
-	"TO_CONTROLLER_MEMBER" => Loc::getMessage("CONTROLLER_AUTH_LOG_TO_CONTROLLER_MEMBER"),
-	"TIMESTAMP_X" => Loc::getMessage("CONTROLLER_AUTH_LOG_TIMESTAMP_X"),
+$filterFields = array(
+	array(
+		"id" => "USER_ID",
+		"name" => GetMessage("CONTROLLER_AUTH_LOG_USER_ID"),
+		"filterable" => "=",
+	),
+	array(
+		"id" => "FROM_CONTROLLER_MEMBER_ID",
+		"name" => GetMessage("CONTROLLER_AUTH_LOG_FROM_CONTROLLER_MEMBER"),
+		"filterable" => "=",
+	),
+	array(
+		"id" => "TO_CONTROLLER_MEMBER_ID",
+		"name" => GetMessage("CONTROLLER_AUTH_LOG_TO_CONTROLLER_MEMBER"),
+		"filterable" => "=",
+		"default" => true,
+	),
+	array(
+		"id" => "TIMESTAMP_X",
+		"name" => GetMessage("CONTROLLER_AUTH_LOG_TIMESTAMP_X"),
+		"type" => "date",
+	),
 );
 
-$filter = new CAdminFilter(
-	$sTableID."_filter_id",
-	$arFilterRows
-);
+$arFilter = array();
+$adminList->AddFilter($filterFields, $arFilter);
+if (preg_match("/[^0-9]+/", $arFilter["=FROM_CONTROLLER_MEMBER_ID"]))
+{
+	$arFilter["=FROM_CONTROLLER_MEMBER.NAME"] = $arFilter["=FROM_CONTROLLER_MEMBER_ID"];
+	unset($arFilter["=FROM_CONTROLLER_MEMBER_ID"]);
+}
+if (preg_match("/[^0-9]+/", $arFilter["=TO_CONTROLLER_MEMBER_ID"]))
+{
+	$arFilter["=TO_CONTROLLER_MEMBER.NAME"] = $arFilter["=TO_CONTROLLER_MEMBER_ID"];
+	unset($arFilter["=TO_CONTROLLER_MEMBER_ID"]);
+}
 
-$arFilterFields = Array(
-	"find_user_id",
-	"find_from_controller_member",
-	"find_to_controller_member",
-	"find_timestamp_x_from",
-	"find_timestamp_x_to",
-);
+$nav = $adminList->getPageNavigation("nav-controller-auth-log");
 
-$adminFilter = $adminList->InitFilter($arFilterFields);
-
-$listFilter = array();
-if ($adminFilter["find_user_id"] > 0)
-	$listFilter["=USER_ID"] = intval($adminFilter["find_user_id"]);
-if (preg_match("/^[0-9]+$/", $adminFilter["find_from_controller_member"]))
-	$listFilter["=FROM_CONTROLLER_MEMBER_ID"] = intval($adminFilter["find_from_controller_member"]);
-elseif ($adminFilter["find_from_controller_member"] <> "")
-	$listFilter["=FROM_CONTROLLER_MEMBER.NAME"] = $adminFilter["find_from_controller_member"];
-if (preg_match("/^[0-9]+$/", $adminFilter["find_to_controller_member"]))
-	$listFilter["=TO_CONTROLLER_MEMBER_ID"] = intval($adminFilter["find_to_controller_member"]);
-elseif ($adminFilter["find_to_controller_member"] <> "")
-	$listFilter["=TO_CONTROLLER_MEMBER.NAME"] = $adminFilter["find_to_controller_member"];
-
-$nav = new \Bitrix\Main\UI\AdminPageNavigation("nav-controller-auth-log");
-\Bitrix\Main\Application::getConnection()->startTracker();
-\Bitrix\Main\Application::getConnection()->getTracker()->startFileLog("/tmp/debug03.log");
 $authLogList = AuthLogTable::getList(array(
 	'select' => array(
 		'ID',
@@ -69,13 +71,13 @@ $authLogList = AuthLogTable::getList(array(
 		'USER_ID',
 		'USER_NAME',
 	),
-	'filter' => $listFilter,
+	'filter' => $arFilter,
 	'order' => array(mb_strtoupper($by) => $order),
 	'count_total' => true,
 	'offset' => $nav->getOffset(),
 	'limit' => $nav->getLimit(),
 ));
-\Bitrix\Main\Application::getConnection()->getTracker()->stopFileLog();
+
 $nav->setRecordCount($authLogList->getCount());
 
 $adminList->setNavigation($nav, Loc::getMessage("CONTROLLER_AUTH_LOG_PAGES"));
@@ -155,61 +157,8 @@ $adminList->CheckListMode();
 $APPLICATION->SetTitle(Loc::getMessage("CONTROLLER_AUTH_LOG_TITLE"));
 
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
-?>
-	<form name="form1" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>?">
-		<? $filter->Begin(); ?>
-		<tr>
-			<td nowrap><label for="find_user_id"><?=GetMessage("CONTROLLER_AUTH_LOG_USER_ID")?></label>:</td>
-			<td nowrap>
-				<input
-					type="text"
-					name="find_user_id"
-					id="find_user_id"
-					value="<? echo htmlspecialcharsbx($adminFilter['find_user_id']) ?>"
-					size="47"
-				>
-			</td>
-		</tr>
-		<tr>
-			<td nowrap><label for="find_from_controller_member"><?=GetMessage("CONTROLLER_AUTH_LOG_FROM_CONTROLLER_MEMBER")?></label>:</td>
-			<td nowrap>
-				<input
-					type="text"
-					name="find_from_controller_member"
-					id="find_from_controller_member"
-					value="<? echo htmlspecialcharsbx($adminFilter['find_from_controller_member']) ?>"
-					size="47"
-				>
-			</td>
-		</tr>
-		<tr>
-			<td nowrap><label for="find_to_controller_member"><?=GetMessage("CONTROLLER_AUTH_LOG_TO_CONTROLLER_MEMBER")?></label>:</td>
-			<td nowrap>
-				<input
-					type="text"
-					name="find_to_controller_member"
-					id="find_to_controller_member"
-					value="<? echo htmlspecialcharsbx($adminFilter['find_to_controller_member']) ?>"
-					size="47"
-				>
-			</td>
-		</tr>
-		<tr>
-			<td nowrap><?=GetMessage("CONTROLLER_AUTH_LOG_TIMESTAMP_X")?>:</td>
-			<td nowrap><? echo CalendarPeriod("find_timestamp_x_from", $adminFilter['find_timestamp_x_from'], "find_timestamp_x_to", $adminFilter['find_timestamp_x_to'], "form1", "Y") ?></td>
-		</tr>
-		<?
-		$filter->Buttons(array(
-			"table_id" => $sTableID,
-			"url" => $APPLICATION->GetCurPage(),
-			"form" => "form1",
-		));
-		$filter->End();
-		?>
 
-	</form>
-<?
-
+$adminList->DisplayFilter($filterFields);
 $adminList->DisplayList();
 
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

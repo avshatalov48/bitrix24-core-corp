@@ -17,5 +17,5 @@ $MESS["CTRLR_UPLOAD_OPEN_FILE_BUTTON"] = "Открыть...";
 $MESS["CTRLR_UPLOAD_BUTT_RUN"] = "Передать";
 $MESS["CTRLR_UPLOAD_BUTT_CLEAR"] = "Очистить";
 $MESS["CTRLR_UPLOAD_ERR_TOO_MANY_SELECTED"] = "Файл будет передан на очень большое количество подключенных сайтов. Если вы уверены в своих действиях, то отметьте соответствующий чекбокс.";
-$MESS["CTRLR_UPLOAD_FORCE_RUN"] = "Передать файл не проверяя количество сайтов.";
+$MESS["CTRLR_UPLOAD_FORCE_RUN"] = "Передать файл, не проверяя количество сайтов.";
 ?>

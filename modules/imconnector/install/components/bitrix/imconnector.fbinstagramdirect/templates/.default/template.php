@@ -30,6 +30,7 @@ const HELP_DESK_INFO_CONNECT_ID = '13406062';
 const HELP_DESK_NO_SPECIFIC_PAGE = '10443976';
 const HELP_DESK_CONVERT_TO_BUSINESS_HELP = '10443962';
 const HELP_DESK_ACTIVATE_COMMENT = '14671362';
+const HELP_DESK_HUMAN_AGENT = '14927782';
 
 if($arParams['INDIVIDUAL_USE'] !== 'Y')
 {
@@ -477,6 +478,18 @@ else
 													</label><span class="imconnector-ui-hint-icon-instagram-direct" onclick="top.BX.Helper.show('redirect=detail&code=<?=HELP_DESK_ACTIVATE_COMMENT?>');"></span>
 												</div>
 												<div class="imconnector-field-social-list-info-inner imconnector-public-link-settings-inner-option">
+													<label for="human_agent_<?=$cell?>">
+														<input id="human_agent_<?=$cell?>" class="imconnector-public-link-settings-inner-option-field" type="checkbox" name="human_agent" value="Y" checked>
+														<span class="imconnector-public-link-settings-inner-option-text"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT')?></span>
+													</label>
+												</div>
+												<div class="imconnector-field-social-card-human-agent-instagram-direct">
+													<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT_DESCRIPTION', [
+														'#START_HELP_DESC#' => '<strong class="imconnector-field-social-card-human-agent-instagram-direct-link" onclick="top.BX.Helper.show(\'redirect=detail&code=' . HELP_DESK_HUMAN_AGENT . '\');">',
+														'#END_HELP_DESC#' => '</strong>',
+													])?>
+												</div>
+												<div class="imconnector-field-social-list-info-inner imconnector-public-link-settings-inner-option">
 													<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
 													<input type="hidden" name="page_id" value="<?=$page['INFO']['ID']?>">
 													<?=bitrix_sessid_post();?>
@@ -570,6 +583,19 @@ else
 											<span class="imconnector-indicator-no-comments-instagram-direct"></span><?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_NO_ACTIVE_COMMENTS')?>
 										<?endif;?>
 										<span class="imconnector-ui-hint-icon-instagram-direct" onclick="top.BX.Helper.show('redirect=detail&code=<?=HELP_DESK_ACTIVATE_COMMENT?>');"></span>
+									</div>
+									<div class="imconnector-field-social-list-info-inner imconnector-public-link-settings-inner-option">
+										<?if ($arResult['DATA_STATUS']['HUMAN_AGENT'] === true):?>
+											<span class="imconnector-indicator-comments-instagram-direct"></span><?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT_ON')?>
+										<?else:?>
+											<span class="imconnector-indicator-no-comments-instagram-direct"></span><?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT_OFF')?>
+										<?endif;?>
+									</div>
+									<div class="imconnector-field-social-card-human-agent-instagram-direct imconnector-field-social-card-human-agent-instagram-direct-invert">
+										<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT_DESCRIPTION', [
+											'#START_HELP_DESC#' => '<strong class="imconnector-field-social-card-human-agent-instagram-direct-link" onclick="top.BX.Helper.show(\'redirect=detail&code=' . HELP_DESK_HUMAN_AGENT . '\');">',
+											'#END_HELP_DESC#' => '</strong>',
+										])?>
 									</div>
 									<div class="imconnector-field-social-list-info-inner imconnector-public-link-settings-inner-option">
 										<form action="<?=$arResult['URL']['SIMPLE_FORM']?>" method="post">
@@ -669,6 +695,18 @@ else
 																	<input id="comment_<?=$cell?>" class="imconnector-public-link-settings-inner-option-field" type="checkbox" name="comments" <?if(empty($arResult['FORM']['USER']['IS_USER_PERMISSION_COMMENTS'])):?>disabled<?else:?>value="Y" checked<?endif;?>>
 																	<span class="imconnector-public-link-settings-inner-option-text"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_DIRECT_AND_BUSINESS')?></span>
 																</label><span class="imconnector-ui-hint-icon-instagram-direct" onclick="top.BX.Helper.show('redirect=detail&code=<?=HELP_DESK_ACTIVATE_COMMENT?>');"></span>
+															</div>
+															<div class="imconnector-field-social-list-info-inner imconnector-public-link-settings-inner-option">
+																<label for="human_agent_<?=$cell?>">
+																	<input id="human_agent_<?=$cell?>" class="imconnector-public-link-settings-inner-option-field" type="checkbox" name="human_agent" value="Y" checked>
+																	<span class="imconnector-public-link-settings-inner-option-text"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT')?></span>
+																</label>
+															</div>
+															<div class="imconnector-field-social-card-human-agent-instagram-direct">
+																<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_TO_CONNECT_HUMAN_AGENT_DESCRIPTION', [
+																	'#START_HELP_DESC#' => '<strong class="imconnector-field-social-card-human-agent-instagram-direct-link" onclick="top.BX.Helper.show(\'redirect=detail&code=' . HELP_DESK_HUMAN_AGENT . '\');">',
+																	'#END_HELP_DESC#' => '</strong>',
+																])?>
 															</div>
 															<div class="imconnector-field-social-list-info-inner imconnector-public-link-settings-inner-option">
 																<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">

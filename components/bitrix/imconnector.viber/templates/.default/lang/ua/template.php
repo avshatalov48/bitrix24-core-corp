@@ -22,7 +22,6 @@ $MESS["IMCONNECTOR_COMPONENT_VIBER_INFO_IOS_CONNECT_ID"] = "redirect=detail&code
 $MESS["IMCONNECTOR_COMPONENT_VIBER_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Інструкція</span> по отриманню ключа публічного акаунта:";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_I_KNOW_KEY"] = "Я знаю ключ";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_LINK_CHAT_ONE_TO_ONE"] = "Посилання на чат один на один";
-$MESS["IMCONNECTOR_COMPONENT_VIBER_LINK_PUBLIC_ACCOUNT"] = "Посилання на публічний запис";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_NAME_BOT"] = "Ім'я публічного акаунту";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_TESTED"] = "Тестування з'єднання";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_USING_ANDROID"] = "<span class=\"imconnector-field-box-text-bold\">ANDROID</span> ЗАСТОСУНОК";
